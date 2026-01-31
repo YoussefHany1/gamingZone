@@ -1,7 +1,6 @@
 package com.yh.gamingzone
 import expo.modules.splashscreen.SplashScreenManager
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 
@@ -44,10 +43,7 @@ class MainActivity : ReactActivity() {
               fabricEnabled
           ){})
   }
-  override fun onNewIntent(intent: Intent) {
-      super.onNewIntent(intent)
-      setIntent(intent)
-    }
+
   /**
     * Align the back button behavior with Android S
     * where moving root activities to background instead of finishing activities.

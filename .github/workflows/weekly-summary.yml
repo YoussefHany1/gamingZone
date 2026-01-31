@@ -27,6 +27,8 @@ jobs:
           APPWRITE_ENDPOINT: ${{ secrets.APPWRITE_ENDPOINT }}
           APPWRITE_PROJECT: ${{ secrets.APPWRITE_PROJECT }}
           APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
+          APPWRITE_DATABASE_ID: ${{ secrets.APPWRITE_DATABASE_ID }}
+          ARTICLES_COLLECTION_ID: ${{ secrets.ARTICLES_COLLECTION_ID }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
         working-directory: ./backend

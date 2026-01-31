@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
+  ToastAndroid,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -40,21 +40,18 @@ const ContactScreen = ({ navigation }) => {
 
   const handleSubmit = async () => {
     if (!message.trim()) {
-      Alert.alert(t("common.error"), t("settings.contact.messagePlaceholder"), [
-        { text: t("common.ok") },
-      ]);
+      ToastAndroid.show(t("settings.contact.messageError"), ToastAndroid.LONG);
       return;
     }
     if (message.length > 5000) {
-      Alert.alert(t("common.error"), t("contact.messageTooLong"), [
-        { text: t("common.ok") },
-      ]);
+      ToastAndroid.show(
+        t("settings.contact.messageTooLong"),
+        ToastAndroid.LONG
+      );
       return;
     }
     if (email.trim() && !isValidEmail(email)) {
-      Alert.alert(t("common.error"), t("settings.contact.invalidEmail"), [
-        { text: t("common.ok") },
-      ]);
+      ToastAndroid.show(t("settings.contact.invalidEmail"), ToastAndroid.LONG);
       return;
     }
 
@@ -67,14 +64,11 @@ const ContactScreen = ({ navigation }) => {
         userId: currentUser ? currentUser.uid : null,
       });
 
-      Alert.alert(t("common.ok"), t("settings.contact.success"), [
-        { text: t("common.ok"), onPress: () => navigation.goBack() },
-      ]);
+      ToastAndroid.show(t("settings.contact.success"), ToastAndroid.LONG);
+      navigation.goBack();
     } catch (error) {
       console.error("Error sending feedback:", error);
-      Alert.alert(t("common.error"), t("settings.contact.error"), [
-        { text: t("common.ok") },
-      ]);
+      ToastAndroid.show(t("settings.contact.error"), ToastAndroid.LONG);
     } finally {
       setLoading(false);
     }

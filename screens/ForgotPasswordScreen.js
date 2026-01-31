@@ -4,7 +4,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Text,
-  Alert,
+  ToastAndroid,
   ImageBackground,
 } from "react-native";
 import { Image } from "expo-image";
@@ -20,30 +20,30 @@ function ForgotPasswordScreen({ navigation }) {
 
   const handleResetPassword = async () => {
     if (!email) {
-      Alert.alert("Error", "Please enter your email address.");
+      ToastAndroid.show(t("auth.forgotPassword.emptyEmail"), ToastAndroid.LONG);
       return;
     }
 
     setLoading(true);
     try {
       await auth().sendPasswordResetEmail(email);
-      Alert.alert(
-        "Sent successfully",
-        "A password reset link has been sent to your email. (Please also check your Spam folder)",
-        [{ text: "OK", onPress: () => navigation.goBack() }] // العودة لشاشة الدخول
+      ToastAndroid.show(
+        t("auth.forgotPassword.successTitle"),
+        ToastAndroid.LONG
       );
+      navigation.goBack(); // العودة لشاشة الدخول
     } catch (error) {
       console.error("❌ Error sending password reset email:", error);
       // معالجة الأخطاء الشائعة
       if (error.code === "auth/user-not-found") {
-        Alert.alert(
-          t("auth.errors.generalTitle"),
-          t("auth.forgotPassword.errors.userNotFound")
+        ToastAndroid.show(
+          t("auth.forgotPassword.errors.userNotFound"),
+          ToastAndroid.LONG
         );
       } else {
-        Alert.alert(
-          t("auth.errors.generalTitle"),
-          t("auth.forgotPassword.errors.general")
+        ToastAndroid.show(
+          t("auth.forgotPassword.errors.general"),
+          ToastAndroid.LONG
         );
       }
     }

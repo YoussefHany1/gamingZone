@@ -4,18 +4,17 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  Alert,
   InteractionManager,
   TouchableOpacity,
+  ToastAndroid,
 } from "react-native";
 import { Image } from "expo-image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import auth from "@react-native-firebase/auth";
 import * as ImagePicker from "expo-image-picker";
 import firestore from "@react-native-firebase/firestore";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Picker } from "@react-native-picker/picker";
 import Loading from "../Loading";
 import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
@@ -23,6 +22,10 @@ import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
 import Constants from "expo-constants";
 import CustomPicker from "./CustomPicker";
+import * as Updates from "expo-updates";
+import countries from "i18n-iso-countries";
+import enLang from "i18n-iso-countries/langs/en.json";
+import arLang from "i18n-iso-countries/langs/ar.json";
 
 const CLOUDINARY_CLOUD_NAME =
   Constants?.expoConfig?.extra?.CLOUDINARY_CLOUD_NAME ??
@@ -34,6 +37,9 @@ const CLOUDINARY_UPLOAD_PRESET =
   Constants?.expoConfig?.extra?.CLOUDINARY_UPLOAD_PRESET ??
   process.env.CLOUDINARY_UPLOAD_PRESET;
 
+countries.registerLocale(enLang);
+countries.registerLocale(arLang);
+
 function ProfileScreen() {
   const [name, setName] = useState("");
   const [imageUri, setImageUri] = useState(null);
@@ -44,8 +50,9 @@ function ProfileScreen() {
   const [showPicker, setShowPicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(auth().currentUser);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [showAds, setShowAds] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // 3. تفعيل الإعلانات بعد انتهاء تحميل الواجهة الأساسية
   useEffect(() => {
@@ -73,13 +80,15 @@ function ProfileScreen() {
 
           if (userDocument.exists) {
             const userData = userDocument.data();
-            // تحديث الـ State ببيانات Firestore (هي الأصح)
             setName(userData.displayName || "");
             setImageUri(userData.photoURL || null);
             setDob(userData.dob || "");
             setGender(userData.gender || "");
             setCountry(userData.country || "");
-            setPlatform(userData.platform || ""); // <-- تحميل تاريخ الميلاد
+            setPlatform(userData.platform || "");
+            if (userData.isAdmin === true) {
+              setIsAdmin(true);
+            }
           }
         } catch (error) {
           console.error("❌ Error fetching user data from Firestore:", error);
@@ -93,9 +102,9 @@ function ProfileScreen() {
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert(
-        t("profile.messages.permissionTitle"),
-        t("profile.messages.permissionMsg")
+      ToastAndroid.show(
+        t("settings.profile.messages.permissionMsg"),
+        ToastAndroid.LONG
       );
       return;
     }
@@ -149,7 +158,10 @@ function ProfileScreen() {
       }
     } catch (e) {
       console.error("❌ Error uploading image:", e);
-      Alert.alert(t("common.error"), t("profile.messages.uploadFailed"));
+      ToastAndroid.show(
+        t("settings.profile.messages.uploadFailed"),
+        ToastAndroid.LONG
+      );
       throw e;
     }
   };
@@ -182,11 +194,17 @@ function ProfileScreen() {
       setCurrentUser(auth().currentUser);
 
       setLoading(false);
-      Alert.alert("Done!", "Your data has been successfully updated.");
+      ToastAndroid.show(
+        t("settings.profile.messages.saveSuccessMsg"),
+        ToastAndroid.LONG
+      );
     } catch (error) {
       setLoading(false);
       console.error("❌ Error saving profile:", error);
-      Alert.alert(t("common.error"), t("profile.messages.saveError"));
+      ToastAndroid.show(
+        t("settings.profile.messages.saveError"),
+        ToastAndroid.LONG
+      );
     }
   };
   const handleChange = (event, selectedDate) => {
@@ -200,6 +218,25 @@ function ProfileScreen() {
     { label: t("auth.register.male") || "Male", value: "male" },
     { label: t("auth.register.female") || "Female", value: "female" },
   ];
+
+  const countriesList = useMemo(() => {
+    // تحديد اللغة المطلوبة (إذا كانت العربية نستخدم 'ar'، غير ذلك 'en')
+    const langCode = i18n.language.startsWith("ar") ? "ar" : "en";
+
+    // جلب الأسماء كـ Object { "EG": "Egypt", ... }
+    const countriesObj = countries.getNames(langCode, { select: "official" });
+
+    const excludedCountries = ["IL"];
+
+    // تحويلها لمصفوفة { label, value } وترتيبها أبجديًا
+    return Object.entries(countriesObj)
+      .filter(([code]) => !excludedCountries.includes(code))
+      .map(([code, name]) => ({
+        label: name,
+        value: code,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [i18n.language]);
   const platformOptions = [
     { label: "", value: "" },
     { label: t("settings.profile.platforms.pc") || "PC", value: "pc" },
@@ -211,6 +248,10 @@ function ProfileScreen() {
     {
       label: t("settings.profile.platforms.android") || "Android",
       value: "android",
+    },
+    {
+      label: t("settings.profile.platforms.ios") || "IOS",
+      value: "ios",
     },
   ];
   return (
@@ -237,7 +278,7 @@ function ProfileScreen() {
           <Text style={styles.label}>{t("settings.profile.nameLabel")}</Text>
           <TextInput
             style={styles.input}
-            placeholder={t("settings.profile.namePlaceholder")}
+            placeholder={t("settings.profile.placeholders.name")}
             placeholderTextColor="#888"
             value={name}
             onChangeText={setName}
@@ -247,7 +288,7 @@ function ProfileScreen() {
           <TouchableOpacity onPress={() => setShowPicker(true)}>
             <TextInput
               style={styles.input}
-              placeholder={t("settings.profile.dobPlaceholder")}
+              placeholder={t("settings.profile.placeholders.dob")}
               placeholderTextColor="#888"
               value={dob}
               editable={false}
@@ -267,7 +308,19 @@ function ProfileScreen() {
             options={genderOptions}
             selectedValue={gender}
             onValueChange={setGender}
-            placeholder={t("settings.profile.genderLabel") || "Select Gender"}
+            placeholder={
+              t("settings.profile.placeholders.gender") || "Select Gender"
+            }
+          />
+          {/* Country Input */}
+          <Text style={styles.label}>{t("settings.profile.countryLabel")}</Text>
+          <CustomPicker
+            options={countriesList}
+            selectedValue={country}
+            onValueChange={setCountry}
+            placeholder={
+              t("settings.profile.placeholders.country") || "Select Country"
+            }
           />
           {/* Platform Input */}
           <Text style={styles.label}>
@@ -278,7 +331,7 @@ function ProfileScreen() {
             selectedValue={platform}
             onValueChange={setPlatform}
             placeholder={
-              t("settings.profile.platformLabel") || "Select Platform"
+              t("settings.profile.placeholders.platform") || "Select Platform"
             }
           />
           {/* {showAds && (
@@ -296,6 +349,21 @@ function ProfileScreen() {
           <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
             <Text style={styles.saveText}>{t("common.saveChanges")}</Text>
           </TouchableOpacity>
+          {isAdmin && (
+            <View style={{ backgroundColor: "gold", padding: 15, margin: 20 }}>
+              <Text>Admin Dashboard 👑</Text>
+              <Text>📢 Channel: {Updates.channel || "Not Defined"}</Text>
+              <Text>
+                ⚙️ Runtime Version: {Updates.runtimeVersion || "Not Defined"}
+              </Text>
+              <Text>
+                🆔 Update ID: {Updates.updateId || "Running Native Build"}
+              </Text>
+              <Text>
+                📦 App Config Version: {require("../app.json").expo.version}
+              </Text>
+            </View>
+          )}
         </ScrollView>
       )}
     </SafeAreaView>
@@ -360,7 +428,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignSelf: "center",
     padding: 15,
-    marginTop: 20,
+    marginVertical: 20,
   },
   saveText: {
     color: "#fff",

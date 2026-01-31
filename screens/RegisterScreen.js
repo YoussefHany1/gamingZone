@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   Alert,
+  ToastAndroid,
   ImageBackground,
   ScrollView,
 } from "react-native";
@@ -82,7 +83,11 @@ function SignupScreen({ navigation }) {
   // --- دالة تسجيل الدخول بالبريد الإلكتروني ---
   const handleSignup = async () => {
     if (!email || !password || !name) {
-      Alert.alert(`${t("common.error")}`, `${t("auth.register.emptyFields")}`);
+      ToastAndroid.show(
+        `${t("common.error")}: ${t("auth.register.emptyFields")}`,
+        ToastAndroid.LONG
+      );
+
       return;
     }
 
@@ -127,10 +132,10 @@ function SignupScreen({ navigation }) {
       } else if (error.code === "auth/weak-password") {
         msg = t("auth.errors.weakPassword");
       } else if (error.code === "auth/invalid-email") {
-        msg = "البريد الإلكتروني غير صالح.";
+        msg = t("auth.errors.invalidEmail");
       }
 
-      Alert.alert(t("auth.errors.generalTitle"), msg);
+      ToastAndroid.show(msg, ToastAndroid.LONG);
     }
   };
 
@@ -146,7 +151,8 @@ function SignupScreen({ navigation }) {
           "❌ Google sign up error: idToken not found in response.",
           JSON.stringify(userInfoResponse)
         );
-        Alert.alert(t("common.error"), t("auth.idTokenError"));
+        ToastAndroid.show(t("auth.idTokenError"), ToastAndroid.LONG);
+
         return;
       }
 
@@ -160,7 +166,7 @@ function SignupScreen({ navigation }) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         console.log("User cancelled the login flow");
       } else {
-        Alert.alert("Error", error.message);
+        ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
       }
     }
   };
@@ -171,7 +177,7 @@ function SignupScreen({ navigation }) {
       // App.js سيتولى تحويل المستخدم للصفحة الرئيسية تلقائياً
     } catch (error) {
       console.error("Anonymous login failed", error);
-      Alert.alert("Error", error.message);
+      ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
     }
   };
   return (
@@ -308,7 +314,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#fff",
+    color: COLORS.textLight,
     textAlign: "center",
     marginBottom: 20,
   },
@@ -316,7 +322,7 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   input: {
-    color: "white",
+    color: COLORS.textLight,
     backgroundColor: "rgba(119, 155, 221, 0.2)",
     fontSize: 14,
     padding: 15,
@@ -340,7 +346,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   buttonText: {
-    color: "white",
+    color: COLORS.textLight,
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",

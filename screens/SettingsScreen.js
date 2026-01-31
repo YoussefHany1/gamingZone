@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -5,206 +6,200 @@ import {
   TouchableOpacity,
   ScrollView,
   Linking,
+  Alert,
 } from "react-native";
 import { Image } from "expo-image";
-import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
+
 import COLORS from "../constants/colors";
+import InviteFriendsBtn from "../components/InviteFriendsBtn";
 
-function SettingsScreen() {
+const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.yh.gamingzone";
+const PRIVACY_POLICY_URL = "https://youssefhany1.github.io/gamingZoneApp/";
+
+const SettingsScreen = () => {
   const navigation = useNavigation();
-  const [currentUser, setCurrentUser] = useState(auth().currentUser);
   const { t } = useTranslation();
+  const currentUser = auth().currentUser;
   const isAnonymous = currentUser?.isAnonymous;
-  // console.log(currentUser);
 
-  const handleSignOut = async () => {
+  const userAvatar = useMemo(() => {
+    if (isAnonymous) {
+      return require("../assets/anonymous.png");
+    }
+    return currentUser?.photoURL
+      ? { uri: currentUser.photoURL }
+      : require("../assets/default_profile.png");
+  }, [currentUser?.photoURL, isAnonymous]);
+
+  const displayName = useMemo(() => {
+    return currentUser?.displayName || t("auth.login.signInButton");
+  }, [currentUser?.displayName, t]);
+
+  const handleSignOut = useCallback(async () => {
     try {
       await auth().signOut();
-      console.log("✅ User signed out");
-      // onAuthStateChanged سيتكفل بالباقي
+      console.log("✅ User signed out successfully");
     } catch (error) {
       console.error("❌ Sign out error:", error);
+      Alert.alert(
+        t("settings.signOut.errorTitle"),
+        t("settings.signOut.errorMessage")
+      );
     }
-  };
-  return (
-    <>
-      <SafeAreaView style={styles.container} edges={["top", "right", "left"]}>
-        {/* <Image source={require('../assets/logo.png')} style={styles.logo} /> */}
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <TouchableOpacity
-            style={styles.userContainer}
-            onPress={() =>
-              isAnonymous ? handleSignOut() : navigation.navigate("Profile")
-            }
-          >
-            {isAnonymous ? (
-              <Image
-                source={require("../assets/anonymous.png")}
-                style={styles.avatar}
-                contentFit="cover"
-                transition={500}
-                cachePolicy="memory-disk"
-              />
-            ) : (
-              <Image
-                source={
-                  currentUser?._user?.photoURL
-                    ? { uri: currentUser._user.photoURL }
-                    : require("../assets/default_profile.png")
-                }
-                style={styles.avatar}
-                contentFit="cover"
-                transition={500}
-                cachePolicy="memory-disk"
-              />
-            )}
+  }, [t]);
 
-            <Text style={styles.displayName}>
-              {currentUser?._user?.displayName
-                ? currentUser?._user?.displayName
-                : t("auth.login.signInButton")}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.categoryHeader}
-            onPress={() => navigation.navigate("NotificationSettings")}
-          >
-            <View style={styles.categoryHeaderLeft}>
-              <Ionicons
-                name="notifications"
-                size={20}
-                color="#779bdd"
-                style={styles.chevronIcon}
-              />
-              <Text style={styles.categoryTitle}>
-                {t("settings.menu.notifications")}
-              </Text>
-            </View>
-          </TouchableOpacity>
+  const handleOpenURL = useCallback(async (url) => {
+    try {
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      console.error("❌ Error opening URL:", error);
+    }
+  }, []);
 
-          {/* Lists Screen */}
-          <TouchableOpacity
-            style={styles.categoryHeader}
-            onPress={() => navigation.navigate("UserListsScreen")}
-          >
-            <View style={styles.categoryHeaderLeft}>
-              <Ionicons
-                name="list"
-                size={20}
-                color="#779bdd"
-                style={styles.chevronIcon}
-              />
-              <Text style={styles.categoryTitle}>
-                {t("settings.menu.myLists")}
-              </Text>
-            </View>
-          </TouchableOpacity>
+  const handleUserContainerPress = useCallback(() => {
+    if (isAnonymous) {
+      handleSignOut();
+    } else {
+      navigation.navigate("Profile");
+    }
+  }, [isAnonymous, handleSignOut, navigation]);
 
-          <TouchableOpacity
-            style={styles.categoryHeader}
-            onPress={() =>
-              Linking.openURL(
-                "https://play.google.com/store/apps/details?id=com.yh.gamingzone"
-              )
-            }
-          >
-            <View style={styles.categoryHeaderLeft}>
-              <Ionicons
-                name="star"
-                size={20}
-                color="#779bdd"
-                style={styles.chevronIcon}
-              />
-              <Text style={styles.categoryTitle}>
-                {t("settings.menu.rateUs")}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.categoryHeader}
-            onPress={() => navigation.navigate("ContactScreen")}
-          >
-            <View style={styles.categoryHeaderLeft}>
-              <Ionicons
-                name="chatbubble-ellipses-sharp" // أو mail-open
-                size={20}
-                color="#779bdd"
-                style={styles.chevronIcon}
-              />
-              <Text style={styles.categoryTitle}>
-                {t("settings.menu.contactUs")}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.categoryHeader}
-            onPress={() => navigation.navigate("LanguageScreen")}
-          >
-            <View style={styles.categoryHeaderLeft}>
-              <Ionicons
-                name="language"
-                size={20}
-                color="#779bdd"
-                style={styles.chevronIcon}
-              />
-              <Text style={styles.categoryTitle}>
-                {t("settings.menu.changeLanguage")}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.categoryHeader}
-            onPress={() =>
-              Linking.openURL("https://youssefhany1.github.io/gamingZoneApp2/")
-            }
-          >
-            <View style={styles.categoryHeaderLeft}>
-              <Ionicons
-                name="shield-checkmark-sharp"
-                size={20}
-                color="#779bdd"
-                style={styles.chevronIcon}
-              />
-              <Text style={styles.categoryTitle}>
-                {t("settings.menu.privacyPolicy")}
-              </Text>
-            </View>
-          </TouchableOpacity>
-          {isAnonymous ? null : (
-            <TouchableOpacity
-              style={[styles.categoryHeader, styles.categoryHeaderSignout]}
-              onPress={handleSignOut}
-            >
-              <View style={styles.categoryHeaderLeft}>
-                <Ionicons
-                  name="log-out-outline"
-                  size={20}
-                  color="#779bdd"
-                  style={styles.chevronIcon}
-                />
-                <Text style={styles.signout}>{t("settings.menu.signOut")}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    </>
+  const menuItems = useMemo(
+    () => [
+      {
+        id: "notifications",
+        icon: "notifications",
+        label: t("settings.menu.notifications"),
+        onPress: () => navigation.navigate("NotificationSettings"),
+      },
+      {
+        id: "lists",
+        icon: "list",
+        label: t("settings.menu.myLists"),
+        onPress: () => navigation.navigate("UserListsScreen"),
+      },
+      {
+        id: "rate",
+        icon: "star",
+        label: t("settings.menu.rateUs"),
+        onPress: () => handleOpenURL(PLAY_STORE_URL),
+      },
+      {
+        id: "invite",
+        component: InviteFriendsBtn,
+      },
+      {
+        id: "contact",
+        icon: "chatbubble-ellipses-sharp",
+        label: t("settings.menu.contactUs"),
+        onPress: () => navigation.navigate("ContactScreen"),
+      },
+      {
+        id: "language",
+        icon: "language",
+        label: t("settings.menu.changeLanguage"),
+        onPress: () => navigation.navigate("LanguageScreen"),
+      },
+      {
+        id: "privacy",
+        icon: "shield-checkmark-sharp",
+        label: t("settings.menu.privacyPolicy"),
+        onPress: () => handleOpenURL(PRIVACY_POLICY_URL),
+      },
+    ],
+    [t, navigation, handleOpenURL]
   );
-}
+
+  const renderMenuItem = useCallback((item) => {
+    if (item.component) {
+      const Component = item.component;
+      return <Component key={item.id} />;
+    }
+
+    return (
+      <TouchableOpacity
+        key={item.id}
+        style={styles.menuItem}
+        onPress={item.onPress}
+        activeOpacity={0.7}
+      >
+        <View style={styles.menuItemLeft}>
+          <Ionicons
+            name={item.icon}
+            size={20}
+            color={COLORS.lightGray}
+            style={styles.menuIcon}
+          />
+          <Text style={styles.menuLabel}>{item.label}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  }, []);
+
+  return (
+    <SafeAreaView style={styles.container} edges={["top", "right", "left"]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <TouchableOpacity
+          style={styles.userContainer}
+          onPress={handleUserContainerPress}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={userAvatar}
+            style={styles.avatar}
+            contentFit="cover"
+            transition={500}
+            cachePolicy="memory-disk"
+          />
+          <Text style={styles.displayName}>{displayName}</Text>
+        </TouchableOpacity>
+
+        {menuItems.map(renderMenuItem)}
+
+        {!isAnonymous && (
+          <TouchableOpacity
+            style={styles.signOutButton}
+            onPress={handleSignOut}
+            activeOpacity={0.7}
+          >
+            <View style={styles.menuItemLeft}>
+              <Ionicons
+                name="log-out-outline"
+                size={20}
+                color="red"
+                style={styles.menuIcon}
+              />
+              <Text style={styles.signOutText}>
+                {t("settings.menu.signOut")}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.primary,
     paddingHorizontal: 16,
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   userContainer: {
     marginVertical: 15,
@@ -218,20 +213,16 @@ const styles = StyleSheet.create({
   avatar: {
     height: 50,
     width: 50,
-    borderRadius: 50,
+    borderRadius: 25,
   },
   displayName: {
     color: "#fff",
     fontSize: 20,
     fontWeight: "bold",
     marginLeft: 15,
+    flex: 1,
   },
-  logo: {
-    width: 200,
-    height: 200,
-    alignSelf: "center",
-  },
-  categoryHeader: {
+  menuItem: {
     marginVertical: 10,
     flexDirection: "row",
     alignItems: "center",
@@ -240,29 +231,32 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(119, 155, 221, 0.2)",
     borderRadius: 12,
   },
-  categoryHeaderLeft: {
+  menuItemLeft: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
   },
-  chevronIcon: {
+  menuIcon: {
     marginRight: 8,
   },
-  categoryTitle: {
+  menuLabel: {
     fontSize: 18,
     fontWeight: "600",
     color: "#fff",
-    marginRight: 8,
   },
-  signout: {
+  signOutButton: {
+    marginVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    backgroundColor: "rgba(221, 119, 119, 0.2)",
+    borderRadius: 12,
+  },
+  signOutText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "red",
-    marginRight: 8,
-  },
-  categoryHeaderSignout: {
-    backgroundColor: "rgba(221, 119, 119, 0.2)",
-    marginBottom: 20,
+    color: COLORS.danger || "red",
   },
 });
 

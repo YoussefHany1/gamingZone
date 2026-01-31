@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Text,
-  Alert,
+  ToastAndroid,
   ImageBackground,
   ScrollView,
 } from "react-native";
@@ -34,7 +34,7 @@ function LoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
 
   const handleAuthError = (error, t) => {
-    let errorMessage = t("auth.errors.general"); // الرسالة الافتراضية
+    let errorMessage = t("common.error"); // الرسالة الافتراضية
 
     if (
       error.code === "auth/invalid-credential" ||
@@ -49,13 +49,16 @@ function LoginScreen({ navigation }) {
         "تم تجاوز عدد المحاولات المسموح بها. يرجى الانتظار قليلاً.";
     }
 
-    Alert.alert(t("auth.errors.generalTitle"), errorMessage);
+    ToastAndroid.show(errorMessage, ToastAndroid.LONG);
   };
 
   // --- دالة تسجيل الدخول بالبريد الإلكتروني ---
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert(`${t("common.error")}`, `${t("auth.emptyFields")}`);
+      ToastAndroid.show(
+        `${t("common.error")}: ${t("auth.emptyFields")}`,
+        ToastAndroid.LONG
+      );
       return;
     }
     try {
@@ -82,10 +85,7 @@ function LoginScreen({ navigation }) {
           "❌ Google sign in error: idToken not found in userInfoResponse.data",
           JSON.stringify(userInfoResponse)
         );
-        Alert.alert(
-          "خطأ",
-          "لم نتمكن من الحصول على معرف جوجل (idToken not found in data)."
-        );
+        ToastAndroid.show(t("auth.errors.googleSignIn"), ToastAndroid.LONG);
         return;
       }
 
@@ -102,11 +102,7 @@ function LoginScreen({ navigation }) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         console.log("User cancelled");
       } else {
-        // رسالة ودية بدلاً من error.message
-        Alert.alert(
-          t("auth.errors.generalTitle"),
-          t("auth.errors.googleSignIn")
-        );
+        ToastAndroid.show(t("auth.errors.googleSignIn"), ToastAndroid.LONG);
       }
     }
   };
@@ -118,7 +114,7 @@ function LoginScreen({ navigation }) {
       // App.js سيتولى تحويل المستخدم للصفحة الرئيسية تلقائياً
     } catch (error) {
       console.error("Anonymous login failed", error);
-      Alert.alert("Error", error.message);
+      ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
     }
   };
 

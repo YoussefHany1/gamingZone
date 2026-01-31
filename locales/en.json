@@ -10,17 +10,19 @@
         "saveChanges": "Save Changes",
         "noData": "No data to display",
         "imageNotFound": "Image not found",
-        "ad": "Advertisement"
+        "ad": "Advertisement",
+        "loginRequired": "You need to be logged in to perform this action",
+        "noInternet": "No Internet Connection"
     },
     "auth": {
                     "emailPlaceholder": "Email",
             "passwordPlaceholder": "Password",
                         "guest": "Sign in Later",
-                                    "emptyFields": "Please enter your email and password.",
-                                    "idTokenError": "Unable to retrieve Google ID token.",
+                                    "emptyFields": "Please enter your email and password",
+                                    "idTokenError": "Unable to retrieve Google ID token",
         "login": {
             "title": "Sign In",
-            "forgotPassword": "Forget Password?",
+            "forgotPassword": "Forgot Password?",
             "signInButton": "Sign In",
             "googleSignIn": "Sign In with Google",
             "createAccount": "Create new account",
@@ -38,31 +40,31 @@
             "googleSignUp": "Sign Up with Google",
             "haveAnAccount": "Already have an account?",
             "success": "Sign up successful",
-             "emptyFields": "Please fill in all required fields."
+             "emptyFields": "Please fill in all required fields"
         },
         "forgotPassword": {
             "title": "Reset your Password",
             "sendButton": "Send a reset password link",
             "sending": "Loading..",
             "backToLogin": "Back to Login",
-            "emptyEmail": "Please enter your email address.",
+            "emptyEmail": "Please enter your email address",
             "successTitle": "Sent successfully",
             "successMessage": "A password reset link has been sent to your email. (Please also check your Spam folder)",
-            "userNotFound": "No account is registered with this email address.",
+            "userNotFound": "No account is registered with this email address",
             "errors": {
-            "userNotFound": "No account registered with this email.",
-            "general": "An error occurred while sending the link. Please try again later."
+            "userNotFound": "No account registered with this email",
+            "general": "An error occurred while sending the link. Please try again later"
         }
         },
 "errors": {
-    "generalTitle": "Alert",
     "general": "An unexpected error occurred. Please try again later.",
-    "invalidCredentials": "Incorrect email or password.",
-    "userNotFound": "No account associated with this email.",
-    "emailAlreadyInUse": "This email is already in use.",
-    "network": "Please check your internet connection.",
-    "weakPassword": "The password is too weak.",
-    "googleSignIn": "Google Sign-In failed. Please try again."
+    "invalidCredentials": "Incorrect email or password",
+    "userNotFound": "No account associated with this email",
+    "network": "Please check your internet connection",
+    "emailAlreadyInUse": "This email is already in use",
+    "invalidEmail": "The email address is invalid",
+    "weakPassword": "The password is too weak",
+    "googleSignIn": "Google Sign-In failed. Please try again"
 },
 "validation": {
     "passwordTitle": "Inadequate Password",
@@ -141,8 +143,8 @@
             "seconds": "Sec",
             "discount": "100%\nOFF",
             "not": "New Free Game!",
-            "subscribed": "You are subscribed to free game notifications.",
-            "unsubscribed": "You have unsubscribed from free game notifications."
+            "subscribed": "You are subscribed to free games notifications",
+            "unsubscribed": "You have unsubscribed from free games notifications"
         },
         "gamesNews":{
             "source": "Source: The game's official website"
@@ -220,7 +222,7 @@
             "newListName": "e.g. RPG Favorites"
         },
         "errors": {
-            "couldNotCreateList": "Could not create list. Please try again later."
+            "couldNotCreateList": "Could not create list. Please try again later"
         }
     },
     "settings": {
@@ -229,50 +231,58 @@
         "menu": {
             "notifications": "Notification Settings",
             "myLists": "My Lists",
-            "changeLanguage": "Change Language",
             "rateUs": "Rate Us",
+            "inviteFriends": "Invite Friends",
             "contactUs": "Contact Us / Suggestions",
-            "supportUs": "Support Us",
+            "changeLanguage": "Change Language",
             "privacyPolicy": "Privacy Policy",
             "signOut": "Sign Out"
         },
         "profile": {
             "changePic": "Change your profile picture",
             "nameLabel": "Your Name:",
-            "namePlaceholder": "Your Name",
             "dobLabel": "Your Birthday date:",
-            "dobPlaceholder": "Date of Birth (YYYY-MM-DD)",
-            "genderLabel": "Select Gender",
-            "platformLabel": "Choose your platform",
+            "genderLabel": "Gender:",
+            "countryLabel": "Country:",
+            "platformLabel": "Platform:",
             "platforms": {
                 "pc": "PC",
                 "playstation": "Playstation",
                 "xbox": "Xbox",
-                "android": "Android"
+                "android": "Android",
+                "ios": "IOS"
             },
             "saveSuccessTitle": "Done!",
-            "saveSuccessMessage": "Your data has been successfully updated.",
-            "permissionError": "Images permissions are required.",
+            "saveSuccessMessage": "Your data has been successfully updated",
+            "permissionError": "Images permissions are required",
+            "placeholders": {
+                "name": "Enter your name",
+                "dob": "Date of Birth (YYYY-MM-DD)",
+                "gender": "Select your Gender",
+                "country": "Select your Country",
+                "platform": "Select your Platform"
+            },
             "messages": {
         "permissionTitle": "Photo Access Permission",
-        "permissionMsg": "We need access to your photo gallery to update your profile picture.",
-        "uploadFailed": "Failed to upload image. Please check your internet and try again.",
-        "saveError": "Unable to save changes.",
+        "permissionMsg": "We need access to your photo gallery to update your profile picture",
+        "uploadFailed": "Failed to upload image. Please check your internet and try again",
+        "saveError": "Unable to save changes",
         "saveSuccessTitle": "Saved",
-        "saveSuccessMsg": "Your profile details have been updated successfully."
+        "saveSuccessMsg": "Your profile details have been updated successfully"
     }
         },
         "notifications": {
             "description": "Choose which news sources you want to receive notifications from\nMake sure to allow notifications for this app",
-            "footer": "Notifications will be sent when new articles are published from enabled sources."
+            "footer": "Notifications will be sent when new articles are published from enabled sources.",
+            "testNotification": "Send Test Notification"
         },
         "userGames": {
             "emptyText": "Your list is empty",
             "emptySubText": "Add the games you want.",
             "findButton": "Find Your Game",
             "messages": {
-        "loadError": "We encountered a problem loading your list. Please try again later.",
-        "removeError": "An error occurred while trying to remove the game."
+        "loadError": "We encountered a problem loading your list. Please try again later",
+        "removeError": "An error occurred while trying to remove the game"
     }
         },
         "contact": {
@@ -285,13 +295,14 @@
         },
         "messageLabel": "Your Message *",
         "messagePlaceholder": "Write the details of your suggestion or problem here...",
+        "messageError": "Write the details of your suggestion",
         "emailLabel": "Email (to contact you)",
         "send": "Send",
         "sending": "Sending...",
-        "success": "Sent successfully. Thank you for contacting us!",
-        "error": "An error occurred while sending. Please try again.",
+        "success": "Thank you for contacting us!",
+        "error": "An error occurred while sending. Please try again",
         "messageTooLong": "Message is too long. Maximum limit is 5000 characters.",
-        "invalidEmail": "The email address is invalid."
+        "invalidEmail": "The email address is invalid"
     }
     }
 }

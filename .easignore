@@ -1,0 +1,19 @@
+# الملفات الأساسية
+.git
+node_modules/
+.expo/
+npm-debug.*
+
+# ملفات الـ Web والـ Builds المحلية
+dist/
+web-build/
+
+# ملفات Android (لتجنب رفع ملفات البناء المحلية)
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+
+# ملفات iOS (إذا كنت ستقوم ببناء iOS مستقبلاً)
+ios/Pods/
+ios/build/

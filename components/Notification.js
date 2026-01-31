@@ -326,7 +326,9 @@ const Notification = () => {
             onPress={NotificationService.testLocalNotification}
           >
             <Ionicons name="notifications" size={20} color="#ffffff" />
-            <Text style={styles.testButtonText}>Test Notification</Text>
+            <Text style={styles.testButtonText}>
+              {t("settings.notifications.testNotification")}
+            </Text>
           </TouchableOpacity>
 
           <Text style={styles.footerText}>

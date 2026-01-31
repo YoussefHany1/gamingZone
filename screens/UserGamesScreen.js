@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  ToastAndroid,
   InteractionManager,
 } from "react-native";
 import { Image } from "expo-image";
@@ -157,7 +158,10 @@ function UserGamesScreen({ route, navigation }) {
             setLoading(false);
           }
           if (games.length === 0) {
-            Alert.alert(t("common.error"), t("userGames.messages.loadError"));
+            ToastAndroid.show(
+              t("settings.userGames.messages.loadError"),
+              ToastAndroid.LONG
+            );
           }
         }
       );
@@ -208,9 +212,9 @@ function UserGamesScreen({ route, navigation }) {
               AsyncStorage.setItem(CACHE_KEY, JSON.stringify(oldGames)).catch(
                 console.error
               );
-              Alert.alert(
-                t("common.error"),
-                t("userGames.messages.removeError")
+              ToastAndroid.show(
+                t("settings.userGames.messages.removeError"),
+                ToastAndroid.LONG
               );
             }
           },

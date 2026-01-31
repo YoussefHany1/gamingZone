@@ -76,6 +76,9 @@ async function generateSummary() {
               ],
             },
           ],
+          generationConfig: {
+            response_mime_type: "application/json",
+          },
         }),
       }
     );
@@ -86,31 +89,39 @@ async function generateSummary() {
         "❌ Google Gemini API Error:",
         JSON.stringify(aiData.error, null, 2)
       );
-      return; // توقف هنا
+      return;
     }
 
     if (!aiData.candidates || aiData.candidates.length === 0) {
       console.error(
-        "❌ No candidates returned. Full Response:",
+        "❌ No candidates returned.",
         JSON.stringify(aiData, null, 2)
       );
-      // قد يكون السبب Safety Filters
-      if (aiData.promptFeedback) {
-        console.log("Prompt Feedback:", aiData.promptFeedback);
-      }
       return;
     }
-    let rawText = aiData.candidates[0].content.parts[0].text;
-    rawText = rawText
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
 
+    let rawText = aiData.candidates[0].content.parts[0].text;
+
+    // --- التعديل الثالث: تنظيف النص بطريقة أكثر ذكاءً ---
+    // هذا يضمن أننا نأخذ فقط ما بين القوسين { و } ونتجاهل أي شيء قبلهما أو بعدهما
+    const firstBrace = rawText.indexOf("{");
+    const lastBrace = rawText.lastIndexOf("}");
+
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      rawText = rawText.substring(firstBrace, lastBrace + 1);
+    } else {
+      // احتياطي: التنظيف التقليدي
+      rawText = rawText
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+    }
+
+    // محاولة التحويل
     const jsonSummary = JSON.parse(rawText);
 
     console.log("Summary generated successfully. Saving to Appwrite...");
 
-    // حفظ الملخص في قاعدة البيانات
     await databases.createDocument(
       DATABASE_ID,
       SUMMARIES_COLLECTION_ID,
@@ -123,11 +134,14 @@ async function generateSummary() {
       }
     );
 
-    console.log("Weekly summary saved!");
+    console.log("✅ Weekly summary saved!");
   } catch (error) {
     console.error("Error generating summary:", error);
+    // طباعة النص الذي سبب الخطأ لتسهيل التصحيح
     if (error instanceof SyntaxError) {
-      console.log("JSON Parse Error. The AI might have included extra text.");
+      console.log(
+        "JSON Parse Error Details. Please check the raw text output if possible."
+      );
     }
   }
 }

@@ -6,7 +6,7 @@ import {
   Linking,
   Modal,
   SectionList,
-  Alert,
+  ToastAndroid,
 } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -62,9 +62,9 @@ const DropdownPicker = (props) => {
   const handleToggleNotification = async () => {
     const state = await NetInfo.fetch();
     if (!state.isConnected) {
-      Alert.alert(
-        t("common.notice") || "Notice",
-        t("common.noInternet") || "No Internet Connection"
+      ToastAndroid.show(
+        t("common.noInternet") || "No Internet Connection",
+        ToastAndroid.LONG
       );
       return;
     }
@@ -76,9 +76,9 @@ const DropdownPicker = (props) => {
     if (!url) return;
     const state = await NetInfo.fetch();
     if (!state.isConnected) {
-      Alert.alert(
-        t("common.notice") || "Notice",
-        t("common.noInternet") || "No Internet Connection"
+      ToastAndroid.show(
+        t("common.noInternet") || "No Internet Connection",
+        ToastAndroid.LONG
       );
       return;
     }

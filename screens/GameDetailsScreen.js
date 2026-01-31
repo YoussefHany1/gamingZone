@@ -6,7 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
-  Alert,
+  ToastAndroid,
 } from "react-native";
 import { Image } from "expo-image";
 import { useEffect, useState, useRef } from "react";
@@ -347,9 +347,10 @@ function GameDetails({ route, navigation }) {
                 }}
                 onPress={() => {
                   if (!user) {
-                    Alert.alert(
-                      "Login Required",
-                      "Please login to manage your games."
+                    ToastAndroid.show(
+                      t("common.loginRequired") ||
+                        "You need to log in to perform this action.",
+                      ToastAndroid.LONG
                     );
                     return;
                   }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  ToastAndroid,
   Modal,
   StyleSheet,
 } from "react-native";
@@ -102,7 +103,10 @@ export default function UserListsScreen({ navigation }) {
       setNewListName("");
       setModalVisible(false);
     } catch (error) {
-      Alert.alert(t("common.error"), t("userLists.errors.couldNotCreateList"));
+      ToastAndroid.show(
+        t("userLists.errors.couldNotCreateList"),
+        ToastAndroid.LONG
+      );
     }
   };
 
@@ -131,15 +135,6 @@ export default function UserListsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => setModalVisible(true)}
-          style={{ padding: 10 }}
-        >
-          <Ionicons name="add" size={28} color="#fff" />
-        </TouchableOpacity>
-      </View>
-
       <FlatList
         data={lists}
         keyExtractor={(item) => item.id}
@@ -171,6 +166,15 @@ export default function UserListsScreen({ navigation }) {
           </TouchableOpacity>
         )}
       />
+      <TouchableOpacity
+        onPress={() => setModalVisible(true)}
+        style={styles.addListBtn}
+      >
+        <Text style={styles.addListText}>
+          {t("userLists.actions.createNewList")}
+        </Text>
+        <Ionicons name="add" size={24} color="#fff" />
+      </TouchableOpacity>
 
       <Modal visible={isModalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
@@ -207,7 +211,7 @@ export default function UserListsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.primary },
+  container: { backgroundColor: COLORS.primary },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -254,6 +258,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 20,
     color: COLORS.textLight,
+  },
+  addListBtn: {
+    padding: 10,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.secondary,
+    margin: 16,
+    borderRadius: 8,
+    marginHorizontal: 70,
+  },
+  addListText: {
+    color: COLORS.textLight,
+    fontSize: 16,
+    fontWeight: "bold",
   },
   modalButtons: { flexDirection: "row", justifyContent: "space-around" },
   cancelBtn: { padding: 10, fontWeight: "bold" },

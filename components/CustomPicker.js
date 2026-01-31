@@ -10,6 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import COLORS from "../constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 const CustomPicker = ({
   options, // Array of objects { label, value }
   selectedValue, // The currently selected value
@@ -65,21 +66,9 @@ const CustomPicker = ({
                 <Ionicons name="close" size={24} color="#7eaafcff" />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={[
-                styles.optionItem,
-                // لو القيمة الحالية null نغير اللون عشان نبين إنه مختار ده
-                selectedValue === null && styles.selectedOption,
-              ]}
-              onPress={() => handleSelect(null)} // هنا بنبعت null
-            >
-              <Text style={[styles.optionText, { color: "#ff6b6b" }]}>
-                None (Clear)
-              </Text>
-              {selectedValue === null && (
-                <Ionicons name="checkmark" size={24} color="#ff6b6b" />
-              )}
-            </TouchableOpacity>
+
+            {/* تم حذف جزء None (Clear) من هنا */}
+
             <FlatList
               data={options}
               keyExtractor={(item) => item.value.toString()}

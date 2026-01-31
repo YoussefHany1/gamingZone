@@ -6,7 +6,7 @@ import {
   Linking,
   FlatList,
   ScrollView,
-  Alert,
+  ToastAndroid,
 } from "react-native";
 import { Image } from "expo-image";
 import { useState, useEffect, memo } from "react";
@@ -112,7 +112,7 @@ function FreeGames() {
   // 2. زر تبديل التفعيل باستخدام NotificationService
   const toggleNotifications = async () => {
     if (!userId) {
-      Alert.alert(t("error"), t("common.loginRequired")); // تأكد من وجود ترجمة مناسبة
+      ToastAndroid.show(t("common.loginRequired"), ToastAndroid.LONG); // تأكد من وجود ترجمة مناسبة
       return;
     }
 
@@ -131,14 +131,14 @@ function FreeGames() {
       );
 
       if (newStatus) {
-        Alert.alert(t("notifications"), t("games.freeGames.subscribed"));
+        ToastAndroid.show(t("games.freeGames.subscribed"), ToastAndroid.LONG);
       } else {
-        Alert.alert(t("notifications"), t("games.freeGames.unsubscribed"));
+        ToastAndroid.show(t("games.freeGames.unsubscribed"), ToastAndroid.LONG);
       }
     } catch (error) {
       console.error("Toggle error:", error);
       setNotifEnabled(!newStatus); // التراجع في حالة الخطأ
-      Alert.alert(t("error"), "Failed to update subscription");
+      ToastAndroid.show(t("error"), ToastAndroid.LONG);
     }
   };
 
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     borderBottomLeftRadius: 16,
     borderTopRightRadius: 16,
-    padding: 5,
+    padding: 7,
     top: 0,
     right: 0,
     fontSize: 15,

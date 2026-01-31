@@ -6,7 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
-  Alert,
+  ToastAndroid,
 } from "react-native";
 import { Image } from "expo-image";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
@@ -203,9 +203,10 @@ function LatestNews({
     // التحقق من الإنترنت قبل محاولة التحديث
     const state = await NetInfo.fetch();
     if (!state.isConnected) {
-      Alert.alert(
-        t("common.notice") || "Notice",
-        t("common.noInternet") || "No Internet Connection. Showing cached data."
+      ToastAndroid.show(
+        t("common.noInternet") ||
+          "No Internet Connection. Showing cached data.",
+        ToastAndroid.LONG
       );
       return; // إلغاء التحديث للحفاظ على البيانات المعروضة
     }
