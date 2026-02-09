@@ -19,13 +19,13 @@ import auth from "@react-native-firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Loading from "../Loading";
 import { useTranslation } from "react-i18next";
-// import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
-// import { adUnitId } from "../constants/config";
+import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { adUnitId } from "../constants/config";
 import COLORS from "../constants/colors";
 import Svg, { Circle, Text as SvgText, Path } from "react-native-svg";
 import { SERVER_URL } from "../constants/config";
 import ListSelectionModal from "../components/ListSelectionModal";
-
+import ImageGallery from "../components/ImageGallery";
 const CACHE_KEY_PREFIX = "GAME_DETAILS_CACHE_";
 
 async function fetchGameById(id) {
@@ -42,7 +42,7 @@ async function fetchGameById(id) {
       console.error(
         "Server Error:",
         error.response.status,
-        error.response.data
+        error.response.data,
       );
       throw new Error(`Server fetch failed: ${error.response.status}`);
     } else if (error.request) {
@@ -66,8 +66,8 @@ function GameDetails({ route, navigation }) {
   const [user, setUser] = useState();
   const [showListModal, setShowListModal] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
-  const { t } = useTranslation();
-
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language;
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -155,6 +155,7 @@ function GameDetails({ route, navigation }) {
     };
   }, [currentId]);
 
+  // Rating Background Color
   function getRatingColor(rating) {
     if (rating <= 2) return "#8B0000";
     if (rating <= 4) return "#FF4C4C";
@@ -163,6 +164,7 @@ function GameDetails({ route, navigation }) {
     return "#006400";
   }
 
+  // Store Icons
   const storeIcons = {
     13: require("../assets/steam.png"),
     16: require("../assets/epic-games.png"),
@@ -174,11 +176,30 @@ function GameDetails({ route, navigation }) {
     10: require("../assets/apple-store.png"),
   };
 
-  const languageTypes = [
-    { key: "Audio", label: t("games.details.languages.audio") },
-    { key: "Subtitles", label: t("games.details.languages.subtitles") },
-    { key: "Interface", label: t("games.details.languages.interface") },
-  ];
+  const processLanguageData = () => {
+    if (!game?.language_supports) return [];
+
+    const langMap = {};
+
+    game.language_supports.forEach((item) => {
+      const langName = item.language.name;
+      const supportType = item.language_support_type.name; // المتوقع: "Audio", "Subtitles", "Interface"
+
+      if (!langMap[langName]) {
+        langMap[langName] = {
+          name: langName,
+          Audio: false,
+          Subtitles: false,
+          Interface: false,
+        };
+      }
+      langMap[langName][supportType] = true;
+    });
+
+    return Object.values(langMap);
+  };
+
+  const languageList = processLanguageData();
 
   let main, mainExtra, completionist, showHowLongToBeat;
   if (game?.game_time_to_beats) {
@@ -239,25 +260,20 @@ function GameDetails({ route, navigation }) {
           style={styles.container}
           showsVerticalScrollIndicator={false}
         >
-          {/* ... (Image and Gradient code remains same) ... */}
-          {game.cover?.image_id ? (
-            <Image
-              style={styles.image}
-              source={`https://images.igdb.com/igdb/image/upload/t_720p/${game.cover?.image_id}.jpg`}
-              contentFit="cover"
-              transition={500}
-              cachePolicy="memory-disk"
+          <View style={{ zIndex: 100 }}>
+            <ImageGallery
+              coverImageId={game.cover?.image_id}
+              screenshots={game.screenshots || []}
             />
-          ) : (
-            <Image
-              style={styles.image}
-              source={require("../assets/image-not-found.webp")}
-              contentFit="cover"
-              transition={500}
-              cachePolicy="memory-disk"
-            />
-          )}
-          <View style={styles.backgroundContainer}>
+          </View>
+          <View
+            style={[
+              styles.backgroundContainer,
+              {
+                flexDirection: currentLang === "en" ? "row" : "row-reverse",
+              },
+            ]}
+          >
             <LinearGradient
               colors={["transparent", COLORS.primary]}
               style={styles.gradient}
@@ -271,14 +287,17 @@ function GameDetails({ route, navigation }) {
               end={{ x: 0, y: 0.5 }}
             />
           </View>
-          {/* ... */}
-
+          {/* Game Info */}
           <View style={styles.content}>
+            {/* Game Name */}
             <Text style={styles.title}>{game.name}</Text>
+            {/* Game release date */}
             <Text style={styles.releaseDate}>
               {game.release_dates?.[0]?.human}
             </Text>
+
             <View style={styles.contentHeader}>
+              {/* platforms */}
               <View style={styles.platformContainer}>
                 {game.platforms?.map((platform) => (
                   <Text key={platform.id} style={styles.platform}>
@@ -286,31 +305,45 @@ function GameDetails({ route, navigation }) {
                   </Text>
                 ))}
               </View>
-              {game.total_rating ? (
-                <Text
-                  style={[
-                    styles.rating,
-                    {
-                      backgroundColor: getRatingColor(game.total_rating / 10),
-                    },
-                  ]}
-                >
-                  {Math.round(game.total_rating) / 10}
-                </Text>
-              ) : (
-                <Text
-                  style={[styles.rating, { backgroundColor: COLORS.secondary }]}
-                >
-                  N/A
-                </Text>
-              )}
+
+              {/* game rating */}
+              <View style={{ alignItems: "center" }}>
+                {game.total_rating ? (
+                  <Text
+                    style={[
+                      styles.rating,
+                      {
+                        backgroundColor: getRatingColor(game.total_rating / 10),
+                      },
+                    ]}
+                  >
+                    {Math.round(game.total_rating) / 10}
+                  </Text>
+                ) : (
+                  <Text
+                    style={[
+                      styles.rating,
+                      { backgroundColor: COLORS.secondary },
+                    ]}
+                  >
+                    N/A
+                  </Text>
+                )}
+                {game.total_rating_count > 0 && (
+                  <Text style={styles.ratingCount}>
+                    {game.total_rating_count} user ratings
+                  </Text>
+                )}
+              </View>
             </View>
 
-            {game.websites && (
-              <Text style={styles.storesHeader}>
-                {t("games.details.availableStores")}
-              </Text>
-            )}
+            {/* Available Stores */}
+            {game.websites &&
+              game.websites.some((site) => storeIcons[site.type]) && (
+                <Text style={styles.storesHeader}>
+                  {t("games.details.availableStores")}
+                </Text>
+              )}
             <View style={styles.storesContainer}>
               {game.websites?.map((site) => {
                 const icon = storeIcons[site.type];
@@ -333,7 +366,7 @@ function GameDetails({ route, navigation }) {
               })}
             </View>
 
-            {/* Buttons section */}
+            {/* Add to list Button */}
             <View style={styles.addToList}>
               <TouchableOpacity
                 style={{
@@ -350,7 +383,7 @@ function GameDetails({ route, navigation }) {
                     ToastAndroid.show(
                       t("common.loginRequired") ||
                         "You need to log in to perform this action.",
-                      ToastAndroid.LONG
+                      ToastAndroid.LONG,
                     );
                     return;
                   }
@@ -371,7 +404,6 @@ function GameDetails({ route, navigation }) {
               </TouchableOpacity>
             </View>
 
-            {/* تم استبدال المودال القديم بالمكون الجديد هنا */}
             <ListSelectionModal
               visible={!!showListModal}
               onClose={() => setShowListModal(false)}
@@ -386,6 +418,40 @@ function GameDetails({ route, navigation }) {
               </Text>
               <Text style={styles.summary}>{game.summary}</Text>
             </View>
+
+            {/* Game Trailer section */}
+            {game.videos && (
+              <View style={styles.trailerContainer}>
+                {(() => {
+                  const trailer =
+                    game.videos.find((v) => v.name === "Trailer") ||
+                    game.videos.find(
+                      (v) => v.name === "Announcement Trailer",
+                    ) ||
+                    game.videos.find((v) => v.name === "Teaser") ||
+                    game.videos.find(
+                      (v) => v.name === "Release Date Trailer",
+                    ) ||
+                    game.videos.find((v) => v.name === "Gameplay Trailer");
+                  if (trailer?.video_id) {
+                    return (
+                      <>
+                        <Text style={styles.detailsHeader}>
+                          {t("games.details.trailer")}
+                        </Text>
+                        <View style={styles.ytVid}>
+                          <YoutubePlayer
+                            height={250}
+                            videoId={trailer.video_id}
+                          />
+                        </View>
+                      </>
+                    );
+                  }
+                  return null;
+                })()}
+              </View>
+            )}
 
             <View style={styles.details}>
               {/* generes section */}
@@ -418,7 +484,7 @@ function GameDetails({ route, navigation }) {
                 <>
                   {/* Developers section*/}
                   {game.involved_companies.some(
-                    (company) => company.developer
+                    (company) => company.developer,
                   ) && (
                     <View style={styles.textCard}>
                       <Text style={styles.detailsHeader}>
@@ -436,7 +502,7 @@ function GameDetails({ route, navigation }) {
 
                   {/* Publishers section*/}
                   {game.involved_companies.some(
-                    (company) => company.publisher
+                    (company) => company.publisher,
                   ) && (
                     <View style={styles.textCard}>
                       <Text style={styles.detailsHeader}>
@@ -453,28 +519,6 @@ function GameDetails({ route, navigation }) {
                   )}
                 </>
               )}
-              {/* language supports section*/}
-              {game.language_supports && (
-                <>
-                  <View style={styles.textCard}>
-                    <Text style={styles.detailsHeader}>
-                      {t("games.details.languages.title")}
-                    </Text>
-                    {languageTypes.map(({ key, label }) => {
-                      const langs = game.language_supports
-                        ?.filter((l) => l.language_support_type.name === key)
-                        .map((l) => l.language.name);
-
-                      return langs.length ? (
-                        <Text key={key} style={styles.langs}>
-                          <Text style={styles.detailsText}>{label}:</Text>{" "}
-                          {langs.join(", ")}
-                        </Text>
-                      ) : null;
-                    })}
-                  </View>
-                </>
-              )}
               {/* Game Engines section */}
               {game.game_engines && (
                 <View style={styles.textCard}>
@@ -489,6 +533,117 @@ function GameDetails({ route, navigation }) {
                 </View>
               )}
             </View>
+
+            {/* ad space */}
+            <View style={styles.ad}>
+              <Text style={styles.adText}>{t("common.ad")}</Text>
+              <BannerAd
+                unitId={adUnitId}
+                size={BannerAdSize.MEDIUM_RECTANGLE}
+                requestOptions={{
+                  requestNonPersonalizedAdsOnly: true,
+                }}
+              />
+            </View>
+
+            {/* Language Supports Table Section */}
+            {languageList.length > 0 && (
+              <View style={[styles.textCard, { width: "100%", marginTop: 20 }]}>
+                <Text style={styles.detailsHeader}>
+                  {t("games.details.languages.title")}
+                </Text>
+
+                {/* Table Header */}
+                <View style={styles.langTableHeader}>
+                  <View style={styles.langHeaderCell}>
+                    <Ionicons
+                      name="language"
+                      size={18}
+                      color={COLORS.secondary}
+                    />
+                    <Text style={styles.langHeaderCellText}>
+                      {t("games.details.languages.Language")}
+                    </Text>
+                  </View>
+                  <View style={styles.iconHeaderContainer}>
+                    <Ionicons name="mic" size={18} color={COLORS.secondary} />
+                    <Text style={styles.headerLabel}>
+                      {t("games.details.languages.audio")}
+                    </Text>
+                  </View>
+                  <View style={styles.iconHeaderContainer}>
+                    <Ionicons
+                      name="document-text"
+                      size={18}
+                      color={COLORS.secondary}
+                    />
+                    <Text style={styles.headerLabel}>
+                      {t("games.details.languages.subtitles")}
+                    </Text>
+                  </View>
+                  <View style={styles.iconHeaderContainer}>
+                    <Ionicons
+                      name="desktop"
+                      size={18}
+                      color={COLORS.secondary}
+                    />
+                    <Text style={styles.headerLabel}>
+                      {t("games.details.languages.interface")}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Table Rows */}
+                {languageList.map((lang, index) => (
+                  <View
+                    key={lang.name}
+                    style={[
+                      styles.langTableRow,
+                      {
+                        backgroundColor:
+                          index % 2 === 0
+                            ? "rgba(81, 105, 150, 0.1)"
+                            : "transparent",
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.langCellText, { flex: 2 }]}>
+                      {lang.name}
+                    </Text>
+
+                    <View style={styles.checkCell}>
+                      {lang.Audio && (
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={20}
+                          color={COLORS.lightGray}
+                        />
+                      )}
+                    </View>
+
+                    <View style={styles.checkCell}>
+                      {lang.Subtitles && (
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={20}
+                          color={COLORS.lightGray}
+                        />
+                      )}
+                    </View>
+
+                    <View style={styles.checkCell}>
+                      {lang.Interface && (
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={20}
+                          color={COLORS.lightGray}
+                        />
+                      )}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
 
             {/* How long to beat section */}
             {showHowLongToBeat && (
@@ -613,39 +768,18 @@ function GameDetails({ route, navigation }) {
               </>
             )}
 
-            {/* Game Trailer section */}
-            {game.videos && (
-              <View style={styles.trailerContainer}>
-                {(() => {
-                  const trailer =
-                    game.videos.find((v) => v.name === "Trailer") ||
-                    game.videos.find(
-                      (v) => v.name === "Announcement Trailer"
-                    ) ||
-                    game.videos.find((v) => v.name === "Teaser") ||
-                    game.videos.find(
-                      (v) => v.name === "Release Date Trailer"
-                    ) ||
-                    game.videos.find((v) => v.name === "Gameplay Trailer");
-                  if (trailer?.video_id) {
-                    return (
-                      <>
-                        <Text style={styles.detailsHeader}>
-                          {t("games.details.trailer")}
-                        </Text>
-                        <View style={styles.ytVid}>
-                          <YoutubePlayer
-                            height={250}
-                            videoId={trailer.video_id}
-                          />
-                        </View>
-                      </>
-                    );
-                  }
-                  return null;
-                })()}
-              </View>
-            )}
+            {/* ad space */}
+            <View style={styles.ad}>
+              <Text style={styles.adText}>{t("common.ad")}</Text>
+              <BannerAd
+                unitId={adUnitId}
+                size={BannerAdSize.MEDIUM_RECTANGLE}
+                requestOptions={{
+                  requestNonPersonalizedAdsOnly: true,
+                }}
+              />
+            </View>
+
             {/* Collection section */}
             {game.collections?.[0]?.games && (
               <View style={{ marginTop: 20 }}>
@@ -684,6 +818,7 @@ function GameDetails({ route, navigation }) {
                 </ScrollView>
               </View>
             )}
+
             {/* Similar Games section */}
             {game?.similar_games && game.similar_games.length > 0 && (
               <View style={{ marginTop: 20 }}>
@@ -765,7 +900,6 @@ const styles = StyleSheet.create({
     // marginBottom: 20
   },
   backgroundContainer: {
-    flexDirection: "row",
     justifyContent: "space-between",
     position: "absolute",
     bottom: 0,
@@ -842,6 +976,10 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: "bold",
   },
+  ratingCount: {
+    color: "#9f9f9f",
+    marginTop: 4,
+  },
   storesHeader: {
     color: COLORS.textLight,
     fontWeight: "600",
@@ -880,6 +1018,48 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     flexWrap: "wrap",
+  },
+  langTableHeader: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.secondary,
+    paddingVertical: 10,
+    marginTop: 10,
+    alignItems: "flex-end",
+  },
+  iconHeaderContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerLabel: {
+    color: "#9f9f9f",
+    marginTop: 2,
+  },
+  langHeaderCell: {
+    flex: 2,
+    marginLeft: 8,
+  },
+  langHeaderCellText: {
+    color: "#9f9f9f",
+  },
+  langTableRow: {
+    flexDirection: "row",
+    paddingVertical: 12,
+    alignItems: "center",
+    borderBottomWidth: 0.5,
+    borderBottomColor: "rgba(81, 105, 150, 0.3)",
+  },
+  langCellText: {
+    color: "#cfcfcf",
+    fontSize: 15,
+    fontWeight: "500",
+    marginLeft: 8,
+  },
+  checkCell: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   textCard: {
     // marginRight: 25

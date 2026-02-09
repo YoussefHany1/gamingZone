@@ -12,42 +12,40 @@ const MY_APP_SECRET = process.env.MY_APP_SECRET;
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error(
-    "TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET must be set in environment."
+    "TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET must be set in environment.",
   );
   process.exit(1);
 }
 
 if (!MY_APP_SECRET) {
   console.warn(
-    "تحذير هام: MY_APP_SECRET غير مضبوط في متغيرات البيئة. الـ API يعمل بمفتاح افتراضي غير آمن (default-insecure-key)."
+    "Warning: MY_APP_SECRET is not set in environment variables. The API is running with a default insecure key (default-insecure-key).",
   );
 }
 
-const authenticateRequest = (req, res, next) => {
-  // استثناء الصفحة الرئيسية من الحماية (لأغراض الـ Health Check)
-  if (req.path === "/") return next();
+// const authenticateRequest = (req, res, next) => {
+//   // Exclude the homepage from authentication (for Health Check purposes)
+//   if (req.path === "/") return next();
 
-  const apiKey = req.headers["x-api-key"];
+//   const apiKey = req.headers["x-api-key"];
 
-  // استخدام المفتاح من البيئة أو مفتاح افتراضي مؤقت
-  const validKey = MY_APP_SECRET || "default-insecure-key";
+//   // Use the key from the environment or a temporary default key
+//   const validKey = MY_APP_SECRET || "default-insecure-key";
 
-  if (!apiKey || apiKey !== validKey) {
-    return res
-      .status(403)
-      .json({ message: "Forbidden: Invalid or missing API Key" });
-  }
+//   if (!apiKey || apiKey !== validKey) {
+//     return res
+//       .status(403)
+//       .json({ message: "Forbidden: Invalid or missing API Key" });
+//   }
 
-  next();
-};
+//   next();
+// };
 
 const cacheMiddleware = (duration) => (req, res, next) => {
   if (req.method === "GET") {
-    // s-maxage: مدة الكاش في الـ CDN (بالثواني)
-    // stale-while-revalidate: يسمح بتقديم نسخة قديمة بسرعة بينما يقوم بتحديث البيانات في الخلفية
     res.setHeader(
       "Cache-Control",
-      `s-maxage=${duration}, stale-while-revalidate=59`
+      `s-maxage=${duration}, stale-while-revalidate=59`,
     );
   }
   next();
@@ -104,11 +102,11 @@ async function callIgdb(apiEndpoint, queryBody) {
       console.error("IGDB returned non-OK status:", res.status, res.statusText);
       console.error("IGDB response body:", text);
       throw new Error(
-        `IGDB API Error: ${res.status} ${res.statusText} - ${text}`
+        `IGDB API Error: ${res.status} ${res.statusText} - ${text}`,
       );
     }
 
-    // حاول تحويل النص إلى JSON (IGDB عادةً يرسل JSON)
+    // Attempt to parse JSON, with error handling
     let data;
     try {
       data = JSON.parse(text);
@@ -118,13 +116,13 @@ async function callIgdb(apiEndpoint, queryBody) {
       throw new Error("Failed to parse IGDB JSON response");
     }
 
-    // تعديل روابط الأغطية لتكون كاملة
+    // Adjust cover URLs
     if (!Array.isArray(data)) return data;
     return data.map((game) => {
       if (game.cover && game.cover.url) {
         game.cover.url = `https:${game.cover.url.replace(
           "t_thumb",
-          "t_cover_big"
+          "t_cover_big",
         )}`;
       }
       return game;
@@ -134,22 +132,99 @@ async function callIgdb(apiEndpoint, queryBody) {
     throw error;
   }
 }
+const now = new Date();
+const endTimestamp = Math.floor(now.getTime() / 1000); // time now
+
+// 6 months ago
+const pastDate = new Date();
+pastDate.setMonth(pastDate.getMonth() - 6);
+const startTimestamp = Math.floor(pastDate.getTime() / 1000);
+
+// 20 years ago
+const nostalgiaDate = new Date();
+nostalgiaDate.setFullYear(nostalgiaDate.getFullYear() - 20);
+const nostalgiaTimestamp = Math.floor(nostalgiaDate.getTime() / 1000);
+
 //  Endpoints
 
 const currentTimestamp = Math.floor(Date.now() / 1000);
 const BASE_QUERY_FIELDS =
   "fields id, name, cover.image_id, first_release_date, total_rating, game_type";
-const BASE_QUERY_WHERE = `where (cover.image_id != null  & game_type = (0,8,9,10))`;
+const BASE_QUERY_WHERE = `where cover.image_id != null & game_type = (0,8,9,10)`;
 
+// Home Page
 app.get("/", (req, res) => {
-  res.send("Gaming Zone API is working! 🚀");
+  res.send(`    <html>
+      <head>
+        <title>Gaming Zone News</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #0c1a33; color: white; }
+          .btn { background-color: #779bdd; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin-top: 20px;}
+        </style>
+      </head>
+      <body>
+        <h1>Gaming Zone</h1>
+        <p>All-in-one companion app designed for every gamer</p>
+        
+        <a href="https://play.google.com/store/apps/details?id=com.yh.gamingzone" class="btn">Download App</a>
+      </body>
+    </html>`);
+});
+// Asset Links for Android App Links (Deep Linking)
+app.get("/.well-known/assetlinks.json", (req, res) => {
+  res.json([
+    {
+      relation: ["delegate_permission/common.handle_all_urls"],
+      target: {
+        namespace: "android_app",
+        package_name: "com.yh.gamingzone",
+        sha256_cert_fingerprints: [
+          "EB:45:4C:81:18:1C:14:1A:8A:33:70:8B:C4:A5:A5:4D:BF:FA:A2:D3:FF:32:6E:4F:82:F8:8D:9A:7B:F2:ED:85",
+        ],
+      },
+    },
+  ]);
+});
+
+// News Details (Deep Linking)
+app.get("/news-details", (req, res) => {
+  res.send(`
+    <html>
+      <head>
+        <title>Gaming Zone News</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #0c1a33; color: white; }
+          .btn { background-color: #779bdd; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin-top: 20px;}
+        </style>
+      </head>
+      <body>
+        <h1>Gaming Zone</h1>
+        <p>لقراءة الخبر كاملاً، يرجى استخدام التطبيق.</p>
+        
+        <a href="https://play.google.com/store/apps/details?id=com.yh.gamingzone" class="btn">تحميل التطبيق</a>
+        
+        <script>
+          // محاولة فتح التطبيق عبر الـ Custom Scheme
+          // إذا كان التطبيق مثبتاً ولم يفتح تلقائياً، هذا السكريبت سيحاول فتحه
+          window.location.href = "gaming-zone://news-details" + window.location.search;
+          
+          // (اختياري) يمكنك تفعيل تحويل تلقائي للمتجر بعد مدة زمنية إذا أردت
+          setTimeout(function() {
+            window.location.href = "https://play.google.com/store/apps/details?id=com.yh.gamingzone";
+          }, 3000);
+        </script>
+      </body>
+    </html>
+  `);
 });
 
 // Top Rated
 app.get("/top-rated", cacheMiddleware(3600), async (req, res) => {
   try {
     const query = `
-      ${BASE_QUERY_FIELDS};
+      ${BASE_QUERY_FIELDS}, genres.name;
       ${BASE_QUERY_WHERE} & total_rating_count > 20;
       sort total_rating desc;
       limit 10;
@@ -168,7 +243,7 @@ app.get("/top-rated", cacheMiddleware(3600), async (req, res) => {
 app.get("/recently-released", cacheMiddleware(3600), async (req, res) => {
   try {
     const query = `
-      ${BASE_QUERY_FIELDS};
+      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
       ${BASE_QUERY_WHERE} & first_release_date < ${currentTimestamp} & total_rating_count > 5;
       sort first_release_date desc;
       limit 10;
@@ -183,11 +258,11 @@ app.get("/recently-released", cacheMiddleware(3600), async (req, res) => {
   }
 });
 
-// 3. Coming Soon
+// Coming Soon
 app.get("/coming-soon", cacheMiddleware(3600), async (req, res) => {
   try {
     const query = `
-      ${BASE_QUERY_FIELDS};
+      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, hypes;
       ${BASE_QUERY_WHERE} & first_release_date > ${currentTimestamp};
       sort first_release_date asc;
       limit 10;
@@ -202,7 +277,7 @@ app.get("/coming-soon", cacheMiddleware(3600), async (req, res) => {
   }
 });
 
-// 4. Most Anticipated
+// Most Anticipated
 app.get("/most-anticipated", cacheMiddleware(3600), async (req, res) => {
   try {
     const query = `
@@ -221,43 +296,42 @@ app.get("/most-anticipated", cacheMiddleware(3600), async (req, res) => {
   }
 });
 
-// 5. Popular Right Now
+// Popular Right Now
 app.get("/popular", cacheMiddleware(3600), async (req, res) => {
   try {
-    // الخطوة 1: جلب الـ IDs من popularity_primitives
-    // هنا نقوم بفرز النتائج حسب القيمة (value) تنازلياً للحصول على الأكثر شعبية
+    // Fetch IDs from popularity_primitives
     const primitivesQuery = `
       fields game_id;
       sort value desc;
-      where popularity_type = 5;
-      limit 10;
+      where popularity_type = 1;
+      limit 500;
     `;
 
-    // نطلب الـ IDs أولاً
+    // Request the IDs
     const primitivesData = await callIgdb(
       "popularity_primitives",
-      primitivesQuery
+      primitivesQuery,
     );
 
     if (!primitivesData || primitivesData.length === 0) {
       return res.json([]);
     }
 
-    // الخطوة 2: استخراج الـ IDs من النتائج
+    // Extract IDs from the results
     const gameIds = primitivesData.map((p) => p.game_id).join(",");
 
-    // الخطوة 3: استخدام الـ IDs لجلب تفاصيل الألعاب الكاملة
+    // Use the IDs to fetch full game details
     const gamesQuery = `
-      ${BASE_QUERY_FIELDS};
-      where id = (${gameIds});
+      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name;
+      ${BASE_QUERY_WHERE} & id = (${gameIds}) & first_release_date > ${startTimestamp} & first_release_date < ${endTimestamp};
     `;
 
     const gamesData = await callIgdb("games", gamesQuery);
 
-    // الخطوة 4: إعادة ترتيب الألعاب لتطابق ترتيب الشعبية (لأن الـ where لا يضمن الترتيب)
+    // Reorder games to match popularity order
     const sortedGames = primitivesData
       .map((p) => gamesData.find((g) => g.id === p.game_id))
-      .filter((g) => g); // تصفية أي نتائج غير موجودة (undefined)
+      .filter((g) => g); // Filter out any undefined results
 
     res.json(sortedGames);
   } catch (error) {
@@ -272,9 +346,9 @@ app.get("/popular", cacheMiddleware(3600), async (req, res) => {
 app.get("/nostalgia-corner", cacheMiddleware(3600), async (req, res) => {
   try {
     const query = `
-${BASE_QUERY_FIELDS};
-where (platforms = (6, 7, 8, 13) & first_release_date < 1167609600 & total_rating_count > 100);
-sort popularity desc;
+${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name;
+${BASE_QUERY_WHERE} & first_release_date < ${nostalgiaTimestamp} & total_rating > 70;
+sort total_rating_count desc;
 limit 50;
     `;
     const data = await callIgdb("games", query);
@@ -296,7 +370,7 @@ app.get("/search", cacheMiddleware(300), async (req, res) => {
       return res.status(400).json({ message: 'Search query "q" is required' });
     }
 
-    // تنظيف النص لتجنب أخطاء الكوتيشن (Sanitization)
+    // clean the search query to prevent IGDB query issues
     const safeQuery = q.replace(/"/g, '\\"');
 
     const query = `
@@ -314,6 +388,7 @@ app.get("/search", cacheMiddleware(300), async (req, res) => {
   }
 });
 
+// Game Details
 app.get("/game-details", cacheMiddleware(3600), async (req, res) => {
   try {
     const { id } = req.query;
@@ -322,8 +397,7 @@ app.get("/game-details", cacheMiddleware(3600), async (req, res) => {
       return res.status(400).json({ message: "Game ID is required" });
     }
 
-    // 1. بناء الـ Multi-query
-    // نقوم بتعريف استعلامين: واحد باسم "Game" وواحد باسم "TimeToBeat"
+    // Define two queries "Game" and "TimeToBeat"
     const query = `
       query games "Game" {
         fields id, name, cover.image_id, cover.url, first_release_date, total_rating, total_rating_count, summary, dlcs, game_type, multiplayer_modes, remakes, remasters, screenshots.image_id, release_dates.human, platforms.abbreviation, websites.type, websites.url, genres.name, game_modes.name, language_supports.language.name, language_supports.language_support_type.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, game_engines.name, videos.name, videos.video_id, collection.name, similar_games.name, similar_games.cover.image_id, collections.games.name, collections.games.cover.image_id;
@@ -337,35 +411,32 @@ app.get("/game-details", cacheMiddleware(3600), async (req, res) => {
       };
     `;
 
-    // 2. استدعاء الـ endpoint المسمى "multiquery"
+    // Call "multiquery" endpoint
     const data = await callIgdb("multiquery", query);
 
-    // 3. معالجة البيانات القادمة (تكون عبارة عن مصفوفة تحتوي نتائج الاستعلامين)
-    // النتيجة تكون: [{ name: "Game", result: [...] }, { name: "TimeToBeat", result: [...] }]
     const gameResult = data.find((item) => item.name === "Game");
     const timeResult = data.find((item) => item.name === "TimeToBeat");
 
-    // استخراج كائن اللعبة
+    // Extract the game object
     let game =
       gameResult && gameResult.result.length > 0 ? gameResult.result[0] : null;
 
-    // استخراج بيانات الوقت
+    // Extract the time data
     const timeToBeat =
       timeResult && timeResult.result.length > 0 ? timeResult.result[0] : null;
 
     if (game) {
-      // إصلاح رابط الغلاف يدوياً هنا لأن دالة callIgdb الأصلية
-      // لا يمكنها الوصول لداخل هيكلية الـ multiquery
+      // Fix the cover URL manually here
       if (game.cover && game.cover.url) {
         game.cover.url = `https:${game.cover.url.replace(
           "t_thumb",
-          "t_cover_big"
+          "t_cover_big",
         )}`;
       }
 
-      // دمج بيانات الوقت داخل كائن اللعبة
+      // Merge time data into the game object
       if (timeToBeat) {
-        // نقوم بحذف الـ id و game_id من بيانات الوقت لأنها مكررة ولا داعي لها
+        // Remove id and game_id from time data
         delete timeToBeat.id;
         delete timeToBeat.game_id;
 
@@ -384,4 +455,10 @@ app.get("/game-details", cacheMiddleware(3600), async (req, res) => {
   }
 });
 
+// invalid route handler (404)
+app.get("*", (req, res) => {
+  res.redirect(
+    "https://play.google.com/store/apps/details?id=com.yh.gamingzone",
+  );
+});
 export default app;

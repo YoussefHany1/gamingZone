@@ -15,10 +15,13 @@ import useFeed from "../hooks/useFeed";
 import { intervalToDuration } from "date-fns";
 import DropdownPicker from "../components/DropdownPicker";
 import SkeletonNewsItem from "../skeleton/SkeletonNewsItem";
-import NewsDetails from "../screens/NewsDetailsScreen";
+// 1. إزالة استيراد NewsDetails لأنه أصبح شاشة منفصلة
+// import NewsDetails from "../screens/NewsDetailsScreen";
 import { useTranslation } from "react-i18next";
 import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
+// 2. استيراد useNavigation
+import { useNavigation } from "@react-navigation/native";
 
 function LatestNews({
   limit,
@@ -31,8 +34,13 @@ function LatestNews({
   websitesList,
   showFooter = true,
 }) {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedArticle, setSelectedArticle] = useState(null);
+  // 3. تعريف Navigation
+  const navigation = useNavigation();
+
+  // إزالة state الخاصة بالـ Modal
+  // const [modalVisible, setModalVisible] = useState(false);
+  // const [selectedArticle, setSelectedArticle] = useState(null);
+
   const { t } = useTranslation();
   const feedCategory = typeof category !== "undefined" ? category : undefined;
   const feedWebsite =
@@ -42,7 +50,7 @@ function LatestNews({
 
   const { articles, loading, error, isFetching, refetch } = useFeed(
     feedCategory,
-    feedWebsite
+    feedWebsite,
   );
   let filteredArticles = articles;
   if ((!websitesList || websitesList.length === 0) && language) {
@@ -53,10 +61,13 @@ function LatestNews({
       ? filteredArticles.slice(0, limit)
       : filteredArticles;
 
-  const handlePressArticle = useCallback((item) => {
-    setSelectedArticle(item);
-    setModalVisible(true);
-  }, []);
+  // 4. تعديل دالة الضغط للانتقال للشاشة بدلاً من فتح Modal
+  const handlePressArticle = useCallback(
+    (item) => {
+      navigation.navigate("NewsDetails", { article: item });
+    },
+    [navigation],
+  );
 
   const renderItem = useCallback(
     ({ item, index }) => {
@@ -68,9 +79,7 @@ function LatestNews({
         const startDate = new Date(dateString);
         const endDate = new Date();
 
-        // التأكد من صحة التاريخ
         if (!isNaN(startDate)) {
-          // حساب المدة الزمنية بالتفصيل
           const duration = intervalToDuration({
             start: startDate,
             end: endDate,
@@ -78,24 +87,21 @@ function LatestNews({
 
           const { years, months, days, hours, minutes } = duration;
 
-          // بناء النص بناءً على المدة
           if (years > 0) {
-            timeAgo = `${years} ${t("news.duration.years")}`; // سنوات
+            timeAgo = `${years} ${t("news.duration.years")}`;
           } else if (months > 0) {
-            timeAgo = `${months} ${t("news.duration.months")}`; // شهور
+            timeAgo = `${months} ${t("news.duration.months")}`;
           } else if (days > 0) {
-            timeAgo = `${days} ${t("news.duration.days")}`; // أيام
+            timeAgo = `${days} ${t("news.duration.days")}`;
           } else if (hours > 0) {
-            // هنا يظهر الشكل المطلوب: 8h 30m
-            // إذا كانت الدقائق 0، سيظهر 8h فقط
             timeAgo =
               minutes > 0
                 ? `${hours}${t("news.duration.hours")} ${minutes}${t(
-                    "news.duration.minutes"
+                    "news.duration.minutes",
                   )}`
                 : `${hours}${t("news.duration.hours")}`;
           } else {
-            timeAgo = `${minutes}${t("news.duration.minutes")}`; // دقائق فقط
+            timeAgo = `${minutes}${t("news.duration.minutes")}`;
           }
         }
       }
@@ -133,7 +139,14 @@ function LatestNews({
                 style={styles.thumbnail}
                 source={
                   item?.thumbnail
-                    ? item.thumbnail
+                    ? {
+                        uri: item.thumbnail,
+                        headers: {
+                          Referer: "https://www.saudigamer.com/",
+                          "User-Agent":
+                            "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36",
+                        },
+                      }
                     : require("../assets/image-not-found.webp")
                 }
                 contentFit="cover"
@@ -143,23 +156,10 @@ function LatestNews({
               <Text style={styles.website}>{item.siteName}</Text>
             </View>
           </TouchableOpacity>
-          {/* {shouldShowAd && (
-            <View style={styles.ad}>
-              <Text style={styles.adText}>{t("common.ad")}</Text>
-              <BannerAd
-                key={`ad-${index}`}
-                unitId={adUnitId}
-                size={BannerAdSize.MEDIUM_RECTANGLE}
-                requestOptions={{
-                  requestNonPersonalizedAdsOnly: true,
-                }}
-              />
-            </View>
-          )} */}
         </View>
       );
     },
-    [language, website, handlePressArticle]
+    [language, website, handlePressArticle, t],
   );
 
   const renderHeader = useCallback(() => {
@@ -200,15 +200,14 @@ function LatestNews({
   }, [loading, listData.length, t, showFooter]);
 
   const onRefresh = useCallback(async () => {
-    // التحقق من الإنترنت قبل محاولة التحديث
     const state = await NetInfo.fetch();
     if (!state.isConnected) {
       ToastAndroid.show(
         t("common.noInternet") ||
           "No Internet Connection. Showing cached data.",
-        ToastAndroid.LONG
+        ToastAndroid.LONG,
       );
-      return; // إلغاء التحديث للحفاظ على البيانات المعروضة
+      return;
     }
     refetch();
   }, [refetch, t]);
@@ -264,16 +263,7 @@ function LatestNews({
         contentContainerStyle={listData.length === 0 ? { flexGrow: 1 } : null}
         ListEmptyComponent={renderEmptyComponent}
       />
-      {selectedArticle && (
-        <NewsDetails
-          article={selectedArticle}
-          visible={modalVisible}
-          onClose={() => {
-            setModalVisible(false);
-            setTimeout(() => setSelectedArticle(null), 300);
-          }}
-        />
-      )}
+      {/* 5. تمت إزالة NewsDetails من هنا */}
     </View>
   );
 }

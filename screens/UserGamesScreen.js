@@ -149,7 +149,7 @@ function UserGamesScreen({ route, navigation }) {
           setLoading(false);
 
           AsyncStorage.setItem(CACHE_KEY, JSON.stringify(gamesList)).catch(
-            (e) => console.error(e)
+            (e) => console.error(e),
           );
         },
         (error) => {
@@ -160,10 +160,10 @@ function UserGamesScreen({ route, navigation }) {
           if (games.length === 0) {
             ToastAndroid.show(
               t("settings.userGames.messages.loadError"),
-              ToastAndroid.LONG
+              ToastAndroid.LONG,
             );
           }
-        }
+        },
       );
     };
 
@@ -192,7 +192,7 @@ function UserGamesScreen({ route, navigation }) {
             const newGames = games.filter((g) => g.id !== gameIdStr);
             setGames(newGames);
             AsyncStorage.setItem(CACHE_KEY, JSON.stringify(newGames)).catch(
-              console.error
+              console.error,
             );
             // delete from firestore
             const gameRef = firestore()
@@ -210,16 +210,16 @@ function UserGamesScreen({ route, navigation }) {
               // إعادة الحالة القديمة عند الفشل
               setGames(oldGames);
               AsyncStorage.setItem(CACHE_KEY, JSON.stringify(oldGames)).catch(
-                console.error
+                console.error,
               );
               ToastAndroid.show(
                 t("settings.userGames.messages.removeError"),
-                ToastAndroid.LONG
+                ToastAndroid.LONG,
               );
             }
           },
         },
-      ]
+      ],
     );
   };
   useEffect(() => {
@@ -258,9 +258,9 @@ function UserGamesScreen({ route, navigation }) {
               <GameItem game={item} onRemove={handleRemoveGame} />
 
               {/* شرط ظهور الإعلان: إذا كان الترتيب يقبل القسمة على 4 */}
-              {/* {showAds && // 1. نتحقق أولاً أن الإعلانات مفعلة بشكل عام
+              {showAds && // 1. نتحقق أولاً أن الإعلانات مفعلة بشكل عام
                 ((index + 1) % 4 === 0 || // 2. إما يظهر كل 4 عناصر
-                  (games.length < 4 && index === games.length - 1)) && ( // 3. أو يظهر في نهاية القائمة القصيرة
+                  (games.length < 4 && index === games.length - 1)) && (
                   <View style={styles.ad}>
                     <Text style={styles.adText}>{t("common.ad")}</Text>
                     <BannerAd
@@ -271,7 +271,7 @@ function UserGamesScreen({ route, navigation }) {
                       }}
                     />
                   </View>
-                )} */}
+                )}
             </>
           )}
           ListEmptyComponent={renderEmptyList}

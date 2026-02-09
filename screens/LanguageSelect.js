@@ -80,18 +80,18 @@ function LanguageSelect() {
             )}
           </View>
         </TouchableOpacity>
-        {/* {showAds && (
+        {showAds && (
           <View style={styles.ad}>
             <Text style={styles.adText}>{t("common.ad")}</Text>
             <BannerAd
               unitId={adUnitId}
-              size={BannerAdSize.MEDIUM_RECTANGLE} // حجم مستطيل كبير
+              size={BannerAdSize.MEDIUM_RECTANGLE}
               requestOptions={{
                 requestNonPersonalizedAdsOnly: true,
               }}
             />
           </View>
-        )} */}
+        )}
       </ScrollView>
     </SafeAreaView>
   );

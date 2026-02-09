@@ -33,15 +33,15 @@ function Home() {
     () => [
       { type: "slideshow", website: website, category: "news" },
       { type: "news", category: "news" },
-      // { type: "ad" },
       { type: "weekly_summary" },
+      { type: "ad" },
       { type: "news", category: "reviews" },
-      // { type: "ad" },
+      { type: "ad" },
       { type: "news", category: "esports" },
-      // { type: "ad" },
+      { type: "ad" },
       { type: "news", category: "hardware" },
     ],
-    []
+    [],
   );
 
   // 2. دالة renderItem هي المسؤولة عن إنشاء المكونات
@@ -62,20 +62,24 @@ function Home() {
         );
       case "weekly_summary":
         return <WeeklySummary />;
-      // case "ad":
-      //   if (!showAds) return null;
-      //   return (
-      //     <View style={styles.ad}>
-      //       <Text style={styles.adText}>{t("common.ad")}</Text>
-      //       <BannerAd
-      //         unitId={adUnitId}
-      //         size={BannerAdSize.MEDIUM_RECTANGLE}
-      //         requestOptions={{
-      //           requestNonPersonalizedAdsOnly: true,
-      //         }}
-      //       />
-      //     </View>
-      //   );
+      case "ad":
+        if (!showAds) return null;
+        return (
+          <View style={styles.ad}>
+            <Text style={styles.adText}>{t("common.ad")}</Text>
+            <BannerAd
+              unitId={adUnitId}
+              size={BannerAdSize.MEDIUM_RECTANGLE}
+              requestOptions={{
+                requestNonPersonalizedAdsOnly: true,
+              }}
+              onAdFailedToLoad={(error) => {
+                console.error("Ad failed to load: ", error);
+                // Error Code 3 = No Fill (يعني الكود سليم لكن جوجل مبعتش إعلان للأسباب السابقة)
+              }}
+            />
+          </View>
+        );
 
       default:
         return null;

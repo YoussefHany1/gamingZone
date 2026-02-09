@@ -112,7 +112,9 @@
         "endOfList": "End of Articles",
         "details": {
             "readFullArticle": "Read the full article",
-            "noDescription": "No description available here"
+            "noDescription": "No description available here",
+            "shareShortenError": "There was an error, Please try again later.",
+                "shareMessage": "found an interesting article via Gaming Zone App\nCheck it out: "
         },
         "dropdown": {
             "selectSource": "Select a Source",
@@ -141,7 +143,7 @@
             "hours": "Hrs",
             "minutes": "Min",
             "seconds": "Sec",
-            "discount": "100%\nOFF",
+            "claimNow": "Claim Now",
             "not": "New Free Game!",
             "subscribed": "You are subscribed to free games notifications",
             "unsubscribed": "You have unsubscribed from free games notifications"
@@ -150,27 +152,33 @@
             "source": "Source: The game's official website"
         },
         "list": {
-                        "gamesNews": "Game News",
-
+            "gamesNews": "Game News",
             "popular": "Popular Right now",
             "recentlyReleased": "Recently Released",
             "topRated": "Top Rated",
             "comingSoon": "Coming Soon",
-            "mostAnticipated": "Most Anticipated",
+            "mostAnticipated": {
+                "header": "Most Anticipated",
+                "countdown": {
+                    "days": "Days",
+                    "hours": "Hours",
+                    "minutes": "Minutes",
+                    "seconds": "Seconds"
+                } },
             "nostalgiaCorner": "Nostalgia Corner",
             "searchResults": "Search Results",
             "noResults": "No games found.",
             "serverError": "The connection to the server failed. Please ensure you have an active internet connection and try again.",
             "gameTypes": {
-    "1": "DLC",
-    "2": "Expansion",
-    "5": "MOD",
-    "6": "Episode",
-    "7": "Season",
-    "8": "Remake",
-    "9": "Remaster",
-    "10": "Expanded"
-  }
+                "1": "DLC",
+                "2": "Expansion",
+                "5": "MOD",
+                "6": "Episode",
+                "7": "Season",
+                "8": "Remake",
+                "9": "Remaster",
+                "10": "Expanded"
+            }
         },
         "details": {
             "availableStores": "Available at these stores",
@@ -182,6 +190,7 @@
             "publisher": "Publisher",
             "languages": {
                 "title": "Language Supports",
+                "Language": "Language",
                 "audio": "Audio",
                 "subtitles": "Subtitles",
                 "interface": "Interface"

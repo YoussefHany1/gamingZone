@@ -6,11 +6,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import * as Notifications from "expo-notifications";
-// Constants & Config
 import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
-
-// Screens & Components
 import HomeScreen from "../screens/HomeScreen";
 import NewsScreen from "../screens/NewsScreen";
 import GamesScreen from "../screens/GamesScreen";
@@ -22,13 +19,14 @@ import Profile from "../components/Profile";
 import LanguageScreen from "../screens/LanguageSelect";
 import GameNewsScreen from "../screens/GameNewsScreen";
 import UserListsScreen from "../screens/UserListsScreen";
+import NewsDetails from "../screens/NewsDetailsScreen";
 
-const ContactScreen = React.lazy(() => import("../screens/ContactScreen"));
 // Lazy Loaded Screens
+const ContactScreen = React.lazy(() => import("../screens/ContactScreen"));
 const LoginScreen = React.lazy(() => import("../screens/LoginScreen"));
 const RegisterScreen = React.lazy(() => import("../screens/RegisterScreen"));
-const ForgotPasswordScreen = React.lazy(() =>
-  import("../screens/ForgotPasswordScreen")
+const ForgotPasswordScreen = React.lazy(
+  () => import("../screens/ForgotPasswordScreen"),
 );
 
 const Stack = createNativeStackNavigator();
@@ -40,6 +38,7 @@ function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      <Stack.Screen name="NewsDetails" component={NewsDetails} />
     </Stack.Navigator>
   );
 }
@@ -48,6 +47,7 @@ function NewsStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="NewsScreen" component={NewsScreen} />
+      <Stack.Screen name="NewsDetails" component={NewsDetails} />
     </Stack.Navigator>
   );
 }

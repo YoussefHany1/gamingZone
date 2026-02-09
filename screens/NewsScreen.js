@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react"; // 1. إضافة useMemo
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useWindowDimensions, StyleSheet, View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TabView, TabBar } from "react-native-tab-view";
@@ -16,7 +16,6 @@ const GenericNewsRoute = ({ rssFeeds, categoryKey, loading }) => {
   const feedList = useMemo(() => {
     const list = rssFeeds[categoryKey] || [];
 
-    // 1. فصل المجموعات
     const arList = list.filter((item) => item.language === "ar");
     const enList = list.filter((item) => item.language !== "ar"); // أي لغة أخرى نعتبرها إنجليزي أو أجنبي
 
@@ -93,7 +92,7 @@ export default function TabViewExample() {
       { key: "esports", title: t("news.tabs.esports") || "Esports" },
       { key: "hardware", title: t("news.tabs.hardware") || "Hardware" },
     ],
-    [t]
+    [t],
   );
 
   const renderTabBar = useCallback(
@@ -107,7 +106,7 @@ export default function TabViewExample() {
         inactiveColor="#a9b7d0"
       />
     ),
-    [] // مصفوفة فارغة تعني أن الدالة لن يُعاد إنشاؤها أبداً
+    [], // مصفوفة فارغة تعني أن الدالة لن يُعاد إنشاؤها أبداً
   );
 
   const renderScene = useCallback(
@@ -149,7 +148,7 @@ export default function TabViewExample() {
           return null;
       }
     },
-    [rssFeeds, loading]
+    [rssFeeds, loading],
   );
 
   return (

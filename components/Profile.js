@@ -104,7 +104,7 @@ function ProfileScreen() {
     if (status !== "granted") {
       ToastAndroid.show(
         t("settings.profile.messages.permissionMsg"),
-        ToastAndroid.LONG
+        ToastAndroid.LONG,
       );
       return;
     }
@@ -160,7 +160,7 @@ function ProfileScreen() {
       console.error("❌ Error uploading image:", e);
       ToastAndroid.show(
         t("settings.profile.messages.uploadFailed"),
-        ToastAndroid.LONG
+        ToastAndroid.LONG,
       );
       throw e;
     }
@@ -196,14 +196,14 @@ function ProfileScreen() {
       setLoading(false);
       ToastAndroid.show(
         t("settings.profile.messages.saveSuccessMsg"),
-        ToastAndroid.LONG
+        ToastAndroid.LONG,
       );
     } catch (error) {
       setLoading(false);
       console.error("❌ Error saving profile:", error);
       ToastAndroid.show(
         t("settings.profile.messages.saveError"),
-        ToastAndroid.LONG
+        ToastAndroid.LONG,
       );
     }
   };
@@ -334,7 +334,7 @@ function ProfileScreen() {
               t("settings.profile.placeholders.platform") || "Select Platform"
             }
           />
-          {/* {showAds && (
+          {showAds && (
             <View style={styles.ad}>
               <Text style={styles.adText}>{t("common.ad")}</Text>
               <BannerAd
@@ -345,7 +345,7 @@ function ProfileScreen() {
                 }}
               />
             </View>
-          )} */}
+          )}
           <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
             <Text style={styles.saveText}>{t("common.saveChanges")}</Text>
           </TouchableOpacity>

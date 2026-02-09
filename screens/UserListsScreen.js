@@ -9,6 +9,7 @@ import {
   ToastAndroid,
   Modal,
   StyleSheet,
+  InteractionManager,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,16 +17,26 @@ import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import COLORS from "../constants/colors";
 import { useTranslation } from "react-i18next";
+import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { adUnitId } from "../constants/config";
 
 export default function UserListsScreen({ navigation }) {
   const [lists, setLists] = useState([]);
   const [newListName, setNewListName] = useState("");
   const [isModalVisible, setModalVisible] = useState(false);
+  const [showAds, setShowAds] = useState(false);
   const user = auth().currentUser;
   const { t } = useTranslation();
 
+  // active ads after interactions
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      setShowAds(true);
+    });
+    return () => task.cancel();
+  }, []);
+
   const getDisplayName = (originalName) => {
-    // يمكنك تعديل مفاتيح الترجمة هنا حسب الموجود في ملفات اللغة عندك
     switch (originalName) {
       case "Playing":
         return t("games.details.listStatus.playing");
@@ -34,14 +45,14 @@ export default function UserListsScreen({ navigation }) {
       case "Want to Play":
         return t("games.details.listStatus.wantToPlay");
       default:
-        return originalName; // لو الاسم مش من القائمة دي، يرجع زي ما هو
+        return originalName; // if it's a custom list return the original name
     }
   };
 
   useEffect(() => {
     if (!user) return;
 
-    // 1. إنشاء القوائم الافتراضية إذا لم تكن موجودة
+    // 1. Create default lists if they don't exist
     const initDefaults = async () => {
       const listsRef = firestore()
         .collection("users")
@@ -71,7 +82,7 @@ export default function UserListsScreen({ navigation }) {
 
     initDefaults();
 
-    // 2. جلب القوائم
+    // Fetch lists
     const unsubscribe = firestore()
       .collection("users")
       .doc(user.uid)
@@ -105,7 +116,7 @@ export default function UserListsScreen({ navigation }) {
     } catch (error) {
       ToastAndroid.show(
         t("userLists.errors.couldNotCreateList"),
-        ToastAndroid.LONG
+        ToastAndroid.LONG,
       );
     }
   };
@@ -120,7 +131,7 @@ export default function UserListsScreen({ navigation }) {
           text: t("common.remove"),
           style: "destructive",
           onPress: async () => {
-            // حذف القائمة (يجب حذف الـ Subcollection يدوياً أو عبر Cloud Function، هنا سنحذف الوثيقة فقط للتبسيط)
+            // Delete the list
             await firestore()
               .collection("users")
               .doc(user.uid)
@@ -129,7 +140,7 @@ export default function UserListsScreen({ navigation }) {
               .delete();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -138,32 +149,50 @@ export default function UserListsScreen({ navigation }) {
       <FlatList
         data={lists}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.listItem}
-            onPress={() =>
-              navigation.navigate("UserGamesScreen", {
-                listId: item.id,
-                listName: item.name,
-              })
-            }
-          >
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Ionicons
-                name={item.type === "default" ? "list" : "folder-open-outline"}
-                size={24}
-                color={COLORS.lightGray}
-              />
-              <Text style={styles.listName}>{getDisplayName(item.name)}</Text>
-            </View>
-            {item.type === "custom" && (
-              <TouchableOpacity
-                onPress={() => handleDeleteList(item.id, item.name)}
-              >
-                <Ionicons name="trash-outline" size={20} color="red" />
-              </TouchableOpacity>
-            )}
-          </TouchableOpacity>
+        renderItem={({ item, index }) => (
+          <>
+            <TouchableOpacity
+              style={styles.listItem}
+              onPress={() =>
+                navigation.navigate("UserGamesScreen", {
+                  listId: item.id,
+                  listName: item.name,
+                })
+              }
+            >
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons
+                  name={
+                    item.type === "default" ? "list" : "folder-open-outline"
+                  }
+                  size={24}
+                  color={COLORS.lightGray}
+                />
+                <Text style={styles.listName}>{getDisplayName(item.name)}</Text>
+              </View>
+              {item.type === "custom" && (
+                <TouchableOpacity
+                  onPress={() => handleDeleteList(item.id, item.name)}
+                >
+                  <Ionicons name="trash-outline" size={20} color="red" />
+                </TouchableOpacity>
+              )}
+            </TouchableOpacity>
+            {showAds && // 1. نتحقق أولاً أن الإعلانات مفعلة بشكل عام
+              ((index + 1) % 4 === 0 || // 2. إما يظهر كل 4 عناصر
+                (lists.length < 4 && index === lists.length - 1)) && (
+                <View style={styles.ad}>
+                  <Text style={styles.adText}>{t("common.ad")}</Text>
+                  <BannerAd
+                    unitId={adUnitId}
+                    size={BannerAdSize.MEDIUM_RECTANGLE}
+                    requestOptions={{
+                      requestNonPersonalizedAdsOnly: true,
+                    }}
+                  />
+                </View>
+              )}
+          </>
         )}
       />
       <TouchableOpacity
@@ -287,5 +316,14 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
     fontWeight: "bold",
     fontSize: 16,
+  },
+  ad: {
+    alignItems: "center",
+    width: "100%",
+    marginVertical: 55,
+  },
+  adText: {
+    color: "#fff",
+    marginBottom: 10,
   },
 });

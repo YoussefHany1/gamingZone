@@ -114,7 +114,9 @@
         "endOfList": "نهاية المقالات",
         "details": {
             "readFullArticle": "قراءة المقال كاملاً",
-            "noDescription": "لا يوجد وصف متاح الأن"
+            "noDescription": "لا يوجد وصف متاح الأن",
+            "shareShortenError": "حدث خطأ، يرجى المحاولة مرة أخرى لاحقاً.",
+            "shareMessage": "وجد مقالاً مثيراً عبر تطبيق Gaming Zone\nتفقده: "
         },
         "dropdown": {
                         "selectSource": "اختر مصدرًا",
@@ -143,21 +145,28 @@
             "hours": "ساعة",
             "minutes": "دقيقة",
             "seconds": "ثانية",
-            "discount": "خصم\n100%",
+            "claimNow": "احصل عليه الآن",
             "not": "لعبة مجانية جديدة!",
-                        "subscribed": "أنت مشترك في إشعارات الألعاب المجانية.",
-                        "unsubscribed": "لقد ألغيت الاشتراك في إشعارات الألعاب المجانية."
+            "subscribed": "أنت مشترك في إشعارات الألعاب المجانية.",
+            "unsubscribed": "لقد ألغيت الاشتراك في إشعارات الألعاب المجانية."
         },
-                "gamesNews":{
+        "gamesNews":{
             "source": "المصدر: الموقع الرسمي للعبة"
         },
         "list": {
             "gamesNews": "أخبار الألعاب",
-                        "popular": "الأكثر شعبية حالياً",
+            "popular": "الأكثر شعبية حالياً",
             "recentlyReleased": "صدرت حديثاً",
             "topRated": "الأعلى تقييماً",
             "comingSoon": "ستصدر قريباً",
-            "mostAnticipated": "الأكثر ترقباً",
+            "mostAnticipated": {    
+                "header": "الأكثر ترقباً",
+                "countdown": {
+        "days": "أيام",
+        "hours": "ساعات",
+        "minutes": "دقائق",
+        "seconds": "ثواني"
+            }},
             "nostalgiaCorner": "ركن الماضي",
             "searchResults": "نتائج البحث",
             "noResults": "لم يتم العثور على ألعاب.",
@@ -183,6 +192,7 @@
             "publisher": "الناشر",
             "languages": {
                 "title": "دعم اللغات",
+                "Language": "اللغة",
                 "audio": "الصوت",
                 "subtitles": "الترجمة",
                 "interface": "الواجهة"

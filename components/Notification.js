@@ -49,7 +49,7 @@ const Notification = () => {
     // تكوين اسم الموضوع (Topic Name) بنفس الطريقة الموحدة
     const topicId = NotificationService.getTopicName(
       FREE_GAMES_CATEGORY,
-      FREE_GAMES_SOURCE
+      FREE_GAMES_SOURCE,
     );
 
     // معرفة الحالة الحالية
@@ -65,7 +65,7 @@ const Notification = () => {
       userId,
       FREE_GAMES_CATEGORY,
       FREE_GAMES_SOURCE,
-      newValue
+      newValue,
     );
   };
 
@@ -93,8 +93,8 @@ const Notification = () => {
               userId,
               category,
               source.name,
-              newValue
-            )
+              newValue,
+            ),
           );
         }
       });
@@ -102,7 +102,7 @@ const Notification = () => {
       setPreferences(newPreferences);
       await Promise.all(updatePromises);
     },
-    [rssFeeds, preferences, setPreferences]
+    [rssFeeds, preferences, setPreferences],
   );
 
   const toggleCategoryExpansion = useCallback((category) => {
@@ -121,7 +121,7 @@ const Notification = () => {
         return preferences[topic];
       });
     },
-    [rssFeeds, preferences]
+    [rssFeeds, preferences],
   );
 
   const getCategoryToggleIndeterminate = useCallback(
@@ -134,7 +134,7 @@ const Notification = () => {
       }).length;
       return enabledCount > 0 && enabledCount < categorySources.length;
     },
-    [rssFeeds, preferences]
+    [rssFeeds, preferences],
   );
 
   // --- دالة جديدة: عرض قسم الألعاب المجانية ---
@@ -142,7 +142,7 @@ const Notification = () => {
     // جلب المفتاح الصحيح من الخدمة
     const topicId = NotificationService.getTopicName(
       FREE_GAMES_CATEGORY,
-      FREE_GAMES_SOURCE
+      FREE_GAMES_SOURCE,
     );
     const isEnabled = preferences[topicId] || false;
 
@@ -253,7 +253,7 @@ const Notification = () => {
                 {group.data.map((source, index) => {
                   const prefId = NotificationService.getTopicName(
                     category,
-                    source.name
+                    source.name,
                   );
                   const isEnabled = preferences[prefId] || false;
 
@@ -307,7 +307,7 @@ const Notification = () => {
         {renderCategorySection("hardware", `${t("news.tabs.hardware")}`)}
         {renderFreeGamesSection()}
 
-        {/* {showAds && (
+        {showAds && (
           <View style={styles.ad}>
             <Text style={styles.adText}>{t("common.ad")}</Text>
             <BannerAd
@@ -318,7 +318,7 @@ const Notification = () => {
               }}
             />
           </View>
-        )} */}
+        )}
 
         <View style={styles.footer}>
           <TouchableOpacity

@@ -13,32 +13,34 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import { Ionicons } from "@expo/vector-icons";
-
-// Components
-import FreeGames from "../components/FreeGames";
-import GamesList from "../components/GamesList";
-import GamesNews from "../components/GamesNews";
-
-// Config & Constants
+import FreeGames from "../components/gamesScreen/FreeGames";
+import GamesList from "../components/gamesScreen/GamesList";
+import GamesNews from "../components/gamesScreen/GamesNews";
+import ComingSoon from "../components/gamesScreen/ComingSoon";
 import { adUnitId } from "../constants/config";
 import COLORS from "../constants/colors";
+import MostAnticipated from "../components/gamesScreen/MostAnticipated";
+import RecentlyReleased from "../components/gamesScreen/RecentlyReleased";
+import TopRated from "../components/gamesScreen/TopRated";
+import NostalgiaCorner from "../components/gamesScreen/NostalgiaCorner";
+import Popular from "../components/gamesScreen/Popular";
 
-// --- Sub-Component: Ad Container (Reusable) ---
-// const AdContainer = () => {
-//   const { t } = useTranslation();
-//   return (
-//     <View style={styles.adContainer}>
-//       <Text style={styles.adLabel}>{t("common.ad")}</Text>
-//       <BannerAd
-//         unitId={adUnitId}
-//         size={BannerAdSize.MEDIUM_RECTANGLE}
-//         requestOptions={{
-//           requestNonPersonalizedAdsOnly: true,
-//         }}
-//       />
-//     </View>
-//   );
-// };
+// Ad Container
+const AdContainer = () => {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.adContainer}>
+      <Text style={styles.adLabel}>{t("common.ad")}</Text>
+      <BannerAd
+        unitId={adUnitId}
+        size={BannerAdSize.MEDIUM_RECTANGLE}
+        requestOptions={{
+          requestNonPersonalizedAdsOnly: true,
+        }}
+      />
+    </View>
+  );
+};
 
 function GamesScreen() {
   const { t } = useTranslation();
@@ -86,58 +88,57 @@ function GamesScreen() {
       },
       { id: "free_games", type: "COMPONENT", component: <FreeGames /> },
       { id: "news", type: "COMPONENT", component: <GamesNews /> },
-      // { id: "ad_1", type: "AD" },
+      { id: "ad_1", type: "AD" },
       {
         id: "popular",
-        type: "LIST",
+        type: "COMPONENT",
         endpoint: "/popular",
-        titleKey: "games.list.popular",
+        component: <Popular />,
       },
       {
-        id: "recent",
-        type: "LIST",
+        id: "recently_released",
+        type: "COMPONENT",
         endpoint: "/recently-released",
-        titleKey: "games.list.recentlyReleased",
+        component: <RecentlyReleased />,
       },
-      // { id: "ad_2", type: "AD" },
+      { id: "ad_2", type: "AD" },
       {
         id: "coming_soon",
-        type: "LIST",
+        type: "COMPONENT",
         endpoint: "/coming-soon",
-        titleKey: "games.list.comingSoon",
+        component: <ComingSoon />,
       },
       {
         id: "anticipated",
-        type: "LIST",
-        endpoint: "/most-anticipated",
-        titleKey: "games.list.mostAnticipated",
+        type: "COMPONENT",
+        component: <MostAnticipated />,
       },
-      // { id: "ad_3", type: "AD" },
-      {
-        id: "top_rated",
-        type: "LIST",
-        endpoint: "/top-rated",
-        titleKey: "games.list.topRated",
-      },
+      { id: "ad_3", type: "AD" },
       {
         id: "nostalgia",
-        type: "LIST",
+        type: "COMPONENT",
         endpoint: "/nostalgia-corner",
-        titleKey: "games.list.nostalgiaCorner",
+        component: <NostalgiaCorner />,
+      },
+      {
+        id: "top_rated",
+        type: "COMPONENT",
+        endpoint: "/top-rated",
+        component: <TopRated />,
       },
     ],
-    []
+    [],
   );
 
-  // 4. Render Item Function for FlatList
+  // Render Item Function for FlatList
   const renderFeedItem = useCallback(
     ({ item }) => {
       switch (item.type) {
         case "COMPONENT":
           return <View style={styles.sectionSpacing}>{item.component}</View>;
 
-        // case "AD":
-        //   return showAds ? <AdContainer /> : null;
+        case "AD":
+          return showAds ? <AdContainer /> : null;
 
         case "LIST":
           return (
@@ -150,7 +151,7 @@ function GamesScreen() {
           return null;
       }
     },
-    [showAds, t]
+    [showAds, t],
   );
 
   return (

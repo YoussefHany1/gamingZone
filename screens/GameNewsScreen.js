@@ -37,7 +37,6 @@ const safeId = (input) => {
     .replace(/^_+|_+$/g, "");
 };
 
-// --- 1. مكون فرعي يعرض قسم أخبار واحد ---
 const NewsSection = ({
   gameName,
   apiUrl,
@@ -97,7 +96,10 @@ const NewsSection = ({
         const existingDocs = await databases.listDocuments(
           APPWRITE_DATABASE_ID,
           RSS_COLLECTION_ID,
-          [Query.equal("category", categorySafe), Query.equal("name", nameSafe)]
+          [
+            Query.equal("category", categorySafe),
+            Query.equal("name", nameSafe),
+          ],
         );
 
         const payload = {
@@ -114,7 +116,7 @@ const NewsSection = ({
             APPWRITE_DATABASE_ID,
             RSS_COLLECTION_ID,
             docId,
-            payload
+            payload,
           );
           // console.log("✅ RSS Source updated in Appwrite");
         } else {
@@ -123,14 +125,14 @@ const NewsSection = ({
             APPWRITE_DATABASE_ID,
             RSS_COLLECTION_ID,
             ID.unique(), // نستخدم ID تلقائي لتجنب مشكلة الطول المحدود (36 حرف)
-            payload
+            payload,
           );
           // console.log("✅ RSS Source created in Appwrite");
         }
       } catch (error) {
         console.error(
           "❌ Error adding/updating RSS source in Appwrite:",
-          error
+          error,
         );
         // يمكنك اتخاذ قرار هنا: هل تمنع التفعيل في الواجهة أم تسمح به محلياً؟
         // return;
@@ -252,7 +254,7 @@ function GameNewsScreen({ route, navigation }) {
           defaultExpanded={true}
         />
         {/* <Text>Ad </Text> */}
-        {/* {showAds && (
+        {showAds && (
           <View style={styles.ad}>
             <Text style={styles.adText}>{t("common.ad")}</Text>
             <BannerAd
@@ -263,7 +265,7 @@ function GameNewsScreen({ route, navigation }) {
               }}
             />
           </View>
-        )} */}
+        )}
         {/* Arabic News Section */}
         {source && (
           <TouchableOpacity onPress={() => Linking.openURL(source)}>
@@ -335,7 +337,7 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 8,
     marginLeft: 10,
-    // backgroundColor: COLORS.secondary, // يظهر أثناء تحميل الصورة
+    // backgroundColor: COLORS.secondary,
   },
   title: {
     color: "white",
