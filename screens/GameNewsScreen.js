@@ -13,7 +13,6 @@ import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import axios from "axios";
 import { useTranslation } from "react-i18next";
 import { databases } from "../lib/appwrite";
 import { Query, ID } from "react-native-appwrite";
@@ -24,7 +23,11 @@ import { adUnitId } from "../constants/config";
 import Loading from "../Loading";
 
 const { APPWRITE_DATABASE_ID } = Constants.expoConfig.extra;
+
+// تأكد من أن هذا الاسم يطابق اسم الـ Collection الخاصة بالمقالات في Appwrite
+const ARTICLES_COLLECTION_ID = "articles";
 const RSS_COLLECTION_ID = "news_sources";
+
 // --- دالة مساعدة لإنشاء معرفات آمنة ---
 const safeId = (input) => {
   if (!input) return "unknown";
@@ -39,11 +42,11 @@ const safeId = (input) => {
 
 const NewsSection = ({
   gameName,
-  apiUrl,
   title,
   sourceId,
   lang,
   defaultExpanded = true,
+  rssUrl, // يمكن تمريره إذا أردنا حفظه عند تفعيل التنبيهات
 }) => {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,32 +55,38 @@ const NewsSection = ({
   const { preferences, toggleSource, loadingPreferences } =
     useNotificationPreferences();
 
-  const categorySafe = safeId(gameName);
+  // تنظيف الاسم لاستخدامه كـ category في قاعدة البيانات
+  const categorySafe = safeId(gameName); // مثال: "league_of_legends"
   const nameSafe = safeId(sourceId || title);
+  console.log(categorySafe);
   const topicName = `${categorySafe}_${nameSafe}`;
 
   const isEnabled = !!preferences[topicName];
 
-  const API_URL = `${apiUrl}${lang}`;
-
   useEffect(() => {
     fetchNews();
-  }, [gameName, apiUrl]);
+  }, [gameName, lang]);
+
   const fetchNews = async () => {
     try {
-      const response = await axios.get(API_URL);
-      const data = response.data;
-      let newsArray = [];
+      setLoading(true);
 
-      if (Array.isArray(data.data)) {
-        newsArray = data.data;
-      } else if (gameName === "Fortnite") {
-        // إذا كانت البيانات داخل مفتاح data
-        newsArray = data?.data?.br.motds;
-      }
-      setNews(newsArray);
+      // الحل الثاني: جلب الأخبار من قاعدة بيانات Appwrite مباشرة
+      // هذا يعتمد على أن السكريبت الخلفي قد قام بالفعل بجلب الـ RSS وتخزينه
+      const response = await databases.listDocuments(
+        APPWRITE_DATABASE_ID,
+        ARTICLES_COLLECTION_ID,
+        [
+          Query.equal("category", categorySafe), // تصفية حسب اللعبة
+          Query.equal("language", lang), // تصفية حسب اللغة (ar أو en)
+          Query.orderDesc("pubDate"), // الأحدث أولاً
+          Query.limit(40), // جلب آخر 40   خبر
+        ],
+      );
+
+      setNews(response.documents);
     } catch (error) {
-      console.error(`Error fetching API for ${title}:`, error);
+      console.error(`Error fetching news for ${title} from Appwrite:`, error);
     } finally {
       setLoading(false);
     }
@@ -92,50 +101,38 @@ const NewsSection = ({
     // إذا كان الزر غير مفعل، وسنقوم بتفعيله الآن -> نحتاج لتسجيل المصدر في السيرفر
     if (!isEnabled) {
       try {
-        // 1. البحث هل هذا المصدر مسجل من قبل؟
         const existingDocs = await databases.listDocuments(
           APPWRITE_DATABASE_ID,
           RSS_COLLECTION_ID,
           [
             Query.equal("category", categorySafe),
-            Query.equal("name", nameSafe),
+            Query.equal("language", lang),
           ],
         );
 
-        const payload = {
-          rssUrl: API_URL,
-          category: categorySafe,
-          name: nameSafe,
-          isActive: true,
-        };
+        // إذا لم يكن المصدر موجوداً، نقوم بإنشائه ليتمكن السيرفر الخلفي من جدولة الـ RSS
+        if (existingDocs.total === 0 && rssUrl) {
+          const payload = {
+            rssUrl: rssUrl, // الرابط الذي مررناه
+            category: categorySafe,
+            name: title,
+            language: lang,
+            isActive: true,
+          };
 
-        if (existingDocs.total > 0) {
-          // ✅ المصدر موجود: نقوم بتحديثه فقط للتأكيد
-          const docId = existingDocs.documents[0].$id;
-          await databases.updateDocument(
-            APPWRITE_DATABASE_ID,
-            RSS_COLLECTION_ID,
-            docId,
-            payload,
-          );
-          // console.log("✅ RSS Source updated in Appwrite");
-        } else {
-          // ✅ المصدر غير موجود: ننشئه بمعرف فريد جديد
           await databases.createDocument(
             APPWRITE_DATABASE_ID,
             RSS_COLLECTION_ID,
-            ID.unique(), // نستخدم ID تلقائي لتجنب مشكلة الطول المحدود (36 حرف)
+            ID.unique(),
             payload,
           );
-          // console.log("✅ RSS Source created in Appwrite");
+          console.log("✅ New RSS Source created in Appwrite via App");
         }
       } catch (error) {
         console.error(
           "❌ Error adding/updating RSS source in Appwrite:",
           error,
         );
-        // يمكنك اتخاذ قرار هنا: هل تمنع التفعيل في الواجهة أم تسمح به محلياً؟
-        // return;
       }
     }
 
@@ -179,8 +176,8 @@ const NewsSection = ({
           {loading ? (
             <Loading />
           ) : news.length === 0 ? (
-            <Text style={{ color: "gray", textAlign: "center" }}>
-              No news found.
+            <Text style={{ color: "gray", textAlign: "center", marginTop: 10 }}>
+              {lang === "ar" ? "لا توجد أخبار حالياً" : "No news found."}
             </Text>
           ) : (
             <ScrollView
@@ -188,32 +185,53 @@ const NewsSection = ({
               nestedScrollEnabled={true}
               showsVerticalScrollIndicator={false}
             >
-              {news.map((item, index) => (
-                <TouchableOpacity
-                  key={index.toString()}
-                  style={styles.card}
-                  onPress={() =>
-                    item.link ? Linking.openURL(item.link) : null
-                  }
-                >
-                  <View style={styles.cardContent}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.title}>{item.title}</Text>
-                      <Text style={styles.desc}>
-                        {item.description || item.body}
-                      </Text>
-                      {/* <Text style={styles.desc}>{item.description}</Text> */}
+              {news.map((item, index) => {
+                let imageUrl = item.thumbnail || null;
+
+                if (imageUrl?.startsWith("https://lh3.googleusercontent.com")) {
+                  imageUrl = null;
+                }
+                return (
+                  <TouchableOpacity
+                    key={item.$id || index.toString()}
+                    style={styles.card}
+                    onPress={() =>
+                      item.link ? Linking.openURL(item.link) : null
+                    }
+                  >
+                    <View style={styles.cardContent}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.title} numberOfLines={2}>
+                          {item.title}
+                        </Text>
+                        {/* عرض الوصف أو الملخص */}
+                        <Text style={styles.desc} numberOfLines={3}>
+                          {item.description || item.body || ""}
+                        </Text>
+                        <Text style={styles.desc} numberOfLines={1}>
+                          {new Date(item.pubDate).toLocaleString(
+                            lang === "ar" ? "ar-EG" : "en-US",
+                            {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            },
+                          )}
+                        </Text>
+                      </View>
+                      {/* عرض الصورة: نستخدم thumbnail الذي يوفره السكريبت الخلفي */}
+                      {imageUrl && (
+                        <Image
+                          source={{ uri: imageUrl }}
+                          style={styles.cover}
+                          contentFit="cover"
+                          transition={500}
+                          cachePolicy="memory-disk"
+                        />
+                      )}
                     </View>
-                    <Image
-                      source={item.image || item.tileImage}
-                      style={styles.cover}
-                      contentFit="cover"
-                      transition={500}
-                      cachePolicy="memory-disk"
-                    />
-                  </View>
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
           )}
         </View>
@@ -225,8 +243,11 @@ const NewsSection = ({
 // --- 2. الشاشة الرئيسية ---
 function GameNewsScreen({ route, navigation }) {
   const Currentgame = route.params?.gameName || "";
-  const apiUrl = route.params?.apiUrl || "";
-  const source = route.params?.source || "";
+  // لم نعد بحاجة ملحة لـ apiUrl هنا لأننا نجلب من قاعدة البيانات
+  // لكن يمكن استخدامه لإنشاء المصدر أول مرة إذا لزم الأمر
+  const legacyApiUrl = route.params?.apiUrl || "";
+  const sourceLink = route.params?.source || "";
+
   const [showAds, setShowAds] = useState(false);
   const { t } = useTranslation();
 
@@ -241,7 +262,7 @@ function GameNewsScreen({ route, navigation }) {
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: "#0d1b2a" }}
-      edges={["top", "left", "right"]}
+      edges={["left", "right"]}
     >
       <ScrollView style={{ padding: 16 }}>
         {/* English News Section */}
@@ -249,11 +270,11 @@ function GameNewsScreen({ route, navigation }) {
           gameName={Currentgame}
           title="English News"
           sourceId="english_news"
-          apiUrl={apiUrl}
           lang="en"
           defaultExpanded={true}
+          rssUrl={legacyApiUrl} // تمرير الرابط احتياطياً
         />
-        {/* <Text>Ad </Text> */}
+
         {showAds && (
           <View style={styles.ad}>
             <Text style={styles.adText}>{t("common.ad")}</Text>
@@ -266,20 +287,25 @@ function GameNewsScreen({ route, navigation }) {
             />
           </View>
         )}
-        {/* Arabic News Section */}
-        {source && (
-          <TouchableOpacity onPress={() => Linking.openURL(source)}>
+
+        {/* رابط المصدر الأصلي إن وجد */}
+        {sourceLink && (
+          <TouchableOpacity
+            onPress={() => Linking.openURL(sourceLink)}
+            style={{ marginBottom: 10 }}
+          >
             <Text style={styles.sourceText}>{t("games.gamesNews.source")}</Text>
           </TouchableOpacity>
         )}
 
+        {/* Arabic News Section */}
         <NewsSection
           gameName={Currentgame}
           title="الأخبار العربية"
           sourceId="arabic_news"
-          apiUrl={apiUrl}
           lang="ar"
           defaultExpanded={true}
+          rssUrl={legacyApiUrl}
         />
       </ScrollView>
     </SafeAreaView>
@@ -337,11 +363,11 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 8,
     marginLeft: 10,
-    // backgroundColor: COLORS.secondary,
+    backgroundColor: "#2a4d7d", // لون خلفية للصورة أثناء التحميل
   },
   title: {
     color: "white",
-    fontSize: 16,
+    fontSize: 15, // تقليل الحجم قليلاً ليتناسب مع العناوين الطويلة
     fontWeight: "bold",
     marginBottom: 5,
     textAlign: "left",
@@ -350,10 +376,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "gray",
     marginTop: 4,
+    textAlign: "left",
   },
   sourceText: {
     color: "#779bdd",
     textAlign: "center",
+    textDecorationLine: "underline",
   },
   ad: {
     alignItems: "center",

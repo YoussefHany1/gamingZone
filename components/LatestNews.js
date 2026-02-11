@@ -156,6 +156,16 @@ function LatestNews({
               <Text style={styles.website}>{item.siteName}</Text>
             </View>
           </TouchableOpacity>
+          {shouldShowAd && (
+            <View style={styles.ad}>
+              <Text style={styles.adText}>{t("common.ad")}</Text>
+              <BannerAd
+                key={`ad-${index}`}
+                unitId={adUnitId}
+                size={BannerAdSize.MEDIUM_RECTANGLE}
+              />
+            </View>
+          )}
         </View>
       );
     },

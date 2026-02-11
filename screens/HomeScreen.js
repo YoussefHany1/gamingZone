@@ -70,13 +70,9 @@ function Home() {
             <BannerAd
               unitId={adUnitId}
               size={BannerAdSize.MEDIUM_RECTANGLE}
-              requestOptions={{
-                requestNonPersonalizedAdsOnly: true,
-              }}
-              onAdFailedToLoad={(error) => {
-                console.error("Ad failed to load: ", error);
-                // Error Code 3 = No Fill (يعني الكود سليم لكن جوجل مبعتش إعلان للأسباب السابقة)
-              }}
+              // onAdFailedToLoad={(error) => {
+              //   console.error("Ad failed to load: ", error);
+              // }}
             />
           </View>
         );

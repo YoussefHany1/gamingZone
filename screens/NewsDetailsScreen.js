@@ -215,9 +215,6 @@ function NewsDetails() {
               <BannerAd
                 unitId={adUnitId}
                 size={BannerAdSize.MEDIUM_RECTANGLE}
-                requestOptions={{
-                  requestNonPersonalizedAdsOnly: true,
-                }}
               />
             </View>
           )}

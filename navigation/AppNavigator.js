@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { InteractionManager } from "react-native";
+import { InteractionManager, View } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,12 +16,10 @@ import GameDetails from "../screens/GameDetailsScreen";
 import UserGamesScreen from "../screens/UserGamesScreen";
 import NotificationSettings from "../components/Notification";
 import Profile from "../components/Profile";
-import LanguageScreen from "../screens/LanguageSelect";
 import GameNewsScreen from "../screens/GameNewsScreen";
 import UserListsScreen from "../screens/UserListsScreen";
 import NewsDetails from "../screens/NewsDetailsScreen";
-
-// Lazy Loaded Screens
+const LanguageScreen = React.lazy(() => import("../screens/LanguageSelect"));
 const ContactScreen = React.lazy(() => import("../screens/ContactScreen"));
 const LoginScreen = React.lazy(() => import("../screens/LoginScreen"));
 const RegisterScreen = React.lazy(() => import("../screens/RegisterScreen"));
@@ -32,8 +30,7 @@ const ForgotPasswordScreen = React.lazy(
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// --- Internal Stacks ---
-
+// Internal Stacks
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -176,15 +173,14 @@ export function MainAppTabs() {
         <Tab.Screen name="Settings" component={SettingsStack} />
       </Tab.Navigator>
 
-      {/* {showAds && (
+      {showAds && (
         <View style={{ alignItems: "center", width: "100%" }}>
           <BannerAd
             unitId={adUnitId}
             size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-            requestOptions={{ requestNonPersonalizedAdsOnly: true }}
           />
         </View>
-      )} */}
+      )}
     </>
   );
 }

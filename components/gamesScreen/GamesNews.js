@@ -19,7 +19,8 @@ const GAMES_DATA = [
     name: "League of Legends",
     image:
       "https://newzoo.com/wp-content/uploads/api/games/artworks/game--league-of-legends.jpg",
-    apiUrl: "https://games-news-api.vercel.app/lol/",
+    apiUrl:
+      "https://news.google.com/rss/search?q=league%20of%20legends%20news&hl=",
     source: "https://www.leagueoflegends.com/news/",
   },
   {

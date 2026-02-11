@@ -55,6 +55,59 @@ async function fetchGameById(id) {
   }
 }
 
+// خريطة تحويل الأكواد إلى نصوص (أرقام مع +)
+const AGE_RATING_MAP = {
+  // PEGI Ratings (الأوروبي)
+  1: "3+",
+  2: "7+",
+  3: "12+",
+  4: "16+",
+  5: "18+",
+
+  // ESRB Ratings (الأمريكي) - سنحاول تقريبها لأرقام
+  6: "RP", // Pending
+  7: "3+", // Early Childhood (تقريباً)
+  8: "3+", // Everyone (تقريباً)
+  9: "10+", // Everyone 10+
+  10: "13+", // Teen
+  11: "17+", // Mature
+  12: "18+", // Adults Only
+};
+
+// ... (AGE_RATING_MAP يبقى كما هو)
+
+const getAgeRatingInfo = (ratings) => {
+  if (!ratings || ratings.length === 0) return null;
+
+  // استخدام organization بدلاً من category
+  const pegi = ratings.find((r) => r.organization === 2);
+  const esrb = ratings.find((r) => r.organization === 1);
+
+  const selectedRating = pegi || esrb;
+
+  if (!selectedRating) return null;
+
+  // استخدام rating_category بدلاً من rating
+  return {
+    label: AGE_RATING_MAP[selectedRating.rating_category] || "?",
+    color: getRatingColorCode(selectedRating.rating_category),
+  };
+};
+
+const getRatingColorCode = (ratingVal) => {
+  // Low ratings (safe for kids)
+  if ([1, 2, 6, 7, 8].includes(ratingVal)) return "#a5c400"; // Green
+
+  // Medium ratings (teens)
+  if ([3, 4, 9, 10].includes(ratingVal)) return "#f4a200"; // Orange
+
+  // High ratings (mature/adult)
+  if ([5, 11, 12].includes(ratingVal)) return "#e3001b"; // Red
+
+  // Default
+  return COLORS.secondary;
+};
+
 function GameDetails({ route, navigation }) {
   const { gameID: initialGameID } = route.params;
   const [game, setGame] = useState(null);
@@ -68,6 +121,8 @@ function GameDetails({ route, navigation }) {
   const [authLoading, setAuthLoading] = useState(false);
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
+  const ageRating = game ? getAgeRatingInfo(game.age_ratings) : null;
+
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -224,7 +279,7 @@ function GameDetails({ route, navigation }) {
       release_date: game.release_dates?.[0]?.human || "N/A",
     };
   };
-
+  console.log("Game Data:", game);
   return (
     <SafeAreaView edges={["right", "left"]} style={styles.container}>
       <View style={styles.header}>
@@ -307,7 +362,13 @@ function GameDetails({ route, navigation }) {
               </View>
 
               {/* game rating */}
-              <View style={{ alignItems: "center" }}>
+              <View
+                style={{
+                  alignItems: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
                 {game.total_rating ? (
                   <Text
                     style={[
@@ -336,6 +397,17 @@ function GameDetails({ route, navigation }) {
                 )}
               </View>
             </View>
+            {/* age rating */}
+            {ageRating && (
+              <View
+                style={[
+                  styles.ageRatingBadge,
+                  { backgroundColor: ageRating.color },
+                ]}
+              >
+                <Text style={styles.ageRatingText}>{ageRating.label}</Text>
+              </View>
+            )}
 
             {/* Available Stores */}
             {game.websites &&
@@ -540,9 +612,6 @@ function GameDetails({ route, navigation }) {
               <BannerAd
                 unitId={adUnitId}
                 size={BannerAdSize.MEDIUM_RECTANGLE}
-                requestOptions={{
-                  requestNonPersonalizedAdsOnly: true,
-                }}
               />
             </View>
 
@@ -774,9 +843,6 @@ function GameDetails({ route, navigation }) {
               <BannerAd
                 unitId={adUnitId}
                 size={BannerAdSize.MEDIUM_RECTANGLE}
-                requestOptions={{
-                  requestNonPersonalizedAdsOnly: true,
-                }}
               />
             </View>
 
@@ -965,6 +1031,21 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginBottom: 10,
     borderRadius: 14,
+  },
+  ageRatingBadge: {
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    marginRight: 27,
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "flex-end",
+    minWidth: 45,
+  },
+  ageRatingText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 18,
   },
   rating: {
     color: COLORS.textLight,

@@ -310,13 +310,7 @@ const Notification = () => {
         {showAds && (
           <View style={styles.ad}>
             <Text style={styles.adText}>{t("common.ad")}</Text>
-            <BannerAd
-              unitId={adUnitId}
-              size={BannerAdSize.MEDIUM_RECTANGLE}
-              requestOptions={{
-                requestNonPersonalizedAdsOnly: true,
-              }}
-            />
+            <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
           </View>
         )}
 

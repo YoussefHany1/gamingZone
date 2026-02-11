@@ -339,10 +339,7 @@ function ProfileScreen() {
               <Text style={styles.adText}>{t("common.ad")}</Text>
               <BannerAd
                 unitId={adUnitId}
-                size={BannerAdSize.MEDIUM_RECTANGLE} // حجم مستطيل كبير
-                requestOptions={{
-                  requestNonPersonalizedAdsOnly: true,
-                }}
+                size={BannerAdSize.MEDIUM_RECTANGLE}
               />
             </View>
           )}

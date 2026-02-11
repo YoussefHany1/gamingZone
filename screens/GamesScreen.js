@@ -31,13 +31,7 @@ const AdContainer = () => {
   return (
     <View style={styles.adContainer}>
       <Text style={styles.adLabel}>{t("common.ad")}</Text>
-      <BannerAd
-        unitId={adUnitId}
-        size={BannerAdSize.MEDIUM_RECTANGLE}
-        requestOptions={{
-          requestNonPersonalizedAdsOnly: true,
-        }}
-      />
+      <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
     </View>
   );
 };

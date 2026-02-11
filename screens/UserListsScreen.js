@@ -145,7 +145,7 @@ export default function UserListsScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["right", "left", "top"]}>
       <FlatList
         data={lists}
         keyExtractor={(item) => item.id}
@@ -186,24 +186,23 @@ export default function UserListsScreen({ navigation }) {
                   <BannerAd
                     unitId={adUnitId}
                     size={BannerAdSize.MEDIUM_RECTANGLE}
-                    requestOptions={{
-                      requestNonPersonalizedAdsOnly: true,
-                    }}
                   />
                 </View>
               )}
           </>
         )}
+        ListFooterComponent={
+          <TouchableOpacity
+            onPress={() => setModalVisible(true)}
+            style={styles.addListBtn}
+          >
+            <Text style={styles.addListText}>
+              {t("userLists.actions.createNewList")}
+            </Text>
+            <Ionicons name="add" size={24} color="#fff" />
+          </TouchableOpacity>
+        }
       />
-      <TouchableOpacity
-        onPress={() => setModalVisible(true)}
-        style={styles.addListBtn}
-      >
-        <Text style={styles.addListText}>
-          {t("userLists.actions.createNewList")}
-        </Text>
-        <Ionicons name="add" size={24} color="#fff" />
-      </TouchableOpacity>
 
       <Modal visible={isModalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
@@ -241,14 +240,6 @@ export default function UserListsScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { backgroundColor: COLORS.primary },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 10,
-    marginBottom: 10,
-  },
-  title: { fontSize: 22, fontWeight: "bold", color: COLORS.textLight },
   listItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -260,6 +251,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   listName: { color: COLORS.textLight, fontSize: 18, marginLeft: 10 },
+  ad: {
+    alignItems: "center",
+    width: "100%",
+    marginVertical: 30,
+  },
+  adText: {
+    color: "#fff",
+    marginBottom: 10,
+  },
   // Modal styles
   modalContainer: {
     flex: 1,
@@ -316,14 +316,5 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
     fontWeight: "bold",
     fontSize: 16,
-  },
-  ad: {
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 55,
-  },
-  adText: {
-    color: "#fff",
-    marginBottom: 10,
   },
 });
