@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from "react";
+import { useCallback, memo } from "react";
 import {
   View,
   Text,
@@ -15,12 +15,9 @@ import useFeed from "../hooks/useFeed";
 import { intervalToDuration } from "date-fns";
 import DropdownPicker from "../components/DropdownPicker";
 import SkeletonNewsItem from "../skeleton/SkeletonNewsItem";
-// 1. إزالة استيراد NewsDetails لأنه أصبح شاشة منفصلة
-// import NewsDetails from "../screens/NewsDetailsScreen";
 import { useTranslation } from "react-i18next";
 import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
-// 2. استيراد useNavigation
 import { useNavigation } from "@react-navigation/native";
 
 function LatestNews({
@@ -34,13 +31,7 @@ function LatestNews({
   websitesList,
   showFooter = true,
 }) {
-  // 3. تعريف Navigation
   const navigation = useNavigation();
-
-  // إزالة state الخاصة بالـ Modal
-  // const [modalVisible, setModalVisible] = useState(false);
-  // const [selectedArticle, setSelectedArticle] = useState(null);
-
   const { t } = useTranslation();
   const feedCategory = typeof category !== "undefined" ? category : undefined;
   const feedWebsite =

@@ -10,13 +10,13 @@ import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import SkeletonGameCard from "../../skeleton/SkeletonGameCard";
+import SkeletonComingSoon from "../../skeleton/SkeletonComingSoon";
 import COLORS from "../../constants/colors";
 import { SERVER_URL } from "../../constants/config";
 import { Ionicons } from "@expo/vector-icons";
+import { useCountdown } from "../../hooks/useCountdown";
+import useCachedData from "../../hooks/useCachedData";
 
 const CARD_WIDTH = 300;
 const CARD_MARGIN = 10;
@@ -25,16 +25,6 @@ const CARD_MARGIN = 10;
 const fetchComingSoonGames = async () => {
   const response = await axios.get(`${SERVER_URL}/coming-soon`);
   return response.data;
-};
-
-// دالة حساب الأيام المتبقية
-const getDaysUntilRelease = (timestamp) => {
-  if (!timestamp) return null;
-  const releaseDate = new Date(timestamp * 1000);
-  const today = new Date();
-  const diffTime = releaseDate - today;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays > 0 ? diffDays : 0;
 };
 
 // دالة الحصول على الشهر واليوم
@@ -51,7 +41,7 @@ const ComingSoonCard = React.memo(({ item }) => {
   const navigation = useNavigation();
   const { t } = useTranslation();
 
-  const daysUntil = getDaysUntilRelease(item.first_release_date);
+  const timeLeft = useCountdown(item.first_release_date);
   const { month, day } = getDateParts(item.first_release_date);
 
   const handlePress = useCallback(() => {
@@ -158,49 +148,15 @@ export default function ComingSoonGames() {
   const { t } = useTranslation();
   const STORAGE_KEY = "GAMES_CACHE_COMING_SOON";
 
-  // حالة محلية للكاش
-  const [cachedGames, setCachedGames] = useState([]);
-
-  // تحميل الكاش عند فتح الشاشة
-  useEffect(() => {
-    const loadCache = async () => {
-      try {
-        const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
-        if (jsonValue != null) {
-          setCachedGames(JSON.parse(jsonValue));
-        }
-      } catch (e) {
-        console.error("Failed to load cache", e);
-      }
-    };
-    loadCache();
-  }, []);
-
-  // React Query لجلب البيانات
+  // استخدام Hook الكاش المحسّن
   const {
-    data: freshGames,
+    data: games,
     isLoading,
     error,
-    isSuccess,
-  } = useQuery({
-    queryKey: ["games", "coming-soon"],
-    queryFn: fetchComingSoonGames,
-    staleTime: 1000 * 60 * 30, // 30 دقيقة
-    retry: 1,
-  });
+  } = useCachedData(STORAGE_KEY, fetchComingSoonGames, []);
 
-  // تحديث الكاش عند وصول بيانات جديدة
-  useEffect(() => {
-    if (isSuccess && freshGames && freshGames.length > 0) {
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(freshGames)).catch((e) =>
-        console.error(e),
-      );
-    }
-  }, [isSuccess, freshGames]);
-
-  // دمج البيانات
-  const gamesToShow =
-    freshGames && freshGames.length > 0 ? freshGames : cachedGames;
+  // البيانات المعروضة
+  const gamesToShow = games || [];
   const isActuallyLoading = isLoading && gamesToShow.length === 0;
 
   const renderItem = useCallback(
@@ -229,7 +185,7 @@ export default function ComingSoonGames() {
         <FlatList
           data={Array.from({ length: 3 }).map((_, i) => ({ id: i }))}
           horizontal
-          renderItem={() => <SkeletonGameCard />}
+          renderItem={() => <SkeletonComingSoon />}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
         />

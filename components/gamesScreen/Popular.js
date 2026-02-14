@@ -10,12 +10,11 @@ import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import SkeletonGameCard from "../../skeleton/SkeletonGameCard";
+import SkeletonPopular from "../../skeleton/SkeletonPopular";
 import COLORS from "../../constants/colors";
 import { SERVER_URL } from "../../constants/config";
+import useCachedData from "../../hooks/useCachedData";
 
 const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
@@ -126,49 +125,15 @@ export default function PopularGames() {
   const { t } = useTranslation();
   const STORAGE_KEY = "GAMES_CACHE_POPULAR";
 
-  // حالة محلية للكاش
-  const [cachedGames, setCachedGames] = useState([]);
-
-  // تحميل الكاش عند فتح الشاشة
-  useEffect(() => {
-    const loadCache = async () => {
-      try {
-        const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
-        if (jsonValue != null) {
-          setCachedGames(JSON.parse(jsonValue));
-        }
-      } catch (e) {
-        console.error("Failed to load cache", e);
-      }
-    };
-    loadCache();
-  }, []);
-
-  // React Query لجلب البيانات
+  // استخدام Hook الكاش المحسّن
   const {
-    data: freshGames,
+    data: games,
     isLoading,
     error,
-    isSuccess,
-  } = useQuery({
-    queryKey: ["games", "popular"],
-    queryFn: fetchPopularGames,
-    staleTime: 1000 * 60 * 15, // 15 دقيقة
-    retry: 1,
-  });
+  } = useCachedData(STORAGE_KEY, fetchPopularGames, []);
 
-  // تحديث الكاش عند وصول بيانات جديدة
-  useEffect(() => {
-    if (isSuccess && freshGames && freshGames.length > 0) {
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(freshGames)).catch((e) =>
-        console.error(e),
-      );
-    }
-  }, [isSuccess, freshGames]);
-
-  // دمج البيانات
-  const gamesToShow =
-    freshGames && freshGames.length > 0 ? freshGames : cachedGames;
+  // البيانات المعروضة
+  const gamesToShow = games || [];
   const isActuallyLoading = isLoading && gamesToShow.length === 0;
 
   const renderItem = useCallback(
@@ -197,7 +162,7 @@ export default function PopularGames() {
         <FlatList
           data={Array.from({ length: 5 }).map((_, i) => ({ id: i }))}
           horizontal
-          renderItem={() => <SkeletonGameCard />}
+          renderItem={() => <SkeletonPopular />}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
         />

@@ -20,7 +20,7 @@ import { useCountdown } from "../../hooks/useCountdown";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85; // The card takes 85% of the screen width
-const CARD_HEIGHT = 200;
+const CARD_HEIGHT = 220;
 
 const fetchAnticipatedGames = async () => {
   const response = await axios.get(`${SERVER_URL}/most-anticipated`);
@@ -148,7 +148,7 @@ export default function MostAnticipated() {
     [freshGames, cachedGames],
   );
 
-  if (gamesToShow.length === 0) return <SkeletonMostAnticipated />; // or show a custom Skeleton
+  if (gamesToShow.length === 0) return <SkeletonMostAnticipated />;
 
   return (
     <View style={styles.container}>

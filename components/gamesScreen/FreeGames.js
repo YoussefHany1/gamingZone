@@ -9,11 +9,10 @@ import {
   ToastAndroid,
 } from "react-native";
 import { Image } from "expo-image";
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import SkeletonGameCard from "../../skeleton/SkeletonGameCard";
+import SkeletonFreeGames from "../../skeleton/SkeletonFreeGames";
 import { useTranslation } from "react-i18next";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import COLORS from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
@@ -24,10 +23,45 @@ import { databases } from "../../lib/appwrite";
 import { Query } from "react-native-appwrite";
 import Constants from "expo-constants";
 import { useCountdown } from "../../hooks/useCountdown";
+import useCachedData from "../../hooks/useCachedData";
 
 const FREE_GAMES_COLLECTION_ID = "free_games";
 const NOTIF_CATEGORY = "free_games";
 const NOTIF_SOURCE = "alerts";
+const FREE_GAMES_CACHE_KEY = "FREE_GAMES_APPWRITE_CACHE";
+const dbId = Constants.expoConfig?.extra?.APPWRITE_DATABASE_ID;
+
+// fetch games from Appwrite
+const fetchFreeGamesFromAppwrite = async () => {
+  const netState = await NetInfo.fetch();
+  if (!netState.isConnected) {
+    throw new Error("No internet connection");
+  }
+
+  try {
+    const response = await databases.listDocuments(
+      dbId,
+      FREE_GAMES_COLLECTION_ID,
+      [Query.orderAsc("type"), Query.limit(20)],
+    );
+
+    return response.documents.map((doc) => ({
+      id: doc.$id,
+      title: doc.title,
+      image: doc.image,
+      slug: doc.slug,
+      store: doc.store,
+      url: doc.url,
+      description: doc.description,
+      type: doc.type,
+      startDate: doc.startDate,
+      endDate: doc.endDate,
+    }));
+  } catch (err) {
+    console.error("Error fetching games from Appwrite:", err);
+    throw err;
+  }
+};
 
 // Countdown Timer
 const CountdownTimer = memo(({ t, startDate }) => {
@@ -72,18 +106,20 @@ const TimeUnit = ({ value, label }) => (
   </View>
 );
 
-// --- Main Component ---
+// Main Component
 function FreeGames() {
   const { t } = useTranslation();
-  const [gamesList, setGamesList] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [notifEnabled, setNotifEnabled] = useState(false);
-
-  const dbId = Constants.expoConfig.extra.APPWRITE_DATABASE_ID;
   const userId = auth().currentUser?.uid;
 
+  // cache
+  const { data: gamesList, isLoading } = useCachedData(
+    FREE_GAMES_CACHE_KEY,
+    fetchFreeGamesFromAppwrite,
+    [],
+  );
+
   useEffect(() => {
-    loadGames();
     checkNotificationStatus();
   }, [userId]);
 
@@ -135,164 +171,115 @@ function FreeGames() {
     }
   };
 
-  const loadGames = async () => {
-    let hasCachedData = false;
-    try {
-      const cachedString = await AsyncStorage.getItem(
-        "FREE_GAMES_APPWRITE_CACHE",
-      );
-      if (cachedString) {
-        const cachedObject = JSON.parse(cachedString);
-        setGamesList(cachedObject.data);
-        setLoading(false);
-        hasCachedData = true;
+  const renderGameItem = useCallback(
+    ({ item }) => {
+      let StoreIcon = null;
+      if (item.store === "steam") {
+        StoreIcon = require("../../assets/steam.png");
+      } else {
+        StoreIcon = require("../../assets/epic-games.png");
       }
-    } catch (error) {
-      console.error("Cache loading error:", error);
-    }
 
-    const netState = await NetInfo.fetch();
-    if (!netState.isConnected) {
-      if (hasCachedData) setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await databases.listDocuments(
-        dbId,
-        FREE_GAMES_COLLECTION_ID,
-        [Query.orderAsc("type"), Query.limit(20)],
-      );
-
-      const fetchedGames = response.documents.map((doc) => ({
-        id: doc.$id,
-        title: doc.title,
-        image: doc.image,
-        slug: doc.slug,
-        store: doc.store,
-        url: doc.url,
-        description: doc.description,
-        type: doc.type,
-        startDate: doc.startDate,
-        endDate: doc.endDate,
-      }));
-
-      setGamesList(fetchedGames);
-      setLoading(false);
-
-      await AsyncStorage.setItem(
-        "FREE_GAMES_APPWRITE_CACHE",
-        JSON.stringify({ data: fetchedGames, timestamp: Date.now() }),
-      );
-    } catch (err) {
-      console.error("Error fetching games from Appwrite:", err);
-      if (loading) setLoading(false);
-    }
-  };
-
-  const renderGameItem = ({ item }) => {
-    let StoreIcon = null;
-    if (item.store === "steam") {
-      StoreIcon = require("../../assets/steam.png");
-    } else {
-      StoreIcon = require("../../assets/epic-games.png");
-    }
-
-    return (
-      <View style={styles.gameCard}>
-        {/* linear background */}
-        <LinearGradient
-          colors={["#1a3052", "#0c1a33"]}
-          style={styles.cardGradient}
-        />
-
-        {/* countdown timer */}
-        <View style={styles.imageContainer}>
-          {item.type === "next" && item.startDate && (
-            <CountdownTimer t={t} startDate={item.startDate} />
-          )}
-
-          <Image
-            source={
-              item.image
-                ? `https://wsrv.nl/?url=${item.image}&w=400&q=80&output=webp`
-                : require("../../assets/image-not-found.webp")
-            }
-            style={styles.cover}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-          />
-
-          {/* Gradient overlay for image */}
+      return (
+        <View style={styles.gameCard}>
+          {/* linear background */}
           <LinearGradient
-            colors={["transparent", COLORS.darkBackground + "99"]}
-            style={styles.imageGradient}
+            colors={["#1a3052", "#0c1a33"]}
+            style={styles.cardGradient}
           />
 
-          {/* Store Icon Badge */}
-          <View style={styles.storeIconBadge}>
+          {/* countdown timer */}
+          <View style={styles.imageContainer}>
+            {item.type === "next" && item.startDate && (
+              <CountdownTimer t={t} startDate={item.startDate} />
+            )}
+
             <Image
-              source={StoreIcon}
-              style={{ width: 20, height: 20 }}
-              contentFit="contain"
+              source={
+                item.image
+                  ? `https://wsrv.nl/?url=${item.image}&w=400&q=80&output=webp`
+                  : require("../../assets/image-not-found.webp")
+              }
+              style={styles.cover}
+              contentFit="cover"
+              cachePolicy="memory-disk"
             />
+
+            {/* Gradient overlay for image */}
+            <LinearGradient
+              colors={["transparent", COLORS.darkBackground + "99"]}
+              style={styles.imageGradient}
+            />
+
+            {/* Store Icon Badge */}
+            <View style={styles.storeIconBadge}>
+              <Image
+                source={StoreIcon}
+                style={{ width: 20, height: 20 }}
+                contentFit="contain"
+              />
+            </View>
+          </View>
+
+          {/* game title */}
+          <View style={styles.infoSection}>
+            <Text
+              style={styles.title}
+              numberOfLines={item.type === "current" ? 2 : 4}
+            >
+              {item.title}
+            </Text>
+
+            {/* claim button */}
+            {item.type === "current" && (
+              <TouchableOpacity
+                style={styles.savingsContainer}
+                onPress={async () => {
+                  try {
+                    await analytics().logEvent("click_free_game", {
+                      item_id: item.id,
+                      item_name: item.title,
+                      content_type: "free_game_card",
+                      game_type: item.type,
+                      store: item.store || "epic",
+                    });
+                  } catch (error) {
+                    console.log("Analytics Error:", error);
+                  }
+
+                  if (item.url) {
+                    Linking.openURL(item.url);
+                  } else if (item.slug) {
+                    Linking.openURL(
+                      `https://store.epicgames.com/en-US/p/${item.slug}`,
+                    );
+                  }
+                }}
+                activeOpacity={0.9}
+              >
+                <LinearGradient
+                  colors={[COLORS.lightGray, "#516996"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.savingsButton}
+                >
+                  <Ionicons
+                    name="gift-outline"
+                    size={16}
+                    color={COLORS.textLight}
+                  />
+                  <Text style={styles.savingsText}>
+                    {t("games.freeGames.claimNow")}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
-
-        {/* game title */}
-        <View style={styles.infoSection}>
-          <Text style={styles.title} numberOfLines={2}>
-            {item.title}
-          </Text>
-
-          {/* claim button */}
-          {item.type === "current" && (
-            <TouchableOpacity
-              style={styles.savingsContainer}
-              onPress={async () => {
-                try {
-                  await analytics().logEvent("click_free_game", {
-                    item_id: item.id,
-                    item_name: item.title,
-                    content_type: "free_game_card",
-                    game_type: item.type,
-                    store: item.store || "epic",
-                  });
-                } catch (error) {
-                  console.log("Analytics Error:", error);
-                }
-
-                if (item.url) {
-                  Linking.openURL(item.url);
-                } else if (item.slug) {
-                  Linking.openURL(
-                    `https://store.epicgames.com/en-US/p/${item.slug}`,
-                  );
-                }
-              }}
-              activeOpacity={0.9}
-            >
-              <LinearGradient
-                colors={[COLORS.lightGray, "#516996"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.savingsButton}
-              >
-                <Ionicons
-                  name="gift-outline"
-                  size={16}
-                  color={COLORS.textLight}
-                />
-                <Text style={styles.savingsText}>
-                  {t("games.freeGames.claimNow")}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-    );
-  };
+      );
+    },
+    [t],
+  );
 
   return (
     <View>
@@ -311,15 +298,15 @@ function FreeGames() {
         </TouchableOpacity>
       </View>
       {/* Games List */}
-      {loading && gamesList.length === 0 ? (
+      {isLoading && gamesList?.length === 0 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {[1, 2, 3].map((item) => (
-            <SkeletonGameCard key={item} />
+            <SkeletonFreeGames key={item} />
           ))}
         </ScrollView>
       ) : (
         <FlatList
-          data={gamesList}
+          data={gamesList || []}
           renderItem={renderGameItem}
           keyExtractor={(item) => item.id}
           horizontal={true}

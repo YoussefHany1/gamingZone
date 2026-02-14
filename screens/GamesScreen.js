@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   StyleSheet,
   View,
@@ -133,14 +133,6 @@ function GamesScreen() {
 
         case "AD":
           return showAds ? <AdContainer /> : null;
-
-        case "LIST":
-          return (
-            <View style={styles.sectionSpacing}>
-              <GamesList endpoint={item.endpoint} header={t(item.titleKey)} />
-            </View>
-          );
-
         default:
           return null;
       }
@@ -178,7 +170,6 @@ function GamesScreen() {
           <GamesList query={submittedQuery} />
         </View>
       ) : (
-        // Main Feed State (Optimized with FlatList)
         <>
           <FlatList
             data={FEED_DATA}
@@ -186,9 +177,9 @@ function GamesScreen() {
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContentContainer}
-            initialNumToRender={3} // Performance optimization
-            windowSize={10} // Performance optimization
-            removeClippedSubviews={true} // Performance optimization
+            initialNumToRender={3}
+            windowSize={15}
+            removeClippedSubviews={true}
             keyboardShouldPersistTaps="handled"
           />
         </>

@@ -7,14 +7,15 @@ import {
   InteractionManager,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Slideshow from "../components/Slideshow";
+import Slideshow from "../components/home/Slideshow";
 import LatestNews from "../components/LatestNews";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import { useEffect, useState } from "react";
-import WeeklySummary from "../components/WeeklySummary";
+import WeeklySummary from "../components/home/WeeklySummary";
 import { useTranslation } from "react-i18next";
 import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
+import GamingEvents from "../components/home/Gamingevents";
 
 function Home() {
   const [showAds, setShowAds] = useState(false);
@@ -36,6 +37,7 @@ function Home() {
       { type: "weekly_summary" },
       { type: "ad" },
       { type: "news", category: "reviews" },
+      { type: "events" },
       { type: "ad" },
       { type: "news", category: "esports" },
       { type: "ad" },
@@ -54,7 +56,7 @@ function Home() {
         return (
           <LatestNews
             category={item.category}
-            limit={5}
+            limit={4}
             showDropdown={false}
             language={currentLang}
             showFooter={false}
@@ -62,6 +64,8 @@ function Home() {
         );
       case "weekly_summary":
         return <WeeklySummary />;
+      case "events":
+        return <GamingEvents />;
       case "ad":
         if (!showAds) return null;
         return (

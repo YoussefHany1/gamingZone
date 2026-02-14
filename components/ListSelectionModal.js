@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
@@ -17,10 +18,15 @@ import { useTranslation } from "react-i18next";
 const ListSelectionModal = ({ visible, onClose, gameId, gameData }) => {
   const [lists, setLists] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // حالات جديدة خاصة بإنشاء القائمة
+  const [isCreating, setIsCreating] = useState(false);
+  const [newListName, setNewListName] = useState("");
+  const [creatingLoading, setCreatingLoading] = useState(false);
+
   const { t } = useTranslation();
 
   const getDisplayName = (originalName) => {
-    // يمكنك تعديل مفاتيح الترجمة هنا حسب الموجود في ملفات اللغة عندك
     switch (originalName) {
       case "Playing":
         return t("games.details.listStatus.playing");
@@ -29,19 +35,21 @@ const ListSelectionModal = ({ visible, onClose, gameId, gameData }) => {
       case "Want to Play":
         return t("games.details.listStatus.wantToPlay");
       default:
-        return originalName; // لو الاسم مش من القائمة دي، يرجع زي ما هو
+        return originalName;
     }
   };
 
-  // هذا الـ Effect يعمل فقط عند فتح المودال (visible يصبح true)
   useEffect(() => {
-    // 1. لو المودال مقفول، مانعملش حاجة ونخرج
-    if (!visible) return;
+    if (!visible) {
+      // إعادة تعيين حالة الإنشاء عند إغلاق المودال
+      setIsCreating(false);
+      setNewListName("");
+      return;
+    }
 
     const user = auth().currentUser;
     if (!user) return;
 
-    // 2. أهم خطوة: تصفير القائمة تماماً لضمان عدم ظهور أي اختيارات سابقة
     setLists([]);
     setLoading(true);
 
@@ -50,23 +58,18 @@ const ListSelectionModal = ({ visible, onClose, gameId, gameData }) => {
       .doc(user.uid)
       .collection("lists");
 
-    // 3. جلب القوائم
-    // استخدمنا get بدل onSnapshot هنا لضمان استقرار البيانات عند الفتح
     listsRef.get().then(async (snapshot) => {
-      // أ: تحويل البيانات لقائمة مبدئية (كلها غير مختارة)
       const initialLists = snapshot.docs.map((doc) => ({
         id: doc.id,
         name: doc.data().name,
-        isChecked: false, // إجباري: ابدأ دايماً بغير مختار
+        isChecked: false,
       }));
 
-      // عرض القائمة المبدئية فوراً (هتظهر مربعات فاضية)
       setLists(initialLists);
       setLoading(false);
 
       if (!gameId) return;
 
-      // ب: التحقق من قاعدة البيانات في الخلفية
       try {
         const checkedLists = await Promise.all(
           initialLists.map(async (list) => {
@@ -79,32 +82,27 @@ const ListSelectionModal = ({ visible, onClose, gameId, gameData }) => {
               ...list,
               isChecked: gameDoc.exists(),
             };
-          })
+          }),
         );
-
-        // تحديث القائمة بالقيم الحقيقية
         setLists(checkedLists);
       } catch (error) {
         console.error("Error checking games:", error);
       }
     });
 
-    // دالة التنظيف (اختيارية هنا لأننا استخدمنا get)
     return () => {};
-  }, [visible, gameId]); // يعيد العمل كل ما المودال يفتح
+  }, [visible, gameId]);
 
   const toggleList = async (listId) => {
     const user = auth().currentUser;
     if (!user) return;
 
-    // العثور على القائمة المستهدفة لتحديد حالتها الجديدة
     const targetListIndex = lists.findIndex((l) => l.id === listId);
     if (targetListIndex === -1) return;
 
     const currentStatus = lists[targetListIndex].isChecked;
     const newStatus = !currentStatus;
 
-    // 1. تحديث الواجهة فوراً (Optimistic Update)
     const updatedLists = [...lists];
     updatedLists[targetListIndex].isChecked = newStatus;
     setLists(updatedLists);
@@ -119,20 +117,60 @@ const ListSelectionModal = ({ visible, onClose, gameId, gameData }) => {
 
     try {
       if (newStatus) {
-        // المستخدم يريد الإضافة (لأن الحالة الجديدة true)
         if (gameData) {
           await gameRef.set(gameData);
         }
       } else {
-        // المستخدم يريد الحذف (لأن الحالة الجديدة false)
         await gameRef.delete();
       }
     } catch (error) {
       console.error("Error toggling list:", error);
-      // في حالة الخطأ، نعيد الواجهة كما كانت
       const revertLists = [...lists];
       revertLists[targetListIndex].isChecked = currentStatus;
       setLists(revertLists);
+    }
+  };
+
+  // دالة جديدة لإنشاء القائمة
+  const handleCreateList = async () => {
+    if (!newListName.trim()) return;
+
+    const user = auth().currentUser;
+    if (!user) return;
+
+    setCreatingLoading(true);
+    try {
+      const newListRef = firestore()
+        .collection("users")
+        .doc(user.uid)
+        .collection("lists")
+        .doc(); // إنشاء ID تلقائي
+
+      const listData = {
+        name: newListName.trim(),
+        type: "custom",
+        createdAt: firestore.FieldValue.serverTimestamp(),
+      };
+
+      await newListRef.set(listData);
+
+      // تحديث الواجهة محلياً بإضافة القائمة الجديدة
+      const newList = {
+        id: newListRef.id,
+        name: listData.name,
+        isChecked: false, // تبدأ غير مختارة
+      };
+
+      setLists((prev) => [...prev, newList]);
+
+      // إعادة تعيين الحقول
+      setNewListName("");
+      setIsCreating(false);
+    } catch (error) {
+      console.error("Error creating list:", error);
+      alert(t("userLists.errors.couldNotCreateList"));
+    } finally {
+      setCreatingLoading(false);
     }
   };
 
@@ -148,59 +186,120 @@ const ListSelectionModal = ({ visible, onClose, gameId, gameData }) => {
         activeOpacity={1}
         onPress={onClose}
       >
-        <View style={styles.modalContent}>
+        <View
+          style={styles.modalContent}
+          onStartShouldSetResponder={() => true}
+        >
           <Text style={styles.modalTitle}>
             {t("games.details.listStatus.add") || "Add to..."}
           </Text>
-
           {loading ? (
             <ActivityIndicator size="large" color={COLORS.secondary} />
           ) : (
-            <FlatList
-              data={lists}
-              keyExtractor={(item) => item.id}
-              extraData={lists} // تأكيد للتحديث
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.listItem,
-                    item.isChecked && styles.selectedOption,
-                  ]}
-                  onPress={() => toggleList(item.id)}
-                >
-                  <Ionicons
-                    // "checkbox" أيقونة مليانة، "square-outline" أيقونة فاضية
-                    name={item.isChecked ? "checkbox" : "square-outline"}
-                    size={24}
-                    color={COLORS.secondary}
-                  />
-                  <Text
+            <>
+              <FlatList
+                data={lists}
+                keyExtractor={(item) => item.id}
+                extraData={lists}
+                showsVerticalScrollIndicator={true}
+                style={{ maxHeight: 300 }} // تحديد ارتفاع للقائمة لمنع تداخلها
+                renderItem={({ item }) => (
+                  <TouchableOpacity
                     style={[
-                      styles.listName,
-                      item.isChecked && { fontWeight: "bold" },
+                      styles.listItem,
+                      item.isChecked && styles.selectedOption,
                     ]}
+                    onPress={() => toggleList(item.id)}
                   >
-                    {getDisplayName(item.name)}
+                    <Ionicons
+                      name={item.isChecked ? "checkbox" : "square-outline"}
+                      size={24}
+                      color={COLORS.secondary}
+                    />
+                    <Text
+                      style={[
+                        styles.listName,
+                        item.isChecked && { fontWeight: "bold" },
+                      ]}
+                    >
+                      {getDisplayName(item.name)}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                ListEmptyComponent={
+                  <Text
+                    style={{
+                      color: "#ccc",
+                      textAlign: "center",
+                      marginVertical: 10,
+                    }}
+                  >
+                    {t("userLists.empty.title")}
                   </Text>
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={
-                <Text
-                  style={{
-                    color: "#ccc",
-                    textAlign: "center",
-                    marginVertical: 10,
-                  }}
-                >
-                  No lists found.
-                </Text>
-              }
-            />
-          )}
+                }
+              />
 
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>{t("common.close")}</Text>
-          </TouchableOpacity>
+              {/* قسم إنشاء قائمة جديدة */}
+              <View style={styles.createSection}>
+                {isCreating ? (
+                  <View style={styles.creationForm}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder={t("userLists.placeholders.newListName")}
+                      placeholderTextColor="#aaa"
+                      value={newListName}
+                      onChangeText={setNewListName}
+                      autoFocus={true}
+                    />
+                    <View style={styles.creationButtons}>
+                      <TouchableOpacity
+                        style={[
+                          styles.smallBtn,
+                          { backgroundColor: COLORS.darkBackground },
+                        ]}
+                        onPress={() => setIsCreating(false)}
+                      >
+                        <Text style={styles.smallBtnText}>
+                          {t("common.cancel")}
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.smallBtn,
+                          { backgroundColor: COLORS.secondary },
+                        ]}
+                        onPress={handleCreateList}
+                        disabled={creatingLoading}
+                      >
+                        {creatingLoading ? (
+                          <ActivityIndicator size="small" color="white" />
+                        ) : (
+                          <Text style={styles.smallBtnText}>
+                            {t("common.create")}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={() => setIsCreating(true)}
+                  >
+                    <Ionicons
+                      name="add-circle"
+                      size={24}
+                      color={COLORS.lightGray}
+                    />
+                    <Text style={styles.addButtonText}>
+                      {t("userLists.actions.createNewList")}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </>
+          )}
         </View>
       </TouchableOpacity>
     </Modal>
@@ -216,10 +315,10 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: COLORS.primary,
-    width: "80%",
+    width: "85%",
     borderRadius: 12,
-    paddingVertical: 20,
-    maxHeight: "60%",
+    // paddingVertical: 20,
+    maxHeight: "80%", // زيادة المساحة لتسع الكيبورد أحياناً
   },
   modalTitle: {
     color: "white",
@@ -227,6 +326,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 15,
     textAlign: "center",
+    paddingTop: 20,
   },
   listItem: {
     flexDirection: "row",
@@ -234,25 +334,60 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.secondary + "70",
+    borderBottomColor: COLORS.secondary + "40",
   },
   listName: {
     color: "white",
-    fontSize: 18,
+    fontSize: 16,
     marginLeft: 12,
   },
-  closeButton: {
-    textAlign: "center",
-    alignItems: "center",
-    paddingTop: 15,
-  },
-  closeButtonText: {
-    color: "#779bdd",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
   selectedOption: {
-    backgroundColor: COLORS.secondary + "33",
+    backgroundColor: COLORS.secondary + "22",
+  },
+  createSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+  },
+  addButtonText: {
+    color: COLORS.lightGray,
+    marginLeft: 8,
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  creationForm: {
+    width: "100%",
+  },
+  input: {
+    backgroundColor: COLORS.secondary + "40",
+    borderRadius: 8,
+    color: "white",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+  },
+  creationButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  smallBtn: {
+    flex: 0.48,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  smallBtnText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });
 

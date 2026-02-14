@@ -9,14 +9,13 @@ import {
   ToastAndroid,
 } from "react-native";
 import { Image } from "expo-image";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import YoutubePlayer from "react-native-youtube-iframe";
 import auth from "@react-native-firebase/auth";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Loading from "../Loading";
 import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
@@ -26,7 +25,7 @@ import Svg, { Circle, Text as SvgText, Path } from "react-native-svg";
 import { SERVER_URL } from "../constants/config";
 import ListSelectionModal from "../components/ListSelectionModal";
 import ImageGallery from "../components/ImageGallery";
-const CACHE_KEY_PREFIX = "GAME_DETAILS_CACHE_";
+import useCachedData from "../hooks/useCachedData";
 
 async function fetchGameById(id) {
   if (!id) throw new Error("fetchGameById: missing id");
@@ -110,9 +109,6 @@ const getRatingColorCode = (ratingVal) => {
 
 function GameDetails({ route, navigation }) {
   const { gameID: initialGameID } = route.params;
-  const [game, setGame] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [currentId, setCurrentId] = useState(initialGameID);
   const mountedRef = useRef(true);
   const scrollRef = useRef(null);
@@ -121,6 +117,21 @@ function GameDetails({ route, navigation }) {
   const [authLoading, setAuthLoading] = useState(false);
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
+  const CACHE_KEY = currentId ? `GAME_DETAILS_CACHE_${currentId}` : null;
+
+  // إنشاء دالة الجلب تحديد حسب currentId
+  const fetchGameData = useCallback(async () => {
+    if (!currentId) throw new Error("No game ID provided");
+    return fetchGameById(currentId);
+  }, [currentId]);
+
+  // استخدام Hook الكاش المحسّن
+  const {
+    data: game,
+    isLoading: loading,
+    error,
+  } = useCachedData(CACHE_KEY, fetchGameData, [currentId]);
+
   const ageRating = game ? getAgeRatingInfo(game.age_ratings) : null;
 
   useEffect(() => {
@@ -145,70 +156,15 @@ function GameDetails({ route, navigation }) {
   }, [initialGameID]);
 
   useEffect(() => {
-    if (!currentId) {
-      setError("No game ID provided");
-      setGame(null);
-      return;
+    // التمرير إلى الأعلى عند تحميل البيانات
+    if (game && !loading) {
+      setTimeout(() => {
+        try {
+          scrollRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+        } catch (e) {}
+      }, 50);
     }
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    const cacheKey = `${CACHE_KEY_PREFIX}${currentId}`;
-
-    const loadGameData = async () => {
-      let cacheFound = false;
-
-      try {
-        const cachedString = await AsyncStorage.getItem(cacheKey);
-        if (cachedString && !cancelled) {
-          const cachedData = JSON.parse(cachedString);
-          setGame(cachedData.data);
-          setLoading(false);
-          cacheFound = true;
-          setTimeout(() => {
-            try {
-              scrollRef.current?.scrollTo({ x: 0, y: 0, animated: true });
-            } catch (e) {}
-          }, 50);
-        }
-      } catch (e) {
-        console.error("Cache read error:", e);
-      }
-
-      try {
-        const fetchedGame = await fetchGameById(currentId);
-        if (cancelled || !mountedRef.current) return;
-        setGame(fetchedGame);
-        setLoading(false);
-        const dataToSave = {
-          data: fetchedGame,
-          timestamp: Date.now(),
-        };
-        await AsyncStorage.setItem(cacheKey, JSON.stringify(dataToSave));
-        if (!cacheFound) {
-          setTimeout(() => {
-            try {
-              scrollRef.current?.scrollTo({ x: 0, y: 0, animated: true });
-            } catch (e) {}
-          }, 50);
-        }
-      } catch (err) {
-        console.error("fetchGameById error:", err);
-        if (cancelled || !mountedRef.current) return;
-        if (!cacheFound) {
-          setError(err.message || "Failed to load game");
-          setGame(null);
-        }
-        setLoading(false);
-      }
-    };
-
-    loadGameData();
-    return () => {
-      cancelled = true;
-    };
-  }, [currentId]);
+  }, [game, loading]);
 
   // Rating Background Color
   function getRatingColor(rating) {

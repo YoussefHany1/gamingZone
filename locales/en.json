@@ -12,7 +12,12 @@
         "imageNotFound": "Image not found",
         "ad": "Advertisement",
         "loginRequired": "You need to be logged in to perform this action",
-        "noInternet": "No Internet Connection"
+        "noInternet": "No Internet Connection",
+                "time": {
+        "d": "d",
+        "h": "h",
+        "m": "m"
+    }
     },
     "auth": {
                     "emailPlaceholder": "Email",
@@ -98,6 +103,14 @@
         "seeklySummary":{
             "readMore": "Read More..",
             "readLess": "Read Less"
+        },
+        "gamingEvents": {
+            "header": "Gaming Events",
+            "upcoming": "Upcoming",
+            "live": "Live",
+            "watchNowButton": "Watch Now",
+            "detailsButton": "View Details",
+            "noEvents": "No gaming events available at the moment."
         }
     },
     "news": {

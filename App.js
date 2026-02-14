@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useState, useRef } from "react";
-import { View, AppState } from "react-native";
+import { View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
@@ -12,7 +12,9 @@ import "./i18n";
 import COLORS from "./constants/colors";
 import Loading from "./Loading";
 import useNotifications from "./hooks/useNotifications";
+import useRateApp from "./hooks/useRateApp";
 import { MainAppTabs, AuthStack } from "./navigation/AppNavigator";
+import * as Linking from "expo-linking";
 
 // Global config
 globalThis.RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS = true;
@@ -28,7 +30,7 @@ const queryClient = new QueryClient({
     },
   },
 });
-
+// منع الإخفاء التلقائي حتى يصبح التطبيق جاهزاً
 SplashScreen.preventAutoHideAsync();
 
 function App() {
@@ -36,7 +38,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const routeNameRef = useRef();
   const navigationRef = useRef();
-  const appState = useRef(AppState.currentState); // track the app state
 
   // 1. Auth State Management
   useEffect(() => {
@@ -53,41 +54,16 @@ function App() {
       }
       setLoading(false);
     });
-
     if (!loading) {
       SplashScreen.hideAsync();
     }
-
     return () => unsubscribeAuth();
   }, [loading]);
 
-  // 2. **الحل الجديد**: AppState Listener
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
-      if (
-        appState.current.match(/inactive|background/) &&
-        nextAppState === "active"
-      ) {
-        // التطبيق رجع من الخلفية للأمام
-        console.log("App has come to the foreground!");
-
-        // إعادة تحميل حالة المستخدم
-        const currentUser = auth().currentUser;
-        if (currentUser) {
-          setUser({ ...currentUser }); // Force re-render
-        }
-      }
-
-      appState.current = nextAppState;
-    });
-
-    return () => {
-      subscription?.remove();
-    };
-  }, []);
-
-  // 3. Notifications Logic
+  // 2. Notifications Logic (Extracted to Hook)
   useNotifications(user);
+
+  useRateApp();
 
   if (loading) {
     return <Loading />;
@@ -100,7 +76,26 @@ function App() {
       background: COLORS.primary,
     },
   };
-
+  const linking = {
+    prefixes: [
+      "gaming-zone://",
+      "https://igdb-api-omega.vercel.app/",
+      "http://igdb-api-omega.vercel.app/",
+    ],
+    config: {
+      screens: {
+        MainApp: {
+          screens: {
+            News: {
+              screens: {
+                NewsDetails: "news-details", // هذا هو المسار في الرابط
+              },
+            },
+          },
+        },
+      },
+    },
+  };
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
@@ -110,6 +105,7 @@ function App() {
           <NavigationContainer
             ref={navigationRef}
             theme={MyTheme}
+            linking={linking}
             onReady={() => {
               routeNameRef.current =
                 navigationRef.current.getCurrentRoute().name;

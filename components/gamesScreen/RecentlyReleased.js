@@ -10,12 +10,11 @@ import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import SkeletonGameCard from "../../skeleton/SkeletonGameCard";
+import SkeletonRecentlyReleased from "../../skeleton/SkeletonRecentlyReleased";
 import COLORS from "../../constants/colors";
 import { SERVER_URL } from "../../constants/config";
+import useCachedData from "../../hooks/useCachedData";
 
 const CARD_HEIGHT = 200;
 
@@ -34,16 +33,6 @@ const formatReleaseDate = (timestamp) => {
   return date.toLocaleDateString(i18n.language, options);
 };
 
-// دالة حساب عدد الأيام منذ الإصدار
-const getDaysSinceRelease = (timestamp) => {
-  if (!timestamp) return null;
-  const releaseDate = new Date(timestamp * 1000);
-  const today = new Date();
-  const diffTime = Math.abs(today - releaseDate);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
-};
-
 // دالة الحصول على ألوان التقييم
 function getRatingColor(rating) {
   if (rating <= 2) return ["#8B0000", "#B22222"];
@@ -57,7 +46,13 @@ const RecentGameCard = React.memo(({ item }) => {
   const navigation = useNavigation();
   const { t } = useTranslation();
 
-  const daysSince = getDaysSinceRelease(item.first_release_date);
+  const daysSince = (() => {
+    if (!item.first_release_date) return null;
+    const releaseDate = new Date(item.first_release_date * 1000);
+    const today = new Date();
+    const diffTime = Math.abs(today - releaseDate);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  })();
   const isNew = daysSince && daysSince <= 7;
 
   const handlePress = useCallback(() => {
@@ -154,49 +149,15 @@ export default function RecentlyReleasedGames() {
   const { t } = useTranslation();
   const STORAGE_KEY = "GAMES_CACHE_RECENTLY_RELEASED";
 
-  // حالة محلية للكاش
-  const [cachedGames, setCachedGames] = useState([]);
-
-  // تحميل الكاش عند فتح الشاشة
-  useEffect(() => {
-    const loadCache = async () => {
-      try {
-        const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
-        if (jsonValue != null) {
-          setCachedGames(JSON.parse(jsonValue));
-        }
-      } catch (e) {
-        console.error("Failed to load cache", e);
-      }
-    };
-    loadCache();
-  }, []);
-
-  // React Query لجلب البيانات
+  // استخدام Hook الكاش المحسّن
   const {
-    data: freshGames,
+    data: games,
     isLoading,
     error,
-    isSuccess,
-  } = useQuery({
-    queryKey: ["games", "recently-released"],
-    queryFn: fetchRecentlyReleasedGames,
-    staleTime: 1000 * 60 * 30, // 30 دقيقة
-    retry: 1,
-  });
+  } = useCachedData(STORAGE_KEY, fetchRecentlyReleasedGames, []);
 
-  // تحديث الكاش عند وصول بيانات جديدة
-  useEffect(() => {
-    if (isSuccess && freshGames && freshGames.length > 0) {
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(freshGames)).catch((e) =>
-        console.error(e),
-      );
-    }
-  }, [isSuccess, freshGames]);
-
-  // دمج البيانات
-  const gamesToShow =
-    freshGames && freshGames.length > 0 ? freshGames : cachedGames;
+  // البيانات المعروضة
+  const gamesToShow = games || [];
   const isActuallyLoading = isLoading && gamesToShow.length === 0;
 
   const renderItem = useCallback(
@@ -224,7 +185,7 @@ export default function RecentlyReleasedGames() {
       {isActuallyLoading && (
         <FlatList
           data={Array.from({ length: 5 }).map((_, i) => ({ id: i }))}
-          renderItem={() => <SkeletonGameCard />}
+          renderItem={() => <SkeletonRecentlyReleased />}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
         />

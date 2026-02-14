@@ -1,115 +1,114 @@
-import { useEffect } from "react";
-import { View, StyleSheet, Dimensions, FlatList } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import React, { useEffect } from "react";
+import { View, StyleSheet, Dimensions } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
   withTiming,
+  interpolate,
 } from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
 import COLORS from "../constants/colors";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
-const CARD_HEIGHT = 200;
+const CARD_HEIGHT = 220;
 
-const SkeletonAnticipatedCard = () => {
-  const translateX = useSharedValue(-width);
+const SkeletonCard = () => {
+  const shimmerAnimation = useSharedValue(0);
 
   useEffect(() => {
-    translateX.value = withRepeat(
-      withTiming(width, { duration: 1500 }),
+    shimmerAnimation.value = withRepeat(
+      withTiming(1, { duration: 1500 }),
       -1,
       false,
     );
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => {
+    const translateX = interpolate(
+      shimmerAnimation.value,
+      [0, 1],
+      [-CARD_WIDTH, CARD_WIDTH],
+    );
+
     return {
-      transform: [{ translateX: translateX.value }],
+      transform: [{ translateX }],
     };
   });
 
   return (
     <View style={styles.cardContainer}>
-      {/* Background shimmer */}
-      <View style={styles.backgroundPlaceholder}>
-        <Animated.View style={[styles.shimmerOverlay, animatedStyle]}>
-          <LinearGradient
-            colors={["transparent", "rgba(255,255,255,0.3)", "transparent"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-      </View>
+      {/* Background skeleton */}
+      <View style={styles.backgroundSkeleton} />
 
-      {/* Overlay */}
-      <View style={styles.overlay} />
+      {/* Shimmer overlay */}
+      <Animated.View style={[styles.shimmerContainer, animatedStyle]}>
+        <LinearGradient
+          colors={["transparent", "rgba(255, 255, 255, 0.15)", "transparent"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.shimmer}
+        />
+      </Animated.View>
 
-      {/* Countdown placeholders */}
+      {/* Content skeletons */}
       <View style={styles.content}>
-        <View style={styles.countdownGroup}>
-          <View style={styles.countdownLabelPlaceholder} />
-          <View style={styles.countdownValuePlaceholder} />
-        </View>
-        <View style={styles.countdownGroup}>
-          <View style={styles.countdownLabelPlaceholder} />
-          <View style={styles.countdownValuePlaceholder} />
-        </View>
-        <View style={styles.countdownGroup}>
-          <View style={styles.countdownLabelPlaceholder} />
-          <View style={styles.countdownValuePlaceholder} />
+        {/* Countdown boxes */}
+        <View style={styles.countdownRow}>
+          <View style={styles.countdownBox}>
+            <View style={styles.countdownHeaderSkeleton} />
+            <View style={styles.countdownNumberSkeleton} />
+          </View>
+          <View style={styles.countdownBox}>
+            <View style={styles.countdownHeaderSkeleton} />
+            <View style={styles.countdownNumberSkeleton} />
+          </View>
+          <View style={styles.countdownBox}>
+            <View style={styles.countdownHeaderSkeleton} />
+            <View style={styles.countdownNumberSkeleton} />
+          </View>
         </View>
       </View>
 
-      {/* Title placeholder */}
+      {/* Title skeleton */}
       <View style={styles.textWrapper}>
-        <View style={styles.titlePlaceholder} />
-        <View style={[styles.titlePlaceholder, { width: "60%" }]} />
+        <View style={styles.titleSkeleton} />
       </View>
     </View>
   );
 };
 
-const SkeletonMostAnticipated = () => {
-  // عرض 3 cards كـ placeholder
-  const skeletonData = Array.from({ length: 3 }, (_, index) => ({
-    id: `skeleton-${index}`,
-  }));
-
+export default function SkeletonMostAnticipated() {
   return (
     <View style={styles.container}>
-      {/* Header placeholder */}
-      <View style={styles.headerPlaceholder} />
+      {/* Header skeleton */}
+      <View style={styles.headerSkeleton} />
 
-      <FlatList
-        data={skeletonData}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.id}
-        renderItem={() => <SkeletonAnticipatedCard />}
-        contentContainerStyle={styles.listContent}
-        scrollEnabled={false}
-      />
+      {/* Cards skeleton */}
+      <View style={styles.listContent}>
+        <SkeletonCard />
+        <SkeletonCard />
+      </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     marginVertical: 10,
   },
-  headerPlaceholder: {
-    width: 200,
-    height: 24,
+  headerSkeleton: {
+    width: 250,
+    height: 32,
     backgroundColor: COLORS.secondary,
     marginLeft: 20,
     marginBottom: 15,
-    borderRadius: 4,
+    borderRadius: 8,
   },
   listContent: {
     paddingHorizontal: 10,
+    flexDirection: "row",
   },
   cardContainer: {
     width: CARD_WIDTH,
@@ -117,43 +116,45 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     borderRadius: 20,
     overflow: "hidden",
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.secondary + "50",
     elevation: 5,
   },
-  backgroundPlaceholder: {
+  backgroundSkeleton: {
     width: "100%",
     height: "100%",
     position: "absolute",
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.secondary + "50",
   },
-  shimmerOverlay: {
+  shimmerContainer: {
     ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
+  shimmer: {
+    width: CARD_WIDTH,
+    height: "100%",
   },
   content: {
     flex: 1,
     justifyContent: "center",
     padding: 20,
+  },
+  countdownRow: {
     flexDirection: "row",
+    justifyContent: "center",
     gap: 15,
   },
-  countdownGroup: {
-    flexDirection: "column",
+  countdownBox: {
     alignItems: "center",
-    alignSelf: "center",
-    gap: 8,
   },
-  countdownLabelPlaceholder: {
-    width: 50,
-    height: 14,
-    backgroundColor: COLORS.secondary + "80",
-    borderRadius: 4,
-  },
-  countdownValuePlaceholder: {
+  countdownHeaderSkeleton: {
     width: 60,
+    height: 14,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  countdownNumberSkeleton: {
+    width: 50,
     height: 40,
     backgroundColor: COLORS.primary + "30",
     borderRadius: 50,
@@ -161,14 +162,12 @@ const styles = StyleSheet.create({
   textWrapper: {
     marginBottom: 10,
     marginHorizontal: 10,
-    gap: 6,
   },
-  titlePlaceholder: {
-    width: "100%",
-    height: 20,
-    backgroundColor: COLORS.secondary + "80",
-    borderRadius: 4,
+  titleSkeleton: {
+    width: "90%",
+    height: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    borderRadius: 6,
+    marginBottom: 8,
   },
 });
-
-export default SkeletonMostAnticipated;

@@ -38,7 +38,7 @@ function NewsDetails() {
   const siteImage = article.siteImage || "";
   const pubDate = article.pubDate || "";
   let description = article.description || "";
-  console.log(thumbnail);
+
   // activate ads after the list loads
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {

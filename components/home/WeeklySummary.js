@@ -7,11 +7,11 @@ import {
   Animated,
 } from "react-native";
 import Markdown from "react-native-markdown-display";
-import Loading from "../Loading";
-import { databases } from "../lib/appwrite";
+import Loading from "../../Loading";
+import { databases } from "../../lib/appwrite";
 import { Query } from "react-native-appwrite";
-import i18n from "../i18n";
-import COLORS from "../constants/colors";
+import i18n from "../../i18n";
+import COLORS from "../../constants/colors";
 import { t } from "i18next";
 import Constants from "expo-constants";
 
@@ -36,7 +36,7 @@ const WeeklySummary = () => {
         const response = await databases.listDocuments(
           DATABASE_ID,
           SUMMARIES_COLLECTION_ID,
-          [Query.orderDesc("$createdAt"), Query.limit(1)]
+          [Query.orderDesc("$createdAt"), Query.limit(1)],
         );
 
         if (response.documents.length > 0) {
@@ -139,8 +139,8 @@ const WeeklySummary = () => {
               ? t("home.seeklySummary.readLess")
               : t("home.seeklySummary.readLess")
             : currentLang === "ar"
-            ? t("home.seeklySummary.readMore")
-            : t("home.seeklySummary.readMore")}
+              ? t("home.seeklySummary.readMore")
+              : t("home.seeklySummary.readMore")}
         </Text>
       </TouchableOpacity>
     </View>

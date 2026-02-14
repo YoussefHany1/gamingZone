@@ -50,11 +50,22 @@ function NewsStack() {
 }
 
 function GamesStack() {
+  const { t } = useTranslation();
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="GamesScreen" component={GamesScreen} />
       <Stack.Screen name="GameDetails" component={GameDetails} />
-      <Stack.Screen name="GameNewsScreen" component={GameNewsScreen} />
+      <Stack.Screen
+        name="GameNewsScreen"
+        component={GameNewsScreen}
+        options={{
+          headerShown: true,
+          title: t("games.list.gamesNews"),
+          headerStyle: { backgroundColor: COLORS.primary },
+          headerTintColor: "#fff",
+          headerTitleStyle: { fontWeight: "bold" },
+        }}
+      />
     </Stack.Navigator>
   );
 }
@@ -113,7 +124,7 @@ function SettingsStack() {
   );
 }
 
-// --- Main Exported Navigators ---
+// Main Exported Navigators
 
 export function MainAppTabs() {
   const { t } = useTranslation();

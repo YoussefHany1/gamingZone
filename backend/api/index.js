@@ -258,44 +258,6 @@ app.get("/recently-released", cacheMiddleware(3600), async (req, res) => {
   }
 });
 
-// Coming Soon
-app.get("/coming-soon", cacheMiddleware(3600), async (req, res) => {
-  try {
-    const query = `
-      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, hypes;
-      ${BASE_QUERY_WHERE} & first_release_date > ${currentTimestamp};
-      sort first_release_date asc;
-      limit 10;
-    `;
-    const data = await callIgdb("games", query);
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      message:
-        "An error occurred on the server while fteching data. Please try again later.",
-    });
-  }
-});
-
-// Most Anticipated
-app.get("/most-anticipated", cacheMiddleware(3600), async (req, res) => {
-  try {
-    const query = `
-      ${BASE_QUERY_FIELDS};
-      ${BASE_QUERY_WHERE} & first_release_date > ${currentTimestamp} & hypes > 0;
-      sort hypes desc;
-      limit 10;
-    `;
-    const data = await callIgdb("games", query);
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      message:
-        "An error occurred on the server while fteching data. Please try again later.",
-    });
-  }
-});
-
 // Popular Right Now
 app.get("/popular", cacheMiddleware(3600), async (req, res) => {
   try {
@@ -334,6 +296,44 @@ app.get("/popular", cacheMiddleware(3600), async (req, res) => {
       .filter((g) => g); // Filter out any undefined results
 
     res.json(sortedGames);
+  } catch (error) {
+    res.status(500).json({
+      message:
+        "An error occurred on the server while fteching data. Please try again later.",
+    });
+  }
+});
+
+// Coming Soon
+app.get("/coming-soon", cacheMiddleware(3600), async (req, res) => {
+  try {
+    const query = `
+      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, hypes;
+      ${BASE_QUERY_WHERE} & first_release_date > ${currentTimestamp};
+      sort first_release_date asc;
+      limit 10;
+    `;
+    const data = await callIgdb("games", query);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({
+      message:
+        "An error occurred on the server while fteching data. Please try again later.",
+    });
+  }
+});
+
+// Most Anticipated
+app.get("/most-anticipated", cacheMiddleware(3600), async (req, res) => {
+  try {
+    const query = `
+      ${BASE_QUERY_FIELDS};
+      ${BASE_QUERY_WHERE} & first_release_date > ${currentTimestamp} & hypes > 0;
+      sort hypes desc;
+      limit 10;
+    `;
+    const data = await callIgdb("games", query);
+    res.json(data);
   } catch (error) {
     res.status(500).json({
       message:
@@ -451,6 +451,26 @@ app.get("/game-details", cacheMiddleware(3600), async (req, res) => {
     res.status(500).json({
       message:
         "An error occurred on the server while fteching data. Please try again later.",
+    });
+  }
+});
+
+// Gaming Events
+app.get("/events", cacheMiddleware(3600), async (req, res) => {
+  try {
+    // جلب الأحداث القادمة فقط باستخدام currentTimestamp المعرف مسبقاً في الملف
+    const query = `
+      fields name, start_time, end_time, time_zone, event_logo.image_id, live_stream_url;
+      where start_time > ${currentTimestamp};
+      sort start_time asc;
+      limit 15;
+    `;
+    const data = await callIgdb("events", query);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({
+      message:
+        "An error occurred on the server while fetching data. Please try again later.",
     });
   }
 });
