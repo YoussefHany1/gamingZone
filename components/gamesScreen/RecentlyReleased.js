@@ -74,15 +74,17 @@ const RecentGameCard = React.memo(({ item }) => {
         {/* Cover Container */}
         <View style={styles.coverContainer}>
           <Image
+            recyclingKey={item?.cover?.image_id || ""}
             source={
               item.cover
-                ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.jpg`
+                ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`
                 : require("../../assets/image-not-found.webp")
             }
             style={styles.cover}
             contentFit="cover"
             transition={500}
             cachePolicy="memory-disk"
+            allowDownscaling={true}
           />
 
           {/* Rating Badge */}
@@ -158,7 +160,8 @@ export default function RecentlyReleasedGames() {
 
   // البيانات المعروضة
   const gamesToShow = games || [];
-  const isActuallyLoading = isLoading && gamesToShow.length === 0;
+  const isActuallyLoading =
+    isLoading && (gamesToShow.length === 0 || !gamesToShow);
 
   const renderItem = useCallback(
     ({ item }) => <RecentGameCard item={item} />,

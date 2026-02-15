@@ -244,7 +244,8 @@
             "newListName": "e.g. RPG Favorites"
         },
         "errors": {
-            "couldNotCreateList": "Could not create list. Please try again later"
+            "couldNotCreateList": "Could not create list. Please try again later",
+            "listAlreadyExists": "A list with this name already exists"
         }
     },
     "settings": {

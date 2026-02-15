@@ -49,7 +49,7 @@ const SettingsScreen = () => {
       console.error("❌ Sign out error:", error);
       Alert.alert(
         t("settings.signOut.errorTitle"),
-        t("settings.signOut.errorMessage")
+        t("settings.signOut.errorMessage"),
       );
     }
   }, [t]);
@@ -116,7 +116,7 @@ const SettingsScreen = () => {
         onPress: () => handleOpenURL(PRIVACY_POLICY_URL),
       },
     ],
-    [t, navigation, handleOpenURL]
+    [t, navigation, handleOpenURL],
   );
 
   const renderMenuItem = useCallback((item) => {
@@ -162,6 +162,7 @@ const SettingsScreen = () => {
             contentFit="cover"
             transition={500}
             cachePolicy="memory-disk"
+            allowDownscaling={true}
           />
           <Text style={styles.displayName}>{displayName}</Text>
         </TouchableOpacity>

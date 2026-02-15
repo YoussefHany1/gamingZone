@@ -85,7 +85,7 @@ function SignupScreen({ navigation }) {
     if (!email || !password || !name) {
       ToastAndroid.show(
         `${t("common.error")}: ${t("auth.register.emptyFields")}`,
-        ToastAndroid.LONG
+        ToastAndroid.LONG,
       );
 
       return;
@@ -100,7 +100,7 @@ function SignupScreen({ navigation }) {
     try {
       const userCredential = await auth().createUserWithEmailAndPassword(
         email,
-        password
+        password,
       );
       const user = userCredential.user;
 
@@ -149,7 +149,7 @@ function SignupScreen({ navigation }) {
       if (!idToken) {
         console.error(
           "❌ Google sign up error: idToken not found in response.",
-          JSON.stringify(userInfoResponse)
+          JSON.stringify(userInfoResponse),
         );
         ToastAndroid.show(t("auth.idTokenError"), ToastAndroid.LONG);
 
@@ -185,6 +185,7 @@ function SignupScreen({ navigation }) {
       source={require("../assets/background.png")}
       style={styles.background}
       resizeMode="cover"
+      allowDownscaling={true}
     >
       <SafeAreaView style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -194,6 +195,7 @@ function SignupScreen({ navigation }) {
             contentFit="cover"
             transition={500}
             cachePolicy="memory-disk"
+            allowDownscaling={true}
           />
           <Text style={styles.title}>{t("auth.register.title")}</Text>
           <View style={styles.inputContainer}>

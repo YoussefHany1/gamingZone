@@ -218,14 +218,16 @@ const NewsSection = ({
                           )}
                         </Text>
                       </View>
-                      {/* عرض الصورة: نستخدم thumbnail الذي يوفره السكريبت الخلفي */}
+
                       {imageUrl && (
                         <Image
+                          recyclingKey={imageUrl || ""}
                           source={{ uri: imageUrl }}
                           style={styles.cover}
                           contentFit="cover"
                           transition={500}
                           cachePolicy="memory-disk"
+                          allowDownscaling={true}
                         />
                       )}
                     </View>

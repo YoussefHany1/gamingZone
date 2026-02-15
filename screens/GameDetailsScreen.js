@@ -388,6 +388,7 @@ function GameDetails({ route, navigation }) {
                       contentFit="contain"
                       transition={500}
                       cachePolicy="memory-disk"
+                      allowDownscaling={true}
                     />
                   </TouchableOpacity>
                 );
@@ -822,15 +823,17 @@ function GameDetails({ route, navigation }) {
                       }}
                     >
                       <Image
+                        recyclingKey={g.cover?.image_id || ""}
                         style={styles.similarImg}
                         source={
-                          g?.cover?.image_id
-                            ? `https://images.igdb.com/igdb/image/upload/t_cover_small/${g.cover.image_id}.jpg`
+                          g.cover?.image_id
+                            ? `https://images.igdb.com/igdb/image/upload/t_cover_small/${g.cover?.image_id}.webp`
                             : require("../assets/image-not-found.webp")
                         }
                         contentFit="cover"
                         transition={500}
                         cachePolicy="memory-disk"
+                        allowDownscaling={true}
                       />
                       <Text style={styles.similarName} numberOfLines={2}>
                         {g.name}
@@ -861,15 +864,17 @@ function GameDetails({ route, navigation }) {
                       }}
                     >
                       <Image
+                        recyclingKey={sg.cover?.image_id || ""}
                         style={styles.similarImg}
                         source={
-                          sg?.cover?.image_id
-                            ? `https://images.igdb.com/igdb/image/upload/t_cover_small/${sg.cover.image_id}.jpg`
+                          sg.cover?.image_id
+                            ? `https://images.igdb.com/igdb/image/upload/t_cover_small/${sg.cover?.image_id}.webp`
                             : require("../assets/image-not-found.webp")
                         }
                         contentFit="cover"
                         transition={500}
                         cachePolicy="memory-disk"
+                        allowDownscaling={true}
                       />
                       <Text style={styles.similarName} numberOfLines={2}>
                         {sg.name}
@@ -884,9 +889,9 @@ function GameDetails({ route, navigation }) {
           <ImageBackground
             blurRadius={2}
             source={
-              game.cover.image_id
+              game.cover?.image_id
                 ? {
-                    uri: `https://images.igdb.com/igdb/image/upload/t_720p/${game.cover.image_id}.jpg`,
+                    uri: `https://images.igdb.com/igdb/image/upload/t_720p/${game.cover?.image_id}.webp`,
                   }
                 : null
             }

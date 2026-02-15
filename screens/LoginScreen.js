@@ -57,7 +57,7 @@ function LoginScreen({ navigation }) {
     if (!email || !password) {
       ToastAndroid.show(
         `${t("common.error")}: ${t("auth.emptyFields")}`,
-        ToastAndroid.LONG
+        ToastAndroid.LONG,
       );
       return;
     }
@@ -83,7 +83,7 @@ function LoginScreen({ navigation }) {
       if (!idToken) {
         console.error(
           "❌ Google sign in error: idToken not found in userInfoResponse.data",
-          JSON.stringify(userInfoResponse)
+          JSON.stringify(userInfoResponse),
         );
         ToastAndroid.show(t("auth.errors.googleSignIn"), ToastAndroid.LONG);
         return;
@@ -123,6 +123,7 @@ function LoginScreen({ navigation }) {
       source={require("../assets/background.png")}
       style={styles.background}
       resizeMode="cover"
+      allowDownscaling={true}
     >
       <SafeAreaView style={styles.container}>
         <ScrollView>
@@ -132,6 +133,7 @@ function LoginScreen({ navigation }) {
             contentFit="cover"
             transition={500}
             cachePolicy="memory-disk"
+            allowDownscaling={true}
           />
           <Text style={styles.title}>{t("auth.login.title")}</Text>
           <View style={styles.inputContainer}>

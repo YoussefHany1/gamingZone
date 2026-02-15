@@ -37,11 +37,13 @@ function GameItem({ game, onRemove }) {
       onPress={() => navigation.navigate("GameDetails", { gameID: game.id })}
     >
       <Image
+        recyclingKey={gameImage || ""}
         source={coverUrl}
         style={styles.gameImage}
         contentFit="cover"
         transition={500}
         cachePolicy="memory-disk"
+        allowDownscaling={true}
       />
       <View style={styles.gameInfo}>
         <Text style={styles.gameName} numberOfLines={2}>

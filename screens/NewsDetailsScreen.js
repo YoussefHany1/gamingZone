@@ -153,6 +153,7 @@ function NewsDetails() {
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <Image
           style={styles.image}
+          recyclingKey={thumbnail || ""}
           source={
             thumbnail
               ? {
@@ -167,6 +168,7 @@ function NewsDetails() {
           }
           contentFit="cover"
           cachePolicy="memory-disk"
+          allowDownscaling={true}
         />
         <View style={styles.content}>
           <Text style={styles.title}>{title}</Text>
@@ -178,10 +180,12 @@ function NewsDetails() {
               }}
             >
               <Image
+                recyclingKey={siteImage || ""}
                 style={styles.siteImage}
                 source={siteImage}
                 contentFit="cover"
                 cachePolicy="memory-disk"
+                allowDownscaling={true}
               />
               <Text style={styles.siteName}>{siteName}</Text>
             </View>

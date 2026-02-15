@@ -262,6 +262,7 @@ function ProfileScreen() {
         <ScrollView style={styles.subContainer}>
           <TouchableOpacity onPress={pickImage} style={styles.avatarContainer}>
             <Image
+              recyclingKey={imageUri || ""}
               style={styles.avatar}
               source={
                 imageUri ? imageUri : require("../assets/default_profile.png")
@@ -269,6 +270,7 @@ function ProfileScreen() {
               contentFit="cover"
               transition={500}
               cachePolicy="memory-disk"
+              allowDownscaling={true}
             />
             <Text style={styles.changePicText}>
               {t("settings.profile.changePic")}

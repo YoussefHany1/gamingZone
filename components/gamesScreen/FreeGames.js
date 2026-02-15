@@ -195,6 +195,7 @@ function FreeGames() {
             )}
 
             <Image
+              recyclingKey={item?.image || ""}
               source={
                 item.image
                   ? `https://wsrv.nl/?url=${item.image}&w=400&q=80&output=webp`
@@ -203,6 +204,7 @@ function FreeGames() {
               style={styles.cover}
               contentFit="cover"
               cachePolicy="memory-disk"
+              allowDownscaling={true}
             />
 
             {/* Gradient overlay for image */}
@@ -298,7 +300,7 @@ function FreeGames() {
         </TouchableOpacity>
       </View>
       {/* Games List */}
-      {isLoading && gamesList?.length === 0 ? (
+      {isLoading && (!gamesList || gamesList.length === 0) ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {[1, 2, 3].map((item) => (
             <SkeletonFreeGames key={item} />

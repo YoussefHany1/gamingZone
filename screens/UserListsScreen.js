@@ -10,6 +10,8 @@ import {
   Modal,
   StyleSheet,
   InteractionManager,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -100,24 +102,60 @@ export default function UserListsScreen({ navigation }) {
   }, [user]);
 
   const handleCreateList = async () => {
-    if (!newListName.trim()) return;
+    const trimmedName = newListName.trim();
+    if (!trimmedName) return;
+
+    // 1. التحقق من وجود القائمة مسبقاً (case-insensitive)
+    const listExists = lists.some(
+      (list) => list.name.toLowerCase() === trimmedName.toLowerCase(),
+    );
+
+    if (listExists) {
+      // يفضل إضافة المفتاح "listAlreadyExists" في ملفات الترجمة
+      ToastAndroid.show(
+        t("userLists.errors.listAlreadyExists") ||
+          "A list with this name already exists",
+        ToastAndroid.LONG,
+      );
+      return;
+    }
+
+    const user = auth().currentUser;
+    if (!user) return;
+
+    setCreatingLoading(true);
     try {
-      await firestore()
+      const newListRef = firestore()
         .collection("users")
         .doc(user.uid)
         .collection("lists")
-        .add({
-          name: newListName,
-          type: "custom",
-          createdAt: firestore.FieldValue.serverTimestamp(),
-        });
+        .doc();
+
+      const listData = {
+        name: trimmedName,
+        type: "custom",
+        createdAt: firestore.FieldValue.serverTimestamp(),
+      };
+
+      await newListRef.set(listData);
+
+      const newList = {
+        id: newListRef.id,
+        name: listData.name,
+        isChecked: false,
+      };
+
+      setLists((prev) => [...prev, newList]);
       setNewListName("");
-      setModalVisible(false);
+      setIsCreating(false);
     } catch (error) {
+      console.error("Error creating list:", error);
       ToastAndroid.show(
         t("userLists.errors.couldNotCreateList"),
         ToastAndroid.LONG,
       );
+    } finally {
+      setCreatingLoading(false);
     }
   };
 
@@ -145,7 +183,7 @@ export default function UserListsScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["right", "left", "top"]}>
+    <SafeAreaView style={styles.container} edges={["right", "left"]}>
       <FlatList
         data={lists}
         keyExtractor={(item) => item.id}
@@ -202,37 +240,43 @@ export default function UserListsScreen({ navigation }) {
             <Ionicons name="add" size={24} color="#fff" />
           </TouchableOpacity>
         }
+        contentContainerStyle={{ paddingVertical: 30 }}
       />
 
       <Modal visible={isModalVisible} transparent animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {t("userLists.actions.createNewList")}
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={newListName}
-              onChangeText={setNewListName}
-              placeholder={t("userLists.placeholders.newListName")}
-              placeholderTextColor="#999"
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                onPress={() => setModalVisible(false)}
-                style={styles.cancelBtn}
-              >
-                <Text style={styles.textBtn}>{t("common.cancel")}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleCreateList}
-                style={styles.createBtn}
-              >
-                <Text style={styles.textBtn}>{t("common.create")}</Text>
-              </TouchableOpacity>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>
+                {t("userLists.actions.createNewList")}
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={newListName}
+                onChangeText={setNewListName}
+                placeholder={t("userLists.placeholders.newListName")}
+                placeholderTextColor="#999"
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  onPress={() => setModalVisible(false)}
+                  style={styles.cancelBtn}
+                >
+                  <Text style={styles.textBtn}>{t("common.cancel")}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleCreateList}
+                  style={styles.createBtn}
+                >
+                  <Text style={styles.textBtn}>{t("common.create")}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -294,7 +338,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: COLORS.secondary,
-    margin: 16,
+    marginTop: 16,
     borderRadius: 8,
     marginHorizontal: 70,
   },

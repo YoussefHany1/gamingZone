@@ -72,11 +72,13 @@ const NewsGameCard = React.memo(({ item, onPress }) => {
       {/* الصورة */}
       <View style={styles.imageContainer}>
         <Image
+          recyclingKey={item?.image || ""}
           source={item.image}
           style={styles.cover}
           contentFit="cover"
           transition={500}
           cachePolicy="memory-disk"
+          allowDownscaling={true}
         />
 
         {/* Overlay gradient */}

@@ -52,15 +52,17 @@ const GameCard = React.memo(({ item }) => {
   return (
     <TouchableOpacity style={styles.gameCard} onPress={handlePress}>
       <Image
+        recyclingKey={item?.cover?.image_id || ""}
         source={
           item.cover
-            ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.jpg`
+            ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`
             : require("../../assets/image-not-found.webp")
         }
         style={styles.cover}
         contentFit="cover"
         transition={500}
         cachePolicy="memory-disk"
+        allowDownscaling={true}
       />
       {shouldShowLabel && <Text style={styles.gameType}>{label}</Text>}
       {item.total_rating != null && (
@@ -103,7 +105,8 @@ export default function GamesList({ endpoint, query, header }) {
 
   // البيانات المعروضة
   const gamesToShow = games || [];
-  const isActuallyLoading = isLoading && gamesToShow.length === 0;
+  const isActuallyLoading =
+    isLoading && (gamesToShow.length === 0 || !gamesToShow);
 
   const renderItem = useCallback(({ item }) => <GameCard item={item} />, []);
 
@@ -126,7 +129,6 @@ export default function GamesList({ endpoint, query, header }) {
 
   return (
     <View style={styles.container}>
-      {/* عرض الـ Skeleton فقط إذا لم يكن هناك أي بيانات (لا كاش ولا نت) */}
       {isActuallyLoading && (
         <FlatList
           data={Array.from({ length: 6 }).map((_, i) => ({ id: i }))}

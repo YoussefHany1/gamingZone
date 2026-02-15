@@ -44,6 +44,7 @@ function Slideshow({ website, category }) {
         >
           <Image
             style={styles.thumbnail}
+            recyclingKey={item?.id || item?.thumbnail}
             source={
               item?.thumbnail
                 ? item.thumbnail
@@ -52,6 +53,7 @@ function Slideshow({ website, category }) {
             contentFit="cover"
             transition={300}
             cachePolicy="memory-disk"
+            allowDownscaling={true}
           />
           <LinearGradient
             colors={["transparent", COLORS.primary]}

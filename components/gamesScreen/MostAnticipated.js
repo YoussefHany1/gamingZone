@@ -53,14 +53,17 @@ const AnticipatedCard = React.memo(({ item }) => {
       activeOpacity={0.9}
     >
       <Image
+        recyclingKey={item?.cover?.image_id || ""}
         source={
           item.cover
-            ? `https://images.igdb.com/igdb/image/upload/t_screenshot_med/${item.cover.image_id}.jpg`
+            ? `https://images.igdb.com/igdb/image/upload/t_screenshot_med/${item.cover.image_id}.webp`
             : require("../../assets/image-not-found.webp")
         }
         style={styles.backgroundImage}
         contentFit="cover"
         transition={500}
+        cachePolicy="memory-disk"
+        allowDownscaling={true}
       />
 
       <View style={styles.overlay} />
@@ -148,7 +151,8 @@ export default function MostAnticipated() {
     [freshGames, cachedGames],
   );
 
-  if (gamesToShow.length === 0) return <SkeletonMostAnticipated />;
+  if (gamesToShow.length === 0 || !gamesToShow)
+    return <SkeletonMostAnticipated />;
 
   return (
     <View style={styles.container}>

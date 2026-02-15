@@ -46,3 +46,6 @@ firebase-*.json
 serviceAccountKey.json
 
 android/app/release/app-release.aab
+android/app/release/app-release.apk
+*.aab
+*.apk

@@ -64,7 +64,7 @@ const DropdownPicker = (props) => {
     if (!state.isConnected) {
       ToastAndroid.show(
         t("common.noInternet") || "No Internet Connection",
-        ToastAndroid.LONG
+        ToastAndroid.LONG,
       );
       return;
     }
@@ -78,7 +78,7 @@ const DropdownPicker = (props) => {
     if (!state.isConnected) {
       ToastAndroid.show(
         t("common.noInternet") || "No Internet Connection",
-        ToastAndroid.LONG
+        ToastAndroid.LONG,
       );
       return;
     }
@@ -98,7 +98,7 @@ const DropdownPicker = (props) => {
 
   const notifTopic = NotificationService.getTopicName(
     category,
-    selectedItem.name
+    selectedItem.name,
   );
   const isNotifEnabled = notifTopic ? preferences[notifTopic] : false;
 
@@ -111,10 +111,12 @@ const DropdownPicker = (props) => {
       >
         {selectedItem?.image ? (
           <Image
+            recyclingKey={selectedItem?.image || ""}
             source={selectedItem?.image}
             style={styles.avatar}
             contentFit="cover"
             cachePolicy="memory-disk"
+            allowDownscaling={true}
           />
         ) : null}
 
@@ -128,10 +130,12 @@ const DropdownPicker = (props) => {
       <View style={styles.siteDesc}>
         {selectedItem?.image ? (
           <Image
+            recyclingKey={selectedItem?.image || ""}
             source={selectedItem?.image}
             style={styles.siteImg}
             contentFit="cover"
             cachePolicy="memory-disk"
+            allowDownscaling={true}
           />
         ) : (
           <View
@@ -226,10 +230,12 @@ const DropdownPicker = (props) => {
                 >
                   <View style={{ alignItems: "center", flexDirection: "row" }}>
                     <Image
+                      recyclingKey={item?.image || ""}
                       source={item?.image}
                       style={styles.modalItemLogo}
                       contentFit="cover"
                       cachePolicy="memory-disk"
+                      allowDownscaling={true}
                     />
                     <Text
                       style={[

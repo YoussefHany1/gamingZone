@@ -72,14 +72,16 @@ const EventCard = React.memo(({ item }) => {
     <View style={styles.eventCard}>
       {/* Background Image */}
       <Image
+        recyclingKey={item?.event_logo?.image_id || ""}
         source={
           item.event_logo
-            ? `https://images.igdb.com/igdb/image/upload/t_screenshot_med/${item.event_logo.image_id}.jpg`
+            ? `https://images.igdb.com/igdb/image/upload/t_screenshot_med/${item.event_logo?.image_id}.webp`
             : require("../../assets/image-not-found.webp")
         }
         style={styles.backgroundImage}
         contentFit="cover"
         cachePolicy="memory-disk"
+        allowDownscaling={true}
       />
 
       {/* Dark Gradient Overlay */}
@@ -189,7 +191,8 @@ export default function GamingEvents() {
 
   // البيانات المعروضة
   const eventsToShow = events || [];
-  const isActuallyLoading = isLoading && eventsToShow.length === 0;
+  const isActuallyLoading =
+    isLoading && (eventsToShow.length === 0 || !eventsToShow);
 
   const renderItem = useCallback(({ item }) => <EventCard item={item} />, []);
 

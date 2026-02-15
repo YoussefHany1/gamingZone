@@ -455,6 +455,37 @@ app.get("/game-details", cacheMiddleware(3600), async (req, res) => {
   }
 });
 
+// Search for game by name to get IGDB ID (used for free games section in the app)
+app.get("/search-game-id", cacheMiddleware(3600), async (req, res) => {
+  try {
+    const { name } = req.query;
+
+    if (!name) {
+      return res.status(400).json({ message: "Game name is required" });
+    }
+
+    const safeQuery = name.replace(/"/g, '\\"');
+
+    const query = `
+      fields id, name;
+      search "${safeQuery}";
+      limit 1;
+    `;
+
+    const data = await callIgdb("games", query);
+
+    if (data && data.length > 0) {
+      res.json({ igdb_id: data[0].id });
+    } else {
+      res.json({ igdb_id: null });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "An error occurred while searching for game.",
+    });
+  }
+});
+
 // Gaming Events
 app.get("/events", cacheMiddleware(3600), async (req, res) => {
   try {

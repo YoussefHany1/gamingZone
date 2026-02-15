@@ -228,138 +228,118 @@ function normalizeGame(item, type) {
   };
 }
 
-// --- MAIN PROCESS ---
-async function run() {
-  console.log("🚀 Starting Free Games Fetcher (Safe-Update Mode)...");
+async function searchIgdbGameId(gameName) {
+  try {
+    const apiUrl = "https://igdb-api-omega.vercel.app/";
+    const response = await axios.get(`${apiUrl}/search-game-id`, {
+      params: { name: gameName },
+      timeout: 10000,
+    });
+
+    return response.data.igdb_id || null;
+  } catch (error) {
+    console.log(
+      `   ⚠️ Failed to get IGDB ID for "${gameName}": ${error.message}`,
+    );
+    return null;
+  }
+}
+
+// MAIN PROCESS 
+for (const game of uniqueGames) {
+  const docId = generateDocId(game.slug);
+  activeIds.add(docId);
+
+  console.log(`\n🎮 Processing [${game.store}]: ${game.title}`);
+
+  let existingDoc = null;
 
   try {
-    const [epicGames, steamGames] = await Promise.all([
-      fetchEpicGames().catch((e) => {
-        console.error(e.message);
-        return [];
-      }),
-      fetchSteamGames(),
-    ]);
-
-    // دمج النتائج
-    const rawGames = [...epicGames, ...steamGames];
-    console.log(
-      `📥 Total Fetched: ${rawGames.length} entries (${epicGames.length} Epic, ${steamGames.length} Steam).`
-    );
-    // 1. منع التكرار (Deduplication)
-    const uniqueGamesMap = new Map();
-    for (const game of rawGames) {
-      const docId = generateDocId(game.slug);
-      if (!uniqueGamesMap.has(docId)) {
-        uniqueGamesMap.set(docId, game);
-      }
-    }
-    const uniqueGames = Array.from(uniqueGamesMap.values());
-    console.log(`✅ Processing ${uniqueGames.length} unique games.`);
-
-    const activeIds = new Set();
-
-    for (const game of uniqueGames) {
-      const docId = generateDocId(game.slug);
-      activeIds.add(docId);
-
-      console.log(`\n🎮 Processing [${game.store}]: ${game.title}`);
-
-      let existingDoc = null;
-
-      try {
-        existingDoc = await databases.getDocument(
-          CONFIG.APPWRITE_DATABASE_ID,
-          CONFIG.COLLECTION_FREE_GAMES,
-          docId
-        );
-      } catch (e) {
-        if (e.code !== 404)
-          console.error(`   ❌ Error fetching doc: ${e.message}`);
-      }
-
-      if (!existingDoc) {
-        // --- لعبة جديدة ---
-        try {
-          let notificationSent = false;
-          if (game.type === "current") {
-            await sendGameNotification(game);
-            notificationSent = true;
-          }
-
-          await databases.createDocument(
-            CONFIG.APPWRITE_DATABASE_ID,
-            CONFIG.COLLECTION_FREE_GAMES,
-            docId,
-            { ...game, notificationSent: notificationSent }
-          );
-          console.log(`   ✨ Created NEW game document.`);
-        } catch (createError) {
-          console.error(`   ❌ Failed to create: ${createError.message}`);
-        }
-      } else {
-        // --- لعبة موجودة مسبقاً ---
-        const alreadySent = existingDoc.notificationSent === true;
-
-        if (game.type === "current" && !alreadySent) {
-          // الحالة: اللعبة أصبحت مجانية الآن ولم نرسل لها من قبل
-          console.log(`   🔔 Sending delayed notification...`);
-          await sendGameNotification(game);
-
-          await databases.updateDocument(
-            CONFIG.APPWRITE_DATABASE_ID,
-            CONFIG.COLLECTION_FREE_GAMES,
-            docId,
-            { ...game, notificationSent: true }
-          );
-          console.log(`   ✅ Updated doc: Notification marked as SENT.`);
-        } else {
-          // الحالة: تحديث بيانات عادي
-          // التعديل الهام جداً هنا: 👇
-          // بنقول للداتابيز: خد بيانات اللعبة الجديدة، بس حافظ على قيمة notificationSent القديمة
-          await databases.updateDocument(
-            CONFIG.APPWRITE_DATABASE_ID,
-            CONFIG.COLLECTION_FREE_GAMES,
-            docId,
-            {
-              ...game,
-              notificationSent: alreadySent, // التأكيد على حفظ الحالة القديمة
-            }
-          );
-          console.log(
-            `   ℹ️ Updated details. Notification Status: ${
-              alreadySent ? "✅ Already Sent" : "⏳ Not Sent Yet"
-            }`
-          );
-        }
-      }
-    }
-
-    // --- CLEANUP ---
-    console.log("\n🧹 Cleaning up old games...");
-    const existingDocs = await databases.listDocuments(
+    existingDoc = await databases.getDocument(
       CONFIG.APPWRITE_DATABASE_ID,
       CONFIG.COLLECTION_FREE_GAMES,
-      [Query.limit(100)]
+      docId
     );
-
-    const deletePromises = existingDocs.documents
-      .filter((doc) => !activeIds.has(doc.$id))
-      .map((doc) =>
-        databases.deleteDocument(
-          CONFIG.APPWRITE_DATABASE_ID,
-          CONFIG.COLLECTION_FREE_GAMES,
-          doc.$id
-        )
-      );
-
-    await Promise.all(deletePromises);
   } catch (e) {
-    console.error("Fatal Error:", e);
+    if (e.code !== 404)
+      console.error(`   ❌ Error fetching doc: ${e.message}`);
   }
 
-  console.log("\n--- Done. ---");
-  process.exit(0);
+  if (!existingDoc) {
+    // --- لعبة جديدة ---
+    try {
+      // 🆕 البحث عن IGDB ID
+      console.log(`   🔍 Searching IGDB for: ${game.title}`);
+      const igdbId = await searchIgdbGameId(game.title);
+      
+      if (igdbId) {
+        console.log(`   ✅ Found IGDB ID: ${igdbId}`);
+        game.igdb_game_id = igdbId;
+      } else {
+        console.log(`   ⚠️ No IGDB match found`);
+        game.igdb_game_id = null;
+      }
+
+      let notificationSent = false;
+      if (game.type === "current") {
+        await sendGameNotification(game);
+        notificationSent = true;
+      }
+
+      await databases.createDocument(
+        CONFIG.APPWRITE_DATABASE_ID,
+        CONFIG.COLLECTION_FREE_GAMES,
+        docId,
+        { ...game, notificationSent: notificationSent }
+      );
+      console.log(`   ✨ Created NEW game document.`);
+    } catch (createError) {
+      console.error(`   ❌ Failed to create: ${createError.message}`);
+    }
+  } else {
+    // --- لعبة موجودة مسبقاً ---
+    const alreadySent = existingDoc.notificationSent === true;
+
+    // 🆕 إذا لم يكن لديها IGDB ID، حاول البحث عنه
+    if (!existingDoc.igdb_game_id) {
+      console.log(`   🔍 Missing IGDB ID, searching...`);
+      const igdbId = await searchIgdbGameId(game.title);
+      if (igdbId) {
+        console.log(`   ✅ Found IGDB ID: ${igdbId}`);
+        game.igdb_game_id = igdbId;
+      }
+    } else {
+      game.igdb_game_id = existingDoc.igdb_game_id;
+    }
+
+    if (game.type === "current" && !alreadySent) {
+      console.log(`   🔔 Sending delayed notification...`);
+      await sendGameNotification(game);
+
+      await databases.updateDocument(
+        CONFIG.APPWRITE_DATABASE_ID,
+        CONFIG.COLLECTION_FREE_GAMES,
+        docId,
+        { ...game, notificationSent: true }
+      );
+      console.log(`   ✅ Updated doc: Notification marked as SENT.`);
+    } else {
+      await databases.updateDocument(
+        CONFIG.APPWRITE_DATABASE_ID,
+        CONFIG.COLLECTION_FREE_GAMES,
+        docId,
+        {
+          ...game,
+          notificationSent: alreadySent,
+        }
+      );
+      console.log(
+        `   ℹ️ Updated details. Notification Status: ${
+          alreadySent ? "✅ Already Sent" : "⏳ Not Sent Yet"
+        }`
+      );
+    }
+  }
 }
 
 run();

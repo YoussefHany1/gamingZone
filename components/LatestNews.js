@@ -128,6 +128,7 @@ function LatestNews({
             <View>
               <Image
                 style={styles.thumbnail}
+                recyclingKey={item?.id || item?.thumbnail}
                 source={
                   item?.thumbnail
                     ? {
@@ -143,6 +144,7 @@ function LatestNews({
                 contentFit="cover"
                 transition={500}
                 cachePolicy="memory-disk"
+                allowDownscaling={true}
               />
               <Text style={styles.website}>{item.siteName}</Text>
             </View>

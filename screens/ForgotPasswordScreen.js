@@ -29,7 +29,7 @@ function ForgotPasswordScreen({ navigation }) {
       await auth().sendPasswordResetEmail(email);
       ToastAndroid.show(
         t("auth.forgotPassword.successTitle"),
-        ToastAndroid.LONG
+        ToastAndroid.LONG,
       );
       navigation.goBack(); // العودة لشاشة الدخول
     } catch (error) {
@@ -38,12 +38,12 @@ function ForgotPasswordScreen({ navigation }) {
       if (error.code === "auth/user-not-found") {
         ToastAndroid.show(
           t("auth.forgotPassword.errors.userNotFound"),
-          ToastAndroid.LONG
+          ToastAndroid.LONG,
         );
       } else {
         ToastAndroid.show(
           t("auth.forgotPassword.errors.general"),
-          ToastAndroid.LONG
+          ToastAndroid.LONG,
         );
       }
     }
@@ -63,6 +63,7 @@ function ForgotPasswordScreen({ navigation }) {
           contentFit="cover"
           transition={500}
           cachePolicy="memory-disk"
+          allowDownscaling={true}
         />
         <Text style={styles.title}>{t("auth.forgotPassword.title")}</Text>
         <TextInput
