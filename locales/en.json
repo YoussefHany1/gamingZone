@@ -195,7 +195,8 @@
         },
         "details": {
             "availableStores": "Available at these stores",
-                "addToList": "Add to My List",
+            "addToList": "Add to My List",
+            "claimNow": "Get this game free on ",
             "about": "About",
             "genres": "Genres",
             "gameModes": "Game Modes",

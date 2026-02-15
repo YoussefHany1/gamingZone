@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react"; // 1. استدعاء useState و useEffect
 import {
   View,
   Text,
@@ -25,26 +25,46 @@ const PRIVACY_POLICY_URL = "https://youssefhany1.github.io/gamingZoneApp/";
 const SettingsScreen = () => {
   const navigation = useNavigation();
   const { t } = useTranslation();
-  const currentUser = auth().currentUser;
-  const isAnonymous = currentUser?.isAnonymous;
+
+  // 2. تحويل currentUser لـ State عشان الشاشة تعمل تحديث لما يتغير
+  // نبدأ بالقيمة الحالية عشان مايظهرش ومضات
+  const [currentUser, setCurrentUser] = useState(auth().currentUser);
+
+  // 3. استخدام onAuthStateChanged لمراقبة التغييرات
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged((user) => {
+      // كل ما يحصل تغيير (دخول أو خروج)، حدث الـ State
+      setCurrentUser(user);
+    });
+
+    // تنظيف المستمع لما تخرج من الشاشة
+    return subscriber;
+  }, []);
+
+  // 4. المتغير isGuest هيعتمد دلوقتي على الـ State المتحدثة
+  const isGuest = !currentUser || currentUser.isAnonymous;
 
   const userAvatar = useMemo(() => {
-    if (isAnonymous) {
+    if (isGuest) {
       return require("../assets/anonymous.png");
     }
     return currentUser?.photoURL
       ? { uri: currentUser.photoURL }
       : require("../assets/default_profile.png");
-  }, [currentUser?.photoURL, isAnonymous]);
+  }, [currentUser?.photoURL, isGuest]);
 
   const displayName = useMemo(() => {
-    return currentUser?.displayName || t("auth.login.signInButton");
-  }, [currentUser?.displayName, t]);
+    if (isGuest || !currentUser?.displayName) {
+      return t("auth.login.signInButton");
+    }
+    return currentUser.displayName;
+  }, [currentUser?.displayName, isGuest, t]);
 
   const handleSignOut = useCallback(async () => {
     try {
       await auth().signOut();
       console.log("✅ User signed out successfully");
+      await auth().signInAnonymously();
     } catch (error) {
       console.error("❌ Sign out error:", error);
       Alert.alert(
@@ -66,12 +86,12 @@ const SettingsScreen = () => {
   }, []);
 
   const handleUserContainerPress = useCallback(() => {
-    if (isAnonymous) {
-      handleSignOut();
-    } else {
+    if (!isGuest) {
       navigation.navigate("Profile");
+    } else {
+      navigation.navigate("Auth");
     }
-  }, [isAnonymous, handleSignOut, navigation]);
+  }, [isGuest, navigation]);
 
   const menuItems = useMemo(
     () => [
@@ -165,11 +185,16 @@ const SettingsScreen = () => {
             allowDownscaling={true}
           />
           <Text style={styles.displayName}>{displayName}</Text>
+
+          {!isGuest && (
+            <Ionicons name="chevron-forward" size={24} color="#fff" />
+          )}
         </TouchableOpacity>
 
         {menuItems.map(renderMenuItem)}
 
-        {!isAnonymous && (
+        {/* الزر الآن سيختفي ويظهر تلقائياً بناءً على الـ State */}
+        {!isGuest && (
           <TouchableOpacity
             style={styles.signOutButton}
             onPress={handleSignOut}

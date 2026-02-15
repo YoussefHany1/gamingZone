@@ -24,6 +24,7 @@ import { Query } from "react-native-appwrite";
 import Constants from "expo-constants";
 import { useCountdown } from "../../hooks/useCountdown";
 import useCachedData from "../../hooks/useCachedData";
+import { useNavigation } from "@react-navigation/native";
 
 const FREE_GAMES_COLLECTION_ID = "free_games";
 const NOTIF_CATEGORY = "free_games";
@@ -56,6 +57,7 @@ const fetchFreeGamesFromAppwrite = async () => {
       type: doc.type,
       startDate: doc.startDate,
       endDate: doc.endDate,
+      igdb_game_id: doc.igdb_game_id,
     }));
   } catch (err) {
     console.error("Error fetching games from Appwrite:", err);
@@ -109,6 +111,7 @@ const TimeUnit = ({ value, label }) => (
 // Main Component
 function FreeGames() {
   const { t } = useTranslation();
+  const navigation = useNavigation();
   const [notifEnabled, setNotifEnabled] = useState(false);
   const userId = auth().currentUser?.uid;
 
@@ -123,6 +126,7 @@ function FreeGames() {
     checkNotificationStatus();
   }, [userId]);
 
+  // check if user has enabled notifications for free games
   const checkNotificationStatus = async () => {
     if (!userId) return;
     try {
@@ -142,6 +146,7 @@ function FreeGames() {
     }
   };
 
+  // toggle notification subscription
   const toggleNotifications = async () => {
     if (!userId) {
       ToastAndroid.show(t("common.loginRequired"), ToastAndroid.LONG);
@@ -180,8 +185,23 @@ function FreeGames() {
         StoreIcon = require("../../assets/epic-games.png");
       }
 
+      const handleCardPress = () => {
+        if (item.igdb_game_id) {
+          // go to game details screen
+          navigation.navigate("GameDetails", {
+            gameID: item.igdb_game_id,
+            claimUrl: item.url,
+            store: item.store,
+          });
+        }
+      };
+
       return (
-        <View style={styles.gameCard}>
+        <TouchableOpacity
+          style={styles.gameCard}
+          activeOpacity={0.9}
+          onPress={handleCardPress}
+        >
           {/* linear background */}
           <LinearGradient
             colors={["#1a3052", "#0c1a33"]}
@@ -277,10 +297,10 @@ function FreeGames() {
               </TouchableOpacity>
             )}
           </View>
-        </View>
+        </TouchableOpacity>
       );
     },
-    [t],
+    [t, navigation],
   );
 
   return (

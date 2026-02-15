@@ -108,7 +108,7 @@ const getRatingColorCode = (ratingVal) => {
 };
 
 function GameDetails({ route, navigation }) {
-  const { gameID: initialGameID } = route.params;
+  const { gameID: initialGameID, claimUrl, store } = route.params;
   const [currentId, setCurrentId] = useState(initialGameID);
   const mountedRef = useRef(true);
   const scrollRef = useRef(null);
@@ -125,7 +125,7 @@ function GameDetails({ route, navigation }) {
     return fetchGameById(currentId);
   }, [currentId]);
 
-  // استخدام Hook الكاش المحسّن
+  // cache
   const {
     data: game,
     isLoading: loading,
@@ -247,7 +247,7 @@ function GameDetails({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
-      {loading && <Loading />}
+      {(loading || authLoading) && <Loading />}
 
       {!loading && error && (
         <View style={{ padding: 20, backgroundColor: COLORS.primary }}>
@@ -265,7 +265,7 @@ function GameDetails({ route, navigation }) {
         </View>
       )}
 
-      {!loading && game && (
+      {!loading && !authLoading && game && (
         <ScrollView
           ref={scrollRef}
           style={styles.container}
@@ -395,44 +395,84 @@ function GameDetails({ route, navigation }) {
               })}
             </View>
 
-            {/* Add to list Button */}
-            <View style={styles.addToList}>
-              <TouchableOpacity
-                style={{
-                  backgroundColor: COLORS.secondary,
-                  padding: 12,
-                  borderRadius: 8,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flex: 1,
-                }}
-                onPress={() => {
-                  if (!user) {
-                    ToastAndroid.show(
-                      t("common.loginRequired") ||
-                        "You need to log in to perform this action.",
-                      ToastAndroid.LONG,
-                    );
-                    return;
-                  }
-                  setShowListModal(true);
-                }}
-              >
-                <Ionicons name="add-circle-outline" size={24} color="white" />
-                <Text
-                  style={{
-                    color: COLORS.textLight,
-                    fontSize: 18,
-                    fontWeight: "600",
-                    marginLeft: 8,
-                  }}
-                >
-                  {t("games.details.addToList") || "Add to List"}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            {/* Claim Now Button For Free Games*/}
+            <View style={{ marginVertical: 20 }}>
+              {claimUrl && (
+                <View style={styles.addToList}>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={() => Linking.openURL(claimUrl)}
+                    style={{ width: "100%" }}
+                  >
+                    <LinearGradient
+                      colors={["#516996", "#3b4d6e"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.addToListBtn}
+                    >
+                      <Ionicons
+                        name="gift"
+                        size={24}
+                        color="#fff"
+                        style={{ marginRight: 10 }}
+                      />
+                      <Text
+                        style={{
+                          color: "#fff",
+                          fontSize: 18,
+                          fontWeight: "bold",
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        {t("games.details.claimNow")}
+                        {store.charAt(0).toUpperCase() + store.slice(1)}
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              )}
 
+              {/* Add to list Button */}
+              <View style={styles.addToList}>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (!user) {
+                      ToastAndroid.show(
+                        t("common.loginRequired") ||
+                          "You need to log in to perform this action.",
+                        ToastAndroid.LONG,
+                      );
+                      return;
+                    }
+                    setShowListModal(true);
+                  }}
+                  style={{ width: "100%" }}
+                >
+                  <LinearGradient
+                    colors={["#516996", "#3b4d6e"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.addToListBtn}
+                  >
+                    <Ionicons
+                      name="add-circle-outline"
+                      size={24}
+                      color="white"
+                    />
+                    <Text
+                      style={{
+                        color: COLORS.textLight,
+                        fontSize: 18,
+                        fontWeight: "600",
+                        marginLeft: 8,
+                      }}
+                    >
+                      {t("games.details.addToList") || "Add to List"}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </View>
             <ListSelectionModal
               visible={!!showListModal}
               onClose={() => setShowListModal(false)}
@@ -1050,11 +1090,22 @@ const styles = StyleSheet.create({
     height: 50,
   },
   addToList: {
+    alignItems: "center",
+    margin: 10,
+    // marginTop: 30,
+  },
+  addToListBtn: {
+    padding: 15,
+    borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    margin: 10,
-    marginTop: 30,
+    justifyContent: "center",
+    elevation: 5,
+    shadowColor: "#516996",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    width: "100%",
   },
   details: {
     flexDirection: "row",

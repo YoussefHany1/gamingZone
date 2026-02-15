@@ -215,12 +215,12 @@ const ImageGalleryAdvanced = ({ coverImageId, screenshots = [] }) => {
 
   if (allImages.length === 0) {
     return (
-      <Image
+      <View
         style={styles.placeholderImage}
-        source={require("../assets/image-not-found.webp")}
-        contentFit="cover"
-        transition={500}
-        cachePolicy="memory-disk"
+        // source={require("../assets/image-not-found.webp")}
+        // contentFit="cover"
+        // transition={500}
+        // cachePolicy="memory-disk"
       />
     );
   }
@@ -403,6 +403,7 @@ const styles = StyleSheet.create({
   placeholderImage: {
     width: "100%",
     height: 350,
+    backgroundColor: COLORS.secondary,
   },
   pagination: {
     flexDirection: "row",

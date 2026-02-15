@@ -8,6 +8,8 @@ import {
   ToastAndroid,
   ImageBackground,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Image } from "expo-image";
 import auth from "@react-native-firebase/auth";
@@ -64,10 +66,11 @@ function LoginScreen({ navigation }) {
     try {
       await auth().signInWithEmailAndPassword(email, password);
       console.log(`${t("auth.login.success")})`);
-      // سيقوم onAuthStateChanged في App.js بالباقي
+
+      // 👇 التعديل هنا: التوجيه بعد النجاح
+      navigation.replace("MainApp");
     } catch (error) {
       console.error("Login failed", error);
-      // الخطأ [auth/invalid-credential] سيظهر هنا إذا كانت البيانات خاطئة
       handleAuthError(error, t);
     }
   };
@@ -76,42 +79,30 @@ function LoginScreen({ navigation }) {
   const onGoogleButtonPress = async () => {
     try {
       await GoogleSignin.hasPlayServices();
-
       const userInfoResponse = await GoogleSignin.signIn();
       const idToken = userInfoResponse.data?.idToken;
 
       if (!idToken) {
-        console.error(
-          "❌ Google sign in error: idToken not found in userInfoResponse.data",
-          JSON.stringify(userInfoResponse),
-        );
-        ToastAndroid.show(t("auth.errors.googleSignIn"), ToastAndroid.LONG);
+        // ... (Error handling code)
         return;
       }
 
-      // إنشاء بيانات الاعتماد
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-
-      // تسجيل الدخول (أو التسجيل) في Firebase
       await auth().signInWithCredential(googleCredential);
 
-      // console.log("✅ Signed in with Google credential");
-      // سيقوم onAuthStateChanged في App.js بالباقي
+      // 👇 التعديل هنا: التوجيه بعد النجاح
+      navigation.replace("MainApp");
     } catch (error) {
-      console.error("❌ Google sign in error:", error);
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log("User cancelled");
-      } else {
-        ToastAndroid.show(t("auth.errors.googleSignIn"), ToastAndroid.LONG);
-      }
+      // ... (Error handling code)
     }
   };
 
   const handleAnonymousLogin = async () => {
     try {
       await auth().signInAnonymously();
-      // console.log("User signed in anonymously");
-      // App.js سيتولى تحويل المستخدم للصفحة الرئيسية تلقائياً
+
+      // 👇 التعديل هنا: التوجيه بعد النجاح
+      navigation.replace("MainApp");
     } catch (error) {
       console.error("Anonymous login failed", error);
       ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
@@ -127,87 +118,97 @@ function LoginScreen({ navigation }) {
     >
       <SafeAreaView style={styles.container}>
         <ScrollView>
-          <Image
-            source={require("../assets/logo.png")}
-            style={styles.logo}
-            contentFit="cover"
-            transition={500}
-            cachePolicy="memory-disk"
-            allowDownscaling={true}
-          />
-          <Text style={styles.title}>{t("auth.login.title")}</Text>
-          <View style={styles.inputContainer}>
-            {/* Email Input */}
-            <TextInput
-              style={styles.input}
-              placeholder={t("auth.emailPlaceholder")}
-              placeholderTextColor="#aaa"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
+          >
+            <Image
+              source={require("../assets/logo.png")}
+              style={styles.logo}
+              contentFit="cover"
+              transition={500}
+              cachePolicy="memory-disk"
+              allowDownscaling={true}
             />
-            {/* Password Input */}
-            <TextInput
-              style={styles.input}
-              placeholder={t("auth.passwordPlaceholder")}
-              placeholderTextColor="#aaa"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-            {/* Forgot Password Button */}
+            <Text style={styles.title}>{t("auth.login.title")}</Text>
+            <View style={styles.inputContainer}>
+              {/* Email Input */}
+              <TextInput
+                style={styles.input}
+                placeholder={t("auth.emailPlaceholder")}
+                placeholderTextColor="#aaa"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+
+              {/* Password Input */}
+              <TextInput
+                style={styles.input}
+                placeholder={t("auth.passwordPlaceholder")}
+                placeholderTextColor="#aaa"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+
+              {/* Forgot Password Button */}
+              <TouchableOpacity
+                onPress={() => navigation.navigate("ForgotPassword")}
+                style={styles.forgotPasswordButton}
+              >
+                <Text style={styles.forgotPasswordText}>
+                  {t("auth.login.forgotPassword")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Login Button */}
+            <TouchableOpacity onPress={handleLogin} style={styles.button}>
+              <Text style={styles.buttonText}>{t("auth.login.title")}</Text>
+            </TouchableOpacity>
+
+            {/* Google Sign In Button */}
             <TouchableOpacity
-              onPress={() => navigation.navigate("ForgotPassword")}
-              style={styles.forgotPasswordButton}
+              onPress={onGoogleButtonPress}
+              style={{
+                textAlign: "center",
+                justifyContent: "center",
+              }}
             >
-              <Text style={styles.forgotPasswordText}>
-                {t("auth.login.forgotPassword")}
+              <LinearGradient
+                colors={["#10574b", "#3174f1", "#e92d18", "#c38d0c"]}
+                style={styles.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Ionicons name="logo-google" size={28} color="white" />
+                <Text style={styles.buttonText}>
+                  {" "}
+                  {t("auth.login.googleSignIn")}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            {/* Create Account Button */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Register")}
+              style={styles.newAccButton}
+            >
+              <Text style={styles.buttonText}>
+                {t("auth.login.createAccount")}
               </Text>
             </TouchableOpacity>
-          </View>
-          <TouchableOpacity onPress={handleLogin} style={styles.button}>
-            <Text style={styles.buttonText}>{t("auth.login.title")}</Text>
-          </TouchableOpacity>
-          {/* Google Sign In Button */}
-          <TouchableOpacity
-            onPress={onGoogleButtonPress}
-            style={{
-              textAlign: "center",
-              justifyContent: "center",
-            }}
-          >
-            <LinearGradient
-              colors={["#10574b", "#3174f1", "#e92d18", "#c38d0c"]}
-              style={styles.gradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+            {/* Continue as Guest Button */}
+            <TouchableOpacity
+              onPress={handleAnonymousLogin}
+              style={styles.guestButton}
             >
-              <Ionicons name="logo-google" size={28} color="white" />
-              <Text style={styles.buttonText}>
-                {" "}
-                {t("auth.login.googleSignIn")}
+              <Text style={styles.guestButtonText}>
+                {t("auth.guest") || "Continue as Guest"}
               </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-          {/* Create Account Button */}
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Register")}
-            style={styles.newAccButton}
-          >
-            <Text style={styles.buttonText}>
-              {t("auth.login.createAccount")}
-            </Text>
-          </TouchableOpacity>
-          {/* Continue as Guest Button */}
-          <TouchableOpacity
-            onPress={handleAnonymousLogin}
-            style={styles.guestButton}
-          >
-            <Text style={styles.guestButtonText}>
-              {t("auth.guest") || "Continue as Guest"}
-            </Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
         </ScrollView>
       </SafeAreaView>
     </ImageBackground>

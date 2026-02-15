@@ -9,6 +9,8 @@ import {
   ToastAndroid,
   ImageBackground,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Image } from "expo-image";
 import auth from "@react-native-firebase/auth";
@@ -122,7 +124,7 @@ function SignupScreen({ navigation }) {
       });
 
       // console.log("✅ Sign up successful");
-      // سيقوم onAuthStateChanged في App.js بالباقي
+      navigation.replace("MainApp");
     } catch (error) {
       console.error("❌ Sign up failed:", error);
       let msg = t("auth.errors.general");
@@ -161,6 +163,7 @@ function SignupScreen({ navigation }) {
       // تسجيل الدخول (أو التسجيل) في Firebase
       await auth().signInWithCredential(googleCredential);
       // console.log("✅ Signed up with Google credential");
+      navigation.replace("MainApp");
     } catch (error) {
       console.error("❌ Google sign up error:", error);
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -174,7 +177,7 @@ function SignupScreen({ navigation }) {
     try {
       await auth().signInAnonymously();
       // console.log("User signed in anonymously");
-      // App.js سيتولى تحويل المستخدم للصفحة الرئيسية تلقائياً
+      navigation.replace("MainApp");
     } catch (error) {
       console.error("Anonymous login failed", error);
       ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
@@ -189,105 +192,110 @@ function SignupScreen({ navigation }) {
     >
       <SafeAreaView style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
-          <Image
-            source={require("../assets/logo.png")}
-            style={styles.logo}
-            contentFit="cover"
-            transition={500}
-            cachePolicy="memory-disk"
-            allowDownscaling={true}
-          />
-          <Text style={styles.title}>{t("auth.register.title")}</Text>
-          <View style={styles.inputContainer}>
-            {/* Name Input */}
-            <TextInput
-              style={styles.input}
-              placeholder={t("auth.register.namePlaceholder")}
-              value={name}
-              onChangeText={setName}
-              placeholderTextColor="#ccc"
-            />
-            {/* Email Input */}
-            <TextInput
-              style={styles.input}
-              placeholder={t("auth.emailPlaceholder")}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            {/* Gender Input */}
-            <CustomPicker
-              options={genderOptions}
-              selectedValue={gender}
-              onValueChange={setGender}
-              placeholder={
-                t("auth.register.genderPlaceholder") || "Select Gender"
-              }
-            />
-            {/* Country Input */}
-            <CustomPicker
-              options={countriesList}
-              selectedValue={country}
-              onValueChange={setCountry}
-              placeholder={
-                t("auth.register.countryPlaceholder") || "Select Country"
-              }
-            />
-            {/* Password Input */}
-            <TextInput
-              style={styles.input}
-              placeholder={t("auth.passwordPlaceholder")}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
-          {/* Sign Up Button */}
-          <TouchableOpacity style={styles.button} onPress={handleSignup}>
-            <Text style={styles.buttonText}>
-              {t("auth.register.signUpButton")}
-            </Text>
-          </TouchableOpacity>
-          {/* Google Sign Up Button */}
-          <TouchableOpacity
-            onPress={onGoogleButtonPress}
-            style={{
-              textAlign: "center",
-              justifyContent: "center",
-            }}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
           >
-            <LinearGradient
-              colors={["#10574b", "#3174f1", "#e92d18", "#c38d0c"]}
-              style={styles.gradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Ionicons name="logo-google" size={28} color="white" />
+            <Image
+              source={require("../assets/logo.png")}
+              style={styles.logo}
+              contentFit="cover"
+              transition={500}
+              cachePolicy="memory-disk"
+              allowDownscaling={true}
+            />
+            <Text style={styles.title}>{t("auth.register.title")}</Text>
+            <View style={styles.inputContainer}>
+              {/* Name Input */}
+              <TextInput
+                style={styles.input}
+                placeholder={t("auth.register.namePlaceholder")}
+                value={name}
+                onChangeText={setName}
+                placeholderTextColor="#ccc"
+              />
+              {/* Email Input */}
+              <TextInput
+                style={styles.input}
+                placeholder={t("auth.emailPlaceholder")}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              {/* Gender Input */}
+              <CustomPicker
+                options={genderOptions}
+                selectedValue={gender}
+                onValueChange={setGender}
+                placeholder={
+                  t("auth.register.genderPlaceholder") || "Select Gender"
+                }
+              />
+              {/* Country Input */}
+              <CustomPicker
+                options={countriesList}
+                selectedValue={country}
+                onValueChange={setCountry}
+                placeholder={
+                  t("auth.register.countryPlaceholder") || "Select Country"
+                }
+              />
+              {/* Password Input */}
+              <TextInput
+                style={styles.input}
+                placeholder={t("auth.passwordPlaceholder")}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+            {/* Sign Up Button */}
+            <TouchableOpacity style={styles.button} onPress={handleSignup}>
               <Text style={styles.buttonText}>
-                {" "}
-                {t("auth.register.googleSignUp")}
+                {t("auth.register.signUpButton")}
               </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-          {/* Have an Account Button */}
-          <TouchableOpacity
-            style={styles.newAccButton}
-            onPress={() => navigation.navigate("Login")}
-          >
-            <Text style={styles.buttonText}>
-              {t("auth.register.haveAnAccount")}
-            </Text>
-          </TouchableOpacity>
-          {/* Continue as Guest Button */}
-          <TouchableOpacity
-            onPress={handleAnonymousLogin}
-            style={styles.guestButton}
-          >
-            <Text style={styles.guestButtonText}>
-              {t("auth.guest") || "Continue as Guest"}
-            </Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
+            {/* Google Sign Up Button */}
+            <TouchableOpacity
+              onPress={onGoogleButtonPress}
+              style={{
+                textAlign: "center",
+                justifyContent: "center",
+              }}
+            >
+              <LinearGradient
+                colors={["#10574b", "#3174f1", "#e92d18", "#c38d0c"]}
+                style={styles.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Ionicons name="logo-google" size={28} color="white" />
+                <Text style={styles.buttonText}>
+                  {" "}
+                  {t("auth.register.googleSignUp")}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            {/* Have an Account Button */}
+            <TouchableOpacity
+              style={styles.newAccButton}
+              onPress={() => navigation.navigate("Login")}
+            >
+              <Text style={styles.buttonText}>
+                {t("auth.register.haveAnAccount")}
+              </Text>
+            </TouchableOpacity>
+            {/* Continue as Guest Button */}
+            <TouchableOpacity
+              onPress={handleAnonymousLogin}
+              style={styles.guestButton}
+            >
+              <Text style={styles.guestButtonText}>
+                {t("auth.guest") || "Continue as Guest"}
+              </Text>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
         </ScrollView>
       </SafeAreaView>
     </ImageBackground>

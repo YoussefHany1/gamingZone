@@ -42,6 +42,17 @@ function App() {
   // 1. Auth State Management
   useEffect(() => {
     const unsubscribeAuth = auth().onAuthStateChanged(async (newUser) => {
+      if (!newUser) {
+        try {
+          await auth().signInAnonymously();
+          return;
+        } catch (error) {
+          console.error("Error signing in anonymously:", error);
+          setLoading(false);
+          return;
+        }
+      }
+
       setUser(newUser);
       if (newUser) {
         await analytics().setUserId(newUser.uid);
@@ -49,20 +60,24 @@ function App() {
           "email_verified",
           String(newUser.emailVerified),
         );
+        await analytics().setUserProperty(
+          "is_anonymous",
+          String(newUser.isAnonymous),
+        );
       } else {
         await analytics().setUserId(null);
       }
       setLoading(false);
     });
+
     if (!loading) {
       SplashScreen.hideAsync();
     }
+
     return () => unsubscribeAuth();
   }, [loading]);
 
-  // 2. Notifications Logic (Extracted to Hook)
   useNotifications(user);
-
   useRateApp();
 
   if (loading) {
@@ -125,17 +140,12 @@ function App() {
             }}
           >
             <Suspense fallback={<Loading />}>
-              <Stack.Navigator
-                key={user ? user.uid : "guest"}
-                screenOptions={{ headerShown: false }}
-              >
-                {user ? (
-                  <>
-                    <Stack.Screen name="MainApp" component={MainAppTabs} />
-                  </>
-                ) : (
-                  <Stack.Screen name="Auth" component={AuthStack} />
-                )}
+              <Stack.Navigator screenOptions={{ headerShown: false }}>
+                {/* جعلنا MainApp في البداية لتظهر دائماً عند الفتح */}
+                <Stack.Screen name="MainApp" component={MainAppTabs} />
+
+                {/* أبقينا على Auth لتتمكن من الانتقال إليها يدوياً لاحقاً (مثلاً من الإعدادات) */}
+                <Stack.Screen name="Auth" component={AuthStack} />
               </Stack.Navigator>
             </Suspense>
           </NavigationContainer>
