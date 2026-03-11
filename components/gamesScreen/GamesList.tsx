@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ListRenderItemInfo,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -16,17 +17,24 @@ import COLORS from "../../constants/colors";
 import { SERVER_URL } from "../../constants/config";
 import useCachedData from "../../hooks/useCachedData";
 import { Game } from "../types";
+import { GameFilters } from "./FilterModal";
 
-const CARD_HEIGHT = 290;
+const CARD_HEIGHT = 290; // card 270px + 10px margin top + 10px margin bottom
 const CARD_WIDTH = 180;
 
-// Factory that creates a typed fetch function for a given endpoint/query pair
+// Factory – sends query + filter params to the server
 const createFetchGamesFunction = (
   endpoint: string | undefined,
   query: string | undefined,
+  filters?: GameFilters,
 ) => async (): Promise<Game[]> => {
   const url = endpoint ? `${SERVER_URL}${endpoint}` : `${SERVER_URL}/search`;
-  const params = query ? { q: query } : {};
+  const params: Record<string, string> = {};
+  if (query) params.q = query;
+  if (filters?.year) params.year = filters.year;
+  if (filters?.genre) params.genre = filters.genre;
+  if (filters?.platform) params.platform = filters.platform;
+  if (filters?.sort) params.sort = filters.sort;
   const response = await axios.get<Game[]>(url, { params });
   return response.data;
 };
@@ -94,24 +102,31 @@ interface GamesListProps {
   endpoint?: string;
   query?: string;
   header?: string;
+  filters?: GameFilters;
+  onBack?: () => void;
 }
 
-function GamesList({ endpoint, query, header }: GamesListProps) {
+function GamesList({ endpoint, query, header, filters, onBack }: GamesListProps) {
   const { t } = useTranslation();
 
   const safeEndpoint = (endpoint ?? "search").replace(/\//g, "_");
   const safeQuery = (query ?? "all").replace(/\s/g, "_");
-  const STORAGE_KEY = `GAMES_CACHE_${safeEndpoint}_${safeQuery}`;
+  // Cache key includes filter values so different filter combos don't share cache
+  const safeFilters = `${filters?.year ?? ""}_${filters?.genre ?? ""}_${filters?.platform ?? ""}_${filters?.sort ?? ""}`;
+  const STORAGE_KEY = `GAMES_CACHE_${safeEndpoint}_${safeQuery}_${safeFilters}`;
 
   const fetchGames = useCallback(
-    createFetchGamesFunction(endpoint, query),
-    [endpoint, query],
+    createFetchGamesFunction(endpoint, query, filters),
+    // Use primitive values as deps, not the filters object reference,
+    // to avoid re-fetching when a new object with the same values is created.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [endpoint, query, filters?.year, filters?.genre, filters?.platform, filters?.sort],
   );
 
   const { data: games, isLoading, error } = useCachedData<Game[]>(
     STORAGE_KEY,
     fetchGames,
-    [endpoint, query],
+    [endpoint, query, filters],
   );
 
   const gamesToShow: Game[] = games ?? [];
@@ -138,21 +153,27 @@ function GamesList({ endpoint, query, header }: GamesListProps) {
     [endpoint, query],
   );
 
+  const renderListHeader = useCallback(() => {
+    if (!onBack) return null;
+    return (
+      <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.7}>
+        <Ionicons name="arrow-back" size={20} color="#fff" />
+      </TouchableOpacity>
+    );
+  }, [onBack]);
+
   return (
     <View style={styles.container}>
       {isActuallyLoading && (
         <FlatList
           data={Array.from({ length: 6 }, (_, i) => ({ id: i } as any))}
           horizontal={!!endpoint}
-          numColumns={query ? 2 : 1}
-          key={query ? "skeleton-grid" : "skeleton-list"}
+          numColumns={2}
+          key={"skeleton-grid"}
           renderItem={() => <SkeletonGameCard />}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingVertical: 12,
-            paddingHorizontal: 5,
-            ...(query && { alignItems: "center", paddingBottom: 320 }),
-          }}
+          ListHeaderComponent={renderListHeader}
+          contentContainerStyle={styles.listContent}
         />
       )}
 
@@ -164,7 +185,10 @@ function GamesList({ endpoint, query, header }: GamesListProps) {
         gamesToShow.length === 0 &&
         (query || endpoint) &&
         !error && (
-          <Text style={styles.noResults}>{t("games.list.noResults")}</Text>
+          <>
+            {renderListHeader()}
+            <Text style={styles.noResults}>{t("games.list.noResults")}</Text>
+          </>
         )}
 
       {gamesToShow.length > 0 && (
@@ -173,8 +197,8 @@ function GamesList({ endpoint, query, header }: GamesListProps) {
           <FlatList
             data={gamesToShow}
             horizontal={!!endpoint}
-            numColumns={query ? 2 : 1}
-            key={query ? "grid" : "list"}
+            numColumns={2}
+            key={"grid"}
             keyExtractor={(item) => String(item.id)}
             renderItem={renderItem}
             getItemLayout={getItemLayout}
@@ -182,10 +206,8 @@ function GamesList({ endpoint, query, header }: GamesListProps) {
             maxToRenderPerBatch={6}
             windowSize={5}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[
-              styles.listContent,
-              query ? { alignItems: "center", paddingBottom: 220 } : undefined,
-            ]}
+            ListHeaderComponent={renderListHeader}
+            contentContainerStyle={styles.listContent}
           />
         </>
       )}
@@ -196,6 +218,19 @@ export default GamesList
 
 const styles = StyleSheet.create({
   container: {},
+  backBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: COLORS.secondary,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 4,
+    gap: 6,
+  },
   header: { fontSize: 28, color: "white", margin: 12, fontWeight: "bold" },
   gameCard: {
     borderWidth: 1,
@@ -264,5 +299,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingVertical: 12,
     paddingHorizontal: 5,
+    alignItems: "center", paddingBottom: 220
   },
 });

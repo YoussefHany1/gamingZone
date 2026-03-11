@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 
-//serves cached data immediately from AsyncStorage then silently revalidates from the network in the background.
-
+// Serves cached data immediately from AsyncStorage, then revalidates from the
+// network in the background. The cache is only written when the fresh data
+// actually differs from what was previously stored.
 
 // Types
 export interface CachedDataResult<T> {
@@ -33,18 +34,28 @@ export default function useCachedData<T>(
       setIsRefetching(true);
       setError(null);
 
-      // Serve the cache immediately
+      // Serve whatever is in the cache immediately (no TTL expiry)
       if (!currentDataRef.current) {
         const cached = await AsyncStorage.getItem(key);
         if (cached) {
-          const parsed: T = JSON.parse(cached);
+          const raw = JSON.parse(cached);
+          // Migration: handle old {data, timestamp} wrapper format that was
+          // temporarily used — extract the inner data if detected.
+          const parsed: T =
+            raw !== null &&
+              typeof raw === "object" &&
+              !Array.isArray(raw) &&
+              "data" in raw &&
+              "timestamp" in raw
+              ? (raw as { data: T; timestamp: number }).data
+              : (raw as T);
           setDataState(parsed);
           currentDataRef.current = parsed;
-          setIsLoading(false); // hide the initial skeleton once we have cache
+          setIsLoading(false);
         }
       }
 
-      // if user is offline
+      // If user is offline, stop here
       const netState = await NetInfo.fetch();
       if (!netState.isConnected) {
         setIsLoading(false);
@@ -52,11 +63,10 @@ export default function useCachedData<T>(
         return;
       }
 
-      // Fetch new data from the source
+      // Fetch fresh data from the network
       const freshData: T = await fetchFunction();
 
-      // Only update state and cache when data actually changed.
-      
+      // Only update state AND cache when data actually changed
       const isDataDifferent =
         JSON.stringify(freshData) !== JSON.stringify(currentDataRef.current);
 
@@ -79,8 +89,7 @@ export default function useCachedData<T>(
     loadData();
   }, [loadData]);
 
-  // Manually update state and cache 
-
+  // Manually update state and cache
   const updateLocalData = useCallback(
     async (newData: T): Promise<void> => {
       setDataState(newData);

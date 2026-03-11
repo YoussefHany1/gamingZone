@@ -1,4 +1,5 @@
 import React, { useState, useCallback, memo } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   View,
   Text,
@@ -32,6 +33,9 @@ const DATABASE_ID = "6930389a0033ba85bfe1" as const;
 const COLLECTION_ID = "contact" as const;
 const MAX_MESSAGE_LENGTH = 5000 as const;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_MESSAGES_PER_HOUR = 5 as const;
+const RATE_LIMIT_KEY = "contact_rate_limit_timestamps" as const;
+const ONE_HOUR_MS = 3_600_000 as const; // 1 hour in milliseconds
 
 interface TypeButtonProps {
   value: FeedbackType;
@@ -73,6 +77,31 @@ const ContactScreen: React.FC<Props> = ({ navigation }) => {
     setType(value);
   }, []);
 
+  // Rate limiting helpers
+  const getRateLimitTimestamps = useCallback(async (): Promise<number[]> => {
+    try {
+      const raw = await AsyncStorage.getItem(RATE_LIMIT_KEY);
+      if (!raw) return [];
+      const all: number[] = JSON.parse(raw);
+      const now = Date.now();
+      // Keep only timestamps within the last hour
+      return all.filter((ts) => now - ts < ONE_HOUR_MS);
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const saveRateLimitTimestamp = useCallback(async (timestamps: number[]): Promise<void> => {
+    try {
+      await AsyncStorage.setItem(
+        RATE_LIMIT_KEY,
+        JSON.stringify([...timestamps, Date.now()])
+      );
+    } catch {
+      // silently fail — don't block the user on storage errors
+    }
+  }, []);
+
   const handleSubmit = useCallback(async (): Promise<void> => {
     if (!message.trim()) {
       ToastAndroid.show(t("settings.contact.messageError"), ToastAndroid.LONG);
@@ -87,6 +116,17 @@ const ContactScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
+    // Rate limit check
+    const recentTimestamps = await getRateLimitTimestamps();
+    if (recentTimestamps.length >= MAX_MESSAGES_PER_HOUR) {
+
+      ToastAndroid.show(
+        t("settings.contact.rateLimitError"),
+        ToastAndroid.LONG
+      );
+      return;
+    }
+
     setLoading(true);
     try {
       await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), {
@@ -95,6 +135,7 @@ const ContactScreen: React.FC<Props> = ({ navigation }) => {
         email,
         userId: currentUser?.uid ?? null,
       });
+      await saveRateLimitTimestamp(recentTimestamps);
       ToastAndroid.show(t("settings.contact.success"), ToastAndroid.LONG);
       navigation.goBack();
     } catch (error) {
@@ -103,7 +144,7 @@ const ContactScreen: React.FC<Props> = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
-  }, [message, email, type, currentUser, isValidEmail, t, navigation]);
+  }, [message, email, type, currentUser, isValidEmail, getRateLimitTimestamps, saveRateLimitTimestamp, t, navigation]);
 
   // Render
 

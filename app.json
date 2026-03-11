@@ -5,6 +5,7 @@
     "version": "1.0.3",
     "icon": "./assets/logo-background.png",
     "userInterfaceStyle": "light",
+    "jsEngine": "hermes",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/logo-background.png",
@@ -17,6 +18,8 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#0c1a33"
       },
+      "enableProguardInReleaseBuilds": true,
+      "enableShrinkResourcesInReleaseBuilds": true,
       "edgeToEdgeEnabled": true,
       "package": "com.yh.gamingzone",
       "googleServicesFile": "./google-services.json",

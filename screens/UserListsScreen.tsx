@@ -39,18 +39,18 @@ type Props = NativeStackScreenProps<StackParamList, "UserListsScreen">;
 
 // Default lists
 const DEFAULT_LISTS: { id: string; name: string; type: ListType }[] = [
-  { id: "played",      name: "Played",        type: "default" },
-  { id: "wantToPlay",  name: "Want to Play",   type: "default" },
-  { id: "playing",     name: "Playing",        type: "default" },
+  { id: "played", name: "Played", type: "default" },
+  { id: "wantToPlay", name: "Want to Play", type: "default" },
+  { id: "playing", name: "Playing", type: "default" },
 ];
 
 // main 
 const UserListsScreen: React.FC<Props> = ({ navigation }) => {
-  const [lists, setLists]           = useState<GameList[]>([]);
+  const [lists, setLists] = useState<GameList[]>([]);
   const [newListName, setNewListName] = useState<string>("");
   const [isModalVisible, setModalVisible] = useState<boolean>(false);
   const [isCreating, setIsCreating] = useState<boolean>(false);
-  const [showAds, setShowAds]       = useState<boolean>(false);
+  const [showAds, setShowAds] = useState<boolean>(false);
   const user = auth().currentUser;
   const { t } = useTranslation();
 
@@ -64,9 +64,9 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
   const getDisplayName = useCallback(
     (name: string): string => {
       const map: Record<string, string> = {
-        Playing:       t("games.details.listStatus.playing"),
-        Played:        t("games.details.listStatus.played"),
-        "Want to Play":t("games.details.listStatus.wantToPlay"),
+        Playing: t("games.details.listStatus.playing"),
+        Played: t("games.details.listStatus.played"),
+        "Want to Play": t("games.details.listStatus.wantToPlay"),
       };
       return map[name] ?? name;
     },
@@ -148,7 +148,7 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
       if (!user) return;
       Alert.alert(
         t("userLists.actions.confirmDeleteTitle"),
-        `Delete "${listName}"?`,
+        t("userLists.actions.confirmDeleteMessage", { gameName: listName }),
         [
           { text: t("common.cancel"), style: "cancel" },
           {

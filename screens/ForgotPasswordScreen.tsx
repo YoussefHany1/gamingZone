@@ -35,6 +35,16 @@ const ForgotPasswordScreen: React.FC<Props> = memo(({ navigation }) => {
 
     setLoading(true);
     try {
+      // Check if the email is registered before sending the reset link
+      const signInMethods = await auth().fetchSignInMethodsForEmail(email);
+      if (signInMethods.length === 0) {
+        ToastAndroid.show(
+          t("auth.forgotPassword.errors.userNotFound"),
+          ToastAndroid.LONG
+        );
+        return;
+      }
+
       await auth().sendPasswordResetEmail(email);
       ToastAndroid.show(t("auth.forgotPassword.successTitle"), ToastAndroid.LONG);
       navigation.goBack();
@@ -42,7 +52,7 @@ const ForgotPasswordScreen: React.FC<Props> = memo(({ navigation }) => {
       console.error("[ForgotPasswordScreen] Reset error:", error);
       const code = (error as { code?: string }).code;
       const key =
-        code === "auth/user-not-found"
+        code === "auth/invalid-email"
           ? "auth.forgotPassword.errors.userNotFound"
           : "auth.forgotPassword.errors.general";
       ToastAndroid.show(t(key), ToastAndroid.LONG);
@@ -84,7 +94,7 @@ const ForgotPasswordScreen: React.FC<Props> = memo(({ navigation }) => {
           keyboardType="email-address"
           autoCapitalize="none"
         />
-  {/* Send Button */}
+        {/* Send Button */}
         <TouchableOpacity
           style={styles.button}
           onPress={handleResetPassword}
@@ -94,7 +104,7 @@ const ForgotPasswordScreen: React.FC<Props> = memo(({ navigation }) => {
             {t("auth.forgotPassword.sendButton")}
           </Text>
         </TouchableOpacity>
-{/* Back Button */}
+        {/* Back Button */}
         <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
           <Text style={styles.buttonText}>
             {t("auth.forgotPassword.backToLogin")}

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { View, StyleSheet, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
@@ -13,7 +13,9 @@ const { width } = Dimensions.get("window");
 const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
 
-const SkeletonPopular = () => {
+// Main
+
+const SkeletonPopular: React.FC = () => {
   const translateX = useSharedValue(-width);
 
   useEffect(() => {
@@ -32,7 +34,7 @@ const SkeletonPopular = () => {
 
   return (
     <View style={styles.cardContainer}>
-      {/* غلاف اللعبة */}
+      {/* Game cover image placeholder */}
       <View style={styles.coverContainer}>
         <View style={styles.coverPlaceholder}>
           <Animated.View style={[styles.shimmerOverlay, animatedStyle]}>
@@ -46,10 +48,10 @@ const SkeletonPopular = () => {
         </View>
       </View>
 
-      {/* عنوان اللعبة */}
+      {/* Game title placeholder */}
       <View style={styles.titlePlaceholder} />
 
-      {/* إحصائيات اللعبة */}
+      {/* Game stats placeholders */}
       <View style={styles.statsContainer}>
         <View style={styles.statPlaceholder} />
         <View style={styles.statPlaceholder} />
@@ -57,6 +59,7 @@ const SkeletonPopular = () => {
     </View>
   );
 };
+export default React.memo(SkeletonPopular);
 
 const styles = StyleSheet.create({
   cardContainer: {
@@ -101,5 +104,3 @@ const styles = StyleSheet.create({
     width: "75%",
   },
 });
-
-export default SkeletonPopular;

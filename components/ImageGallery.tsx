@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -32,6 +32,11 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
+// Swipe thresholds
+const SWIPE_DOWN_DIST = 100;   // px downward to close
+const SWIPE_DOWN_VEL = 800;   // px/s downward velocity to close
+const SWIPE_HORIZ_DIST = 60;   // px horizontal to navigate
+const SWIPE_HORIZ_VEL = 400;  // px/s horizontal velocity to navigate
 
 // Domain types
 
@@ -47,27 +52,52 @@ interface Screenshot {
 }
 
 // ZoomableImage
+// — Pinch-to-zoom and pan when zoomed in.
+// — When at normal scale (1×), horizontal swipe → navigate images,
+//   downward swipe → close gallery.
 
 interface ZoomableImageProps {
   imageUrl: string;
+  onSwipeLeft?: () => void; // navigate forward
+  onSwipeRight?: () => void; // navigate backward
+  onSwipeDown?: () => void; // close gallery
 }
 
-const ZoomableImage: React.FC<ZoomableImageProps> = ({ imageUrl }) => {
+const ZoomableImage: React.FC<ZoomableImageProps> = ({
+  imageUrl,
+  onSwipeLeft,
+  onSwipeRight,
+  onSwipeDown,
+}) => {
   const scale = useRef(new Animated.Value(1)).current;
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
-
-  // Persistent scale state across pinch gestures
   const lastScale = useRef<number>(1);
-
-  // Persistent translation state across pan gestures
   const lastTranslateX = useRef<number>(0);
   const lastTranslateY = useRef<number>(0);
-
-  // Animated ref used inside Animated.event (must be an Animated.Value)
   const pinchScaleAnim = useRef(new Animated.Value(1)).current;
 
-  const onPinchEvent: (event: PinchGestureHandlerGestureEvent) => void =
+  const resetPan = (): void => {
+    translateX.setValue(0);
+    translateY.setValue(0);
+    translateX.setOffset(0);
+    translateY.setOffset(0);
+    lastTranslateX.current = 0;
+    lastTranslateY.current = 0;
+  };
+
+  const snapBack = (): void => {
+    Animated.parallel([
+      Animated.spring(translateX, { toValue: 0, useNativeDriver: true }),
+      Animated.spring(translateY, { toValue: 0, useNativeDriver: true }),
+    ]).start();
+    translateX.setOffset(0);
+    translateY.setOffset(0);
+    lastTranslateX.current = 0;
+    lastTranslateY.current = 0;
+  };
+
+  const onPinchEvent: (e: PinchGestureHandlerGestureEvent) => void =
     Animated.event([{ nativeEvent: { scale: pinchScaleAnim } }], {
       useNativeDriver: true,
     });
@@ -77,24 +107,17 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({ imageUrl }) => {
   ): void => {
     if (event.nativeEvent.oldState === State.ACTIVE) {
       lastScale.current *= event.nativeEvent.scale;
-
-      // Clamp scale between MIN and MAX
       if (lastScale.current > MAX_SCALE) lastScale.current = MAX_SCALE;
       if (lastScale.current < MIN_SCALE) {
         lastScale.current = MIN_SCALE;
-        // Reset translation when fully zoomed out
-        translateX.setValue(0);
-        translateY.setValue(0);
-        lastTranslateX.current = 0;
-        lastTranslateY.current = 0;
+        resetPan();
       }
-
       scale.setValue(lastScale.current);
-      pinchScaleAnim.setValue(1); // Reset pinch delta after applying it
+      pinchScaleAnim.setValue(1);
     }
   };
 
-  const onPanEvent: (event: PanGestureHandlerGestureEvent) => void =
+  const onPanEvent: (e: PanGestureHandlerGestureEvent) => void =
     Animated.event(
       [{ nativeEvent: { translationX: translateX, translationY: translateY } }],
       { useNativeDriver: true },
@@ -104,10 +127,37 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({ imageUrl }) => {
     event: HandlerStateChangeEvent<PanGestureHandlerEventPayload>,
   ): void => {
     if (event.nativeEvent.oldState === State.ACTIVE) {
-      // Accumulate translation offsets so the next gesture starts from here
-      lastTranslateX.current += event.nativeEvent.translationX;
-      lastTranslateY.current += event.nativeEvent.translationY;
+      const { translationX: tx, translationY: ty, velocityX: vx, velocityY: vy } =
+        event.nativeEvent;
 
+      if (lastScale.current <= MIN_SCALE) {
+        // ── Not zoomed: interpret as navigation / close gesture ──────────────
+        const absX = Math.abs(tx);
+        const absY = Math.abs(ty);
+
+        // Swipe down → close
+        if (ty > SWIPE_DOWN_DIST || vy > SWIPE_DOWN_VEL) {
+          resetPan();
+          onSwipeDown?.();
+          return;
+        }
+
+        // Horizontal swipe → navigate (must be more horizontal than vertical)
+        if (absX > absY && (absX > SWIPE_HORIZ_DIST || Math.abs(vx) > SWIPE_HORIZ_VEL)) {
+          resetPan();
+          if (tx < 0) onSwipeLeft?.();
+          else onSwipeRight?.();
+          return;
+        }
+
+        // Not a decisive gesture → spring back
+        snapBack();
+        return;
+      }
+
+      // ── Zoomed: accumulate pan offsets ─────────────────────────────────────
+      lastTranslateX.current += tx;
+      lastTranslateY.current += ty;
       translateX.setOffset(lastTranslateX.current);
       translateX.setValue(0);
       translateY.setOffset(lastTranslateY.current);
@@ -115,19 +165,14 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({ imageUrl }) => {
     }
   };
 
-  // Double-tap resets zoom and position to their initial state
   const handleDoubleTap = (): void => {
     Animated.parallel([
       Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
       Animated.spring(translateX, { toValue: 0, useNativeDriver: true }),
       Animated.spring(translateY, { toValue: 0, useNativeDriver: true }),
     ]).start();
-
     lastScale.current = 1;
-    lastTranslateX.current = 0;
-    lastTranslateY.current = 0;
-    translateX.setOffset(0);
-    translateY.setOffset(0);
+    resetPan();
   };
 
   return (
@@ -136,7 +181,6 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({ imageUrl }) => {
       onHandlerStateChange={onPanStateChange}
       minPointers={1}
       maxPointers={1}
-      enabled={lastScale.current > MIN_SCALE} // Pan is only active when zoomed in
     >
       <Animated.View style={styles.zoomContainer}>
         <PinchGestureHandler
@@ -199,10 +243,10 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
   const allImages: GalleryImage[] = [
     coverImageId
       ? {
-          id: "cover",
-          url: `https://images.igdb.com/igdb/image/upload/t_1080p/${coverImageId}.jpg`,
-          thumbnail: `https://images.igdb.com/igdb/image/upload/t_cover_big/${coverImageId}.jpg`,
-        }
+        id: "cover",
+        url: `https://images.igdb.com/igdb/image/upload/t_1080p/${coverImageId}.jpg`,
+        thumbnail: `https://images.igdb.com/igdb/image/upload/t_cover_big/${coverImageId}.jpg`,
+      }
       : null,
     ...screenshots.map((screenshot) => ({
       id: screenshot.id ?? screenshot.image_id,
@@ -211,12 +255,8 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
     })),
   ].filter(Boolean) as GalleryImage[];
 
-  const handleScroll = (
-    event: NativeSyntheticEvent<NativeScrollEvent>,
-  ): void => {
-    const index = Math.round(
-      event.nativeEvent.contentOffset.x / SCREEN_WIDTH,
-    );
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>): void => {
+    const index = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
     setActiveIndex(index);
   };
 
@@ -225,23 +265,24 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
     setFullScreenVisible(true);
   };
 
-  const closeFullScreen = (): void => setFullScreenVisible(false);
+  const closeFullScreen = useCallback((): void => {
+    setFullScreenVisible(false);
+  }, []);
 
-  const goToNextImage = (): void => {
-    if (fullScreenIndex < allImages.length - 1) {
-      setFullScreenIndex((prev) => prev + 1);
-    }
-  };
+  const goToNextImage = useCallback((): void => {
+    setFullScreenIndex((prev) => Math.min(prev + 1, allImages.length - 1));
+  }, [allImages.length]);
 
-  const goToPreviousImage = (): void => {
-    if (fullScreenIndex > 0) {
-      setFullScreenIndex((prev) => prev - 1);
-    }
-  };
+  const goToPreviousImage = useCallback((): void => {
+    setFullScreenIndex((prev) => Math.max(prev - 1, 0));
+  }, []);
 
   if (allImages.length === 0) {
     return <View style={styles.placeholderImage} />;
   }
+
+  const isFirst = fullScreenIndex === 0;
+  const isLast = fullScreenIndex === allImages.length - 1;
 
   return (
     <View style={styles.container}>
@@ -273,10 +314,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
             <View
               style={[
                 styles.backgroundContainer,
-                {
-                  flexDirection:
-                    currentLang === "en" ? "row" : "row-reverse",
-                },
+                { flexDirection: currentLang === "en" ? "row" : "row-reverse" },
               ]}
             >
               <LinearGradient
@@ -333,12 +371,10 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
         <StatusBar hidden />
         <GestureHandlerRootView style={{ flex: 1 }}>
           <View style={styles.fullScreenContainer}>
+
             {/* Top controls: close button + counter */}
             <View style={styles.topControls}>
-              <TouchableOpacity
-                style={styles.controlButton}
-                onPress={closeFullScreen}
-              >
+              <TouchableOpacity style={styles.controlButton} onPress={closeFullScreen}>
                 <Ionicons name="close" size={28} color="#fff" />
               </TouchableOpacity>
               <View style={styles.fullScreenCounterBadge}>
@@ -348,59 +384,40 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
               </View>
             </View>
 
-            {/* Pinch-to-zoom image — keyed by index to reset state on navigation */}
+            {/* Swipe hint indicators (prev / next arrows, fade when at edges) */}
+            {allImages.length > 1 && (
+              <View style={styles.swipeHints} pointerEvents="none">
+                <Ionicons
+                  name="chevron-back"
+                  size={28}
+                  color={isFirst ? "transparent" : "rgba(255,255,255,0.25)"}
+                />
+                <Ionicons
+                  name="chevron-forward"
+                  size={28}
+                  color={isLast ? "transparent" : "rgba(255,255,255,0.25)"}
+                />
+              </View>
+            )}
+
+            {/* Pinch-to-zoom + swipe-navigable image */}
             <View style={styles.imageArea}>
               <ZoomableImage
-                imageUrl={allImages[fullScreenIndex].url}
                 key={fullScreenIndex}
+                imageUrl={allImages[fullScreenIndex].url}
+                onSwipeLeft={!isLast ? goToNextImage : undefined}
+                onSwipeRight={!isFirst ? goToPreviousImage : undefined}
+                onSwipeDown={closeFullScreen}
               />
             </View>
 
-            {/* Previous / next navigation buttons */}
-            {allImages.length > 1 && (
-              <View style={styles.navigationControls}>
-                <TouchableOpacity
-                  style={[
-                    styles.navButton,
-                    fullScreenIndex === 0 && styles.navButtonDisabled,
-                  ]}
-                  onPress={goToPreviousImage}
-                  disabled={fullScreenIndex === 0}
-                >
-                  <Ionicons
-                    name="chevron-back"
-                    size={32}
-                    color={fullScreenIndex === 0 ? "#666" : "#fff"}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.navButton,
-                    fullScreenIndex === allImages.length - 1 &&
-                      styles.navButtonDisabled,
-                  ]}
-                  onPress={goToNextImage}
-                  disabled={fullScreenIndex === allImages.length - 1}
-                >
-                  <Ionicons
-                    name="chevron-forward"
-                    size={32}
-                    color={
-                      fullScreenIndex === allImages.length - 1
-                        ? "#666"
-                        : "#fff"
-                    }
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
         </GestureHandlerRootView>
       </Modal>
     </View>
   );
 };
+
 export default ImageGalleryAdvanced;
 
 const styles = StyleSheet.create({
@@ -408,11 +425,7 @@ const styles = StyleSheet.create({
   scrollView: { width: "100%", height: "100%" },
   imageContainer: { width: SCREEN_WIDTH, height: 350, position: "relative" },
   image: { width: "100%", height: "100%", backgroundColor: COLORS.secondary },
-  placeholderImage: {
-    width: "100%",
-    height: 350,
-    backgroundColor: COLORS.secondary,
-  },
+  placeholderImage: { width: "100%", height: 350, backgroundColor: COLORS.secondary },
   pagination: {
     flexDirection: "row",
     position: "absolute",
@@ -477,22 +490,19 @@ const styles = StyleSheet.create({
   },
   fullScreenCounterText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
   imageArea: { flex: 1, justifyContent: "center", alignItems: "center" },
-  navigationControls: {
+  // Subtle left/right chevrons to hint at swipe navigation
+  swipeHints: {
     position: "absolute",
-    bottom: "48%",
+    top: 0,
+    bottom: 0,
     left: 0,
     right: 0,
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 10,
+    alignItems: "center",
+    paddingHorizontal: 8,
     zIndex: 999,
   },
-  navButton: {
-    borderRadius: 30,
-    padding: 7,
-    backgroundColor: "rgba(0, 0, 28, 0.1)",
-  },
-  navButtonDisabled: { backgroundColor: "rgba(0, 0, 0, 0.3)" },
   zoomContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   imageWrapper: {
     flex: 1,
@@ -517,4 +527,3 @@ const styles = StyleSheet.create({
   },
   gradient: { height: "100%", width: "50%" },
 });
-

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ViewStyle } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,19 +9,42 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
-import COLORS from "../constants/colors"; // تأكد من المسار الصحيح
+import COLORS from "../constants/colors";
 
+// Card dimensions
 const CARD_WIDTH = 200;
 const CARD_HEIGHT = 320;
 const CARD_MARGIN = 5;
 
-// ألوان الـ Skeleton
+// Skeleton color palette
 const SKELETON_BASE_COLOR = "#1f3a60";
 const SKELETON_HIGHLIGHT_COLOR = "#2a4a75";
-const CARD_BG_COLOR = COLORS.primary; // لون خلفية الكارت الوهمي
+const CARD_BG_COLOR = COLORS.primary;
 
-const SkeletonGameCard = () => {
-  // 1. إعداد الأنيميشن (Opacity Pulse)
+// Types
+
+interface SkeletonItemProps {
+  style?: ViewStyle;
+  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+}
+
+// SkeletonItem
+
+const SkeletonItem = React.memo<SkeletonItemProps>(({ style, animatedStyle }) => (
+  <Animated.View style={[styles.skeletonItem, style, animatedStyle]}>
+    <LinearGradient
+      colors={[SKELETON_BASE_COLOR, SKELETON_HIGHLIGHT_COLOR]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={StyleSheet.absoluteFill}
+    />
+  </Animated.View>
+));
+
+// Main
+
+const SkeletonTopRatedCard: React.FC = () => {
+  // Opacity pulse animation
   const opacity = useSharedValue(0.5);
 
   useEffect(() => {
@@ -39,72 +62,57 @@ const SkeletonGameCard = () => {
     opacity: opacity.value,
   }));
 
-  // مكون فرعي لرسم الأشكال
-  const SkeletonItem = ({ style }) => (
-    <Animated.View style={[styles.skeletonItem, style, animatedStyle]}>
-      <LinearGradient
-        colors={[SKELETON_BASE_COLOR, SKELETON_HIGHLIGHT_COLOR]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
-    </Animated.View>
-  );
-
   return (
     <View style={styles.cardContainer}>
-      {/* 1. Cover Image Skeleton */}
-      {/* يطابق height: 160 */}
+      {/* Cover image skeleton */}
       <View style={styles.coverContainer}>
-        <SkeletonItem style={styles.coverSkeleton} />
+        <SkeletonItem animatedStyle={animatedStyle} style={styles.coverSkeleton} />
       </View>
 
-      {/* 2. Info Container Skeleton */}
-      {/* يطابق padding: 12 */}
+      {/* Info container skeleton */}
       <View style={styles.infoContainer}>
-        {/* Title Area */}
+        {/* Title area */}
         <View>
-          {/* Title Line 1 */}
+          {/* First title line */}
           <SkeletonItem
-            style={{
-              width: "90%",
-              height: 18,
-              borderRadius: 4,
-              marginBottom: 6,
-            }}
+            animatedStyle={animatedStyle}
+            style={{ width: "90%", height: 18, borderRadius: 4, marginBottom: 6 }}
           />
-          {/* Title Line 2 + Year Badge simulation */}
+          {/* Second title line (year badge) */}
           <View style={{ flexDirection: "row", gap: 6 }}>
             <SkeletonItem
+              animatedStyle={animatedStyle}
               style={{ width: "40%", height: 18, borderRadius: 4 }}
             />
-            <SkeletonItem style={{ width: 40, height: 18, borderRadius: 8 }} />
+            <SkeletonItem
+              animatedStyle={animatedStyle}
+              style={{ width: 40, height: 18, borderRadius: 8 }}
+            />
           </View>
         </View>
 
-        {/* Rating Area (Bottom) */}
-        {/* يطابق ratingMainContainer */}
+        {/* Rating area (bottom) */}
         <View style={styles.ratingContainer}>
-          {/* Rating Circle Skeleton (55x55) */}
-          <SkeletonItem style={styles.ratingCircle} />
+          {/* Rating circle skeleton */}
+          <SkeletonItem animatedStyle={animatedStyle} style={styles.ratingCircle} />
 
-          {/* Genres List Skeleton */}
+          {/* Genre tags skeleton */}
           <View style={styles.genresContainer}>
             <SkeletonItem
-              style={{
-                width: 70,
-                height: 20,
-                borderRadius: 12,
-                marginBottom: 4,
-              }}
+              animatedStyle={animatedStyle}
+              style={{ width: 70, height: 20, borderRadius: 12, marginBottom: 4 }}
             />
-            <SkeletonItem style={{ width: 50, height: 20, borderRadius: 12 }} />
+            <SkeletonItem
+              animatedStyle={animatedStyle}
+              style={{ width: 50, height: 20, borderRadius: 12 }}
+            />
           </View>
         </View>
       </View>
     </View>
   );
 };
+export default React.memo(SkeletonTopRatedCard);
 
 const styles = StyleSheet.create({
   cardContainer: {
@@ -114,7 +122,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: CARD_BG_COLOR,
     overflow: "hidden",
-    // إضافة Shadow خفيف ليشبه الكارت الحقيقي
+    // Subtle shadow to mimic the real card
     elevation: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -130,20 +138,20 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   infoContainer: {
-    flex: 1, // يأخذ المساحة المتبقية (320 - 160 = 160)
+    flex: 1, // remaining space: 320 - 160 = 160
     padding: 12,
-    justifyContent: "space-between", // يوزع المحتوى بين العنوان (فوق) والتقييم (تحت)
+    justifyContent: "space-between", // title top, rating bottom
   },
   ratingContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    marginBottom: 12, // يطابق marginBottom في الكود الأصلي
+    marginBottom: 12, // matches marginBottom in the real card
   },
   ratingCircle: {
     width: 55,
     height: 55,
-    borderRadius: 33, // نصف القطر لجعلها دائرية
+    borderRadius: 33, // half of (55 + some padding) for a circular shape
   },
   genresContainer: {
     flexDirection: "column",
@@ -154,5 +162,3 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 });
-
-export default SkeletonGameCard;

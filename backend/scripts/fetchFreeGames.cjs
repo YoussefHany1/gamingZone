@@ -11,8 +11,9 @@ const CONFIG = {
     "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US",
   STEAM_API_URL:
     "https://www.gamerpower.com/api/giveaways?platform=steam&type=game&sort-by=value",
+  GOG_API_URL:
+    "https://www.gamerpower.com/api/giveaways?platform=gog&type=game&sort-by=value",
   FCM_TOPIC: "free_games_alerts",
-  // 🆕 إضافة رابط الـ API
   API_BASE_URL: "https://igdb-api-omega.vercel.app",
 };
 
@@ -65,6 +66,9 @@ const cleanGameNameForSearch = (gameName) => {
   // remove "(Steam) Giveaway" pattern
   cleanName = cleanName.replace(/\(Steam\)\s*Giveaway/gi, "");
 
+  // remove "(GOG) Giveaway" pattern
+  cleanName = cleanName.replace(/\(GOG\)\s*Giveaway/gi, "");
+
   // remove "Giveaway" word
   cleanName = cleanName.replace(/Giveaway/gi, "");
 
@@ -99,7 +103,7 @@ async function searchIgdbGameId(gameName) {
 async function sendGameNotification(game) {
   if (!fcmEnabled) return;
   const imageLink = game.image || null;
-  const storeName = game.store === "steam" ? "Steam" : "Epic Games";
+  const storeName = game.store === "steam" ? "Steam" : game.store === "gog" ? "GOG" : "Epic Games";
 
   const message = {
     topic: CONFIG.FCM_TOPIC,
@@ -141,7 +145,7 @@ async function fetchSteamGames() {
 
     return games.map((game) => ({
       originalId: String(game.id),
-      title: game.title,
+      title: cleanGameNameForSearch(game.title),
       description: game.description || "",
       image: game.image,
       slug: `steam-${game.id}`,
@@ -154,6 +158,31 @@ async function fetchSteamGames() {
     }));
   } catch (error) {
     console.error(`⚠️ Steam Fetch failed: ${error.message}`);
+    return [];
+  }
+}
+
+async function fetchGogGames() {
+  try {
+    console.log("📥 Fetching from GOG (via GamerPower)...");
+    const response = await axios.get(CONFIG.GOG_API_URL);
+    const games = response.data;
+
+    return games.map((game) => ({
+      originalId: String(game.id),
+      title: cleanGameNameForSearch(game.title),
+      description: game.description || "",
+      image: game.image,
+      slug: `gog-${game.id}`,
+      url: game.open_giveaway_url,
+      store: "gog",
+      type: "current",
+      startDate: game.published_date,
+      endDate: game.end_date,
+      fetchedAt: new Date().toISOString(),
+    }));
+  } catch (error) {
+    console.error(`⚠️ GOG Fetch failed: ${error.message}`);
     return [];
   }
 }
@@ -260,17 +289,18 @@ async function run() {
   console.log("🚀 Starting Free Games Fetcher (Safe-Update Mode)...");
 
   try {
-    const [epicGames, steamGames] = await Promise.all([
+    const [epicGames, steamGames, gogGames] = await Promise.all([
       fetchEpicGames().catch((e) => {
         console.error(e.message);
         return [];
       }),
       fetchSteamGames(),
+      fetchGogGames(),
     ]);
 
-    const rawGames = [...epicGames, ...steamGames];
+    const rawGames = [...epicGames, ...steamGames, ...gogGames];
     console.log(
-      `📥 Total Fetched: ${rawGames.length} entries (${epicGames.length} Epic, ${steamGames.length} Steam).`,
+      `📥 Total Fetched: ${rawGames.length} entries (${epicGames.length} Epic, ${steamGames.length} Steam, ${gogGames.length} GOG).`,
     );
 
     const uniqueGamesMap = new Map();

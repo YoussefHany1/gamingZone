@@ -177,8 +177,9 @@ function FreeGames(): React.ReactElement {
       const StoreIcon =
         item.store === "steam"
           ? require("../../assets/steam.png")
-          : require("../../assets/epic-games.png");
-
+          : item.store === "gog"
+            ? require("../../assets/gog.png")
+            : require("../../assets/epic-games.png");
       const handleCardPress = (): void => {
         if (item.igdb_game_id) {
           navigation.navigate("GameDetails", {

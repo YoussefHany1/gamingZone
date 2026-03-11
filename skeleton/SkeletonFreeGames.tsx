@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ViewStyle } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -11,17 +11,37 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient";
 import COLORS from "../constants/colors";
 
+// Card dimensions
 const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
 const CARD_MARGIN = 5;
 
-// ألوان الـ Skeleton (Dark Theme)
+// Skeleton color palette
 const SKELETON_BASE_COLOR = "#1f3a60";
 const SKELETON_HIGHLIGHT_COLOR = "#2a4a75";
-const CARD_BG_COLOR = COLORS.primary; // لون خلفية الكارت الوهمي
+const CARD_BG_COLOR = COLORS.primary;
 
-const SkeletonFreeGames = () => {
-  // 1. إعداد الأنيميشن (Opacity Pulse)
+// Types
+interface SkeletonItemProps {
+  style?: ViewStyle;
+  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+}
+
+// SkeletonItem
+const SkeletonItem = React.memo<SkeletonItemProps>(({ style, animatedStyle }) => (
+  <Animated.View style={[styles.skeletonItem, style, animatedStyle]}>
+    <LinearGradient
+      colors={[SKELETON_BASE_COLOR, SKELETON_HIGHLIGHT_COLOR]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={StyleSheet.absoluteFill}
+    />
+  </Animated.View>
+));
+
+// Main
+const SkeletonFreeGames: React.FC = () => {
+  // Opacity pulse animation
   const opacity = useSharedValue(0.5);
 
   useEffect(() => {
@@ -39,27 +59,15 @@ const SkeletonFreeGames = () => {
     opacity: opacity.value,
   }));
 
-  // مكون فرعي لرسم الأشكال
-  const SkeletonItem = ({ style }) => (
-    <Animated.View style={[styles.skeletonItem, style, animatedStyle]}>
-      <LinearGradient
-        colors={[SKELETON_BASE_COLOR, SKELETON_HIGHLIGHT_COLOR]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
-    </Animated.View>
-  );
-
   return (
     <View style={styles.cardContainer}>
-      {/* 1. Image Container (Top) */}
-      {/* يطابق height: 200 */}
+      {/* Image Container */}
       <View style={styles.imageContainer}>
-        <SkeletonItem style={styles.coverSkeleton} />
+        <SkeletonItem animatedStyle={animatedStyle} style={styles.coverSkeleton} />
 
-        {/* Store Icon Badge Placeholder (Bottom Left of Image) */}
+        {/* Store icon badge placeholder */}
         <SkeletonItem
+          animatedStyle={animatedStyle}
           style={{
             position: "absolute",
             bottom: 8,
@@ -68,34 +76,34 @@ const SkeletonFreeGames = () => {
             height: 34,
             borderRadius: 17,
             borderWidth: 2,
-            borderColor: CARD_BG_COLOR, // لمحاكاة البوردر
+            borderColor: CARD_BG_COLOR, // simulates the badge border
           }}
         />
       </View>
 
-      {/* 2. Info Section (Bottom) */}
-      {/* يطابق padding: 12 */}
+      {/* Info Section */}
       <View style={styles.infoSection}>
-        {/* Title Lines (Centered) */}
+        {/* Title lines */}
         <View style={{ alignItems: "center", gap: 6 }}>
-          <SkeletonItem style={{ width: "90%", height: 14, borderRadius: 4 }} />
-          <SkeletonItem style={{ width: "60%", height: 14, borderRadius: 4 }} />
+          <SkeletonItem animatedStyle={animatedStyle} style={{ width: "90%", height: 14, borderRadius: 4 }} />
+          <SkeletonItem animatedStyle={animatedStyle} style={{ width: "60%", height: 14, borderRadius: 4 }} />
         </View>
 
-        {/* Claim Button Placeholder */}
-        {/* يطابق savingsButton */}
+        {/* Claim button placeholder */}
         <SkeletonItem
+          animatedStyle={animatedStyle}
           style={{
             width: "100%",
             height: 36,
             borderRadius: 10,
-            marginTop: 8, // يطابق margin زر التوفير
+            marginTop: 8,
           }}
         />
       </View>
     </View>
   );
 };
+export default React.memo(SkeletonFreeGames);
 
 const styles = StyleSheet.create({
   cardContainer: {
@@ -105,7 +113,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: CARD_BG_COLOR,
     overflow: "hidden",
-    // إضافة Shadow خفيف
+    // Subtle shadow
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -122,14 +130,12 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   infoSection: {
-    flex: 1, // المساحة المتبقية (100px)
+    flex: 1, // remaining space (~100px)
     padding: 12,
-    justifyContent: "space-between", // يوزع المساحة بين العنوان والزر
+    justifyContent: "space-between", // distributes title and button
   },
   skeletonItem: {
     backgroundColor: SKELETON_BASE_COLOR,
     overflow: "hidden",
   },
 });
-
-export default SkeletonFreeGames;

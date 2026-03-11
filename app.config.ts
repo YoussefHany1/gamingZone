@@ -70,6 +70,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
           mainApplication["meta-data"].push(channelMetaData);
 
+          // Add alwaysRetainTaskState to MainActivity so Android doesn't
+          // destroy the task stack after a long background (blank screen fix).
+          const mainActivity = androidManifest.manifest.application?.[0]?.activity?.find(
+            (a: { $: Record<string, string> }) => a.$["android:name"] === ".MainActivity"
+          );
+          if (mainActivity) {
+            mainActivity.$["android:alwaysRetainTaskState"] = "true";
+          }
+
           return modConfig;
         },
       },

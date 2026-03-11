@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { View, StyleSheet, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
@@ -11,14 +11,16 @@ import COLORS from "../constants/colors";
 
 const { width } = Dimensions.get("window");
 
-const SkeletonGameCard = () => {
+// Main
+
+const SkeletonGameCard: React.FC = () => {
   const translateX = useSharedValue(-width);
 
   useEffect(() => {
     translateX.value = withRepeat(
       withTiming(width, { duration: 1500 }),
-      -1, // تكرار لا نهائي
-      false // عدم العكس (يبدأ من البداية دائماً)
+      -1, // infinite repetition
+      false // always sweep left-to-right, no reverse
     );
   }, []);
 
@@ -30,7 +32,7 @@ const SkeletonGameCard = () => {
 
   return (
     <View style={styles.cardContainer}>
-      {/* محاكاة صورة الغلاف */}
+      {/* Game cover image placeholder */}
       <View style={styles.coverPlaceholder}>
         <Animated.View style={[styles.shimmerOverlay, animatedStyle]}>
           <LinearGradient
@@ -42,11 +44,12 @@ const SkeletonGameCard = () => {
         </Animated.View>
       </View>
 
-      {/* محاكاة عنوان اللعبة */}
+      {/* Game title placeholder */}
       <View style={styles.titlePlaceholder} />
     </View>
   );
 };
+export default React.memo(SkeletonGameCard);
 
 const styles = StyleSheet.create({
   cardContainer: {
@@ -65,7 +68,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 190,
     borderRadius: 10,
-    backgroundColor: COLORS.secondary, // لون رمادي أساسي
+    backgroundColor: COLORS.secondary, // base gray color
     overflow: "hidden",
     marginBottom: 16,
   },
@@ -79,5 +82,3 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
 });
-
-export default SkeletonGameCard;

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ViewStyle } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,17 +10,40 @@ import Animated, {
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 
+// Card dimensions
 const CARD_WIDTH = 300;
 const CARD_HEIGHT = 350;
 const CARD_MARGIN = 10;
 
-// ألوان الـ Skeleton
+// Skeleton color palette
 const SKELETON_BASE_COLOR = "#1f3a60";
 const SKELETON_HIGHLIGHT_COLOR = "#2a4a75";
-const CARD_BG_COLOR = "#1a3052"; // لون خلفية الكارت
+const CARD_BG_COLOR = "#1a3052"; // Card background color
 
-const SkeletonComingSoonCard = () => {
-  // 1. إعداد الأنيميشن (Opacity Pulse)
+// Types
+
+interface SkeletonItemProps {
+  style?: ViewStyle;
+  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+}
+
+// SkeletonItem
+
+const SkeletonItem = React.memo<SkeletonItemProps>(({ style, animatedStyle }) => (
+  <Animated.View style={[styles.skeletonItem, style, animatedStyle]}>
+    <LinearGradient
+      colors={[SKELETON_BASE_COLOR, SKELETON_HIGHLIGHT_COLOR]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={StyleSheet.absoluteFill}
+    />
+  </Animated.View>
+));
+
+// Main
+
+const SkeletonComingSoonCard: React.FC = () => {
+  // Opacity pulse animation value
   const opacity = useSharedValue(0.5);
 
   useEffect(() => {
@@ -38,25 +61,11 @@ const SkeletonComingSoonCard = () => {
     opacity: opacity.value,
   }));
 
-  // مكون فرعي لرسم الأشكال
-  const SkeletonItem = ({ style }) => (
-    <Animated.View style={[styles.skeletonItem, style, animatedStyle]}>
-      <LinearGradient
-        colors={[SKELETON_BASE_COLOR, SKELETON_HIGHLIGHT_COLOR]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
-    </Animated.View>
-  );
-
   return (
     <View style={styles.cardContainer}>
-      {/* 1. Absolute Elements (Date & Hype) */}
-
-      {/* Date Calendar Skeleton (Top Left) */}
-      {/* يطابق top: 10, left: 10, width: 55 */}
+      {/* Date Calendar Skeleton */}
       <SkeletonItem
+        animatedStyle={animatedStyle}
         style={{
           position: "absolute",
           top: 10,
@@ -67,32 +76,33 @@ const SkeletonComingSoonCard = () => {
           zIndex: 10,
         }}
       />
-      {/* 2. Main Content (Centered) */}
+
       <View style={styles.contentContainer}>
         {/* Cover Image Skeleton */}
-        {/* يطابق width: 140, height: 200, marginBottom: 20 */}
         <View style={styles.coverContainer}>
-          <SkeletonItem style={styles.cover} />
+          <SkeletonItem animatedStyle={animatedStyle} style={styles.cover} />
         </View>
 
         {/* Info Container */}
         <View style={styles.infoContainer}>
-          {/* Title Lines (Centered) */}
+          {/* Title lines */}
           <SkeletonItem
+            animatedStyle={animatedStyle}
             style={{ width: 200, height: 22, borderRadius: 4, marginBottom: 8 }}
           />
 
-          {/* Platforms Row (Centered) */}
+          {/* Platforms row */}
           <View style={styles.platformsContainer}>
-            <SkeletonItem style={styles.platformBadge} />
-            <SkeletonItem style={styles.platformBadge} />
-            <SkeletonItem style={styles.platformBadge} />
+            <SkeletonItem animatedStyle={animatedStyle} style={styles.platformBadge} />
+            <SkeletonItem animatedStyle={animatedStyle} style={styles.platformBadge} />
+            <SkeletonItem animatedStyle={animatedStyle} style={styles.platformBadge} />
           </View>
         </View>
       </View>
     </View>
   );
 };
+export default React.memo(SkeletonComingSoonCard);
 
 const styles = StyleSheet.create({
   cardContainer: {
@@ -108,12 +118,11 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     padding: 16,
-    justifyContent: "center", // لتوسيط المحتوى رأسياً
-    alignItems: "center", // لتوسيط المحتوى أفقياً
+    justifyContent: "center",
+    alignItems: "center",
   },
   coverContainer: {
     marginBottom: 20,
-    // Shadow simulation for the placeholder
     elevation: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -126,7 +135,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   infoContainer: {
-    alignItems: "center", // توسيط النصوص
+    alignItems: "center",
     width: "100%",
   },
   platformsContainer: {
@@ -144,5 +153,3 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 });
-
-export default SkeletonComingSoonCard;

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { View, StyleSheet, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
@@ -11,7 +11,25 @@ import COLORS from "../constants/colors";
 
 const { width } = Dimensions.get("window");
 
-const DropdownSkeleton = () => {
+// Types
+interface ShimmerProps {
+  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+}
+
+// Shimmer
+const Shimmer = React.memo<ShimmerProps>(({ animatedStyle }) => (
+  <Animated.View style={[StyleSheet.absoluteFill, animatedStyle]}>
+    <LinearGradient
+      colors={["transparent", "rgba(255,255,255,0.2)", "transparent"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={StyleSheet.absoluteFill}
+    />
+  </Animated.View>
+));
+
+// Main
+const DropdownSkeleton: React.FC = () => {
   const translateX = useSharedValue(-width);
 
   useEffect(() => {
@@ -26,48 +44,36 @@ const DropdownSkeleton = () => {
     transform: [{ translateX: translateX.value }],
   }));
 
-  const Shimmer = () => (
-    <Animated.View style={[StyleSheet.absoluteFill, animatedStyle]}>
-      <LinearGradient
-        colors={["transparent", "rgba(255,255,255,0.2)", "transparent"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
-    </Animated.View>
-  );
-
   return (
     <View style={styles.wrapper}>
       {/* Header Title Skeleton */}
-      {/* يحاكي العنوان: Latest News */}
       <View style={styles.headerSkeleton}>
-        <Shimmer />
+        <Shimmer animatedStyle={animatedStyle} />
       </View>
 
       {/* Dropdown Box Skeleton */}
-      {/* يحاكي القائمة المنسدلة */}
       <View style={styles.pickerContainer}>
         <View style={styles.pickerTextLine}>
-          <Shimmer />
+          <Shimmer animatedStyle={animatedStyle} />
         </View>
       </View>
     </View>
   );
 };
+export default React.memo(DropdownSkeleton);
 
 const styles = StyleSheet.create({
   wrapper: {
     alignItems: "center",
     paddingBottom: 20,
-    marginTop: 20, // ✅ يتطابق مع marginTop في LatestNews header
+    marginTop: 20,
   },
   headerSkeleton: {
-    width: 250, // عرض تقريبي للعنوان مع الحشوة
-    height: 50, // ارتفاع تقريبي للعنوان
+    width: 250,
+    height: 50,
     borderRadius: 16,
-    backgroundColor: COLORS.secondary + "80", // لون أغمق قليلاً لمحاكاة خلفية العنوان
-    marginBottom: 30, // ✅ نفس marginBottom في LatestNews header
+    backgroundColor: COLORS.secondary + "80",
+    marginBottom: 30,
     overflow: "hidden",
   },
   pickerContainer: {
@@ -75,7 +81,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: "hidden",
     backgroundColor: COLORS.secondary + "50",
-    width: "90%", // عرض الـ Dropdown عادة
+    width: "90%",
     height: 50,
     justifyContent: "center",
     paddingHorizontal: 15,
@@ -90,4 +96,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DropdownSkeleton;
+

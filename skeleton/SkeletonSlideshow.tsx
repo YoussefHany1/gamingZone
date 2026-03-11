@@ -11,20 +11,22 @@ import COLORS from "../constants/colors";
 
 const { width } = Dimensions.get("window");
 
-const SlideshowSkeleton = () => {
-  // 1. قيمة مشتركة للتحريك الأفقي (بدلاً من الشفافية)
+// Main
+
+const SlideshowSkeleton: React.FC = () => {
+  // Horizontal translate value for the shimmer pass
   const translateX = useSharedValue(-width);
 
-  // 2. حلقة التحريك (Infinite Loop)
+  // Infinite shimmer loop — sweeps left to right
   useEffect(() => {
     translateX.value = withRepeat(
-      withTiming(width, { duration: 1500 }), // تحريك من اليسار لليمين
-      -1, // تكرار لا نهائي
-      false // عدم العكس (يبدأ من جديد دائماً)
+      withTiming(width, { duration: 1500 }), // sweep from left to right
+      -1, // infinite repetition
+      false // always restart from the left (no reverse)
     );
   }, []);
 
-  // 3. تطبيق الستايل المتحرك
+  // Apply the animated transform
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateX: translateX.value }],
@@ -33,16 +35,16 @@ const SlideshowSkeleton = () => {
 
   return (
     <View style={styles.container}>
-      {/* خلفية مكان الصورة - ثابتة الآن */}
+      {/* image placeholder */}
       <View style={styles.imagePlaceholder} />
 
-      {/* أماكن النصوص - ثابتة الآن */}
+      {/* text line placeholders */}
       <View style={styles.textContainer}>
         <View style={[styles.textLine, { width: "80%" }]} />
         <View style={[styles.textLine, { width: "60%", marginTop: 8 }]} />
       </View>
 
-      {/* طبقة الوميض المتحركة (Shimmer Overlay) */}
+      {/* Animated shimmer overlay */}
       <Animated.View style={[styles.shimmerOverlay, animatedStyle]}>
         <LinearGradient
           colors={["transparent", "rgba(255,255,255,0.3)", "transparent"]}
@@ -54,14 +56,15 @@ const SlideshowSkeleton = () => {
     </View>
   );
 };
+export default React.memo(SlideshowSkeleton);
 
 const styles = StyleSheet.create({
   container: {
-    height: 400, // نفس ارتفاع الـ Swiper
+    height: 400,
     width: "100%",
     backgroundColor: COLORS.secondary,
     position: "relative",
-    overflow: "hidden", // ضروري لضمان بقاء الوميض داخل الحاوية
+    overflow: "hidden",
   },
   imagePlaceholder: {
     ...StyleSheet.absoluteFillObject,
@@ -89,4 +92,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SlideshowSkeleton;
+

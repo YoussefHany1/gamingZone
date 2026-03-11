@@ -5,7 +5,7 @@ import React, {
   useRef,
   useCallback,
 } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, AppState, AppStateStatus } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import {
@@ -24,6 +24,7 @@ import COLORS from "./constants/colors";
 import Loading from "./Loading";
 import useNotifications from "./hooks/useNotifications";
 import useRateApp from "./hooks/useRateApp";
+import useUpdateCheck from "./hooks/useUpdateCheck";
 import { MainAppTabs, AuthStack } from "./navigation/AppNavigator";
 
 // Types
@@ -44,7 +45,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,
-      gcTime: 1000 * 60 * 30, 
+      gcTime: 1000 * 60 * 30,
       retry: 2,
     },
   },
@@ -90,6 +91,7 @@ function App(): React.ReactElement | null {
 
   const routeNameRef = useRef<string | undefined>(undefined);
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
+  const appState = useRef<AppStateStatus>(AppState.currentState);
 
   // Auth State
   useEffect(() => {
@@ -123,7 +125,43 @@ function App(): React.ReactElement | null {
       }
     );
 
-    return () => unsubscribeAuth();
+    // Guard against blank screen after long background / screen lock.
+    // When the OS suspends the JS thread for a long time and then resumes,
+    // React state resets but Firebase's native layer still knows the current user.
+    // If we're still in "loading" state when coming to foreground, give the auth
+    // listener 2s to fire naturally — if it doesn't, read currentUser directly
+    // from the native module and clear loading ourselves.
+    let resumeTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const handleAppStateChange = (nextState: AppStateStatus): void => {
+      const prev = appState.current;
+      appState.current = nextState;
+
+      const comingToForeground =
+        (prev === "background" || prev === "inactive") &&
+        nextState === "active";
+
+      if (!comingToForeground) return;
+
+      // Give the auth listener 2s to fire on its own first
+      resumeTimer = setTimeout(() => {
+        setLoading((wasLoading) => {
+          if (!wasLoading) return false; // already resolved, nothing to do
+          // Auth listener didn't fire in time — read from native layer directly
+          const currentUser = auth().currentUser;
+          setUser(currentUser);
+          return false; // clear loading
+        });
+      }, 2000);
+    };
+
+    const appStateSub = AppState.addEventListener("change", handleAppStateChange);
+
+    return () => {
+      unsubscribeAuth();
+      appStateSub.remove();
+      if (resumeTimer) clearTimeout(resumeTimer);
+    };
   }, []);
 
   // Splash Hide
@@ -136,6 +174,7 @@ function App(): React.ReactElement | null {
   // Hooks
   useNotifications(user);
   useRateApp();
+  useUpdateCheck();
 
   // Navigation Analytics
   const handleNavigationReady = useCallback(() => {

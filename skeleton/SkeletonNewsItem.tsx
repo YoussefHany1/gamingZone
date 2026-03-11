@@ -11,7 +11,30 @@ import COLORS from "../constants/colors";
 
 const { width } = Dimensions.get("window");
 
-const SkeletonNewsItem = ({ language }) => {
+// Types
+interface SkeletonNewsItemProps {
+  /** ISO language code — used to determine text direction (e.g. "ar" for RTL) */
+  language?: string;
+}
+
+interface ShimmerProps {
+  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+}
+
+// Shimmer
+const Shimmer = React.memo<ShimmerProps>(({ animatedStyle }) => (
+  <Animated.View style={[styles.shimmerOverlay, animatedStyle]}>
+    <LinearGradient
+      colors={["transparent", "rgba(255,255,255,0.1)", "transparent"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={StyleSheet.absoluteFill}
+    />
+  </Animated.View>
+));
+
+// Main
+const SkeletonNewsItem: React.FC<SkeletonNewsItemProps> = ({ language }) => {
   const translateX = useSharedValue(-width);
 
   useEffect(() => {
@@ -26,49 +49,38 @@ const SkeletonNewsItem = ({ language }) => {
     transform: [{ translateX: translateX.value }],
   }));
 
-  const Shimmer = () => (
-    <Animated.View style={[styles.shimmerOverlay, animatedStyle]}>
-      <LinearGradient
-        colors={["transparent", "rgba(255,255,255,0.1)", "transparent"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
-    </Animated.View>
-  );
-
   const isRTL = language === "ar";
 
   return (
     <View
       style={[
         styles.container,
-        { direction: isRTL ? "rtl" : "ltr" }, // ✅ ضبط الاتجاه
+        { direction: isRTL ? "rtl" : "ltr" }, // adjust text direction per language
       ]}
     >
-      {/* Text Container */}
+      {/* Text container */}
       <View
         style={[
           styles.textContainer,
-          // ✅ ضبط الهوامش حسب اللغة كما في LatestNews
           isRTL ? { paddingLeft: 8 } : { paddingRight: 8 },
         ]}
       >
         <View style={[styles.skeletonLine, styles.titleLine]}>
-          <Shimmer />
+          <Shimmer animatedStyle={animatedStyle} />
         </View>
         <View style={[styles.skeletonLine, styles.descLine]}>
-          <Shimmer />
+          <Shimmer animatedStyle={animatedStyle} />
         </View>
       </View>
 
-      {/* Thumbnail */}
+      {/* Thumbnail placeholder */}
       <View style={styles.thumbnail}>
-        <Shimmer />
+        <Shimmer animatedStyle={animatedStyle} />
       </View>
     </View>
   );
 };
+export default React.memo(SkeletonNewsItem);
 
 const styles = StyleSheet.create({
   container: {
@@ -77,8 +89,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#4a5565", // ✅ نفس لون LatestNews
-    borderRadius: 16, // ✅ إضافة borderRadius للتطابق
+    borderBottomColor: "#4a5565", // matches LatestNews border color
+    borderRadius: 16,
   },
   textContainer: {
     width: "65%",
@@ -87,7 +99,7 @@ const styles = StyleSheet.create({
     width: 135,
     height: 100,
     borderRadius: 16,
-    backgroundColor: COLORS.secondary + "40", // شفافية قليلة لتمييز السكيلتون
+    backgroundColor: COLORS.secondary + "40", // semi-transparent to distinguish skeleton
     overflow: "hidden",
   },
   skeletonLine: {
@@ -99,7 +111,7 @@ const styles = StyleSheet.create({
   titleLine: {
     width: "90%",
     height: 20,
-    marginBottom: 12, // ✅ نفس المسافة في LatestNews
+    marginBottom: 12, // matches spacing in LatestNews
   },
   descLine: {
     width: "60%",
@@ -109,5 +121,3 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
 });
-
-export default SkeletonNewsItem;

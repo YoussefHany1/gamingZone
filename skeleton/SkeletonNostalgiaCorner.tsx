@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, StyleSheet, Dimensions } from "react-native";
+import { View, StyleSheet, Dimensions, ViewStyle } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -15,13 +15,32 @@ const CARD_WIDTH = width * 0.55;
 const CARD_HEIGHT = 360;
 const CARD_MARGIN = 10;
 
-// ألوان الـ Skeleton متناسقة مع الثيم الكحلي القديم
-const SKELETON_BASE_COLOR = "#1a3052"; // نفس لون نهاية تدرج الخلفية
+// Skeleton colors
+const SKELETON_BASE_COLOR = "#1a3052";
 const SKELETON_HIGHLIGHT_COLOR = "#2a4a75";
-const FRAME_BORDER_COLOR = "#1f3a60"; // لون حدود الإطار (أغمق قليلاً من الأصلي للـ skeleton)
+const FRAME_BORDER_COLOR = "#1f3a60";
 
-const SkeletonNostalgiaCard = () => {
-  // 1. إعداد الأنيميشن (Opacity Pulse)
+// Types
+interface SkeletonItemProps {
+  style?: ViewStyle;
+  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+}
+
+// SkeletonItem
+const SkeletonItem = React.memo<SkeletonItemProps>(({ style, animatedStyle }) => (
+  <Animated.View style={[styles.skeletonItem, style, animatedStyle]}>
+    <LinearGradient
+      colors={[SKELETON_BASE_COLOR, SKELETON_HIGHLIGHT_COLOR]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={StyleSheet.absoluteFill}
+    />
+  </Animated.View>
+));
+
+// Main
+const SkeletonNostalgiaCard: React.FC = () => {
+  // Opacity pulse animation
   const opacity = useSharedValue(0.5);
 
   useEffect(() => {
@@ -39,45 +58,32 @@ const SkeletonNostalgiaCard = () => {
     opacity: opacity.value,
   }));
 
-  // مكون فرعي لرسم الأشكال
-  const SkeletonItem = ({ style }) => (
-    <Animated.View style={[styles.skeletonItem, style, animatedStyle]}>
-      <LinearGradient
-        colors={[SKELETON_BASE_COLOR, SKELETON_HIGHLIGHT_COLOR]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
-    </Animated.View>
-  );
-
   return (
     <View style={styles.gameCard}>
-      {/* خلفية الكارت */}
+      {/* Card background */}
       <View style={styles.paperBackground} />
 
-      {/* الإطار الخارجي (ثابت ليعطي شكل التصميم) */}
+      {/* Outer decorative frame */}
       <View style={styles.outerFrame}>
-        {/* Decade Badge Skeleton (Top Right) */}
-        <SkeletonItem style={styles.decadeBadge} />
+        {/* Decade badge skeleton */}
+        <SkeletonItem animatedStyle={animatedStyle} style={styles.decadeBadge} />
 
-        {/* Cover Skeleton (Centered) */}
+        {/* Cover image skeleton */}
         <View style={styles.coverFrame}>
-          <SkeletonItem style={styles.cover} />
+          <SkeletonItem animatedStyle={animatedStyle} style={styles.cover} />
         </View>
 
-        {/* Title Ribbon Skeleton */}
-        {/* نستبدل الشكل المعقد بمستطيل بسيط يمثل النص */}
+        {/* Title ribbon skeleton */}
         <View style={styles.ribbonContainer}>
-          <SkeletonItem style={styles.ribbonSkeleton} />
+          <SkeletonItem animatedStyle={animatedStyle} style={styles.ribbonSkeleton} />
         </View>
 
-        {/* Info/Console Skeleton */}
+        {/* platform info skeleton */}
         <View style={styles.infoContainer}>
-          <SkeletonItem style={styles.consoleSkeleton} />
+          <SkeletonItem animatedStyle={animatedStyle} style={styles.consoleSkeleton} />
         </View>
 
-        {/* زخرفة الزوايا (Decorative Corners) - مبقاة لجمالية الـ Loading */}
+        {/* Decorative corner accents */}
         <View style={styles.cornerTopLeft} />
         <View style={styles.cornerTopRight} />
         <View style={styles.cornerBottomLeft} />
@@ -86,6 +92,7 @@ const SkeletonNostalgiaCard = () => {
     </View>
   );
 };
+export default React.memo(SkeletonNostalgiaCard);
 
 const styles = StyleSheet.create({
   gameCard: {
@@ -99,14 +106,14 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     borderRadius: 12,
-    backgroundColor: "#0c1a33", // لون الخلفية الأساسي
+    backgroundColor: "#0c1a33", // primary background color
   },
   outerFrame: {
     flex: 1,
     margin: 8,
     padding: 12,
     borderWidth: 3,
-    borderColor: FRAME_BORDER_COLOR, // لون حدود خافت
+    borderColor: FRAME_BORDER_COLOR, // subdued border color
     borderRadius: 8,
     position: "relative",
   },
@@ -133,7 +140,7 @@ const styles = StyleSheet.create({
   },
   ribbonContainer: {
     alignItems: "center",
-    marginTop: 18, // 12 margin + some adjustment
+    marginTop: 18,
     marginBottom: 8,
   },
   ribbonSkeleton: {
@@ -155,7 +162,6 @@ const styles = StyleSheet.create({
     backgroundColor: SKELETON_BASE_COLOR,
     overflow: "hidden",
   },
-  // Corner Styles (Copy Paste from original but with darker color)
   cornerTopLeft: {
     position: "absolute",
     top: 5,
@@ -197,5 +203,3 @@ const styles = StyleSheet.create({
     borderColor: FRAME_BORDER_COLOR,
   },
 });
-
-export default SkeletonNostalgiaCard;

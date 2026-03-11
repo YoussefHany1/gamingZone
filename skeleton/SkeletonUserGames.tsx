@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, StyleSheet, FlatList, Dimensions } from "react-native";
+import { View, StyleSheet, FlatList, Dimensions, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
@@ -9,20 +9,26 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
-import COLORS from "../constants/colors"; // تأكد من المسار الصحيح
+import COLORS from "../constants/colors";
 
 const { width } = Dimensions.get("window");
 
-// 1. مكون الشيمر القابل لإعادة الاستخدام (Shimmer Block)
-// هذا المكون يأخذ الحجم والشكل ويطبق عليه تأثير اللمعان
-const ShimmerPlaceholder = ({ style }) => {
+// Types
+
+interface ShimmerPlaceholderProps {
+  style?: ViewStyle;
+}
+
+// ShimmerPlaceholder
+
+const ShimmerPlaceholder = React.memo<ShimmerPlaceholderProps>(({ style }) => {
   const translateX = useSharedValue(-width);
 
   useEffect(() => {
     translateX.value = withRepeat(
       withTiming(width, { duration: 1250, easing: Easing.linear }),
-      -1, // تكرار لا نهائي
-      false // عدم العكس ليمر الضوء من اليسار لليمين دائماً
+      -1, // infinite repetition
+      false // always sweep left-to-right
     );
   }, []);
 
@@ -44,38 +50,41 @@ const ShimmerPlaceholder = ({ style }) => {
       </Animated.View>
     </View>
   );
-};
+});
 
-// 2. مكون العنصر الواحد (Skeleton Item)
-// يحاكي تصميم GameItem الأصلي
-const SkeletonItem = () => {
+// SkeletonItem
+
+const SkeletonItem = React.memo(() => {
   return (
     <View style={styles.skeletonContainer}>
-      {/* محاكاة الصورة */}
+      {/* Game cover image placeholder */}
       <ShimmerPlaceholder style={styles.skeletonImage} />
 
-      {/* محاكاة النصوص */}
+      {/* Text info placeholders */}
       <View style={styles.skeletonInfo}>
-        {/* محاكاة العنوان */}
+        {/* Title placeholder */}
         <ShimmerPlaceholder style={styles.skeletonTitle} />
-        {/* محاكاة التاريخ */}
+        {/* Date placeholder */}
         <ShimmerPlaceholder style={styles.skeletonDate} />
       </View>
 
-      {/* محاكاة أيقونة الحذف */}
+      {/* Delete icon placeholder */}
       <ShimmerPlaceholder style={styles.skeletonIcon} />
     </View>
   );
-};
+});
 
-// 3. القائمة الكاملة (The List Component)
-const UserGamesSkeleton = () => {
-  const dummyData = Array(4).fill(0); // عدد العناصر الوهمية
+// Main
 
+// Number of dummy rows displayed during loading
+const DUMMY_COUNT = 4;
+const DUMMY_DATA = Array(DUMMY_COUNT).fill(0);
+
+const UserGamesSkeleton: React.FC = () => {
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["left", "right"]}>
       <FlatList
-        data={dummyData}
+        data={DUMMY_DATA}
         keyExtractor={(_, index) => index.toString()}
         renderItem={() => <SkeletonItem />}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
@@ -84,15 +93,15 @@ const UserGamesSkeleton = () => {
     </SafeAreaView>
   );
 };
+export default React.memo(UserGamesSkeleton);
 
 const styles = StyleSheet.create({
-  // لون العنصر الرمادي الأساسي قبل مرور الضوء عليه
   placeholderBase: {
-    backgroundColor: COLORS.secondary ? COLORS.secondary + "40" : "#ccc", // درجة شفافية من لونك الثانوي
+    backgroundColor: COLORS.secondary ? COLORS.secondary + "40" : "#ccc",
   },
   skeletonContainer: {
     flexDirection: "row",
-    backgroundColor: "rgba(119, 155, 221, 0.1)", // نفس خلفية الـ GameItem الأصلية
+    backgroundColor: "rgba(119, 155, 221, 0.1)",
     borderRadius: 12,
     marginTop: 24,
     padding: 10,
@@ -126,5 +135,3 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 });
-
-export default UserGamesSkeleton;

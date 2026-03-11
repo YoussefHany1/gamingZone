@@ -1,332 +1,389 @@
 {
-    "common": {
-        "loading": "Loading...",
-        "error": "Error",
-        "cancel": "Cancel",
-        "close": "Close",
-        "remove": "Remove",
-        "ok": "OK",
-        "create": "Create",
-        "saveChanges": "Save Changes",
-        "noData": "No data to display",
-        "imageNotFound": "Image not found",
-        "ad": "Advertisement",
-        "loginRequired": "You need to be logged in to perform this action",
-        "noInternet": "No Internet Connection",
-                "time": {
-        "d": "d",
-        "h": "h",
-        "m": "m"
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "cancel": "Cancel",
+    "close": "Close",
+    "remove": "Remove",
+    "ok": "OK",
+    "create": "Create",
+    "saveChanges": "Save Changes",
+    "noData": "No data to display",
+    "imageNotFound": "Image not found",
+    "ad": "Advertisement",
+    "loginRequired": "You need to be logged in to perform this action",
+    "noInternet": "No Internet Connection",
+    "updateAlert": {
+      "title": "Update Available",
+      "message": "A new version of the app is available. Update now for the latest features and improvements.",
+      "updateNow": "Update Now",
+      "later": "Later"
+    },
+    "time": {
+      "d": "d",
+      "h": "h",
+      "m": "m"
     }
+  },
+  "auth": {
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "guest": "Sign in Later",
+    "emptyFields": "Please enter your email and password",
+    "idTokenError": "Unable to retrieve Google ID token",
+    "login": {
+      "title": "Sign In",
+      "forgotPassword": "Forgot Password?",
+      "signInButton": "Sign In",
+      "googleSignIn": "Sign In with Google",
+      "createAccount": "Create new account",
+      "success": "Login successful",
+      "failed": "Login failed"
     },
-    "auth": {
-                    "emailPlaceholder": "Email",
-            "passwordPlaceholder": "Password",
-                        "guest": "Sign in Later",
-                                    "emptyFields": "Please enter your email and password",
-                                    "idTokenError": "Unable to retrieve Google ID token",
-        "login": {
-            "title": "Sign In",
-            "forgotPassword": "Forgot Password?",
-            "signInButton": "Sign In",
-            "googleSignIn": "Sign In with Google",
-            "createAccount": "Create new account",
-            "success": "Login successful",
-            "failed": "Login failed"
-        },
-        "register": {
-            "title": "Sign Up",
-            "signUpButton": "Sign Up",
-            "namePlaceholder": "Full Name",
-        "countryPlaceholder": "Select Country",
-        "genderPlaceholder": "Select Gender",
-        "male": "Male",
-        "female": "Female",
-            "googleSignUp": "Sign Up with Google",
-            "haveAnAccount": "Already have an account?",
-            "success": "Sign up successful",
-             "emptyFields": "Please fill in all required fields"
-        },
-        "forgotPassword": {
-            "title": "Reset your Password",
-            "sendButton": "Send a reset password link",
-            "sending": "Loading..",
-            "backToLogin": "Back to Login",
-            "emptyEmail": "Please enter your email address",
-            "successTitle": "Sent successfully",
-            "successMessage": "A password reset link has been sent to your email. (Please also check your Spam folder)",
-            "userNotFound": "No account is registered with this email address",
-            "errors": {
-            "userNotFound": "No account registered with this email",
-            "general": "An error occurred while sending the link. Please try again later"
-        }
-        },
-"errors": {
-    "general": "An unexpected error occurred. Please try again later.",
-    "invalidCredentials": "Incorrect email or password",
-    "userNotFound": "No account associated with this email",
-    "network": "Please check your internet connection",
-    "emailAlreadyInUse": "This email is already in use",
-    "invalidEmail": "The email address is invalid",
-    "weakPassword": "The password is too weak",
-    "googleSignIn": "Google Sign-In failed. Please try again"
-},
-"validation": {
-    "passwordTitle": "Inadequate Password",
-    "passwordRequirements": "Password must be at least 8 characters long and contain both letters and numbers."
-}
+    "register": {
+      "title": "Sign Up",
+      "signUpButton": "Sign Up",
+      "namePlaceholder": "Full Name",
+      "countryPlaceholder": "Select Country",
+      "genderPlaceholder": "Select Gender",
+      "male": "Male",
+      "female": "Female",
+      "googleSignUp": "Sign Up with Google",
+      "haveAnAccount": "Already have an account?",
+      "success": "Sign up successful",
+      "emptyFields": "Please fill in all required fields"
     },
-    "navigation": {
-        "tabs": {
-            "home": "Home",
-            "news": "News",
-            "games": "Games",
-            "settings": "Settings"
-        },
-        "titles": {
-            "notificationSettings": "Notification Settings",
-            "accountSettings": "Account Settings",
-            "gamesList": "My Games List",
-            "myLists": "My Lists"
-        }
+    "forgotPassword": {
+      "title": "Reset your Password",
+      "sendButton": "Send a reset password link",
+      "sending": "Loading..",
+      "backToLogin": "Back to Login",
+      "emptyEmail": "Please enter your email address",
+      "successTitle": "Sent successfully",
+      "successMessage": "A password reset link has been sent to your email. (Please also check your Spam folder)",
+      "userNotFound": "No account is registered with this email address",
+      "errors": {
+        "userNotFound": "No account registered with this email",
+        "general": "An error occurred while sending the link. Please try again later"
+      }
     },
-    "home": {
-        "slideshow": {
-            "error": "Error loading slideshow"
-        },
-        "sections": {
-            "news": "News",
-            "reviews": "Reviews",
-            "esports": "Esports",
-            "hardware": "Hardware"
-        },
-        "seeklySummary":{
-            "readMore": "Read More..",
-            "readLess": "Read Less"
-        },
-        "gamingEvents": {
-            "header": "Gaming Events",
-            "upcoming": "Upcoming",
-            "live": "Live",
-            "watchNowButton": "Watch Now",
-            "detailsButton": "View Details",
-            "noEvents": "No gaming events available at the moment."
-        }
+    "errors": {
+      "general": "An unexpected error occurred. Please try again later.",
+      "invalidCredentials": "Incorrect email or password",
+      "userNotFound": "No account associated with this email",
+      "network": "Please check your internet connection",
+      "emailAlreadyInUse": "This email is already in use",
+      "invalidEmail": "The email address is invalid",
+      "weakPassword": "The password is too weak",
+      "googleSignIn": "Google Sign-In failed. Please try again"
     },
-    "news": {
-        "tabs": {
-            "news": "News",
-            "reviews": "Reviews",
-            "esports": "Esports",
-            "hardware": "Hardware"
-        },
-        "latestHeader": "Latest {{category}}",
-        "noArticles": "No articles available at the moment.",
-        "endOfList": "End of Articles",
-        "details": {
-            "readFullArticle": "Read the full article",
-            "noDescription": "No description available here",
-            "shareShortenError": "There was an error, Please try again later.",
-                "shareMessage": "found an interesting article via Gaming Zone App\nCheck it out: "
-        },
-        "dropdown": {
-            "selectSource": "Select a Source",
-            "cancel":"Cancel",
-                        "englishSources": "English Sources",
-            "arabicSources": "Arabic Sources",
-            "visitWebsite": "Visit Website"
-        },
-    "duration":{
-        "years": "years",
-        "months": "month",
-        "days": "days",
-        "hours": "h",
-        "minutes": "m"
+    "validation": {
+      "passwordTitle": "Inadequate Password",
+      "passwordRequirements": "Password must be at least 8 characters long and contain both letters and numbers."
     }
+  },
+  "navigation": {
+    "tabs": {
+      "home": "Home",
+      "news": "News",
+      "games": "Games",
+      "settings": "Settings"
     },
-    "games": {
-        "screen": {
-            "searchPlaceholder": "Search for Games...",
-            "header": "Find Your Next Gaming Adventure"
-        },
-        "freeGames": {
-            "header": "Get Your Free Games!",
-            "freeOn": "Free On",
-            "days": "Days",
-            "hours": "Hrs",
-            "minutes": "Min",
-            "seconds": "Sec",
-            "claimNow": "Claim Now",
-            "not": "New Free Game!",
-            "subscribed": "You are subscribed to free games notifications",
-            "unsubscribed": "You have unsubscribed from free games notifications"
-        },
-        "gamesNews":{
-            "source": "Source: The game's official website"
-        },
-        "list": {
-            "gamesNews": "Game News",
-            "popular": "Popular Right now",
-            "recentlyReleased": "Recently Released",
-            "topRated": "Top Rated",
-            "comingSoon": "Coming Soon",
-            "mostAnticipated": {
-                "header": "Most Anticipated",
-                "countdown": {
-                    "days": "Days",
-                    "hours": "Hours",
-                    "minutes": "Minutes",
-                    "seconds": "Seconds"
-                } },
-            "nostalgiaCorner": "Nostalgia Corner",
-            "searchResults": "Search Results",
-            "noResults": "No games found.",
-            "serverError": "The connection to the server failed. Please ensure you have an active internet connection and try again.",
-            "gameTypes": {
-                "1": "DLC",
-                "2": "Expansion",
-                "5": "MOD",
-                "6": "Episode",
-                "7": "Season",
-                "8": "Remake",
-                "9": "Remaster",
-                "10": "Expanded"
-            }
-        },
-        "details": {
-            "availableStores": "Available at these stores",
-            "addToList": "Add to My List",
-            "claimNow": "Get this game free on ",
-            "about": "About",
-            "genres": "Genres",
-            "gameModes": "Game Modes",
-            "developer": "Developer",
-            "publisher": "Publisher",
-            "languages": {
-                "title": "Language Supports",
-                "Language": "Language",
-                "audio": "Audio",
-                "subtitles": "Subtitles",
-                "interface": "Interface"
-            },
-            "engines": "Game Engines",
-            "howLongToBeat": {
-                "title": "How Long to Beat",
-                "main": "Main Story",
-                "mainExtra": "Main + Extra",
-                "completionist": "Completionist",
-                "hours": "Hours"
-            },
-            "trailer": "Game Trailer",
-            "series": "Game series",
-            "similar": "Similar Games",
-            "listStatus": {
-                "add": "Add to...",
-                "played": "Played",
-                "playing": "Playing",
-                "wantToPlay": "Want to Play"
-            }
+    "titles": {
+      "notificationSettings": "Notification Settings",
+      "accountSettings": "Account Settings",
+      "gamesList": "My Games List",
+      "myLists": "My Lists"
+    }
+  },
+  "home": {
+    "slideshow": {
+      "error": "Error loading slideshow"
+    },
+    "sections": {
+      "news": "News",
+      "reviews": "Reviews",
+      "esports": "Esports",
+      "hardware": "Hardware"
+    },
+    "seeklySummary": {
+      "readMore": "Read More..",
+      "readLess": "Read Less"
+    },
+    "gamingEvents": {
+      "header": "Gaming Events",
+      "upcoming": "Upcoming",
+      "live": "Live",
+      "watchNowButton": "Watch Now",
+      "detailsButton": "View Details",
+      "noEvents": "No gaming events available at the moment."
+    }
+  },
+  "news": {
+    "tabs": {
+      "news": "News",
+      "reviews": "Reviews",
+      "esports": "Esports",
+      "hardware": "Hardware"
+    },
+    "latestHeader": "Latest {{category}}",
+    "noArticles": "No articles available at the moment.",
+    "endOfList": "End of Articles",
+    "details": {
+      "readFullArticle": "Read the full article",
+      "noDescription": "No description available here",
+      "shareShortenError": "There was an error, Please try again later.",
+      "shareMessage": "found an interesting article via Gaming Zone App\nCheck it out: "
+    },
+    "dropdown": {
+      "selectSource": "Select a Source",
+      "cancel": "Cancel",
+      "englishSources": "English Sources",
+      "arabicSources": "Arabic Sources",
+      "visitWebsite": "Visit Website"
+    },
+    "duration": {
+      "years": "years",
+      "months": "month",
+      "days": "days",
+      "hours": "h",
+      "minutes": "m"
+    }
+  },
+  "games": {
+    "screen": {
+      "searchPlaceholder": "Search for Games...",
+      "header": "Find Your Next Gaming Adventure"
+    },
+    "freeGames": {
+      "header": "Get Your Free Games!",
+      "freeOn": "Free On",
+      "days": "Days",
+      "hours": "Hrs",
+      "minutes": "Min",
+      "seconds": "Sec",
+      "claimNow": "Claim Now",
+      "not": "New Free Game!",
+      "subscribed": "You are subscribed to free games notifications",
+      "unsubscribed": "You have unsubscribed from free games notifications"
+    },
+    "gamesNews": {
+      "source": "Source: The game's official website"
+    },
+    "list": {
+      "gamesNews": "Game News",
+      "popular": "Popular Right now",
+      "recentlyReleased": "Recently Released",
+      "topRated": "Top Rated",
+      "comingSoon": "Coming Soon",
+      "mostAnticipated": {
+        "header": "Most Anticipated",
+        "countdown": {
+          "days": "Days",
+          "hours": "Hours",
+          "minutes": "Minutes",
+          "seconds": "Seconds"
         }
+      },
+      "nostalgiaCorner": "Nostalgia Corner",
+      "searchResults": "Search Results",
+      "noResults": "No games found.",
+      "serverError": "The connection to the server failed. Please ensure you have an active internet connection and try again.",
+      "gameTypes": {
+        "1": "DLC",
+        "2": "Expansion",
+        "5": "MOD",
+        "6": "Episode",
+        "7": "Season",
+        "8": "Remake",
+        "9": "Remaster",
+        "10": "Expanded"
+      }
     },
-    "userLists": {
-        "empty": {
-            "title": "Your list is empty",
-            "playedSub": "Add the games you have played here.",
-            "wantSub": "Add the games you want to play.",
-            "findButton": "Find Your Game",
-            "findButtonNew": "Find Your New Game"
-        },
-        "actions": {
-            "confirmDeleteTitle": "Confirm deletion",
-            "confirmDeleteMessage": "Are you sure you want to remove \"{{gameName}}\" from your list?",
-            "createNewList": "Create New List"
-        },
-        "placeholders": {
-            "newListName": "e.g. RPG Favorites"
-        },
-        "errors": {
-            "couldNotCreateList": "Could not create list. Please try again later",
-            "listAlreadyExists": "A list with this name already exists"
-        }
+    "details": {
+      "availableStores": "Available at these stores",
+      "addToList": "Add to My List",
+      "claimNow": "Get this game free on ",
+      "about": "About",
+      "genres": "Genres",
+      "gameModes": "Game Modes",
+      "developer": "Developer",
+      "publisher": "Publisher",
+      "languages": {
+        "title": "Language Supports",
+        "Language": "Language",
+        "audio": "Audio",
+        "subtitles": "Subtitles",
+        "interface": "Interface"
+      },
+      "engines": "Game Engines",
+      "howLongToBeat": {
+        "title": "How Long to Beat",
+        "main": "Main Story",
+        "mainExtra": "Main + Extra",
+        "completionist": "Completionist",
+        "hours": "Hours"
+      },
+      "trailer": "Game Trailer",
+      "series": "Game series",
+      "similar": "Similar Games",
+      "listStatus": {
+        "add": "Add to...",
+        "played": "Played",
+        "playing": "Playing",
+        "wantToPlay": "Want to Play"
+      }
     },
-    "settings": {
-        "language": "language",
-        "currentLang": "English",
-        "menu": {
-            "notifications": "Notification Settings",
-            "myLists": "My Lists",
-            "rateUs": "Rate Us",
-            "inviteFriends": "Invite Friends",
-            "contactUs": "Contact Us / Suggestions",
-            "changeLanguage": "Change Language",
-            "privacyPolicy": "Privacy Policy",
-            "signOut": "Sign Out"
-        },
-        "profile": {
-            "changePic": "Change your profile picture",
-            "nameLabel": "Your Name:",
-            "dobLabel": "Your Birthday date:",
-            "genderLabel": "Gender:",
-            "countryLabel": "Country:",
-            "platformLabel": "Platform:",
-            "platforms": {
-                "pc": "PC",
-                "playstation": "Playstation",
-                "xbox": "Xbox",
-                "android": "Android",
-                "ios": "IOS"
-            },
-            "saveSuccessTitle": "Done!",
-            "saveSuccessMessage": "Your data has been successfully updated",
-            "permissionError": "Images permissions are required",
-            "placeholders": {
-                "name": "Enter your name",
-                "dob": "Date of Birth (YYYY-MM-DD)",
-                "gender": "Select your Gender",
-                "country": "Select your Country",
-                "platform": "Select your Platform"
-            },
-            "messages": {
+    "filter": {
+      "title": "Filter Games",
+      "year": "Release Year",
+      "genre": "Genre",
+      "platform": "Platform",
+      "sort": "Sort By",
+      "sortOptions": {
+        "relevance": "Relevance",
+        "title": "Title",
+        "release_date": "Release Date",
+        "rating": "Rating"
+      },
+      "reset": "Reset",
+      "apply": "Apply",
+      "any": "Any",
+      "genres": {
+        "rpg": "RPG",
+        "shooter": "Shooter",
+        "fighting": "Fighting",
+        "music": "Music",
+        "platform": "Platform",
+        "puzzle": "Puzzle",
+        "racing": "Racing",
+        "rts": "RTS",
+        "simulator": "Simulator",
+        "sport": "Sport",
+        "strategy": "Strategy",
+        "turnBased": "Turn-based",
+        "tactical": "Tactical",
+        "hackSlash": "Hack & Slash",
+        "quiz": "Quiz / Trivia",
+        "adventure": "Adventure",
+        "indie": "Indie",
+        "arcade": "Arcade",
+        "moba": "MOBA"
+      },
+      "platforms": {
+        "pc": "PC",
+        "ps5": "PS5",
+        "ps4": "PS4",
+        "xboxSeries": "Xbox Series X|S",
+        "xboxOne": "Xbox One",
+        "switch": "Switch",
+        "linux": "Linux",
+        "mac": "Mac",
+        "android": "Android",
+        "ios": "iOS"
+      }
+    }
+  },
+  "userLists": {
+    "empty": {
+      "title": "Your list is empty",
+      "playedSub": "Add the games you have played here.",
+      "wantSub": "Add the games you want to play.",
+      "findButton": "Find Your Game",
+      "findButtonNew": "Find Your New Game"
+    },
+    "actions": {
+      "confirmDeleteTitle": "Confirm deletion",
+      "confirmDeleteMessage": "Are you sure you want to remove \"{{gameName}}\" from your list?",
+      "createNewList": "Create New List"
+    },
+    "placeholders": {
+      "newListName": "e.g. RPG Favorites"
+    },
+    "errors": {
+      "couldNotCreateList": "Could not create list. Please try again later",
+      "listAlreadyExists": "A list with this name already exists"
+    }
+  },
+  "settings": {
+    "language": "language",
+    "currentLang": "English",
+    "menu": {
+      "notifications": "Notification Settings",
+      "myLists": "My Lists",
+      "rateUs": "Rate Us",
+      "inviteFriends": "Invite Friends",
+      "contactUs": "Contact Us / Suggestions",
+      "changeLanguage": "Change Language",
+      "privacyPolicy": "Privacy Policy",
+      "signOut": "Sign Out"
+    },
+    "profile": {
+      "changePic": "Change your profile picture",
+      "nameLabel": "Your Name:",
+      "dobLabel": "Your Birthday date:",
+      "genderLabel": "Gender:",
+      "countryLabel": "Country:",
+      "platformLabel": "Platform:",
+      "platforms": {
+        "pc": "PC",
+        "playstation": "Playstation",
+        "xbox": "Xbox",
+        "android": "Android",
+        "ios": "IOS"
+      },
+      "saveSuccessTitle": "Done!",
+      "saveSuccessMessage": "Your data has been successfully updated",
+      "permissionError": "Images permissions are required",
+      "placeholders": {
+        "name": "Enter your name",
+        "dob": "Date of Birth (YYYY-MM-DD)",
+        "gender": "Select your Gender",
+        "country": "Select your Country",
+        "platform": "Select your Platform"
+      },
+      "messages": {
         "permissionTitle": "Photo Access Permission",
         "permissionMsg": "We need access to your photo gallery to update your profile picture",
         "uploadFailed": "Failed to upload image. Please check your internet and try again",
         "saveError": "Unable to save changes",
         "saveSuccessTitle": "Saved",
         "saveSuccessMsg": "Your profile details have been updated successfully"
-    }
-        },
-        "notifications": {
-            "description": "Choose which news sources you want to receive notifications from\nMake sure to allow notifications for this app",
-            "footer": "Notifications will be sent when new articles are published from enabled sources.",
-            "testNotification": "Send Test Notification"
-        },
-        "userGames": {
-            "emptyText": "Your list is empty",
-            "emptySubText": "Add the games you want.",
-            "findButton": "Find Your Game",
-            "messages": {
+      }
+    },
+    "notifications": {
+      "description": "Choose which news sources you want to receive notifications from\nMake sure to allow notifications for this app",
+      "footer": "Notifications will be sent when new articles are published from enabled sources.",
+      "testNotification": "Send Test Notification"
+    },
+    "userGames": {
+      "emptyText": "Your list is empty",
+      "emptySubText": "Add the games you want.",
+      "findButton": "Find Your Game",
+      "messages": {
         "loadError": "We encountered a problem loading your list. Please try again later",
         "removeError": "An error occurred while trying to remove the game"
+      }
+    },
+    "contact": {
+      "title": "Contact Us",
+      "typeLabel": "Message Type",
+      "types": {
+        "suggestion": "Suggestion",
+        "problem": "Report a Problem",
+        "other": "General Inquiry"
+      },
+      "rateLimitError": "You reached the message limit. Try again later.",
+      "messageLabel": "Your Message *",
+      "messagePlaceholder": "Write the details of your suggestion or problem here...",
+      "messageError": "Write the details of your suggestion",
+      "emailLabel": "Email (to contact you)",
+      "send": "Send",
+      "sending": "Sending...",
+      "success": "Thank you for contacting us!",
+      "error": "An error occurred while sending. Please try again",
+      "messageTooLong": "Message is too long. Maximum limit is 5000 characters.",
+      "invalidEmail": "The email address is invalid"
     }
-        },
-        "contact": {
-        "title": "Contact Us",
-        "typeLabel": "Message Type",
-        "types": {
-            "suggestion": "Suggestion",
-            "problem": "Report a Problem",
-            "other": "General Inquiry"
-        },
-        "messageLabel": "Your Message *",
-        "messagePlaceholder": "Write the details of your suggestion or problem here...",
-        "messageError": "Write the details of your suggestion",
-        "emailLabel": "Email (to contact you)",
-        "send": "Send",
-        "sending": "Sending...",
-        "success": "Thank you for contacting us!",
-        "error": "An error occurred while sending. Please try again",
-        "messageTooLong": "Message is too long. Maximum limit is 5000 characters.",
-        "invalidEmail": "The email address is invalid"
-    }
-    }
+  }
 }

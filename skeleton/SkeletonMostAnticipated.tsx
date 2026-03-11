@@ -14,7 +14,8 @@ const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
 const CARD_HEIGHT = 220;
 
-const SkeletonCard = () => {
+// SkeletonCard
+const SkeletonCard: React.FC = () => {
   const shimmerAnimation = useSharedValue(0);
 
   useEffect(() => {
@@ -39,10 +40,10 @@ const SkeletonCard = () => {
 
   return (
     <View style={styles.cardContainer}>
-      {/* Background skeleton */}
+      {/* Background skeleton fill */}
       <View style={styles.backgroundSkeleton} />
 
-      {/* Shimmer overlay */}
+      {/* Sliding shimmer overlay */}
       <Animated.View style={[styles.shimmerContainer, animatedStyle]}>
         <LinearGradient
           colors={["transparent", "rgba(255, 255, 255, 0.15)", "transparent"]}
@@ -52,9 +53,8 @@ const SkeletonCard = () => {
         />
       </Animated.View>
 
-      {/* Content skeletons */}
+      {/* Countdown boxes skeleton */}
       <View style={styles.content}>
-        {/* Countdown boxes */}
         <View style={styles.countdownRow}>
           <View style={styles.countdownBox}>
             <View style={styles.countdownHeaderSkeleton} />
@@ -79,20 +79,22 @@ const SkeletonCard = () => {
   );
 };
 
-export default function SkeletonMostAnticipated() {
+// Main
+const SkeletonMostAnticipated: React.FC = () => {
   return (
     <View style={styles.container}>
-      {/* Header skeleton */}
+      {/* Section header skeleton */}
       <View style={styles.headerSkeleton} />
 
-      {/* Cards skeleton */}
+      {/* Card skeletons */}
       <View style={styles.listContent}>
         <SkeletonCard />
         <SkeletonCard />
       </View>
     </View>
   );
-}
+};
+export default React.memo(SkeletonMostAnticipated);
 
 const styles = StyleSheet.create({
   container: {

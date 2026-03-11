@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { View, StyleSheet, Dimensions } from "react-native";
 import Animated, {
   useSharedValue,
@@ -15,7 +15,9 @@ const CARD_WIDTH = width * 0.85;
 const CARD_HEIGHT = 220;
 const CARD_MARGIN = 10;
 
-export default function SkeletonGamingEvents() {
+// Main
+
+const SkeletonGamingEvents: React.FC = () => {
   const shimmerAnimation = useSharedValue(0);
 
   useEffect(() => {
@@ -40,16 +42,16 @@ export default function SkeletonGamingEvents() {
 
   return (
     <View style={styles.eventCard}>
-      {/* Background skeleton */}
+      {/* Base background skeleton */}
       <View style={styles.backgroundSkeleton} />
 
-      {/* Dark Gradient Overlay */}
+      {/* Dark gradient overlay */}
       <LinearGradient
         colors={["rgba(12, 26, 51, 0.4)", "rgba(12, 26, 51, 0.95)"]}
         style={styles.gradientOverlay}
       />
 
-      {/* Shimmer overlay */}
+      {/* Sliding shimmer overlay */}
       <Animated.View style={[styles.shimmerContainer, animatedStyle]}>
         <LinearGradient
           colors={["transparent", "rgba(255, 255, 255, 0.12)", "transparent"]}
@@ -59,22 +61,21 @@ export default function SkeletonGamingEvents() {
         />
       </Animated.View>
 
-      {/* Content Container */}
       <View style={styles.contentContainer}>
-        {/* Status Badge Skeleton */}
+        {/* Status badge skeleton */}
         <View style={styles.topRow}>
           <View style={styles.badgeSkeleton} />
         </View>
 
-        {/* Info Container */}
+        {/* Info container */}
         <View style={styles.infoContainer}>
-          {/* Event Title Skeleton */}
+          {/* Event title skeleton */}
           <View style={styles.titleSkeletonContainer}>
             <View style={styles.titleSkeleton} />
             <View style={[styles.titleSkeleton, { width: "70%" }]} />
           </View>
 
-          {/* Date & Time Row Skeleton */}
+          {/* Date & time row skeleton */}
           <View style={styles.dateTimeRow}>
             <View style={styles.dateSkeleton} />
             <View style={styles.countdownSkeleton} />
@@ -83,16 +84,10 @@ export default function SkeletonGamingEvents() {
       </View>
     </View>
   );
-}
+};
+export default React.memo(SkeletonGamingEvents);
 
 const styles = StyleSheet.create({
-  container: {
-    marginTop: 40,
-  },
-  listContent: {
-    padding: 10,
-    flexDirection: "row",
-  },
   eventCard: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
@@ -174,11 +169,5 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.lightGray + "40",
-  },
-  actionButtonSkeleton: {
-    width: "100%",
-    height: 42,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: 12,
   },
 });

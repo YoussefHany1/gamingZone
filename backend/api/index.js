@@ -132,22 +132,8 @@ async function callIgdb(apiEndpoint, queryBody) {
     throw error;
   }
 }
-const now = new Date();
-const endTimestamp = Math.floor(now.getTime() / 1000); // time now
-
-// 6 months ago
-const pastDate = new Date();
-pastDate.setMonth(pastDate.getMonth() - 6);
-const startTimestamp = Math.floor(pastDate.getTime() / 1000);
-
-// 20 years ago
-const nostalgiaDate = new Date();
-nostalgiaDate.setFullYear(nostalgiaDate.getFullYear() - 20);
-const nostalgiaTimestamp = Math.floor(nostalgiaDate.getTime() / 1000);
-
 //  Endpoints
 
-const currentTimestamp = Math.floor(Date.now() / 1000);
 const BASE_QUERY_FIELDS =
   "fields id, name, cover.image_id, first_release_date, total_rating, game_type";
 const BASE_QUERY_WHERE = `where cover.image_id != null & game_type = (0,8,9,10)`;
@@ -234,7 +220,7 @@ app.get("/top-rated", cacheMiddleware(3600), async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message:
-        "An error occurred on the server while fteching data. Please try again later.",
+        "An error occurred on the server while fetching data. Please try again later.",
     });
   }
 });
@@ -242,9 +228,10 @@ app.get("/top-rated", cacheMiddleware(3600), async (req, res) => {
 // Recently Released
 app.get("/recently-released", cacheMiddleware(3600), async (req, res) => {
   try {
+    const nowTs = Math.floor(Date.now() / 1000);
     const query = `
       ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
-      ${BASE_QUERY_WHERE} & first_release_date < ${currentTimestamp} & total_rating_count > 5;
+      ${BASE_QUERY_WHERE} & first_release_date < ${nowTs} & total_rating_count > 5;
       sort first_release_date desc;
       limit 10;
     `;
@@ -253,7 +240,7 @@ app.get("/recently-released", cacheMiddleware(3600), async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message:
-        "An error occurred on the server while fteching data. Please try again later.",
+        "An error occurred on the server while fetching data. Please try again later.",
     });
   }
 });
@@ -261,15 +248,20 @@ app.get("/recently-released", cacheMiddleware(3600), async (req, res) => {
 // Popular Right Now
 app.get("/popular", cacheMiddleware(3600), async (req, res) => {
   try {
-    // Fetch IDs from popularity_primitives
+    const nowTs = Math.floor(Date.now() / 1000);
+    // 6 months ago
+    const pastDate = new Date();
+    pastDate.setMonth(pastDate.getMonth() - 6);
+    const startTs = Math.floor(pastDate.getTime() / 1000);
+
+    // Fetch top 100 IDs from popularity_primitives (was 500 — reduced for performance)
     const primitivesQuery = `
       fields game_id;
       sort value desc;
       where popularity_type = 1;
-      limit 500;
+      limit 100;
     `;
 
-    // Request the IDs
     const primitivesData = await callIgdb(
       "popularity_primitives",
       primitivesQuery,
@@ -279,13 +271,11 @@ app.get("/popular", cacheMiddleware(3600), async (req, res) => {
       return res.json([]);
     }
 
-    // Extract IDs from the results
     const gameIds = primitivesData.map((p) => p.game_id).join(",");
 
-    // Use the IDs to fetch full game details
     const gamesQuery = `
       ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name;
-      ${BASE_QUERY_WHERE} & id = (${gameIds}) & first_release_date > ${startTimestamp} & first_release_date < ${endTimestamp};
+      ${BASE_QUERY_WHERE} & id = (${gameIds}) & first_release_date > ${startTs} & first_release_date < ${nowTs};
     `;
 
     const gamesData = await callIgdb("games", gamesQuery);
@@ -293,13 +283,13 @@ app.get("/popular", cacheMiddleware(3600), async (req, res) => {
     // Reorder games to match popularity order
     const sortedGames = primitivesData
       .map((p) => gamesData.find((g) => g.id === p.game_id))
-      .filter((g) => g); // Filter out any undefined results
+      .filter((g) => g);
 
     res.json(sortedGames);
   } catch (error) {
     res.status(500).json({
       message:
-        "An error occurred on the server while fteching data. Please try again later.",
+        "An error occurred on the server while fetching data. Please try again later.",
     });
   }
 });
@@ -307,9 +297,10 @@ app.get("/popular", cacheMiddleware(3600), async (req, res) => {
 // Coming Soon
 app.get("/coming-soon", cacheMiddleware(3600), async (req, res) => {
   try {
+    const nowTs = Math.floor(Date.now() / 1000);
     const query = `
       ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, hypes;
-      ${BASE_QUERY_WHERE} & first_release_date > ${currentTimestamp};
+      ${BASE_QUERY_WHERE} & first_release_date > ${nowTs};
       sort first_release_date asc;
       limit 10;
     `;
@@ -318,7 +309,7 @@ app.get("/coming-soon", cacheMiddleware(3600), async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message:
-        "An error occurred on the server while fteching data. Please try again later.",
+        "An error occurred on the server while fetching data. Please try again later.",
     });
   }
 });
@@ -326,9 +317,10 @@ app.get("/coming-soon", cacheMiddleware(3600), async (req, res) => {
 // Most Anticipated
 app.get("/most-anticipated", cacheMiddleware(3600), async (req, res) => {
   try {
+    const nowTs = Math.floor(Date.now() / 1000);
     const query = `
       ${BASE_QUERY_FIELDS};
-      ${BASE_QUERY_WHERE} & first_release_date > ${currentTimestamp} & hypes > 0;
+      ${BASE_QUERY_WHERE} & first_release_date > ${nowTs} & hypes > 0;
       sort hypes desc;
       limit 10;
     `;
@@ -337,7 +329,7 @@ app.get("/most-anticipated", cacheMiddleware(3600), async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message:
-        "An error occurred on the server while fteching data. Please try again later.",
+        "An error occurred on the server while fetching data. Please try again later.",
     });
   }
 });
@@ -345,37 +337,13 @@ app.get("/most-anticipated", cacheMiddleware(3600), async (req, res) => {
 // Nostalgia Corner
 app.get("/nostalgia-corner", cacheMiddleware(3600), async (req, res) => {
   try {
+    const nostalgiaDate = new Date();
+    nostalgiaDate.setFullYear(nostalgiaDate.getFullYear() - 20);
+    const nostalgiaTs = Math.floor(nostalgiaDate.getTime() / 1000);
     const query = `
-${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name;
-${BASE_QUERY_WHERE} & first_release_date < ${nostalgiaTimestamp} & total_rating > 70;
-sort total_rating_count desc;
-limit 50;
-    `;
-    const data = await callIgdb("games", query);
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      message:
-        "An error occurred on the server while fteching data. Please try again later.",
-    });
-  }
-});
-
-app.get("/search", cacheMiddleware(300), async (req, res) => {
-  try {
-    // search query parameter
-    const { q } = req.query;
-
-    if (!q) {
-      return res.status(400).json({ message: 'Search query "q" is required' });
-    }
-
-    // clean the search query to prevent IGDB query issues
-    const safeQuery = q.replace(/"/g, '\\"');
-
-    const query = `
-      ${BASE_QUERY_FIELDS};
-      search "${safeQuery}";
+      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name;
+      ${BASE_QUERY_WHERE} & first_release_date < ${nostalgiaTs} & total_rating > 70;
+      sort total_rating_count desc;
       limit 50;
     `;
     const data = await callIgdb("games", query);
@@ -383,7 +351,100 @@ app.get("/search", cacheMiddleware(300), async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message:
-        "An error occurred on the server while fteching data. Please try again later.",
+        "An error occurred on the server while fetching data. Please try again later.",
+    });
+  }
+});
+
+app.get("/search", cacheMiddleware(300), async (req, res) => {
+  try {
+    const { q, year, genre, platform, sort } = req.query;
+
+    // At least one of q, year, genre, or platform must be provided
+    if (!q && !year && !genre && !platform) {
+      return res.status(400).json({ message: "At least one filter (q, year, genre, or platform) is required" });
+    }
+
+    // Always include genres and platforms in fields so client can display them
+    const fields = `${BASE_QUERY_FIELDS}, genres.name, platforms.name, platforms.abbreviation`;
+
+    // Build WHERE clauses
+    const whereClauses = ["cover.image_id != null", "game_type = (0,8,9,10)"];
+
+    // Year filter: convert to Unix timestamp range
+    if (year) {
+      const y = parseInt(year, 10);
+      if (!isNaN(y)) {
+        const start = Math.floor(new Date(y, 0, 1).getTime() / 1000);
+        const end   = Math.floor(new Date(y + 1, 0, 1).getTime() / 1000) - 1;
+        whereClauses.push(`first_release_date >= ${start}`);
+        whereClauses.push(`first_release_date <= ${end}`);
+      }
+    }
+
+    // Genre filter: match by genre name
+    if (genre) {
+      const safeGenre = genre.replace(/"/g, '\\"');
+      whereClauses.push(`genres.name = "${safeGenre}"`);
+    }
+
+    // Platform filter: match by platform name
+    if (platform) {
+      const safePlatform = platform.replace(/"/g, '\\"');
+      whereClauses.push(`platforms.name = "${safePlatform}"`);
+    }
+
+    const whereStr = whereClauses.join(" & ");
+
+
+    let igdbQuery;
+
+    if (q) {
+      // IGDB does NOT allow `sort` when using the `search` keyword.
+      // Fetch in relevance order; sort is applied in Node.js below.
+      const safeQ = q.replace(/"/g, '\\"');
+      igdbQuery = `
+        ${fields};
+        search "${safeQ}";
+        where ${whereStr};
+        limit 50;
+      `;
+    } else {
+      // Browse/filter only — server-side sort is fine here.
+      let serverSort;
+      if (sort === "title") {
+        serverSort = "sort name asc;";
+      } else if (sort === "release_date") {
+        serverSort = "sort first_release_date desc;";
+      } else {
+        serverSort = "sort total_rating desc;";
+      }
+      const ratingFilter = (sort === "title" || sort === "release_date") ? "" : "& total_rating_count > 0";
+      igdbQuery = `
+        ${fields};
+        where ${whereStr} ${ratingFilter};
+        ${serverSort}
+        limit 50;
+      `;
+    }
+
+    let data = await callIgdb("games", igdbQuery);
+
+    // For text search, IGDB can't sort — so we do it here in Node
+    if (q && sort && sort !== "relevance") {
+      data = [...data].sort((a, b) => {
+        if (sort === "title") return (a.name ?? "").localeCompare(b.name ?? "");
+        if (sort === "release_date") return (b.first_release_date ?? 0) - (a.first_release_date ?? 0);
+        if (sort === "rating") return (b.total_rating ?? 0) - (a.total_rating ?? 0);
+        return 0;
+      });
+    }
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({
+      message:
+        "An error occurred on the server while fetching data. Please try again later.",
     });
   }
 });
@@ -450,7 +511,7 @@ app.get("/game-details", cacheMiddleware(3600), async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message:
-        "An error occurred on the server while fteching data. Please try again later.",
+        "An error occurred on the server while fetching data. Please try again later.",
     });
   }
 });
@@ -489,10 +550,10 @@ app.get("/search-game-id", cacheMiddleware(3600), async (req, res) => {
 // Gaming Events
 app.get("/events", cacheMiddleware(3600), async (req, res) => {
   try {
-    // جلب الأحداث القادمة فقط باستخدام currentTimestamp المعرف مسبقاً في الملف
+    const nowTs = Math.floor(Date.now() / 1000);
     const query = `
       fields name, start_time, end_time, time_zone, event_logo.image_id, live_stream_url;
-      where start_time > ${currentTimestamp};
+      where start_time > ${nowTs};
       sort start_time asc;
       limit 15;
     `;

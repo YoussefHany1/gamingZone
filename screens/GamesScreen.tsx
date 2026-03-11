@@ -7,28 +7,45 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import { Ionicons } from "@expo/vector-icons";
-import FreeGames    from "../components/gamesScreen/FreeGames";
-import GamesList    from "../components/gamesScreen/GamesList";
-import GamesNews    from "../components/gamesScreen/GamesNews";
-import ComingSoon   from "../components/gamesScreen/ComingSoon";
-import MostAnticipated  from "../components/gamesScreen/MostAnticipated";
+import FreeGames from "../components/gamesScreen/FreeGames";
+import GamesList from "../components/gamesScreen/GamesList";
+import GamesNews from "../components/gamesScreen/GamesNews";
+import ComingSoon from "../components/gamesScreen/ComingSoon";
+import MostAnticipated from "../components/gamesScreen/MostAnticipated";
 import RecentlyReleased from "../components/gamesScreen/RecentlyReleased";
-import TopRated     from "../components/gamesScreen/TopRated";
-import NostalgiaCorner  from "../components/gamesScreen/NostalgiaCorner";
-import Popular      from "../components/gamesScreen/Popular";
+import TopRated from "../components/gamesScreen/TopRated";
+import NostalgiaCorner from "../components/gamesScreen/NostalgiaCorner";
+import Popular from "../components/gamesScreen/Popular";
+import FilterModal, { GameFilters } from "../components/gamesScreen/FilterModal";
 import { adUnitId } from "../constants/config";
 import COLORS from "../constants/colors";
 
 // Types
 type FeedItemType = "COMPONENT" | "AD";
 
-interface FeedItem {
+interface FeedItemConfig {
   id: string;
   type: FeedItemType;
-  component?: React.ReactElement;
 }
 
-//  Ad Container
+// Feed items that are pure static components (no props/state); defined outside
+// the component so the array reference never changes between renders.
+const STATIC_FEED_ITEMS: FeedItemConfig[] = [
+  { id: "header", type: "COMPONENT" },
+  { id: "free_games", type: "COMPONENT" },
+  { id: "news", type: "COMPONENT" },
+  { id: "ad_1", type: "AD" },
+  { id: "popular", type: "COMPONENT" },
+  { id: "recently_released", type: "COMPONENT" },
+  { id: "ad_2", type: "AD" },
+  { id: "coming_soon", type: "COMPONENT" },
+  { id: "anticipated", type: "COMPONENT" },
+  { id: "ad_3", type: "AD" },
+  { id: "nostalgia", type: "COMPONENT" },
+  { id: "top_rated", type: "COMPONENT" },
+];
+
+// Ad Container
 const AdContainer = memo(() => {
   const { t } = useTranslation();
   return (
@@ -40,13 +57,25 @@ const AdContainer = memo(() => {
 });
 AdContainer.displayName = "AdContainer";
 
+// Helper – count active filters
+function countActiveFilters(f: GameFilters): number {
+  return (f.year ? 1 : 0) + (f.genre ? 1 : 0) + (f.platform ? 1 : 0) + (f.sort && f.sort !== "relevance" ? 1 : 0);
+}
+
 // main
 
 function GamesScreen(): React.ReactElement {
   const { t } = useTranslation();
-  const [searchQuery,    setSearchQuery]    = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [submittedQuery, setSubmittedQuery] = useState<string>("");
   const [showAds, setShowAds] = useState<boolean>(false);
+  const [filterVisible, setFilterVisible] = useState<boolean>(false);
+  const [filters, setFilters] = useState<GameFilters>({
+    year: null,
+    genre: null,
+    platform: null,
+    sort: "relevance",
+  });
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
@@ -69,27 +98,52 @@ function GamesScreen(): React.ReactElement {
     Keyboard.dismiss();
   }, [searchQuery]);
 
+  const handleApplyFilters = useCallback((newFilters: GameFilters): void => {
+    setFilters(newFilters);
+  }, []);
 
-  const FEED_DATA = useMemo<FeedItem[]>(
-    () => [
-      { id: "header",           type: "COMPONENT", component: <Text style={styles.headerText}>{t("games.screen.header")}</Text> },
-      { id: "free_games",       type: "COMPONENT", component: <FreeGames /> },
-      { id: "news",             type: "COMPONENT", component: <GamesNews /> },
-      { id: "ad_1",             type: "AD" },
-      { id: "popular",          type: "COMPONENT", component: <Popular /> },
-      { id: "recently_released",type: "COMPONENT", component: <RecentlyReleased /> },
-      { id: "ad_2",             type: "AD" },
-      { id: "coming_soon",      type: "COMPONENT", component: <ComingSoon /> },
-      { id: "anticipated",      type: "COMPONENT", component: <MostAnticipated /> },
-      { id: "ad_3",             type: "AD" },
-      { id: "nostalgia",        type: "COMPONENT", component: <NostalgiaCorner /> },
-      { id: "top_rated",        type: "COMPONENT", component: <TopRated /> },
-    ],
-    []
+  const handleBack = useCallback((): void => {
+    setSearchQuery("");
+    setSubmittedQuery("");
+    setFilters({ year: null, genre: null, platform: null, sort: "relevance" });
+    Keyboard.dismiss();
+  }, []);
+
+  const openFilter = useCallback((): void => {
+    setFilterVisible(true);
+  }, []);
+
+  // The text query sent to search (empty string = browse by filters only)
+  const effectiveQuery = useMemo((): string => {
+    return submittedQuery.trim();
+  }, [submittedQuery]);
+
+  const activeFilterCount = countActiveFilters(filters);
+  const showResults = effectiveQuery !== "" || activeFilterCount > 0;
+
+  // Build the renderable feed by mapping static config to JSX
+  const FEED_DATA = useMemo(
+    () =>
+      STATIC_FEED_ITEMS.map((item) => {
+        if (item.type === "AD") return item;
+        const componentMap: Record<string, React.ReactElement> = {
+          header: <Text style={styles.headerText}>{t("games.screen.header")}</Text>,
+          free_games: <FreeGames />,
+          news: <GamesNews />,
+          popular: <Popular />,
+          recently_released: <RecentlyReleased />,
+          coming_soon: <ComingSoon />,
+          anticipated: <MostAnticipated />,
+          nostalgia: <NostalgiaCorner />,
+          top_rated: <TopRated />,
+        };
+        return { ...item, component: componentMap[item.id] };
+      }),
+    [t]
   );
 
   const renderFeedItem = useCallback(
-    ({ item }: { item: FeedItem }) => {
+    ({ item }: { item: { id: string; type: FeedItemType; component?: React.ReactElement } }) => {
       if (item.type === "AD") return showAds ? <AdContainer /> : null;
       return <View>{item.component}</View>;
     },
@@ -98,26 +152,47 @@ function GamesScreen(): React.ReactElement {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      <View style={styles.searchBarContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder={t("games.screen.searchPlaceholder")}
-          placeholderTextColor="#999"
-          value={searchQuery}
-          onChangeText={handleSearchTextChange}
-          onSubmitEditing={handleSubmitSearch}
-          returnKeyType="search"
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={handleClearSearch} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Ionicons name="close-circle" size={24} color="#ccc" />
-          </TouchableOpacity>
-        )}
+      {/* Search bar + filter button row */}
+      <View style={styles.searchRow}>
+        <View style={styles.searchBarContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t("games.screen.searchPlaceholder")}
+            placeholderTextColor="#999"
+            value={searchQuery}
+            onChangeText={handleSearchTextChange}
+            onSubmitEditing={handleSubmitSearch}
+            returnKeyType="search"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={handleClearSearch} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Ionicons name="close-circle" size={24} color="#ccc" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Filter button */}
+        <TouchableOpacity
+          style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
+          onPress={openFilter}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+        >
+          <Ionicons
+            name="options-outline"
+            size={20}
+            color={activeFilterCount > 0 ? "#fff" : COLORS.lightGray}
+          />
+          {activeFilterCount > 0 && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
-      {submittedQuery !== "" ? (
+      {showResults ? (
         <View style={{ flex: 1 }}>
-          <GamesList query={submittedQuery} endpoint="" header="" />
+          <GamesList query={effectiveQuery || undefined} filters={filters} endpoint="" header="" onBack={handleBack} />
         </View>
       ) : (
         <FlatList
@@ -131,6 +206,13 @@ function GamesScreen(): React.ReactElement {
           keyboardShouldPersistTaps="handled"
         />
       )}
+
+      <FilterModal
+        visible={filterVisible}
+        filters={filters}
+        onApply={handleApplyFilters}
+        onClose={() => setFilterVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -142,17 +224,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.primary,
   },
-  searchBarContainer: {
+  searchRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#1e2a45",
+    marginHorizontal: 16,
+    marginTop: 10,
     marginBottom: 20,
+    gap: 10,
+  },
+  searchBarContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1e2a45",
     paddingHorizontal: 15,
     paddingBottom: 2,
-    marginTop: 10,
     borderRadius: 24,
-    marginHorizontal: 50,
     borderWidth: 1,
     borderColor: COLORS.secondary,
   },
@@ -160,6 +247,37 @@ const styles = StyleSheet.create({
     flex: 1,
     color: "white",
     fontSize: 16,
+  },
+  filterBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: COLORS.secondary,
+    backgroundColor: "#1e2a45",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  filterBtnActive: {
+    backgroundColor: COLORS.secondary,
+    borderColor: COLORS.lightGray,
+  },
+  filterBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "#e74c3c",
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+  },
+  filterBadgeText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "700",
   },
   headerText: {
     color: "#fff",

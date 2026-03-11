@@ -7,7 +7,7 @@ import React, {
   Suspense,
   lazy,
 } from "react";
-import { InteractionManager, View, StyleSheet } from "react-native";
+import { InteractionManager, View, StyleSheet, TouchableOpacity } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import type { BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
@@ -198,7 +198,17 @@ const SettingsStack = memo(() => {
       <Stack.Screen
         name="UserGamesScreen"
         component={UserGamesScreen}
-        options={screenTitles.userGames}
+        options={({ navigation: nav, route }) => ({
+          title: (route.params as { listName?: string } | undefined)?.listName ?? screenTitles.userGames.title,
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => nav.getParent()?.navigate("Games")}
+              style={{ marginRight: 4, padding: 6 }}
+            >
+              <Ionicons name="add-circle-outline" size={28} color="#fff" />
+            </TouchableOpacity>
+          ),
+        })}
       />
       <Stack.Screen
         name="LanguageScreen"
