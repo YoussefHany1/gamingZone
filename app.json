@@ -5,7 +5,6 @@
     "version": "1.0.3",
     "icon": "./assets/logo-background.png",
     "userInterfaceStyle": "light",
-    "jsEngine": "hermes",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/logo-background.png",
@@ -14,19 +13,18 @@
     },
     "android": {
       "versionCode": 15,
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#0c1a33"
-      },
-      "enableProguardInReleaseBuilds": true,
-      "enableShrinkResourcesInReleaseBuilds": true,
+      "runtimeVersion": "1.0.3",
+      "userInterfaceStyle": "light",
       "edgeToEdgeEnabled": true,
       "package": "com.yh.gamingzone",
       "googleServicesFile": "./google-services.json",
       "config": {
         "googleMobileAdsAppId": "ca-app-pub-4635812020796700~2053599689"
       },
-      "runtimeVersion": "1.0.3"
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0c1a33"
+      }
     },
     "notification": {
       "icon": "./assets/icon.png",
@@ -47,6 +45,10 @@
         }
       ]
     ],
+    "react-native-google-mobile-ads": {
+      "android_app_id": "ca-app-pub-4635812020796700~2053599689",
+      "delay_app_measurement_init": true
+    },
     "updates": {
       "url": "https://u.expo.dev/25078fb9-8a54-4056-b988-2ac45be30e52"
     },

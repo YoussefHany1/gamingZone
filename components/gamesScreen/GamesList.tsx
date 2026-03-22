@@ -6,10 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   ListRenderItemInfo,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
 import SkeletonGameCard from "../../skeleton/SkeletonGameCard";
@@ -18,6 +20,7 @@ import { SERVER_URL } from "../../constants/config";
 import useCachedData from "../../hooks/useCachedData";
 import { Game } from "../types";
 import { GameFilters } from "./FilterModal";
+import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
 
 const CARD_HEIGHT = 290; // card 270px + 10px margin top + 10px margin bottom
 const CARD_WIDTH = 180;
@@ -52,7 +55,7 @@ interface GameCardProps {
   item: Game;
 }
 const GameCard = React.memo<GameCardProps>(({ item }) => {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
   const { t } = useTranslation();
 
   const labelKey = `games.list.gameTypes.${item.game_type}`;
@@ -96,6 +99,7 @@ const GameCard = React.memo<GameCardProps>(({ item }) => {
     </TouchableOpacity>
   );
 });
+GameCard.displayName = "GameCard";
 
 // main
 interface GamesListProps {
@@ -115,18 +119,18 @@ function GamesList({ endpoint, query, header, filters, onBack }: GamesListProps)
   const safeFilters = `${filters?.year ?? ""}_${filters?.genre ?? ""}_${filters?.platform ?? ""}_${filters?.sort ?? ""}`;
   const STORAGE_KEY = `GAMES_CACHE_${safeEndpoint}_${safeQuery}_${safeFilters}`;
 
+  // FIX: use primitive filter values as deps to avoid re-fetching on object reference changes
   const fetchGames = useCallback(
     createFetchGamesFunction(endpoint, query, filters),
-    // Use primitive values as deps, not the filters object reference,
-    // to avoid re-fetching when a new object with the same values is created.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [endpoint, query, filters?.year, filters?.genre, filters?.platform, filters?.sort],
   );
 
-  const { data: games, isLoading, error } = useCachedData<Game[]>(
+  const { data: games, isLoading, isRefetching, error, refetch } = useCachedData<Game[]>(
     STORAGE_KEY,
     fetchGames,
-    [endpoint, query, filters],
+    // FIX: use primitive values not the filters object reference
+    [endpoint, query, filters?.year, filters?.genre, filters?.platform, filters?.sort],
   );
 
   const gamesToShow: Game[] = games ?? [];
@@ -137,20 +141,23 @@ function GamesList({ endpoint, query, header, filters, onBack }: GamesListProps)
     [],
   );
 
+  // FIX: numColumns must be 1 when horizontal, 2 when vertical grid
+  const isHorizontal = !!endpoint;
+  const numColumns = (!isHorizontal && query !== undefined) ? 2 : isHorizontal ? 1 : 2;
+
   const getItemLayout = useCallback(
     (_data: ArrayLike<Game> | null | undefined, index: number) => {
-      const isHorizontal = !!endpoint;
-      const numColumns = query ? 2 : 1;
       if (isHorizontal) {
         return { length: CARD_WIDTH, offset: CARD_WIDTH * index, index };
       }
+      // FIX: use the computed numColumns in layout calculation
       return {
         length: CARD_HEIGHT,
         offset: CARD_HEIGHT * Math.floor(index / numColumns),
         index,
       };
     },
-    [endpoint, query],
+    [isHorizontal, numColumns],
   );
 
   const renderListHeader = useCallback(() => {
@@ -162,14 +169,29 @@ function GamesList({ endpoint, query, header, filters, onBack }: GamesListProps)
     );
   }, [onBack]);
 
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  const refreshControl = !isHorizontal ? (
+    <RefreshControl
+      refreshing={isRefetching && !isActuallyLoading}
+      onRefresh={handleRefresh}
+      tintColor={COLORS.secondary}
+      colors={[COLORS.secondary]}
+    />
+  ) : undefined;
+
   return (
     <View style={styles.container}>
+      {/* FIX: skeleton – no numColumns on horizontal list */}
       {isActuallyLoading && (
         <FlatList
           data={Array.from({ length: 6 }, (_, i) => ({ id: i } as any))}
-          horizontal={!!endpoint}
-          numColumns={2}
-          key={"skeleton-grid"}
+          horizontal={isHorizontal}
+          numColumns={isHorizontal ? undefined : 2}
+          key={isHorizontal ? "skeleton-horiz" : "skeleton-grid"}
           renderItem={() => <SkeletonGameCard />}
           showsHorizontalScrollIndicator={false}
           ListHeaderComponent={renderListHeader}
@@ -178,7 +200,12 @@ function GamesList({ endpoint, query, header, filters, onBack }: GamesListProps)
       )}
 
       {error && gamesToShow.length === 0 && (
-        <Text style={styles.error}>{t("games.list.serverError")}</Text>
+        <View style={styles.errorContainer}>
+          <Text style={styles.error}>{t("games.list.serverError")}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={handleRefresh}>
+            <Text style={styles.retryText}>{t("common.retryButton")}</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {!isActuallyLoading &&
@@ -196,9 +223,10 @@ function GamesList({ endpoint, query, header, filters, onBack }: GamesListProps)
           {header && <Text style={styles.header}>{header}</Text>}
           <FlatList
             data={gamesToShow}
-            horizontal={!!endpoint}
-            numColumns={2}
-            key={"grid"}
+            horizontal={isHorizontal}
+            // FIX: don't apply numColumns on horizontal list
+            numColumns={isHorizontal ? undefined : numColumns}
+            key={isHorizontal ? "horiz" : `grid-${numColumns}`}
             keyExtractor={(item) => String(item.id)}
             renderItem={renderItem}
             getItemLayout={getItemLayout}
@@ -206,15 +234,18 @@ function GamesList({ endpoint, query, header, filters, onBack }: GamesListProps)
             maxToRenderPerBatch={6}
             windowSize={5}
             showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
             ListHeaderComponent={renderListHeader}
             contentContainerStyle={styles.listContent}
+            refreshControl={refreshControl}
           />
         </>
       )}
     </View>
   );
 }
-export default GamesList
+// FIX: wrap with React.memo to avoid unnecessary re-renders
+export default React.memo(GamesList);
 
 const styles = StyleSheet.create({
   container: {},
@@ -283,12 +314,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
+  errorContainer: {
+    alignItems: "center",
+    paddingHorizontal: 20,
+    marginTop: 20,
+  },
   error: {
     color: "#ffcccc",
     textAlign: "center",
-    marginTop: 20,
-    paddingHorizontal: 20,
     fontSize: 16,
+    marginBottom: 12,
+  },
+  retryBtn: {
+    backgroundColor: COLORS.secondary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  retryText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
   },
   noResults: {
     color: "#999",
@@ -299,6 +345,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingVertical: 12,
     paddingHorizontal: 5,
-    alignItems: "center", paddingBottom: 220
+    alignItems: "center", paddingBottom: 220,
   },
 });

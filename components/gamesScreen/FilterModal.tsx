@@ -119,7 +119,15 @@ const FilterSection = memo<SectionProps>(({ title, items, selected, onSelect, hi
             <TouchableOpacity
               key={item.id}
               style={[styles.chip, isActive && styles.chipActive]}
-              onPress={() => onSelect(isActive ? null : item.id)}
+              onPress={() => {
+                // FIX: For Sort section (hideAny=true), pressing active chip resets to "relevance"
+                // instead of null, which would break the API.
+                if (hideAny) {
+                  onSelect(isActive ? "relevance" : item.id);
+                } else {
+                  onSelect(isActive ? null : item.id);
+                }
+              }}
             >
               <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
                 {t(item.label)}

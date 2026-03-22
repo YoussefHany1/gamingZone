@@ -1,19 +1,33 @@
-# الملفات الأساسية
-.git
+# الأساسيات
+.git/
 node_modules/
 .expo/
 npm-debug.*
+
+# مجلدات و ملفات غير متعلقة بتطبيق الموبايل
+backend/
+docs/
+.github/
 
 # ملفات الـ Web والـ Builds المحلية
 dist/
 web-build/
 
-# ملفات Android (لتجنب رفع ملفات البناء المحلية)
+# ملفات بيئة العمل والمحرر
+.idea/
+.vscode/
+*.DS_Store
+
+# ملفات الكي ستور والمفاتيح (لمنع رفع مفاتيح أندرويد الخاصة بالخطأ أو زيادة الحجم)
+*.jks
+*.keystore
+
+# ملفات Android (لتجنب رفع ملفات البناء المؤقتة مع الإبقاء على كود الأندرويد نفسه)
 android/build/
 android/app/build/
 android/.gradle/
 android/local.properties
 
-# ملفات iOS (إذا كنت ستقوم ببناء iOS مستقبلاً)
+# ملفات iOS (بحال وجودها مستقبلا)
 ios/Pods/
 ios/build/

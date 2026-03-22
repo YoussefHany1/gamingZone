@@ -9,6 +9,7 @@
     "create": "Create",
     "saveChanges": "Save Changes",
     "noData": "No data to display",
+    "retryButton": "Try Again",
     "imageNotFound": "Image not found",
     "ad": "Advertisement",
     "loginRequired": "You need to be logged in to perform this action",
@@ -224,6 +225,7 @@
         "completionist": "Completionist",
         "hours": "Hours"
       },
+      "userRatings": "user ratings",
       "trailer": "Game Trailer",
       "series": "Game series",
       "similar": "Similar Games",

@@ -99,11 +99,12 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 // Shared Screen Options
-const HIDDEN_HEADER_OPTIONS = { headerShown: false } as const;
+const HIDDEN_HEADER_OPTIONS = { headerShown: false, detachInactiveScreens: false } as const;
 const settingsHeaderOptions = {
   headerStyle: { backgroundColor: COLORS.primary },
   headerTintColor: "#fff" as const,
   headerTitleStyle: { fontWeight: "bold" as const },
+  detachInactiveScreens: false,
 } as const;
 
 // BannerAd wrapper
