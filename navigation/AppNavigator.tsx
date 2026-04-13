@@ -27,7 +27,10 @@ import GameDetails from "../screens/GameDetailsScreen";
 import UserGamesScreen from "../screens/UserGamesScreen";
 import NotificationSettings from "../components/Notification";
 import Profile from "../components/Profile";
+import AIChatScreen from "../screens/AIChatScreen";
 import GameNewsScreen from "../screens/GameNewsScreen";
+import EventDetailsScreen from "../screens/EventDetailsScreen";
+import type { GamingEvent } from "../components/types";
 import UserListsScreen from "../screens/UserListsScreen";
 import NewsDetails from "../screens/NewsDetailsScreen";
 import Loading from "../Loading";
@@ -44,6 +47,8 @@ const ForgotPasswordScreen = lazy(
 export type HomeStackParamList = {
   HomeScreen: undefined;
   NewsDetails: { id: string } | undefined;
+  AIChatScreen: undefined;
+  EventDetailsScreen: { event: GamingEvent };
 };
 
 export type NewsStackParamList = {
@@ -99,12 +104,13 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 // Shared Screen Options
-const HIDDEN_HEADER_OPTIONS = { headerShown: false, detachInactiveScreens: false } as const;
+const HIDDEN_HEADER_OPTIONS = { headerShown: false, detachInactiveScreens: false, animation: 'fade_from_bottom' } as const;
 const settingsHeaderOptions = {
   headerStyle: { backgroundColor: COLORS.primary },
   headerTintColor: "#fff" as const,
   headerTitleStyle: { fontWeight: "bold" as const },
   detachInactiveScreens: false,
+  animation: 'fade_from_bottom'
 } as const;
 
 // BannerAd wrapper
@@ -120,12 +126,26 @@ AdBanner.displayName = "AdBanner";
 
 // Internal Stack Navigators
 
-const HomeStack = memo(() => (
-  <Stack.Navigator id="HomeStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
-    <Stack.Screen name="HomeScreen" component={HomeScreen} />
-    <Stack.Screen name="NewsDetails" component={NewsDetails} />
-  </Stack.Navigator>
-));
+const HomeStack = memo(() => {
+  const { t } = useTranslation();
+  return (
+    <Stack.Navigator id="HomeStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
+      <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      <Stack.Screen name="NewsDetails" component={NewsDetails} />
+      <Stack.Screen
+        name="AIChatScreen"
+        component={AIChatScreen}
+        options={{
+          headerShown: true,
+          title: t("aiChat.title"),
+          headerStyle: { backgroundColor: COLORS.primary },
+          headerTintColor: "#fff"
+        }}
+      />
+      <Stack.Screen name="EventDetailsScreen" component={EventDetailsScreen} />
+    </Stack.Navigator>
+  );
+});
 HomeStack.displayName = "HomeStack";
 
 const NewsStack = memo(() => (
@@ -274,6 +294,7 @@ export const MainAppTabs = memo(() => {
         tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: COLORS.lightGray,
         tabBarInactiveTintColor: COLORS.lightGray,
+
         tabBarLabel: t(`navigation.tabs.${routeName.toLowerCase()}`),
         tabBarIcon: ({
           focused,

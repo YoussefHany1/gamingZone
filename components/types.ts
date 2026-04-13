@@ -49,7 +49,6 @@ export interface FreeGame {
   id: string;
   title: string;
   image?: string;
-  slug?: string;
   store?: "steam" | "epic" | string;
   url?: string;
   description?: string;
@@ -59,6 +58,22 @@ export interface FreeGame {
   igdb_game_id?: number;
 }
 
+export interface GamingEventGame {
+  id: number;
+  name: string;
+  cover?: { image_id: string };
+}
+
+export interface GamingEventVideo {
+  name?: string;
+  video_id: string;
+}
+
+export interface GamingEventNetwork {
+  url: string;
+  network_type: number; // 1=Twitter, 2=Instagram, 3=YouTube, 4=Twitch, 5=Discord, 6=Facebook, 7=Website
+}
+
 export interface GamingEvent {
   id: number;
   name: string;
@@ -66,6 +81,10 @@ export interface GamingEvent {
   start_time: number;
   end_time: number;
   live_stream_url?: string;
+  description?: string;
+  games?: GamingEventGame[];
+  videos?: GamingEventVideo[];
+  event_networks?: GamingEventNetwork[];
 }
 
 export interface UserList {

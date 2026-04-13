@@ -192,6 +192,28 @@ function ProfileScreen(): React.ReactElement {
   const handleSave = useCallback(async (): Promise<void> => {
     if (!currentUser) return;
 
+    // Validate all required fields
+    if (!name.trim()) {
+      ToastAndroid.show(t("settings.profile.messages.missingName"), ToastAndroid.LONG);
+      return;
+    }
+    if (!dob) {
+      ToastAndroid.show(t("settings.profile.messages.missingDob"), ToastAndroid.LONG);
+      return;
+    }
+    if (!gender) {
+      ToastAndroid.show(t("settings.profile.messages.missingGender"), ToastAndroid.LONG);
+      return;
+    }
+    if (!country) {
+      ToastAndroid.show(t("settings.profile.messages.missingCountry"), ToastAndroid.LONG);
+      return;
+    }
+    if (!platform) {
+      ToastAndroid.show(t("settings.profile.messages.missingPlatform"), ToastAndroid.LONG);
+      return;
+    }
+
     setLoading(true);
     try {
       const newPhotoURL = await uploadImage(imageUri);

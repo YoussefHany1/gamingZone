@@ -7,11 +7,9 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# react-native-reanimated
+# --- React Native Reanimated ---
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
-
-# Add any project specific keep options here:
 
 # --- Firebase ---
 -keep class io.invertase.firebase.** { *; }
@@ -25,15 +23,16 @@
 }
 # Keep React Native Google Mobile Ads
 -keep class io.invertase.firebase.app.** { *; }
--keep class io.invertase.googlemobileads.**
+-keep class io.invertase.googlemobileads.** { *; }
 
 # --- React Native Screens (React Navigation) ---
 -keep class com.swmansion.rnscreens.** { *; }
--keep class com.swmansion.reanimated.** { *; }
-
 -keep class androidx.fragment.app.** { *; }
 -keep class androidx.activity.** { *; }
 -keep class androidx.lifecycle.** { *; }
+
+# --- React Native Gesture Handler ---
+-keep class com.swmansion.gesturehandler.** { *; }
 
 # --- React Native SVG ---
 -keep public class com.horcrux.svg.** { *; }
@@ -44,13 +43,20 @@
 # --- Async Storage ---
 -keep class com.reactnativecommunity.asyncstorage.** { *; }
 
-# --- Appwrite (إذا موجودة) ---
+# --- Appwrite ---
 -keep class io.appwrite.** { *; }
 
-# React Native Vector Icons (If used implicitly or explicitly)
-# -------------------------
+# --- React Native Vector Icons ---
 -keep class com.oblador.vectoricons.** { *; }
 
-# Google Sign-In
-# -------------------------
+# --- Google Sign-In ---
 -keep class com.google.android.gms.auth.** { *; }
+
+# --- React Native Webview ---
+-keep class com.reactnativecommunity.webview.** { *; }
+
+# --- React Native Pager View ---
+-keep class com.reactnativepagerview.** { *; }
+
+# --- React Native NetInfo ---
+-keep class com.reactnativecommunity.netinfo.** { *; }

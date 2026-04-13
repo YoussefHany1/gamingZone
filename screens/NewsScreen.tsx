@@ -2,14 +2,13 @@ import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useWindowDimensions, StyleSheet, View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TabView, TabBar, type SceneRendererProps, type NavigationState } from "react-native-tab-view";
-import LatestNews  from "../components/LatestNews";
-import Loading     from "../Loading";
+import LatestNews from "../components/LatestNews";
+import Loading from "../Loading";
 import { useTranslation } from "react-i18next";
 import COLORS from "../constants/colors";
 import useRssFeeds, { type RssFeedMap, type RssSource } from "../hooks/useRssFeeds";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
+// Types
 interface RouteShape { key: string; title: string }
 
 interface GenericNewsRouteProps {
@@ -18,19 +17,11 @@ interface GenericNewsRouteProps {
   loading: boolean;
 }
 
-// ─── GenericNewsRoute ─────────────────────────────────────────────────────────
+// GenericNewsRoute
 
-/**
- * ✅ memo — TabView renders all routes at once; memo ensures that only the
- *    active tab re-renders when rssFeeds updates.
- */
 const GenericNewsRoute = memo<GenericNewsRouteProps>(({ rssFeeds, categoryKey, loading }) => {
   const { i18n, t } = useTranslation();
 
-  /**
-   * ✅ useMemo — feedList is sorted and merged from rssFeeds;
-   *    only recomputed when the feeds map, category, or language changes.
-   */
   const feedList = useMemo<RssSource[]>(() => {
     const list = rssFeeds[categoryKey] ?? [];
     const arList = list.filter((item) => item.language === "ar").sort((a, b) => a.name.localeCompare(b.name, "ar"));
@@ -82,9 +73,9 @@ function NewsScreen(): React.ReactElement {
   const { rssFeeds, loading } = useRssFeeds();
 
   const routes = useMemo<RouteShape[]>(() => [
-    { key: "news",     title: t("news.tabs.news")     ?? "News" },
-    { key: "reviews",  title: t("news.tabs.reviews")  ?? "Reviews" },
-    { key: "esports",  title: t("news.tabs.esports")  ?? "Esports" },
+    { key: "news", title: t("news.tabs.news") ?? "News" },
+    { key: "reviews", title: t("news.tabs.reviews") ?? "Reviews" },
+    { key: "esports", title: t("news.tabs.esports") ?? "Esports" },
     { key: "hardware", title: t("news.tabs.hardware") ?? "Hardware" },
   ], [t]);
 

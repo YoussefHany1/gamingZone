@@ -8,6 +8,7 @@ const APPWRITE_ENDPOINT = process.env.APPWRITE_ENDPOINT;
 const APPWRITE_PROJECT = process.env.APPWRITE_PROJECT;
 const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const COHERE_API_KEY = process.env.COHERE_API_KEY;
 
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID;
 const NEWS_COLLECTION_ID = process.env.ARTICLES_COLLECTION_ID;
@@ -17,16 +18,92 @@ client
   .setProject(APPWRITE_PROJECT)
   .setKey(APPWRITE_API_KEY);
 
+const SUMMARY_PROMPT = (newsText) => `You are a professional gaming news editor.
+Analyze the provided list of gaming news HEADLINES and create a Weekly Recap in TWO languages (Arabic and English).
+
+IMPORTANT: Return the result strictly as a valid JSON object. Do NOT add Markdown formatting like \`\`\`json.
+
+The JSON structure must be:
+{
+    "arabic": "## (عنوان الملخص الأسبوعي)... (Write the summary based on these headlines using Markdown and emojis)",
+    "english": "## (Weekly Recap Title)... (Write the summary based on these headlines using Markdown and emojis)"
+}
+
+The Headlines List:
+${newsText}`;
+
+function parseJsonSummary(rawText) {
+  const firstBrace = rawText.indexOf("{");
+  const lastBrace = rawText.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1) {
+    rawText = rawText.substring(firstBrace, lastBrace + 1);
+  } else {
+    rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+  }
+  return JSON.parse(rawText);
+}
+
+async function summarizeWithGemini(newsText) {
+  console.log("🤖 Trying Gemini...");
+  const aiResponse = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: SUMMARY_PROMPT(newsText) }] }],
+        generationConfig: { response_mime_type: "application/json" },
+      }),
+    }
+  );
+
+  const aiData = await aiResponse.json();
+
+  if (aiData.error) {
+    throw new Error(`Gemini API Error: ${JSON.stringify(aiData.error)}`);
+  }
+  if (!aiData.candidates || aiData.candidates.length === 0) {
+    throw new Error(`Gemini returned no candidates: ${JSON.stringify(aiData)}`);
+  }
+
+  const rawText = aiData.candidates[0].content.parts[0].text;
+  return parseJsonSummary(rawText);
+}
+
+async function summarizeWithCohere(newsText) {
+  console.log("🤖 Trying Cohere as fallback...");
+  const aiResponse = await fetch("https://api.cohere.com/v2/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${COHERE_API_KEY}`,
+      "X-Client-Name": "GamingZone",
+    },
+    body: JSON.stringify({
+      model: "command-r-plus-08-2024",
+      messages: [{ role: "user", content: SUMMARY_PROMPT(newsText) }],
+      temperature: 0.3,
+    }),
+  });
+
+  const aiData = await aiResponse.json();
+
+  if (!aiData.message || !aiData.message.content || !aiData.message.content[0].text) {
+    throw new Error(`Cohere returned unexpectedly: ${JSON.stringify(aiData)}`);
+  }
+
+  const rawText = aiData.message.content[0].text;
+  return parseJsonSummary(rawText);
+}
+
 async function generateSummary() {
   try {
     console.log("Fetching news from the last 7 days...");
 
-    // حساب تاريخ قبل 7 أيام
     const date = new Date();
     date.setDate(date.getDate() - 7);
     const sevenDaysAgo = date.toISOString();
 
-    // جلب الأخبار
     const response = await databases.listDocuments(
       DATABASE_ID,
       NEWS_COLLECTION_ID,
@@ -38,9 +115,8 @@ async function generateSummary() {
       return;
     }
 
-    // تجهيز النص للذكاء الاصطناعي
     let newsText = "";
-    response.documents.forEach((doc, index) => {
+    response.documents.forEach((doc) => {
       newsText += `- ${doc.title}\n`;
     });
 
@@ -48,77 +124,17 @@ async function generateSummary() {
       `Found ${response.documents.length} articles. Sending to AI...`
     );
 
-    // استدعاء Gemini API
-    const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `You are a professional gaming news editor. 
-                        Analyze the provided list of gaming news HEADLINES and create a Weekly Recap in TWO languages (Arabic and English).
-
-                        IMPORTANT: Return the result strictly as a valid JSON object. Do NOT add Markdown formatting like \`\`\`json.
-                        
-                        The JSON structure must be:
-                        {
-                            "arabic": "## (عنوان الملخص الأسبوعي)... (Write the summary based on these headlines using Markdown and emojis)",
-                            "english": "## (Weekly Recap Title)... (Write the summary based on these headlines using Markdown and emojis)"
-                        }
-
-                        The Headlines List:
-                        ${newsText}`,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            response_mime_type: "application/json",
-          },
-        }),
-      }
-    );
-
-    const aiData = await aiResponse.json();
-    if (aiData.error) {
-      console.error(
-        "❌ Google Gemini API Error:",
-        JSON.stringify(aiData.error, null, 2)
-      );
-      return;
+    // --- محاولة Gemini أولاً، ثم Cohere كبديل ---
+    let jsonSummary;
+    try {
+      jsonSummary = await summarizeWithGemini(newsText);
+      console.log("✅ Gemini succeeded.");
+    } catch (geminiError) {
+      console.error("❌ Gemini failed:", geminiError.message);
+      console.log("⚠️  Falling back to Cohere...");
+      jsonSummary = await summarizeWithCohere(newsText);
+      console.log("✅ Cohere succeeded.");
     }
-
-    if (!aiData.candidates || aiData.candidates.length === 0) {
-      console.error(
-        "❌ No candidates returned.",
-        JSON.stringify(aiData, null, 2)
-      );
-      return;
-    }
-
-    let rawText = aiData.candidates[0].content.parts[0].text;
-
-    // --- التعديل الثالث: تنظيف النص بطريقة أكثر ذكاءً ---
-    // هذا يضمن أننا نأخذ فقط ما بين القوسين { و } ونتجاهل أي شيء قبلهما أو بعدهما
-    const firstBrace = rawText.indexOf("{");
-    const lastBrace = rawText.lastIndexOf("}");
-
-    if (firstBrace !== -1 && lastBrace !== -1) {
-      rawText = rawText.substring(firstBrace, lastBrace + 1);
-    } else {
-      // احتياطي: التنظيف التقليدي
-      rawText = rawText
-        .replace(/```json/g, "")
-        .replace(/```/g, "")
-        .trim();
-    }
-
-    // محاولة التحويل
-    const jsonSummary = JSON.parse(rawText);
 
     console.log("Summary generated successfully. Saving to Appwrite...");
 
@@ -136,12 +152,9 @@ async function generateSummary() {
 
     console.log("✅ Weekly summary saved!");
   } catch (error) {
-    console.error("Error generating summary:", error);
-    // طباعة النص الذي سبب الخطأ لتسهيل التصحيح
+    console.error("❌ Error generating summary:", error.message);
     if (error instanceof SyntaxError) {
-      console.log(
-        "JSON Parse Error Details. Please check the raw text output if possible."
-      );
+      console.log("JSON Parse Error – check the raw AI response.");
     }
   }
 }

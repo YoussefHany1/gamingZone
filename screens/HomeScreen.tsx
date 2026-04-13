@@ -1,6 +1,8 @@
 import React, { useMemo, useEffect, useState, useCallback, memo } from "react";
-import { FlatList, StyleSheet, View, Text, InteractionManager } from "react-native";
+import { FlatList, StyleSheet, View, Text, InteractionManager, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import { useTranslation } from "react-i18next";
 import COLORS from "../constants/colors";
@@ -35,7 +37,10 @@ AdBanner.displayName = "AdBanner";
 function HomeScreen(): React.ReactElement {
   const [showAds, setShowAds] = useState<boolean>(false);
   const { i18n } = useTranslation();
+  const navigation = useNavigation<any>();
   const currentLang = i18n.language;
+
+  const noopChangeFeed = useCallback(() => {}, []);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
@@ -73,7 +78,7 @@ function HomeScreen(): React.ReactElement {
               showFooter={false}
               website={item.website}
               selectedItem={null}
-              onChangeFeed={() => { }}
+              onChangeFeed={noopChangeFeed}
               websitesList={[]}
             />
           );
@@ -93,7 +98,19 @@ function HomeScreen(): React.ReactElement {
         renderItem={renderItem}
         keyExtractor={(item) => item._key}
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews={true}
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        windowSize={5}
       />
+      
+      <TouchableOpacity 
+        style={homeStyles.fab} 
+        onPress={() => navigation.navigate("AIChatScreen")}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="chatbubbles" size={28} color="#fff" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -113,5 +130,21 @@ const homeStyles = StyleSheet.create({
   adText: {
     color: "#fff",
     marginBottom: 10
+  },
+  fab: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: COLORS.secondary,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });

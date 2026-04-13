@@ -243,7 +243,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 placeholder={t("auth.register.namePlaceholder")}
                 value={name}
                 onChangeText={setName}
-                placeholderTextColor="#ccc"
+                placeholderTextColor="#aaa"
               />
               <TextInput
                 style={styles.input}
@@ -252,6 +252,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                placeholderTextColor="#aaa"
               />
 
               <CustomPicker
@@ -277,6 +278,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                placeholderTextColor="#aaa"
               />
             </View>
 
@@ -336,7 +338,7 @@ SignupScreen.displayName = "SignupScreen";
 
 export default SignupScreen;
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// Styles
 
 const styles = StyleSheet.create({
   background: {

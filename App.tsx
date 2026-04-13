@@ -5,7 +5,9 @@ import React, {
   useRef,
   useCallback,
 } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { View, StyleSheet, AppState, AppStateStatus } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import {
@@ -26,6 +28,7 @@ import useNotifications from "./hooks/useNotifications";
 import useRateApp from "./hooks/useRateApp";
 import useUpdateCheck from "./hooks/useUpdateCheck";
 import { MainAppTabs, AuthStack } from "./navigation/AppNavigator";
+import OnboardingScreen from "./screens/OnboardingScreen";
 
 // Types
 export type RootStackParamList = {
@@ -88,6 +91,7 @@ SplashScreen.preventAutoHideAsync();
 function App(): React.ReactElement | null {
   const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
 
   const routeNameRef = useRef<string | undefined>(undefined);
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
@@ -164,6 +168,17 @@ function App(): React.ReactElement | null {
     };
   }, []);
 
+  // Onboarding check — runs once auth has resolved
+  useEffect(() => {
+    if (loading) return;
+    (async () => {
+      const seen = await AsyncStorage.getItem("@onboarding_done");
+      if (!seen) {
+        setShowOnboarding(true);
+      }
+    })();
+  }, [loading]);
+
   // Splash Hide
   useEffect(() => {
     if (!loading) {
@@ -198,10 +213,25 @@ function App(): React.ReactElement | null {
     return <Loading />;
   }
 
+  if (showOnboarding) {
+    const handleOnboardingDone = async () => {
+      await AsyncStorage.setItem("@onboarding_done", "true");
+      setShowOnboarding(false);
+    };
+    return (
+      <SafeAreaProvider>
+        <GestureHandlerRootView style={styles.container}>
+          <StatusBar style="light" translucent={true} />
+          <OnboardingScreen onDone={handleOnboardingDone} />
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <View style={styles.container}>
+        <GestureHandlerRootView style={styles.container}>
           <StatusBar style="light" translucent={true} />
 
           <NavigationContainer
@@ -218,7 +248,7 @@ function App(): React.ReactElement | null {
               </Stack.Navigator>
             </Suspense>
           </NavigationContainer>
-        </View>
+        </GestureHandlerRootView>
       </SafeAreaProvider>
     </QueryClientProvider>
   );

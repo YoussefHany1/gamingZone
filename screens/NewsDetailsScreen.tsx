@@ -38,18 +38,18 @@ const NewsDetails = memo((): React.ReactElement => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<RootParamList, "NewsDetails">>();
 
-  const params  = route.params ?? {};
+  const params = route.params ?? {};
   const article = (params.article ?? params) as ArticleParams;
 
   const [showAds, setShowAds] = useState<boolean>(false);
   const currentLang = i18n.language;
 
-  const title       = article.title       ?? "";
-  const link        = article.link        ?? "";
-  const thumbnail   = article.thumbnail   ?? "";
-  const siteName    = article.siteName    ?? "";
-  const siteImage   = article.siteImage   ?? "";
-  const pubDate     = article.pubDate     ?? "";
+  const title = article.title ?? "";
+  const link = article.link ?? "";
+  const thumbnail = article.thumbnail ?? "";
+  const siteName = article.siteName ?? "";
+  const siteImage = article.siteImage ?? "";
+  const pubDate = article.pubDate ?? "";
   const description = article.description ?? "";
 
   useEffect(() => {
@@ -76,10 +76,10 @@ const NewsDetails = memo((): React.ReactElement => {
       start: startDate,
       end: new Date(),
     });
-    if (years)   return `${years} ${t("news.duration.years")}`;
-    if (months)  return `${months} ${t("news.duration.months")}`;
-    if (days)    return `${days} ${t("news.duration.days")}`;
-    if (hours)   return minutes
+    if (years) return `${years} ${t("news.duration.years")}`;
+    if (months) return `${months} ${t("news.duration.months")}`;
+    if (days) return `${days} ${t("news.duration.days")}`;
+    if (hours) return minutes
       ? `${hours}${t("news.duration.hours")} ${minutes}${t("news.duration.minutes")}`
       : `${hours}${t("news.duration.hours")}`;
     return `${minutes ?? 0}${t("news.duration.minutes")}`;

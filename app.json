@@ -37,6 +37,7 @@
     },
     "plugins": [
       "expo-localization",
+      "expo-video",
       [
         "react-native-google-mobile-ads",
         {
@@ -55,17 +56,6 @@
     "ios": {
       "runtimeVersion": {
         "policy": "appVersion"
-      }
-    },
-    "extra": {
-      "APPWRITE_PROJECT": "6930387e0009494a1c2a",
-      "APPWRITE_DATABASE_ID": "6930389a0033ba85bfe1",
-      "GOOGLE_WEB_CLIENT_ID": "1003577837647-jpm4m77muign33bu3inaihqf6p82b50v.apps.googleusercontent.com",
-      "CLOUDINARY_CLOUD_NAME": "\"dewusw0db\";",
-      "CLOUDINARY_API_KEY": "\"848952698676177\";",
-      "CLOUDINARY_UPLOAD_PRESET": "\"Gaming Zone\";",
-      "eas": {
-        "projectId": "25078fb9-8a54-4056-b988-2ac45be30e52"
       }
     }
   }

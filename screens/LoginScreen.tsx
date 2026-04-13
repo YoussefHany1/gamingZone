@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 15,
   },
-  googleButtonWrapper: { justifyContent: "center",  },
+  googleButtonWrapper: { justifyContent: "center", },
   gradient: {
     padding: 15,
     borderRadius: 12,

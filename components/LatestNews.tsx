@@ -1,4 +1,4 @@
-import { useCallback, memo } from "react";
+import { useCallback, memo, useMemo } from "react";
 import {
   View,
   Text,
@@ -34,6 +34,85 @@ interface LatestNewsProps {
   showFooter?: boolean;
 }
 
+// Memoized row component
+interface NewsItemProps {
+  item: Article;
+  index: number;
+  language?: string;
+  onPress: (item: Article) => void;
+  t: (key: string, opts?: object) => string;
+}
+
+const NewsItem = memo(function NewsItem({ item, index, language, onPress, t }: NewsItemProps) {
+  const shouldShowAd = (index + 1) % 10 === 0;
+
+  const timeAgo = useMemo(() => {
+    const dateString = item?.pubDate;
+    if (!dateString) return "";
+    const startDate = new Date(dateString);
+    if (isNaN(startDate.getTime())) return "";
+    const duration = intervalToDuration({ start: startDate, end: new Date() });
+    const { years, months, days, hours, minutes } = duration;
+    if (years && years > 0) return `${years} ${t("news.duration.years")}`;
+    if (months && months > 0) return `${months} ${t("news.duration.months")}`;
+    if (days && days > 0) return `${days} ${t("news.duration.days")}`;
+    if (hours && hours > 0)
+      return minutes && minutes > 0
+        ? `${hours}${t("news.duration.hours")} ${minutes}${t("news.duration.minutes")}`
+        : `${hours}${t("news.duration.hours")}`;
+    return `${minutes}${t("news.duration.minutes")}`;
+  }, [item?.pubDate, t]);
+
+  return (
+    <View style={[styles.container, language === "ar" ? { direction: "rtl" } : { direction: "ltr" }]}>
+      <Pressable
+        style={styles.NewsContainer}
+        android_ripple={{ color: COLORS.secondary }}
+        onPress={() => onPress(item)}
+      >
+        <View style={styles.textContainer}>
+          <Text style={[styles.headline, language === "ar" ? { marginLeft: 8 } : { marginRight: 8 }]}>
+            {item?.title ? item.title.substring(0, 100) : ""}
+          </Text>
+          {item?.description ? (
+            <Text numberOfLines={2} style={styles.par}>{item.description}..</Text>
+          ) : null}
+          <Text style={styles.timeAgoText}>{timeAgo}</Text>
+        </View>
+        <View>
+          <Image
+            style={styles.thumbnail}
+            recyclingKey={String(item?.id ?? item?.thumbnail)}
+            source={
+              item?.thumbnail
+                ? {
+                  uri: item.thumbnail,
+                  headers: {
+                    Referer: "https://www.saudigamer.com/",
+                    "User-Agent": "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36",
+                  },
+                }
+                : require("../assets/image-not-found.webp")
+            }
+            contentFit="cover"
+            transition={500}
+            cachePolicy="memory-disk"
+            allowDownscaling={true}
+          />
+          <Text style={styles.website}>{item.siteName}</Text>
+        </View>
+      </Pressable>
+      {shouldShowAd && (
+        <View style={styles.ad}>
+          <Text style={styles.adText}>{t("common.ad")}</Text>
+          <BannerAd key={`ad-${index}`} unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
+        </View>
+      )}
+    </View>
+  );
+});
+
+// Main component
 function LatestNews({
   limit,
   language,
@@ -78,105 +157,16 @@ function LatestNews({
   );
 
   const renderItem = useCallback(
-    ({ item, index }: ListRenderItemInfo<Article>) => {
-      const shouldShowAd = (index + 1) % 10 === 0;
-
-      const dateString = item?.pubDate;
-      let timeAgo = "";
-
-      if (dateString) {
-        const startDate = new Date(dateString);
-        const endDate = new Date();
-
-        if (!isNaN(startDate.getTime())) {
-          const duration = intervalToDuration({ start: startDate, end: endDate });
-          const { years, months, days, hours, minutes } = duration;
-
-          if (years && years > 0) {
-            timeAgo = `${years} ${t("news.duration.years")}`;
-          } else if (months && months > 0) {
-            timeAgo = `${months} ${t("news.duration.months")}`;
-          } else if (days && days > 0) {
-            timeAgo = `${days} ${t("news.duration.days")}`;
-          } else if (hours && hours > 0) {
-            timeAgo =
-              minutes && minutes > 0
-                ? `${hours}${t("news.duration.hours")} ${minutes}${t("news.duration.minutes")}`
-                : `${hours}${t("news.duration.hours")}`;
-          } else {
-            timeAgo = `${minutes}${t("news.duration.minutes")}`;
-          }
-        }
-      }
-
-      return (
-        <View
-          style={[
-            styles.container,
-            language === "ar" ? { direction: "rtl" } : { direction: "ltr" },
-          ]}
-        >
-          <Pressable
-            style={styles.NewsContainer}
-            android_ripple={{ color: COLORS.secondary }}
-            onPress={() => handlePressArticle(item)}
-          >
-            <View style={styles.textContainer}>
-              <Text
-                style={[
-                  styles.headline,
-                  language === "ar" ? { marginLeft: 8 } : { marginRight: 8 },
-                ]}
-              >
-                {item?.title ? item.title.substring(0, 100) : ""}
-              </Text>
-              {item?.description ? (
-                <Text numberOfLines={2} style={styles.par}>
-                  {item.description}..
-                </Text>
-              ) : null}
-              <Text style={styles.timeAgoText}>{timeAgo}</Text>
-            </View>
-
-            <View>
-              <Image
-                style={styles.thumbnail}
-                recyclingKey={String(item?.id ?? item?.thumbnail)}
-                source={
-                  item?.thumbnail
-                    ? {
-                        uri: item.thumbnail,
-                        headers: {
-                          Referer: "https://www.saudigamer.com/",
-                          "User-Agent":
-                            "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36",
-                        },
-                      }
-                    : require("../assets/image-not-found.webp")
-                }
-                contentFit="cover"
-                transition={500}
-                cachePolicy="memory-disk"
-                allowDownscaling={true}
-              />
-              <Text style={styles.website}>{item.siteName}</Text>
-            </View>
-          </Pressable>
-
-          {shouldShowAd && (
-            <View style={styles.ad}>
-              <Text style={styles.adText}>{t("common.ad")}</Text>
-              <BannerAd
-                key={`ad-${index}`}
-                unitId={adUnitId}
-                size={BannerAdSize.MEDIUM_RECTANGLE}
-              />
-            </View>
-          )}
-        </View>
-      );
-    },
-    [language, website, handlePressArticle, t],
+    ({ item, index }: ListRenderItemInfo<Article>) => (
+      <NewsItem
+        item={item}
+        index={index}
+        language={language}
+        onPress={handlePressArticle}
+        t={t as (key: string, opts?: object) => string}
+      />
+    ),
+    [language, handlePressArticle, t],
   );
 
   const renderHeader = useCallback(() => {
@@ -224,18 +214,25 @@ function LatestNews({
     refetch();
   }, [refetch, t]);
 
-  const renderEmptyComponent = () => (
+  const renderEmptyComponent = useCallback(() => (
     <View style={styles.emptyContainer}>
       <Text style={styles.noDataText}>{t("news.noArticles")}</Text>
+      <Pressable
+        style={styles.contactButton}
+        android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+        onPress={() => navigation.navigate("Settings", { screen: "ContactScreen" })}
+      >
+        <Text style={styles.contactButtonText}>{t("news.contactSupport")}</Text>
+      </Pressable>
     </View>
-  );
+  ), [t]);
 
   if (loading && articles.length === 0) {
     return (
       <View style={styles.container}>
         {renderHeader()}
         <View style={{ marginTop: 10 }}>
-          {Array.from({ length: 5 }).map((_, i) => (
+          {Array.from({ length: 4 }).map((_, i) => (
             <SkeletonNewsItem key={i} language={language} />
           ))}
         </View>
@@ -245,9 +242,18 @@ function LatestNews({
 
   if (error && articles.length === 0) {
     return (
-      <Text style={{ color: "white", textAlign: "center", marginTop: 20 }}>
-        Error while fetching data, please try again later
-      </Text>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>
+          {t("news.fetchError")}
+        </Text>
+        <Pressable
+          style={styles.contactButton}
+          android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+          onPress={() => navigation.navigate("Settings", { screen: "ContactScreen" })}
+        >
+          <Text style={styles.contactButtonText}>{t("news.contactSupport")}</Text>
+        </Pressable>
+      </View>
     );
   }
 
@@ -354,12 +360,36 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center",
     borderRadius: 8,
+    marginBottom: 20,
   },
   timeAgoText: {
     fontSize: 12,
     color: COLORS.secondary,
     marginTop: 5,
     marginRight: 12,
+  },
+  errorContainer: {
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  errorText: {
+    color: "white",
+    textAlign: "center",
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  contactButton: {
+    backgroundColor: COLORS.secondary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  contactButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
   },
   footerContainer: {
     paddingVertical: 20,

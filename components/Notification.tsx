@@ -72,75 +72,12 @@ const Notification: React.FC = () => {
     );
   };
 
-  const toggleCategory = useCallback(
-    async (category: string): Promise<void> => {
-      const userId = auth().currentUser?.uid;
-      if (!userId) return;
-
-      const categorySources = rssFeeds[category] || [];
-      const allEnabled = categorySources.every((source) => {
-        const topic = NotificationService.getTopicName(category, source.name);
-        return preferences[topic];
-      });
-
-      const newValue = !allEnabled;
-      const newPreferences = { ...preferences };
-      const updatePromises: Promise<void>[] = [];
-
-      categorySources.forEach((source) => {
-        const prefId = NotificationService.getTopicName(category, source.name);
-        if (newPreferences[prefId] !== newValue) {
-          newPreferences[prefId] = newValue;
-          updatePromises.push(
-            NotificationService.toggleNotificationPreference(
-              userId,
-              category,
-              source.name,
-              newValue,
-            ),
-          );
-        }
-      });
-
-      setPreferences(newPreferences);
-      await Promise.all(updatePromises);
-    },
-    [rssFeeds, preferences, setPreferences],
-  );
-
   const toggleCategoryExpansion = useCallback((category: string): void => {
     setExpandedCategories((prev) => ({
       ...prev,
       [category]: !prev[category],
     }));
   }, []);
-
-  const getCategoryToggleValue = useCallback(
-    (category: string): boolean => {
-      const categorySources: Array<{ name: string }> =
-        rssFeeds[category] || [];
-      if (categorySources.length === 0) return false;
-      return categorySources.every((source) => {
-        const topic = NotificationService.getTopicName(category, source.name);
-        return preferences[topic];
-      });
-    },
-    [rssFeeds, preferences],
-  );
-
-  const getCategoryToggleIndeterminate = useCallback(
-    (category: string): boolean => {
-      const categorySources: Array<{ name: string }> =
-        rssFeeds[category] || [];
-      if (categorySources.length === 0) return false;
-      const enabledCount = categorySources.filter((source) => {
-        const topic = NotificationService.getTopicName(category, source.name);
-        return preferences[topic];
-      }).length;
-      return enabledCount > 0 && enabledCount < categorySources.length;
-    },
-    [rssFeeds, preferences],
-  );
 
   // --- دالة جديدة: عرض قسم الألعاب المجانية ---
   const renderFreeGamesSection = (): React.ReactElement => {
@@ -186,8 +123,6 @@ const Notification: React.FC = () => {
     if (sources.length === 0) return null;
 
     const isExpanded: boolean = expandedCategories[category];
-    const allEnabled: boolean = getCategoryToggleValue(category);
-    const isIndeterminate: boolean = getCategoryToggleIndeterminate(category);
 
     const arabicSources = sources
       .filter((s) => s.language === "ar")
@@ -232,19 +167,6 @@ const Notification: React.FC = () => {
             <Text style={styles.categoryTitle}>{title}</Text>
             <Text style={styles.sourceCount}>({sources.length})</Text>
           </View>
-
-          <TouchableOpacity onPress={() => toggleCategory(category)}>
-            <Switch
-              value={allEnabled}
-              onValueChange={() => toggleCategory(category)}
-              trackColor={{ false: "#3e3e3e", true: "#779bdd" }}
-              thumbColor={allEnabled ? "#ffffff" : "#f4f3f4"}
-              style={[
-                styles.categorySwitch,
-                isIndeterminate && styles.indeterminateSwitch,
-              ]}
-            />
-          </TouchableOpacity>
         </TouchableOpacity>
 
         {isExpanded && (
@@ -314,9 +236,9 @@ const Notification: React.FC = () => {
         {renderCategorySection("esports", `${t("news.tabs.esports")}`)}
         {renderCategorySection("hardware", `${t("news.tabs.hardware")}`)}
         {renderFreeGamesSection()}
-          <Text style={styles.footerText}>
-            {t("settings.notifications.footer")}
-          </Text>
+        <Text style={styles.footerText}>
+          {t("settings.notifications.footer")}
+        </Text>
         {showAds && (
           <View style={styles.ad}>
             <Text style={styles.adText}>{t("common.ad")}</Text>
@@ -397,9 +319,6 @@ const styles = StyleSheet.create({
   categorySwitch: {
     transform: [{ scaleX: 1.1 }, { scaleY: 1.1 }],
     marginLeft: 10,
-  },
-  indeterminateSwitch: {
-    opacity: 0.7,
   },
   sourcesList: {
     paddingVertical: 8,

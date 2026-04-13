@@ -10,9 +10,11 @@ The app aggregates content from top sources, and allows users to manage their pe
 - **🆓 Free Games Tracker**: Get instant alerts for free games available on major stores like Epic Games.
 - **🔔 Smart Notifications**: Advanced Push Notifications system (FCM) to keep you informed about breaking news and limited-time offers.
 - **🌍 Multi-language Support**: Full support for English and Arabic (RTL/LTR).
-- **👤 User Profiles**: Create an account, sign in, and save your favorite games using secure authentication.
-- **⚡ High Performance**: Optimized browsing experience with intelligent data caching.
-- **🤖 Automated Content**: Automated scripts run periodically to fetch the latest news and game offers without manual intervention.
+- **👤 User Profiles**: Create an account, sign in, and save your favorite games using secure authentication with robust profile validation.
+- **⚡ High Performance**: Optimized browsing experience with intelligent data caching, React component memoization, and a modular architecture.
+- **🤖 Automated Content & AI**: Weekly news summaries powered by Google Gemini API (with OpenAI ChatGPT fallback), plus automated scripts to fetch the latest news and game offers without manual intervention.
+- **🕹️ In-Depth Game Details**: Rich game profiles featuring Steam PC system requirements, gaming event details, countdowns, and stream links.
+- **👋 Interactive Onboarding**: Engaging first-launch onboarding flow with swipeable video demonstrations of core app sections.
 
 ## 🛠️ Tech Stack
 
@@ -30,6 +32,8 @@ The app aggregates content from top sources, and allows users to manage their pe
   - **Authentication**: Manages user sign-ups and logins.
   - **Cloud Messaging (FCM)**: Handles push notifications.
   - **Analytics**: Tracks user engagement and app performance.
+- **AI Integration**: Google Gemini API & OpenAI ChatGPT API for automated weekly summaries.
+- **External APIs**: Steam Storefront API for system requirements, IGDB for comprehensive game and event data.
 - **GitHub Actions**: Runs cron jobs (e.g., `free-games.yml`) to execute fetching scripts periodically.
 
 ## 🚀 Getting Started
@@ -80,6 +84,7 @@ The project includes automation scripts located in the `scripts/` folder:
 
 - `fetchFreeGames.cjs`: Fetches the latest free games.
 - `fetchRss.cjs`: Aggregates news from RSS feeds.
+- `generateWeeklySummary.cjs`: Generates AI-powered weekly summaries using Gemini API with ChatGPT fallback.
 
 These are triggered automatically via **GitHub Actions** to ensure the Appwrite database is always up-to-date.
 

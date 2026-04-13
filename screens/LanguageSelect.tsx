@@ -21,7 +21,7 @@ const LanguageSelect = memo((): React.ReactElement => {
 
   const toggleLanguage = useCallback(async (): Promise<void> => {
     const nextLang = i18n.language === "ar" ? "en" : "ar";
-    const isRTL    = nextLang === "ar";
+    const isRTL = nextLang === "ar";
     await i18n.changeLanguage(nextLang);
     if (isRTL !== I18nManager.isRTL) {
       I18nManager.allowRTL(isRTL);
@@ -37,9 +37,23 @@ const LanguageSelect = memo((): React.ReactElement => {
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.primary }}>
       <ScrollView style={styles.container}>
         {(["en", "ar"] as const).map((lang) => (
-          <TouchableOpacity key={lang} style={styles.categoryHeader} onPress={toggleLanguage}>
-            <View style={styles.categoryHeaderLeft}>
-              <Text style={styles.categoryTitle}>{lang === "en" ? "English" : "العربية"}</Text>
+          <TouchableOpacity 
+            key={lang} 
+            style={[styles.categoryHeader, { direction: lang === "en" ? "ltr" : "rtl" }]} 
+            onPress={toggleLanguage}
+          >
+            <View style={[styles.categoryHeaderLeft, { direction: lang === "en" ? "ltr" : "rtl" }]}>
+              <Text 
+                style={[
+                  styles.categoryTitle, 
+                  { 
+                    writingDirection: lang === "en" ? "ltr" : "rtl",
+                    textAlign: lang === "en" ? "left" : "right" 
+                  }
+                ]}
+              >
+                {lang === "en" ? "English" : "العربية"}
+              </Text>
               {i18n.language === lang && (
                 <Ionicons name="checkmark-sharp" size={24} color="#779bdd" />
               )}
@@ -83,7 +97,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#fff",
-    marginRight: 8,
+    marginHorizontal: 8,
   },
   ad: {
     alignItems: "center",

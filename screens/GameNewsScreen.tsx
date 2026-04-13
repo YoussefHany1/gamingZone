@@ -26,6 +26,7 @@ import Constants from "expo-constants";
 import { useNotificationPreferences } from "../hooks/useNotificationPreferences";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import { adUnitId } from "../constants/config";
+import COLORS from "../constants/colors";
 import Loading from "../Loading";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
@@ -35,7 +36,7 @@ interface AppExtra { APPWRITE_DATABASE_ID?: string }
 const { APPWRITE_DATABASE_ID } = (Constants.expoConfig?.extra ?? {}) as AppExtra;
 
 const ARTICLES_COLLECTION_ID = "articles" as const;
-const RSS_COLLECTION_ID      = "news_sources" as const;
+const RSS_COLLECTION_ID = "news_sources" as const;
 
 // Types
 export type GamesStackParamList = {
@@ -76,6 +77,60 @@ const safeId = (input: string): string => {
     .replace(/^_+|_+$/g, "");
 };
 
+//  NewsItem
+
+interface NewsItemProps {
+  item: NewsArticle;
+  lang: string;
+}
+
+const NewsItem = memo<NewsItemProps>(({ item, lang }) => {
+  let imageUrl: string | null = item.thumbnail ?? null;
+  if (imageUrl?.startsWith("https://lh3.googleusercontent.com")) {
+    imageUrl = null;
+  }
+
+  const handlePress = useCallback(() => {
+    if (item.link) Linking.openURL(item.link);
+  }, [item.link]);
+
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={handlePress}
+    >
+      <View style={styles.cardContent}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+          <Text style={styles.desc} numberOfLines={3}>
+            {item.description ?? item.body ?? ""}
+          </Text>
+          <Text style={styles.desc} numberOfLines={1}>
+            {item.pubDate
+              ? new Date(item.pubDate).toLocaleString(
+                lang === "ar" ? "ar-EG" : "en-US",
+                { dateStyle: "medium", timeStyle: "short" }
+              )
+              : ""}
+          </Text>
+        </View>
+        {imageUrl && (
+          <Image
+            recyclingKey={imageUrl}
+            source={{ uri: imageUrl }}
+            style={styles.cover}
+            contentFit="cover"
+            transition={500}
+            cachePolicy="memory-disk"
+            allowDownscaling
+          />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+});
+NewsItem.displayName = "NewsItem";
+
 //  NewsSection
 
 const NewsSection = memo<NewsSectionProps>(({
@@ -86,15 +141,15 @@ const NewsSection = memo<NewsSectionProps>(({
   defaultExpanded = true,
   rssUrl,
 }) => {
-  const [news, setNews]           = useState<NewsArticle[]>([]);
-  const [loading, setLoading]     = useState<boolean>(true);
-  const [expanded, setExpanded]   = useState<boolean>(defaultExpanded);
+  const [news, setNews] = useState<NewsArticle[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [expanded, setExpanded] = useState<boolean>(defaultExpanded);
 
   const { preferences, toggleSource, loadingPreferences } =
     useNotificationPreferences();
 
   const { categorySafe, nameSafe, topicName } = useMemo(() => {
-    const cat  = safeId(gameName);
+    const cat = safeId(gameName);
     const name = safeId(sourceId || title);
     return { categorySafe: cat, nameSafe: name, topicName: `${cat}_${name}` };
   }, [gameName, sourceId, title]);
@@ -192,47 +247,9 @@ const NewsSection = memo<NewsSectionProps>(({
             </Text>
           ) : (
             <ScrollView style={{ maxHeight: 250, borderRadius: 8 }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-              {news.map((item, index) => {
-                let imageUrl: string | null = item.thumbnail ?? null;
-                if (imageUrl?.startsWith("https://lh3.googleusercontent.com")) {
-                  imageUrl = null;
-                }
-                return (
-                  <TouchableOpacity
-                    key={item.$id ?? index.toString()}
-                    style={styles.card}
-                    onPress={() => item.link ? Linking.openURL(item.link) : null}
-                  >
-                    <View style={styles.cardContent}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-                        <Text style={styles.desc} numberOfLines={3}>
-                          {item.description ?? item.body ?? ""}
-                        </Text>
-                        <Text style={styles.desc} numberOfLines={1}>
-                          {item.pubDate
-                            ? new Date(item.pubDate).toLocaleString(
-                                lang === "ar" ? "ar-EG" : "en-US",
-                                { dateStyle: "medium", timeStyle: "short" }
-                              )
-                            : ""}
-                        </Text>
-                      </View>
-                      {imageUrl && (
-                        <Image
-                          recyclingKey={imageUrl}
-                          source={{ uri: imageUrl }}
-                          style={styles.cover}
-                          contentFit="cover"
-                          transition={500}
-                          cachePolicy="memory-disk"
-                          allowDownscaling
-                        />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
+              {news.map((item) => (
+                <NewsItem key={item.$id} item={item} lang={lang} />
+              ))}
             </ScrollView>
           )}
         </View>
@@ -244,10 +261,10 @@ NewsSection.displayName = "NewsSection";
 
 // main
 
-const GameNewsScreen: React.FC<Props> = ({ route }) => {
-  const currentGame  = route.params?.gameName ?? "";
-  const legacyApiUrl = route.params?.apiUrl   ?? "";
-  const sourceLink   = route.params?.source   ?? "";
+const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
+  const currentGame = route.params?.gameName ?? "";
+  const legacyApiUrl = route.params?.apiUrl ?? "";
+  const sourceLink = route.params?.source ?? "";
 
   const [showAds, setShowAds] = useState<boolean>(false);
   const { t } = useTranslation();
@@ -276,11 +293,7 @@ const GameNewsScreen: React.FC<Props> = ({ route }) => {
         {showAds && (
           <View style={styles.ad}>
             <Text style={styles.adText}>{t("common.ad")}</Text>
-            <BannerAd
-              unitId={adUnitId}
-              size={BannerAdSize.MEDIUM_RECTANGLE}
-              requestOptions={{ requestNonPersonalizedAdsOnly: true }}
-            />
+            <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
           </View>
         )}
 
@@ -301,14 +314,14 @@ const GameNewsScreen: React.FC<Props> = ({ route }) => {
       </ScrollView>
     </SafeAreaView>
   );
-};
+});
 
 export default GameNewsScreen;
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#0d1b2a"
+    backgroundColor: COLORS.primary
   },
   sectionContainer: {
     marginVertical: 20,

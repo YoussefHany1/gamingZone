@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import axios from "axios";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonGamingevents from "../../skeleton/SkeletonGamingevents";
@@ -19,6 +21,7 @@ import { SERVER_URL } from "../../constants/config";
 import { useCountdown } from "../../hooks/useCountdown";
 import useCachedData from "../../hooks/useCachedData";
 import { GamingEvent, CountdownResult } from "../types";
+import type { HomeStackParamList } from "../../navigation/AppNavigator";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
@@ -55,11 +58,12 @@ const getEventStatus = (start_time: number, end_time: number): EventStatus => {
 
 interface EventCardProps {
   item: GamingEvent;
+  onPress: () => void;
 }
 
-const EventCard = React.memo<EventCardProps>(({ item }) => {
+const EventCard = React.memo<EventCardProps>(({ item, onPress }) => {
   const { t, i18n } = useTranslation();
-
+  // console.log(item)
   const status: EventStatus = getEventStatus(item.start_time, item.end_time);
   const timeUntil = useCountdown(
     status === "upcoming" ? item.start_time : null,
@@ -74,7 +78,11 @@ const EventCard = React.memo<EventCardProps>(({ item }) => {
   }, [item.live_stream_url]);
 
   return (
-    <View style={styles.eventCard}>
+    <TouchableOpacity
+      style={styles.eventCard}
+      onPress={onPress}
+      activeOpacity={0.92}
+    >
       <Image
         recyclingKey={item.event_logo?.image_id ?? ""}
         source={
@@ -134,8 +142,8 @@ const EventCard = React.memo<EventCardProps>(({ item }) => {
                     ? `${timeUntil.hours}${t("common.time.h")} `
                     : ""}
                   {timeUntil.minutes > 0 ||
-                  timeUntil.hours > 0 ||
-                  timeUntil.days > 0
+                    timeUntil.hours > 0 ||
+                    timeUntil.days > 0
                     ? `${timeUntil.minutes}${t("common.time.m")}`
                     : ""}
                 </Text>
@@ -143,34 +151,10 @@ const EventCard = React.memo<EventCardProps>(({ item }) => {
             </View>
           )}
         </View>
-
-        {/* Action button */}
-        {item.live_stream_url && (
-          <TouchableOpacity onPress={handleStreamPress}>
-            <LinearGradient
-              colors={
-                status === "live"
-                  ? ["#FF3B30", "#FF6B6B"]
-                  : [COLORS.lightGray, "#516996"]
-              }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.actionButton}
-            >
-              <Text style={styles.actionButtonText}>
-                {status === "live"
-                  ? t("home.gamingEvents.watchNowButton")
-                  : status === "upcoming"
-                  ? t("home.gamingEvents.detailsButton")
-                  : t("home.gamingEvents.viewResults")}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
       </View>
 
       {status === "live" && <View style={styles.liveGlow} />}
-    </View>
+    </TouchableOpacity>
   );
 });
 
@@ -178,6 +162,7 @@ const EventCard = React.memo<EventCardProps>(({ item }) => {
 
 function GamingEvents(): React.ReactElement {
   const { t } = useTranslation();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const STORAGE_KEY = "GAMES_CACHE_EVENTS";
 
   const { data: events, isLoading, error } = useCachedData<GamingEvent[]>(
@@ -190,8 +175,12 @@ function GamingEvents(): React.ReactElement {
   const isActuallyLoading = isLoading && eventsToShow.length === 0;
 
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<GamingEvent>) => <EventCard item={item} />,
-    [],
+    ({ item }: ListRenderItemInfo<GamingEvent>) => {
+      const handlePress = () =>
+        navigation.navigate("EventDetailsScreen", { event: item });
+      return <EventCard item={item} onPress={handlePress} />;
+    },
+    [navigation],
   );
 
   const getItemLayout = useCallback(
@@ -319,7 +308,6 @@ const styles = StyleSheet.create({
     gap: 8,
     justifyContent: "flex-end",
     flexGrow: 1,
-    marginBottom: 14,
     marginLeft: 4,
   },
   eventTitle: {
@@ -359,19 +347,6 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
     fontSize: 12,
     fontWeight: "bold",
-  },
-  actionButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    elevation: 4,
-  },
-  actionButtonText: {
-    color: COLORS.textLight,
-    fontSize: 14,
-    fontWeight: "bold",
-    letterSpacing: 0.5,
   },
   liveGlow: {
     position: "absolute",

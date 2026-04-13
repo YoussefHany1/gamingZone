@@ -552,7 +552,11 @@ app.get("/events", cacheMiddleware(3600), async (req, res) => {
   try {
     const nowTs = Math.floor(Date.now() / 1000);
     const query = `
-      fields name, start_time, end_time, time_zone, event_logo.image_id, live_stream_url;
+      fields name, start_time, end_time, time_zone, event_logo.image_id, live_stream_url,
+             description,
+             games.name, games.cover.image_id,
+             videos.name, videos.video_id,
+             event_networks.url, event_networks.network_type;
       where start_time > ${nowTs};
       sort start_time asc;
       limit 15;

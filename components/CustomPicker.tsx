@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import {
   View,
   Text,
@@ -25,7 +25,7 @@ interface CustomPickerProps {
   containerStyle?: ViewStyle;
 }
 
-const CustomPicker: React.FC<CustomPickerProps> = ({
+const CustomPicker: React.FC<CustomPickerProps> = memo(({
   options,
   selectedValue,
   onValueChange,
@@ -35,15 +35,17 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   // Derive the display label for the currently selected value
-  const selectedLabel: string =
-    options.find((opt) => opt.value === selectedValue)?.label ?? placeholder;
+  const selectedLabel: string = useMemo(
+    () => options.find((opt) => opt.value === selectedValue)?.label ?? placeholder,
+    [options, selectedValue, placeholder]
+  );
 
-  const handleSelect = (value: string): void => {
+  const handleSelect = useCallback((value: string): void => {
     onValueChange(value);
     setModalVisible(false);
-  };
+  }, [onValueChange]);
 
-  const renderItem = ({ item }: ListRenderItemInfo<PickerOption>) => (
+  const renderItem = useCallback(({ item }: ListRenderItemInfo<PickerOption>) => (
     <TouchableOpacity
       style={[
         styles.optionItem,
@@ -63,7 +65,7 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
         <Ionicons name="checkmark" size={24} color="#7eaafcff" />
       )}
     </TouchableOpacity>
-  );
+  ), [selectedValue, handleSelect]);
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -110,7 +112,8 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
       </Modal>
     </View>
   );
-};
+});
+CustomPicker.displayName = "CustomPicker";
 export default CustomPicker;
 
 const styles = StyleSheet.create({

@@ -82,7 +82,7 @@ GameItem.displayName = "GameItem";
 
 const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
   const { listId, listName } = route.params;
-  const [games, setGames]     = useState<GameEntry[]>([]);
+  const [games, setGames] = useState<GameEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showAds, setShowAds] = useState<boolean>(false);
   const mountedRef = useRef<boolean>(true);
@@ -96,9 +96,9 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
   const getDisplayName = useCallback(
     (name: string): string => {
       const map: Record<string, string> = {
-        Playing:       t("games.details.listStatus.playing"),
-        Played:        t("games.details.listStatus.played"),
-        "Want to Play":t("games.details.listStatus.wantToPlay"),
+        Playing: t("games.details.listStatus.playing"),
+        Played: t("games.details.listStatus.played"),
+        "Want to Play": t("games.details.listStatus.wantToPlay"),
       };
       return map[name] ?? name;
     },
@@ -120,7 +120,7 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
     mountedRef.current = true;
     if (!currentUser || !CACHE_KEY) { setLoading(false); return; }
 
-    let unsubscribe: () => void = () => {};
+    let unsubscribe: () => void = () => { };
 
     const init = async (): Promise<void> => {
       try {
@@ -173,8 +173,8 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
             style: "destructive",
             onPress: async () => {
               const gameIdStr = String(gameId);
-              const oldGames  = [...games];
-              const newGames  = games.filter((g) => String(g.id) !== gameIdStr);
+              const oldGames = [...games];
+              const newGames = games.filter((g) => String(g.id) !== gameIdStr);
               setGames(newGames);
               AsyncStorage.setItem(CACHE_KEY, JSON.stringify(newGames)).catch(console.error);
               try {

@@ -29,7 +29,7 @@ interface MenuItem {
 type SettingsNavProp = NativeStackNavigationProp<Record<string, object | undefined>>;
 
 //  Constants
-const PLAY_STORE_URL   = "https://play.google.com/store/apps/details?id=com.yh.gamingzone" as const;
+const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.yh.gamingzone" as const;
 const PRIVACY_POLICY_URL = "https://youssefhany1.github.io/gamingZoneApp/" as const;
 
 // main
@@ -58,7 +58,7 @@ const SettingsScreen = memo((): React.ReactElement => {
   }, [currentUser?.photoURL, isGuest]);
 
   const displayName = useMemo<string>(() => {
-    if (isGuest || !currentUser?.displayName) return t("auth.login.signInButton");
+    if (isGuest || !currentUser?.displayName) return t("auth.register.signUpButton");
     return currentUser.displayName;
   }, [currentUser?.displayName, isGuest, t]);
 
@@ -85,13 +85,13 @@ const SettingsScreen = memo((): React.ReactElement => {
 
   const menuItems = useMemo<MenuItem[]>(
     () => [
-      { id: "notifications", icon: "notifications",            label: t("settings.menu.notifications"),   onPress: () => navigation.navigate("NotificationSettings") },
-      { id: "lists",         icon: "list",                     label: t("settings.menu.myLists"),          onPress: () => navigation.navigate("UserListsScreen") },
-      { id: "rate",          icon: "star",                     label: t("settings.menu.rateUs"),           onPress: () => handleOpenURL(PLAY_STORE_URL) },
-      { id: "invite",        component: InviteFriendsBtn },
-      { id: "contact",       icon: "chatbubble-ellipses-sharp",label: t("settings.menu.contactUs"),        onPress: () => navigation.navigate("ContactScreen") },
-      { id: "language",      icon: "language",                 label: t("settings.menu.changeLanguage"),   onPress: () => navigation.navigate("LanguageScreen") },
-      { id: "privacy",       icon: "shield-checkmark-sharp",   label: t("settings.menu.privacyPolicy"),    onPress: () => handleOpenURL(PRIVACY_POLICY_URL) },
+      { id: "notifications", icon: "notifications", label: t("settings.menu.notifications"), onPress: () => navigation.navigate("NotificationSettings") },
+      { id: "lists", icon: "list", label: t("settings.menu.myLists"), onPress: () => navigation.navigate("UserListsScreen") },
+      { id: "rate", icon: "star", label: t("settings.menu.rateUs"), onPress: () => handleOpenURL(PLAY_STORE_URL) },
+      { id: "invite", component: InviteFriendsBtn },
+      { id: "contact", icon: "chatbubble-ellipses-sharp", label: t("settings.menu.contactUs"), onPress: () => navigation.navigate("ContactScreen") },
+      { id: "language", icon: "language", label: t("settings.menu.changeLanguage"), onPress: () => navigation.navigate("LanguageScreen") },
+      { id: "privacy", icon: "shield-checkmark-sharp", label: t("settings.menu.privacyPolicy"), onPress: () => handleOpenURL(PRIVACY_POLICY_URL) },
     ],
     [t, navigation, handleOpenURL]
   );

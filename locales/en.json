@@ -116,7 +116,7 @@
       "upcoming": "Upcoming",
       "live": "Live",
       "watchNowButton": "Watch Now",
-      "detailsButton": "View Details",
+      "detailsButton": "View Live Stream",
       "noEvents": "No gaming events available at the moment."
     }
   },
@@ -129,6 +129,8 @@
     },
     "latestHeader": "Latest {{category}}",
     "noArticles": "No articles available at the moment.",
+    "fetchError": "Error while fetching data, please try again later.",
+    "contactSupport": "Contact Support",
     "endOfList": "End of Articles",
     "details": {
       "readFullArticle": "Read the full article",
@@ -173,6 +175,7 @@
     },
     "list": {
       "gamesNews": "Game News",
+      "live": "Live",
       "popular": "Popular Right now",
       "recentlyReleased": "Recently Released",
       "topRated": "Top Rated",
@@ -229,6 +232,9 @@
       "trailer": "Game Trailer",
       "series": "Game series",
       "similar": "Similar Games",
+      "pcRequirements": "PC System Requirements",
+      "minimum": "Minimum",
+      "recommended": "Recommended",
       "listStatus": {
         "add": "Add to...",
         "played": "Played",
@@ -315,7 +321,7 @@
       "myLists": "My Lists",
       "rateUs": "Rate Us",
       "inviteFriends": "Invite Friends",
-      "contactUs": "Contact Us / Suggestions",
+      "contactUs": "Contact Us",
       "changeLanguage": "Change Language",
       "privacyPolicy": "Privacy Policy",
       "signOut": "Sign Out"
@@ -350,7 +356,13 @@
         "uploadFailed": "Failed to upload image. Please check your internet and try again",
         "saveError": "Unable to save changes",
         "saveSuccessTitle": "Saved",
-        "saveSuccessMsg": "Your profile details have been updated successfully"
+        "saveSuccessMsg": "Your profile details have been updated successfully",
+        "missingName": "Please enter your name.",
+        "missingDob": "Please select your date of birth.",
+        "missingGender": "Please select your gender.",
+        "missingCountry": "Please select your country.",
+        "missingPlatform": "Please select your platform.",
+        "missingImage": "Please add a profile picture."
       }
     },
     "notifications": {
@@ -387,5 +399,42 @@
       "messageTooLong": "Message is too long. Maximum limit is 5000 characters.",
       "invalidEmail": "The email address is invalid"
     }
+  },
+  "aiChat": {
+    "title": "Gaming Assistant (Beta)",
+    "placeholder": "Ask me anything about gaming...",
+    "limitReached": "You have reached your daily limit of 20 messages.",
+    "error": "Something went wrong. Please try again.",
+    "typing": "Typing...",
+    "emptyList": "Start chatting with your AI assistant!",
+    "suggestions": {
+      "basedOnList": "Suggest a game based on my games list",
+      "bestAdventure": "What are the best adventure games?",
+      "coopGames": "Suggest co-op games to play with friends",
+      "newReleases": "What are the latest games released this month?"
+    }
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "getStarted": "Get Started",
+    "slides": [
+      {
+        "title": "📰 Stay up-to-date",
+        "description": "With the latest Games, Reviews, Esports, Hardware news from sources you like just in one place."
+      },
+      {
+        "title": "📃 Games Library",
+        "description": "Organize your collection, track completed games, and build a wishlist for upcoming releases."
+      },
+      {
+        "title": "🎁 Never miss a free game",
+        "description": "Claim it with one tap before the offer expires from Epic Games, Steam, and GOG!"
+      },
+      {
+        "title": "🔔 Instant Notifications",
+        "description": "Stay updated with instant alerts for new free games, and news."
+      }
+    ]
   }
 }

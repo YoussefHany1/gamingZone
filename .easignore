@@ -8,6 +8,7 @@ npm-debug.*
 backend/
 docs/
 .github/
+assets/screenshots/
 
 # ملفات الـ Web والـ Builds المحلية
 dist/

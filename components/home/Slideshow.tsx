@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, memo } from "react";
 import { Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
 import Swiper from "react-native-swiper";
@@ -73,15 +73,15 @@ function Slideshow({ website, category }: SlideshowProps): React.ReactElement {
   );
 }
 
-export default Slideshow;
+export default memo(Slideshow);
 
 const styles = StyleSheet.create({
   swiper: {
-    height: 400,
+    height: 350,
     backgroundColor: COLORS.secondary,
   },
   thumbnail: {
-    height: 400,
+    height: 350,
     resizeMode: "cover",
     width: "100%",
   },

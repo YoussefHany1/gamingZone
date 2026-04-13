@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, memo } from "react";
 import {
   View,
   Text,
@@ -27,7 +27,7 @@ interface ListSelectionModalProps {
   gameData?: Record<string, unknown>;
 }
 
-const ListSelectionModal: React.FC<ListSelectionModalProps> = ({
+const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
   visible,
   onClose,
   gameId,
@@ -42,7 +42,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = ({
   const { t } = useTranslation();
 
   // Map well-known list names to translated labels
-  const getDisplayName = (originalName: string): string => {
+  const getDisplayName = useCallback((originalName: string): string => {
     switch (originalName) {
       case "Playing":
         return t("games.details.listStatus.playing");
@@ -53,7 +53,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = ({
       default:
         return originalName;
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     if (!visible) {
@@ -105,7 +105,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = ({
     });
   }, [visible, gameId]);
 
-  const toggleList = async (listId: string): Promise<void> => {
+  const toggleList = useCallback(async (listId: string): Promise<void> => {
     const user = auth().currentUser;
     if (!user) return;
 
@@ -141,9 +141,9 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = ({
       revertLists[targetListIndex].isChecked = currentStatus;
       setLists(revertLists);
     }
-  };
+  }, [lists, gameId, gameData]);
 
-  const handleCreateList = async (): Promise<void> => {
+  const handleCreateList = useCallback(async (): Promise<void> => {
     const trimmedName = newListName.trim();
     if (!trimmedName) return;
 
@@ -198,9 +198,9 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = ({
     } finally {
       setCreatingLoading(false);
     }
-  };
+  }, [lists, newListName, t]);
 
-  const renderItem = ({ item }: ListRenderItemInfo<UserList>) => (
+  const renderItem = useCallback(({ item }: ListRenderItemInfo<UserList>) => (
     <TouchableOpacity
       style={[styles.listItem, item.isChecked && styles.selectedOption]}
       onPress={() => toggleList(item.id)}
@@ -214,7 +214,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = ({
         {getDisplayName(item.name)}
       </Text>
     </TouchableOpacity>
-  );
+  ), [toggleList, getDisplayName]);
 
   return (
     <Modal
@@ -330,7 +330,8 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = ({
       </KeyboardAvoidingView>
     </Modal>
   );
-};
+});
+ListSelectionModal.displayName = "ListSelectionModal";
 export default ListSelectionModal;
 
 const styles = StyleSheet.create({

@@ -65,43 +65,46 @@ interface NewsGameCardProps {
   onPress: (name: string, apiUrl: string, source?: string) => void;
 }
 
-const NewsGameCard = React.memo<NewsGameCardProps>(({ item, onPress }) => (
-  <TouchableOpacity
-    style={styles.gameCard}
-    onPress={() => onPress(item.name, item.apiUrl, item.source)}
-    activeOpacity={0.9}
-  >
-    <LinearGradient colors={["#1a3052", "#0c1a33"]} style={styles.cardGradient} />
+const NewsGameCard = React.memo<NewsGameCardProps>(({ item, onPress }) => {
+  const { t } = useTranslation();
+  return (
+    <TouchableOpacity
+      style={styles.gameCard}
+      onPress={() => onPress(item.name, item.apiUrl, item.source)}
+      activeOpacity={0.9}
+    >
+      <LinearGradient colors={["#1a3052", "#0c1a33"]} style={styles.cardGradient} />
 
-    <View style={styles.imageContainer}>
-      <Image
-        recyclingKey={item.image}
-        source={item.image}
-        style={styles.cover}
-        contentFit="cover"
-        transition={500}
-        cachePolicy="memory-disk"
-        allowDownscaling={true}
-      />
-      <LinearGradient
-        colors={["transparent", COLORS.darkBackground + "99"]}
-        style={styles.coverGradient}
-      />
-    </View>
+      <View style={styles.imageContainer}>
+        <Image
+          recyclingKey={item.image}
+          source={item.image}
+          style={styles.cover}
+          contentFit="cover"
+          transition={500}
+          cachePolicy="memory-disk"
+          allowDownscaling={true}
+        />
+        <LinearGradient
+          colors={["transparent", COLORS.darkBackground + "99"]}
+          style={styles.coverGradient}
+        />
+      </View>
 
-    <View style={styles.infoSection}>
-      <Text style={styles.title} numberOfLines={2}>
-        {item.name}
-      </Text>
-    </View>
+      <View style={styles.infoSection}>
+        <Text style={styles.title} numberOfLines={2}>
+          {item.name}
+        </Text>
+      </View>
 
-    {/* Live indicator badge */}
-    <View style={styles.liveIndicator}>
-      <View style={styles.liveDot} />
-      <Text style={styles.liveText}>LIVE</Text>
-    </View>
-  </TouchableOpacity>
-));
+      {/* Live indicator badge */}
+      <View style={styles.liveIndicator}>
+        <View style={styles.liveDot} />
+        <Text style={styles.liveText}>{t("games.list.live")}</Text>
+      </View>
+    </TouchableOpacity>
+  )
+});
 
 // main
 
