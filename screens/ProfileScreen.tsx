@@ -23,13 +23,15 @@ import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
 import Constants from "expo-constants";
-import CustomPicker from "./CustomPicker";
+import CustomPicker from "../components/CustomPicker";
 import * as Updates from "expo-updates";
 import countries from "i18n-iso-countries";
 import enLang from "i18n-iso-countries/langs/en.json";
 import arLang from "i18n-iso-countries/langs/ar.json";
-import { PickerOption } from "./types";
-
+import { PickerOption } from "../components/types";
+import SteamLinkModal from "../components/SteamLinkModal";
+import { Ionicons } from "@expo/vector-icons";
+import SectionTitle from "../components/SectionTitle";
 // Cloudinary config
 
 const CLOUDINARY_CLOUD_NAME: string =
@@ -81,7 +83,9 @@ function ProfileScreen(): React.ReactElement {
   const [currentUser, setCurrentUser] =
     useState<FirebaseAuthTypes.User | null>(auth().currentUser);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [stats, setStats] = useState({ userCount: 0, newsCount: 0 });
   const [showAds, setShowAds] = useState<boolean>(false);
+  const [showSteamModal, setShowSteamModal] = useState<boolean>(false);
   const { t, i18n } = useTranslation();
 
   // Defer ad rendering until after the main UI has settled
@@ -106,7 +110,7 @@ function ProfileScreen(): React.ReactElement {
           .doc(currentUser.uid)
           .get();
 
-        if (userDocument.exists) {
+        if (userDocument.exists()) {
           const userData = userDocument.data() as FirestoreUser;
           setName(userData.displayName ?? "");
           setImageUri(userData.photoURL ?? null);
@@ -123,6 +127,20 @@ function ProfileScreen(): React.ReactElement {
 
     fetchUserData();
   }, [currentUser]);
+
+useEffect(() => {
+  if (isAdmin) {
+    const fetchStats = async () => {
+      const usersSnap = await firestore().collection("users").count().get();
+      const newsSnap = await firestore().collection("news").count().get(); // افترضت وجود collection باسم news
+      setStats({
+        userCount: usersSnap.data().count,
+        newsCount: newsSnap.data().count,
+      });
+    };
+    fetchStats();
+  }
+}, [isAdmin]);
 
   const pickImage = useCallback(async (): Promise<void> => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -310,7 +328,7 @@ function ProfileScreen(): React.ReactElement {
               recyclingKey={imageUri ?? ""}
               style={styles.avatar}
               source={
-                imageUri ? imageUri : require("../assets/default_profile.png")
+                imageUri ? imageUri : require("../assets/default_profile.webp")
               }
               contentFit="cover"
               transition={500}
@@ -323,7 +341,7 @@ function ProfileScreen(): React.ReactElement {
           </TouchableOpacity>
 
           {/* Name */}
-          <Text style={styles.label}>{t("settings.profile.nameLabel")}</Text>
+          <SectionTitle title={t("settings.profile.nameLabel")} />
           <TextInput
             style={styles.input}
             placeholder={t("settings.profile.placeholders.name")}
@@ -333,7 +351,7 @@ function ProfileScreen(): React.ReactElement {
           />
 
           {/* Date of Birth */}
-          <Text style={styles.label}>{t("settings.profile.dobLabel")}</Text>
+          <SectionTitle title={t("settings.profile.dobLabel")} />
           <TouchableOpacity onPress={() => setShowPicker(true)}>
             <TextInput
               style={styles.input}
@@ -353,7 +371,7 @@ function ProfileScreen(): React.ReactElement {
           )}
 
           {/* Gender */}
-          <Text style={styles.label}>{t("settings.profile.genderLabel")}</Text>
+          <SectionTitle title={t("settings.profile.genderLabel")} />
           <CustomPicker
             options={genderOptions}
             selectedValue={gender}
@@ -364,7 +382,7 @@ function ProfileScreen(): React.ReactElement {
           />
 
           {/* Country */}
-          <Text style={styles.label}>{t("settings.profile.countryLabel")}</Text>
+          <SectionTitle title={t("settings.profile.countryLabel")} />
           <CustomPicker
             options={countriesList}
             selectedValue={country}
@@ -375,9 +393,7 @@ function ProfileScreen(): React.ReactElement {
           />
 
           {/* Platform */}
-          <Text style={styles.label}>
-            {t("settings.profile.platformLabel")}
-          </Text>
+          <SectionTitle title={t("settings.profile.platformLabel")} />
           <CustomPicker
             options={platformOptions}
             selectedValue={platform}
@@ -393,6 +409,16 @@ function ProfileScreen(): React.ReactElement {
               <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
             </View>
           )}
+
+          {/* Sync Steam Library Button */}
+          <SectionTitle title={t("settings.profile.connectedApps")} />
+          <TouchableOpacity
+            style={[styles.saveBtn, { backgroundColor: '#171a21', marginTop: 10, width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}
+            onPress={() => setShowSteamModal(true)}
+          >
+            <Ionicons name="logo-steam" size={24} color="#fff" style={{ marginRight: 10 }} />
+            <Text style={styles.saveText}>{t("settings.profile.steam.modal.title") || "Sync Steam Library"}</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
             <Text style={styles.saveText}>{t("common.saveChanges")}</Text>
@@ -418,6 +444,11 @@ function ProfileScreen(): React.ReactElement {
           )}
         </ScrollView>
       )}
+
+      <SteamLinkModal
+        visible={showSteamModal}
+        onClose={() => setShowSteamModal(false)}
+      />
     </SafeAreaView>
   );
 }

@@ -10,6 +10,7 @@ import {
   Text,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  ScrollView,
 } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -235,7 +236,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [fullScreenVisible, setFullScreenVisible] = useState<boolean>(false);
   const [fullScreenIndex, setFullScreenIndex] = useState<number>(0);
-  const scrollViewRef = useRef<typeof Animated.ScrollView>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const { i18n } = useTranslation();
   const currentLang = i18n.language;
 
@@ -244,14 +245,14 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
     coverImageId
       ? {
         id: "cover",
-        url: `https://images.igdb.com/igdb/image/upload/t_1080p/${coverImageId}.jpg`,
-        thumbnail: `https://images.igdb.com/igdb/image/upload/t_cover_big/${coverImageId}.jpg`,
+        url: `https://images.igdb.com/igdb/image/upload/t_1080p/${coverImageId}.webp`,
+        thumbnail: `https://images.igdb.com/igdb/image/upload/t_cover_big/${coverImageId}.webp`,
       }
       : null,
     ...screenshots.map((screenshot) => ({
       id: screenshot.id ?? screenshot.image_id,
-      url: `https://images.igdb.com/igdb/image/upload/t_1080p/${screenshot.image_id}.jpg`,
-      thumbnail: `https://images.igdb.com/igdb/image/upload/t_screenshot_med/${screenshot.image_id}.jpg`,
+      url: `https://images.igdb.com/igdb/image/upload/t_1080p/${screenshot.image_id}.webp`,
+      thumbnail: `https://images.igdb.com/igdb/image/upload/t_screenshot_med/${screenshot.image_id}.webp`,
     })),
   ].filter(Boolean) as GalleryImage[];
 

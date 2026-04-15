@@ -42,7 +42,7 @@ const GameItem = memo<GameItemProps>(({ game, onRemove }) => {
   const navigation = useNavigation<NativeStackNavigationProp<StackParamList>>();
 
   const coverUrl = game.cover_image_id
-    ? { uri: `https://images.igdb.com/igdb/image/upload/t_cover_small/${game.cover_image_id}.jpg` }
+    ? { uri: `https://images.igdb.com/igdb/image/upload/t_cover_small/${game.cover_image_id}.webp` }
     : require("../assets/image-not-found.webp");
 
   const handlePress = useCallback(

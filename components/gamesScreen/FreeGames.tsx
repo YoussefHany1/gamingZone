@@ -28,6 +28,8 @@ import useCachedData from "../../hooks/useCachedData";
 import { useNavigation } from "@react-navigation/native";
 import { FreeGame, CountdownResult } from "../types";
 
+type FreeGameItem = FreeGame & { slug?: string };
+
 const FREE_GAMES_COLLECTION_ID = "free_games";
 const NOTIF_CATEGORY = "free_games";
 const NOTIF_SOURCE = "alerts";
@@ -35,7 +37,7 @@ const FREE_GAMES_CACHE_KEY = "FREE_GAMES_APPWRITE_CACHE";
 const dbId = Constants.expoConfig?.extra?.APPWRITE_DATABASE_ID as string;
 
 // Fetch free games from Appwrite, respecting connectivity state
-const fetchFreeGamesFromAppwrite = async (): Promise<FreeGame[]> => {
+const fetchFreeGamesFromAppwrite = async (): Promise<FreeGameItem[]> => {
   const netState = await NetInfo.fetch();
   if (!netState.isConnected) {
     throw new Error("No internet connection");
@@ -119,7 +121,7 @@ function FreeGames(): React.ReactElement {
   const [notifEnabled, setNotifEnabled] = useState<boolean>(false);
   const userId = auth().currentUser?.uid;
 
-  const { data: gamesList, isLoading } = useCachedData<FreeGame[]>(
+  const { data: gamesList, isLoading } = useCachedData<FreeGameItem[]>(
     FREE_GAMES_CACHE_KEY,
     fetchFreeGamesFromAppwrite,
     [],
@@ -173,13 +175,13 @@ function FreeGames(): React.ReactElement {
   };
 
   const renderGameItem = useCallback(
-    ({ item }: ListRenderItemInfo<FreeGame>) => {
+    ({ item }: ListRenderItemInfo<FreeGameItem>) => {
       const StoreIcon =
         item.store === "steam"
-          ? require("../../assets/steam.png")
+          ? require("../../assets/steam.webp")
           : item.store === "gog"
-            ? require("../../assets/gog.png")
-            : require("../../assets/epic-games.png");
+            ? require("../../assets/gog.webp")
+            : require("../../assets/epic-games.webp");
       const handleCardPress = (): void => {
         if (item.igdb_game_id) {
           navigation.navigate("GameDetails", {

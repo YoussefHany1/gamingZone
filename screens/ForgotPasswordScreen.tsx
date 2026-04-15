@@ -6,6 +6,8 @@ import {
   Text,
   ToastAndroid,
   ImageBackground,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
 import { Image } from "expo-image";
 import auth from "@react-native-firebase/auth";
@@ -67,50 +69,55 @@ const ForgotPasswordScreen: React.FC<Props> = memo(({ navigation }) => {
 
   return (
     <ImageBackground
-      source={require("../assets/background.png")}
+      source={require("../assets/background.webp")}
       style={styles.background}
       resizeMode="cover"
     >
-      <SafeAreaView style={styles.container}>
-        {/* Logo */}
-        <Image
-          source={require("../assets/logo.png")}
-          style={styles.logo}
-          contentFit="cover"
-          transition={500}
-          cachePolicy="memory-disk"
-          allowDownscaling
-        />
-        {/* Title */}
-        <Text style={styles.title}>{t("auth.forgotPassword.title")}</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "android" ? "height" : "padding"}
+      >
+        <SafeAreaView style={styles.container}>
+          {/* Logo */}
+          <Image
+            source={require("../assets/logo.webp")}
+            style={styles.logo}
+            contentFit="cover"
+            transition={500}
+            cachePolicy="memory-disk"
+            allowDownscaling
+          />
+          {/* Title */}
+          <Text style={styles.title}>{t("auth.forgotPassword.title")}</Text>
 
-        {/* Email Input */}
-        <TextInput
-          style={styles.input}
-          placeholder={t("auth.emailPlaceholder")}
-          placeholderTextColor="#aaa"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        {/* Send Button */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleResetPassword}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>
-            {t("auth.forgotPassword.sendButton")}
-          </Text>
-        </TouchableOpacity>
-        {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-          <Text style={styles.buttonText}>
-            {t("auth.forgotPassword.backToLogin")}
-          </Text>
-        </TouchableOpacity>
-      </SafeAreaView>
+          {/* Email Input */}
+          <TextInput
+            style={styles.input}
+            placeholder={t("auth.emailPlaceholder")}
+            placeholderTextColor="#aaa"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          {/* Send Button */}
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleResetPassword}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>
+              {t("auth.forgotPassword.sendButton")}
+            </Text>
+          </TouchableOpacity>
+          {/* Back Button */}
+          <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+            <Text style={styles.buttonText}>
+              {t("auth.forgotPassword.backToLogin")}
+            </Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </ImageBackground>
   );
 });

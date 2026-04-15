@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import COLORS from "../../constants/colors";
+import COLORS from "../constants/colors";
 
 interface SectionTitleProps { title: string }
 const SectionTitle = memo<SectionTitleProps>(({ title }) => (

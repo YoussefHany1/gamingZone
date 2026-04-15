@@ -139,7 +139,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
 
   return (
     <ImageBackground
-      source={require("../assets/background.png")}
+      source={require("../assets/background.webp")}
       style={styles.background}
       resizeMode="cover"
     >
@@ -150,7 +150,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
             style={styles.keyboardView}
           >
             <Image
-              source={require("../assets/logo.png")}
+              source={require("../assets/logo.webp")}
               style={styles.logo}
               contentFit="cover"
               transition={500}

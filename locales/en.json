@@ -350,6 +350,26 @@
         "country": "Select your Country",
         "platform": "Select your Platform"
       },
+      "connectedApps": "Connected Apps",
+      "steam": {
+        "modal": {
+          "title": "Sync Your Steam Library",
+          "instructions": "Enter your Steam Custom URL or Steam ID to import your games to your lists (Playing, Played, Want to Play).",
+          "placeholder": "https://steamcommunity.com/profiles/76561198818022625",
+          "privacy": "Please ensure your Steam Profile and Game Details are set to 'Public' in your privacy settings.",
+          "syncing": "Syncing...",
+          "syncBtn": "Sync Games",
+          "cancel": "Cancel"
+        },
+        "errors": {
+          "empty": "Please enter a Steam ID/URL",
+          "resolveFailed": "Could not find Steam user",
+          "privateProfile": "Your profile is private or has no games.",
+          "fetchFailed": "Failed to fetch games",
+          "igdbFailed": "Failed to map games"
+        },
+        "success": "Successfully imported {{count}} games!"
+      },
       "messages": {
         "permissionTitle": "Photo Access Permission",
         "permissionMsg": "We need access to your photo gallery to update your profile picture",

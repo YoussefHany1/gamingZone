@@ -40,7 +40,7 @@ function HomeScreen(): React.ReactElement {
   const navigation = useNavigation<any>();
   const currentLang = i18n.language;
 
-  const noopChangeFeed = useCallback(() => {}, []);
+  const noopChangeFeed = useCallback(() => { }, []);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
@@ -101,11 +101,11 @@ function HomeScreen(): React.ReactElement {
         removeClippedSubviews={true}
         initialNumToRender={3}
         maxToRenderPerBatch={3}
-        windowSize={5}
+        windowSize={10}
       />
-      
-      <TouchableOpacity 
-        style={homeStyles.fab} 
+
+      <TouchableOpacity
+        style={homeStyles.fab}
         onPress={() => navigation.navigate("AIChatScreen")}
         activeOpacity={0.8}
       >

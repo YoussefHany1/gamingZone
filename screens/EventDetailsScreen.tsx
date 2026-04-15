@@ -18,7 +18,7 @@ import { useCountdown } from "../hooks/useCountdown";
 import type { GamingEvent, CountdownResult } from "../components/types";
 
 // Components
-import SectionTitle from "../components/eventDetails/SectionTitle";
+import SectionTitle from "../components/SectionTitle";
 import GameCard from "../components/eventDetails/GameCard";
 import VideoCard from "../components/eventDetails/VideoCard";
 import NetworkButton from "../components/eventDetails/NetworkButton";

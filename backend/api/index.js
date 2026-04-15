@@ -8,7 +8,7 @@ app.use(express.json());
 
 const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 const CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
-const MY_APP_SECRET = process.env.MY_APP_SECRET;
+// const MY_APP_SECRET = process.env.MY_APP_SECRET;
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error(
@@ -17,11 +17,11 @@ if (!CLIENT_ID || !CLIENT_SECRET) {
   process.exit(1);
 }
 
-if (!MY_APP_SECRET) {
-  console.warn(
-    "Warning: MY_APP_SECRET is not set in environment variables. The API is running with a default insecure key (default-insecure-key).",
-  );
-}
+// if (!MY_APP_SECRET) {
+//   console.warn(
+//     "Warning: MY_APP_SECRET is not set in environment variables. The API is running with a default insecure key (default-insecure-key).",
+//   );
+// }
 
 // const authenticateRequest = (req, res, next) => {
 //   // Exclude the homepage from authentication (for Health Check purposes)
@@ -362,7 +362,12 @@ app.get("/search", cacheMiddleware(300), async (req, res) => {
 
     // At least one of q, year, genre, or platform must be provided
     if (!q && !year && !genre && !platform) {
-      return res.status(400).json({ message: "At least one filter (q, year, genre, or platform) is required" });
+      return res
+        .status(400)
+        .json({
+          message:
+            "At least one filter (q, year, genre, or platform) is required",
+        });
     }
 
     // Always include genres and platforms in fields so client can display them
@@ -376,7 +381,7 @@ app.get("/search", cacheMiddleware(300), async (req, res) => {
       const y = parseInt(year, 10);
       if (!isNaN(y)) {
         const start = Math.floor(new Date(y, 0, 1).getTime() / 1000);
-        const end   = Math.floor(new Date(y + 1, 0, 1).getTime() / 1000) - 1;
+        const end = Math.floor(new Date(y + 1, 0, 1).getTime() / 1000) - 1;
         whereClauses.push(`first_release_date >= ${start}`);
         whereClauses.push(`first_release_date <= ${end}`);
       }
@@ -395,7 +400,6 @@ app.get("/search", cacheMiddleware(300), async (req, res) => {
     }
 
     const whereStr = whereClauses.join(" & ");
-
 
     let igdbQuery;
 
@@ -419,7 +423,10 @@ app.get("/search", cacheMiddleware(300), async (req, res) => {
       } else {
         serverSort = "sort total_rating desc;";
       }
-      const ratingFilter = (sort === "title" || sort === "release_date") ? "" : "& total_rating_count > 0";
+      const ratingFilter =
+        sort === "title" || sort === "release_date"
+          ? ""
+          : "& total_rating_count > 0";
       igdbQuery = `
         ${fields};
         where ${whereStr} ${ratingFilter};
@@ -434,8 +441,10 @@ app.get("/search", cacheMiddleware(300), async (req, res) => {
     if (q && sort && sort !== "relevance") {
       data = [...data].sort((a, b) => {
         if (sort === "title") return (a.name ?? "").localeCompare(b.name ?? "");
-        if (sort === "release_date") return (b.first_release_date ?? 0) - (a.first_release_date ?? 0);
-        if (sort === "rating") return (b.total_rating ?? 0) - (a.total_rating ?? 0);
+        if (sort === "release_date")
+          return (b.first_release_date ?? 0) - (a.first_release_date ?? 0);
+        if (sort === "rating")
+          return (b.total_rating ?? 0) - (a.total_rating ?? 0);
         return 0;
       });
     }
@@ -568,6 +577,165 @@ app.get("/events", cacheMiddleware(3600), async (req, res) => {
       message:
         "An error occurred on the server while fetching data. Please try again later.",
     });
+  }
+});
+
+// ======= STEAM INTEGRATION =======
+
+const STEAM_API_KEY = process.env.STEAM_API_KEY;
+
+// Resolve Steam Vanity URL to 64-bit Steam ID
+app.get("/steam/resolve", async (req, res) => {
+  try {
+    const { vanityurl } = req.query;
+    if (!vanityurl)
+      return res.status(400).json({ message: "vanityurl is required" });
+    if (!STEAM_API_KEY)
+      return res
+        .status(500)
+        .json({ message: "STEAM_API_KEY is not configured" });
+
+    const response = await fetch(
+      `https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key=${STEAM_API_KEY}&vanityurl=${vanityurl}`,
+    );
+    const data = await response.json();
+
+    if (data?.response?.success === 1) {
+      res.json({ steamid: data.response.steamid });
+    } else {
+      res.status(404).json({ message: "Steam user not found." });
+    }
+  } catch (error) {
+    console.error("Steam Resolve Error:", error);
+    res.status(500).json({ message: "Error resolving Steam ID." });
+  }
+});
+
+// Get User's Owned Steam Games
+app.get("/steam/owned-games", async (req, res) => {
+  try {
+    const { steamid } = req.query;
+    if (!steamid)
+      return res.status(400).json({ message: "steamid is required" });
+    if (!STEAM_API_KEY)
+      return res
+        .status(500)
+        .json({ message: "STEAM_API_KEY is not configured" });
+
+    const response = await fetch(
+      `https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=${STEAM_API_KEY}&steamid=${steamid}&format=json&include_appinfo=1`,
+    );
+    const data = await response.json();
+
+    if (data?.response?.games) {
+      const playedGames = data.response.games.filter(
+        (game) => Number(game.playtime_forever) > 0,
+      );
+      res.json({ games: playedGames });
+    } else if (Object.keys(data?.response || {}).length === 0) {
+      // Empty response usually indicates a private profile
+      res.status(403).json({ message: "Profile is private or has no games." });
+    } else {
+      res.status(404).json({ message: "Could not retrieve games." });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving owned games." });
+  }
+});
+
+// Get User's Steam Wishlist AppIDs
+app.get("/steam/wishlist", async (req, res) => {
+  try {
+    const { steamid } = req.query;
+    if (!steamid)
+      return res.status(400).json({ message: "steamid is required" });
+    if (!STEAM_API_KEY)
+      return res
+        .status(500)
+        .json({ message: "STEAM_API_KEY is not configured" });
+
+    const response = await fetch(
+      `https://api.steampowered.com/IWishlistService/GetWishlist/v1/?key=${STEAM_API_KEY}&steamid=${steamid}`,
+    );
+    const data = await response.json();
+
+    const rawItems = data?.response?.items;
+    const wishlistAppIds = Array.isArray(rawItems)
+      ? rawItems
+          .map((item) => Number(item?.appid))
+          .filter((appid) => Number.isFinite(appid) && appid > 0)
+      : [];
+
+    res.json({ appIds: wishlistAppIds });
+  } catch (error) {
+    console.error("Steam Wishlist Error:", error);
+    res.status(500).json({ message: "Error retrieving wishlist." });
+  }
+});
+
+// Map Steam AppIDs to IGDB Game Details
+app.post("/steam/map-to-igdb", async (req, res) => {
+  try {
+    const { appIds } = req.body;
+    if (!appIds || !Array.isArray(appIds) || appIds.length === 0) {
+      return res.status(400).json({ message: "Array of appIds is required" });
+    }
+
+    // Batching to avoid IGDB payload limits (50-100 per request is good)
+    const BATCH_SIZE = 50;
+    const promises = [];
+
+    for (let i = 0; i < appIds.length; i += BATCH_SIZE) {
+      const batchIds = appIds.slice(i, i + BATCH_SIZE);
+      const formattedIds = batchIds.map((id) => `"${id}"`).join(",");
+
+      const query = `
+  fields uid, game.id, game.name, game.cover.image_id, game.first_release_date;
+  where uid = (${formattedIds});
+  limit 500;
+      `;
+
+      console.log("==> IGDB Query:", query);
+      console.log("==> Batch IDs:", batchIds);
+      promises.push(callIgdb("external_games", query));
+    }
+
+    // Run in chunks of 4 concurrent requests to respect IGDB 4 req/sec limit
+    // while still being much faster than 1 by 1.
+    const allMappedGames = [];
+    for (let i = 0; i < promises.length; i += 4) {
+      const chunk = promises.slice(i, i + 4);
+      const results = await Promise.all(chunk);
+
+      for (const data of results) {
+        if (Array.isArray(data)) {
+          const games = data
+            .filter((e) => e.game != null)
+            .map((e) => ({
+              steam_appid: Number(e.uid),
+              id: e.game.id,
+              name: e.game.name,
+              cover_image_id: e.game.cover?.image_id || null,
+              release_date: e.game.first_release_date
+                ? new Date(e.game.first_release_date * 1000)
+                    .getFullYear()
+                    .toString()
+                : "",
+            }));
+          allMappedGames.push(...games);
+        }
+      }
+
+      // Sleep for 250ms to ensure we don't bombard IGDB too heavily (safe rate limit buffer)
+      if (i + 4 < promises.length) {
+        await new Promise((r) => setTimeout(r, 250));
+      }
+    }
+
+    res.json(allMappedGames);
+  } catch (error) {
+    console.error("IGDB Mapping Error:", error);
+    res.status(500).json({ message: "Error mapping Steam games to IGDB." });
   }
 });
 

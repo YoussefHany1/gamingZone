@@ -51,10 +51,10 @@ const SettingsScreen = memo((): React.ReactElement => {
   // Derived values
 
   const userAvatar = useMemo(() => {
-    if (isGuest) return require("../assets/anonymous.png");
+    if (isGuest) return require("../assets/anonymous.webp");
     return currentUser?.photoURL
       ? { uri: currentUser.photoURL }
-      : require("../assets/default_profile.png");
+      : require("../assets/default_profile.webp");
   }, [currentUser?.photoURL, isGuest]);
 
   const displayName = useMemo<string>(() => {

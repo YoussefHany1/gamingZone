@@ -62,4 +62,19 @@ class MainActivity : ReactActivity() {
       // because it's doing more than [Activity.moveTaskToBack] in fact.
       super.invokeDefaultOnBackPressed()
   }
+
+  /**
+   * Workaround for Samsung Freecess / React Native Fabric white screen on resume.
+   * Forces the entire window to invalidate and measurement bounds to redraw, 
+   * helping react natively to re-render the JS Surface context when un-freezing.
+   */
+  override fun onWindowFocusChanged(hasFocus: Boolean) {
+      super.onWindowFocusChanged(hasFocus)
+      if (hasFocus) {
+          window.decorView.post {
+              window.decorView.requestLayout()
+              window.decorView.invalidate()
+          }
+      }
+  }
 }

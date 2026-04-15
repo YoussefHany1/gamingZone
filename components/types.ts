@@ -49,6 +49,7 @@ export interface FreeGame {
   id: string;
   title: string;
   image?: string;
+  slug?: string;
   store?: "steam" | "epic" | string;
   url?: string;
   description?: string;

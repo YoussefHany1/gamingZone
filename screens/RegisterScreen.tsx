@@ -216,7 +216,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
 
   return (
     <ImageBackground
-      source={require("../assets/background.png")}
+      source={require("../assets/background.webp")}
       style={styles.background}
       resizeMode="cover"
     >
@@ -227,7 +227,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
             style={styles.keyboardView}
           >
             <Image
-              source={require("../assets/logo.png")}
+              source={require("../assets/logo.webp")}
               style={styles.logo}
               contentFit="cover"
               transition={500}

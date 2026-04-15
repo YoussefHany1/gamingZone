@@ -3,7 +3,7 @@ import COLORS from "../../constants/colors";
 import { SERVER_URL } from "../../constants/config";
 import type { AgeRating, AgeRatingInfo, GameData, PcRequirements, SpecRow, Website } from "./types";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// Constants
 
 export const AGE_RATING_MAP: Record<number, string> = {
   1: "3+", 2: "7+", 3: "12+", 4: "16+", 5: "18+",
@@ -12,17 +12,17 @@ export const AGE_RATING_MAP: Record<number, string> = {
 
 // require() calls must be at module level for static assets
 export const STORE_ICONS: Record<number, ReturnType<typeof require>> = {
-  13: require("../../assets/steam.png"),
-  16: require("../../assets/epic-games.png"),
-  17: require("../../assets/gog.png"),
-  23: require("../../assets/playstation.png"),
-  22: require("../../assets/xbox.png"),
-  24: require("../../assets/nintendo-switch.png"),
-  12: require("../../assets/play-store.png"),
-  10: require("../../assets/apple-store.png"),
+  13: require("../../assets/steam.webp"),
+  16: require("../../assets/epic-games.webp"),
+  17: require("../../assets/gog.webp"),
+  23: require("../../assets/playstation.webp"),
+  22: require("../../assets/xbox.webp"),
+  24: require("../../assets/nintendo-switch.webp"),
+  12: require("../../assets/play-store.webp"),
+  10: require("../../assets/apple-store.webp"),
 };
 
-// ─── Helper Functions ─────────────────────────────────────────────────────────
+// Helper Functions
 
 export function extractSteamAppId(websites?: Website[]): string | null {
   if (!websites) return null;

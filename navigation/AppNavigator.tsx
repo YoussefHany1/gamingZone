@@ -26,7 +26,7 @@ import SettingsScreen from "../screens/SettingsScreen";
 import GameDetails from "../screens/GameDetailsScreen";
 import UserGamesScreen from "../screens/UserGamesScreen";
 import NotificationSettings from "../components/Notification";
-import Profile from "../components/Profile";
+import Profile from "../screens/ProfileScreen";
 import AIChatScreen from "../screens/AIChatScreen";
 import GameNewsScreen from "../screens/GameNewsScreen";
 import EventDetailsScreen from "../screens/EventDetailsScreen";
