@@ -36,4 +36,4 @@ jobs:
 
         working-directory: ./backend
         run: |
-          node scripts/fetchFreeGames.cjs
+          npm run fetch:free-games

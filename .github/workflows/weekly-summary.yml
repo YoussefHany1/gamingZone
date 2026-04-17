@@ -11,15 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm install node-appwrite
+        run: npm ci
         working-directory: ./backend
 
       - name: Run Summary Script
@@ -32,4 +32,4 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
         working-directory: ./backend
-        run: node scripts/generateWeeklySummary.cjs
+        run: npm run summary:weekly

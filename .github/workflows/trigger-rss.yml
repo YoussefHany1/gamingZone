@@ -34,4 +34,4 @@ jobs:
 
         working-directory: ./backend
         run: |
-          node scripts/fetchRss.cjs
+          npm run fetch:rss

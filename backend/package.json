@@ -1,6 +1,12 @@
 {
   "name": "gamingzone-scripts",
   "version": "1.0.0",
+  "scripts": {
+    "fetch:free-games": "node ./scripts/fetchFreeGames.cjs",
+    "fetch:rss": "node ./scripts/fetchRss.cjs",
+    "summary:weekly": "node ./scripts/generateWeeklySummary.cjs",
+    "check:scripts": "node --check ./scripts/fetchFreeGames.cjs && node --check ./scripts/fetchFreeGames.service.cjs && node --check ./scripts/fetchRss.cjs && node --check ./scripts/fetchRss.service.cjs && node --check ./scripts/generateWeeklySummary.cjs && node --check ./scripts/generateWeeklySummary.service.cjs && node --check ./scripts/rss/helpers.cjs && node --check ./scripts/rss/encoding.cjs && node --check ./scripts/rss/fetch.cjs && node --check ./scripts/rss/normalize.cjs && node --check ./scripts/freeGames/helpers.cjs && node --check ./scripts/freeGames/providers.cjs && node --check ./scripts/freeGames/igdb.cjs && node --check ./scripts/lib/http.cjs"
+  },
   "dependencies": {
     "axios": "^1.13.2",
     "dotenv": "^17.2.3",
