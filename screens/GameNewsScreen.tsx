@@ -299,7 +299,7 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
 
         {sourceLink && (
           <TouchableOpacity onPress={handleOpenSource} style={{ marginBottom: 10 }}>
-            <Text style={styles.sourceText}>{t("games.gamesNews.source")}</Text>
+            <Text style={styles.sourceText}>{t("games.list.gamesNews.source")}</Text>
           </TouchableOpacity>
         )}
 

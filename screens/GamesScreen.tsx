@@ -15,10 +15,13 @@ import MostAnticipated from "../components/gamesScreen/MostAnticipated";
 import RecentlyReleased from "../components/gamesScreen/RecentlyReleased";
 import TopRated from "../components/gamesScreen/TopRated";
 import NostalgiaCorner from "../components/gamesScreen/NostalgiaCorner";
+import SteamTopSellers from "../components/gamesScreen/SteamTopSellers";
 import Popular from "../components/gamesScreen/Popular";
+import TrendingMobileGames from "../components/gamesScreen/TrendingMobile";
 import FilterModal, { GameFilters } from "../components/gamesScreen/FilterModal";
 import { adUnitId } from "../constants/config";
 import COLORS from "../constants/colors";
+import { LinearGradient } from "expo-linear-gradient";
 
 // Types
 type FeedItemType = "COMPONENT" | "AD";
@@ -36,11 +39,14 @@ const STATIC_FEED_ITEMS: FeedItemConfig[] = [
   { id: "news", type: "COMPONENT" },
   { id: "ad_1", type: "AD" },
   { id: "popular", type: "COMPONENT" },
-  { id: "recently_released", type: "COMPONENT" },
+  { id: "trending_mobile", type: "COMPONENT" },
   { id: "ad_2", type: "AD" },
-  { id: "coming_soon", type: "COMPONENT" },
   { id: "anticipated", type: "COMPONENT" },
+  { id: "steam_top_sellers", type: "COMPONENT" },
   { id: "ad_3", type: "AD" },
+  { id: "recently_released", type: "COMPONENT" },
+  { id: "coming_soon", type: "COMPONENT" },
+  { id: "ad_4", type: "AD" },
   { id: "nostalgia", type: "COMPONENT" },
   { id: "top_rated", type: "COMPONENT" },
 ];
@@ -127,10 +133,12 @@ function GamesScreen(): React.ReactElement {
       STATIC_FEED_ITEMS.map((item) => {
         if (item.type === "AD") return item;
         const componentMap: Record<string, React.ReactElement> = {
-          header: <Text style={styles.headerText}>{t("games.screen.header")}</Text>,
+          header: <LinearGradient colors={["#516996", "#3b4d6e"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.header}><Text style={styles.headerText}>{t("games.header")}</Text></LinearGradient>,
           free_games: <FreeGames />,
           news: <GamesNews />,
           popular: <Popular />,
+          steam_top_sellers: <SteamTopSellers />,
+          trending_mobile: <TrendingMobileGames />,
           recently_released: <RecentlyReleased />,
           coming_soon: <ComingSoon />,
           anticipated: <MostAnticipated />,
@@ -157,7 +165,7 @@ function GamesScreen(): React.ReactElement {
         <View style={styles.searchBarContainer}>
           <TextInput
             style={styles.searchInput}
-            placeholder={t("games.screen.searchPlaceholder")}
+            placeholder={t("games.searchPlaceholder")}
             placeholderTextColor="#999"
             value={searchQuery}
             onChangeText={handleSearchTextChange}
@@ -192,7 +200,7 @@ function GamesScreen(): React.ReactElement {
 
       {showResults ? (
         <View style={{ flex: 1 }}>
-          <GamesList query={effectiveQuery || undefined} filters={filters} endpoint="" header="" onBack={handleBack} />
+          <GamesList query={effectiveQuery || undefined} filters={filters} onBack={handleBack} />
         </View>
       ) : (
         <FlatList
@@ -279,17 +287,24 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "700",
   },
+  header: {
+    padding: 8,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
+    shadowColor: "#516996",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    marginHorizontal: 50,
+  },
   headerText: {
     color: "#fff",
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "bold",
-    marginHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 30,
-    backgroundColor: COLORS.secondary,
     textAlign: "center",
-    paddingVertical: 8,
-    borderRadius: 8,
   },
   adContainer: {
     alignItems: "center",

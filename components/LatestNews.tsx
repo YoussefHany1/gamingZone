@@ -1,4 +1,4 @@
-import { useCallback, memo, useMemo } from "react";
+import { useCallback, memo, useMemo, Fragment } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import useFeed from "../hooks/useFeed";
 import { intervalToDuration } from "date-fns";
 import DropdownPicker from "../components/DropdownPicker";
 import SkeletonNewsItem from "../skeleton/SkeletonNewsItem";
+import ErrorState from "./ErrorState";
 import { useTranslation } from "react-i18next";
 import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
@@ -32,6 +33,7 @@ interface LatestNewsProps {
   showDropdown?: boolean;
   websitesList?: RssFeedSource[];
   showFooter?: boolean;
+  scrollEnabled?: boolean;
 }
 
 // Memoized row component
@@ -44,7 +46,7 @@ interface NewsItemProps {
 }
 
 const NewsItem = memo(function NewsItem({ item, index, language, onPress, t }: NewsItemProps) {
-  const shouldShowAd = (index + 1) % 10 === 0;
+  const shouldShowAd = (index + 1) % 8 === 0;
 
   const timeAgo = useMemo(() => {
     const dateString = item?.pubDate;
@@ -71,7 +73,7 @@ const NewsItem = memo(function NewsItem({ item, index, language, onPress, t }: N
         onPress={() => onPress(item)}
       >
         <View style={styles.textContainer}>
-          <Text style={[styles.headline, language === "ar" ? { marginLeft: 8 } : { marginRight: 8 }]}>
+          <Text numberOfLines={3} style={[styles.headline, language === "ar" ? { marginLeft: 8 } : { marginRight: 8 }]}>
             {item?.title ? item.title.substring(0, 100) : ""}
           </Text>
           {item?.description ? (
@@ -95,7 +97,7 @@ const NewsItem = memo(function NewsItem({ item, index, language, onPress, t }: N
                 : require("../assets/image-not-found.webp")
             }
             contentFit="cover"
-            transition={500}
+            // transition={500}
             cachePolicy="memory-disk"
             allowDownscaling={true}
           />
@@ -123,6 +125,7 @@ function LatestNews({
   showDropdown,
   websitesList,
   showFooter = true,
+  scrollEnabled = true,
 }: LatestNewsProps) {
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
@@ -215,16 +218,7 @@ function LatestNews({
   }, [refetch, t]);
 
   const renderEmptyComponent = useCallback(() => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.noDataText}>{t("news.noArticles")}</Text>
-      <Pressable
-        style={styles.contactButton}
-        android_ripple={{ color: "rgba(255,255,255,0.2)" }}
-        onPress={() => navigation.navigate("Settings", { screen: "ContactScreen" })}
-      >
-        <Text style={styles.contactButtonText}>{t("news.contactSupport")}</Text>
-      </Pressable>
-    </View>
+    <ErrorState message={t("news.noArticles")} />
   ), [t]);
 
   if (loading && articles.length === 0) {
@@ -241,18 +235,25 @@ function LatestNews({
   }
 
   if (error && articles.length === 0) {
+    return <ErrorState message={t("news.fetchError")} />;
+  }
+
+  if (scrollEnabled === false) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>
-          {t("news.fetchError")}
-        </Text>
-        <Pressable
-          style={styles.contactButton}
-          android_ripple={{ color: "rgba(255,255,255,0.2)" }}
-          onPress={() => navigation.navigate("Settings", { screen: "ContactScreen" })}
-        >
-          <Text style={styles.contactButtonText}>{t("news.contactSupport")}</Text>
-        </Pressable>
+      <View style={styles.container}>
+        {renderHeader()}
+        {listData.length === 0 ? (
+          renderEmptyComponent()
+        ) : (
+          <View>
+            {listData.map((item, index) => (
+              <Fragment key={item.$id ? `${item.$id}-${index}` : index.toString()}>
+                {renderItem({ item, index, separators: {} as any })}
+              </Fragment>
+            ))}
+          </View>
+        )}
+        {renderFooter()}
       </View>
     );
   }
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
   header: {
     textAlign: "center",
     alignSelf: "center",
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "bold",
     backgroundColor: COLORS.secondary,
     paddingHorizontal: 80,
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
     width: "65%",
   },
   headline: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "bold",
     marginBottom: 12,
     color: "white",

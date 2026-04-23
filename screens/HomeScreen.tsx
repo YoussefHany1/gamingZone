@@ -80,6 +80,7 @@ function HomeScreen(): React.ReactElement {
               selectedItem={null}
               onChangeFeed={noopChangeFeed}
               websitesList={[]}
+              scrollEnabled={false}
             />
           );
         case "weekly_summary": return <WeeklySummary />;

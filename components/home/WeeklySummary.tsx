@@ -110,12 +110,12 @@ const WeeklySummary: React.FC = () => {
       <View style={styles.headerContainer}>
         <View style={{ flexDirection: "column" }}>
           <Text style={styles.headerTitle}>
-            {currentLang === "ar" ? "🗞️ ملخص الأسبوع" : "🗞️ Weekly Recap"}
+            {t("home.seeklySummary.title")}
           </Text>
-          <Text style={styles.date}>Created by Gemini 1.5 Flash</Text>
+          <Text style={styles.date}>{t("home.seeklySummary.createdBy")} Gemini 2.5 Flash</Text>
         </View>
         <Text style={styles.date}>
-          {new Date(summaryDoc.$createdAt).toLocaleDateString()}
+          {new Date(summaryDoc.$createdAt).toLocaleDateString(currentLang)}
         </Text>
       </View>
 

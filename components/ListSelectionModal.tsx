@@ -155,7 +155,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
     if (listExists) {
       ToastAndroid.show(
         t("userLists.errors.listAlreadyExists") ||
-          "A list with this name already exists",
+        "A list with this name already exists",
         ToastAndroid.LONG,
       );
       return;

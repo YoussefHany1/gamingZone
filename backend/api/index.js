@@ -245,6 +245,30 @@ app.get("/recently-released", cacheMiddleware(3600), async (req, res) => {
   }
 });
 
+// Trending Mobile Games
+app.get("/trending-mobile", cacheMiddleware(3600), async (req, res) => {
+  try {
+    const nowTs = Math.floor(Date.now() / 1000);
+    const pastDate = new Date();
+    pastDate.setFullYear(pastDate.getFullYear() - 2);
+    const startTs = Math.floor(pastDate.getTime() / 1000);
+
+    const query = `
+      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
+      ${BASE_QUERY_WHERE} & platforms = (34,39) & first_release_date > ${startTs} & first_release_date < ${nowTs} & total_rating_count > 5;
+      sort total_rating desc;
+      limit 10;
+    `;
+    const data = await callIgdb("games", query);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({
+      message:
+        "An error occurred on the server while fetching data. Please try again later.",
+    });
+  }
+});
+
 // Popular Right Now
 app.get("/popular", cacheMiddleware(3600), async (req, res) => {
   try {
@@ -286,6 +310,26 @@ app.get("/popular", cacheMiddleware(3600), async (req, res) => {
       .filter((g) => g);
 
     res.json(sortedGames);
+  } catch (error) {
+    res.status(500).json({
+      message:
+        "An error occurred on the server while fetching data. Please try again later.",
+    });
+  }
+});
+
+// Latest Trailers
+app.get("/latest-trailers", cacheMiddleware(3600), async (req, res) => {
+  try {
+    const nowTs = Math.floor(Date.now() / 1000);
+    const query = `
+      ${BASE_QUERY_FIELDS}, videos.name, videos.video_id, screenshots.image_id;
+      ${BASE_QUERY_WHERE} & videos != null & screenshots != null & first_release_date < ${nowTs};
+      sort first_release_date desc;
+      limit 10;
+    `;
+    const data = await callIgdb("games", query);
+    res.json(data);
   } catch (error) {
     res.status(500).json({
       message:
@@ -583,6 +627,65 @@ app.get("/events", cacheMiddleware(3600), async (req, res) => {
 // ======= STEAM INTEGRATION =======
 
 const STEAM_API_KEY = process.env.STEAM_API_KEY;
+
+// Get Steam Top Sellers and map to IGDB
+app.get("/steam-top-sellers", cacheMiddleware(3600), async (req, res) => {
+  try {
+    const steamRes = await fetch("https://store.steampowered.com/api/featuredcategories/");
+    const steamData = await steamRes.json();
+    
+    const topSellersItems = steamData?.top_sellers?.items || [];
+    const appIds = topSellersItems.map(item => `"${item.id}"`);
+    
+    if (appIds.length === 0) {
+      return res.json([]);
+    }
+
+    // 1) Find IGDB game IDs from Steam appIds
+    const extQuery = `
+      fields game, uid;
+      where uid = (${appIds.join(",")});
+      limit 50;
+    `;
+    const extGames = await callIgdb("external_games", extQuery);
+    const gameIds = extGames.map(e => e.game).filter(id => id).join(",");
+
+    if (!gameIds) {
+      return res.json([]);
+    }
+
+    // 2) Get full game details from IGDB
+    const query = `
+      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
+      ${BASE_QUERY_WHERE} & id = (${gameIds});
+      limit 50;
+    `;
+    const igdbGames = await callIgdb("games", query);
+
+    // 3) Reorder based on Steam's top sellers list to maintain rank
+    const sortedGames = [];
+    const addedIds = new Set();
+    
+    for (const appIdStr of appIds) {
+      const cleanId = appIdStr.replace(/"/g, '');
+      const extMatch = extGames.find(e => e.uid === cleanId);
+      if (extMatch) {
+        const game = igdbGames.find(g => g.id === extMatch.game);
+        if (game && !addedIds.has(game.id)) {
+          sortedGames.push(game);
+          addedIds.add(game.id);
+        }
+      }
+    }
+
+    res.json(sortedGames);
+  } catch (error) {
+    console.error("Steam Top Sellers Error:", error);
+    res.status(500).json({
+      message: "An error occurred while fetching Steam top sellers.",
+    });
+  }
+});
 
 // Resolve Steam Vanity URL to 64-bit Steam ID
 app.get("/steam/resolve", async (req, res) => {

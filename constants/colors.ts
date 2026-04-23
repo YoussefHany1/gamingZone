@@ -5,7 +5,6 @@ const COLORS = {
   darkBackground: "#00001c",
   lightGray: "#779bdd",
   textLight: "#fff",
-  background: "#0c1a33",
 } as const;
 
 export type ColorKey = keyof typeof COLORS;

@@ -12,6 +12,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import COLORS from "../../constants/colors";
+import SectionTitle from "../SectionTitle";
 
 interface NewsGame {
   id: string;
@@ -100,7 +101,7 @@ const NewsGameCard = React.memo<NewsGameCardProps>(({ item, onPress }) => {
       {/* Live indicator badge */}
       <View style={styles.liveIndicator}>
         <View style={styles.liveDot} />
-        <Text style={styles.liveText}>{t("games.list.live")}</Text>
+        <Text style={styles.liveText}>{t("games.list.gamesNews.live")}</Text>
       </View>
     </TouchableOpacity>
   )
@@ -129,7 +130,7 @@ function GamesNews(): React.ReactElement {
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={styles.header}>{t("games.list.gamesNews")}</Text>
+        <SectionTitle title={t("games.list.gamesNews.title")} subtitle={t("games.list.gamesNews.subtitle")} fontSize={28} />
       </View>
 
       <FlatList
@@ -157,18 +158,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     margin: 18,
   },
-  header: { fontSize: 28, color: COLORS.textLight, fontWeight: "bold" },
   listContent: { paddingHorizontal: 10, paddingVertical: 5 },
   gameCard: {
     width: 165,
-    height: 300,
+    height: 250,
     marginHorizontal: 5,
     borderRadius: 16,
     overflow: "hidden",
     position: "relative",
   },
   cardGradient: { position: "absolute", width: "100%", height: "100%" },
-  imageContainer: { width: "100%", height: 250, position: "relative" },
+  imageContainer: { width: "100%", height: 200, position: "relative" },
   cover: { width: "100%", height: "100%" },
   coverGradient: {
     position: "absolute",

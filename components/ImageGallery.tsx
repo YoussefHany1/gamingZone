@@ -246,7 +246,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
       ? {
         id: "cover",
         url: `https://images.igdb.com/igdb/image/upload/t_1080p/${coverImageId}.webp`,
-        thumbnail: `https://images.igdb.com/igdb/image/upload/t_cover_big/${coverImageId}.webp`,
+        thumbnail: `https://images.igdb.com/igdb/image/upload/t_screenshot_med/${coverImageId}.webp`,
       }
       : null,
     ...screenshots.map((screenshot) => ({
@@ -309,7 +309,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
               source={image.thumbnail}
               contentFit="cover"
               cachePolicy="memory-disk"
-              placeholder={require("../assets/image-not-found.webp")}
+            // placeholder={require("../assets/image-not-found.webp")}
             />
             {/* Side-gradient overlay — direction mirrors app locale */}
             <View

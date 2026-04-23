@@ -34,6 +34,7 @@ export interface GameGenre {
 }
 
 export interface Game {
+  screenshots: any;
   id: number;
   name: string;
   cover?: GameCover;
@@ -43,6 +44,7 @@ export interface Game {
   platforms?: GamePlatform[];
   genres?: GameGenre[];
   hypes?: number;
+  videos?: GamingEventVideo[];
 }
 
 export interface FreeGame {

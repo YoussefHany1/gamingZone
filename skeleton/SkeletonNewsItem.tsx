@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   },
   titleLine: {
     width: "90%",
-    height: 20,
+    height: 19,
     marginBottom: 12, // matches spacing in LatestNews
   },
   descLine: {

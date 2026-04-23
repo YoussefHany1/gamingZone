@@ -24,6 +24,7 @@ import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
 import Constants from "expo-constants";
 import CustomPicker from "../components/CustomPicker";
+import ErrorState from "../components/ErrorState";
 import * as Updates from "expo-updates";
 import countries from "i18n-iso-countries";
 import enLang from "i18n-iso-countries/langs/en.json";
@@ -128,19 +129,19 @@ function ProfileScreen(): React.ReactElement {
     fetchUserData();
   }, [currentUser]);
 
-useEffect(() => {
-  if (isAdmin) {
-    const fetchStats = async () => {
-      const usersSnap = await firestore().collection("users").count().get();
-      const newsSnap = await firestore().collection("news").count().get(); // افترضت وجود collection باسم news
-      setStats({
-        userCount: usersSnap.data().count,
-        newsCount: newsSnap.data().count,
-      });
-    };
-    fetchStats();
-  }
-}, [isAdmin]);
+  useEffect(() => {
+    if (isAdmin) {
+      const fetchStats = async () => {
+        const usersSnap = await firestore().collection("users").count().get();
+        const newsSnap = await firestore().collection("news").count().get(); // افترضت وجود collection باسم news
+        setStats({
+          userCount: usersSnap.data().count,
+          newsCount: newsSnap.data().count,
+        });
+      };
+      fetchStats();
+    }
+  }, [isAdmin]);
 
   const pickImage = useCallback(async (): Promise<void> => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -315,6 +316,8 @@ useEffect(() => {
     ],
     [t],
   );
+
+  if (!currentUser) return <ErrorState message={t("common.loginRequired")} showContactButton={false} />;
 
   return (
     <SafeAreaView style={styles.container} edges={["right", "left"]}>

@@ -11,9 +11,11 @@ import { Image } from "expo-image";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
+import ErrorState from "../ErrorState";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonRecentlyReleased from "../../skeleton/SkeletonRecentlyReleased";
 import COLORS from "../../constants/colors";
+import SectionTitle from "../SectionTitle";
 import { SERVER_URL } from "../../constants/config";
 import useCachedData from "../../hooks/useCachedData";
 import { Game } from "../types";
@@ -60,9 +62,9 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
   // Derive how many days ago the game was released
   const daysSince: number | null = item.first_release_date
     ? Math.ceil(
-        Math.abs(Date.now() - item.first_release_date * 1000) /
-          (1000 * 60 * 60 * 24),
-      )
+      Math.abs(Date.now() - item.first_release_date * 1000) /
+      (1000 * 60 * 60 * 24),
+    )
     : null;
 
   const isNew = daysSince !== null && daysSince <= 7;
@@ -131,7 +133,7 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
           )}
 
           {/* "NEW" badge visible for games released within the last 7 days */}
-          {isNew && <Text style={styles.newBadgeText}>{t("NEW")}</Text>}
+          {isNew && <Text style={styles.newBadgeText}>{t("games.list.recentlyReleased.new")}</Text>}
 
           {item.platforms && item.platforms.length > 0 && (
             <View style={styles.platformsContainer}>
@@ -184,7 +186,7 @@ function RecentlyReleasedGames(): React.ReactElement {
   return (
     <View>
       <View style={styles.headerContainer}>
-        <Text style={styles.header}>{t("games.list.recentlyReleased")}</Text>
+        <SectionTitle title={t("games.list.recentlyReleased.title")} subtitle={t("games.list.recentlyReleased.subtitle")} fontSize={28} />
       </View>
 
       {/* Skeleton while loading with no cached data */}
@@ -197,16 +199,14 @@ function RecentlyReleasedGames(): React.ReactElement {
           contentContainerStyle={styles.listContent}
         />
       )}
-
-      {error && gamesToShow.length === 0 && (
-        <Text style={styles.error}>{t("games.list.serverError")}</Text>
+      {/* error */}
+      {(error || !Array.isArray(gamesToShow)) && (
+        <View style={{ width: "100%", height: CARD_HEIGHT }}>
+          <ErrorState message={t("games.list.serverError")} />
+        </View>
       )}
 
-      {!isActuallyLoading && gamesToShow.length === 0 && !error && (
-        <Text style={styles.noResults}>{t("games.list.noResults")}</Text>
-      )}
-
-      {gamesToShow.length > 0 && (
+      {!error && Array.isArray(gamesToShow) && (
         <FlatList
           data={gamesToShow}
           keyExtractor={(item) => String(item.id)}
@@ -217,13 +217,16 @@ function RecentlyReleasedGames(): React.ReactElement {
           windowSize={5}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
+          ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
+            <ErrorState message={t("games.list.serverError")} />
+          </View>}
         />
       )}
     </View>
   );
 }
 export default RecentlyReleasedGames;
-  
+
 const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
@@ -231,7 +234,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     margin: 18,
   },
-  header: { fontSize: 28, color: COLORS.textLight, fontWeight: "bold" },
   gameCard: {
     marginHorizontal: 15,
     marginVertical: 8,

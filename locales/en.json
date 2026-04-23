@@ -99,6 +99,7 @@
   },
   "home": {
     "slideshow": {
+      "subtitle": "Watch the Trailer",
       "error": "Error loading slideshow"
     },
     "sections": {
@@ -108,6 +109,8 @@
       "hardware": "Hardware"
     },
     "seeklySummary": {
+      "title": "🗞️ Weekly Recap",
+      "createdBy": "Created by",
       "readMore": "Read More..",
       "readLess": "Read Less"
     },
@@ -117,7 +120,8 @@
       "live": "Live",
       "watchNowButton": "Watch Now",
       "detailsButton": "View Live Stream",
-      "noEvents": "No gaming events available at the moment."
+      "noEvents": "No gaming events available at the moment.",
+      "subtitle": "Watch upcoming and live gaming events"
     }
   },
   "news": {
@@ -154,34 +158,52 @@
     }
   },
   "games": {
-    "screen": {
-      "searchPlaceholder": "Search for Games...",
-      "header": "Find Your Next Gaming Adventure"
-    },
-    "freeGames": {
-      "header": "Get Your Free Games!",
-      "freeOn": "Free On",
-      "days": "Days",
-      "hours": "Hrs",
-      "minutes": "Min",
-      "seconds": "Sec",
-      "claimNow": "Claim Now",
-      "not": "New Free Game!",
-      "subscribed": "You are subscribed to free games notifications",
-      "unsubscribed": "You have unsubscribed from free games notifications"
-    },
-    "gamesNews": {
-      "source": "Source: The game's official website"
-    },
+    "searchPlaceholder": "Search for Games...",
+    "header": "Find Your Next Gaming Adventure",
     "list": {
-      "gamesNews": "Game News",
-      "live": "Live",
-      "popular": "Popular Right now",
-      "recentlyReleased": "Recently Released",
-      "topRated": "Top Rated",
-      "comingSoon": "Coming Soon",
+      "freeGames": {
+        "header": "Get Your Free Games!",
+        "freeOn": "Free On",
+        "days": "Days",
+        "hours": "Hrs",
+        "minutes": "Min",
+        "seconds": "Sec",
+        "claimNow": "Claim Now",
+        "not": "New Free Game!",
+        "subscribed": "You are subscribed to free games notifications",
+        "unsubscribed": "You have unsubscribed from free games notifications",
+        "subtitle": "From Epic Games, Steam, and GOG"
+      },
+      "gamesNews": {
+        "title": "Game News",
+        "subtitle": "Follow the latest news about your favorite games",
+        "live": "Live",
+        "source": "Source: The game's official website"
+      },
+      "popular": {
+        "title": "Popular Right now",
+        "subtitle": "Top trending games right now"
+      },
+      "steamTopSellers": {
+        "title": "Steam Top Sellers",
+        "subtitle": "Global top selling games on Steam"
+      },
+      "trendingMobile": {
+        "title": "Popular Mobile Games\nRight now",
+        "subtitle": "Top trending mobile games right now"
+      },
+      "recentlyReleased": {
+        "title": "Recently Released",
+        "subtitle": "Discover the newest arrivals",
+        "new": "New"
+      },
+      "comingSoon": {
+        "title": "Coming Soon",
+        "subtitle": "Upcoming games to watch out for"
+      },
       "mostAnticipated": {
-        "header": "Most Anticipated",
+        "title": "Most Anticipated",
+        "subtitle": "Most awaited upcoming games",
         "countdown": {
           "days": "Days",
           "hours": "Hours",
@@ -189,7 +211,14 @@
           "seconds": "Seconds"
         }
       },
-      "nostalgiaCorner": "Nostalgia Corner",
+      "nostalgiaCorner": {
+        "title": "Nostalgia Corner",
+        "subtitle": "Revisit classic masterpieces"
+      },
+      "topRated": {
+        "title": "Top Rated",
+        "subtitle": "Highest rated by the community"
+      },
       "searchResults": "Search Results",
       "noResults": "No games found.",
       "serverError": "The connection to the server failed. Please ensure you have an active internet connection and try again.",

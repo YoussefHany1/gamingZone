@@ -12,9 +12,11 @@ import { Image } from "expo-image";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
+import ErrorState from "../ErrorState";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonNostalgiaCorner from "../../skeleton/SkeletonNostalgiaCorner";
 import COLORS from "../../constants/colors";
+import SectionTitle from "../SectionTitle";
 import { SERVER_URL } from "../../constants/config";
 import useCachedData from "../../hooks/useCachedData";
 import { Game } from "../types";
@@ -190,7 +192,7 @@ export default function NostalgiaCorner(): React.ReactElement {
   return (
     <View>
       <View style={styles.headerContainer}>
-        <Text style={styles.header}>{t("games.list.nostalgiaCorner")}</Text>
+        <SectionTitle title={t("games.list.nostalgiaCorner.title")} subtitle={t("games.list.nostalgiaCorner.subtitle")} fontSize={28} />
       </View>
 
       {/* Skeleton while loading with no cached data */}
@@ -204,16 +206,14 @@ export default function NostalgiaCorner(): React.ReactElement {
           contentContainerStyle={styles.listContent}
         />
       )}
-
-      {error && gamesToShow.length === 0 && (
-        <Text style={styles.error}>{t("games.list.serverError")}</Text>
+      {/* error */}
+      {(error || !Array.isArray(gamesToShow)) && (
+        <View style={{ width: "100%", height: CARD_HEIGHT }}>
+          <ErrorState message={t("games.list.serverError")} />
+        </View>
       )}
 
-      {!isActuallyLoading && gamesToShow.length === 0 && !error && (
-        <Text style={styles.noResults}>{t("games.list.noResults")}</Text>
-      )}
-
-      {gamesToShow.length > 0 && (
+      {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
         <FlatList
           data={gamesToShow}
           horizontal
@@ -227,6 +227,9 @@ export default function NostalgiaCorner(): React.ReactElement {
           snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
+          ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
+            <ErrorState message={t("games.list.serverError")} />
+          </View>}
         />
       )}
     </View>
@@ -241,7 +244,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     margin: 18,
   },
-  header: { fontSize: 28, color: COLORS.textLight, fontWeight: "bold" },
   gameCard: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,

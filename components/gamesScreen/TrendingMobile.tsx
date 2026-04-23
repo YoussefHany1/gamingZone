@@ -24,21 +24,18 @@ const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
 const CARD_MARGIN = 5;
 
-const fetchPopularGames = async (): Promise<Game[]> => {
-  const response = await axios.get<Game[]>(`${SERVER_URL}/popular`);
+const fetchTrendingMobileGames = async (): Promise<Game[]> => {
+  const response = await axios.get<Game[]>(`${SERVER_URL}/trending-mobile`);
   return response.data;
 };
 
-// Card
-
-interface PopularCardProps {
+interface TrendingMobileCardProps {
   item: Game;
   index: number;
 }
 
-const PopularCard = React.memo<PopularCardProps>(({ item, index }) => {
+const TrendingMobileCard = React.memo<TrendingMobileCardProps>(({ item, index }) => {
   const navigation = useNavigation<any>();
-
   const rating = item.total_rating ? Math.round(item.total_rating) / 10 : 0;
   const rank = index + 1;
 
@@ -75,7 +72,6 @@ const PopularCard = React.memo<PopularCardProps>(({ item, index }) => {
           colors={["transparent", COLORS.darkBackground]}
           style={styles.coverGradient}
         />
-        {/* Rank badge */}
         <View style={styles.trendBadge}>
           <Text style={styles.trendRank}>#{rank}</Text>
         </View>
@@ -110,15 +106,13 @@ const PopularCard = React.memo<PopularCardProps>(({ item, index }) => {
   );
 });
 
-// main
-
-function PopularGames(): React.ReactElement {
+function TrendingMobileGames(): React.ReactElement {
   const { t } = useTranslation();
-  const STORAGE_KEY = "GAMES_CACHE_POPULAR";
+  const STORAGE_KEY = "GAMES_CACHE_TRENDING_MOBILE";
 
   const { data: games, isLoading, error } = useCachedData<Game[]>(
     STORAGE_KEY,
-    fetchPopularGames,
+    fetchTrendingMobileGames,
     [],
   );
 
@@ -127,7 +121,7 @@ function PopularGames(): React.ReactElement {
 
   const renderItem = useCallback(
     ({ item, index }: ListRenderItemInfo<Game>) => (
-      <PopularCard item={item} index={index} />
+      <TrendingMobileCard item={item} index={index} />
     ),
     [],
   );
@@ -144,7 +138,11 @@ function PopularGames(): React.ReactElement {
   return (
     <View>
       <View style={styles.headerContainer}>
-        <SectionTitle title={t("games.list.popular.title")} fontSize={28} subtitle={t("games.list.popular.subtitle")} />
+        <SectionTitle 
+          title={t("games.list.trendingMobile.title", "Trending Mobile 🔥")} 
+          fontSize={28} 
+          subtitle={t("games.list.trendingMobile.subtitle", "Best games on the go")} 
+        />
       </View>
 
       {isActuallyLoading && (
@@ -156,7 +154,7 @@ function PopularGames(): React.ReactElement {
           contentContainerStyle={styles.listContent}
         />
       )}
-      {/* error */}
+      
       {(error || !Array.isArray(gamesToShow)) && (
         <View style={{ width: "100%", height: CARD_HEIGHT }}>
           <ErrorState message={t("games.list.serverError")} />
@@ -177,15 +175,18 @@ function PopularGames(): React.ReactElement {
           snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
-            <ErrorState message={t("games.list.serverError")} />
-          </View>}
+          ListEmptyComponent={
+            <View style={{ width: "100%", height: CARD_HEIGHT }}>
+              <ErrorState message={t("games.list.noResults", "No games found")} />
+            </View>
+          }
         />
       )}
     </View>
   );
 }
-export default PopularGames
+
+export default TrendingMobileGames;
 
 const styles = StyleSheet.create({
   headerContainer: {
@@ -264,12 +265,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 20,
     fontSize: 16,
-  },
-  noResults: {
-    color: "#9CB4DD",
-    textAlign: "center",
-    fontSize: 16,
-    marginVertical: 20,
   },
   listContent: { paddingHorizontal: 10, paddingVertical: 5 },
 });

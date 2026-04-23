@@ -17,8 +17,10 @@ import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonGamingevents from "../../skeleton/SkeletonGamingevents";
 import COLORS from "../../constants/colors";
+import SectionTitle from "../SectionTitle";
 import { SERVER_URL } from "../../constants/config";
 import { useCountdown } from "../../hooks/useCountdown";
+import ErrorState from "../ErrorState";
 import useCachedData from "../../hooks/useCachedData";
 import { GamingEvent, CountdownResult } from "../types";
 import type { HomeStackParamList } from "../../navigation/AppNavigator";
@@ -194,7 +196,9 @@ function GamingEvents(): React.ReactElement {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>{t("home.gamingEvents.header")}</Text>
+      <View style={styles.headerContainer}>
+        <SectionTitle title={t("home.gamingEvents.header")} subtitle={t("home.gamingEvents.subtitle")} fontSize={28} />
+      </View>
 
       {isActuallyLoading && (
         <FlatList
@@ -206,15 +210,14 @@ function GamingEvents(): React.ReactElement {
         />
       )}
 
-      {error && eventsToShow.length === 0 && (
-        <Text style={styles.error}>{t("games.list.serverError")}</Text>
+      {/* error */}
+      {(error || !Array.isArray(eventsToShow)) && (
+        <View style={{ width: "100%", height: CARD_HEIGHT }}>
+          <ErrorState message={t("games.list.serverError")} />
+        </View>
       )}
 
-      {!isActuallyLoading && eventsToShow.length === 0 && !error && (
-        <Text style={styles.noResults}>{t("home.gamingEvents.noEvents")}</Text>
-      )}
-
-      {eventsToShow.length > 0 && (
+      {!error && Array.isArray(eventsToShow) && (
         <FlatList
           data={eventsToShow}
           horizontal
@@ -228,6 +231,9 @@ function GamingEvents(): React.ReactElement {
           snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
+          ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
+            <ErrorState message={t("games.list.serverError")} />
+          </View>}
         />
       )}
     </View>
@@ -236,13 +242,13 @@ function GamingEvents(): React.ReactElement {
 export default GamingEvents;
 
 const styles = StyleSheet.create({
-  container: { marginTop: 40 },
-  header: {
-    fontSize: 28,
-    color: COLORS.textLight,
-    marginLeft: 20,
-    marginBottom: 15,
-    fontWeight: "bold",
+  container: { marginTop: 20 },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    margin: 18,
   },
   listContent: { padding: 10 },
   eventCard: {

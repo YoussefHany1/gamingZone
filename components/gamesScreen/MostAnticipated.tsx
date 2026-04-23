@@ -15,10 +15,12 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import COLORS from "../../constants/colors";
+import SectionTitle from "../SectionTitle";
 import { SERVER_URL } from "../../constants/config";
 import SkeletonMostAnticipated from "../../skeleton/SkeletonMostAnticipated";
 import { useCountdown } from "../../hooks/useCountdown";
 import { Game, CountdownResult } from "../types";
+import ErrorState from "../ErrorState";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
@@ -161,7 +163,12 @@ function MostAnticipated(): React.ReactElement {
     [freshGames, cachedGames],
   );
 
-  if (gamesToShow.length === 0) return <SkeletonMostAnticipated />;
+  if (!isError && gamesToShow.length === 0 && !isSuccess) return <SkeletonMostAnticipated />;
+
+  if (!Array.isArray(gamesToShow) && isError) return
+  <View style={{ width: "100%", height: CARD_HEIGHT }}>
+    <ErrorState message={t("games.list.serverError")} />
+  </View>;
 
   const renderItem = ({ item }: ListRenderItemInfo<Game>) => (
     <AnticipatedCard item={item} />
@@ -169,9 +176,9 @@ function MostAnticipated(): React.ReactElement {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>
-        {t("games.list.mostAnticipated.header")}
-      </Text>
+      <View style={styles.headerContainer}>
+        <SectionTitle title={t("games.list.mostAnticipated.title")} subtitle={t("games.list.mostAnticipated.subtitle")} fontSize={28} />
+      </View>
       <FlatList
         data={gamesToShow}
         horizontal
@@ -190,6 +197,9 @@ function MostAnticipated(): React.ReactElement {
           offset: (CARD_WIDTH + 20) * index,
           index,
         })}
+        ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
+          <ErrorState message={t("games.list.serverError")} />
+        </View>}
       />
     </View>
   );
@@ -198,14 +208,14 @@ export default MostAnticipated
 
 const styles = StyleSheet.create({
   container: { marginVertical: 10 },
-  header: {
-    fontSize: 28,
-    color: "white",
-    marginLeft: 20,
-    marginBottom: 15,
-    fontWeight: "bold",
-  },
   listContent: { paddingHorizontal: 10 },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    margin: 18,
+  },
   cardContainer: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,

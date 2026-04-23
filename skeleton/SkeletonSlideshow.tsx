@@ -60,7 +60,7 @@ export default React.memo(SlideshowSkeleton);
 
 const styles = StyleSheet.create({
   container: {
-    height: 400,
+    height: 350,
     width: "100%",
     backgroundColor: COLORS.secondary,
     position: "relative",

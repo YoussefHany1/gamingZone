@@ -13,7 +13,9 @@ import axios from "axios";
 import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonComingSoon from "../../skeleton/SkeletonComingSoon";
+import ErrorState from "../ErrorState";
 import COLORS from "../../constants/colors";
+import SectionTitle from "../SectionTitle";
 import { SERVER_URL } from "../../constants/config";
 import { Ionicons } from "@expo/vector-icons";
 import { useCountdown } from "../../hooks/useCountdown";
@@ -21,6 +23,7 @@ import useCachedData from "../../hooks/useCachedData";
 import { Game, CountdownResult } from "../types";
 
 const CARD_WIDTH = 300;
+const CARD_HEIGHT = 350;
 const CARD_MARGIN = 10;
 
 const fetchComingSoonGames = async (): Promise<Game[]> => {
@@ -183,7 +186,7 @@ function ComingSoonGames(): React.ReactElement {
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={styles.header}>{t("games.list.comingSoon")}</Text>
+        <SectionTitle title={t("games.list.comingSoon.title")} subtitle={t("games.list.comingSoon.subtitle")} fontSize={28} />
       </View>
 
       {isActuallyLoading && (
@@ -195,16 +198,14 @@ function ComingSoonGames(): React.ReactElement {
           contentContainerStyle={styles.listContent}
         />
       )}
-
-      {error && gamesToShow.length === 0 && (
-        <Text style={styles.error}>{t("games.list.serverError")}</Text>
+      {/* error */}
+      {(error || !Array.isArray(gamesToShow)) && (
+        <View style={{ height: CARD_HEIGHT }}>
+          <ErrorState message={t("games.list.serverError")} />
+        </View>
       )}
 
-      {!isActuallyLoading && gamesToShow.length === 0 && !error && (
-        <Text style={styles.noResults}>{t("games.list.noResults")}</Text>
-      )}
-
-      {gamesToShow.length > 0 && (
+      {!error && Array.isArray(gamesToShow) && (
         <FlatList
           data={gamesToShow}
           horizontal
@@ -219,6 +220,9 @@ function ComingSoonGames(): React.ReactElement {
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
           pagingEnabled={false}
+          ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
+            <ErrorState message={t("games.list.serverError")} />
+          </View>}
         />
       )}
     </View>
@@ -233,11 +237,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexWrap: "wrap",
     margin: 18,
-  },
-  header: {
-    fontSize: 28,
-    color: COLORS.textLight,
-    fontWeight: "bold",
   },
   gameCard: {
     width: CARD_WIDTH,

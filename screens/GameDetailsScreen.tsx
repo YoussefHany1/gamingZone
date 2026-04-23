@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ImageBackground,
   ScrollView,
   ToastAndroid,
   TouchableOpacity,
@@ -17,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import Loading from "../Loading";
+import ErrorState from "../components/ErrorState";
 import ImageGallery from "../components/ImageGallery";
 import ListSelectionModal from "../components/ListSelectionModal";
 import useCachedData from "../hooks/useCachedData";
@@ -205,17 +205,9 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
 
       {(loading || authLoading) && <Loading />}
 
-      {!loading && error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Error: {String(error)}</Text>
-        </View>
-      )}
+      {!loading && error && <ErrorState message={`Error: ${String(error)}`} />}
 
-      {!loading && !error && !game && (
-        <View style={styles.errorContainer}>
-          <Text style={{ color: COLORS.textLight, textAlign: "center" }}>No data to display</Text>
-        </View>
-      )}
+      {!loading && !error && !game && <ErrorState message="No data to display" showContactButton={false} />}
 
       {!loading && !authLoading && game && (
         <ScrollView ref={scrollRef} style={styles.container} showsVerticalScrollIndicator={false}>

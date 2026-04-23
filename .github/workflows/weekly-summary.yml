@@ -2,7 +2,7 @@ name: Generate Weekly Gaming Summary
 
 on:
   schedule:
-    # At 12:00 PM every Friday
+    # runs every Friday at 12:00 PM
     - cron: "0 12 * * 5"
   workflow_dispatch:
 

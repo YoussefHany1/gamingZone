@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
     zIndex: 100,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.primary,
   },
   loadingText: {
     color: COLORS.secondary,

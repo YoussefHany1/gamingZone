@@ -27,6 +27,8 @@ import { useCountdown } from "../../hooks/useCountdown";
 import useCachedData from "../../hooks/useCachedData";
 import { useNavigation } from "@react-navigation/native";
 import { FreeGame, CountdownResult } from "../types";
+import ErrorState from "../ErrorState";
+import SectionTitle from "../SectionTitle";
 
 type FreeGameItem = FreeGame & { slug?: string };
 
@@ -35,6 +37,7 @@ const NOTIF_CATEGORY = "free_games";
 const NOTIF_SOURCE = "alerts";
 const FREE_GAMES_CACHE_KEY = "FREE_GAMES_APPWRITE_CACHE";
 const dbId = Constants.expoConfig?.extra?.APPWRITE_DATABASE_ID as string;
+const CARD_HEIGHT = 300;
 
 // Fetch free games from Appwrite, respecting connectivity state
 const fetchFreeGamesFromAppwrite = async (): Promise<FreeGameItem[]> => {
@@ -85,15 +88,15 @@ const CountdownTimer = memo<CountdownTimerProps>(({ t, startDate }) => {
         colors={["rgba(81, 105, 150, 0.9)", "rgba(12, 26, 51, 0.8)"]}
         style={styles.countdownGradient}
       >
-        <Text style={styles.countdownTitle}>{t("games.freeGames.freeOn")}</Text>
+        <Text style={styles.countdownTitle}>{t("games.list.freeGames.freeOn")}</Text>
         <View style={styles.timerContainer}>
-          <TimeUnit value={timeLeft.days} label={t("games.freeGames.days")} />
+          <TimeUnit value={timeLeft.days} label={t("games.list.freeGames.days")} />
           <Text style={styles.separator}>:</Text>
-          <TimeUnit value={timeLeft.hours} label={t("games.freeGames.hours")} />
+          <TimeUnit value={timeLeft.hours} label={t("games.list.freeGames.hours")} />
           <Text style={styles.separator}>:</Text>
-          <TimeUnit value={timeLeft.minutes} label={t("games.freeGames.minutes")} />
+          <TimeUnit value={timeLeft.minutes} label={t("games.list.freeGames.minutes")} />
           <Text style={styles.separator}>:</Text>
-          <TimeUnit value={timeLeft.seconds} label={t("games.freeGames.seconds")} />
+          <TimeUnit value={timeLeft.seconds} label={t("games.list.freeGames.seconds")} />
         </View>
       </LinearGradient>
     </View>
@@ -105,6 +108,7 @@ interface TimeUnitProps {
   label: string;
 }
 
+// countdown timer unit
 const TimeUnit: React.FC<TimeUnitProps> = ({ value, label }) => (
   <View style={styles.timeUnit}>
     <View style={styles.timeValueBox}>
@@ -121,11 +125,13 @@ function FreeGames(): React.ReactElement {
   const [notifEnabled, setNotifEnabled] = useState<boolean>(false);
   const userId = auth().currentUser?.uid;
 
-  const { data: gamesList, isLoading } = useCachedData<FreeGameItem[]>(
+  const { data: gamesList, isLoading, error } = useCachedData<FreeGameItem[]>(
     FREE_GAMES_CACHE_KEY,
     fetchFreeGamesFromAppwrite,
     [],
   );
+
+  const isError = !!error;
 
   useEffect(() => {
     checkNotificationStatus();
@@ -163,8 +169,8 @@ function FreeGames(): React.ReactElement {
       );
       ToastAndroid.show(
         newStatus
-          ? t("games.freeGames.subscribed")
-          : t("games.freeGames.unsubscribed"),
+          ? t("games.list.freeGames.subscribed")
+          : t("games.list.freeGames.unsubscribed"),
         ToastAndroid.LONG,
       );
     } catch (error) {
@@ -285,7 +291,7 @@ function FreeGames(): React.ReactElement {
                     color={COLORS.textLight}
                   />
                   <Text style={styles.savingsText}>
-                    {t("games.freeGames.claimNow")}
+                    {t("games.list.freeGames.claimNow")}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -301,7 +307,7 @@ function FreeGames(): React.ReactElement {
     <View>
       {/* Header with notification toggle */}
       <View style={styles.headerContainer}>
-        <Text style={styles.header}>{t("games.freeGames.header")}</Text>
+        <SectionTitle title={t("games.list.freeGames.header")} fontSize={28} subtitle={t("games.list.freeGames.subtitle")} />
         <TouchableOpacity
           onPress={toggleNotifications}
           style={styles.bellButton}
@@ -314,13 +320,24 @@ function FreeGames(): React.ReactElement {
         </TouchableOpacity>
       </View>
 
-      {isLoading && (!gamesList || gamesList.length === 0) ? (
+      {/* loading */}
+      {isLoading && !isError && !Array.isArray(gamesList) && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {[1, 2, 3].map((item) => (
             <SkeletonFreeGames key={item} />
           ))}
         </ScrollView>
-      ) : (
+      )}
+
+      {/* error */}
+      {(!Array.isArray(gamesList) || isError) && (
+        <View style={{ height: CARD_HEIGHT }}>
+          <ErrorState message={t("games.list.serverError")} />
+        </View>
+      )}
+
+      {/* games list */}
+      {!isError && Array.isArray(gamesList) && (
         <FlatList
           data={gamesList ?? []}
           renderItem={renderGameItem}
@@ -330,6 +347,9 @@ function FreeGames(): React.ReactElement {
           contentContainerStyle={styles.listContent}
           snapToInterval={185}
           decelerationRate="fast"
+          ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
+            <ErrorState message={t("games.list.serverError")} />
+          </View>}
         />
       )}
     </View>
@@ -345,11 +365,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     margin: 18,
   },
-  header: {
-    fontSize: 28,
-    color: COLORS.textLight,
-    fontWeight: "bold",
-  },
   bellButton: {
     padding: 10,
     backgroundColor: COLORS.secondary + "80",
@@ -361,7 +376,7 @@ const styles = StyleSheet.create({
   },
   gameCard: {
     width: 165,
-    height: 300,
+    height: CARD_HEIGHT,
     marginHorizontal: 5,
     borderRadius: 16,
     overflow: "hidden",
