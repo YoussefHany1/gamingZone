@@ -1,5 +1,6 @@
 import React, { memo, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import GamePcRequirementsSkeleton from "../../skeleton/gameDetails/GamePcRequirementsSkeleton";
 import { useTranslation } from "react-i18next";
 import COLORS from "../../constants/colors";
 import type { PcRequirements } from "./types";
@@ -23,9 +24,7 @@ const GamePcRequirements: React.FC<Props> = ({ pcRequirements, pcReqLoading }) =
         </Text>
       </View>
 
-      {pcReqLoading && (
-        <Text style={styles.sysReqLoading}>Loading…</Text>
-      )}
+      {pcReqLoading && <GamePcRequirementsSkeleton />}
 
       {!pcReqLoading && pcRequirements && (
         <>

@@ -22,7 +22,7 @@ const resolveImageUrl = (img, baseUrl) => {
     try {
       const u = new URL(baseUrl);
       finalUrl = u.origin + finalUrl;
-    } catch (_error) {}
+    } catch (_error) { }
   }
 
   if (finalUrl.startsWith("http:")) {
@@ -35,7 +35,6 @@ const resolveImageUrl = (img, baseUrl) => {
 
 const extractThumbnail = (item, baseUrl, isJson = false) => {
   let img = null;
-
   if (isJson) {
     img =
       item.image ||
@@ -46,7 +45,12 @@ const extractThumbnail = (item, baseUrl, isJson = false) => {
       null;
   } else {
     const getImgFromHtml = (html) =>
-      (html || "").match(/<img[^>]+src=['\"]([^'\"]+)['\"]/i)?.[1];
+      (html || "").match(/<img[^>]+src=['"]([^'"]+)['"]/i)?.[1];
+
+    // الإضافة الجديدة للبحث عن og:image داخل محتوى الـ RSS المدمج
+    const getOgImageFromHtml = (html) =>
+      (html || "").match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ||
+      (html || "").match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
 
     img =
       item["media:content"]?.["media:thumbnail"]?.url ||
@@ -55,7 +59,9 @@ const extractThumbnail = (item, baseUrl, isJson = false) => {
       item["media:content"]?.url ||
       item["media:thumbnail"]?.url ||
       getImgFromHtml(item.description) ||
+      getOgImageFromHtml(item.description) || // استخدام الدالة الجديدة هنا
       getImgFromHtml(item["content:encoded"]) ||
+      getOgImageFromHtml(item["content:encoded"]) || // استخدام الدالة الجديدة هنا
       (item.enclosure &&
         (Array.isArray(item.enclosure)
           ? item.enclosure[0]?.url

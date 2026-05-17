@@ -26,7 +26,7 @@ import {
   PinchGestureHandlerEventPayload,
   PanGestureHandlerEventPayload,
 } from "react-native-gesture-handler";
-import COLORS from "../constants/colors";
+import COLORS from "../../constants/colors";
 import { useTranslation } from "react-i18next";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");

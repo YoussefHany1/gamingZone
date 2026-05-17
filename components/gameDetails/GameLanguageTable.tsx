@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import COLORS from "../../constants/colors";
+import * as Localization from "expo-localization";
 import type { LangRow } from "./types";
 
 interface Props {
@@ -13,6 +14,36 @@ const ICONS = ["mic", "document-text", "desktop"] as const;
 
 const GameLanguageTable: React.FC<Props> = ({ languageList }) => {
   const { t } = useTranslation();
+
+  const deviceLanguageName = React.useMemo(() => {
+    const code = Localization.getLocales()[0]?.languageCode;
+    if (!code) return null;
+
+    try {
+      // @ts-ignore
+      if (typeof Intl !== "undefined" && Intl.DisplayNames) {
+        // @ts-ignore
+        return new Intl.DisplayNames(["en"], { type: "language" }).of(code);
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    const map: Record<string, string> = {
+      ar: "Arabic",
+      en: "English",
+      fr: "French",
+      de: "German",
+      es: "Spanish",
+      it: "Italian",
+      ja: "Japanese",
+      ko: "Korean",
+      ru: "Russian",
+      pt: "Portuguese",
+      zh: "Chinese",
+    };
+    return map[code] || null;
+  }, []);
 
   if (languageList.length === 0) return null;
 
@@ -33,18 +64,28 @@ const GameLanguageTable: React.FC<Props> = ({ languageList }) => {
           </View>
         ))}
       </View>
-      {languageList.map((lang, index) => (
-        <View key={lang.name} style={[styles.langTableRow, {
-          backgroundColor: index % 2 === 0 ? "rgba(81, 105, 150, 0.1)" : "transparent",
-        }]}>
-          <Text style={[styles.langCellText, { flex: 2 }]}>{lang.name}</Text>
+      {languageList.map((lang, index) => {
+        const isDeviceLanguage = deviceLanguageName && lang.name.includes(deviceLanguageName);
+
+        return (
+          <View key={lang.name} style={[styles.langTableRow, {
+            backgroundColor: index % 2 === 0 ? "rgba(81, 105, 150, 0.1)" : "transparent",
+          }]}>
+            <Text style={[
+              styles.langCellText,
+              { flex: 2 },
+              isDeviceLanguage && { fontWeight: "bold", color: COLORS.textLight }
+            ]}>
+              {lang.name}
+            </Text>
           {(["Audio", "Subtitles", "Interface"] as const).map((key) => (
             <View key={key} style={styles.checkCell}>
               {lang[key] && <Ionicons name="checkmark-circle" size={20} color={COLORS.lightGray} />}
             </View>
           ))}
-        </View>
-      ))}
+          </View>
+        );
+      })}
     </View>
   );
 };

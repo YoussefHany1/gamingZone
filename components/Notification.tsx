@@ -99,7 +99,7 @@ const Notification: React.FC = () => {
               style={styles.chevronIcon}
             />
             <Text style={styles.categoryTitle}>
-              {t("games.freeGames.header") || "Free Games Alerts"}
+              {t("games.list.freeGames.header")}
             </Text>
           </View>
 

@@ -161,7 +161,7 @@ const GamesStack = memo(() => {
   const gameNewsOptions = useMemo(
     () => ({
       headerShown: true,
-      title: t("games.list.gamesNews"),
+      title: t("games.list.gamesNews.title"),
       headerStyle: { backgroundColor: COLORS.primary },
       headerTintColor: "#fff" as const,
       headerTitleStyle: { fontWeight: "bold" as const },

@@ -15,9 +15,17 @@ import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import { useTranslation } from "react-i18next";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
-import Loading from "../Loading";
+import ImageGallerySkeleton from "../skeleton/gameDetails/ImageGallerySkeleton";
+import GameDetailsMetaSkeleton from "../skeleton/gameDetails/GameDetailsMetaSkeleton";
+import GameStoresSkeleton from "../skeleton/gameDetails/GameStoresSkeleton";
+import GameAboutSkeleton from "../skeleton/gameDetails/GameAboutSkeleton";
+import GameTrailerSkeleton from "../skeleton/gameDetails/GameTrailerSkeleton";
+import GameDetailsGridSkeleton from "../skeleton/gameDetails/GameDetailsGridSkeleton";
+import GameLanguageTableSkeleton from "../skeleton/gameDetails/GameLanguageTableSkeleton";
+import GameHowLongToBeatSkeleton from "../skeleton/gameDetails/GameHowLongToBeatSkeleton";
+import GameHorizontalScrollSkeleton from "../skeleton/gameDetails/GameHorizontalScrollSkeleton";
 import ErrorState from "../components/ErrorState";
-import ImageGallery from "../components/ImageGallery";
+import ImageGallery from "../components/gameDetails/ImageGallery";
 import ListSelectionModal from "../components/ListSelectionModal";
 import useCachedData from "../hooks/useCachedData";
 import { adUnitId } from "../constants/config";
@@ -193,55 +201,63 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
   const handleCloseModal = useCallback(() => setShowListModal(false), []);
   const handleNavigateToGame = useCallback((id: number) => setCurrentId(id), []);
 
-  // Render
-
   return (
     <SafeAreaView edges={["right", "left"]} style={styles.container}>
+      {/* Back button — always visible */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
           <Ionicons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      {(loading || authLoading) && <Loading />}
-
+      {/* Error states */}
       {!loading && error && <ErrorState message={`Error: ${String(error)}`} />}
-
       {!loading && !error && !game && <ErrorState message="No data to display" showContactButton={false} />}
 
-      {!loading && !authLoading && game && (
+      {/* Main content — ScrollView always mounted, each section swaps independently */}
+      {(loading || game) && (
         <ScrollView ref={scrollRef} style={styles.container} showsVerticalScrollIndicator={false}>
 
           {/* Cover / Screenshots Gallery */}
           <View style={{ zIndex: 100 }}>
-            <ImageGallery
-              coverImageId={game.cover?.image_id}
-              screenshots={game.screenshots ?? []}
-            />
+            {loading ? (
+              <ImageGallerySkeleton />
+            ) : (
+              <ImageGallery
+                coverImageId={game!.cover?.image_id}
+                screenshots={game!.screenshots ?? []}
+              />
+            )}
           </View>
 
-          {/* Backgrounds */}
-          <GameDetailsBackground
-            coverImageId={game.cover?.image_id}
-            currentLang={currentLang}
-          />
+          {/* Blurred background — only once image data is ready */}
+          {!loading && game && (
+            <GameDetailsBackground
+              coverImageId={game.cover?.image_id}
+              currentLang={currentLang}
+            />
+          )}
 
           <View style={styles.content}>
 
             {/* Title, platforms, rating, age rating */}
-            <GameDetailsMeta
-              name={game.name}
-              releaseDate={game.release_dates?.[0]?.human}
-              platforms={game.platforms}
-              totalRating={game.total_rating}
-              totalRatingCount={game.total_rating_count}
-              ageRating={ageRating}
-            />
+            {loading ? (
+              <GameDetailsMetaSkeleton />
+            ) : game ? (
+              <GameDetailsMeta
+                name={game.name}
+                releaseDate={game.release_dates?.[0]?.human}
+                platforms={game.platforms}
+                totalRating={game.total_rating}
+                totalRatingCount={game.total_rating_count}
+                ageRating={ageRating}
+              />
+            ) : null}
 
             {/* Stores */}
-            <GameStores websites={game.websites} />
+            {loading ? <GameStoresSkeleton /> : game ? <GameStores websites={game.websites} /> : null}
 
-            {/* Action buttons */}
+            {/* Action buttons — static (route params), always shown */}
             <GameActionButtons
               claimUrl={claimUrl}
               store={store}
@@ -256,53 +272,73 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
             />
 
             {/* About */}
-            <GameAbout summary={game.summary} />
+            {loading ? <GameAboutSkeleton /> : game ? <GameAbout summary={game.summary} /> : null}
 
             {/* Trailer */}
-            <GameTrailer videos={game.videos} />
+            {loading ? <GameTrailerSkeleton /> : game ? <GameTrailer videos={game.videos} /> : null}
 
             {/* Details grid */}
-            <GameDetailsGrid
-              genres={game.genres}
-              gameModes={game.game_modes}
-              involvedCompanies={game.involved_companies}
-              gameEngines={game.game_engines}
-            />
+            {loading ? (
+              <GameDetailsGridSkeleton />
+            ) : game ? (
+              <GameDetailsGrid
+                genres={game.genres}
+                gameModes={game.game_modes}
+                involvedCompanies={game.involved_companies}
+                gameEngines={game.game_engines}
+              />
+            ) : null}
 
-            {/* Ad */}
+            {/* Ad — always shown */}
             <View style={styles.ad}>
               <Text style={styles.adText}>{t("common.ad")}</Text>
               <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
             </View>
 
             {/* Language support table */}
-            <GameLanguageTable languageList={languageList} />
+            {loading ? (
+              <GameLanguageTableSkeleton />
+            ) : game ? (
+              <GameLanguageTable languageList={languageList} />
+            ) : null}
 
             {/* How long to beat */}
-            <GameHowLongToBeat main={main} mainExtra={mainExtra} completionist={completionist} />
+            {loading ? (
+              <GameHowLongToBeatSkeleton />
+            ) : game ? (
+              <GameHowLongToBeat main={main} mainExtra={mainExtra} completionist={completionist} />
+            ) : null}
 
-            {/* Second ad */}
+            {/* Second ad — always shown */}
             <View style={styles.ad}>
               <Text style={styles.adText}>{t("common.ad")}</Text>
               <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
             </View>
 
-            {/* PC System Requirements */}
+            {/* PC System Requirements — has its own internal skeleton via pcReqLoading */}
             <GamePcRequirements pcRequirements={pcRequirements} pcReqLoading={pcReqLoading} />
 
             {/* Game series */}
-            <GameHorizontalScroll
-              title={t("games.details.series")}
-              games={seriesGames}
-              onGamePress={handleNavigateToGame}
-            />
+            {loading ? (
+              <GameHorizontalScrollSkeleton title={t("games.details.series")} />
+            ) : (
+              <GameHorizontalScroll
+                title={t("games.details.series")}
+                games={seriesGames}
+                onGamePress={handleNavigateToGame}
+              />
+            )}
 
             {/* Similar games */}
-            <GameHorizontalScroll
-              title={t("games.details.similar")}
-              games={similarGames}
-              onGamePress={handleNavigateToGame}
-            />
+            {loading ? (
+              <GameHorizontalScrollSkeleton title={t("games.details.similar")} />
+            ) : (
+              <GameHorizontalScroll
+                title={t("games.details.similar")}
+                games={similarGames}
+                onGamePress={handleNavigateToGame}
+              />
+            )}
           </View>
         </ScrollView>
       )}

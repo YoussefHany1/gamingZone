@@ -1,6 +1,7 @@
 const xml2js = require("xml2js");
 const iconv = require("iconv-lite");
 const jschardet = require("jschardet");
+const he = require("he");
 
 const { withRetry } = require("../lib/http.cjs");
 const { fixArabHardwareEncoding } = require("./encoding.cjs");
@@ -52,23 +53,53 @@ async function fetchOgImage(url) {
           url,
           timeout: { request: 15000 },
           headerGeneratorOptions: {
-            devices: ["mobile"],
-            locales: ["en-US"],
+            devices: ["mobile", "desktop"],
+            locales: ["en-US", "ar"],
           },
         }),
       { label: `OG fetch (${url})`, retries: 2 },
     );
 
     const body = response.body;
-    const match =
-      body.match(
-        /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
-      ) ||
-      body.match(
-        /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
-      );
+    if (!body || typeof body !== "string") return null;
 
-    return match?.[1] || null;
+    // Find all meta and link tags in the document body
+    const tags = body.match(/<(?:meta|link)\s+[^>]*>/gi) || [];
+    const images = {};
+
+    for (const tag of tags) {
+      // Extract property, name, itemprop, or rel attribute value
+      const propMatch = tag.match(/(?:property|name|itemprop|rel)\s*=\s*["']([^"']+)["']/i);
+      // Extract content or href attribute value
+      const contentMatch = tag.match(/(?:content|href)\s*=\s*["']([^"']+)["']/i);
+
+      if (propMatch && contentMatch) {
+        const key = propMatch[1].toLowerCase().trim();
+        const val = he.decode(contentMatch[1].trim());
+        if (val) {
+          images[key] = val;
+        }
+      }
+    }
+
+    // Prioritize the best image candidate
+    const candidateKeys = [
+      "og:image",
+      "og:image:secure_url",
+      "twitter:image",
+      "twitter:image:src",
+      "image",
+      "image_src",
+      "thumbnail",
+    ];
+
+    for (const key of candidateKeys) {
+      if (images[key]) {
+        return images[key];
+      }
+    }
+
+    return null;
   } catch (error) {
     console.warn(
       `      ⚠️ Failed to fetch OG image for ${url}: ${error.message}`,

@@ -130,6 +130,7 @@ async function cleanupOldArticles(siteName) {
       CONFIG.COLLECTION_ARTICLES,
       [
         Query.equal("siteName", siteName),
+        Query.equal("category", category),
         Query.orderDesc("fetchedAt"),
         Query.limit(50),
         Query.offset(CONFIG.MAX_STORED_NEWS),
@@ -239,7 +240,7 @@ async function processSource(sourceData, summary) {
       console.log("   💤 No new articles.");
     }
 
-    await cleanupOldArticles(name);
+    await cleanupOldArticles(name, category);
   } catch (error) {
     console.error(`❌ Error in ${name}: ${error.message}`);
     summary.errors.push({ name, msg: error.message });

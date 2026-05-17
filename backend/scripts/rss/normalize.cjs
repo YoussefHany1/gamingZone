@@ -98,7 +98,6 @@ function normalizeXmlItems(parsedData, sourceUrl) {
 
 function normalizeItems(fetchedContent, sourceUrl) {
   if (!fetchedContent) return [];
-
   const items =
     fetchedContent.type === "json"
       ? normalizeJsonItems(fetchedContent.data, sourceUrl)
