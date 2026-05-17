@@ -35,20 +35,20 @@ const LanguageSelect = memo((): React.ReactElement => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.primary }}>
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {(["en", "ar"] as const).map((lang) => (
-          <TouchableOpacity 
-            key={lang} 
-            style={[styles.categoryHeader, { direction: lang === "en" ? "ltr" : "rtl" }]} 
+          <TouchableOpacity
+            key={lang}
+            style={[styles.categoryHeader, { direction: lang === "en" ? "ltr" : "rtl" }]}
             onPress={toggleLanguage}
           >
             <View style={[styles.categoryHeaderLeft, { direction: lang === "en" ? "ltr" : "rtl" }]}>
-              <Text 
+              <Text
                 style={[
-                  styles.categoryTitle, 
-                  { 
+                  styles.categoryTitle,
+                  {
                     writingDirection: lang === "en" ? "ltr" : "rtl",
-                    textAlign: lang === "en" ? "left" : "right" 
+                    textAlign: lang === "en" ? "left" : "right"
                   }
                 ]}
               >

@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import { memo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import COLORS from "../../constants/colors";
 import type { AgeRatingInfo, Platform } from "./types";
@@ -21,7 +21,7 @@ const GameDetailsMeta: React.FC<Props> = ({
   totalRatingCount,
   ageRating,
 }) => (
-  <>
+  <View style={{ direction: "ltr" }}>
     <Text style={styles.title}>{name}</Text>
     <Text style={styles.releaseDate}>{releaseDate}</Text>
 
@@ -50,7 +50,7 @@ const GameDetailsMeta: React.FC<Props> = ({
         <Text style={styles.ageRatingText}>{ageRating.label}</Text>
       </View>
     )}
-  </>
+  </View>
 );
 
 export default memo(GameDetailsMeta);
@@ -60,14 +60,17 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
     fontSize: 24,
     fontWeight: "bold",
+    direction: "ltr",
   },
   releaseDate: {
     color: "gray",
     letterSpacing: 2,
+    direction: "ltr",
   },
   contentHeader: {
     flexDirection: "row",
     alignItems: "center",
+    direction: "ltr",
   },
   platformContainer: {
     flexDirection: "row",
@@ -104,7 +107,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     paddingHorizontal: 8,
     borderRadius: 8,
-    marginRight: 27,
+    marginRight: 22,
+    marginTop: 5,
     justifyContent: "center",
     alignItems: "center",
     alignSelf: "flex-end",

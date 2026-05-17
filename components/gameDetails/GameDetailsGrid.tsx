@@ -89,5 +89,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 3,
     flexWrap: "wrap",
+
   },
 });

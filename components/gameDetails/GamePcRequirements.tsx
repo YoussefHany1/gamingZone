@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(81,105,150,0.4)",
+    borderColor: "rgba(81,105,150,0.4)", direction: "ltr",
   },
   sysReqRow: {
     paddingHorizontal: 14,

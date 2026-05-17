@@ -33,5 +33,6 @@ const styles = StyleSheet.create({
     color: "#c1c1c1",
     fontSize: 16,
     marginTop: 5,
+    direction: "ltr",
   },
 });

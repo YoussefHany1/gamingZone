@@ -11,12 +11,12 @@ const GameDetailsMetaSkeleton: React.FC = () => {
   return (
     <View>
       {/* Game title */}
-      <S w="70%" h={28} r={6} />
+      <S w="70%" h={28} r={6} style={{ direction: "ltr" }} />
       {/* Release date */}
-      <S w="38%" h={14} r={5} style={{ marginTop: 8 }} />
+      <S w="38%" h={14} r={5} style={{ marginTop: 8, direction: "ltr" }} />
 
       {/* Platforms + rating row */}
-      <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12, direction: "ltr" }}>
         <View style={{ flexDirection: "row", flex: 1, gap: 8 }}>
           {[70, 70, 70].map((w, i) => (
             <S key={i} w={w} h={28} r={14} />

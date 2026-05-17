@@ -14,11 +14,12 @@ const GameAboutSkeleton: React.FC = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{t("games.details.about")}</Text>
-      <S w="100%" h={14} r={5} style={{ marginTop: 10 }} />
-      <S w="95%" h={14} r={5} style={{ marginTop: 6 }} />
-      <S w="88%" h={14} r={5} style={{ marginTop: 6 }} />
-      <S w="93%" h={14} r={5} style={{ marginTop: 6 }} />
-      <S w="75%" h={14} r={5} style={{ marginTop: 6 }} />
+      <View style={{ direction: "ltr" }}>
+        <S w="100%" h={14} r={5} style={{ marginTop: 10 }} />
+        <S w="95%" h={14} r={5} style={{ marginTop: 6 }} />
+        <S w="88%" h={14} r={5} style={{ marginTop: 6 }} />
+        <S w="93%" h={14} r={5} style={{ marginTop: 6 }} />
+        <S w="75%" h={14} r={5} style={{ marginTop: 6 }} /></View>
     </View>
   );
 };

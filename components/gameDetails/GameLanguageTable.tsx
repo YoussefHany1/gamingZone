@@ -78,11 +78,11 @@ const GameLanguageTable: React.FC<Props> = ({ languageList }) => {
             ]}>
               {lang.name}
             </Text>
-          {(["Audio", "Subtitles", "Interface"] as const).map((key) => (
-            <View key={key} style={styles.checkCell}>
-              {lang[key] && <Ionicons name="checkmark-circle" size={20} color={COLORS.lightGray} />}
-            </View>
-          ))}
+            {(["Audio", "Subtitles", "Interface"] as const).map((key) => (
+              <View key={key} style={styles.checkCell}>
+                {lang[key] && <Ionicons name="checkmark-circle" size={20} color={COLORS.lightGray} />}
+              </View>
+            ))}
           </View>
         );
       })}
@@ -110,6 +110,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: 10,
     alignItems: "flex-end",
+    direction: "ltr",
   },
   iconHeaderContainer: {
     flex: 1,
@@ -133,6 +134,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderBottomWidth: 0.5,
     borderBottomColor: "rgba(81, 105, 150, 0.3)",
+    direction: "ltr",
   },
   langCellText: {
     color: "#cfcfcf",

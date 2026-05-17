@@ -45,7 +45,7 @@ const GamePcRequirementsSkeleton: React.FC = () => {
 export default GamePcRequirementsSkeleton;
 
 const styles = StyleSheet.create({
-  container: { marginTop: 20, marginBottom: 10 },
+  container: { marginTop: 20, marginBottom: 10, direction: "ltr", },
   header: {
     color: COLORS.textLight,
     fontSize: 24,
