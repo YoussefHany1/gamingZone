@@ -2,11 +2,11 @@ import React, { useCallback } from "react";
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   ListRenderItemInfo,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -183,6 +183,14 @@ function ComingSoonGames(): React.ReactElement {
     [],
   );
 
+  const skeletonData = useMemo(() => Array.from({ length: 3 }, (_, i) => ({ id: i } as any)), []);
+  const renderSkeletonItem = useCallback(() => <SkeletonComingSoon />, []);
+  const renderEmpty = useCallback(() => (
+    <View style={styles.emptyContainer}>
+      <ErrorState message={t("games.list.serverError")} />
+    </View>
+  ), [t]);
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -190,39 +198,35 @@ function ComingSoonGames(): React.ReactElement {
       </View>
 
       {isActuallyLoading && (
-        <FlatList
-          data={Array.from({ length: 3 }, (_, i) => ({ id: i } as any))}
+        <FlashList
+          data={skeletonData}
           horizontal
-          renderItem={() => <SkeletonComingSoon />}
+          renderItem={renderSkeletonItem}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
+          estimatedItemSize={320}
         />
       )}
       {/* error */}
       {(error || !Array.isArray(gamesToShow)) && (
-        <View style={{ height: CARD_HEIGHT }}>
+        <View style={styles.errorContainer}>
           <ErrorState message={t("games.list.serverError")} />
         </View>
       )}
 
       {!error && Array.isArray(gamesToShow) && (
-        <FlatList
+        <FlashList
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          initialNumToRender={3}
-          maxToRenderPerBatch={3}
-          windowSize={5}
           showsHorizontalScrollIndicator={false}
           snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
           pagingEnabled={false}
-          ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
-            <ErrorState message={t("games.list.serverError")} />
-          </View>}
+          ListEmptyComponent={renderEmpty}
+          estimatedItemSize={320}
         />
       )}
     </View>
@@ -231,6 +235,13 @@ function ComingSoonGames(): React.ReactElement {
 export default ComingSoonGames;
 
 const styles = StyleSheet.create({
+  errorContainer: {
+    height: CARD_HEIGHT,
+  },
+  emptyContainer: {
+    width: "100%",
+    height: CARD_HEIGHT,
+  },
   container: {},
   headerContainer: {
     flexDirection: "row",

@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Modal,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
@@ -13,6 +12,7 @@ import {
   ToastAndroid,
   ListRenderItemInfo,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
@@ -244,7 +244,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
               <ActivityIndicator size="large" color={COLORS.secondary} />
             ) : (
               <>
-                <FlatList
+                <FlashList
                   data={lists}
                   keyExtractor={(item) => item.id}
                   extraData={lists}
@@ -262,6 +262,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
                       {t("userLists.empty.title")}
                     </Text>
                   }
+                  estimatedItemSize={50}
                 />
 
                 {/* Create new list section */}

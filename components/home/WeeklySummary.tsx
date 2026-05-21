@@ -1,12 +1,12 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Animated,
   LayoutChangeEvent,
 } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import Markdown from "react-native-markdown-display";
 import Loading from "../../Loading";
 import { databases } from "../../lib/appwrite";
@@ -33,16 +33,22 @@ const WeeklySummary: React.FC = () => {
   // Full height measured from the inner content layout
   const [contentHeight, setContentHeight] = useState<number>(0);
 
-  // Animated value starts at collapsed height
-  const animatedHeight = useRef(new Animated.Value(COLLAPSED_HEIGHT)).current;
+  // Shared value for animation on UI thread
+  const animatedHeight = useSharedValue(COLLAPSED_HEIGHT);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      height: animatedHeight.value,
+    };
+  });
 
   useEffect(() => {
     const fetchSummary = async (): Promise<void> => {
       try {
         const response = await databases.listDocuments(
-          DATABASE_ID,
-          SUMMARIES_COLLECTION_ID,
-          [Query.orderDesc("$createdAt"), Query.limit(1)],
+            DATABASE_ID,
+            SUMMARIES_COLLECTION_ID,
+            [Query.orderDesc("$createdAt"), Query.limit(1)],
         );
 
         if (response.documents.length > 0) {
@@ -61,13 +67,11 @@ const WeeklySummary: React.FC = () => {
   // Animate between collapsed and expanded states whenever either value changes
   useEffect(() => {
     if (contentHeight > 0) {
-      Animated.timing(animatedHeight, {
-        toValue: expanded ? contentHeight : COLLAPSED_HEIGHT,
+      animatedHeight.value = withTiming(expanded ? contentHeight : COLLAPSED_HEIGHT, {
         duration: 300,
-        useNativeDriver: false, // Height animation cannot use the native driver
-      }).start();
+      });
     }
-  }, [expanded, contentHeight]);
+  }, [expanded, contentHeight, animatedHeight]);
 
   if (loading) return <Loading />;
   if (!summaryDoc) return null;
@@ -120,7 +124,7 @@ const WeeklySummary: React.FC = () => {
       </View>
 
       <Animated.View
-        style={[styles.animatedContainer, { height: animatedHeight }]}
+        style={[styles.animatedContainer, animatedStyle]}
       >
         <View onLayout={handleContentLayout} style={styles.innerContent}>
           <Markdown style={markdownStyles}>{content}</Markdown>

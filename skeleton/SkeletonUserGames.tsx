@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
-import { View, StyleSheet, FlatList, Dimensions, ViewStyle } from "react-native";
+import { View, StyleSheet, Dimensions, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
@@ -83,12 +84,13 @@ const DUMMY_DATA = Array(DUMMY_COUNT).fill(0);
 const UserGamesSkeleton: React.FC = () => {
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["left", "right"]}>
-      <FlatList
+      <FlashList
         data={DUMMY_DATA}
         keyExtractor={(_, index) => index.toString()}
         renderItem={() => <SkeletonItem />}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
+        estimatedItemSize={150}
       />
     </SafeAreaView>
   );

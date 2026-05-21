@@ -5,8 +5,9 @@ import React, {
   useRef,
   useCallback,
 } from "react";
+import { useAuthStore } from "./store/useAuthStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { View, StyleSheet, AppState, AppStateStatus } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -18,7 +19,7 @@ import {
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
+
 import analytics from "@react-native-firebase/analytics";
 import * as SplashScreen from "expo-splash-screen";
 import "./i18n";
@@ -27,7 +28,8 @@ import Loading from "./Loading";
 import useNotifications from "./hooks/useNotifications";
 import useRateApp from "./hooks/useRateApp";
 import useUpdateCheck from "./hooks/useUpdateCheck";
-import { MainAppTabs, AuthStack } from "./navigation/AppNavigator";
+const MainAppTabs = React.lazy(() => import("./navigation/AppNavigator").then(m => ({ default: m.MainAppTabs })));
+const AuthStack = React.lazy(() => import("./navigation/AppNavigator").then(m => ({ default: m.AuthStack })));
 import OnboardingScreen from "./screens/OnboardingScreen";
 
 // Types
@@ -89,84 +91,21 @@ const linking = {
 SplashScreen.preventAutoHideAsync();
 
 function App(): React.ReactElement | null {
-  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const user = useAuthStore((state) => state.user);
+  const loading = useAuthStore((state) => state.isLoading);
+  const initAuth = useAuthStore((state) => state.initAuth);
+
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
 
   const routeNameRef = useRef<string | undefined>(undefined);
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
-  const appState = useRef<AppStateStatus>(AppState.currentState);
 
-  // Auth State
+  // Auth State — all listener / AppState / analytics logic lives in the store
   useEffect(() => {
-    const unsubscribeAuth = auth().onAuthStateChanged(
-      async (newUser: FirebaseAuthTypes.User | null) => {
-        if (!newUser) {
-          try {
-            await auth().signInAnonymously();
-            return;
-          } catch (error) {
-            console.error("Error signing in anonymously:", error);
-            setLoading(false);
-            return;
-          }
-        }
+    const cleanup = initAuth();
+    return cleanup;
+  }, [initAuth]);
 
-        setUser(newUser);
-
-        // User tracking
-        await analytics().setUserId(newUser.uid);
-        await analytics().setUserProperty(
-          "email_verified",
-          String(newUser.emailVerified)
-        );
-        await analytics().setUserProperty(
-          "is_anonymous",
-          String(newUser.isAnonymous)
-        );
-
-        setLoading(false);
-      }
-    );
-
-    // Guard against blank screen after long background / screen lock.
-    // When the OS suspends the JS thread for a long time and then resumes,
-    // React state resets but Firebase's native layer still knows the current user.
-    // If we're still in "loading" state when coming to foreground, give the auth
-    // listener 2s to fire naturally — if it doesn't, read currentUser directly
-    // from the native module and clear loading ourselves.
-    let resumeTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const handleAppStateChange = (nextState: AppStateStatus): void => {
-      const prev = appState.current;
-      appState.current = nextState;
-
-      const comingToForeground =
-        (prev === "background" || prev === "inactive") &&
-        nextState === "active";
-
-      if (!comingToForeground) return;
-
-      // Give the auth listener 2s to fire on its own first
-      resumeTimer = setTimeout(() => {
-        setLoading((wasLoading) => {
-          if (!wasLoading) return false; // already resolved, nothing to do
-          // Auth listener didn't fire in time — read from native layer directly
-          const currentUser = auth().currentUser;
-          setUser(currentUser);
-          return false; // clear loading
-        });
-      }, 2000);
-    };
-
-    const appStateSub = AppState.addEventListener("change", handleAppStateChange);
-
-    return () => {
-      unsubscribeAuth();
-      appStateSub.remove();
-      if (resumeTimer) clearTimeout(resumeTimer);
-    };
-  }, []);
 
   // Onboarding check — runs once auth has resolved
   useEffect(() => {
@@ -242,7 +181,7 @@ function App(): React.ReactElement | null {
             onStateChange={handleStateChange}
           >
             <Suspense fallback={<Loading />}>
-              <Stack.Navigator id="root" screenOptions={{ headerShown: false }}>
+              <Stack.Navigator id="root" screenOptions={{ headerShown: false, freezeOnBlur: true }}>
                 <Stack.Screen name="MainApp" component={MainAppTabs} />
                 <Stack.Screen name="Auth" component={AuthStack} />
               </Stack.Navigator>

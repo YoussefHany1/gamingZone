@@ -2,13 +2,13 @@ import React, { useCallback } from "react";
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
   Linking,
   ListRenderItemInfo,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
@@ -201,12 +201,13 @@ function GamingEvents(): React.ReactElement {
       </View>
 
       {isActuallyLoading && (
-        <FlatList
+        <FlashList
           data={Array.from({ length: 3 }, (_, i) => ({ id: i } as any))}
           horizontal
           renderItem={() => <SkeletonGamingevents />}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
+          estimatedItemSize={CARD_WIDTH + CARD_MARGIN * 2}
         />
       )}
 
@@ -218,15 +219,11 @@ function GamingEvents(): React.ReactElement {
       )}
 
       {!error && Array.isArray(eventsToShow) && (
-        <FlatList
+        <FlashList
           data={eventsToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          initialNumToRender={3}
-          maxToRenderPerBatch={3}
-          windowSize={5}
           showsHorizontalScrollIndicator={false}
           snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
           decelerationRate="fast"
@@ -234,6 +231,7 @@ function GamingEvents(): React.ReactElement {
           ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
             <ErrorState message={t("games.list.serverError")} />
           </View>}
+          estimatedItemSize={CARD_WIDTH + CARD_MARGIN * 2}
         />
       )}
     </View>

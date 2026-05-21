@@ -4,9 +4,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
-  FlatList,
   ListRenderItemInfo,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
@@ -133,7 +133,7 @@ function GamesNews(): React.ReactElement {
         <SectionTitle title={t("games.list.gamesNews.title")} subtitle={t("games.list.gamesNews.subtitle")} fontSize={28} />
       </View>
 
-      <FlatList
+      <FlashList
         data={GAMES_DATA}
         horizontal={true}
         showsHorizontalScrollIndicator={false}
@@ -142,6 +142,7 @@ function GamesNews(): React.ReactElement {
         contentContainerStyle={styles.listContent}
         snapToInterval={175}
         decelerationRate="fast"
+        estimatedItemSize={175}
       />
     </View>
   );

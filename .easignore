@@ -32,3 +32,11 @@ android/local.properties
 # ملفات iOS (بحال وجودها مستقبلا)
 ios/Pods/
 ios/build/
+
+/web
+
+# ملفات متعلقة باستضافة الويب والباك إند
+vercel.json
+.vercel/
+firebase.json
+firestore.rules

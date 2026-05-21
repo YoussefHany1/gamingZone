@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   Pressable,
   RefreshControl,
   ToastAndroid,
   ListRenderItemInfo,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import NetInfo from "@react-native-community/netinfo";
@@ -97,7 +97,7 @@ const NewsItem = memo(function NewsItem({ item, index, language, onPress, t }: N
                 : require("../assets/image-not-found.webp")
             }
             contentFit="cover"
-            // transition={500}
+
             cachePolicy="memory-disk"
             allowDownscaling={true}
           />
@@ -260,7 +260,7 @@ function LatestNews({
 
   return (
     <View style={styles.container}>
-      <FlatList
+      <FlashList
         data={listData}
         renderItem={renderItem}
         keyExtractor={(item, index) =>
@@ -276,12 +276,9 @@ function LatestNews({
             tintColor={COLORS.secondary}
           />
         }
-        removeClippedSubviews={true}
-        initialNumToRender={5}
-        maxToRenderPerBatch={5}
-        windowSize={10}
         contentContainerStyle={listData.length === 0 ? { flexGrow: 1 } : null}
         ListEmptyComponent={renderEmptyComponent}
+        estimatedItemSize={140}
       />
     </View>
   );

@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
@@ -12,6 +11,7 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Markdown from "react-native-markdown-display";
@@ -26,7 +26,7 @@ const AIChatScreen: React.FC = memo(() => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<FlashList<any>>(null);
 
   const suggestions = useMemo(() => [
     t("aiChat.suggestions.basedOnList"),
@@ -97,7 +97,7 @@ const AIChatScreen: React.FC = memo(() => {
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
-      <FlatList
+      <FlashList
         ref={flatListRef}
         data={messages.filter(m => m.role !== "system")}
         keyExtractor={(_, index) => index.toString()}
@@ -105,6 +105,7 @@ const AIChatScreen: React.FC = memo(() => {
         contentContainerStyle={styles.listContent}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        estimatedItemSize={80}
       />
       {isLoading && (
         <View style={styles.typingContainer}>

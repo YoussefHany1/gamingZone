@@ -5,10 +5,10 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-  FlatList,
   ViewToken,
   I18nManager,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -63,7 +63,7 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
   const { t } = useTranslation();
   // const isRTL = i18n.language === "ar" || I18nManager.isRTL;
   const [activeIndex, setActiveIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<FlashList<any>>(null);
 
   const slides = t("onboarding.slides", { returnObjects: true }) as Array<{
     title: string;
@@ -143,7 +143,7 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
           />
         </View>
 
-        <FlatList
+        <FlashList
           ref={flatListRef}
           data={slides}
           renderItem={renderItem}
@@ -154,7 +154,7 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
           bounces={false}
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={viewabilityConfig.current}
-
+          estimatedItemSize={width}
         />
       </View>
 

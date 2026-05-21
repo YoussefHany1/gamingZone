@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from "react";
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity, Alert,
+  View, Text, StyleSheet, TouchableOpacity, Alert,
   ToastAndroid, InteractionManager,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -236,12 +237,13 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
       {loading && games.length === 0 ? (
         <UserGamesSkeleton />
       ) : (
-        <FlatList
+        <FlashList
           data={games}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           ListEmptyComponent={renderEmptyList}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+          estimatedItemSize={150}
         />
       )}
     </SafeAreaView>

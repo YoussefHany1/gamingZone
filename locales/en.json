@@ -159,6 +159,7 @@
   },
   "games": {
     "searchPlaceholder": "Search for Games...",
+    "search": "Search",
     "header": "Find Your Next Gaming Adventure",
     "list": {
       "freeGames": {
@@ -462,6 +463,15 @@
       "coopGames": "Suggest co-op games to play with friends",
       "newReleases": "What are the latest games released this month?"
     }
+  },
+  "appAdvertisement": {
+    "titlePrefix": "Download",
+    "titleHighlight": "Gaming Zone",
+    "titleSuffix": "App Now!",
+    "description": "Join the gaming community, follow the latest news, reviews, and easily add your favorite games to your library via our app available on Google Play.",
+    "getItOn": "GET IT ON",
+    "googlePlay": "Google Play",
+    "getItOnFooter": "Get it on Google Play"
   },
   "onboarding": {
     "skip": "Skip",

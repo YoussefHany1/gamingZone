@@ -6,6 +6,7 @@
     "icon": "./assets/logo-background.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "jsEngine": "hermes",
     "splash": {
       "image": "./assets/logo-background.png",
       "resizeMode": "cover",

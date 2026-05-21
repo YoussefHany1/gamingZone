@@ -51,3 +51,6 @@ android/app/release/app-release.apk
 *.apk
 
 todomd.defaultFile
+AGENTS.md
+CLAUDE.md
+.vercel/

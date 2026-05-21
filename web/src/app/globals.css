@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-bg: #0c1a33;
+  --color-secondary-blue: #516996;
+  --color-dark-bg: #00001c;
+  --color-light-blue: #779bdd;
+  --color-live-red: #ff3b30;
+
+  --font-cairo: "Cairo", sans-serif;
+  --font-outfit: "Outfit", sans-serif;
+}
+
+:root {
+  --background: #00001c;
+  --foreground: #ffffff;
+}
+
+body {
+  /* background-color: var(--background); */
+  background-color: var(--color-primary-bg);
+  color: var(--foreground);
+  overflow-x: hidden;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* Scrollbar customization */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #00001c;
+}
+::-webkit-scrollbar-thumb {
+  background: #516996;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #779bdd;
+}
+
+/* Glassmorphism custom classes */
+.glass-panel {
+  /* background: rgba(12, 26, 51, 0.45); */
+  background: rgb(0, 0, 28, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(119, 155, 221, 0.15);
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(12, 26, 51, 0.65);
+  border-color: rgba(119, 155, 221, 0.3);
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.3),
+    0 8px 10px -6px rgba(0, 0, 0, 0.3);
+}
+
+.glow-live {
+  position: relative;
+}
+.glow-live::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid #ff3b30;
+  box-shadow: 0 0 15px rgba(255, 59, 48, 0.4);
+  pointer-events: none;
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* RTL Layout Fixes */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}

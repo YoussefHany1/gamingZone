@@ -2,12 +2,12 @@ import React, { useCallback } from "react";
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   ListRenderItemInfo,
   RefreshControl,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
@@ -48,7 +48,7 @@ async function fetchSearchResults(
   if (filters?.genre) params.genre = filters.genre;
   if (filters?.platform) params.platform = filters.platform;
   if (filters?.sort) params.sort = filters.sort;
-  const response = await axios.get<Game[]>(`${SERVER_URL}/search`, { params });
+  const response = await axios.get<Game[]>(`${SERVER_URL}/search`, { params, timeout: 10000 });
   return response.data;
 }
 
@@ -140,7 +140,11 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
   const isInitialLoading = isLoading && games.length === 0;
 
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<Game>) => <GameCard item={item} />,
+    ({ item }: ListRenderItemInfo<Game>) => (
+      <View style={styles.cardWrapper}>
+        <GameCard item={item} />
+      </View>
+    ),
     [],
   );
 
@@ -173,16 +177,28 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     />
   );
 
+  const renderSkeletonItem = useCallback(
+    () => (
+      <View style={styles.cardWrapper}>
+        <SkeletonGameCard />
+      </View>
+    ),
+    [],
+  );
+
+  const skeletonData = useMemo(() => Array.from({ length: 6 }, (_, i) => ({ id: i } as unknown as Game)), []);
+
   if (isInitialLoading) {
     return (
-      <FlatList
-        data={Array.from({ length: 6 }, (_, i) => ({ id: i } as Game))}
+      <FlashList
+        data={skeletonData}
         numColumns={NUM_COLUMNS}
         keyExtractor={(item) => String(item.id)}
-        renderItem={() => <SkeletonGameCard />}
+        renderItem={renderSkeletonItem}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={renderBackButton}
         contentContainerStyle={styles.listContent}
+        estimatedItemSize={290}
       />
     );
   }
@@ -205,19 +221,16 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
   }
 
   return (
-    <FlatList
+    <FlashList
       data={games}
       numColumns={NUM_COLUMNS}
       keyExtractor={(item) => String(item.id)}
       renderItem={renderItem}
-      getItemLayout={getItemLayout}
-      initialNumToRender={6}
-      maxToRenderPerBatch={6}
-      windowSize={5}
       showsVerticalScrollIndicator={false}
       ListHeaderComponent={renderBackButton}
       contentContainerStyle={styles.listContent}
       refreshControl={refreshControl}
+      estimatedItemSize={CARD_HEIGHT}
     />
   );
 }
@@ -230,7 +243,7 @@ const styles = StyleSheet.create({
   backBtn: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
+    alignSelf: "center",
     backgroundColor: COLORS.secondary,
     borderRadius: 20,
     paddingHorizontal: 14,
@@ -298,9 +311,11 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   listContent: {
-    paddingVertical: 12,
     paddingHorizontal: 5,
+  },
+  cardWrapper: {
+    flex: 1,
     alignItems: "center",
-    paddingBottom: 220,
+    justifyContent: "center",
   },
 });

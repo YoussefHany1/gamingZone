@@ -2,12 +2,12 @@ import React, { useCallback } from "react";
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
   ListRenderItemInfo,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import axios from "axios";
@@ -197,13 +197,14 @@ export default function NostalgiaCorner(): React.ReactElement {
 
       {/* Skeleton while loading with no cached data */}
       {isActuallyLoading && (
-        <FlatList
+        <FlashList
           data={Array.from({ length: 4 }, (_, i) => ({ id: i }))}
           horizontal
           keyExtractor={(item) => String(item.id)}
           renderItem={() => <SkeletonNostalgiaCorner />}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
+          estimatedItemSize={CARD_WIDTH + CARD_MARGIN * 2}
         />
       )}
       {/* error */}
@@ -214,15 +215,11 @@ export default function NostalgiaCorner(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlatList
+        <FlashList
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          initialNumToRender={4}
-          maxToRenderPerBatch={4}
-          windowSize={5}
           showsHorizontalScrollIndicator={false}
           snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
           decelerationRate="fast"
@@ -230,6 +227,7 @@ export default function NostalgiaCorner(): React.ReactElement {
           ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
             <ErrorState message={t("games.list.serverError")} />
           </View>}
+          estimatedItemSize={CARD_WIDTH + CARD_MARGIN * 2}
         />
       )}
     </View>

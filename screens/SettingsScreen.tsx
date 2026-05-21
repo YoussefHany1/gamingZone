@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect, memo } from "react";
+import React, { useCallback, useMemo, memo } from "react";
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Alert,
 } from "react-native";
@@ -6,11 +6,11 @@ import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
-import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import COLORS from "../constants/colors";
+import { useAuthStore } from "../store/useAuthStore";
 import InviteFriendsBtn from "../components/InviteFriendsBtn";
 import type { ComponentProps } from "react";
 
@@ -38,14 +38,7 @@ const SettingsScreen = memo((): React.ReactElement => {
   const navigation = useNavigation<SettingsNavProp>();
   const { t } = useTranslation();
 
-  const [currentUser, setCurrentUser] =
-    useState<FirebaseAuthTypes.User | null>(auth().currentUser);
-
-  useEffect(() => {
-    const unsub = auth().onAuthStateChanged(setCurrentUser);
-    return unsub;
-  }, []);
-
+  const currentUser = useAuthStore((state) => state.user);
   const isGuest = !currentUser || currentUser.isAnonymous;
 
   // Derived values

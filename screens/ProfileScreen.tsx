@@ -11,7 +11,7 @@ import {
 import { Image } from "expo-image";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import auth from "@react-native-firebase/auth";
 import * as ImagePicker from "expo-image-picker";
 import firestore from "@react-native-firebase/firestore";
 import DateTimePicker, {
@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
+import { useAuthStore } from "../store/useAuthStore";
 import Constants from "expo-constants";
 import CustomPicker from "../components/CustomPicker";
 import ErrorState from "../components/ErrorState";
@@ -73,6 +74,8 @@ interface CloudinaryResponse {
 // main
 
 function ProfileScreen(): React.ReactElement {
+  const currentUser = useAuthStore((state) => state.user);
+  const refreshUser = useAuthStore((state) => state.refreshUser);
   const [name, setName] = useState<string>("");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [dob, setDob] = useState<string>("");
@@ -81,13 +84,12 @@ function ProfileScreen(): React.ReactElement {
   const [platform, setPlatform] = useState<string>("");
   const [showPicker, setShowPicker] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [currentUser, setCurrentUser] =
-    useState<FirebaseAuthTypes.User | null>(auth().currentUser);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [stats, setStats] = useState({ userCount: 0, newsCount: 0 });
   const [showAds, setShowAds] = useState<boolean>(false);
   const [showSteamModal, setShowSteamModal] = useState<boolean>(false);
   const { t, i18n } = useTranslation();
+
 
   // Defer ad rendering until after the main UI has settled
   useEffect(() => {
@@ -253,7 +255,7 @@ function ProfileScreen(): React.ReactElement {
         platform,
       });
 
-      setCurrentUser(auth().currentUser);
+      refreshUser();
       setLoading(false);
       ToastAndroid.show(
         t("settings.profile.messages.saveSuccessMsg"),

@@ -4,11 +4,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   Linking,
-  FlatList,
   ScrollView,
   ToastAndroid,
   ListRenderItemInfo,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useState, useEffect, memo, useCallback } from "react";
 import { LinearGradient } from "expo-linear-gradient";
@@ -338,7 +338,7 @@ function FreeGames(): React.ReactElement {
 
       {/* games list */}
       {!isError && Array.isArray(gamesList) && (
-        <FlatList
+        <FlashList
           data={gamesList ?? []}
           renderItem={renderGameItem}
           keyExtractor={(item) => item.id}
@@ -350,6 +350,7 @@ function FreeGames(): React.ReactElement {
           ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
             <ErrorState message={t("games.list.serverError")} />
           </View>}
+          estimatedItemSize={185}
         />
       )}
     </View>

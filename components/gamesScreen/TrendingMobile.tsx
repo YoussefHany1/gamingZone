@@ -2,11 +2,11 @@ import React, { useCallback } from "react";
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   ListRenderItemInfo,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -135,6 +135,14 @@ function TrendingMobileGames(): React.ReactElement {
     [],
   );
 
+  const skeletonData = useMemo(() => Array.from({ length: 5 }, (_, i) => ({ id: i } as any)), []);
+  const renderSkeletonItem = useCallback(() => <SkeletonPopular />, []);
+  const renderEmpty = useCallback(() => (
+    <View style={styles.emptyContainer}>
+      <ErrorState message={t("games.list.noResults", "No games found")} />
+    </View>
+  ), [t]);
+
   return (
     <View>
       <View style={styles.headerContainer}>
@@ -146,40 +154,34 @@ function TrendingMobileGames(): React.ReactElement {
       </View>
 
       {isActuallyLoading && (
-        <FlatList
-          data={Array.from({ length: 5 }, (_, i) => ({ id: i } as any))}
+        <FlashList
+          data={skeletonData}
           horizontal
-          renderItem={() => <SkeletonPopular />}
+          renderItem={renderSkeletonItem}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
+          estimatedItemSize={175}
         />
       )}
       
       {(error || !Array.isArray(gamesToShow)) && (
-        <View style={{ width: "100%", height: CARD_HEIGHT }}>
+        <View style={styles.errorContainer}>
           <ErrorState message={t("games.list.serverError")} />
         </View>
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlatList
+        <FlashList
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          initialNumToRender={5}
-          maxToRenderPerBatch={5}
-          windowSize={7}
           showsHorizontalScrollIndicator={false}
           snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <View style={{ width: "100%", height: CARD_HEIGHT }}>
-              <ErrorState message={t("games.list.noResults", "No games found")} />
-            </View>
-          }
+          ListEmptyComponent={renderEmpty}
+          estimatedItemSize={175}
         />
       )}
     </View>
@@ -189,6 +191,14 @@ function TrendingMobileGames(): React.ReactElement {
 export default TrendingMobileGames;
 
 const styles = StyleSheet.create({
+  errorContainer: {
+    width: "100%",
+    height: CARD_HEIGHT,
+  },
+  emptyContainer: {
+    width: "100%",
+    height: CARD_HEIGHT,
+  },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",

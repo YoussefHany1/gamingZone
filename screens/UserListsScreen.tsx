@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, memo } from "react";
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   TextInput,
   Alert,
@@ -13,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
@@ -217,12 +217,13 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["right", "left"]}>
-      <FlatList
+      <FlashList
         data={lists}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         ListFooterComponent={<ListFooter />}
         contentContainerStyle={{ paddingVertical: 30 }}
+        estimatedItemSize={75}
       />
 
       <Modal visible={isModalVisible} transparent animationType="slide">

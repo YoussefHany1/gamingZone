@@ -2,11 +2,11 @@ import React, { useCallback } from "react";
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   ListRenderItemInfo,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -148,12 +148,13 @@ function PopularGames(): React.ReactElement {
       </View>
 
       {isActuallyLoading && (
-        <FlatList
+        <FlashList
           data={Array.from({ length: 5 }, (_, i) => ({ id: i } as any))}
           horizontal
           renderItem={() => <SkeletonPopular />}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
+          estimatedItemSize={175}
         />
       )}
       {/* error */}
@@ -164,15 +165,11 @@ function PopularGames(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlatList
+        <FlashList
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          initialNumToRender={5}
-          maxToRenderPerBatch={5}
-          windowSize={7}
           showsHorizontalScrollIndicator={false}
           snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
           decelerationRate="fast"
@@ -180,6 +177,7 @@ function PopularGames(): React.ReactElement {
           ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
             <ErrorState message={t("games.list.serverError")} />
           </View>}
+          estimatedItemSize={175}
         />
       )}
     </View>

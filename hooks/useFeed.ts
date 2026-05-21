@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback, useRef } from "react";
 import { Query, Models } from "react-native-appwrite";
 import { databases, client } from "../lib/appwrite";
 import Constants from "expo-constants";
@@ -78,8 +78,16 @@ export default function useFeed(
     setData,
   } = useCachedData<Article[]>(cacheKey, fetchArticles, [category, siteName]);
 
-  // Realtime Subscription
+  // Keep a ref that always holds the latest articles list so the Realtime
+  // subscription callback can read it without being in the effect's deps.
+  const articlesRef = useRef<Article[]>(articles ?? []);
+  useEffect(() => {
+    articlesRef.current = articles ?? [];
+  }, [articles]);
 
+  // Realtime Subscription
+  // Only re-subscribes when category or siteName actually change — NOT on
+  // every new article, which was the previous source of the re-subscribe loop.
   useEffect(() => {
     if (!category) return;
 
@@ -102,7 +110,8 @@ export default function useFeed(
 
         if (!matchesCategory || !matchesSite) return;
 
-        const currentArticles = articles ?? [];
+        // Read the live articles from the ref — no re-subscribe needed
+        const currentArticles = articlesRef.current;
 
         // Guard against duplicate events from Realtime
         const alreadyExists = currentArticles.some(
@@ -128,7 +137,8 @@ export default function useFeed(
         (subscription as unknown as { unsubscribe: () => void }).unsubscribe();
       }
     };
-  }, [category, siteName, articles, setData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, siteName, setData]);
 
   return {
     articles: articles ?? [],

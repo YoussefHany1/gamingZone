@@ -2,12 +2,12 @@ import React, { useCallback, useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
   ListRenderItemInfo,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -179,7 +179,7 @@ function MostAnticipated(): React.ReactElement {
       <View style={styles.headerContainer}>
         <SectionTitle title={t("games.list.mostAnticipated.title")} subtitle={t("games.list.mostAnticipated.subtitle")} fontSize={28} />
       </View>
-      <FlatList
+      <FlashList
         data={gamesToShow}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -188,18 +188,10 @@ function MostAnticipated(): React.ReactElement {
         contentContainerStyle={styles.listContent}
         snapToInterval={CARD_WIDTH + 20}
         decelerationRate="fast"
-        initialNumToRender={3}
-        maxToRenderPerBatch={5}
-        windowSize={5}
-        removeClippedSubviews={true}
-        getItemLayout={(_, index) => ({
-          length: CARD_WIDTH + 20,
-          offset: (CARD_WIDTH + 20) * index,
-          index,
-        })}
         ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
           <ErrorState message={t("games.list.serverError")} />
         </View>}
+        estimatedItemSize={CARD_WIDTH + 20}
       />
     </View>
   );

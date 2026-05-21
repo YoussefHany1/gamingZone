@@ -1,8 +1,8 @@
-# 🎮 Gaming Zone App
+# 🎮 Gaming Zone
 
-**Gaming Zone** is a comprehensive mobile application designed for video game enthusiasts. Built with **React Native (Expo)**, it provides a seamless and modern experience for tracking the latest gaming news, reviews, and free game offers.
+**Gaming Zone** is a comprehensive platform for video game enthusiasts. It features a modern **React Native (Expo)** mobile application and a powerful **Next.js** web platform, providing a seamless experience for tracking the latest gaming news, reviews, and free game offers.
 
-The app aggregates content from top sources, and allows users to manage their personal game library, powered by a robust backend using **Appwrite** and **Firebase**.
+The platform aggregates content from top sources, and allows users to manage their personal game library, powered by a robust backend using **Appwrite**, **Firebase**, and a custom **API**.
 
 ## ✨ Key Features
 
@@ -18,12 +18,18 @@ The app aggregates content from top sources, and allows users to manage their pe
 
 ## 🛠️ Tech Stack
 
-### Frontend
+### Mobile App (React Native)
 
 - **[React Native](https://reactnative.dev/)**: The core framework for building the mobile app.
 - **[Expo](https://expo.dev/)**: For streamlined development and build management.
 - **[React Navigation](https://reactnavigation.org/)**: For handling app navigation.
 - **[TanStack Query (React Query)](https://tanstack.com/query/latest)**: For efficient state management and data caching.
+
+### Web App (Next.js)
+
+- **[Next.js](https://nextjs.org/)**: The React framework for the web platform.
+- **[React](https://reactjs.org/)**: For building the web user interface.
+- **[Vercel](https://vercel.com/)**: For unified deployment of the web app and API.
 
 ### Backend & Services
 
@@ -50,8 +56,8 @@ Follow these instructions to get the project up and running on your local machin
 1.  **Clone the repository**:
 
     ```bash
-    git clone [https://github.com/youssefhany1/gamingzoneapp.git](https://github.com/youssefhany1/gamingzoneapp.git)
-    cd gamingzoneapp
+    git clone https://github.com/YoussefHany1/gamingZone.git
+    cd gamingZone
     ```
 
 2.  **Install dependencies**:

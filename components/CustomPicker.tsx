@@ -4,11 +4,11 @@ import {
   Text,
   Modal,
   TouchableOpacity,
-  FlatList,
   StyleSheet,
   ViewStyle,
   ListRenderItemInfo,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
 import COLORS from "../constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -102,10 +102,11 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(({
               </TouchableOpacity>
             </View>
 
-            <FlatList
+            <FlashList
               data={options}
               keyExtractor={(item) => item.value.toString()}
               renderItem={renderItem}
+              estimatedItemSize={55}
             />
           </SafeAreaView>
         </TouchableOpacity>

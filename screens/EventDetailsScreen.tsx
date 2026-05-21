@@ -6,8 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
-  FlatList,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -229,7 +229,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
         {event.videos && event.videos.length > 0 && (
           <View style={styles.section}>
             <SectionTitle title="Videos" />
-            <FlatList
+            <FlashList
               data={event.videos}
               horizontal
               keyExtractor={(v) => v.video_id}
@@ -237,6 +237,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 4 }}
               scrollEnabled
+              estimatedItemSize={200}
             />
           </View>
         )}
@@ -245,7 +246,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
         {event.games && event.games.length > 0 && (
           <View style={styles.section}>
             <SectionTitle title="Featured Games" />
-            <FlatList
+            <FlashList
               data={event.games}
               horizontal
               keyExtractor={(g) => String(g.id)}
@@ -253,6 +254,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 4 }}
               scrollEnabled
+              estimatedItemSize={120}
             />
           </View>
         )}

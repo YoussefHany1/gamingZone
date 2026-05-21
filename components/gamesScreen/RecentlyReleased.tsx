@@ -2,11 +2,11 @@ import React, { useCallback } from "react";
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   ListRenderItemInfo,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import axios from "axios";
@@ -191,12 +191,13 @@ function RecentlyReleasedGames(): React.ReactElement {
 
       {/* Skeleton while loading with no cached data */}
       {isActuallyLoading && (
-        <FlatList
+        <FlashList
           data={Array.from({ length: 5 }, (_, i) => ({ id: i }))}
           keyExtractor={(item) => String(item.id)}
           renderItem={() => <SkeletonRecentlyReleased />}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
+          estimatedItemSize={216}
         />
       )}
       {/* error */}
@@ -207,19 +208,16 @@ function RecentlyReleasedGames(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && (
-        <FlatList
+        <FlashList
           data={gamesToShow}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          initialNumToRender={5}
-          maxToRenderPerBatch={5}
-          windowSize={5}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
             <ErrorState message={t("games.list.serverError")} />
           </View>}
+          estimatedItemSize={216}
         />
       )}
     </View>
