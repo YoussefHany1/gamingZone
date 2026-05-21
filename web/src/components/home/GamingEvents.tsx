@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import axios from "axios";
-
 import { useLangStore } from "../../store/useLangStore";
 import { useCountdown } from "../../hooks/useCountdown";
 import { Tv, Calendar, Flame, AlertCircle } from "lucide-react";
@@ -19,7 +18,11 @@ interface GamingEvent {
   description?: string;
 }
 
-const EventCard = React.memo(function EventCard({ item }: { item: GamingEvent }) {
+const EventCard = React.memo(function EventCard({
+  item,
+}: {
+  item: GamingEvent;
+}) {
   const { lang, t } = useLangStore();
   const now = Date.now() / 1000;
 
@@ -126,7 +129,7 @@ const EventCard = React.memo(function EventCard({ item }: { item: GamingEvent })
       </div>
     </Link>
   );
-})
+});
 
 const GamingEvents = React.memo(function GamingEvents() {
   const { t } = useLangStore();
@@ -138,7 +141,8 @@ const GamingEvents = React.memo(function GamingEvents() {
     async function fetchEvents() {
       try {
         const SERVER_URL =
-          process.env.NEXT_PUBLIC_SERVER_URL || "/api";
+          process.env.NEXT_PUBLIC_SERVER_URL ||
+          "https://igdb-api-omega.vercel.app";
         const response = await axios.get<GamingEvent[]>(`${SERVER_URL}/events`);
         if (Array.isArray(response.data)) {
           setEvents(response.data);
@@ -188,6 +192,6 @@ const GamingEvents = React.memo(function GamingEvents() {
       )}
     </section>
   );
-})
+});
 
 export default GamingEvents;

@@ -6,7 +6,7 @@ import axios from "axios";
 import { useLangStore } from "../../store/useLangStore";
 import { ChevronLeft, ChevronRight, PlayCircle, X } from "lucide-react";
 
-const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "/api";
+const SERVER_URL = "https://igdb-api-omega.vercel.app";
 
 interface Video {
   video_id: string;

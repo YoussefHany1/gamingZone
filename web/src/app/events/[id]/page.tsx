@@ -26,7 +26,8 @@ import EventVideoCard from "../../../components/events/EventVideoCard";
 import EventGameCard from "../../../components/events/EventGameCard";
 import EventStreamButton from "../../../components/events/EventStreamButton";
 
-const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api` : "http://localhost:3000/api");
+const SERVER_URL =
+  process.env.NEXT_PUBLIC_SERVER_URL || "https://igdb-api-omega.vercel.app";
 
 interface GamingEvent {
   id: number;

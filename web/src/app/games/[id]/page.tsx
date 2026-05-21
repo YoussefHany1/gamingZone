@@ -66,7 +66,7 @@ interface GameData {
   similar_games?: SimilarGame[];
 }
 
-const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api` : "http://localhost:3000/api");
+const SERVER_URL = "https://igdb-api-omega.vercel.app";
 
 function extractSteamAppId(websites?: Website[]): string | null {
   if (!websites) return null;

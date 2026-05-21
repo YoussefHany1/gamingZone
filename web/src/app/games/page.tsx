@@ -22,7 +22,7 @@ interface FreeGame {
   type: string;
 }
 
-const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api` : "http://localhost:3000/api");
+const SERVER_URL = "https://igdb-api-omega.vercel.app";
 
 async function fetchGamesList(endpoint: string): Promise<Game[]> {
   try {
