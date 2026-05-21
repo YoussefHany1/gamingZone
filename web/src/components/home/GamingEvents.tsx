@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import axios from "axios";
-import { useTranslation } from "react-i18next";
+
 import { useLangStore } from "../../store/useLangStore";
 import { useCountdown } from "../../hooks/useCountdown";
 import { Tv, Calendar, Flame, AlertCircle } from "lucide-react";
