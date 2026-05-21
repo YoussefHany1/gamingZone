@@ -6,6 +6,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Strip /api prefix for Vercel rewrites
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api')) {
+    req.url = req.url.substring(4) || '/';
+  }
+  next();
+});
+
 const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 const CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
 // const MY_APP_SECRET = process.env.MY_APP_SECRET;
