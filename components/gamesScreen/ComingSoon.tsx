@@ -1,12 +1,6 @@
-import React, { useCallback } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ListRenderItemInfo,
-} from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import React, { useCallback, useMemo } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -53,7 +47,9 @@ const ComingSoonCard = React.memo<ComingSoonCardProps>(({ item }) => {
   const navigation = useNavigation<any>();
   const { t, i18n } = useTranslation();
 
-  const timeLeft = useCountdown(item.first_release_date) as CountdownResult | null;
+  const timeLeft = useCountdown(
+    item.first_release_date,
+  ) as CountdownResult | null;
   const { month, day } = getDateParts(item.first_release_date, i18n.language);
 
   const handlePress = useCallback(() => {
@@ -160,11 +156,11 @@ function ComingSoonGames(): React.ReactElement {
   const { t } = useTranslation();
   const STORAGE_KEY = "GAMES_CACHE_COMING_SOON";
 
-  const { data: games, isLoading, error } = useCachedData<Game[]>(
-    STORAGE_KEY,
-    fetchComingSoonGames,
-    [],
-  );
+  const {
+    data: games,
+    isLoading,
+    error,
+  } = useCachedData<Game[]>(STORAGE_KEY, fetchComingSoonGames, []);
 
   const gamesToShow: Game[] = games ?? [];
   const isActuallyLoading = isLoading && gamesToShow.length === 0;
@@ -183,18 +179,28 @@ function ComingSoonGames(): React.ReactElement {
     [],
   );
 
-  const skeletonData = useMemo(() => Array.from({ length: 3 }, (_, i) => ({ id: i } as any)), []);
+  const skeletonData = useMemo(
+    () => Array.from({ length: 3 }, (_, i) => ({ id: i }) as any),
+    [],
+  );
   const renderSkeletonItem = useCallback(() => <SkeletonComingSoon />, []);
-  const renderEmpty = useCallback(() => (
-    <View style={styles.emptyContainer}>
-      <ErrorState message={t("games.list.serverError")} />
-    </View>
-  ), [t]);
+  const renderEmpty = useCallback(
+    () => (
+      <View style={styles.emptyContainer}>
+        <ErrorState message={t("games.list.serverError")} />
+      </View>
+    ),
+    [t],
+  );
 
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <SectionTitle title={t("games.list.comingSoon.title")} subtitle={t("games.list.comingSoon.subtitle")} fontSize={28} />
+        <SectionTitle
+          title={t("games.list.comingSoon.title")}
+          subtitle={t("games.list.comingSoon.subtitle")}
+          fontSize={28}
+        />
       </View>
 
       {isActuallyLoading && (

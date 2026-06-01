@@ -1,57 +1,94 @@
 import { memo } from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { useTranslation } from "react-i18next";
 import COLORS from "../../constants/colors";
 import type { AgeRatingInfo, Platform } from "./types";
 import { getRatingColor } from "./utils";
 
 interface Props {
   name: string;
-  releaseDate?: string;
+  releaseDate?: number; // Unix timestamp in seconds (from IGDB first_release_date)
   platforms?: Platform[];
   totalRating?: number;
   totalRatingCount?: number;
   ageRating: AgeRatingInfo | null;
 }
 
-const GameDetailsMeta: React.FC<Props> = ({
+// Maps i18next language codes to valid BCP-47 locales for Intl.DateTimeFormat
+const LOCALE_MAP: Record<string, string> = {
+  ar: "ar-EG",
+  en: "en-US",
+  fr: "fr-FR",
+  de: "de-DE",
+  es: "es-ES",
+  ja: "ja-JP",
+  zh: "zh-CN",
+  pt: "pt-BR",
+  ru: "ru-RU",
+  ko: "ko-KR",
+};
+
+function formatReleaseDate(timestamp: number, lang: string): string {
+  const locale = LOCALE_MAP[lang] ?? LOCALE_MAP[lang.split("-")[0]] ?? "en-US";
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(new Date(timestamp * 1000));
+}
+
+function GameDetailsMeta({
   name,
   releaseDate,
   platforms,
   totalRating,
   totalRatingCount,
   ageRating,
-}) => (
-  <View style={{ direction: "ltr" }}>
-    <Text style={styles.title}>{name}</Text>
-    <Text style={styles.releaseDate}>{releaseDate}</Text>
+}: Props) {
+  const { i18n, t } = useTranslation();
 
-    <View style={styles.contentHeader}>
-      <View style={styles.platformContainer}>
-        {platforms?.map((p) => (
-          <Text key={p.id} style={styles.platform}>{p.abbreviation}</Text>
-        ))}
+  const formattedDate =
+    typeof releaseDate === "number"
+      ? formatReleaseDate(releaseDate, i18n.language)
+      : undefined;
+
+  return (
+    <View style={{ direction: "ltr" }}>
+      <Text style={styles.title}>{name}</Text>
+      {formattedDate && (
+        <Text style={styles.releaseDate}>{formattedDate}</Text>
+      )}
+
+      <View style={styles.contentHeader}>
+        <View style={styles.platformContainer}>
+          {platforms?.map((p) => (
+            <Text key={p.id} style={styles.platform}>{p.abbreviation}</Text>
+          ))}
+        </View>
+        <View style={{ alignItems: "center", flexDirection: "column" }}>
+          {totalRating ? (
+            <Text style={[styles.rating, { backgroundColor: getRatingColor(totalRating / 10) }]}>
+              {Math.round(totalRating) / 10}
+            </Text>
+          ) : (
+            <Text style={[styles.rating, { backgroundColor: COLORS.secondary }]}>N/A</Text>
+          )}
+          {(totalRatingCount ?? 0) > 0 && (
+            <Text style={styles.ratingCount}>
+              {totalRatingCount} {t("games.details.userRatings", "user ratings")}
+            </Text>
+          )}
+        </View>
       </View>
-      <View style={{ alignItems: "center", flexDirection: "column" }}>
-        {totalRating ? (
-          <Text style={[styles.rating, { backgroundColor: getRatingColor(totalRating / 10) }]}>
-            {Math.round(totalRating) / 10}
-          </Text>
-        ) : (
-          <Text style={[styles.rating, { backgroundColor: COLORS.secondary }]}>N/A</Text>
-        )}
-        {(totalRatingCount ?? 0) > 0 && (
-          <Text style={styles.ratingCount}>{totalRatingCount} user ratings</Text>
-        )}
-      </View>
+
+      {ageRating && (
+        <View style={[styles.ageRatingBadge, { backgroundColor: ageRating.color }]}>
+          <Text style={styles.ageRatingText}>{ageRating.label}</Text>
+        </View>
+      )}
     </View>
-
-    {ageRating && (
-      <View style={[styles.ageRatingBadge, { backgroundColor: ageRating.color }]}>
-        <Text style={styles.ageRatingText}>{ageRating.label}</Text>
-      </View>
-    )}
-  </View>
-);
+  );
+}
 
 export default memo(GameDetailsMeta);
 

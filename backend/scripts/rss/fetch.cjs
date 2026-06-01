@@ -44,6 +44,90 @@ async function parseResponse(body) {
   }
 }
 
+async function fetchOgImageWithPuppeteer(url) {
+  let browser = null;
+  try {
+    const puppeteer = require("puppeteer");
+    browser = await puppeteer.launch({
+      headless: "new",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--no-first-run",
+        "--no-zygote",
+        "--disable-gpu",
+      ],
+    });
+    const page = await browser.newPage();
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+    );
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+
+    const imgUrl = await page.evaluate(() => {
+      const metaKeys = [
+        "meta[property='og:image']",
+        "meta[property='og:image:secure_url']",
+        "meta[name='twitter:image']",
+        "meta[name='twitter:image:src']",
+        "meta[itemprop='image']",
+        "link[rel='image_src']"
+      ];
+      for (const selector of metaKeys) {
+        const el = document.querySelector(selector);
+        const val = el ? (el.getAttribute("content") || el.getAttribute("href")) : null;
+        if (val) return val;
+      }
+
+      const ldScripts = document.querySelectorAll("script[type='application/ld+json']");
+      for (const script of ldScripts) {
+        try {
+          const parsed = JSON.parse(script.textContent);
+          const findImage = (obj) => {
+            if (!obj) return null;
+            if (Array.isArray(obj)) {
+              for (const item of obj) {
+                const res = findImage(item);
+                if (res) return res;
+              }
+            }
+            if (typeof obj === "object") {
+              if (obj.image) {
+                if (typeof obj.image === "string") return obj.image;
+                if (Array.isArray(obj.image) && typeof obj.image[0] === "string") return obj.image[0];
+                if (typeof obj.image === "object" && obj.image.url) return obj.image.url;
+              }
+              for (const key of Object.keys(obj)) {
+                if (typeof obj[key] === "object") {
+                  const res = findImage(obj[key]);
+                  if (res) return res;
+                }
+              }
+            }
+            return null;
+          };
+          const image = findImage(parsed);
+          if (image) return image;
+        } catch (_) {}
+      }
+
+      const articleImg = document.querySelector("article img, .post-content img, .entry-content img");
+      if (articleImg) return articleImg.src;
+
+      return null;
+    });
+
+    return imgUrl;
+  } catch (error) {
+    console.warn(`      ⚠️ Puppeteer OG fetch failed for ${url}: ${error.message}`);
+    return null;
+  } finally {
+    if (browser) await browser.close();
+  }
+}
+
 async function fetchOgImage(url) {
   try {
     const { gotScraping } = await import("got-scraping");
@@ -61,23 +145,68 @@ async function fetchOgImage(url) {
     );
 
     const body = response.body;
-    if (!body || typeof body !== "string") return null;
+    if (!body || typeof body !== "string") {
+      console.log(`      ⚠️ gotScraping returned invalid body for ${url}. Switching to Puppeteer...`);
+      return fetchOgImageWithPuppeteer(url);
+    }
+
+    // Try to extract from JSON-LD
+    const jsonLdMatches = body.match(/<script\s+[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
+    for (const jsonLdScript of jsonLdMatches) {
+      try {
+        const jsonContent = jsonLdScript.replace(/<script\s+[^>]*>|<\/script>/gi, "").trim();
+        const parsed = JSON.parse(jsonContent);
+        
+        const findImageInLd = (obj) => {
+          if (!obj) return null;
+          if (Array.isArray(obj)) {
+            for (const item of obj) {
+              const res = findImageInLd(item);
+              if (res) return res;
+            }
+          }
+          if (typeof obj === "object") {
+            if (obj.image) {
+              if (typeof obj.image === "string") return obj.image;
+              if (Array.isArray(obj.image) && typeof obj.image[0] === "string") return obj.image[0];
+              if (typeof obj.image === "object" && obj.image.url) return obj.image.url;
+            }
+            for (const key of Object.keys(obj)) {
+              if (typeof obj[key] === "object") {
+                const res = findImageInLd(obj[key]);
+                if (res) return res;
+              }
+            }
+          }
+          return null;
+        };
+
+        const image = findImageInLd(parsed);
+        if (image && typeof image === "string") {
+          return image;
+        }
+      } catch (_e) {}
+    }
 
     // Find all meta and link tags in the document body
     const tags = body.match(/<(?:meta|link)\s+[^>]*>/gi) || [];
     const images = {};
 
     for (const tag of tags) {
-      // Extract property, name, itemprop, or rel attribute value
-      const propMatch = tag.match(/(?:property|name|itemprop|rel)\s*=\s*["']([^"']+)["']/i);
-      // Extract content or href attribute value
-      const contentMatch = tag.match(/(?:content|href)\s*=\s*["']([^"']+)["']/i);
+      const attrRegex = /(\w+)\s*=\s*["']([^"']*)["']/gi;
+      let match;
+      const attrs = {};
+      while ((match = attrRegex.exec(tag)) !== null) {
+        attrs[match[1].toLowerCase()] = match[2];
+      }
 
-      if (propMatch && contentMatch) {
-        const key = propMatch[1].toLowerCase().trim();
-        const val = he.decode(contentMatch[1].trim());
-        if (val) {
-          images[key] = val;
+      const key = attrs.property || attrs.name || attrs.itemprop || attrs.rel;
+      const val = attrs.content || attrs.href;
+
+      if (key && val) {
+        const decodedVal = he.decode(val.trim());
+        if (decodedVal) {
+          images[key.toLowerCase().trim()] = decodedVal;
         }
       }
     }
@@ -99,12 +228,12 @@ async function fetchOgImage(url) {
       }
     }
 
-    return null;
+    // Fall back to Puppeteer if gotScraping worked but didn't find meta images
+    console.log(`      ⚠️ No OG image found in static body for ${url}. Switching to Puppeteer...`);
+    return fetchOgImageWithPuppeteer(url);
   } catch (error) {
-    console.warn(
-      `      ⚠️ Failed to fetch OG image for ${url}: ${error.message}`,
-    );
-    return null;
+    console.log(`      ⚠️ Failed to fetch OG image for ${url} with gotScraping: ${error.message}. Switching to Puppeteer...`);
+    return fetchOgImageWithPuppeteer(url);
   }
 }
 

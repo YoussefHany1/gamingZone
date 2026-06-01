@@ -4,9 +4,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ListRenderItemInfo,
-} from "react-native";
-import { FlashList } from "@shopify/flash-list";
+  } from "react-native";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -148,7 +147,7 @@ function PopularGames(): React.ReactElement {
       </View>
 
       {isActuallyLoading && (
-        <FlashList
+        <FlashList 
           data={Array.from({ length: 5 }, (_, i) => ({ id: i } as any))}
           horizontal
           renderItem={() => <SkeletonPopular />}
@@ -165,7 +164,7 @@ function PopularGames(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList
+        <FlashList 
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}

@@ -35,6 +35,38 @@ The JSON structure must be:
 The Headlines List:
 ${newsText}`;
 
+const PARTIAL_SUMMARY_PROMPT = (newsText) => `You are a professional gaming news editor.
+Analyze the provided batch of gaming news HEADLINES and create a VERY DENSE and CONCISE (مكثف وموجز) Weekly Recap segment in TWO languages (Arabic and English).
+Keep it concise so that multiple segment summaries can be merged later without exceeding model context limits.
+
+IMPORTANT: Return the result strictly as a valid JSON object. Do NOT add Markdown formatting like \`\`\`json.
+
+The JSON structure must be:
+{
+  "arabic": "## (عنوان الملخص الأسبوعي)... (Write a highly dense and concise summary segment based on these headlines using Markdown and emojis)",
+  "english": "## (Weekly Recap Title)... (Write a highly dense and concise summary segment based on these headlines using Markdown and emojis)"
+}
+
+The Headlines List:
+${newsText}`;
+
+const MERGE_SUMMARY_PROMPT = (arabicSummaries, englishSummaries) => `You are a professional gaming news editor.
+Analyze the following weekly recaps generated from different batches of gaming news articles and merge them into a single consolidated, cohesive Weekly Recap in TWO languages (Arabic and English). Keep the markdown and emojis engaging.
+
+IMPORTANT: Return the result strictly as a valid JSON object. Do NOT add Markdown formatting like \`\`\`json.
+
+The JSON structure must be:
+{
+  "arabic": "## (عنوان الملخص الأسبوعي)... (Write the consolidated summary based on the provided Arabic recaps using Markdown and emojis)",
+  "english": "## (Weekly Recap Title)... (Write the consolidated summary based on the provided English recaps using Markdown and emojis)"
+}
+
+Arabic Recaps to merge:
+${arabicSummaries}
+
+English Recaps to merge:
+${englishSummaries}`;
+
 function parseJsonSummary(rawText) {
   let cleanedText = rawText;
   const firstBrace = cleanedText.indexOf("{");
@@ -57,37 +89,63 @@ function parseJsonSummary(rawText) {
   return parsed;
 }
 
-async function summarizeWithGemini(newsText) {
-  console.log("🤖 Trying Gemini...");
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const aiResponse = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: SUMMARY_PROMPT(newsText) }] }],
-        generationConfig: { response_mime_type: "application/json" },
-      }),
-    },
-  );
+async function callGeminiWithRetry(prompt, maxRetries = 3) {
+  let attempt = 0;
+  while (true) {
+    attempt++;
+    try {
+      console.log(`🤖 Trying Gemini... (Attempt ${attempt}/${maxRetries})`);
 
-  const aiData = await aiResponse.json();
+      const aiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { response_mime_type: "application/json" },
+          }),
+        },
+      );
 
-  if (aiData.error) {
-    throw new Error(`Gemini API Error: ${JSON.stringify(aiData.error)}`);
+      const aiData = await aiResponse.json();
+
+      if (aiData.error) {
+        throw new Error(`Gemini API Error: ${JSON.stringify(aiData.error)}`);
+      }
+
+      if (!aiData.candidates?.length) {
+        throw new Error(`Gemini returned no candidates: ${JSON.stringify(aiData)}`);
+      }
+
+      const rawText = aiData.candidates[0]?.content?.parts?.[0]?.text;
+      if (!rawText) {
+        throw new Error("Gemini returned empty text.");
+      }
+
+      return parseJsonSummary(rawText);
+    } catch (error) {
+      console.error(`❌ Gemini attempt ${attempt} failed: ${error.message}`);
+      if (attempt >= maxRetries) {
+        throw error;
+      }
+      const backoffTime = Math.pow(2, attempt) * 1000;
+      console.log(`Waiting ${backoffTime / 1000}s before retrying...`);
+      await delay(backoffTime);
+    }
   }
+}
 
-  if (!aiData.candidates?.length) {
-    throw new Error(`Gemini returned no candidates: ${JSON.stringify(aiData)}`);
-  }
+async function summarizeWithGemini(newsText, isPartial = false) {
+  const prompt = isPartial ? PARTIAL_SUMMARY_PROMPT(newsText) : SUMMARY_PROMPT(newsText);
+  return callGeminiWithRetry(prompt);
+}
 
-  const rawText = aiData.candidates[0]?.content?.parts?.[0]?.text;
-  if (!rawText) {
-    throw new Error("Gemini returned an empty summary.");
-  }
-
-  return parseJsonSummary(rawText);
+async function mergeSummariesWithGemini(arabicSummaries, englishSummaries) {
+  console.log("🤖 Merging chunk summaries with Gemini...");
+  return callGeminiWithRetry(MERGE_SUMMARY_PROMPT(arabicSummaries, englishSummaries));
 }
 
 function getSevenDaysAgoIso() {
@@ -135,16 +193,45 @@ async function runGenerateWeeklySummary() {
       return;
     }
 
-    const newsText = documents.map((doc) => `- ${doc.title}`).join("\n");
-    console.log(`Found ${documents.length} articles. Sending to AI...`);
+    console.log(`Found ${documents.length} articles. Preparing to process...`);
 
+    const CHUNK_SIZE = 40;
     let jsonSummary = null;
-    try {
-      jsonSummary = await summarizeWithGemini(newsText);
+
+    if (documents.length <= CHUNK_SIZE) {
+      const newsText = documents.map((doc) => `- ${doc.title}`).join("\n");
+      console.log(`Sending all ${documents.length} articles in a single batch to AI...`);
+      jsonSummary = await summarizeWithGemini(newsText, false);
       console.log("✅ Gemini succeeded.");
-    } catch (geminiError) {
-      console.error("❌ Gemini failed:", geminiError.message);
-      throw geminiError;
+    } else {
+      const chunks = [];
+      for (let i = 0; i < documents.length; i += CHUNK_SIZE) {
+        chunks.push(documents.slice(i, i + CHUNK_SIZE));
+      }
+
+      console.log(`Split ${documents.length} articles into ${chunks.length} chunks.`);
+
+      const chunkSummaries = [];
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        const chunkText = chunk.map((doc) => `- ${doc.title}`).join("\n");
+        console.log(`Processing chunk ${i + 1}/${chunks.length} (size: ${chunk.length})...`);
+        
+        const summary = await summarizeWithGemini(chunkText, true);
+        chunkSummaries.push(summary);
+
+        if (i < chunks.length - 1) {
+          console.log("Waiting 2 seconds before next chunk to avoid rate limits...");
+          await delay(2000);
+        }
+      }
+
+      console.log("Consolidating and merging all chunk summaries...");
+      const arabicSummaries = chunkSummaries.map((s, idx) => `[Batch ${idx + 1} Arabic Recap segment]:\n${s.arabic}`).join("\n\n");
+      const englishSummaries = chunkSummaries.map((s, idx) => `[Batch ${idx + 1} English Recap segment]:\n${s.english}`).join("\n\n");
+
+      jsonSummary = await mergeSummariesWithGemini(arabicSummaries, englishSummaries);
+      console.log("✅ Gemini merging succeeded.");
     }
 
     console.log("Summary generated successfully. Saving to Appwrite...");

@@ -81,11 +81,13 @@ export default function ListSelectionModal({
     const listsRef = collection(db, "users", user.uid, "lists");
 
     getDocs(listsRef).then(async (snapshot) => {
-      const initialLists: UserList[] = snapshot.docs.map((d) => ({
-        id: d.id,
-        name: d.data().name as string,
-        isChecked: false,
-      }));
+      const initialLists: UserList[] = snapshot.docs
+        .filter((d) => d.id !== "rated")
+        .map((d) => ({
+          id: d.id,
+          name: d.data().name as string,
+          isChecked: false,
+        }));
 
       setLists(initialLists);
       setLoading(false);

@@ -13,6 +13,7 @@ import COLORS from "../constants/colors";
 import { useAuthStore } from "../store/useAuthStore";
 import InviteFriendsBtn from "../components/InviteFriendsBtn";
 import type { ComponentProps } from "react";
+import { openLink } from "../lib/browser";
 
 // Types
 
@@ -68,7 +69,7 @@ const SettingsScreen = memo((): React.ReactElement => {
 
   const handleOpenURL = useCallback(async (url: string): Promise<void> => {
     try {
-      if (await Linking.canOpenURL(url)) await Linking.openURL(url);
+      await openLink(url);
     } catch (e) { console.error("[SettingsScreen] Open URL error:", e); }
   }, []);
 

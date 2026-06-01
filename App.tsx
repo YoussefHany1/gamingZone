@@ -16,6 +16,7 @@ import {
   DefaultTheme,
   NavigationContainerRef,
   Theme,
+  getStateFromPath,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -69,6 +70,8 @@ const MyTheme: Theme = {
 const linking = {
   prefixes: [
     "gaming-zone://",
+    "https://gz1.vercel.app/",
+    "http://gz1.vercel.app/",
     "https://igdb-api-omega.vercel.app/",
     "http://igdb-api-omega.vercel.app/",
   ],
@@ -78,12 +81,90 @@ const linking = {
         screens: {
           News: {
             screens: {
-              NewsDetails: "news-details",
+              NewsDetails: "news/:id",
+            },
+          },
+          Settings: {
+            screens: {
+              UserGamesScreen: "lists/:listId",
             },
           },
         },
       },
     },
+  },
+  getStateFromPath(path: string, options: any) {
+    let cleanPath = path;
+
+    // 1. Remove leading slash
+    if (cleanPath.startsWith("/")) {
+      cleanPath = cleanPath.substring(1);
+    }
+
+    // 2. Strip locale prefixes like en/ or ar/ if present
+    if (cleanPath.startsWith("en/")) {
+      cleanPath = cleanPath.substring(3);
+    } else if (cleanPath.startsWith("ar/")) {
+      cleanPath = cleanPath.substring(3);
+    }
+
+    // 3. Handle "/lists" deep links
+    if (cleanPath.startsWith("lists/")) {
+      const state = getStateFromPath(cleanPath, {
+        screens: {
+          MainApp: {
+            screens: {
+              Settings: {
+                screens: {
+                  UserGamesScreen: "lists/:listId",
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (state) {
+        try {
+          const route = state.routes[0];
+          if (route && route.state && route.state.routes) {
+            const settingsRoute = route.state.routes.find((r) => r.name === "Settings");
+            if (settingsRoute && settingsRoute.state && settingsRoute.state.routes) {
+              const userGamesRoute = settingsRoute.state.routes.find((r) => r.name === "UserGamesScreen");
+              if (userGamesRoute && userGamesRoute.params) {
+                const params = userGamesRoute.params as any;
+                if (params.name && !params.listName) {
+                  params.listName = params.name;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Error mapping query params for lists deep link:", e);
+        }
+      }
+      return state;
+    }
+
+    // 4. Handle old/fallback "/news-details" path with query params
+    if (cleanPath.startsWith("news-details")) {
+      return getStateFromPath(cleanPath, {
+        screens: {
+          MainApp: {
+            screens: {
+              News: {
+                screens: {
+                  NewsDetails: "news-details",
+                },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    // 5. Default parsing for modern "news/:id"
+    return getStateFromPath(cleanPath, options);
   },
 };
 
@@ -160,7 +241,7 @@ function App(): React.ReactElement | null {
     return (
       <SafeAreaProvider>
         <GestureHandlerRootView style={styles.container}>
-          <StatusBar style="light" translucent={true} />
+          <StatusBar style="light" />
           <OnboardingScreen onDone={handleOnboardingDone} />
         </GestureHandlerRootView>
       </SafeAreaProvider>
@@ -171,7 +252,7 @@ function App(): React.ReactElement | null {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <GestureHandlerRootView style={styles.container}>
-          <StatusBar style="light" translucent={true} />
+          <StatusBar style="light" />
 
           <NavigationContainer
             ref={navigationRef}

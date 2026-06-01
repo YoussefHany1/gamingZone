@@ -44,28 +44,61 @@ const extractThumbnail = (item, baseUrl, isJson = false) => {
       item.urlToImage ||
       null;
   } else {
-    const getImgFromHtml = (html) =>
-      (html || "").match(/<img[^>]+src=['"]([^'"]+)['"]/i)?.[1];
+    // Highly robust HTML image extraction including lazy loading attributes
+    const getImgFromHtml = (html) => {
+      if (!html || typeof html !== "string") return null;
+      // Try data-src, data-lazy-src, data-original, data-srcset, srcset, src
+      const matches = 
+        html.match(/<img[^>]+(?:data-src|data-lazy-src|data-original|data-srcset)=['"]([^'"]+)['"]/i)?.[1] ||
+        html.match(/<img[^>]+src=['"]([^'"]+)['"]/i)?.[1];
+      return matches;
+    };
 
-    // الإضافة الجديدة للبحث عن og:image داخل محتوى الـ RSS المدمج
-    const getOgImageFromHtml = (html) =>
-      (html || "").match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ||
-      (html || "").match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
+    // Robust extraction for og:image tags embedded in RSS HTML content
+    const getOgImageFromHtml = (html) => {
+      if (!html || typeof html !== "string") return null;
+      return (
+        html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ||
+        html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1]
+      );
+    };
+
+    // Helper to safely extract url/href from parsed XML thumbnail or enclosure objects/strings
+    const getUrlFromField = (field) => {
+      if (!field) return null;
+      if (typeof field === "string") return field;
+      if (Array.isArray(field)) return getUrlFromField(field[0]);
+      if (typeof field === "object") {
+        return field.url || field.href || field._ || (field.$ && (field.$.url || field.$.href));
+      }
+      return null;
+    };
+
+    // Extract from media:content (which could be an array or single object)
+    const mediaContent = item["media:content"];
+    let mediaContentUrl = null;
+    if (mediaContent) {
+      if (Array.isArray(mediaContent)) {
+        const imageObj = mediaContent.find(m => m.medium === "image" || m.type?.startsWith("image/")) || mediaContent[0];
+        mediaContentUrl = getUrlFromField(imageObj);
+      } else {
+        mediaContentUrl = getUrlFromField(mediaContent);
+      }
+    }
+
+    // Extract from media:thumbnail (which could be an array or single object)
+    const mediaThumbnail = item["media:thumbnail"] || item["media:content"]?.["media:thumbnail"];
+    let mediaThumbnailUrl = getUrlFromField(mediaThumbnail);
 
     img =
-      item["media:content"]?.["media:thumbnail"]?.url ||
-      (item.thumbnail &&
-        (Array.isArray(item.thumbnail) ? item.thumbnail[0] : item.thumbnail)) ||
-      item["media:content"]?.url ||
-      item["media:thumbnail"]?.url ||
+      mediaThumbnailUrl ||
+      mediaContentUrl ||
+      getUrlFromField(item.thumbnail) ||
       getImgFromHtml(item.description) ||
-      getOgImageFromHtml(item.description) || // استخدام الدالة الجديدة هنا
+      getOgImageFromHtml(item.description) ||
       getImgFromHtml(item["content:encoded"]) ||
-      getOgImageFromHtml(item["content:encoded"]) || // استخدام الدالة الجديدة هنا
-      (item.enclosure &&
-        (Array.isArray(item.enclosure)
-          ? item.enclosure[0]?.url
-          : item.enclosure.url));
+      getOgImageFromHtml(item["content:encoded"]) ||
+      getUrlFromField(item.enclosure);
   }
 
   return resolveImageUrl(img, baseUrl);

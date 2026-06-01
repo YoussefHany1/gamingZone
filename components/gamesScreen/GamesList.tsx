@@ -1,13 +1,12 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  ListRenderItemInfo,
   RefreshControl,
 } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
@@ -166,7 +165,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     );
   }, [onBack]);
 
-  const handleRefresh = useCallback(() => refetch(), [refetch]);
+  const handleRefresh = useCallback(() => refetch(true), [refetch]);
 
   const refreshControl = (
     <RefreshControl
@@ -190,8 +189,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
 
   if (isInitialLoading) {
     return (
-      <FlashList
-        data={skeletonData}
+      <FlashList         data={skeletonData}
         numColumns={NUM_COLUMNS}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderSkeletonItem}
@@ -221,8 +219,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
   }
 
   return (
-    <FlashList
-      data={games}
+    <FlashList       data={games}
       numColumns={NUM_COLUMNS}
       keyExtractor={(item) => String(item.id)}
       renderItem={renderItem}

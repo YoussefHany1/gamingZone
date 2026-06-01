@@ -5,9 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  ListRenderItemInfo,
-} from "react-native";
-import { FlashList } from "@shopify/flash-list";
+  } from "react-native";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import axios from "axios";
@@ -197,7 +196,7 @@ export default function NostalgiaCorner(): React.ReactElement {
 
       {/* Skeleton while loading with no cached data */}
       {isActuallyLoading && (
-        <FlashList
+        <FlashList 
           data={Array.from({ length: 4 }, (_, i) => ({ id: i }))}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -215,7 +214,7 @@ export default function NostalgiaCorner(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList
+        <FlashList 
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}

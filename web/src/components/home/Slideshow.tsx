@@ -42,6 +42,13 @@ function getImageSource(item: Game) {
   return "/assets/image-not-found.webp";
 }
 
+function getCoverSource(item: Game) {
+  if (item.cover?.image_id) {
+    return `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`;
+  }
+  return "/assets/image-not-found.webp";
+}
+
 const Slideshow = React.memo(function Slideshow() {
   const { lang, t } = useLangStore();
   const [trailers, setTrailers] = useState<Game[]>([]);
@@ -135,17 +142,32 @@ const Slideshow = React.memo(function Slideshow() {
 
         {/* Content Info Card */}
         <div
-          className={`absolute bottom-0 inset-x-0 z-10 p-6 md:p-10 flex flex-col justify-end gap-3 ${
-            lang === "ar" ? "text-right" : "text-left"
+          className={`absolute bottom-0 inset-x-0 z-10 p-6 md:p-10 flex gap-4 sm:gap-6 items-end ${
+            lang === "ar" ? "flex-row-reverse text-right" : "flex-row text-left"
           }`}
         >
-          <h2 className="flex items-center gap-3 text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight line-clamp-2 max-w-4xl text-shadow">
-            <PlayCircle className="w-8 h-8 sm:w-10 sm:h-10 text-white fill-white/20 group-hover:text-light-blue group-hover:fill-light-blue/20 transition-colors" />
-            <span>{currentSlide.name}</span>
-          </h2>
-          <span className="text-gray-300 text-sm font-medium">
-            {t("home.slideshow.subtitle") || "Watch Latest Trailer"}
-          </span>
+          {/* Mini Poster Cover */}
+          {currentSlide.cover?.image_id && (
+            <div className="relative w-16 h-24 sm:w-20 sm:h-28 rounded-2xl overflow-hidden border border-white/20 shadow-2xl flex-shrink-0">
+              <Image
+                src={getCoverSource(currentSlide)}
+                alt={currentSlide.name}
+                fill
+                sizes="(max-width: 640px) 64px, 80px"
+                className="object-cover"
+              />
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2 md:gap-3">
+            <h2 className="flex items-center gap-3 text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight line-clamp-2 max-w-4xl text-shadow">
+              <PlayCircle className="w-8 h-8 sm:w-10 sm:h-10 text-white fill-white/20 group-hover:text-light-blue group-hover:fill-light-blue/20 transition-colors" />
+              <span>{currentSlide.name}</span>
+            </h2>
+            <span className="text-gray-300 text-sm font-medium">
+              {t("home.slideshow.subtitle") || "Watch Latest Trailer"}
+            </span>
+          </div>
         </div>
 
         {/* Dots Indicator */}

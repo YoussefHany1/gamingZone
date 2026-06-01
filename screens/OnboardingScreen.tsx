@@ -63,7 +63,7 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
   const { t } = useTranslation();
   // const isRTL = i18n.language === "ar" || I18nManager.isRTL;
   const [activeIndex, setActiveIndex] = useState(0);
-  const flatListRef = useRef<FlashList<any>>(null);
+  const flatListRef = useRef<any>(null);
 
   const slides = t("onboarding.slides", { returnObjects: true }) as Array<{
     title: string;
@@ -143,8 +143,7 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
           />
         </View>
 
-        <FlashList
-          ref={flatListRef}
+        <FlashList           ref={flatListRef}
           data={slides}
           renderItem={renderItem}
           keyExtractor={keyExtractor}

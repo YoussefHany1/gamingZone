@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   View,
   Text,
@@ -6,10 +12,12 @@ import {
   ScrollView,
   ToastAndroid,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
 import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import { useTranslation } from "react-i18next";
@@ -45,7 +53,12 @@ import GameHorizontalScroll from "../components/gameDetails/GameHorizontalScroll
 import GameDetailsBackground from "../components/gameDetails/GameDetailsBackground";
 
 // shared types & utils
-import type { GamesStackParamList, GameData, LangRow, PcRequirements } from "../components/gameDetails/types";
+import type {
+  GamesStackParamList,
+  GameData,
+  LangRow,
+  PcRequirements,
+} from "../components/gameDetails/types";
 // Re-export so existing consumers (e.g. GamesList.tsx) keep working
 export type { GamesStackParamList };
 import {
@@ -63,10 +76,15 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
   const scrollRef = useRef<ScrollView>(null);
   const mountedRef = useRef<boolean>(true);
 
-  const [user, setUser] = useState<FirebaseAuthTypes.User | null | undefined>(undefined);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null | undefined>(
+    undefined,
+  );
   const [showListModal, setShowListModal] = useState<boolean>(false);
   const [authLoading, setAuthLoading] = useState<boolean>(true);
-  const [pcRequirements, setPcRequirements] = useState<PcRequirements | null>(null);
+  const [rating, setRating] = useState<number>(0);
+  const [pcRequirements, setPcRequirements] = useState<PcRequirements | null>(
+    null,
+  );
   const [pcReqLoading, setPcReqLoading] = useState<boolean>(false);
 
   const { t, i18n } = useTranslation();
@@ -81,17 +99,17 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
     return fetchGameById(currentId);
   }, [currentId]);
 
-  const { data: game, isLoading: loading, error } = useCachedData<GameData>(
-    cacheKey,
-    fetchGameData,
-    [currentId]
-  );
+  const {
+    data: game,
+    isLoading: loading,
+    error,
+  } = useCachedData<GameData>(cacheKey, fetchGameData, [currentId]);
 
   // Derived values
 
   const ageRating = useMemo(
     () => (game ? getAgeRatingInfo(game.age_ratings) : null),
-    [game?.age_ratings]
+    [game?.age_ratings],
   );
 
   const languageList: LangRow[] = useMemo(() => {
@@ -99,9 +117,17 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
     const langMap: Record<string, LangRow> = {};
     game.language_supports.forEach((item) => {
       const langName = item.language.name;
-      const supportType = item.language_support_type.name as keyof Omit<LangRow, "name">;
+      const supportType = item.language_support_type.name as keyof Omit<
+        LangRow,
+        "name"
+      >;
       if (!langMap[langName]) {
-        langMap[langName] = { name: langName, Audio: false, Subtitles: false, Interface: false };
+        langMap[langName] = {
+          name: langName,
+          Audio: false,
+          Subtitles: false,
+          Interface: false,
+        };
       }
       langMap[langName][supportType] = true;
     });
@@ -109,7 +135,8 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
   }, [game?.language_supports]);
 
   const { main, mainExtra, completionist } = useMemo(() => {
-    if (!game?.game_time_to_beats) return { main: null, mainExtra: null, completionist: null };
+    if (!game?.game_time_to_beats)
+      return { main: null, mainExtra: null, completionist: null };
     const { hastily, normally, completely } = game.game_time_to_beats;
     return {
       main: hastily ? Math.floor(hastily / 3600) : null,
@@ -128,21 +155,101 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
     };
   }, [game]);
 
+  const handleRateGame = useCallback(async (newRating: number) => {
+    if (!user || user.isAnonymous) {
+      Alert.alert(t("common.error"), t("common.loginRequired"));
+      return;
+    }
+    if (!game) return;
+
+    const gameData = getGameDataForList();
+    if (!gameData) return;
+
+    const ratingRef = firestore()
+      .collection("users")
+      .doc(user.uid)
+      .collection("ratings")
+      .doc(String(currentId));
+
+    const ratedGameRef = firestore()
+      .collection("users")
+      .doc(user.uid)
+      .collection("lists")
+      .doc("rated")
+      .collection("games")
+      .doc(String(currentId));
+
+    try {
+      if (newRating === 0) {
+        await ratingRef.delete();
+        await ratedGameRef.delete();
+      } else {
+        await firestore()
+          .collection("users")
+          .doc(user.uid)
+          .collection("lists")
+          .doc("rated")
+          .set({
+            name: "Rated",
+            type: "default",
+            createdAt: firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+
+        await ratingRef.set({
+          rating: newRating,
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        });
+        await ratedGameRef.set({
+          ...gameData,
+          rating: newRating,
+          ratedAt: firestore.FieldValue.serverTimestamp(),
+        });
+      }
+
+      // Sync with other lists
+      const listsRef = firestore()
+        .collection("users")
+        .doc(user.uid)
+        .collection("lists");
+      const listsSnap = await listsRef.get();
+      for (const listDoc of listsSnap.docs) {
+        if (listDoc.id === "rated") continue;
+        const gRef = listDoc.ref.collection("games").doc(String(currentId));
+        const gSnap = await gRef.get();
+        if (gSnap && gSnap.exists) {
+          try {
+            if (newRating === 0) {
+              await gRef.update({ rating: firestore.FieldValue.delete() });
+            } else {
+              await gRef.update({ rating: newRating });
+            }
+          } catch (updateErr) {
+            console.log(`[GameDetailsScreen] Stale cache update handled for list ${listDoc.id}`);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error rating game:", e);
+    }
+  }, [user, currentId, game, getGameDataForList, t]);
+
   const seriesGames = useMemo(
     () => game?.collections?.[0]?.games ?? [],
-    [game?.collections]
+    [game?.collections],
   );
 
   const similarGames = useMemo(
     () => game?.similar_games ?? [],
-    [game?.similar_games]
+    [game?.similar_games],
   );
 
   // Effects
 
   useEffect(() => {
     mountedRef.current = true;
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -152,6 +259,33 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
     });
     return unsub;
   }, []);
+
+  useEffect(() => {
+    if (!user || user.isAnonymous) {
+      setRating(0);
+      return;
+    }
+    const ratingRef = firestore()
+      .collection("users")
+      .doc(user.uid)
+      .collection("ratings")
+      .doc(String(currentId));
+
+    const unsub = ratingRef.onSnapshot(
+      (doc) => {
+        if (doc && doc.exists) {
+          setRating(doc.data()?.rating ?? 0);
+        } else {
+          setRating(0);
+        }
+      },
+      (error) => {
+        console.error("[GameDetailsScreen] Rating snapshot error:", error);
+      }
+    );
+
+    return unsub;
+  }, [user, currentId]);
 
   useEffect(() => {
     if (initialGameID && initialGameID !== currentId) {
@@ -171,14 +305,17 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
         setPcReqLoading(false);
       }
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [game?.websites]);
 
   useEffect(() => {
     if (game && !loading) {
       setTimeout(() => {
-        try { scrollRef.current?.scrollTo({ x: 0, y: 0, animated: true }); }
-        catch (_) { }
+        try {
+          scrollRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+        } catch (_) {}
       }, 50);
     }
   }, [game, loading]);
@@ -191,7 +328,7 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
     if (!user) {
       ToastAndroid.show(
         t("common.loginRequired") ?? "You need to log in.",
-        ToastAndroid.LONG
+        ToastAndroid.LONG,
       );
       return;
     }
@@ -199,7 +336,10 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
   }, [user, t]);
 
   const handleCloseModal = useCallback(() => setShowListModal(false), []);
-  const handleNavigateToGame = useCallback((id: number) => setCurrentId(id), []);
+  const handleNavigateToGame = useCallback(
+    (id: number) => setCurrentId(id),
+    [],
+  );
 
   return (
     <SafeAreaView edges={["right", "left"]} style={styles.container}>
@@ -212,12 +352,17 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
 
       {/* Error states */}
       {!loading && error && <ErrorState message={`Error: ${String(error)}`} />}
-      {!loading && !error && !game && <ErrorState message="No data to display" showContactButton={false} />}
+      {!loading && !error && !game && (
+        <ErrorState message="No data to display" showContactButton={false} />
+      )}
 
       {/* Main content — ScrollView always mounted, each section swaps independently */}
       {(loading || game) && (
-        <ScrollView ref={scrollRef} style={styles.container} showsVerticalScrollIndicator={false}>
-
+        <ScrollView
+          ref={scrollRef}
+          style={styles.container}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Cover / Screenshots Gallery */}
           <View style={{ zIndex: 100 }}>
             {loading ? (
@@ -239,14 +384,13 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
           )}
 
           <View style={styles.content}>
-
             {/* Title, platforms, rating, age rating */}
             {loading ? (
               <GameDetailsMetaSkeleton />
             ) : game ? (
               <GameDetailsMeta
                 name={game.name}
-                releaseDate={game.release_dates?.[0]?.human}
+                releaseDate={game.first_release_date}
                 platforms={game.platforms}
                 totalRating={game.total_rating}
                 totalRatingCount={game.total_rating_count}
@@ -255,7 +399,11 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
             ) : null}
 
             {/* Stores */}
-            {loading ? <GameStoresSkeleton /> : game ? <GameStores websites={game.websites} /> : null}
+            {loading ? (
+              <GameStoresSkeleton />
+            ) : game ? (
+              <GameStores websites={game.websites} />
+            ) : null}
 
             {/* Action buttons — static (route params), always shown */}
             <GameActionButtons
@@ -263,6 +411,36 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
               store={store}
               onAddToList={handleAddToList}
             />
+
+            {/* Rating Section */}
+            {user && !user.isAnonymous && game && (
+              <View style={styles.ratingSection}>
+                <Text style={styles.ratingTitle}>
+                  {t("games.details.rateThisGame") ?? "Rate this Game"}
+                </Text>
+                <View style={styles.starsRow}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <TouchableOpacity
+                      key={star}
+                      onPress={() => handleRateGame(rating === star ? 0 : star)}
+                      activeOpacity={0.7}
+                      style={{ paddingHorizontal: 6 }}
+                    >
+                      <Ionicons
+                        name={star <= rating ? "star" : "star-outline"}
+                        size={32}
+                        color={star <= rating ? "#ffc107" : COLORS.lightGray}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                {rating > 0 && (
+                  <Text style={styles.ratingValueText}>
+                    {t("games.details.yourRating") ?? "Your Rating"}: {rating} / 5
+                  </Text>
+                )}
+              </View>
+            )}
 
             <ListSelectionModal
               visible={showListModal}
@@ -272,10 +450,18 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
             />
 
             {/* About */}
-            {loading ? <GameAboutSkeleton /> : game ? <GameAbout summary={game.summary} /> : null}
+            {loading ? (
+              <GameAboutSkeleton />
+            ) : game ? (
+              <GameAbout summary={game.summary} />
+            ) : null}
 
             {/* Trailer */}
-            {loading ? <GameTrailerSkeleton /> : game ? <GameTrailer videos={game.videos} /> : null}
+            {loading ? (
+              <GameTrailerSkeleton />
+            ) : game ? (
+              <GameTrailer videos={game.videos} />
+            ) : null}
 
             {/* Details grid */}
             {loading ? (
@@ -292,7 +478,10 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
             {/* Ad — always shown */}
             <View style={styles.ad}>
               <Text style={styles.adText}>{t("common.ad")}</Text>
-              <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
+              <BannerAd
+                unitId={adUnitId}
+                size={BannerAdSize.MEDIUM_RECTANGLE}
+              />
             </View>
 
             {/* Language support table */}
@@ -306,17 +495,27 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
             {loading ? (
               <GameHowLongToBeatSkeleton />
             ) : game ? (
-              <GameHowLongToBeat main={main} mainExtra={mainExtra} completionist={completionist} />
+              <GameHowLongToBeat
+                main={main}
+                mainExtra={mainExtra}
+                completionist={completionist}
+              />
             ) : null}
 
             {/* Second ad — always shown */}
             <View style={styles.ad}>
               <Text style={styles.adText}>{t("common.ad")}</Text>
-              <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
+              <BannerAd
+                unitId={adUnitId}
+                size={BannerAdSize.MEDIUM_RECTANGLE}
+              />
             </View>
 
             {/* PC System Requirements — has its own internal skeleton via pcReqLoading */}
-            <GamePcRequirements pcRequirements={pcRequirements} pcReqLoading={pcReqLoading} />
+            <GamePcRequirements
+              pcRequirements={pcRequirements}
+              pcReqLoading={pcReqLoading}
+            />
 
             {/* Game series */}
             {loading ? (
@@ -331,7 +530,9 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
 
             {/* Similar games */}
             {loading ? (
-              <GameHorizontalScrollSkeleton title={t("games.details.similar")} />
+              <GameHorizontalScrollSkeleton
+                title={t("games.details.similar")}
+              />
             ) : (
               <GameHorizontalScroll
                 title={t("games.details.similar")}
@@ -386,5 +587,31 @@ const styles = StyleSheet.create({
   adText: {
     color: "#fff",
     marginBottom: 10,
+  },
+  ratingSection: {
+    backgroundColor: "rgba(119, 155, 221, 0.08)",
+    borderRadius: 16,
+    padding: 20,
+    marginVertical: 15,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(119, 155, 221, 0.15)",
+  },
+  ratingTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+  starsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  ratingValueText: {
+    color: COLORS.lightGray,
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

@@ -50,6 +50,8 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
         return t("games.details.listStatus.played");
       case "Want to Play":
         return t("games.details.listStatus.wantToPlay");
+      case "Rated":
+        return t("games.details.listStatus.rated");
       default:
         return originalName;
     }
@@ -75,11 +77,13 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
       .collection("lists");
 
     listsRef.get().then(async (snapshot) => {
-      const initialLists: UserList[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        name: doc.data().name as string,
-        isChecked: false,
-      }));
+      const initialLists: UserList[] = snapshot.docs
+        .filter((doc) => doc.id !== "rated")
+        .map((doc) => ({
+          id: doc.id,
+          name: doc.data().name as string,
+          isChecked: false,
+        }));
 
       setLists(initialLists);
       setLoading(false);
@@ -95,7 +99,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
               .collection("games")
               .doc(String(gameId))
               .get();
-            return { ...list, isChecked: gameDoc.exists() };
+            return { ...list, isChecked: !!(gameDoc && gameDoc.exists) };
           }),
         );
         setLists(checkedLists);

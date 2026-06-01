@@ -1,5 +1,5 @@
 import React from "react";
-import Link from "next/link";
+import Link from "@/components/Link";
 import Image from "next/image";
 
 import GameCountdown from "./GameCountdown";

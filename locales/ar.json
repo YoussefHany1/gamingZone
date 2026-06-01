@@ -14,6 +14,8 @@
     "ad": "مساحة إعلانية",
     "loginRequired": "تحتاج إلى تسجيل الدخول لتنفيذ هذا الإجراء.",
     "noInternet": "لا يوجد اتصال بالإنترنت.",
+    "share": "مشاركة",
+    "copied": "تم النسخ!",
     "updateAlert": {
       "title": "تحديث متاح",
       "message": "يوجد إصدار جديد للتطبيق. حدّث الآن للحصول على أحدث الميزات والتحسينات.",
@@ -240,6 +242,8 @@
       "availableStores": "متاح في هذه المتاجر",
       "addToList": "أضف إلى قائمتي",
       "claimNow": "احصل على هذه اللعبة مجاناً على ",
+      "rateThisGame": "تقييم هذه اللعبة",
+      "yourRating": "تقييمك",
       "about": "عن اللعبة",
       "genres": "التصنيفات",
       "gameModes": "أطوار اللعب",
@@ -250,7 +254,40 @@
         "Language": "اللغة",
         "audio": "الصوت",
         "subtitles": "الترجمة",
-        "interface": "الواجهة"
+        "interface": "الواجهة",
+        "names": {
+          "Arabic": "العربية",
+          "English": "الإنجليزية",
+          "French": "الفرنسية",
+          "German": "الألمانية",
+          "Spanish": "الإسبانية",
+          "Spanish (Spain)": "الإسبانية (إسبانيا)",
+          "Spanish (Latin America)": "الإسبانية (أمريكا اللاتينية)",
+          "Portuguese": "البرتغالية",
+          "Portuguese (Brazil)": "البرتغالية (البرازيل)",
+          "Portuguese (Portugal)": "البرتغالية (البرتغال)",
+          "Italian": "الإيطالية",
+          "Japanese": "اليابانية",
+          "Korean": "الكورية",
+          "Russian": "الروسية",
+          "Chinese": "الصينية",
+          "Chinese (Simplified)": "الصينية (المبسطة)",
+          "Chinese (Traditional)": "الصينية (التقليدية)",
+          "Polish": "البولندية",
+          "Swedish": "السويدية",
+          "Norwegian": "النرويجية",
+          "Danish": "الدنماركية",
+          "Finnish": "الفنلندية",
+          "Turkish": "التركية",
+          "Dutch": "الهولندية",
+          "Thai": "التايلاندية",
+          "Ukrainian": "الأوكرانية",
+          "Czech": "التشيكية",
+          "Hungarian": "المجرية",
+          "Romanian": "الرومانية",
+          "Vietnamese": "الفيتنامية",
+          "Hindi": "الهندية"
+        }
       },
       "engines": "محركات اللعبة",
       "howLongToBeat": {
@@ -271,7 +308,8 @@
         "add": "أضف إلى...",
         "played": "لعبتها",
         "playing": "العبها الآن",
-        "wantToPlay": "أريد لعبها"
+        "wantToPlay": "أريد لعبها",
+        "rated": "ألعاب تم تقييمها"
       }
     },
     "filter": {
@@ -329,13 +367,15 @@
       "title": "قائمتك فارغة",
       "playedSub": "أضف الألعاب التي لعبتها هنا.",
       "wantSub": "أضف الألعاب التي تريد لعبها.",
+      "ratedSub": "قيّم وانقد الألعاب التي لعبتها هنا.",
       "findButton": "ابحث عن لعبتك",
       "findButtonNew": "ابحث عن لعبتك الجديدة"
     },
     "actions": {
       "confirmDeleteTitle": "تأكيد الحذف",
       "confirmDeleteMessage": "هل أنت متأكد أنك تريد إزالة \"{{gameName}}\" من قائمتك؟",
-      "createNewList": "إنشاء قائمة جديدة"
+      "createNewList": "إنشاء قائمة جديدة",
+      "shareMessage": "ألقِ نظرة على قائمة ألعابي \"{{listName}}\" في جيمنج زون!"
     },
     "placeholders": {
       "newListName": "مثال: أفضل ألعاب قصصية"

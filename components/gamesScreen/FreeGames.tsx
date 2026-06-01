@@ -6,9 +6,8 @@ import {
   Linking,
   ScrollView,
   ToastAndroid,
-  ListRenderItemInfo,
-} from "react-native";
-import { FlashList } from "@shopify/flash-list";
+  } from "react-native";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useState, useEffect, memo, useCallback } from "react";
 import { LinearGradient } from "expo-linear-gradient";
@@ -25,6 +24,7 @@ import { Query } from "react-native-appwrite";
 import Constants from "expo-constants";
 import { useCountdown } from "../../hooks/useCountdown";
 import useCachedData from "../../hooks/useCachedData";
+import { openLink } from "../../lib/browser";
 import { useNavigation } from "@react-navigation/native";
 import { FreeGame, CountdownResult } from "../types";
 import ErrorState from "../ErrorState";
@@ -270,9 +270,9 @@ function FreeGames(): React.ReactElement {
                   }
 
                   if (item.url) {
-                    Linking.openURL(item.url);
+                    openLink(item.url);
                   } else if (item.slug) {
-                    Linking.openURL(
+                    openLink(
                       `https://store.epicgames.com/en-US/p/${item.slug}`,
                     );
                   }
@@ -338,7 +338,7 @@ function FreeGames(): React.ReactElement {
 
       {/* games list */}
       {!isError && Array.isArray(gamesList) && (
-        <FlashList
+        <FlashList 
           data={gamesList ?? []}
           renderItem={renderGameItem}
           keyExtractor={(item) => item.id}

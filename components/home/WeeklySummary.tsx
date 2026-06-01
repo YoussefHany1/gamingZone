@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import i18n from "../../i18n";
 import COLORS from "../../constants/colors";
 import { t } from "i18next";
 import Constants from "expo-constants";
+import useCachedData from "../../hooks/useCachedData";
 import { WeeklySummaryDoc } from "../types";
 
 const { APPWRITE_DATABASE_ID } = Constants.expoConfig!.extra as {
@@ -22,49 +23,43 @@ const { APPWRITE_DATABASE_ID } = Constants.expoConfig!.extra as {
 };
 const DATABASE_ID = APPWRITE_DATABASE_ID;
 const SUMMARIES_COLLECTION_ID = "weekly_summaries";
-
+const CACHE_KEY = "WEEKLY_SUMMARY_CACHE";
 const COLLAPSED_HEIGHT = 100;
 
-const WeeklySummary: React.FC = () => {
-  const [summaryDoc, setSummaryDoc] = useState<WeeklySummaryDoc | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [expanded, setExpanded] = useState<boolean>(false);
+// Fetch the latest weekly summary document from Appwrite
+const fetchWeeklySummary = async (): Promise<WeeklySummaryDoc | null> => {
+  const response = await databases.listDocuments(
+    DATABASE_ID,
+    SUMMARIES_COLLECTION_ID,
+    [Query.orderDesc("$createdAt"), Query.limit(1)],
+  );
+  if (response.documents.length > 0) {
+    return response.documents[0] as unknown as WeeklySummaryDoc;
+  }
+  return null;
+};
 
-  // Full height measured from the inner content layout
+const WeeklySummary: React.FC = () => {
+  const [expanded, setExpanded] = useState<boolean>(false);
   const [contentHeight, setContentHeight] = useState<number>(0);
 
-  // Shared value for animation on UI thread
   const animatedHeight = useSharedValue(COLLAPSED_HEIGHT);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      height: animatedHeight.value,
-    };
-  });
+  const animatedStyle = useAnimatedStyle(() => ({
+    height: animatedHeight.value,
+  }));
 
-  useEffect(() => {
-    const fetchSummary = async (): Promise<void> => {
-      try {
-        const response = await databases.listDocuments(
-            DATABASE_ID,
-            SUMMARIES_COLLECTION_ID,
-            [Query.orderDesc("$createdAt"), Query.limit(1)],
-        );
+  const {
+    data: summaryDoc,
+    isLoading: loading,
+  } = useCachedData<WeeklySummaryDoc | null>(
+    CACHE_KEY,
+    fetchWeeklySummary,
+    [],
+    43200000, // 12-hour TTL — summary is updated weekly, no need for frequent refetches
+  );
 
-        if (response.documents.length > 0) {
-          setSummaryDoc(response.documents[0] as unknown as WeeklySummaryDoc);
-        }
-      } catch (error) {
-        console.error("Error fetching summary:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSummary();
-  }, []);
-
-  // Animate between collapsed and expanded states whenever either value changes
+  // Animate between collapsed and expanded states
   useEffect(() => {
     if (contentHeight > 0) {
       animatedHeight.value = withTiming(expanded ? contentHeight : COLLAPSED_HEIGHT, {
@@ -73,7 +68,14 @@ const WeeklySummary: React.FC = () => {
     }
   }, [expanded, contentHeight, animatedHeight]);
 
-  if (loading) return <Loading />;
+  const handleContentLayout = useCallback((event: LayoutChangeEvent): void => {
+    const layoutHeight = event.nativeEvent.layout.height;
+    if (layoutHeight > COLLAPSED_HEIGHT) {
+      setContentHeight(layoutHeight);
+    }
+  }, []);
+
+  if (loading && !summaryDoc) return <Loading />;
   if (!summaryDoc) return null;
 
   const localeCode: string = i18n.language || "en";
@@ -102,13 +104,6 @@ const WeeklySummary: React.FC = () => {
     bullet_list: { marginBottom: 10 },
   };
 
-  const handleContentLayout = (event: LayoutChangeEvent): void => {
-    const layoutHeight = event.nativeEvent.layout.height;
-    if (layoutHeight > COLLAPSED_HEIGHT) {
-      setContentHeight(layoutHeight);
-    }
-  };
-
   return (
     <View style={styles.card}>
       <View style={styles.headerContainer}>
@@ -123,15 +118,12 @@ const WeeklySummary: React.FC = () => {
         </Text>
       </View>
 
-      <Animated.View
-        style={[styles.animatedContainer, animatedStyle]}
-      >
+      <Animated.View style={[styles.animatedContainer, animatedStyle]}>
         <View onLayout={handleContentLayout} style={styles.innerContent}>
           <Markdown style={markdownStyles}>{content}</Markdown>
         </View>
       </Animated.View>
 
-      {/* Read more / read less toggle */}
       <TouchableOpacity
         onPress={() => setExpanded((prev) => !prev)}
         style={styles.readMoreButton}

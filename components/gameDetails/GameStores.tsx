@@ -1,10 +1,11 @@
 import React, { memo } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
 import { useTranslation } from "react-i18next";
 import COLORS from "../../constants/colors";
 import { STORE_ICONS } from "./utils";
 import type { Website } from "./types";
+import { openLink } from "../../lib/browser";
 
 interface Props {
   websites?: Website[];
@@ -24,7 +25,7 @@ const GameStores: React.FC<Props> = ({ websites }) => {
           const icon = STORE_ICONS[site.type];
           if (!icon) return null;
           return (
-            <TouchableOpacity key={site.id} style={styles.storesBtn} onPress={() => Linking.openURL(site.url)}>
+            <TouchableOpacity key={site.id} style={styles.storesBtn} onPress={() => openLink(site.url)}>
               <Image style={styles.storeImg} source={icon} contentFit="contain" transition={500} cachePolicy="memory-disk" allowDownscaling />
             </TouchableOpacity>
           );

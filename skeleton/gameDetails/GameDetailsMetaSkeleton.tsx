@@ -6,7 +6,7 @@ import SkeletonBar from "./SkeletonBar";
 // Mirrors: title, releaseDate, platforms row + rating circle, age badge
 const GameDetailsMetaSkeleton: React.FC = () => {
   const shimmer = useShimmer();
-  const S = (p: Parameters<typeof SkeletonBar>[0]) => <SkeletonBar shimmer={shimmer} {...p} />;
+  const S = (p: Omit<Parameters<typeof SkeletonBar>[0], "shimmer">) => <SkeletonBar shimmer={shimmer} {...p} />;
 
   return (
     <View>

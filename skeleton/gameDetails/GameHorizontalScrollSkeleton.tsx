@@ -10,7 +10,7 @@ interface Props {
 // Static title + shimmer game cards in a horizontal row
 const GameHorizontalScrollSkeleton: React.FC<Props> = ({ title }) => {
   const shimmer = useShimmer();
-  const S = (p: Parameters<typeof SkeletonBar>[0]) => <SkeletonBar shimmer={shimmer} {...p} />;
+  const S = (p: Omit<Parameters<typeof SkeletonBar>[0], "shimmer">) => <SkeletonBar shimmer={shimmer} {...p} />;
 
   return (
     <View style={styles.container}>

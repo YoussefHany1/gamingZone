@@ -1,6 +1,7 @@
 import React, { memo, useCallback } from "react";
 import { Text, StyleSheet, TouchableOpacity, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { openLink } from "../../lib/browser";
 import type { GamingEventNetwork } from "../types";
 
 // Maps IGDB event_network enum to icon names
@@ -23,7 +24,7 @@ const NetworkButton = memo<NetworkButtonProps>(({ network }) => {
   };
 
   const handlePress = useCallback(() => {
-    Linking.openURL(network.url).catch(() => console.error("Failed to open link"));
+    openLink(network.url);
   }, [network.url]);
 
   return (

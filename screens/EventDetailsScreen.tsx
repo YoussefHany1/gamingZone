@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import COLORS from "../constants/colors";
 import { useCountdown } from "../hooks/useCountdown";
 import type { GamingEvent, CountdownResult } from "../components/types";
+import { openLink } from "../lib/browser";
 
 // Components
 import SectionTitle from "../components/SectionTitle";
@@ -73,9 +74,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
 
   const handleStream = useCallback(() => {
     if (event.live_stream_url) {
-      Linking.openURL(event.live_stream_url).catch(() =>
-        console.error("Failed to open stream"),
-      );
+      openLink(event.live_stream_url);
     }
   }, [event.live_stream_url]);
 
@@ -229,8 +228,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
         {event.videos && event.videos.length > 0 && (
           <View style={styles.section}>
             <SectionTitle title="Videos" />
-            <FlashList
-              data={event.videos}
+            <FlashList               data={event.videos}
               horizontal
               keyExtractor={(v) => v.video_id}
               renderItem={({ item }) => <VideoCard video={item} />}
@@ -246,8 +244,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
         {event.games && event.games.length > 0 && (
           <View style={styles.section}>
             <SectionTitle title="Featured Games" />
-            <FlashList
-              data={event.games}
+            <FlashList               data={event.games}
               horizontal
               keyExtractor={(g) => String(g.id)}
               renderItem={({ item }) => <GameCard game={item} />}

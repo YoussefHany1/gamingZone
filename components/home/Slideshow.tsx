@@ -62,6 +62,10 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
   const { t } = useTranslation();
   const handlePress = useCallback(() => onPress(item), [onPress, item]);
 
+  const coverUrl = item.cover?.image_id
+    ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`
+    : null;
+
   return (
     <TouchableOpacity
       style={styles.slide}
@@ -82,14 +86,25 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
         style={styles.gradient}
       />
       <View style={styles.headline}>
-        <Ionicons name="play-circle-outline" size={32} color="white" />
-        <View>
+        {coverUrl && (
+          <Image
+            source={{ uri: coverUrl }}
+            style={styles.coverImage}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            allowDownscaling
+          />
+        )}
+        <View style={styles.textContainer}>
           <Text style={styles.title} numberOfLines={2}>
             {item.name}
           </Text>
-          <Text style={styles.subtitle} numberOfLines={1}>
-            {t("home.slideshow.subtitle")}
-          </Text>
+          <View style={styles.playRow}>
+            <Ionicons name="play-circle-outline" size={18} color="#779bdd" style={{ marginRight: 6 }} />
+            <Text style={styles.subtitle} numberOfLines={1}>
+              {t("home.slideshow.subtitle")}
+            </Text>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -204,15 +219,34 @@ const styles = StyleSheet.create({
     padding: 16,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
+  },
+  coverImage: {
+    width: 65,
+    height: 90,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: "center",
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
     color: "white",
   },
+  playRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+  },
   subtitle: {
-    color: "gray",
+    color: "#779bdd",
+    fontWeight: "600",
+    fontSize: 14,
   },
   errorWrapper: {
     height: 350,

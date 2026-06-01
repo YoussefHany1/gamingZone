@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/Link";
 import { databases } from "../../lib/appwrite";
 import { Query } from "appwrite";
 import { useLangStore } from "../../store/useLangStore";
@@ -20,14 +20,42 @@ interface Article {
 
 interface LatestNewsFeedProps {
   category: "news" | "reviews" | "esports" | "hardware";
+  initialArticles?: Article[];
+  locale?: string;
 }
 
-const LatestNewsFeed = React.memo(function LatestNewsFeed({ category }: LatestNewsFeedProps) {
+const memCache = new Map<string, { data: Article[]; ts: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+const LatestNewsFeed = React.memo(function LatestNewsFeed({ category, initialArticles, locale }: LatestNewsFeedProps) {
   const { lang, t } = useLangStore();
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
+  const activeLang = locale || lang;
+  const [articles, setArticles] = useState<Article[]>(initialArticles || []);
+  const [loading, setLoading] = useState(!initialArticles);
 
   useEffect(() => {
+    // If initialArticles matches category and Zustand lang, skip fetching!
+    if (
+      initialArticles &&
+      initialArticles.length > 0 &&
+      initialArticles[0].category === category &&
+      initialArticles[0].language === activeLang
+    ) {
+      setArticles(initialArticles);
+      setLoading(false);
+      return;
+    }
+
+    const cacheKey = `${category}_${activeLang}`;
+    const cached = memCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      setArticles(cached.data);
+      setLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+
     async function fetchArticles() {
       setLoading(true);
       try {
@@ -41,26 +69,34 @@ const LatestNewsFeed = React.memo(function LatestNewsFeed({ category }: LatestNe
           COLLECTION_ID,
           [
             Query.equal("category", category),
-            Query.equal("language", lang),
+            Query.equal("language", activeLang),
             Query.orderDesc("pubDate"),
             Query.limit(6),
           ],
         );
 
-        setArticles(response.documents as unknown as Article[]);
+        if (!isCancelled) {
+          const fetchedArticles = response.documents as unknown as Article[];
+          setArticles(fetchedArticles);
+          memCache.set(cacheKey, { data: fetchedArticles, ts: Date.now() });
+        }
       } catch (error) {
         console.error("Error fetching news feed articles:", error);
       } finally {
-        setLoading(false);
+        if (!isCancelled) setLoading(false);
       }
     }
     fetchArticles();
-  }, [category, lang]);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [category, activeLang, initialArticles]);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
-    return date.toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
+    return date.toLocaleDateString(activeLang === "ar" ? "ar-EG" : "en-US", {
       month: "short",
       day: "numeric",
     });

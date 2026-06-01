@@ -49,38 +49,67 @@ const GameLanguageTable: React.FC<Props> = ({ languageList }) => {
 
   return (
     <View style={[styles.textCard, { width: "100%", marginTop: 20 }]}>
-      <Text style={styles.detailsHeader}>{t("games.details.languages.title")}</Text>
+      <Text style={styles.detailsHeader}>
+        {t("games.details.languages.title")}
+      </Text>
       <View style={styles.langTableHeader}>
         <View style={styles.langHeaderCell}>
           <Ionicons name="language" size={18} color={COLORS.secondary} />
-          <Text style={styles.langHeaderCellText}>{t("games.details.languages.Language")}</Text>
+          <Text style={styles.langHeaderCellText}>
+            {t("games.details.languages.Language")}
+          </Text>
         </View>
         {ICONS.map((icon, i) => (
           <View key={icon} style={styles.iconHeaderContainer}>
             <Ionicons name={icon} size={18} color={COLORS.secondary} />
             <Text style={styles.headerLabel}>
-              {t(["games.details.languages.audio", "games.details.languages.subtitles", "games.details.languages.interface"][i])}
+              {t(
+                [
+                  "games.details.languages.audio",
+                  "games.details.languages.subtitles",
+                  "games.details.languages.interface",
+                ][i],
+              )}
             </Text>
           </View>
         ))}
       </View>
       {languageList.map((lang, index) => {
-        const isDeviceLanguage = deviceLanguageName && lang.name.includes(deviceLanguageName);
+        const isDeviceLanguage =
+          deviceLanguageName && lang.name.includes(deviceLanguageName);
 
         return (
-          <View key={lang.name} style={[styles.langTableRow, {
-            backgroundColor: index % 2 === 0 ? "rgba(81, 105, 150, 0.1)" : "transparent",
-          }]}>
-            <Text style={[
-              styles.langCellText,
-              { flex: 2 },
-              isDeviceLanguage && { fontWeight: "bold", color: COLORS.textLight }
-            ]}>
-              {lang.name}
+          <View
+            key={lang.name}
+            style={[
+              styles.langTableRow,
+              {
+                backgroundColor:
+                  index % 2 === 0 ? "rgba(81, 105, 150, 0.1)" : "transparent",
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.langCellText,
+                { flex: 2 },
+                isDeviceLanguage && {
+                  fontWeight: "bold",
+                  color: COLORS.textLight,
+                },
+              ]}
+            >
+              {t(`games.details.languages.names.${lang.name}`, lang.name)}
             </Text>
             {(["Audio", "Subtitles", "Interface"] as const).map((key) => (
               <View key={key} style={styles.checkCell}>
-                {lang[key] && <Ionicons name="checkmark-circle" size={20} color={COLORS.lightGray} />}
+                {lang[key] && (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={COLORS.lightGray}
+                  />
+                )}
               </View>
             ))}
           </View>
@@ -110,7 +139,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: 10,
     alignItems: "flex-end",
-    direction: "ltr",
   },
   iconHeaderContainer: {
     flex: 1,
@@ -134,7 +162,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderBottomWidth: 0.5,
     borderBottomColor: "rgba(81, 105, 150, 0.3)",
-    direction: "ltr",
   },
   langCellText: {
     color: "#cfcfcf",

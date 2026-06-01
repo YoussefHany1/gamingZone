@@ -3,7 +3,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Linking,
   Modal,
   SectionList,
   ToastAndroid,
@@ -12,6 +11,7 @@ import {
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import COLORS from "../constants/colors";
+import { openLink } from "../lib/browser";
 import { useNotificationPreferences } from "../hooks/useNotificationPreferences";
 import NotificationService from "../notificationService";
 import { useState, memo, useMemo } from "react";
@@ -92,7 +92,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
       );
       return;
     }
-    Linking.openURL(url).catch(() => {});
+    openLink(url);
   };
 
   if (websites.length === 0 || !selectedItem) {
@@ -171,10 +171,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                onPress={() =>
-                  selectedItem?.website &&
-                  Linking.openURL(selectedItem.website).catch(() => {})
-                }
+                onPress={() => handleVisitSite(selectedItem?.website)}
                 style={styles.visitSiteBtn}
               >
                 <Text style={styles.visitSiteText}>

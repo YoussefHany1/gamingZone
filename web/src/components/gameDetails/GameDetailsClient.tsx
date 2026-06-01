@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useLangStore } from "../../store/useLangStore";
 import { useAuthStore } from "../../store/useAuthStore";
 import dynamic from "next/dynamic";
@@ -10,6 +10,18 @@ import dynamic from "next/dynamic";
 const ListSelectionModal = dynamic(() => import("../ListSelectionModal"), {
   ssr: false,
 });
+import { db } from "../../lib/firebase";
+import {
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  collection,
+  getDocs,
+  updateDoc,
+  serverTimestamp,
+  deleteField,
+} from "firebase/firestore";
 import {
   Star,
   Play,
@@ -158,6 +170,7 @@ export default function GameDetailsClient({
   const [zoomScale, setZoomScale] = React.useState<number>(1);
   const [activeVideoId, setActiveVideoId] = React.useState<string | null>(null);
   const [listModalOpen, setListModalOpen] = React.useState(false);
+  const [userRating, setUserRating] = React.useState<number>(0);
 
   // Prepare game data for Firestore (same shape as the mobile app)
   const gameDataForList = React.useMemo(
@@ -168,6 +181,99 @@ export default function GameDetailsClient({
       release_date: game.release_dates?.[0]?.human ?? "",
     }),
     [game],
+  );
+
+  React.useEffect(() => {
+    if (!user || user.isAnonymous) {
+      setUserRating(0);
+      return;
+    }
+
+    const ratingDocRef = doc(db, "users", user.uid, "ratings", String(game.id));
+    const unsub = onSnapshot(ratingDocRef, (snap) => {
+      if (snap.exists()) {
+        setUserRating(snap.data()?.rating ?? 0);
+      } else {
+        setUserRating(0);
+      }
+    });
+
+    return unsub;
+  }, [user, game.id]);
+
+  const handleRateGame = React.useCallback(
+    async (newRating: number) => {
+      if (!user || user.isAnonymous) {
+        window.location.href = "/auth/login";
+        return;
+      }
+
+      const ratingDocRef = doc(db, "users", user.uid, "ratings", String(game.id));
+      const ratedGameRef = doc(
+        db,
+        "users",
+        user.uid,
+        "lists",
+        "rated",
+        "games",
+        String(game.id)
+      );
+
+      try {
+        if (newRating === 0) {
+          await deleteDoc(ratingDocRef);
+          await deleteDoc(ratedGameRef);
+        } else {
+          await setDoc(doc(db, "users", user.uid, "lists", "rated"), {
+            name: "Rated",
+            type: "default",
+            createdAt: serverTimestamp(),
+          }, { merge: true });
+
+          await setDoc(ratingDocRef, {
+            rating: newRating,
+            updatedAt: serverTimestamp(),
+          });
+          await setDoc(ratedGameRef, {
+            ...gameDataForList,
+            rating: newRating,
+            ratedAt: serverTimestamp(),
+          });
+        }
+
+        // Sync with other lists
+        const listsRef = collection(db, "users", user.uid, "lists");
+        const listsSnap = await getDocs(listsRef);
+        for (const listDoc of listsSnap.docs) {
+          if (listDoc.id === "rated") continue;
+          const gRef = doc(
+            db,
+            "users",
+            user.uid,
+            "lists",
+            listDoc.id,
+            "games",
+            String(game.id)
+          );
+          const gSnap = await getDocs(collection(db, "users", user.uid, "lists", listDoc.id, "games"));
+          const exists = gSnap.docs.some((d) => d.id === String(game.id));
+          if (exists) {
+            try {
+              if (newRating === 0) {
+                await updateDoc(gRef, { rating: deleteField() });
+              } else {
+                await updateDoc(gRef, { rating: newRating });
+              }
+            } catch (updateErr) {
+              console.log(`[GameDetailsClient] Stale cache update handled for list ${listDoc.id}`);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error rating game:", error);
+      }
+    },
+    [user, game.id, gameDataForList]
   );
 
   const handleNextScreenshot = React.useCallback(() => {
@@ -300,7 +406,7 @@ export default function GameDetailsClient({
         </div>
       </div>
       {/* Add to List button — floating below hero */}
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6 z-10 relative">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6 z-10 relative flex flex-wrap items-center gap-4">
         <button
           id="add-to-list-btn"
           onClick={() => {
@@ -315,6 +421,37 @@ export default function GameDetailsClient({
           <Bookmark className="w-4 h-4" />
           {t("games.details.addToList")}
         </button>
+
+        {/* Rating Section */}
+        {user && !user.isAnonymous && (
+          <div className={`flex items-center gap-3 bg-white/5 border border-white/10 px-5 py-2.5 rounded-xl ${isRtl ? "flex-row-reverse" : "flex-row"}`}>
+            <span className="text-sm font-bold text-white/70">
+              {t("games.details.rateThisGame") ?? "Rate this Game"}
+            </span>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => handleRateGame(userRating === star ? 0 : star)}
+                  className="hover:scale-110 active:scale-95 transition-transform"
+                >
+                  <Star
+                    className={`w-6 h-6 transition-colors ${
+                      star <= userRating
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-white/30 hover:text-white/60"
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+            {userRating > 0 && (
+              <span className="text-xs font-black text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-md">
+                {userRating} / 5
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ListSelectionModal */}
@@ -527,7 +664,10 @@ export default function GameDetailsClient({
                         <td
                           className={`py-3.5 px-4 font-extrabold text-white capitalize ${isRtl ? "text-right" : "text-left"}`}
                         >
-                          {row.name}
+                          {(() => {
+                            const translated = t(`games.details.languages.names.${row.name}`);
+                            return translated.startsWith("games.details.languages.names.") ? row.name : translated;
+                          })()}
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           {row.Audio ? (

@@ -67,7 +67,7 @@ function HomeScreen(): React.ReactElement {
     ({ item }: { item: SectionItem }) => {
       switch (item.type) {
         case "slideshow":
-          return <Slideshow website={item.website!} category={item.category!} />;
+          return <Slideshow />;
         case "news":
           return (
             <LatestNews

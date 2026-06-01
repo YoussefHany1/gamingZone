@@ -15,7 +15,7 @@ import {
 import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import auth from "@react-native-firebase/auth";
+import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import firestore, { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
 import COLORS from "../constants/colors";
 import { useTranslation } from "react-i18next";
@@ -42,6 +42,7 @@ const DEFAULT_LISTS: { id: string; name: string; type: ListType }[] = [
   { id: "played", name: "Played", type: "default" },
   { id: "wantToPlay", name: "Want to Play", type: "default" },
   { id: "playing", name: "Playing", type: "default" },
+  { id: "rated", name: "Rated", type: "default" },
 ];
 
 // main 
@@ -51,8 +52,15 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
   const [isModalVisible, setModalVisible] = useState<boolean>(false);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [showAds, setShowAds] = useState<boolean>(false);
-  const user = auth().currentUser;
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(auth().currentUser);
   const { t } = useTranslation();
+
+  useEffect(() => {
+    const unsub = auth().onAuthStateChanged((u) => {
+      setUser(u);
+    });
+    return unsub;
+  }, []);
 
   // Ad 
   useEffect(() => {
@@ -67,6 +75,7 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
         Playing: t("games.details.listStatus.playing"),
         Played: t("games.details.listStatus.played"),
         "Want to Play": t("games.details.listStatus.wantToPlay"),
+        Rated: t("games.details.listStatus.rated"),
       };
       return map[name] ?? name;
     },
@@ -82,26 +91,66 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
       .collection("users").doc(user.uid).collection("lists");
 
     const initDefaults = async (): Promise<void> => {
-      const snap = await listsRef.get();
-      if (!snap.empty) return;
-      const batch = firestore().batch();
-      DEFAULT_LISTS.forEach(({ id, name, type }) => {
-        batch.set(listsRef.doc(id), {
-          name,
-          type,
-          createdAt: firestore.FieldValue.serverTimestamp(),
-        });
-      });
-      await batch.commit();
+      try {
+        const snap = await listsRef.get();
+
+        const docRated = await listsRef.doc("rated").get();
+        if (docRated && !docRated.exists) {
+          await listsRef.doc("rated").set({
+            name: "Rated",
+            type: "default",
+            createdAt: firestore.FieldValue.serverTimestamp(),
+          });
+        }
+
+        if (snap.empty) {
+          const batch = firestore().batch();
+          DEFAULT_LISTS.forEach(({ id, name, type }) => {
+            if (id === "rated") return;
+            batch.set(listsRef.doc(id), {
+              name,
+              type,
+              createdAt: firestore.FieldValue.serverTimestamp(),
+            });
+          });
+          await batch.commit();
+        } else {
+          const allowedDefaultIds = ["played", "wantToPlay", "playing", "rated"];
+          for (const doc of snap.docs) {
+            const data = doc.data();
+            if (data.type === "default" && !allowedDefaultIds.includes(doc.id)) {
+              await doc.ref.delete();
+            }
+          }
+        }
+      } catch (error) {
+        console.error("[UserListsScreen] initDefaults error:", error);
+      }
     };
 
     initDefaults();
 
-    const unsub = listsRef.orderBy("createdAt", "asc").onSnapshot((snap) => {
-      setLists(
-        snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<GameList, "id">) }))
-      );
-    });
+    const unsub = listsRef.onSnapshot(
+      (snap) => {
+        const parsed = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<GameList, "id">) }));
+        const DEFAULT_ORDER = ["played", "wantToPlay", "playing", "rated"];
+        parsed.sort((a, b) => {
+          const aIdx = DEFAULT_ORDER.indexOf(a.id);
+          const bIdx = DEFAULT_ORDER.indexOf(b.id);
+          if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+          if (aIdx !== -1) return -1;
+          if (bIdx !== -1) return 1;
+          const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+          const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+          return aTime - bTime || a.name.localeCompare(b.name);
+        });
+        setLists(parsed);
+        console.log("[UserListsScreen] Loaded lists on mobile:", parsed.map(p => ({ id: p.id, name: p.name, type: p.type })));
+      },
+      (error) => {
+        console.error("[UserListsScreen] onSnapshot error:", error);
+      }
+    );
 
     return () => unsub();
   }, [user]);
@@ -268,7 +317,7 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
 export default UserListsScreen;
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: COLORS.primary },
+  container: { flex: 1, backgroundColor: COLORS.primary },
   listItem: {
     flexDirection: "row",
     justifyContent: "space-between",

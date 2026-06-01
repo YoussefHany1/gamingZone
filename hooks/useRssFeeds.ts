@@ -29,7 +29,7 @@ export interface UseRssFeedsResult {
   rssFeeds: RssFeedMap;
   loading: boolean;
   error: Error | null;
-  refetch: () => Promise<void>;
+  refetch: (forceRefresh?: boolean) => Promise<void>;
 }
 
 // main
@@ -67,7 +67,12 @@ const useRssFeeds = (): UseRssFeedsResult => {
     isLoading: loading,
     error,
     refetch,
-  } = useCachedData<RssFeedMap>(CACHE_KEY, fetchAndTransformFeeds);
+  } = useCachedData<RssFeedMap>(
+    CACHE_KEY, 
+    fetchAndTransformFeeds, 
+    [],
+    86400000 // 24-hour cache TTL (RSS source list is highly static)
+  );
 
   return {
     rssFeeds: rssFeeds ?? {},

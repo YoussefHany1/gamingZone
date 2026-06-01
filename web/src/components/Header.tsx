@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "./Link";
+import { usePathname, useRouter } from "next/navigation";
 import { useLangStore } from "../store/useLangStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { auth as firebaseAuth } from "../lib/firebase";
@@ -23,12 +23,25 @@ import {
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { lang, setLang, t } = useLangStore();
   const user = useAuthStore((state) => state.user);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const toggleLanguage = () => {
-    setLang(lang === "en" ? "ar" : "en");
+    const nextLang = lang === "en" ? "ar" : "en";
+    
+    // Construct the new pathname with the toggled language
+    let newPathname = pathname;
+    if (pathname.startsWith("/en")) {
+      newPathname = pathname.replace(/^\/en/, `/${nextLang}`);
+    } else if (pathname.startsWith("/ar")) {
+      newPathname = pathname.replace(/^\/ar/, `/${nextLang}`);
+    } else {
+      newPathname = `/${nextLang}${pathname === "/" ? "" : pathname}`;
+    }
+    
+    router.push(newPathname);
   };
 
   // Match mobile: sign out then sign back in as anonymous

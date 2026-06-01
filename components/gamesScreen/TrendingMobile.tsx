@@ -1,12 +1,11 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  ListRenderItemInfo,
-} from "react-native";
-import { FlashList } from "@shopify/flash-list";
+  } from "react-native";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -154,8 +153,7 @@ function TrendingMobileGames(): React.ReactElement {
       </View>
 
       {isActuallyLoading && (
-        <FlashList
-          data={skeletonData}
+        <FlashList           data={skeletonData}
           horizontal
           renderItem={renderSkeletonItem}
           showsHorizontalScrollIndicator={false}
@@ -171,8 +169,7 @@ function TrendingMobileGames(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList
-          data={gamesToShow}
+        <FlashList           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}

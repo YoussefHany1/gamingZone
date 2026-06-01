@@ -28,7 +28,7 @@
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATE_URL" android:value="https://u.expo.dev/25078fb9-8a54-4056-b988-2ac45be30e52"/>
-    <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode|locale|layoutDirection|smallestScreenSize" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true">
+    <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode|locale|layoutDirection|smallestScreenSize" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true" android:screenOrientation="unspecified">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
         <category android:name="android.intent.category.LAUNCHER"/>
@@ -38,6 +38,19 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="https" android:host="igdb-api-omega.vercel.app"/>
+        <data android:scheme="gaming-zone"/>
+      </intent-filter>
+      <intent-filter data-generated="true">
+        <action android:name="android.intent.action.VIEW"/>
+        <data android:scheme="https" android:host="gz1.vercel.app" android:pathPrefix="/news"/>
+        <data android:scheme="https" android:host="gz1.vercel.app" android:pathPrefix="/news-details"/>
+        <data android:scheme="https" android:host="gz1.vercel.app" android:pathPrefix="/lists"/>
+        <data android:scheme="http" android:host="gz1.vercel.app" android:pathPrefix="/news"/>
+        <data android:scheme="http" android:host="gz1.vercel.app" android:pathPrefix="/news-details"/>
+        <data android:scheme="http" android:host="gz1.vercel.app" android:pathPrefix="/lists"/>
+        <data android:scheme="exp+gaming-zone"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>
     </activity>
   </application>

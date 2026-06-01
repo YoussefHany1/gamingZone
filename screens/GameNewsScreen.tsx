@@ -23,7 +23,9 @@ import { useTranslation } from "react-i18next";
 import { databases } from "../lib/appwrite";
 import { Query, ID, Models } from "react-native-appwrite";
 import Constants from "expo-constants";
+import { openLink } from "../lib/browser";
 import { useNotificationPreferences } from "../hooks/useNotificationPreferences";
+import useCachedData from "../hooks/useCachedData";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import { adUnitId } from "../constants/config";
 import COLORS from "../constants/colors";
@@ -91,7 +93,7 @@ const NewsItem = memo<NewsItemProps>(({ item, lang }) => {
   }
 
   const handlePress = useCallback(() => {
-    if (item.link) Linking.openURL(item.link);
+    if (item.link) openLink(item.link);
   }, [item.link]);
 
   return (
@@ -141,8 +143,6 @@ const NewsSection = memo<NewsSectionProps>(({
   defaultExpanded = true,
   rssUrl,
 }) => {
-  const [news, setNews] = useState<NewsArticle[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [expanded, setExpanded] = useState<boolean>(defaultExpanded);
 
   const { preferences, toggleSource, loadingPreferences } =
@@ -158,9 +158,8 @@ const NewsSection = memo<NewsSectionProps>(({
 
   // Data fetch
 
-  const fetchNews = useCallback(async (): Promise<void> => {
+  const fetchNews = useCallback(async (): Promise<NewsArticle[]> => {
     try {
-      setLoading(true);
       const response = await databases.listDocuments(
         APPWRITE_DATABASE_ID ?? "",
         ARTICLES_COLLECTION_ID,
@@ -171,17 +170,21 @@ const NewsSection = memo<NewsSectionProps>(({
           Query.limit(40),
         ]
       );
-      setNews(response.documents as NewsArticle[]);
+      return response.documents as NewsArticle[];
     } catch (error) {
       console.error(`[NewsSection] Error fetching news for ${title}:`, error);
-    } finally {
-      setLoading(false);
+      return [];
     }
   }, [categorySafe, lang, title]);
 
-  useEffect(() => {
-    fetchNews();
-  }, [fetchNews]);
+  const { data, isLoading: loading } = useCachedData<NewsArticle[]>(
+    `game_news_${categorySafe}_${lang}`,
+    fetchNews,
+    [categorySafe, lang],
+    600000 // 10 minutes cache TTL
+  );
+  
+  const news = data ?? [];
 
   // Handlers
 
@@ -275,7 +278,7 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
   }, []);
 
   const handleOpenSource = useCallback(() => {
-    if (sourceLink) Linking.openURL(sourceLink);
+    if (sourceLink) openLink(sourceLink);
   }, [sourceLink]);
 
   return (

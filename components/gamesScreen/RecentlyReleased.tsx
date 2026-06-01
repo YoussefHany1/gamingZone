@@ -4,9 +4,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ListRenderItemInfo,
-} from "react-native";
-import { FlashList } from "@shopify/flash-list";
+  } from "react-native";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import axios from "axios";
@@ -191,7 +190,7 @@ function RecentlyReleasedGames(): React.ReactElement {
 
       {/* Skeleton while loading with no cached data */}
       {isActuallyLoading && (
-        <FlashList
+        <FlashList 
           data={Array.from({ length: 5 }, (_, i) => ({ id: i }))}
           keyExtractor={(item) => String(item.id)}
           renderItem={() => <SkeletonRecentlyReleased />}
@@ -208,7 +207,7 @@ function RecentlyReleasedGames(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && (
-        <FlashList
+        <FlashList 
           data={gamesToShow}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}

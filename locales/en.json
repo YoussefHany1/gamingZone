@@ -14,6 +14,8 @@
     "ad": "Advertisement",
     "loginRequired": "You need to be logged in to perform this action",
     "noInternet": "No Internet Connection",
+    "share": "Share",
+    "copied": "Copied!",
     "updateAlert": {
       "title": "Update Available",
       "message": "A new version of the app is available. Update now for the latest features and improvements.",
@@ -238,6 +240,8 @@
       "availableStores": "Available at these stores",
       "addToList": "Add to My List",
       "claimNow": "Get this game free on ",
+      "rateThisGame": "Rate this Game",
+      "yourRating": "Your Rating",
       "about": "About",
       "genres": "Genres",
       "gameModes": "Game Modes",
@@ -248,7 +252,40 @@
         "Language": "Language",
         "audio": "Audio",
         "subtitles": "Subtitles",
-        "interface": "Interface"
+        "interface": "Interface",
+        "names": {
+          "Arabic": "Arabic",
+          "English": "English",
+          "French": "French",
+          "German": "German",
+          "Spanish": "Spanish",
+          "Spanish (Spain)": "Spanish (Spain)",
+          "Spanish (Latin America)": "Spanish (Latin America)",
+          "Portuguese": "Portuguese",
+          "Portuguese (Brazil)": "Portuguese (Brazil)",
+          "Portuguese (Portugal)": "Portuguese (Portugal)",
+          "Italian": "Italian",
+          "Japanese": "Japanese",
+          "Korean": "Korean",
+          "Russian": "Russian",
+          "Chinese": "Chinese",
+          "Chinese (Simplified)": "Chinese (Simplified)",
+          "Chinese (Traditional)": "Chinese (Traditional)",
+          "Polish": "Polish",
+          "Swedish": "Swedish",
+          "Norwegian": "Norwegian",
+          "Danish": "Danish",
+          "Finnish": "Finnish",
+          "Turkish": "Turkish",
+          "Dutch": "Dutch",
+          "Thai": "Thai",
+          "Ukrainian": "Ukrainian",
+          "Czech": "Czech",
+          "Hungarian": "Hungarian",
+          "Romanian": "Romanian",
+          "Vietnamese": "Vietnamese",
+          "Hindi": "Hindi"
+        }
       },
       "engines": "Game Engines",
       "howLongToBeat": {
@@ -269,7 +306,8 @@
         "add": "Add to...",
         "played": "Played",
         "playing": "Playing",
-        "wantToPlay": "Want to Play"
+        "wantToPlay": "Want to Play",
+        "rated": "Rated"
       }
     },
     "filter": {
@@ -327,13 +365,15 @@
       "title": "Your list is empty",
       "playedSub": "Add the games you have played here.",
       "wantSub": "Add the games you want to play.",
+      "ratedSub": "Rate and review the games you have played here.",
       "findButton": "Find Your Game",
       "findButtonNew": "Find Your New Game"
     },
     "actions": {
       "confirmDeleteTitle": "Confirm deletion",
       "confirmDeleteMessage": "Are you sure you want to remove \"{{gameName}}\" from your list?",
-      "createNewList": "Create New List"
+      "createNewList": "Create New List",
+      "shareMessage": "Check out my games list \"{{listName}}\" on Gaming Zone!"
     },
     "placeholders": {
       "newListName": "e.g. RPG Favorites"

@@ -14,12 +14,13 @@ import App from "./App";
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
-  handleNotification: async (): Promise<Notifications.NotificationBehavior> => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
+  handleNotification:
+    async (): Promise<Notifications.NotificationBehavior> => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
 });
 
 // Root Registration
@@ -27,7 +28,9 @@ registerRootComponent(App);
 
 // Background/quit state messages handler
 messaging().setBackgroundMessageHandler(
-  async (remoteMessage: FirebaseMessagingTypes.RemoteMessage): Promise<void> => {
+  async (
+    remoteMessage: FirebaseMessagingTypes.RemoteMessage,
+  ): Promise<void> => {
     // console.log("📨 Background message received:", remoteMessage?.messageId);
     // console.log("📨 Background message data:", remoteMessage?.data);
     // console.log(
@@ -51,4 +54,5 @@ messaging().setBackgroundMessageHandler(
     } catch (error) {
       console.error("❌ Error handling background message:", error);
     }
-  });
+  },
+);

@@ -4,9 +4,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ListRenderItemInfo,
-} from "react-native";
-import { FlashList } from "@shopify/flash-list";
+  } from "react-native";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -172,8 +171,7 @@ function SteamTopSellers(): React.ReactElement {
 
       {/* Skeleton loading */}
       {isActuallyLoading && (
-        <FlashList
-          data={Array.from({ length: 5 }, (_, i) => ({ id: i } as any))}
+        <FlashList           data={Array.from({ length: 5 }, (_, i) => ({ id: i } as any))}
           horizontal
           renderItem={() => <SkeletonPopular />}
           showsHorizontalScrollIndicator={false}
@@ -191,8 +189,7 @@ function SteamTopSellers(): React.ReactElement {
 
       {/* Games list */}
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList
-          data={gamesToShow}
+        <FlashList           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}

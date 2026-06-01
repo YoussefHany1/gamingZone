@@ -9,7 +9,7 @@ import SkeletonBar from "./SkeletonBar";
 const GameHowLongToBeatSkeleton: React.FC = () => {
   const { t } = useTranslation();
   const shimmer = useShimmer();
-  const S = (p: Parameters<typeof SkeletonBar>[0]) => <SkeletonBar shimmer={shimmer} {...p} />;
+  const S = (p: Omit<Parameters<typeof SkeletonBar>[0], "shimmer">) => <SkeletonBar shimmer={shimmer} {...p} />;
 
   const labels = [
     t("games.details.howLongToBeat.main"),

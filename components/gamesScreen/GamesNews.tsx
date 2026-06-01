@@ -4,9 +4,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
-  ListRenderItemInfo,
-} from "react-native";
-import { FlashList } from "@shopify/flash-list";
+  } from "react-native";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
@@ -133,7 +132,7 @@ function GamesNews(): React.ReactElement {
         <SectionTitle title={t("games.list.gamesNews.title")} subtitle={t("games.list.gamesNews.subtitle")} fontSize={28} />
       </View>
 
-      <FlashList
+      <FlashList 
         data={GAMES_DATA}
         horizontal={true}
         showsHorizontalScrollIndicator={false}

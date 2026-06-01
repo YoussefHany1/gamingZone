@@ -6,9 +6,8 @@ import {
   StyleSheet,
   Dimensions,
   Linking,
-  ListRenderItemInfo,
-} from "react-native";
-import { FlashList } from "@shopify/flash-list";
+  } from "react-native";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
@@ -22,6 +21,7 @@ import { SERVER_URL } from "../../constants/config";
 import { useCountdown } from "../../hooks/useCountdown";
 import ErrorState from "../ErrorState";
 import useCachedData from "../../hooks/useCachedData";
+import { openLink } from "../../lib/browser";
 import { GamingEvent, CountdownResult } from "../types";
 import type { HomeStackParamList } from "../../navigation/AppNavigator";
 
@@ -73,7 +73,7 @@ const EventCard = React.memo<EventCardProps>(({ item, onPress }) => {
 
   const handleStreamPress = useCallback((): void => {
     if (item.live_stream_url) {
-      Linking.openURL(item.live_stream_url).catch(() =>
+      openLink(item.live_stream_url).catch(() =>
         console.error("Failed to open URL"),
       );
     }
@@ -201,7 +201,7 @@ function GamingEvents(): React.ReactElement {
       </View>
 
       {isActuallyLoading && (
-        <FlashList
+        <FlashList 
           data={Array.from({ length: 3 }, (_, i) => ({ id: i } as any))}
           horizontal
           renderItem={() => <SkeletonGamingevents />}
@@ -219,7 +219,7 @@ function GamingEvents(): React.ReactElement {
       )}
 
       {!error && Array.isArray(eventsToShow) && (
-        <FlashList
+        <FlashList 
           data={eventsToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}

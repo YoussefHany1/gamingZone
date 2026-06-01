@@ -44,6 +44,7 @@ export interface GameData {
   total_rating?: number;
   total_rating_count?: number;
   release_dates?: { human?: string }[];
+  first_release_date?: number; // Unix timestamp (seconds)
   platforms?: Platform[];
   genres?: Genre[];
   game_modes?: GameMode[];

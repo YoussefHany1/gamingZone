@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/Link";
 import axios from "axios";
 import { useLangStore } from "../../store/useLangStore";
 import { useCountdown } from "../../hooks/useCountdown";

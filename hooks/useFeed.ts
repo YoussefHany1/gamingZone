@@ -4,7 +4,7 @@ import { databases, client } from "../lib/appwrite";
 import Constants from "expo-constants";
 import useCachedData from "./useCachedData";
 
-// Fetches and caches a paginated article feed, then keeps it live via
+// Fetches and caches a paginated article feed, then keeps it live via Realtime subscriptions.
 
 // Config
 interface AppExtra {
@@ -25,10 +25,11 @@ export interface Article extends Models.Document {
 }
 export interface UseFeedResult {
   articles: Article[];
+  total: number;
   loading: boolean;
   isRefetching: boolean;
   error: Error | null;
-  refetch: () => Promise<void>;
+  refetch: (forceRefresh?: boolean) => Promise<void>;
 }
 interface RealtimeResponse {
   events: string[];
@@ -36,28 +37,42 @@ interface RealtimeResponse {
 }
 type Unsubscribe = () => void;
 
-// main
+interface FetchResponse {
+  articles: Article[];
+  total: number;
+}
+
 export default function useFeed(
   category: string | undefined,
-  siteName?: string
+  siteName?: string,
+  page: number = 1,
+  limit: number = 10,
+  language?: string
 ): UseFeedResult {
 
   const cacheKey = useMemo(
-    () => `feed_cache_${category ?? "nocat"}_${siteName ?? "all"}`,
-    [category, siteName]
+    () => `feed_cache_${category ?? "nocat"}_${siteName ?? "all"}_page_${page}_lang_${language ?? "all"}`,
+    [category, siteName, page, language]
   );
 
-  const fetchArticles = useCallback(async (): Promise<Article[]> => {
-    if (!category) return [];
+  const fetchArticles = useCallback(async (): Promise<FetchResponse> => {
+    if (!category) return { articles: [], total: 0 };
+
+    const offset = (page - 1) * limit;
 
     const queries = [
       Query.orderDesc("pubDate"),
       Query.equal("category", category),
-      Query.limit(MAX_ARTICLES),
+      Query.limit(limit),
+      Query.offset(offset),
     ];
 
     if (siteName) {
       queries.push(Query.equal("siteName", siteName));
+    }
+
+    if (language) {
+      queries.push(Query.equal("language", language));
     }
 
     const response = await databases.listDocuments(
@@ -66,30 +81,41 @@ export default function useFeed(
       queries
     );
 
-    return (response.documents as unknown as Article[]) ?? [];
-  }, [category, siteName]);
+    return {
+      articles: (response.documents as unknown as Article[]) ?? [],
+      total: response.total ?? 0,
+    };
+  }, [category, siteName, page, limit, language]);
 
   const {
-    data: articles,
+    data,
     isLoading: loading,
     isRefetching,
     error,
     refetch,
     setData,
-  } = useCachedData<Article[]>(cacheKey, fetchArticles, [category, siteName]);
+  } = useCachedData<FetchResponse>(
+    cacheKey, 
+    fetchArticles, 
+    [category, siteName, page, limit, language],
+    600000 // 10-minute cache TTL
+  );
 
-  // Keep a ref that always holds the latest articles list so the Realtime
+  const articles = data?.articles ?? [];
+  const total = data?.total ?? 0;
+
+  // Keep refs that always hold the latest data so the Realtime
   // subscription callback can read it without being in the effect's deps.
-  const articlesRef = useRef<Article[]>(articles ?? []);
+  const articlesRef = useRef<Article[]>(articles);
+  const totalRef = useRef<number>(total);
   useEffect(() => {
-    articlesRef.current = articles ?? [];
-  }, [articles]);
+    articlesRef.current = articles;
+    totalRef.current = total;
+  }, [articles, total]);
 
   // Realtime Subscription
-  // Only re-subscribes when category or siteName actually change — NOT on
-  // every new article, which was the previous source of the re-subscribe loop.
   useEffect(() => {
-    if (!category) return;
+    if (!category || page !== 1) return;
 
     const channel = `databases.${APPWRITE_DATABASE_ID}.collections.${ARTICLES_COLLECTION_ID}.documents`;
 
@@ -104,11 +130,12 @@ export default function useFeed(
 
         const newDoc = response.payload;
 
-        // Filter: new document must match the current category + site filters
+        // Filter: new document must match the current category + site + language filters
         const matchesCategory = newDoc.category === category;
         const matchesSite = siteName ? newDoc.siteName === siteName : true;
+        const matchesLang = language ? (newDoc as any).language === language : true;
 
-        if (!matchesCategory || !matchesSite) return;
+        if (!matchesCategory || !matchesSite || !matchesLang) return;
 
         // Read the live articles from the ref — no re-subscribe needed
         const currentArticles = articlesRef.current;
@@ -119,9 +146,9 @@ export default function useFeed(
         );
         if (alreadyExists) return;
 
-        // Prepend new article and trim to MAX_ARTICLES
-        const updated = [newDoc, ...currentArticles].slice(0, MAX_ARTICLES);
-        setData(updated);
+        // Prepend new article and trim to limit
+        const updated = [newDoc, ...currentArticles].slice(0, limit);
+        setData({ articles: updated, total: totalRef.current + 1 });
       }
     ) as unknown as Unsubscribe;
 
@@ -138,10 +165,11 @@ export default function useFeed(
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, siteName, setData]);
+  }, [category, siteName, page, limit, language, setData]);
 
   return {
-    articles: articles ?? [],
+    articles,
+    total,
     loading,
     isRefetching,
     error,

@@ -1,9 +1,10 @@
 import React, { memo } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 import COLORS from "../../constants/colors";
+import { openLink } from "../../lib/browser";
 
 interface Props {
   claimUrl?: string;
@@ -18,7 +19,7 @@ const GameActionButtons: React.FC<Props> = ({ claimUrl, store = "", onAddToList 
     <View style={{ marginVertical: 20 }}>
       {claimUrl && (
         <View style={styles.addToList}>
-          <TouchableOpacity activeOpacity={0.9} onPress={() => Linking.openURL(claimUrl)} style={{ width: "100%" }}>
+          <TouchableOpacity activeOpacity={0.9} onPress={() => openLink(claimUrl)} style={{ width: "100%" }}>
             <LinearGradient colors={["#516996", "#3b4d6e"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.addToListBtn}>
               <Ionicons name="gift" size={24} color="#fff" style={{ marginRight: 10 }} />
               <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold", letterSpacing: 0.5 }}>

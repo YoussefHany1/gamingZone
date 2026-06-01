@@ -6,9 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   ViewStyle,
-  ListRenderItemInfo,
-} from "react-native";
-import { FlashList } from "@shopify/flash-list";
+  } from "react-native";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
 import COLORS from "../constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -102,7 +101,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(({
               </TouchableOpacity>
             </View>
 
-            <FlashList
+            <FlashList 
               data={options}
               keyExtractor={(item) => item.value.toString()}
               renderItem={renderItem}

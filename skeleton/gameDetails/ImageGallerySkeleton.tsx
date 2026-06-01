@@ -8,7 +8,7 @@ const { width } = Dimensions.get("window");
 // Full-width cover + thumbnail strip skeleton
 const ImageGallerySkeleton: React.FC = () => {
   const shimmer = useShimmer();
-  const S = (p: Omit<Parameters<typeof SkeletonBar>[0], "shimmer">) => <SkeletonBar shimmer={shimmer} {...p} />;
+  const S = (p: Omit<Omit<Parameters<typeof SkeletonBar>[0], "shimmer">, "shimmer">) => <SkeletonBar shimmer={shimmer} {...p} />;
 
   return (
     <View>

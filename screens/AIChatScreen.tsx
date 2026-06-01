@@ -26,7 +26,7 @@ const AIChatScreen: React.FC = memo(() => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
-  const flatListRef = useRef<FlashList<any>>(null);
+  const flatListRef = useRef<any>(null);
 
   const suggestions = useMemo(() => [
     t("aiChat.suggestions.basedOnList"),
@@ -97,8 +97,7 @@ const AIChatScreen: React.FC = memo(() => {
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
-      <FlashList
-        ref={flatListRef}
+      <FlashList         ref={flatListRef}
         data={messages.filter(m => m.role !== "system")}
         keyExtractor={(_, index) => index.toString()}
         renderItem={renderItem}

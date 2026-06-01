@@ -17,6 +17,7 @@ export const useLangStore = create<LangState>((set, get) => ({
     set({ lang });
     if (typeof window !== "undefined") {
       localStorage.setItem("gaming_zone_lang", lang);
+      document.cookie = `NEXT_LOCALE=${lang}; path=/; max-age=31536000; SameSite=Lax`;
       document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
       document.documentElement.lang = lang;
     }

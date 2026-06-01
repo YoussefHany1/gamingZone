@@ -11,11 +11,16 @@ import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
+import Constants from "expo-constants";
+import { databases } from "../lib/appwrite";
 import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
+import { openLink } from "../lib/browser";
 
 // Types
 interface ArticleParams {
+  id?: string;
+  $id?: string;
   title?: string;
   link?: string;
   thumbnail?: string;
@@ -30,7 +35,9 @@ type RootParamList = { NewsDetails: ArticleParams };
 
 // Constants
 
-const SHARE_DOMAIN = "https://igdb-api-omega.vercel.app/" as const;
+const SHARE_DOMAIN = "https://gz1.vercel.app" as const;
+const { APPWRITE_DATABASE_ID } = (Constants.expoConfig?.extra ?? {}) as { APPWRITE_DATABASE_ID?: string };
+const ARTICLES_COLLECTION_ID = "articles" as const;
 
 // main
 const NewsDetails = memo((): React.ReactElement => {
@@ -41,16 +48,61 @@ const NewsDetails = memo((): React.ReactElement => {
   const params = route.params ?? {};
   const article = (params.article ?? params) as ArticleParams;
 
+  const [loadingArticle, setLoadingArticle] = useState<boolean>(false);
+  const [fetchedArticle, setFetchedArticle] = useState<ArticleParams | null>(null);
   const [showAds, setShowAds] = useState<boolean>(false);
   const currentLang = i18n.language;
 
-  const title = article.title ?? "";
-  const link = article.link ?? "";
-  const thumbnail = article.thumbnail ?? "";
-  const siteName = article.siteName ?? "";
-  const siteImage = article.siteImage ?? "";
-  const pubDate = article.pubDate ?? "";
-  const description = article.description ?? "";
+  const articleId = params.id ?? params.$id ?? article.id ?? article.$id;
+  const hasFullDetails = !!(article.title && article.link);
+
+  useEffect(() => {
+    if (articleId && !hasFullDetails) {
+      let isMounted = true;
+      const fetchFromAppwrite = async () => {
+        try {
+          setLoadingArticle(true);
+          const doc = await databases.getDocument(
+            APPWRITE_DATABASE_ID ?? "",
+            ARTICLES_COLLECTION_ID,
+            articleId
+          );
+          if (isMounted) {
+            setFetchedArticle({
+              id: doc.$id,
+              $id: doc.$id,
+              title: doc.title,
+              link: doc.link,
+              thumbnail: doc.thumbnail,
+              siteName: doc.siteName,
+              siteImage: doc.siteImage,
+              pubDate: doc.pubDate,
+              description: doc.description,
+            });
+          }
+        } catch (err: any) {
+          console.error("[NewsDetails] Error fetching article by ID:", err.message);
+          ToastAndroid.show(t("news.fetchError") || "Error loading news details", ToastAndroid.SHORT);
+        } finally {
+          if (isMounted) {
+            setLoadingArticle(false);
+          }
+        }
+      };
+      fetchFromAppwrite();
+      return () => { isMounted = false; };
+    }
+  }, [articleId, hasFullDetails, t]);
+
+  const activeArticle = hasFullDetails ? article : (fetchedArticle ?? {});
+
+  const title = activeArticle.title ?? "";
+  const link = activeArticle.link ?? "";
+  const thumbnail = activeArticle.thumbnail ?? "";
+  const siteName = activeArticle.siteName ?? "";
+  const siteImage = activeArticle.siteImage ?? "";
+  const pubDate = activeArticle.pubDate ?? "";
+  const description = activeArticle.description ?? "";
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
@@ -90,13 +142,15 @@ const NewsDetails = memo((): React.ReactElement => {
   const handleGoBack = useCallback(() => navigation.goBack(), [navigation]);
 
   const handleOpenLink = useCallback(() => {
-    if (link) Linking.openURL(link);
+    if (link) openLink(link);
   }, [link]);
 
   const onShare = useCallback(async (): Promise<void> => {
     try {
       const excerpt = description ? description.substring(0, 200) + "..." : "";
-      const longUrl = `${SHARE_DOMAIN}/news-details?title=${encodeURIComponent(title)}&link=${encodeURIComponent(link)}&thumbnail=${encodeURIComponent(thumbnail)}&siteName=${encodeURIComponent(siteName)}&siteImage=${encodeURIComponent(siteImage)}&pubDate=${encodeURIComponent(pubDate)}&description=${encodeURIComponent(excerpt)}`;
+      const longUrl = articleId
+        ? `${SHARE_DOMAIN}/news/${articleId}`
+        : `${SHARE_DOMAIN}/news-details?title=${encodeURIComponent(title)}&link=${encodeURIComponent(link)}&thumbnail=${encodeURIComponent(thumbnail)}&siteName=${encodeURIComponent(siteName)}&siteImage=${encodeURIComponent(siteImage)}&pubDate=${encodeURIComponent(pubDate)}&description=${encodeURIComponent(excerpt)}`;
 
       let finalUrl = longUrl;
       try {
@@ -115,7 +169,15 @@ const NewsDetails = memo((): React.ReactElement => {
     } catch (error: unknown) {
       console.warn("[NewsDetails] Share error:", (error as Error).message);
     }
-  }, [title, link, thumbnail, siteName, siteImage, pubDate, description, t]);
+  }, [articleId, title, link, thumbnail, siteName, siteImage, pubDate, description, t]);
+
+  if (loadingArticle) {
+    return (
+      <View style={[styles.modalContainer, { justifyContent: "center", alignItems: "center", backgroundColor: COLORS.primary }]}>
+        <ActivityIndicator size="large" color={COLORS.secondary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.modalContainer}>

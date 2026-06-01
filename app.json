@@ -2,7 +2,9 @@
   "expo": {
     "name": "Gaming Zone",
     "slug": "gaming-zone",
-    "version": "1.0.3",
+    "orientation": "default",
+    "scheme": "gaming-zone",
+    "version": "1.0.4",
     "icon": "./assets/logo-background.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -13,10 +15,10 @@
       "backgroundColor": "#0c1a33"
     },
     "android": {
+      "resizeableActivity": true,
       "versionCode": 15,
-      "runtimeVersion": "1.0.3",
+      "runtimeVersion": "1.0.4",
       "userInterfaceStyle": "light",
-      "edgeToEdgeEnabled": true,
       "package": "com.yh.gamingzone",
       "googleServicesFile": "./google-services.json",
       "config": {
@@ -25,7 +27,45 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#0c1a33"
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "gz1.vercel.app",
+              "pathPrefix": "/news"
+            },
+            {
+              "scheme": "https",
+              "host": "gz1.vercel.app",
+              "pathPrefix": "/news-details"
+            },
+            {
+              "scheme": "https",
+              "host": "gz1.vercel.app",
+              "pathPrefix": "/lists"
+            },
+            {
+              "scheme": "http",
+              "host": "gz1.vercel.app",
+              "pathPrefix": "/news"
+            },
+            {
+              "scheme": "http",
+              "host": "gz1.vercel.app",
+              "pathPrefix": "/news-details"
+            },
+            {
+              "scheme": "http",
+              "host": "gz1.vercel.app",
+              "pathPrefix": "/lists"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "notification": {
       "icon": "./assets/icon.png",
@@ -55,9 +95,11 @@
       "url": "https://u.expo.dev/25078fb9-8a54-4056-b988-2ac45be30e52"
     },
     "ios": {
+      "supportsTablet": true,
       "runtimeVersion": {
         "policy": "appVersion"
-      }
+      },
+      "associatedDomains": ["applinks:gz1.vercel.app"]
     },
     "extra": {
       "APPWRITE_PROJECT": "6930387e0009494a1c2a",

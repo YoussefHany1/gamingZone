@@ -13,8 +13,6 @@ import {
   Platform,
 } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { ID } from "react-native-appwrite";
-import { databases } from "../lib/appwrite";
 import auth from "@react-native-firebase/auth";
 import COLORS from "../constants/colors";
 import { useTranslation } from "react-i18next";
@@ -28,9 +26,12 @@ type FeedbackType = "suggestion" | "problem" | "other";
 type RootStackParamList = { ContactScreen: undefined };
 type Props = NativeStackScreenProps<RootStackParamList, "ContactScreen">;
 
-// Constants
-const DATABASE_ID = "6930389a0033ba85bfe1" as const;
-const COLLECTION_ID = "contact" as const;
+// EmailJS Config
+const EMAILJS_SERVICE_ID = (process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID ?? "").replace(/^"|"$/g, "");
+const EMAILJS_TEMPLATE_ID = (process.env.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID ?? "").replace(/^"|"$/g, "");
+const EMAILJS_PUBLIC_KEY = (process.env.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY ?? "").replace(/^"|"$/g, "");
+
+// Other constants
 const MAX_MESSAGE_LENGTH = 5000 as const;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_MESSAGES_PER_HOUR = 5 as const;
@@ -129,17 +130,34 @@ const ContactScreen: React.FC<Props> = ({ navigation }) => {
 
     setLoading(true);
     try {
-      await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), {
-        type,
-        message,
-        email,
-        userId: currentUser?.uid ?? null,
+      const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_TEMPLATE_ID,
+          user_id: EMAILJS_PUBLIC_KEY,
+          template_params: {
+            feedback_type: type,
+            message,
+            from_email: email || "(not provided)",
+            user_id: currentUser?.uid ?? "anonymous",
+          },
+        }),
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`EmailJS HTTP Error: ${response.status} ${errorText}`);
+      }
+
       await saveRateLimitTimestamp(recentTimestamps);
       ToastAndroid.show(t("settings.contact.success"), ToastAndroid.LONG);
       navigation.goBack();
     } catch (error) {
-      console.error("[ContactScreen] Error sending feedback:", error);
+      console.error("[ContactScreen] Error sending email:", error);
       ToastAndroid.show(t("settings.contact.error"), ToastAndroid.LONG);
     } finally {
       setLoading(false);

@@ -15,13 +15,18 @@ interface WeeklySummaryDoc {
   summary_en?: string;
 }
 
-export default function WeeklyRecap() {
+export default function WeeklyRecap({
+  initialSummary,
+}: {
+  initialSummary?: WeeklySummaryDoc | null;
+}) {
   const { lang, t } = useLangStore();
-  const [summary, setSummary] = useState<WeeklySummaryDoc | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState<WeeklySummaryDoc | null>(initialSummary || null);
+  const [loading, setLoading] = useState(!initialSummary);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
+    if (initialSummary) return;
     async function fetchSummary() {
       try {
         const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "";

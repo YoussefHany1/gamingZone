@@ -5,9 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  ListRenderItemInfo,
-} from "react-native";
-import { FlashList } from "@shopify/flash-list";
+  } from "react-native";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -179,7 +178,7 @@ function MostAnticipated(): React.ReactElement {
       <View style={styles.headerContainer}>
         <SectionTitle title={t("games.list.mostAnticipated.title")} subtitle={t("games.list.mostAnticipated.subtitle")} fontSize={28} />
       </View>
-      <FlashList
+      <FlashList 
         data={gamesToShow}
         horizontal
         showsHorizontalScrollIndicator={false}

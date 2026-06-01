@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Linking, Dimensions } from "r
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { openLink } from "../../lib/browser";
 import type { GamingEventVideo } from "../types";
 
 const { width } = Dimensions.get("window");
@@ -10,9 +11,7 @@ const { width } = Dimensions.get("window");
 interface VideoCardProps { video: GamingEventVideo }
 const VideoCard = memo<VideoCardProps>(({ video }) => {
   const handlePress = useCallback(() => {
-    Linking.openURL(`https://www.youtube.com/watch?v=${video.video_id}`).catch(() =>
-      console.error("Failed to open video")
-    );
+    openLink(`https://www.youtube.com/watch?v=${video.video_id}`);
   }, [video.video_id]);
 
   return (

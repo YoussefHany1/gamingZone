@@ -123,7 +123,7 @@ async function createArticle(sourceData, item) {
   }
 }
 
-async function cleanupOldArticles(siteName) {
+async function cleanupOldArticles(siteName, category) {
   try {
     const excessDocs = await databases.listDocuments(
       CONFIG.APPWRITE_DATABASE_ID,

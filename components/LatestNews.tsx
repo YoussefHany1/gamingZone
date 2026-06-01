@@ -1,4 +1,12 @@
-import { useCallback, memo, useMemo, Fragment } from "react";
+import {
+  useCallback,
+  memo,
+  useMemo,
+  Fragment,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
 import {
   View,
   Text,
@@ -6,15 +14,16 @@ import {
   Pressable,
   RefreshControl,
   ToastAndroid,
-  ListRenderItemInfo,
+  InteractionManager,
 } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { Ionicons } from "@expo/vector-icons";
 import NetInfo from "@react-native-community/netinfo";
 import useFeed from "../hooks/useFeed";
 import { intervalToDuration } from "date-fns";
-import DropdownPicker from "../components/DropdownPicker";
+import DropdownPicker from "./DropdownPicker";
 import SkeletonNewsItem from "../skeleton/SkeletonNewsItem";
 import ErrorState from "./ErrorState";
 import { useTranslation } from "react-i18next";
@@ -34,6 +43,9 @@ interface LatestNewsProps {
   websitesList?: RssFeedSource[];
   showFooter?: boolean;
   scrollEnabled?: boolean;
+  enablePagination?: boolean;
+  itemsPerPage?: number;
+  adInterval?: number;
 }
 
 // Memoized row component
@@ -43,10 +55,20 @@ interface NewsItemProps {
   language?: string;
   onPress: (item: Article) => void;
   t: (key: string, opts?: object) => string;
+  adInterval?: number;
+  showAds?: boolean;
 }
 
-const NewsItem = memo(function NewsItem({ item, index, language, onPress, t }: NewsItemProps) {
-  const shouldShowAd = (index + 1) % 8 === 0;
+const NewsItem = memo(function NewsItem({
+  item,
+  index,
+  language,
+  onPress,
+  t,
+  adInterval = 8,
+  showAds = false,
+}: NewsItemProps) {
+  const shouldShowAd = showAds && (index + 1) % adInterval === 0;
 
   const timeAgo = useMemo(() => {
     const dateString = item?.pubDate;
@@ -66,18 +88,31 @@ const NewsItem = memo(function NewsItem({ item, index, language, onPress, t }: N
   }, [item?.pubDate, t]);
 
   return (
-    <View style={[styles.container, language === "ar" ? { direction: "rtl" } : { direction: "ltr" }]}>
+    <View
+      style={[
+        styles.container,
+        language === "ar" ? { direction: "rtl" } : { direction: "ltr" },
+      ]}
+    >
       <Pressable
         style={styles.NewsContainer}
         android_ripple={{ color: COLORS.secondary }}
         onPress={() => onPress(item)}
       >
         <View style={styles.textContainer}>
-          <Text numberOfLines={3} style={[styles.headline, language === "ar" ? { marginLeft: 8 } : { marginRight: 8 }]}>
+          <Text
+            numberOfLines={3}
+            style={[
+              styles.headline,
+              language === "ar" ? { marginLeft: 8 } : { marginRight: 8 },
+            ]}
+          >
             {item?.title ? item.title.substring(0, 100) : ""}
           </Text>
           {item?.description ? (
-            <Text numberOfLines={2} style={styles.par}>{item.description}..</Text>
+            <Text numberOfLines={2} style={styles.par}>
+              {item.description}..
+            </Text>
           ) : null}
           <Text style={styles.timeAgoText}>{timeAgo}</Text>
         </View>
@@ -88,16 +123,16 @@ const NewsItem = memo(function NewsItem({ item, index, language, onPress, t }: N
             source={
               item?.thumbnail
                 ? {
-                  uri: item.thumbnail,
-                  headers: {
-                    Referer: "https://www.saudigamer.com/",
-                    "User-Agent": "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36",
-                  },
-                }
+                    uri: item.thumbnail,
+                    headers: {
+                      Referer: "https://www.saudigamer.com/",
+                      "User-Agent":
+                        "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36",
+                    },
+                  }
                 : require("../assets/image-not-found.webp")
             }
             contentFit="cover"
-
             cachePolicy="memory-disk"
             allowDownscaling={true}
           />
@@ -107,7 +142,11 @@ const NewsItem = memo(function NewsItem({ item, index, language, onPress, t }: N
       {shouldShowAd && (
         <View style={styles.ad}>
           <Text style={styles.adText}>{t("common.ad")}</Text>
-          <BannerAd key={`ad-${index}`} unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
+          <BannerAd
+            key={`ad-${index}`}
+            unitId={adUnitId}
+            size={BannerAdSize.MEDIUM_RECTANGLE}
+          />
         </View>
       )}
     </View>
@@ -126,9 +165,35 @@ function LatestNews({
   websitesList,
   showFooter = true,
   scrollEnabled = true,
+  enablePagination = false,
+  itemsPerPage = 10,
+  adInterval = 8,
 }: LatestNewsProps) {
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
+  const listRef = useRef<any>(null);
+
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [showAds, setShowAds] = useState<boolean>(false);
+
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() =>
+      setShowAds(true),
+    );
+    return () => task.cancel();
+  }, []);
+
+  // Reset page when category, website, or language changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [category, website, language]);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    if (listRef.current) {
+      listRef.current.scrollToOffset({ offset: 0, animated: true });
+    }
+  }, []);
 
   const feedCategory = category !== undefined ? category : undefined;
   const feedWebsite =
@@ -136,20 +201,25 @@ function LatestNews({
       ? website
       : undefined;
 
-  const { articles, loading, error, refetch } = useFeed(
+  const { articles, total, loading, error, refetch } = useFeed(
     feedCategory,
     feedWebsite,
+    currentPage,
+    itemsPerPage,
+    language,
   );
 
-  let filteredArticles = articles as Article[];
-  if ((!websitesList || websitesList.length === 0) && language) {
-    filteredArticles = (articles as Article[]).filter((item: Article) => item.language === language);
-  }
+  // Reset page if total items drop below current page range
+  useEffect(() => {
+    if (currentPage > 1 && (currentPage - 1) * itemsPerPage >= (total || 0)) {
+      setCurrentPage(1);
+    }
+  }, [total, itemsPerPage, currentPage]);
 
   const listData: Article[] =
-    typeof limit === "number"
-      ? filteredArticles.slice(0, limit)
-      : filteredArticles;
+    typeof limit === "number" && !enablePagination
+      ? (articles as Article[]).slice(0, limit)
+      : (articles as Article[]);
 
   // Navigate to the article detail screen
   const handlePressArticle = useCallback(
@@ -167,9 +237,11 @@ function LatestNews({
         language={language}
         onPress={handlePressArticle}
         t={t as (key: string, opts?: object) => string}
+        adInterval={adInterval}
+        showAds={showAds}
       />
     ),
-    [language, handlePressArticle, t],
+    [language, handlePressArticle, t, adInterval, showAds],
   );
 
   const renderHeader = useCallback(() => {
@@ -195,7 +267,123 @@ function LatestNews({
   }, [category, t, showDropdown, selectedItem, websitesList, onChangeFeed]);
 
   const renderFooter = useCallback(() => {
-    if (!showFooter || loading || listData.length === 0) return null;
+    if (loading) return null;
+
+    if (enablePagination) {
+      const totalPages = Math.ceil((total || 0) / itemsPerPage);
+      if (totalPages <= 1) return null;
+
+      const pageNumbers: number[] = [];
+      const maxButtons = 5;
+      let startPage = Math.max(1, currentPage - 2);
+      let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+      if (endPage - startPage + 1 < maxButtons) {
+        startPage = Math.max(1, endPage - maxButtons + 1);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+
+      const isRtl = language === "ar";
+      const prevIcon = isRtl ? "chevron-forward" : "chevron-back";
+      const nextIcon = isRtl ? "chevron-back" : "chevron-forward";
+
+      return (
+        <View style={styles.paginationContainer}>
+          <Pressable
+            disabled={currentPage === 1}
+            style={[
+              styles.pageButton,
+              currentPage === 1 && styles.disabledPageButton,
+            ]}
+            onPress={() => handlePageChange(currentPage - 1)}
+          >
+            <Ionicons name={prevIcon} size={18} color="white" />
+          </Pressable>
+
+          {startPage > 1 && (
+            <>
+              <Pressable
+                style={[
+                  styles.pageNumberButton,
+                  currentPage === 1 && styles.activePageNumberButton,
+                ]}
+                onPress={() => handlePageChange(1)}
+              >
+                <Text
+                  style={[
+                    styles.pageNumberText,
+                    currentPage === 1 && styles.activePageNumberText,
+                  ]}
+                >
+                  1
+                </Text>
+              </Pressable>
+              {startPage > 2 && <Text style={styles.ellipsis}>...</Text>}
+            </>
+          )}
+
+          {pageNumbers.map((page) => (
+            <Pressable
+              key={page}
+              style={[
+                styles.pageNumberButton,
+                currentPage === page && styles.activePageNumberButton,
+              ]}
+              onPress={() => handlePageChange(page)}
+            >
+              <Text
+                style={[
+                  styles.pageNumberText,
+                  currentPage === page && styles.activePageNumberText,
+                ]}
+              >
+                {page}
+              </Text>
+            </Pressable>
+          ))}
+
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && (
+                <Text style={styles.ellipsis}>...</Text>
+              )}
+              <Pressable
+                style={[
+                  styles.pageNumberButton,
+                  currentPage === totalPages && styles.activePageNumberButton,
+                ]}
+                onPress={() => handlePageChange(totalPages)}
+              >
+                <Text
+                  style={[
+                    styles.pageNumberText,
+                    currentPage === totalPages && styles.activePageNumberText,
+                  ]}
+                >
+                  {totalPages}
+                </Text>
+              </Pressable>
+            </>
+          )}
+
+          <Pressable
+            disabled={currentPage === totalPages}
+            style={[
+              styles.pageButton,
+              currentPage === totalPages && styles.disabledPageButton,
+            ]}
+            onPress={() => handlePageChange(currentPage + 1)}
+          >
+            <Ionicons name={nextIcon} size={18} color="white" />
+          </Pressable>
+        </View>
+      );
+    }
+
+    if (!showFooter || listData.length === 0) return null;
     return (
       <View style={styles.footerContainer}>
         <Text style={styles.footerText}>
@@ -203,23 +391,36 @@ function LatestNews({
         </Text>
       </View>
     );
-  }, [loading, listData.length, t, showFooter]);
+  }, [
+    loading,
+    enablePagination,
+    total,
+    itemsPerPage,
+    currentPage,
+    language,
+    showFooter,
+    listData.length,
+    t,
+    handlePageChange,
+  ]);
 
   const onRefresh = useCallback(async (): Promise<void> => {
     const state = await NetInfo.fetch();
     if (!state.isConnected) {
       ToastAndroid.show(
-        t("common.noInternet") || "No Internet Connection. Showing cached data.",
+        t("common.noInternet") ||
+          "No Internet Connection. Showing cached data.",
         ToastAndroid.LONG,
       );
       return;
     }
-    refetch();
+    refetch(true);
   }, [refetch, t]);
 
-  const renderEmptyComponent = useCallback(() => (
-    <ErrorState message={t("news.noArticles")} />
-  ), [t]);
+  const renderEmptyComponent = useCallback(
+    () => <ErrorState message={t("news.noArticles")} />,
+    [t],
+  );
 
   if (loading && articles.length === 0) {
     return (
@@ -247,8 +448,10 @@ function LatestNews({
         ) : (
           <View>
             {listData.map((item, index) => (
-              <Fragment key={item.$id ? `${item.$id}-${index}` : index.toString()}>
-                {renderItem({ item, index, separators: {} as any })}
+              <Fragment
+                key={item.$id ? `${item.$id}-${index}` : index.toString()}
+              >
+                {renderItem({ item, index } as any)}
               </Fragment>
             ))}
           </View>
@@ -261,6 +464,7 @@ function LatestNews({
   return (
     <View style={styles.container}>
       <FlashList
+        ref={listRef}
         data={listData}
         renderItem={renderItem}
         keyExtractor={(item, index) =>
@@ -399,5 +603,51 @@ const styles = StyleSheet.create({
     color: "#779bdd",
     fontSize: 14,
     fontStyle: "italic",
+  },
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  pageButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.button,
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 8,
+  },
+  disabledPageButton: {
+    opacity: 0.3,
+  },
+  pageNumberButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "transparent",
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 4,
+  },
+  activePageNumberButton: {
+    backgroundColor: COLORS.secondary,
+  },
+  pageNumberText: {
+    color: COLORS.lightGray,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  activePageNumberText: {
+    color: "#ffffff",
+    fontWeight: "bold",
+  },
+  ellipsis: {
+    color: COLORS.lightGray,
+    fontSize: 16,
+    marginHorizontal: 4,
   },
 });
