@@ -34,6 +34,7 @@ interface GameList {
   id: string;
   name: string;
   type: "default" | "custom";
+  createdAt?: any;
 }
 
 const DEFAULT_LISTS = [
