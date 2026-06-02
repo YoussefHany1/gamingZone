@@ -59,7 +59,9 @@ const Slideshow = React.memo(function Slideshow() {
   useEffect(() => {
     async function fetchTrailers() {
       try {
-        const response = await axios.get<Game[]>(`${SERVER_URL}/latest-trailers`);
+        const response = await axios.get<Game[]>(
+          `${SERVER_URL}/latest-trailers`,
+        );
         if (Array.isArray(response.data)) {
           setTrailers(response.data.filter(hasVideo));
         }
@@ -105,7 +107,7 @@ const Slideshow = React.memo(function Slideshow() {
 
   return (
     <>
-      <div 
+      <div
         className="relative w-full h-72 sm:h-96 md:h-[450px] rounded-3xl overflow-hidden glass-panel border border-white/10 group shadow-2xl cursor-pointer"
         onClick={() => videoId && setPlayingVideoId(videoId)}
       >
@@ -142,9 +144,7 @@ const Slideshow = React.memo(function Slideshow() {
 
         {/* Content Info Card */}
         <div
-          className={`absolute bottom-0 inset-x-0 z-10 p-6 md:p-10 flex gap-4 sm:gap-6 items-end ${
-            lang === "ar" ? "flex-row-reverse text-right" : "flex-row text-left"
-          }`}
+          className={`absolute bottom-0 inset-x-0 z-10 p-6 md:p-10 flex gap-4 sm:gap-6 items-end `}
         >
           {/* Mini Poster Cover */}
           {currentSlide.cover?.image_id && (
@@ -171,7 +171,7 @@ const Slideshow = React.memo(function Slideshow() {
         </div>
 
         {/* Dots Indicator */}
-        <div className="absolute bottom-4 right-4 z-20 flex gap-1.5">
+        <div className="absolute bottom-4 right-0 left-0 z-20 flex justify-center gap-1.5">
           {trailers.map((_, i) => (
             <button
               key={i}
@@ -179,7 +179,7 @@ const Slideshow = React.memo(function Slideshow() {
                 e.stopPropagation();
                 setCurrentIndex(i);
               }}
-              className={`w-2.5 h-1.5 rounded-full transition-all duration-300 ${
+              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                 i === currentIndex ? "w-6 bg-light-blue" : "bg-white/30"
               }`}
             ></button>
@@ -212,6 +212,6 @@ const Slideshow = React.memo(function Slideshow() {
       )}
     </>
   );
-})
+});
 
 export default Slideshow;

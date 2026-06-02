@@ -1,5 +1,20 @@
 # 🎮 Gaming Zone
 
+<p align="center">
+  <img src="assets/logo-background.png" width="120" style="border-radius: 24px; box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.3);" alt="Gaming Zone Logo" />
+</p>
+
+<h1 align="center">🎮 Gaming Zone</h1>
+
+<p align="center">
+  <strong>The Ultimate Video Game Hub & Library Tracker</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/YoussefHany1/gamingZone/stargazers"><img src="https://img.shields.io/github/stars/YoussefHany1/gamingZone?style=for-the-badge&color=12c2e9" alt="GitHub Stars" /></a>
+  <a href="https://github.com/YoussefHany1/gamingZone/network/members"><img src="https://img.shields.io/github/forks/YoussefHany1/gamingZone?style=for-the-badge&color=c471ed" alt="GitHub Forks" /></a>
+</p>
+
 **Gaming Zone** is a comprehensive platform for video game enthusiasts. It features a modern **React Native (Expo)** mobile application and a powerful **Next.js** web platform, providing a seamless experience for tracking the latest gaming news, reviews, and free game offers.
 
 The platform aggregates content from top sources, and allows users to manage their personal game library, powered by a robust backend using **Appwrite**, **Firebase**, and a custom **API**.
@@ -9,12 +24,15 @@ The platform aggregates content from top sources, and allows users to manage the
 - **📰 Exclusive News & Reviews**: Stay updated with the latest articles, game reviews, hardware news, and Esports coverage from global and local sources (e.g., Destructoid, Arab Hardware).
 - **🆓 Free Games Tracker**: Get instant alerts for free games available on major stores like Epic Games.
 - **🔔 Smart Notifications**: Advanced Push Notifications system (FCM) to keep you informed about breaking news and limited-time offers.
-- **🌍 Multi-language Support**: Full support for English and Arabic (RTL/LTR).
+- **🌍 Multi-language Support**: Full support for English and Arabic (RTL/LTR) with customized layouts.
 - **👤 User Profiles**: Create an account, sign in, and save your favorite games using secure authentication with robust profile validation.
 - **⚡ High Performance**: Optimized browsing experience with intelligent data caching, React component memoization, and a modular architecture.
 - **🤖 Automated Content & AI**: Weekly news summaries powered by Google Gemini API (with OpenAI ChatGPT fallback), plus automated scripts to fetch the latest news and game offers without manual intervention.
 - **🕹️ In-Depth Game Details**: Rich game profiles featuring Steam PC system requirements, gaming event details, countdowns, and stream links.
 - **👋 Interactive Onboarding**: Engaging first-launch onboarding flow with swipeable video demonstrations of core app sections.
+- **📚 Interactive Library & Ratings**: Comprehensive library tracking lists (_Played_, _Want to Play_, _Playing_, _Rated_). Features full cross-list synchronization, automatic "Rated" list filing upon score submission, and cascading rating deletions.
+- **📱 Universal Large-Screen & Multi-Window**: Free orientation rotation and multi-window resizing support on Android, tablets, iPads (Universal iOS), and foldables.
+- **🎨 Immersive Android 15 (Edge-to-Edge) Ready**: Modern fully transparent status and navigation bar implementation matching Google's latest target SDK 35 standards for a full-bleed interface.
 
 ## 🛠️ Tech Stack
 
