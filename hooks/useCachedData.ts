@@ -27,18 +27,21 @@ export default function useCachedData<T>(
   const [error, setError] = useState<Error | null>(null);
 
   const currentDataRef = useRef<T | null>(null);
+  const isMountedRef = useRef<boolean>(true);
 
   const loadData = useCallback(async (forceRefresh = false): Promise<void> => {
     try {
-      setIsRefetching(true);
-      setError(null);
+      if (isMountedRef.current) {
+        setIsRefetching(true);
+        setError(null);
+      }
 
       const timestampKey = `${key}_timestamp`;
 
       // 1. Serve whatever is in the cache immediately to the UI
       if (!currentDataRef.current) {
         const cached = await AsyncStorage.getItem(key);
-        if (cached) {
+        if (cached && isMountedRef.current) {
           const raw = JSON.parse(cached);
           const parsed: T =
             raw !== null &&
@@ -62,8 +65,10 @@ export default function useCachedData<T>(
           const age = Date.now() - cachedTimestamp;
           if (age < ttl) {
             // Cache is fresh, skip initial background network fetch to reduce reads
-            setIsLoading(false);
-            setIsRefetching(false);
+            if (isMountedRef.current) {
+              setIsLoading(false);
+              setIsRefetching(false);
+            }
             return;
           }
         }
@@ -72,8 +77,10 @@ export default function useCachedData<T>(
       // If user is offline, stop here
       const netState = await NetInfo.fetch();
       if (!netState.isConnected) {
-        setIsLoading(false);
-        setIsRefetching(false);
+        if (isMountedRef.current) {
+          setIsLoading(false);
+          setIsRefetching(false);
+        }
         return;
       }
 
@@ -85,21 +92,35 @@ export default function useCachedData<T>(
         JSON.stringify(freshData) !== JSON.stringify(currentDataRef.current);
 
       if (isDataDifferent || forceRefresh) {
-        setDataState(freshData);
         currentDataRef.current = freshData;
         await AsyncStorage.setItem(key, JSON.stringify(freshData));
+        if (isMountedRef.current) {
+          setDataState(freshData);
+        }
       }
       
       // Update the timestamp on successful fetch
       await AsyncStorage.setItem(timestampKey, String(Date.now()));
     } catch (err) {
       console.error(`[useCachedData] Error for key "${key}":`, err);
-      setError(err instanceof Error ? err : new Error(String(err)));
+      if (isMountedRef.current) {
+        setError(err instanceof Error ? err : new Error(String(err)));
+      }
     } finally {
-      setIsLoading(false);
-      setIsRefetching(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+        setIsRefetching(false);
+      }
     }
   }, [key, ttl, ...dependencies]);
+
+  // Track mount status to prevent state updates after unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Run on mount and whenever loadData identity changes
   useEffect(() => {

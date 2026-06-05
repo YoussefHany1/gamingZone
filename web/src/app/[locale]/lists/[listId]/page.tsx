@@ -58,10 +58,29 @@ export default function ListGamesPage({
   );
   const [copied, setCopied] = useState(false);
 
-  const listName = searchParams.get("name") ?? "";
-  const ownerId = searchParams.get("ownerId") ?? "";
+  const listNameParam = searchParams.get("name") ?? "";
+  const ownerIdParam = searchParams.get("ownerId") ?? "";
 
-  const isSharedList = ownerId !== "" && (!user || ownerId !== user.uid);
+  // Check raw window.location to prevent race condition during hydration
+  const hasOwnerIdInUrl =
+    typeof window !== "undefined" && window.location.search.includes("ownerId");
+  const isSharedList =
+    (ownerIdParam !== "" || hasOwnerIdInUrl) &&
+    (!user || ownerIdParam !== user.uid);
+
+  const ownerId =
+    ownerIdParam ||
+    (typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("ownerId")
+      : null) ||
+    "";
+  const listName =
+    listNameParam ||
+    (typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("name")
+      : null) ||
+    "";
+
   const targetUid = isSharedList ? ownerId : user ? user.uid : "";
 
   // Resolve async params
@@ -323,9 +342,7 @@ export default function ListGamesPage({
                 </h1>
                 <p className="text-sm text-gray-400">
                   {games.length}{" "}
-                  {games.length === 1
-                    ? t("common.gameCount")
-                    : t("common.gamesCount")}
+                  {games.length >= 1 && t("userLists.gamesCount")}
                 </p>
               </div>
             </div>

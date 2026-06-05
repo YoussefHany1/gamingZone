@@ -295,9 +295,9 @@
         "completionist": "Completionist",
         "hours": "Hours"
       },
-      "userRatings": "user ratings",
+      "userRatings": "User Ratings",
       "trailer": "Game Trailer",
-      "series": "Game series",
+      "series": "Game Series",
       "similar": "Similar Games",
       "pcRequirements": "PC System Requirements",
       "minimum": "Minimum",
@@ -361,6 +361,7 @@
     }
   },
   "userLists": {
+    "gamesCount": "{{count}} Games",
     "empty": {
       "title": "Your list is empty",
       "playedSub": "Add the games you have played here.",

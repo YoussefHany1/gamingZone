@@ -12,32 +12,104 @@ import {
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import { useLangStore } from "@/store/useLangStore";
-import { Gamepad2, Mail, Lock, User, Eye, EyeOff, ChevronDown } from "lucide-react";
+import {
+  Gamepad2,
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  ChevronDown,
+} from "lucide-react";
 
 // Country list — lightweight inline list of Arab + common countries
 // Using ISO 3166-1 alpha-2 codes
 const COUNTRIES_EN: Record<string, string> = {
-  SA: "Saudi Arabia", AE: "United Arab Emirates", EG: "Egypt", IQ: "Iraq",
-  JO: "Jordan", KW: "Kuwait", LB: "Lebanon", LY: "Libya", MA: "Morocco",
-  OM: "Oman", PS: "Palestine", QA: "Qatar", SD: "Sudan", SY: "Syria",
-  TN: "Tunisia", YE: "Yemen", BH: "Bahrain", DZ: "Algeria", MR: "Mauritania",
-  SO: "Somalia", DJ: "Djibouti", KM: "Comoros",
-  US: "United States", GB: "United Kingdom", DE: "Germany", FR: "France",
-  CA: "Canada", AU: "Australia", TR: "Turkey", BR: "Brazil", IN: "India",
-  JP: "Japan", KR: "South Korea", IT: "Italy", ES: "Spain", NL: "Netherlands",
-  SE: "Sweden", NO: "Norway", PL: "Poland", RU: "Russia", MX: "Mexico",
+  SA: "Saudi Arabia",
+  AE: "United Arab Emirates",
+  EG: "Egypt",
+  IQ: "Iraq",
+  JO: "Jordan",
+  KW: "Kuwait",
+  LB: "Lebanon",
+  LY: "Libya",
+  MA: "Morocco",
+  OM: "Oman",
+  PS: "Palestine",
+  QA: "Qatar",
+  SD: "Sudan",
+  SY: "Syria",
+  TN: "Tunisia",
+  YE: "Yemen",
+  BH: "Bahrain",
+  DZ: "Algeria",
+  MR: "Mauritania",
+  SO: "Somalia",
+  DJ: "Djibouti",
+  KM: "Comoros",
+  US: "United States",
+  GB: "United Kingdom",
+  DE: "Germany",
+  FR: "France",
+  CA: "Canada",
+  AU: "Australia",
+  TR: "Turkey",
+  BR: "Brazil",
+  IN: "India",
+  JP: "Japan",
+  KR: "South Korea",
+  IT: "Italy",
+  ES: "Spain",
+  NL: "Netherlands",
+  SE: "Sweden",
+  NO: "Norway",
+  PL: "Poland",
+  RU: "Russia",
+  MX: "Mexico",
 };
 
 const COUNTRIES_AR: Record<string, string> = {
-  SA: "السعودية", AE: "الإمارات", EG: "مصر", IQ: "العراق",
-  JO: "الأردن", KW: "الكويت", LB: "لبنان", LY: "ليبيا", MA: "المغرب",
-  OM: "عُمان", PS: "فلسطين", QA: "قطر", SD: "السودان", SY: "سوريا",
-  TN: "تونس", YE: "اليمن", BH: "البحرين", DZ: "الجزائر", MR: "موريتانيا",
-  SO: "الصومال", DJ: "جيبوتي", KM: "جزر القمر",
-  US: "الولايات المتحدة", GB: "المملكة المتحدة", DE: "ألمانيا", FR: "فرنسا",
-  CA: "كندا", AU: "أستراليا", TR: "تركيا", BR: "البرازيل", IN: "الهند",
-  JP: "اليابان", KR: "كوريا الجنوبية", IT: "إيطاليا", ES: "إسبانيا", NL: "هولندا",
-  SE: "السويد", NO: "النرويج", PL: "بولندا", RU: "روسيا", MX: "المكسيك",
+  SA: "السعودية",
+  AE: "الإمارات",
+  EG: "مصر",
+  IQ: "العراق",
+  JO: "الأردن",
+  KW: "الكويت",
+  LB: "لبنان",
+  LY: "ليبيا",
+  MA: "المغرب",
+  OM: "عُمان",
+  PS: "فلسطين",
+  QA: "قطر",
+  SD: "السودان",
+  SY: "سوريا",
+  TN: "تونس",
+  YE: "اليمن",
+  BH: "البحرين",
+  DZ: "الجزائر",
+  MR: "موريتانيا",
+  SO: "الصومال",
+  DJ: "جيبوتي",
+  KM: "جزر القمر",
+  US: "الولايات المتحدة",
+  GB: "المملكة المتحدة",
+  DE: "ألمانيا",
+  FR: "فرنسا",
+  CA: "كندا",
+  AU: "أستراليا",
+  TR: "تركيا",
+  BR: "البرازيل",
+  IN: "الهند",
+  JP: "اليابان",
+  KR: "كوريا الجنوبية",
+  IT: "إيطاليا",
+  ES: "إسبانيا",
+  NL: "هولندا",
+  SE: "السويد",
+  NO: "النرويج",
+  PL: "بولندا",
+  RU: "روسيا",
+  MX: "المكسيك",
 };
 
 export default function RegisterPage() {
@@ -67,7 +139,7 @@ export default function RegisterPage() {
       }
       return null;
     },
-    [t]
+    [t],
   );
 
   const handleSignup = useCallback(
@@ -91,7 +163,7 @@ export default function RegisterPage() {
         const { user } = await createUserWithEmailAndPassword(
           auth,
           email,
-          password
+          password,
         );
 
         await updateProfile(user, { displayName: name });
@@ -125,7 +197,7 @@ export default function RegisterPage() {
         setLoading(false);
       }
     },
-    [email, password, name, country, gender, t, validatePassword, router]
+    [email, password, name, country, gender, t, validatePassword, router],
   );
 
   const handleGoogleSignUp = useCallback(async () => {

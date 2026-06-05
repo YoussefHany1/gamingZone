@@ -19,8 +19,7 @@ import type {
 import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
-import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
-import { adUnitId } from "../constants/config";
+import { NativeAdComponent } from "../components/NativeAd";
 import UserGamesSkeleton from "../skeleton/SkeletonUserGames";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
@@ -483,6 +482,7 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
         showAds &&
         ((index + 1) % 4 === 0 ||
           (games.length < 4 && index === games.length - 1));
+
       return (
         <>
           <GameItem
@@ -490,19 +490,11 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
             onRemove={isSharedList ? undefined : handleRemoveGame}
             onRate={isSharedList ? undefined : handleRateGame}
           />
-          {showAd && (
-            <View style={styles.ad}>
-              <Text style={styles.adText}>{t("common.ad")}</Text>
-              <BannerAd
-                unitId={adUnitId}
-                size={BannerAdSize.MEDIUM_RECTANGLE}
-              />
-            </View>
-          )}
+          {showAd && <NativeAdComponent />}
         </>
       );
     },
-    [showAds, games.length, handleRemoveGame, handleRateGame, isSharedList, t],
+    [showAds, games.length, handleRemoveGame, handleRateGame, isSharedList],
   );
 
   return (

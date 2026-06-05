@@ -38,7 +38,7 @@ export default function LoginPage() {
         setError(t("auth.errors.general"));
       }
     },
-    [t]
+    [t],
   );
 
   const handleLogin = useCallback(
@@ -61,7 +61,7 @@ export default function LoginPage() {
         setLoading(false);
       }
     },
-    [email, password, t, handleAuthError, router]
+    [email, password, t, handleAuthError, router],
   );
 
   const handleGoogleSignIn = useCallback(async () => {

@@ -18,7 +18,7 @@ import {
 } from "react-native";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
-import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { NativeAdComponent } from "./NativeAd";
 import { Ionicons } from "@expo/vector-icons";
 import NetInfo from "@react-native-community/netinfo";
 import useFeed from "../hooks/useFeed";
@@ -28,7 +28,6 @@ import SkeletonNewsItem from "../skeleton/SkeletonNewsItem";
 import ErrorState from "./ErrorState";
 import { useTranslation } from "react-i18next";
 import COLORS from "../constants/colors";
-import { adUnitId } from "../constants/config";
 import { useNavigation } from "@react-navigation/native";
 import { RssFeedSource, Article } from "./types";
 
@@ -140,14 +139,7 @@ const NewsItem = memo(function NewsItem({
         </View>
       </Pressable>
       {shouldShowAd && (
-        <View style={styles.ad}>
-          <Text style={styles.adText}>{t("common.ad")}</Text>
-          <BannerAd
-            key={`ad-${index}`}
-            unitId={adUnitId}
-            size={BannerAdSize.MEDIUM_RECTANGLE}
-          />
-        </View>
+        <NativeAdComponent variant="news" language={language} />
       )}
     </View>
   );
@@ -552,6 +544,9 @@ const styles = StyleSheet.create({
   adText: {
     color: "#fff",
     marginBottom: 10,
+  },
+  nativeAd: {
+    marginVertical: 24,
   },
   emptyContainer: {
     flex: 1,

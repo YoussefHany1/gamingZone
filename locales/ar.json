@@ -363,6 +363,7 @@
     }
   },
   "userLists": {
+    "gamesCount": "{{count}} لعبة",
     "empty": {
       "title": "قائمتك فارغة",
       "playedSub": "أضف الألعاب التي لعبتها هنا.",

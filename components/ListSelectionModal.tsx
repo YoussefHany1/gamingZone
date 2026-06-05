@@ -10,9 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ToastAndroid,
-  ListRenderItemInfo,
 } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
@@ -65,6 +64,8 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
       return;
     }
 
+    let isMounted = true;
+
     const user = auth().currentUser;
     if (!user) return;
 
@@ -77,6 +78,8 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
       .collection("lists");
 
     listsRef.get().then(async (snapshot) => {
+      if (!isMounted) return;
+
       const initialLists: UserList[] = snapshot.docs
         .filter((doc) => doc.id !== "rated")
         .map((doc) => ({
@@ -102,11 +105,17 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
             return { ...list, isChecked: !!(gameDoc && gameDoc.exists) };
           }),
         );
-        setLists(checkedLists);
+        if (isMounted) {
+          setLists(checkedLists);
+        }
       } catch (error) {
         console.error("Error checking games:", error);
       }
     });
+
+    return () => {
+      isMounted = false;
+    };
   }, [visible, gameId]);
 
   const toggleList = useCallback(async (listId: string): Promise<void> => {

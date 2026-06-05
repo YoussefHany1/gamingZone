@@ -134,22 +134,30 @@ function FreeGames(): React.ReactElement {
   const isError = !!error;
 
   useEffect(() => {
-    checkNotificationStatus();
-  }, [userId]);
+    let isMounted = true;
 
-  const checkNotificationStatus = async (): Promise<void> => {
-    if (!userId) return;
-    try {
-      const prefs = await NotificationService.getUserPreferences(userId);
-      const topicName = NotificationService.getTopicName(
-        NOTIF_CATEGORY,
-        NOTIF_SOURCE,
-      );
-      setNotifEnabled(prefs[topicName] === true);
-    } catch (e) {
-      console.log("Error reading pref from Firestore", e);
-    }
-  };
+    const checkNotificationStatus = async (): Promise<void> => {
+      if (!userId) return;
+      try {
+        const prefs = await NotificationService.getUserPreferences(userId);
+        const topicName = NotificationService.getTopicName(
+          NOTIF_CATEGORY,
+          NOTIF_SOURCE,
+        );
+        if (isMounted) {
+          setNotifEnabled(prefs[topicName] === true);
+        }
+      } catch (e) {
+        console.log("Error reading pref from Firestore", e);
+      }
+    };
+
+    checkNotificationStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
 
   const toggleNotifications = async (): Promise<void> => {
     if (!userId) {

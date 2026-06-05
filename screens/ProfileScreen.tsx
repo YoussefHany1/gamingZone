@@ -103,6 +103,8 @@ function ProfileScreen(): React.ReactElement {
   useEffect(() => {
     if (!currentUser) return;
 
+    let isMounted = true;
+
     setName(currentUser.displayName ?? "");
     setImageUri(currentUser.photoURL ?? null);
 
@@ -112,6 +114,8 @@ function ProfileScreen(): React.ReactElement {
           .collection("users")
           .doc(currentUser.uid)
           .get();
+
+        if (!isMounted) return;
 
         if (userDocument.exists()) {
           const userData = userDocument.data() as FirestoreUser;
@@ -129,19 +133,32 @@ function ProfileScreen(): React.ReactElement {
     };
 
     fetchUserData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [currentUser]);
 
   useEffect(() => {
     if (isAdmin) {
+      let isMounted = true;
+
       const fetchStats = async () => {
         const usersSnap = await firestore().collection("users").count().get();
         const newsSnap = await firestore().collection("news").count().get(); // افترضت وجود collection باسم news
-        setStats({
-          userCount: usersSnap.data().count,
-          newsCount: newsSnap.data().count,
-        });
+        if (isMounted) {
+          setStats({
+            userCount: usersSnap.data().count,
+            newsCount: newsSnap.data().count,
+          });
+        }
       };
+
       fetchStats();
+
+      return () => {
+        isMounted = false;
+      };
     }
   }, [isAdmin]);
 
