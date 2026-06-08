@@ -1,6 +1,12 @@
 import React, { useCallback, useMemo, memo } from "react";
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Alert,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Linking,
+  Alert,
 } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,6 +20,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import InviteFriendsBtn from "../components/InviteFriendsBtn";
 import type { ComponentProps } from "react";
 import { openLink } from "../lib/browser";
+import { useScrollDirection } from "../hooks/useScrollDirection";
 
 // Types
 
@@ -27,11 +34,15 @@ interface MenuItem {
   component?: React.ComponentType;
 }
 
-type SettingsNavProp = NativeStackNavigationProp<Record<string, object | undefined>>;
+type SettingsNavProp = NativeStackNavigationProp<
+  Record<string, object | undefined>
+>;
 
 //  Constants
-const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.yh.gamingzone" as const;
-const PRIVACY_POLICY_URL = "https://youssefhany1.github.io/gamingZoneApp/" as const;
+const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.yh.gamingzone" as const;
+const PRIVACY_POLICY_URL =
+  "https://youssefhany1.github.io/gamingZoneApp/" as const;
 
 // main
 
@@ -41,6 +52,7 @@ const SettingsScreen = memo((): React.ReactElement => {
 
   const currentUser = useAuthStore((state) => state.user);
   const isGuest = !currentUser || currentUser.isAnonymous;
+  const { onScroll } = useScrollDirection();
 
   // Derived values
 
@@ -52,7 +64,8 @@ const SettingsScreen = memo((): React.ReactElement => {
   }, [currentUser?.photoURL, isGuest]);
 
   const displayName = useMemo<string>(() => {
-    if (isGuest || !currentUser?.displayName) return t("auth.register.signUpButton");
+    if (isGuest || !currentUser?.displayName)
+      return t("auth.register.signUpButton");
     return currentUser.displayName;
   }, [currentUser?.displayName, isGuest, t]);
 
@@ -63,14 +76,19 @@ const SettingsScreen = memo((): React.ReactElement => {
       await auth().signOut();
       await auth().signInAnonymously();
     } catch {
-      Alert.alert(t("settings.signOut.errorTitle"), t("settings.signOut.errorMessage"));
+      Alert.alert(
+        t("settings.signOut.errorTitle"),
+        t("settings.signOut.errorMessage"),
+      );
     }
   }, [t]);
 
   const handleOpenURL = useCallback(async (url: string): Promise<void> => {
     try {
       await openLink(url);
-    } catch (e) { console.error("[SettingsScreen] Open URL error:", e); }
+    } catch (e) {
+      console.error("[SettingsScreen] Open URL error:", e);
+    }
   }, []);
 
   const handleUserContainerPress = useCallback((): void => {
@@ -79,15 +97,45 @@ const SettingsScreen = memo((): React.ReactElement => {
 
   const menuItems = useMemo<MenuItem[]>(
     () => [
-      { id: "notifications", icon: "notifications", label: t("settings.menu.notifications"), onPress: () => navigation.navigate("NotificationSettings") },
-      { id: "lists", icon: "list", label: t("settings.menu.myLists"), onPress: () => navigation.navigate("UserListsScreen") },
-      { id: "rate", icon: "star", label: t("settings.menu.rateUs"), onPress: () => handleOpenURL(PLAY_STORE_URL) },
+      {
+        id: "notifications",
+        icon: "notifications",
+        label: t("settings.menu.notifications"),
+        onPress: () => navigation.navigate("NotificationSettings"),
+      },
+      {
+        id: "lists",
+        icon: "list",
+        label: t("settings.menu.myLists"),
+        onPress: () => navigation.navigate("UserListsScreen"),
+      },
+      {
+        id: "rate",
+        icon: "star",
+        label: t("settings.menu.rateUs"),
+        onPress: () => handleOpenURL(PLAY_STORE_URL),
+      },
       { id: "invite", component: InviteFriendsBtn },
-      { id: "contact", icon: "chatbubble-ellipses-sharp", label: t("settings.menu.contactUs"), onPress: () => navigation.navigate("ContactScreen") },
-      { id: "language", icon: "language", label: t("settings.menu.changeLanguage"), onPress: () => navigation.navigate("LanguageScreen") },
-      { id: "privacy", icon: "shield-checkmark-sharp", label: t("settings.menu.privacyPolicy"), onPress: () => handleOpenURL(PRIVACY_POLICY_URL) },
+      {
+        id: "contact",
+        icon: "chatbubble-ellipses-sharp",
+        label: t("settings.menu.contactUs"),
+        onPress: () => navigation.navigate("ContactScreen"),
+      },
+      {
+        id: "language",
+        icon: "language",
+        label: t("settings.menu.changeLanguage"),
+        onPress: () => navigation.navigate("LanguageScreen"),
+      },
+      {
+        id: "privacy",
+        icon: "shield-checkmark-sharp",
+        label: t("settings.menu.privacyPolicy"),
+        onPress: () => handleOpenURL(PRIVACY_POLICY_URL),
+      },
     ],
-    [t, navigation, handleOpenURL]
+    [t, navigation, handleOpenURL],
   );
 
   const renderMenuItem = useCallback((item: MenuItem) => {
@@ -96,9 +144,19 @@ const SettingsScreen = memo((): React.ReactElement => {
       return <Component key={item.id} />;
     }
     return (
-      <TouchableOpacity key={item.id} style={styles.menuItem} onPress={item.onPress} activeOpacity={0.7}>
+      <TouchableOpacity
+        key={item.id}
+        style={styles.menuItem}
+        onPress={item.onPress}
+        activeOpacity={0.7}
+      >
         <View style={styles.menuItemLeft}>
-          <Ionicons name={item.icon!} size={20} color={COLORS.lightGray} style={styles.menuIcon} />
+          <Ionicons
+            name={item.icon!}
+            size={20}
+            color={COLORS.lightGray}
+            style={styles.menuIcon}
+          />
           <Text style={styles.menuLabel}>{item.label}</Text>
         </View>
       </TouchableOpacity>
@@ -107,20 +165,49 @@ const SettingsScreen = memo((): React.ReactElement => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "right", "left"]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity style={styles.userContainer} onPress={handleUserContainerPress} activeOpacity={0.7}>
-          <Image source={userAvatar} style={styles.avatar} contentFit="cover" transition={500} cachePolicy="memory-disk" allowDownscaling />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
+        <TouchableOpacity
+          style={styles.userContainer}
+          onPress={handleUserContainerPress}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={userAvatar}
+            style={styles.avatar}
+            contentFit="cover"
+            transition={500}
+            cachePolicy="memory-disk"
+            allowDownscaling
+          />
           <Text style={styles.displayName}>{displayName}</Text>
-          {!isGuest && <Ionicons name="chevron-forward" size={24} color="#fff" />}
+          {!isGuest && (
+            <Ionicons name="chevron-forward" size={24} color="#fff" />
+          )}
         </TouchableOpacity>
 
         {menuItems.map(renderMenuItem)}
 
         {!isGuest && (
-          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.signOutButton}
+            onPress={handleSignOut}
+            activeOpacity={0.7}
+          >
             <View style={styles.menuItemLeft}>
-              <Ionicons name="log-out-outline" size={20} color="red" style={styles.menuIcon} />
-              <Text style={styles.signOutText}>{t("settings.menu.signOut")}</Text>
+              <Ionicons
+                name="log-out-outline"
+                size={20}
+                color="red"
+                style={styles.menuIcon}
+              />
+              <Text style={styles.signOutText}>
+                {t("settings.menu.signOut")}
+              </Text>
             </View>
           </TouchableOpacity>
         )}
@@ -138,7 +225,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 90,
   },
   userContainer: {
     marginVertical: 15,

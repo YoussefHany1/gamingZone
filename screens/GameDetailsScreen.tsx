@@ -38,6 +38,7 @@ import ListSelectionModal from "../components/ListSelectionModal";
 import useCachedData from "../hooks/useCachedData";
 import { adUnitId } from "../constants/config";
 import COLORS from "../constants/colors";
+import { useScrollDirection } from "../hooks/useScrollDirection";
 
 // gameDetails sub-components
 import GameDetailsMeta from "../components/gameDetails/GameDetailsMeta";
@@ -89,6 +90,7 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
 
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
+  const { onScroll } = useScrollDirection();
 
   // Data fetching
 
@@ -145,7 +147,7 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
     };
   }, [game?.game_time_to_beats]);
 
-  const getGameDataForList = useCallback(() => {
+  const gameDataForList = useMemo(() => {
     if (!game) return null;
     return {
       id: game.id,
@@ -155,83 +157,91 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
     };
   }, [game]);
 
-  const handleRateGame = useCallback(async (newRating: number) => {
-    if (!user || user.isAnonymous) {
-      Alert.alert(t("common.error"), t("common.loginRequired"));
-      return;
-    }
-    if (!game) return;
-
-    const gameData = getGameDataForList();
-    if (!gameData) return;
-
-    const ratingRef = firestore()
-      .collection("users")
-      .doc(user.uid)
-      .collection("ratings")
-      .doc(String(currentId));
-
-    const ratedGameRef = firestore()
-      .collection("users")
-      .doc(user.uid)
-      .collection("lists")
-      .doc("rated")
-      .collection("games")
-      .doc(String(currentId));
-
-    try {
-      if (newRating === 0) {
-        await ratingRef.delete();
-        await ratedGameRef.delete();
-      } else {
-        await firestore()
-          .collection("users")
-          .doc(user.uid)
-          .collection("lists")
-          .doc("rated")
-          .set({
-            name: "Rated",
-            type: "default",
-            createdAt: firestore.FieldValue.serverTimestamp(),
-          }, { merge: true });
-
-        await ratingRef.set({
-          rating: newRating,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
-        });
-        await ratedGameRef.set({
-          ...gameData,
-          rating: newRating,
-          ratedAt: firestore.FieldValue.serverTimestamp(),
-        });
+  const handleRateGame = useCallback(
+    async (newRating: number) => {
+      if (!user || user.isAnonymous) {
+        Alert.alert(t("common.error"), t("common.loginRequired"));
+        return;
       }
+      if (!game) return;
 
-      // Sync with other lists
-      const listsRef = firestore()
+      const gameData = gameDataForList;
+      if (!gameData) return;
+
+      const ratingRef = firestore()
         .collection("users")
         .doc(user.uid)
-        .collection("lists");
-      const listsSnap = await listsRef.get();
-      for (const listDoc of listsSnap.docs) {
-        if (listDoc.id === "rated") continue;
-        const gRef = listDoc.ref.collection("games").doc(String(currentId));
-        const gSnap = await gRef.get();
-        if (gSnap && gSnap.exists) {
-          try {
-            if (newRating === 0) {
-              await gRef.update({ rating: firestore.FieldValue.delete() });
-            } else {
-              await gRef.update({ rating: newRating });
+        .collection("ratings")
+        .doc(String(currentId));
+
+      const ratedGameRef = firestore()
+        .collection("users")
+        .doc(user.uid)
+        .collection("lists")
+        .doc("rated")
+        .collection("games")
+        .doc(String(currentId));
+
+      try {
+        if (newRating === 0) {
+          await ratingRef.delete();
+          await ratedGameRef.delete();
+        } else {
+          await firestore()
+            .collection("users")
+            .doc(user.uid)
+            .collection("lists")
+            .doc("rated")
+            .set(
+              {
+                name: "Rated",
+                type: "default",
+                createdAt: firestore.FieldValue.serverTimestamp(),
+              },
+              { merge: true },
+            );
+
+          await ratingRef.set({
+            rating: newRating,
+            updatedAt: firestore.FieldValue.serverTimestamp(),
+          });
+          await ratedGameRef.set({
+            ...gameData,
+            rating: newRating,
+            ratedAt: firestore.FieldValue.serverTimestamp(),
+          });
+        }
+
+        // Sync with other lists
+        const listsRef = firestore()
+          .collection("users")
+          .doc(user.uid)
+          .collection("lists");
+        const listsSnap = await listsRef.get();
+        for (const listDoc of listsSnap.docs) {
+          if (listDoc.id === "rated") continue;
+          const gRef = listDoc.ref.collection("games").doc(String(currentId));
+          const gSnap = await gRef.get();
+          if (gSnap && gSnap.exists) {
+            try {
+              if (newRating === 0) {
+                await gRef.update({ rating: firestore.FieldValue.delete() });
+              } else {
+                await gRef.update({ rating: newRating });
+              }
+            } catch (updateErr) {
+              console.log(
+                `[GameDetailsScreen] Stale cache update handled for list ${listDoc.id}`,
+              );
             }
-          } catch (updateErr) {
-            console.log(`[GameDetailsScreen] Stale cache update handled for list ${listDoc.id}`);
           }
         }
+      } catch (e) {
+        console.error("Error rating game:", e);
       }
-    } catch (e) {
-      console.error("Error rating game:", e);
-    }
-  }, [user, currentId, game, getGameDataForList, t]);
+    },
+    [user, currentId, game, gameDataForList, t],
+  );
 
   const seriesGames = useMemo(
     () => game?.collections?.[0]?.games ?? [],
@@ -281,7 +291,7 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
       },
       (error) => {
         console.error("[GameDetailsScreen] Rating snapshot error:", error);
-      }
+      },
     );
 
     return unsub;
@@ -362,6 +372,8 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
           ref={scrollRef}
           style={styles.container}
           showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
         >
           {/* Cover / Screenshots Gallery */}
           <View style={{ zIndex: 100 }}>
@@ -436,7 +448,8 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
                 </View>
                 {rating > 0 && (
                   <Text style={styles.ratingValueText}>
-                    {t("games.details.yourRating") ?? "Your Rating"}: {rating} / 5
+                    {t("games.details.yourRating") ?? "Your Rating"}: {rating} /
+                    5
                   </Text>
                 )}
               </View>
@@ -446,7 +459,7 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
               visible={showListModal}
               onClose={handleCloseModal}
               gameId={currentId}
-              gameData={getGameDataForList()}
+              gameData={gameDataForList}
             />
 
             {/* About */}

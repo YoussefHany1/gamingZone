@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, memo } from "react";
+import { useEffect, useState, useCallback, memo, useRef } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   Platform,
   ToastAndroid,
 } from "react-native";
-import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
+import { ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
@@ -38,6 +38,12 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
   const [newListName, setNewListName] = useState<string>("");
   const [creatingLoading, setCreatingLoading] = useState<boolean>(false);
 
+  // Cache checked state between modal opens — avoids Firestore re-read race conditions
+  // The modal stays mounted (only visibility toggles), so refs persist across opens
+  const checkedStateRef = useRef<Map<string, boolean>>(new Map());
+  const fetchedGameIdRef = useRef<string | number | null>(null);
+  const cachedListsRef = useRef<UserList[]>([]);
+
   const { t } = useTranslation();
 
   // Map well-known list names to translated labels
@@ -58,60 +64,101 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
 
   useEffect(() => {
     if (!visible) {
-      // Reset creation state when modal closes
       setIsCreating(false);
       setNewListName("");
       return;
     }
 
     let isMounted = true;
-
     const user = auth().currentUser;
     if (!user) return;
 
+    // If we already fetched for this gameId, restore from ref instantly — no Firestore read
+    if (fetchedGameIdRef.current === String(gameId) && cachedListsRef.current.length > 0) {
+      console.log("[ListSelectionModal] Restoring from ref cache for gameId:", gameId);
+      const restored = cachedListsRef.current.map((l) => ({
+        ...l,
+        isChecked: checkedStateRef.current.get(l.id) ?? false,
+      }));
+      setLists(restored);
+      setLoading(false);
+      return;
+    }
+
+    // First open for this gameId — fetch from Firestore
     setLists([]);
     setLoading(true);
 
-    const listsRef = firestore()
-      .collection("users")
-      .doc(user.uid)
-      .collection("lists");
-
-    listsRef.get().then(async (snapshot) => {
-      if (!isMounted) return;
-
-      const initialLists: UserList[] = snapshot.docs
-        .filter((doc) => doc.id !== "rated")
-        .map((doc) => ({
-          id: doc.id,
-          name: doc.data().name as string,
-          isChecked: false,
-        }));
-
-      setLists(initialLists);
-      setLoading(false);
-
-      if (!gameId) return;
+    const fetchLists = async () => {
+      const listsRef = firestore()
+        .collection("users")
+        .doc(user.uid)
+        .collection("lists");
 
       try {
-        // Check which lists already contain the current game
+        const snapshot = await listsRef.get();
+        if (!isMounted) return;
+
+        const initialLists: UserList[] = snapshot.docs
+          .filter((doc) => doc.id !== "rated")
+          .map((doc) => ({
+            id: doc.id,
+            name: doc.data().name as string,
+            isChecked: false,
+          }));
+
+        if (!gameId) {
+          if (!isMounted) return;
+          cachedListsRef.current = initialLists;
+          fetchedGameIdRef.current = String(gameId);
+          setLists(initialLists);
+          setLoading(false);
+          return;
+        }
+
+        console.log("[ListSelectionModal] First fetch for gameId:", gameId, "type:", typeof gameId);
+
+        // DEBUG: Log actual document IDs stored in each list's games subcollection
+        for (const list of initialLists) {
+          const gamesSnap = await listsRef.doc(list.id).collection("games").limit(5).get();
+          console.log(`[ListSelectionModal] Docs in "${list.id}/games":`, gamesSnap.docs.map(d => d.id));
+        }
+
         const checkedLists = await Promise.all(
           initialLists.map(async (list) => {
-            const gameDoc = await listsRef
-              .doc(list.id)
-              .collection("games")
-              .doc(String(gameId))
-              .get();
-            return { ...list, isChecked: !!(gameDoc && gameDoc.exists) };
+            try {
+              const snap = await listsRef
+                .doc(list.id)
+                .collection("games")
+                .where(firestore.FieldPath.documentId(), "==", String(gameId))
+                .limit(1)
+                .get();
+              const exists = !snap.empty;
+              console.log(`[ListSelectionModal] List "${list.id}" -> exists: ${exists}`);
+              return { ...list, isChecked: exists };
+            } catch (err) {
+              console.error(`[ListSelectionModal] Error checking list "${list.id}":`, err);
+              return { ...list, isChecked: false };
+            }
           }),
         );
-        if (isMounted) {
-          setLists(checkedLists);
-        }
+
+        if (!isMounted) return;
+
+        // Store in refs so subsequent opens don't need Firestore
+        cachedListsRef.current = checkedLists;
+        fetchedGameIdRef.current = String(gameId);
+        checkedStateRef.current = new Map(checkedLists.map((l) => [l.id, l.isChecked]));
+
+        setLists(checkedLists);
+        setLoading(false);
       } catch (error) {
-        console.error("Error checking games:", error);
+        console.error("[ListSelectionModal] Error fetching lists:", error);
+        if (isMounted) setLoading(false);
       }
-    });
+    };
+
+    fetchLists();
 
     return () => {
       isMounted = false;
@@ -128,10 +175,13 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
     const currentStatus = lists[targetListIndex].isChecked;
     const newStatus = !currentStatus;
 
-    // Optimistic UI update
-    const updatedLists = [...lists];
-    updatedLists[targetListIndex].isChecked = newStatus;
+    // Optimistic UI update + update ref so reopen shows correct state
+    const updatedLists = lists.map((l, i) =>
+      i === targetListIndex ? { ...l, isChecked: newStatus } : l
+    );
     setLists(updatedLists);
+    checkedStateRef.current.set(listId, newStatus);
+    cachedListsRef.current = updatedLists;
 
     const gameRef = firestore()
       .collection("users")
@@ -143,16 +193,19 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
 
     try {
       if (newStatus) {
-        if (gameData) await gameRef.set(gameData);
+        await gameRef.set(gameData ?? { gameId: String(gameId), addedAt: firestore.FieldValue.serverTimestamp() });
       } else {
         await gameRef.delete();
       }
     } catch (error) {
       console.error("Error toggling list:", error);
       // Revert on failure
-      const revertLists = [...lists];
-      revertLists[targetListIndex].isChecked = currentStatus;
+      const revertLists = lists.map((l, i) =>
+        i === targetListIndex ? { ...l, isChecked: currentStatus } : l
+      );
       setLists(revertLists);
+      checkedStateRef.current.set(listId, currentStatus);
+      cachedListsRef.current = revertLists;
     }
   }, [lists, gameId, gameData]);
 
@@ -213,8 +266,9 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
     }
   }, [lists, newListName, t]);
 
-  const renderItem = useCallback(({ item }: ListRenderItemInfo<UserList>) => (
+  const renderListItem = useCallback((item: UserList) => (
     <TouchableOpacity
+      key={item.id}
       style={[styles.listItem, item.isChecked && styles.selectedOption]}
       onPress={() => toggleList(item.id)}
     >
@@ -257,14 +311,11 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
               <ActivityIndicator size="large" color={COLORS.secondary} />
             ) : (
               <>
-                <FlashList
-                  data={lists}
-                  keyExtractor={(item) => item.id}
-                  extraData={lists}
-                  showsVerticalScrollIndicator={true}
+                <ScrollView
                   style={{ maxHeight: 300 }}
-                  renderItem={renderItem}
-                  ListEmptyComponent={
+                  showsVerticalScrollIndicator={true}
+                >
+                  {lists.length === 0 ? (
                     <Text
                       style={{
                         color: "#ccc",
@@ -274,9 +325,10 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(({
                     >
                       {t("userLists.empty.title")}
                     </Text>
-                  }
-                  estimatedItemSize={50}
-                />
+                  ) : (
+                    lists.map(renderListItem)
+                  )}
+                </ScrollView>
 
                 {/* Create new list section */}
                 <View style={styles.createSection}>

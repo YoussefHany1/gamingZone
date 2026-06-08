@@ -24,6 +24,9 @@ import UserGamesSkeleton from "../skeleton/SkeletonUserGames";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 import { useTranslation } from "react-i18next";
+import { Game } from "../components/types";
+import { SERVER_URL } from "../constants/config";
+import { useScrollDirection } from "../hooks/useScrollDirection";
 import COLORS from "../constants/colors";
 
 // Types
@@ -125,6 +128,7 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
   const [showAds, setShowAds] = useState<boolean>(false);
   const mountedRef = useRef<boolean>(true);
   const { t } = useTranslation();
+  const { onScroll } = useScrollDirection();
   const currentUser = auth().currentUser;
 
   const isSharedList = ownerId && (!currentUser || ownerId !== currentUser.uid);
@@ -507,7 +511,9 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           ListEmptyComponent={renderEmptyList}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 90 }}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
           estimatedItemSize={150}
         />
       )}

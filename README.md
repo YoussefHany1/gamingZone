@@ -1,7 +1,7 @@
 # 🎮 Gaming Zone
 
 <p align="center">
-  <img src="assets/logo-background.png" width="220" style="border-radius: 24px; box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.3);" alt="Gaming Zone Logo" />
+  <img src="assets/logo.webp" width="320" style="border-radius: 24px; box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.3);" alt="Gaming Zone Logo" />
 </p>
 
 <h1 align="center">🎮 Gaming Zone</h1>
@@ -10,10 +10,10 @@
   <strong>The Ultimate Video Game Hub & Library Tracker</strong>
 </p>
 
-<p align="center">
+<!-- <p align="center">
   <a href="https://github.com/YoussefHany1/gamingZone/stargazers"><img src="https://img.shields.io/github/stars/YoussefHany1/gamingZone?style=for-the-badge&color=12c2e9" alt="GitHub Stars" /></a>
   <a href="https://github.com/YoussefHany1/gamingZone/network/members"><img src="https://img.shields.io/github/forks/YoussefHany1/gamingZone?style=for-the-badge&color=c471ed" alt="GitHub Forks" /></a>
-</p>
+</p> -->
 
 **Gaming Zone** is a comprehensive platform for video game enthusiasts. It features a modern **React Native (Expo)** mobile application and a powerful **Next.js** web platform, providing a seamless experience for tracking the latest gaming news, reviews, and free game offers.
 

@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import {
-  StyleSheet, View, TextInput, TouchableOpacity, InteractionManager,
-  FlatList, Text, Keyboard,
+  StyleSheet,
+  View,
+  TextInput,
+  TouchableOpacity,
+  InteractionManager,
+  FlatList,
+  Text,
+  Keyboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -18,10 +24,13 @@ import NostalgiaCorner from "../components/gamesScreen/NostalgiaCorner";
 import SteamTopSellers from "../components/gamesScreen/SteamTopSellers";
 import Popular from "../components/gamesScreen/Popular";
 import TrendingMobileGames from "../components/gamesScreen/TrendingMobile";
-import FilterModal, { GameFilters } from "../components/gamesScreen/FilterModal";
+import FilterModal, {
+  GameFilters,
+} from "../components/gamesScreen/FilterModal";
 import { adUnitId } from "../constants/config";
 import COLORS from "../constants/colors";
 import { LinearGradient } from "expo-linear-gradient";
+import { useScrollDirection } from "../hooks/useScrollDirection";
 
 // Types
 type FeedItemType = "COMPONENT" | "AD";
@@ -65,7 +74,12 @@ AdContainer.displayName = "AdContainer";
 
 // Helper – count active filters
 function countActiveFilters(f: GameFilters): number {
-  return (f.year ? 1 : 0) + (f.genre ? 1 : 0) + (f.platform ? 1 : 0) + (f.sort && f.sort !== "relevance" ? 1 : 0);
+  return (
+    (f.year ? 1 : 0) +
+    (f.genre ? 1 : 0) +
+    (f.platform ? 1 : 0) +
+    (f.sort && f.sort !== "relevance" ? 1 : 0)
+  );
 }
 
 // main
@@ -82,9 +96,12 @@ function GamesScreen(): React.ReactElement {
     platform: null,
     sort: "relevance",
   });
+  const { onScroll } = useScrollDirection();
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
+    const task = InteractionManager.runAfterInteractions(() =>
+      setShowAds(true),
+    );
     return () => task.cancel();
   }, []);
 
@@ -133,7 +150,16 @@ function GamesScreen(): React.ReactElement {
       STATIC_FEED_ITEMS.map((item) => {
         if (item.type === "AD") return item;
         const componentMap: Record<string, React.ReactElement> = {
-          header: <LinearGradient colors={["#516996", "#3b4d6e"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.header}><Text style={styles.headerText}>{t("games.header")}</Text></LinearGradient>,
+          header: (
+            <LinearGradient
+              colors={["#516996", "#3b4d6e"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.header}
+            >
+              <Text style={styles.headerText}>{t("games.header")}</Text>
+            </LinearGradient>
+          ),
           free_games: <FreeGames />,
           news: <GamesNews />,
           popular: <Popular />,
@@ -147,15 +173,19 @@ function GamesScreen(): React.ReactElement {
         };
         return { ...item, component: componentMap[item.id] };
       }),
-    [t]
+    [t],
   );
 
   const renderFeedItem = useCallback(
-    ({ item }: { item: { id: string; type: FeedItemType; component?: React.ReactElement } }) => {
+    ({
+      item,
+    }: {
+      item: { id: string; type: FeedItemType; component?: React.ReactElement };
+    }) => {
       if (item.type === "AD") return showAds ? <AdContainer /> : null;
       return <View>{item.component}</View>;
     },
-    [showAds]
+    [showAds],
   );
 
   return (
@@ -173,7 +203,10 @@ function GamesScreen(): React.ReactElement {
             returnKeyType="search"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={handleClearSearch} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity
+              onPress={handleClearSearch}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <Ionicons name="close-circle" size={24} color="#ccc" />
             </TouchableOpacity>
           )}
@@ -181,7 +214,10 @@ function GamesScreen(): React.ReactElement {
 
         {/* Filter button */}
         <TouchableOpacity
-          style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
+          style={[
+            styles.filterBtn,
+            activeFilterCount > 0 && styles.filterBtnActive,
+          ]}
           onPress={openFilter}
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
@@ -200,7 +236,11 @@ function GamesScreen(): React.ReactElement {
 
       {showResults ? (
         <View style={{ flex: 1 }}>
-          <GamesList query={effectiveQuery || undefined} filters={filters} onBack={handleBack} />
+          <GamesList
+            query={effectiveQuery || undefined}
+            filters={filters}
+            onBack={handleBack}
+          />
         </View>
       ) : (
         <FlatList
@@ -212,6 +252,9 @@ function GamesScreen(): React.ReactElement {
           windowSize={15}
           removeClippedSubviews
           keyboardShouldPersistTaps="handled"
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          contentContainerStyle={{ paddingBottom: 90 }}
         />
       )}
 

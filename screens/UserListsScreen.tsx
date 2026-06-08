@@ -16,12 +16,15 @@ import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
-import firestore, { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
+import firestore, {
+  FirebaseFirestoreTypes,
+} from "@react-native-firebase/firestore";
 import COLORS from "../constants/colors";
 import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import { adUnitId } from "../constants/config";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { useScrollDirection } from "../hooks/useScrollDirection";
 
 // Types
 type ListType = "default" | "custom";
@@ -45,15 +48,18 @@ const DEFAULT_LISTS: { id: string; name: string; type: ListType }[] = [
   { id: "rated", name: "Rated", type: "default" },
 ];
 
-// main 
+// main
 const UserListsScreen: React.FC<Props> = ({ navigation }) => {
   const [lists, setLists] = useState<GameList[]>([]);
   const [newListName, setNewListName] = useState<string>("");
   const [isModalVisible, setModalVisible] = useState<boolean>(false);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [showAds, setShowAds] = useState<boolean>(false);
-  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(auth().currentUser);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(
+    auth().currentUser,
+  );
   const { t } = useTranslation();
+  const { onScroll } = useScrollDirection();
 
   useEffect(() => {
     const unsub = auth().onAuthStateChanged((u) => {
@@ -62,9 +68,11 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
     return unsub;
   }, []);
 
-  // Ad 
+  // Ad
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
+    const task = InteractionManager.runAfterInteractions(() =>
+      setShowAds(true),
+    );
     return () => task.cancel();
   }, []);
 
@@ -79,7 +87,7 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
       };
       return map[name] ?? name;
     },
-    [t]
+    [t],
   );
 
   // Firestore init + listener
@@ -88,7 +96,9 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
     if (!user) return;
 
     const listsRef = firestore()
-      .collection("users").doc(user.uid).collection("lists");
+      .collection("users")
+      .doc(user.uid)
+      .collection("lists");
 
     const initDefaults = async (): Promise<void> => {
       try {
@@ -115,10 +125,18 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
           });
           await batch.commit();
         } else {
-          const allowedDefaultIds = ["played", "wantToPlay", "playing", "rated"];
+          const allowedDefaultIds = [
+            "played",
+            "wantToPlay",
+            "playing",
+            "rated",
+          ];
           for (const doc of snap.docs) {
             const data = doc.data();
-            if (data.type === "default" && !allowedDefaultIds.includes(doc.id)) {
+            if (
+              data.type === "default" &&
+              !allowedDefaultIds.includes(doc.id)
+            ) {
               await doc.ref.delete();
             }
           }
@@ -132,7 +150,10 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
 
     const unsub = listsRef.onSnapshot(
       (snap) => {
-        const parsed = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<GameList, "id">) }));
+        const parsed = snap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as Omit<GameList, "id">),
+        }));
         const DEFAULT_ORDER = ["played", "wantToPlay", "playing", "rated"];
         parsed.sort((a, b) => {
           const aIdx = DEFAULT_ORDER.indexOf(a.id);
@@ -145,11 +166,14 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
           return aTime - bTime || a.name.localeCompare(b.name);
         });
         setLists(parsed);
-        console.log("[UserListsScreen] Loaded lists on mobile:", parsed.map(p => ({ id: p.id, name: p.name, type: p.type })));
+        console.log(
+          "[UserListsScreen] Loaded lists on mobile:",
+          parsed.map((p) => ({ id: p.id, name: p.name, type: p.type })),
+        );
       },
       (error) => {
         console.error("[UserListsScreen] onSnapshot error:", error);
-      }
+      },
     );
 
     return () => unsub();
@@ -160,11 +184,14 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
     const trimmed = newListName.trim();
     if (!trimmed) return;
 
-    const exists = lists.some((l) => l.name.toLowerCase() === trimmed.toLowerCase());
+    const exists = lists.some(
+      (l) => l.name.toLowerCase() === trimmed.toLowerCase(),
+    );
     if (exists) {
       ToastAndroid.show(
-        t("userLists.errors.listAlreadyExists") ?? "A list with this name already exists",
-        ToastAndroid.LONG
+        t("userLists.errors.listAlreadyExists") ??
+          "A list with this name already exists",
+        ToastAndroid.LONG,
       );
       return;
     }
@@ -175,7 +202,10 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
     setIsCreating(true);
     try {
       const ref = firestore()
-        .collection("users").doc(currentUser.uid).collection("lists").doc();
+        .collection("users")
+        .doc(currentUser.uid)
+        .collection("lists")
+        .doc();
       await ref.set({
         name: trimmed,
         type: "custom",
@@ -185,7 +215,10 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
       setModalVisible(false);
     } catch (error) {
       console.error("[UserListsScreen] Create list error:", error);
-      ToastAndroid.show(t("userLists.errors.couldNotCreateList"), ToastAndroid.LONG);
+      ToastAndroid.show(
+        t("userLists.errors.couldNotCreateList"),
+        ToastAndroid.LONG,
+      );
     } finally {
       setIsCreating(false);
     }
@@ -205,14 +238,17 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
             style: "destructive",
             onPress: async () => {
               await firestore()
-                .collection("users").doc(user.uid)
-                .collection("lists").doc(listId).delete();
+                .collection("users")
+                .doc(user.uid)
+                .collection("lists")
+                .doc(listId)
+                .delete();
             },
           },
-        ]
+        ],
       );
     },
-    [user, t]
+    [user, t],
   );
 
   // Render item
@@ -220,12 +256,18 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
     ({ item, index }: { item: GameList; index: number }) => {
       const showAd =
         showAds &&
-        ((index + 1) % 4 === 0 || (lists.length < 4 && index === lists.length - 1));
+        ((index + 1) % 4 === 0 ||
+          (lists.length < 4 && index === lists.length - 1));
       return (
         <>
           <TouchableOpacity
             style={styles.listItem}
-            onPress={() => navigation.navigate("UserGamesScreen", { listId: item.id, listName: item.name })}
+            onPress={() =>
+              navigation.navigate("UserGamesScreen", {
+                listId: item.id,
+                listName: item.name,
+              })
+            }
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Ionicons
@@ -236,7 +278,9 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
               <Text style={styles.listName}>{getDisplayName(item.name)}</Text>
             </View>
             {item.type === "custom" && (
-              <TouchableOpacity onPress={() => handleDeleteList(item.id, item.name)}>
+              <TouchableOpacity
+                onPress={() => handleDeleteList(item.id, item.name)}
+              >
                 <Ionicons name="trash-outline" size={20} color="red" />
               </TouchableOpacity>
             )}
@@ -244,24 +288,32 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
           {showAd && (
             <View style={styles.ad}>
               <Text style={styles.adText}>{t("common.ad")}</Text>
-              <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
+              <BannerAd
+                unitId={adUnitId}
+                size={BannerAdSize.MEDIUM_RECTANGLE}
+              />
             </View>
           )}
         </>
       );
     },
-    [showAds, lists.length, getDisplayName, handleDeleteList, navigation, t]
+    [showAds, lists.length, getDisplayName, handleDeleteList, navigation, t],
   );
 
   // Footer
   const ListFooter = useCallback(
     () => (
-      <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addListBtn}>
-        <Text style={styles.addListText}>{t("userLists.actions.createNewList")}</Text>
+      <TouchableOpacity
+        onPress={() => setModalVisible(true)}
+        style={styles.addListBtn}
+      >
+        <Text style={styles.addListText}>
+          {t("userLists.actions.createNewList")}
+        </Text>
         <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>
     ),
-    [t]
+    [t],
   );
 
   return (
@@ -271,7 +323,9 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         ListFooterComponent={<ListFooter />}
-        contentContainerStyle={{ paddingVertical: 30 }}
+        contentContainerStyle={{ paddingTop: 15, paddingBottom: 90 }}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         estimatedItemSize={75}
       />
 

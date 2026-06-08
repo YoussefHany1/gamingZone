@@ -28,9 +28,16 @@ const useRateApp = (): void => {
           return;
         }
 
+        const firstLaunchMs = parseInt(firstLaunchRaw, 10);
+        
+        if (isNaN(firstLaunchMs)) {
+          // If stored date is corrupted, reset it
+          await AsyncStorage.setItem(LAUNCH_DATE_KEY, now.toString());
+          return;
+        }
+
         // not enough days have passed yet
-        const diffInDays =
-          (now - parseInt(firstLaunchRaw, 10)) / MS_PER_DAY;
+        const diffInDays = (now - firstLaunchMs) / MS_PER_DAY;
 
         if (diffInDays < DAYS_BEFORE_RATING) return;
 

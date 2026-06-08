@@ -16,6 +16,7 @@ import { databases } from "../lib/appwrite";
 import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
 import { openLink } from "../lib/browser";
+import { useScrollDirection } from "../hooks/useScrollDirection";
 
 // Types
 interface ArticleParams {
@@ -52,6 +53,7 @@ const NewsDetails = memo((): React.ReactElement => {
   const [fetchedArticle, setFetchedArticle] = useState<ArticleParams | null>(null);
   const [showAds, setShowAds] = useState<boolean>(false);
   const currentLang = i18n.language;
+  const { onScroll } = useScrollDirection();
 
   const articleId = params.id ?? params.$id ?? article.id ?? article.$id;
   const hasFullDetails = !!(article.title && article.link);
@@ -187,7 +189,12 @@ const NewsDetails = memo((): React.ReactElement => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
         <Image
           style={styles.image}
           recyclingKey={thumbnail || ""}
@@ -300,7 +307,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 15,
-    paddingBottom: 40,
+    paddingBottom: 90,
   },
   title: {
     fontSize: 22,

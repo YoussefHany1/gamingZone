@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  memo,
+} from "react";
 import {
   View,
   Text,
@@ -17,7 +24,12 @@ import { Ionicons } from "@expo/vector-icons";
 import Markdown from "react-native-markdown-display";
 import { useTranslation } from "react-i18next";
 import { sendChatMessage, ChatMessage } from "../lib/aiService";
-import { checkAILimit, incrementAILimit, getRemainingAILimit, MAX_MESSAGES_PER_DAY } from "../lib/aiLimit";
+import {
+  checkAILimit,
+  incrementAILimit,
+  getRemainingAILimit,
+  MAX_MESSAGES_PER_DAY,
+} from "../lib/aiLimit";
 import COLORS from "../constants/colors";
 
 const AIChatScreen: React.FC = memo(() => {
@@ -28,18 +40,19 @@ const AIChatScreen: React.FC = memo(() => {
   const [remaining, setRemaining] = useState<number | null>(null);
   const flatListRef = useRef<any>(null);
 
-  const suggestions = useMemo(() => [
-    t("aiChat.suggestions.basedOnList"),
-    t("aiChat.suggestions.bestAdventure"),
-    t("aiChat.suggestions.coopGames"),
-    t("aiChat.suggestions.newReleases")
-  ], [t]);
+  const suggestions = useMemo(
+    () => [
+      t("aiChat.suggestions.basedOnList"),
+      t("aiChat.suggestions.bestAdventure"),
+      t("aiChat.suggestions.coopGames"),
+      t("aiChat.suggestions.newReleases"),
+    ],
+    [t],
+  );
 
   useEffect(() => {
     // Initial welcome message
-    setMessages([
-      { role: "assistant", content: t("aiChat.placeholder") }
-    ]);
+    setMessages([{ role: "assistant", content: t("aiChat.placeholder") }]);
     getRemainingAILimit().then(setRemaining);
   }, [t]);
 
@@ -62,13 +75,18 @@ const AIChatScreen: React.FC = memo(() => {
     try {
       // 2. Increment usage when sending request
       await incrementAILimit();
-      setRemaining(prev => (prev && prev > 0) ? prev - 1 : 0);
+      setRemaining((prev) => (prev && prev > 0 ? prev - 1 : 0));
 
       // We only pass the user/assistant history to the model, limit to last 10
-      const historyToPass = newChat.filter(m => m.role !== "system").slice(-10);
+      const historyToPass = newChat
+        .filter((m) => m.role !== "system")
+        .slice(-10);
       const reply = await sendChatMessage(historyToPass);
 
-      setMessages((prev) => [...prev, { role: "assistant", content: reply.text, model: reply.model }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: reply.text, model: reply.model },
+      ]);
     } catch (error) {
       console.error(error);
       Alert.alert(t("common.error"), t("aiChat.error"));
@@ -80,15 +98,18 @@ const AIChatScreen: React.FC = memo(() => {
   const renderItem = useCallback(({ item }: { item: ChatMessage }) => {
     const isUser = item.role === "user";
     return (
-      <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.aiBubble]}>
+      <View
+        style={[
+          styles.messageBubble,
+          isUser ? styles.userBubble : styles.aiBubble,
+        ]}
+      >
         {isUser ? (
           <Text style={styles.userText}>{item.content}</Text>
         ) : (
           <View>
             <Markdown style={markdownStyles}>{item.content}</Markdown>
-            {item.model && (
-              <Text style={styles.modelTag}>{item.model} 🤖</Text>
-            )}
+            {item.model && <Text style={styles.modelTag}>{item.model} 🤖</Text>}
           </View>
         )}
       </View>
@@ -97,12 +118,15 @@ const AIChatScreen: React.FC = memo(() => {
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
-      <FlashList         ref={flatListRef}
-        data={messages.filter(m => m.role !== "system")}
+      <FlashList
+        ref={flatListRef}
+        data={messages.filter((m) => m.role !== "system")}
         keyExtractor={(_, index) => index.toString()}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        onContentSizeChange={() =>
+          flatListRef.current?.scrollToEnd({ animated: true })
+        }
         onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
         estimatedItemSize={80}
       />
@@ -117,7 +141,11 @@ const AIChatScreen: React.FC = memo(() => {
       >
         {messages.length <= 1 && (
           <View style={styles.suggestionsContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionsList}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.suggestionsList}
+            >
               {suggestions.map((suggestion, index) => (
                 <TouchableOpacity
                   key={index}
@@ -135,13 +163,20 @@ const AIChatScreen: React.FC = memo(() => {
             style={styles.textInput}
             value={input}
             onChangeText={setInput}
-            placeholder={remaining !== null ? `${t("aiChat.placeholder")} (${remaining}/${MAX_MESSAGES_PER_DAY})` : t("aiChat.placeholder")}
+            placeholder={
+              remaining !== null
+                ? `${t("aiChat.placeholder")} (${remaining}/${MAX_MESSAGES_PER_DAY})`
+                : t("aiChat.placeholder")
+            }
             placeholderTextColor="gray"
             multiline
             maxLength={500}
           />
           <TouchableOpacity
-            style={[styles.sendButton, !input.trim() && styles.sendButtonDisabled]}
+            style={[
+              styles.sendButton,
+              !input.trim() && styles.sendButtonDisabled,
+            ]}
             onPress={handleSend}
             disabled={!input.trim() || isLoading}
           >
@@ -160,6 +195,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.primary,
+    paddingBottom: 90,
   },
   listContent: {
     padding: 16,

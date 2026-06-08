@@ -27,9 +27,15 @@ type RootStackParamList = { ContactScreen: undefined };
 type Props = NativeStackScreenProps<RootStackParamList, "ContactScreen">;
 
 // EmailJS Config
-const EMAILJS_SERVICE_ID = (process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID ?? "").replace(/^"|"$/g, "");
-const EMAILJS_TEMPLATE_ID = (process.env.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID ?? "").replace(/^"|"$/g, "");
-const EMAILJS_PUBLIC_KEY = (process.env.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY ?? "").replace(/^"|"$/g, "");
+const EMAILJS_SERVICE_ID = (
+  process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID ?? ""
+).replace(/^"|"$/g, "");
+const EMAILJS_TEMPLATE_ID = (
+  process.env.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID ?? ""
+).replace(/^"|"$/g, "");
+const EMAILJS_PUBLIC_KEY = (
+  process.env.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY ?? ""
+).replace(/^"|"$/g, "");
 
 // Other constants
 const MAX_MESSAGE_LENGTH = 5000 as const;
@@ -46,17 +52,19 @@ interface TypeButtonProps {
   onPress: (value: FeedbackType) => void;
 }
 
-const TypeButton = memo<TypeButtonProps>(({ value, icon, label, active, onPress }) => (
-  <TouchableOpacity
-    style={[styles.typeButton, active && styles.typeButtonActive]}
-    onPress={() => onPress(value)}
-  >
-    <Ionicons name={icon} size={24} color="#fff" />
-    <Text style={[styles.typeText, active && styles.typeTextActive]}>
-      {label}
-    </Text>
-  </TouchableOpacity>
-));
+const TypeButton = memo<TypeButtonProps>(
+  ({ value, icon, label, active, onPress }) => (
+    <TouchableOpacity
+      style={[styles.typeButton, active && styles.typeButtonActive]}
+      onPress={() => onPress(value)}
+    >
+      <Ionicons name={icon} size={24} color="#fff" />
+      <Text style={[styles.typeText, active && styles.typeTextActive]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  ),
+);
 TypeButton.displayName = "TypeButton";
 
 // main
@@ -70,8 +78,10 @@ const ContactScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState<string>(currentUser?.email ?? "");
 
   // Validation
-  const isValidEmail = useCallback((addr: string): boolean =>
-    EMAIL_REGEX.test(addr), []);
+  const isValidEmail = useCallback(
+    (addr: string): boolean => EMAIL_REGEX.test(addr),
+    [],
+  );
 
   // Handlers
   const handleTypePress = useCallback((value: FeedbackType) => {
@@ -92,16 +102,19 @@ const ContactScreen: React.FC<Props> = ({ navigation }) => {
     }
   }, []);
 
-  const saveRateLimitTimestamp = useCallback(async (timestamps: number[]): Promise<void> => {
-    try {
-      await AsyncStorage.setItem(
-        RATE_LIMIT_KEY,
-        JSON.stringify([...timestamps, Date.now()])
-      );
-    } catch {
-      // silently fail — don't block the user on storage errors
-    }
-  }, []);
+  const saveRateLimitTimestamp = useCallback(
+    async (timestamps: number[]): Promise<void> => {
+      try {
+        await AsyncStorage.setItem(
+          RATE_LIMIT_KEY,
+          JSON.stringify([...timestamps, Date.now()]),
+        );
+      } catch {
+        // silently fail — don't block the user on storage errors
+      }
+    },
+    [],
+  );
 
   const handleSubmit = useCallback(async (): Promise<void> => {
     if (!message.trim()) {
@@ -109,7 +122,10 @@ const ContactScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
     if (message.length > MAX_MESSAGE_LENGTH) {
-      ToastAndroid.show(t("settings.contact.messageTooLong"), ToastAndroid.LONG);
+      ToastAndroid.show(
+        t("settings.contact.messageTooLong"),
+        ToastAndroid.LONG,
+      );
       return;
     }
     if (email.trim() && !isValidEmail(email)) {
@@ -120,33 +136,35 @@ const ContactScreen: React.FC<Props> = ({ navigation }) => {
     // Rate limit check
     const recentTimestamps = await getRateLimitTimestamps();
     if (recentTimestamps.length >= MAX_MESSAGES_PER_HOUR) {
-
       ToastAndroid.show(
         t("settings.contact.rateLimitError"),
-        ToastAndroid.LONG
+        ToastAndroid.LONG,
       );
       return;
     }
 
     setLoading(true);
     try {
-      const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          service_id: EMAILJS_SERVICE_ID,
-          template_id: EMAILJS_TEMPLATE_ID,
-          user_id: EMAILJS_PUBLIC_KEY,
-          template_params: {
-            feedback_type: type,
-            message,
-            from_email: email || "(not provided)",
-            user_id: currentUser?.uid ?? "anonymous",
+      const response = await fetch(
+        "https://api.emailjs.com/api/v1.0/email/send",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
-      });
+          body: JSON.stringify({
+            service_id: EMAILJS_SERVICE_ID,
+            template_id: EMAILJS_TEMPLATE_ID,
+            user_id: EMAILJS_PUBLIC_KEY,
+            template_params: {
+              feedback_type: type,
+              message,
+              from_email: email || "(not provided)",
+              user_id: currentUser?.uid ?? "anonymous",
+            },
+          }),
+        },
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -162,7 +180,17 @@ const ContactScreen: React.FC<Props> = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
-  }, [message, email, type, currentUser, isValidEmail, getRateLimitTimestamps, saveRateLimitTimestamp, t, navigation]);
+  }, [
+    message,
+    email,
+    type,
+    currentUser,
+    isValidEmail,
+    getRateLimitTimestamps,
+    saveRateLimitTimestamp,
+    t,
+    navigation,
+  ]);
 
   // Render
 
@@ -256,7 +284,7 @@ const ContactScreen: React.FC<Props> = ({ navigation }) => {
 export default ContactScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.primary },
+  container: { flex: 1, backgroundColor: COLORS.primary, paddingBottom: 90 },
   scrollContent: { padding: 20 },
   label: {
     color: "#fff",

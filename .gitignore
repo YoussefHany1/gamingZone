@@ -36,12 +36,12 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# firebase
 *serviceAccountKey.json
 google-services.json
 firebase.json
 firebase.js
 firestore.rules
-# firebase
 firebase-*.json
 serviceAccountKey.json
 

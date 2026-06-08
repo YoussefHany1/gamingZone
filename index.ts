@@ -1,6 +1,7 @@
 import "react-native-gesture-handler";
 import { registerRootComponent } from "expo";
 import "@react-native-firebase/app";
+import "@react-native-firebase/crashlytics";
 import messaging, {
   FirebaseMessagingTypes,
 } from "@react-native-firebase/messaging";

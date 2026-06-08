@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import COLORS from "../constants/colors";
 import { useNavigation } from "@react-navigation/native";
 import { RssFeedSource, Article } from "./types";
+import { useScrollDirection } from "../hooks/useScrollDirection";
 
 interface LatestNewsProps {
   limit?: number;
@@ -138,9 +139,7 @@ const NewsItem = memo(function NewsItem({
           <Text style={styles.website}>{item.siteName}</Text>
         </View>
       </Pressable>
-      {shouldShowAd && (
-        <NativeAdComponent variant="news" language={language} />
-      )}
+      {shouldShowAd && <NativeAdComponent variant="news" language={language} />}
     </View>
   );
 });
@@ -164,6 +163,7 @@ function LatestNews({
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
   const listRef = useRef<any>(null);
+  const { onScroll } = useScrollDirection();
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [showAds, setShowAds] = useState<boolean>(false);
@@ -465,6 +465,8 @@ function LatestNews({
         ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={loading}
@@ -472,7 +474,11 @@ function LatestNews({
             tintColor={COLORS.secondary}
           />
         }
-        contentContainerStyle={listData.length === 0 ? { flexGrow: 1 } : null}
+        contentContainerStyle={
+          listData.length === 0
+            ? { flexGrow: 1, paddingBottom: 90 }
+            : { paddingBottom: 90 }
+        }
         ListEmptyComponent={renderEmptyComponent}
         estimatedItemSize={140}
       />

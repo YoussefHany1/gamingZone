@@ -23,14 +23,21 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import analytics from "@react-native-firebase/analytics";
 import * as SplashScreen from "expo-splash-screen";
-import "./i18n";
+import * as Localization from "expo-localization";
+import * as Updates from "expo-updates";
+import { I18nManager } from "react-native";
+import i18n from "./i18n";
 import COLORS from "./constants/colors";
 import Loading from "./Loading";
 import useNotifications from "./hooks/useNotifications";
 import useRateApp from "./hooks/useRateApp";
 import useUpdateCheck from "./hooks/useUpdateCheck";
-const MainAppTabs = React.lazy(() => import("./navigation/AppNavigator").then(m => ({ default: m.MainAppTabs })));
-const AuthStack = React.lazy(() => import("./navigation/AppNavigator").then(m => ({ default: m.AuthStack })));
+const MainAppTabs = React.lazy(() =>
+  import("./navigation/AppNavigator").then((m) => ({ default: m.MainAppTabs })),
+);
+const AuthStack = React.lazy(() =>
+  import("./navigation/AppNavigator").then((m) => ({ default: m.AuthStack })),
+);
 import OnboardingScreen from "./screens/OnboardingScreen";
 
 // Types
@@ -40,7 +47,9 @@ export type RootStackParamList = {
 };
 
 // Global Config
-declare const globalThis: { RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS: boolean };
+declare const globalThis: {
+  RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS: boolean;
+};
 globalThis.RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS = true;
 
 // Navigator
@@ -122,15 +131,23 @@ const linking = {
             },
           },
         },
-      });
+      } as any);
 
       if (state) {
         try {
           const route = state.routes[0];
           if (route && route.state && route.state.routes) {
-            const settingsRoute = route.state.routes.find((r) => r.name === "Settings");
-            if (settingsRoute && settingsRoute.state && settingsRoute.state.routes) {
-              const userGamesRoute = settingsRoute.state.routes.find((r) => r.name === "UserGamesScreen");
+            const settingsRoute = route.state.routes.find(
+              (r) => r.name === "Settings",
+            );
+            if (
+              settingsRoute &&
+              settingsRoute.state &&
+              settingsRoute.state.routes
+            ) {
+              const userGamesRoute = settingsRoute.state.routes.find(
+                (r) => r.name === "UserGamesScreen",
+              );
               if (userGamesRoute && userGamesRoute.params) {
                 const params = userGamesRoute.params as any;
                 if (params.name && !params.listName) {
@@ -160,7 +177,7 @@ const linking = {
             },
           },
         },
-      });
+      } as any);
     }
 
     // 5. Default parsing for modern "news/:id"
@@ -179,7 +196,8 @@ function App(): React.ReactElement | null {
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
 
   const routeNameRef = useRef<string | undefined>(undefined);
-  const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
+  const navigationRef =
+    useRef<NavigationContainerRef<RootStackParamList>>(null);
 
   // Auth State — all listener / AppState / analytics logic lives in the store
   useEffect(() => {
@@ -187,11 +205,44 @@ function App(): React.ReactElement | null {
     return cleanup;
   }, [initAuth]);
 
-
-  // Onboarding check — runs once auth has resolved
+  // Onboarding & Language check — runs once auth has resolved
   useEffect(() => {
     if (loading) return;
     (async () => {
+      // 1. Check/Set Device Language on First Launch
+      const langSet = await AsyncStorage.getItem("@language_set");
+      if (!langSet) {
+        const locales = Localization.getLocales();
+        const sysLang = locales[0]?.languageCode === "ar" ? "ar" : "en";
+
+        await AsyncStorage.setItem("@language_set", "true");
+
+        if (sysLang === "ar" && !I18nManager.isRTL) {
+          I18nManager.allowRTL(true);
+          I18nManager.forceRTL(true);
+          await i18n.changeLanguage("ar");
+          try {
+            await Updates.reloadAsync();
+          } catch (e) {
+            console.warn("Failed to reload", e);
+          }
+          return; // Stop execution as the app will reload
+        } else if (sysLang === "en" && I18nManager.isRTL) {
+          I18nManager.allowRTL(false);
+          I18nManager.forceRTL(false);
+          await i18n.changeLanguage("en");
+          try {
+            await Updates.reloadAsync();
+          } catch (e) {
+            console.warn("Failed to reload", e);
+          }
+          return;
+        } else {
+          await i18n.changeLanguage(sysLang);
+        }
+      }
+
+      // 2. Check Onboarding
       const seen = await AsyncStorage.getItem("@onboarding_done");
       if (!seen) {
         setShowOnboarding(true);
@@ -262,7 +313,10 @@ function App(): React.ReactElement | null {
             onStateChange={handleStateChange}
           >
             <Suspense fallback={<Loading />}>
-              <Stack.Navigator id="root" screenOptions={{ headerShown: false, freezeOnBlur: true }}>
+              <Stack.Navigator
+                id="root"
+                screenOptions={{ headerShown: false, freezeOnBlur: true }}
+              >
                 <Stack.Screen name="MainApp" component={MainAppTabs} />
                 <Stack.Screen name="Auth" component={AuthStack} />
               </Stack.Navigator>

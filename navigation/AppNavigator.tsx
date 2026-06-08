@@ -3,11 +3,18 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
   memo,
   Suspense,
   lazy,
 } from "react";
-import { InteractionManager, View, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  InteractionManager,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import LiquidGlassTabBar from "../components/LiquidGlassTabBar";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import type { BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
@@ -39,7 +46,7 @@ const ContactScreen = lazy(() => import("../screens/ContactScreen"));
 const LoginScreen = lazy(() => import("../screens/LoginScreen"));
 const RegisterScreen = lazy(() => import("../screens/RegisterScreen"));
 const ForgotPasswordScreen = lazy(
-  () => import("../screens/ForgotPasswordScreen")
+  () => import("../screens/ForgotPasswordScreen"),
 );
 
 // Navigator Param Lists
@@ -104,22 +111,23 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 // Shared Screen Options
-const HIDDEN_HEADER_OPTIONS = { headerShown: false, detachInactiveScreens: false, animation: 'fade_from_bottom' } as const;
+const HIDDEN_HEADER_OPTIONS = {
+  headerShown: false,
+  detachInactiveScreens: false,
+  animation: "slide_from_right",
+} as const;
 const settingsHeaderOptions = {
   headerStyle: { backgroundColor: COLORS.primary },
   headerTintColor: "#fff" as const,
   headerTitleStyle: { fontWeight: "bold" as const },
   detachInactiveScreens: false,
-  animation: 'fade_from_bottom'
+  animation: "slide_from_right",
 } as const;
 
 // BannerAd wrapper
 const AdBanner = memo(() => (
   <View style={styles.adContainer}>
-    <BannerAd
-      unitId={adUnitId}
-      size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-    />
+    <BannerAd unitId={adUnitId} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
   </View>
 ));
 AdBanner.displayName = "AdBanner";
@@ -139,7 +147,7 @@ const HomeStack = memo(() => {
           headerShown: true,
           title: t("aiChat.title"),
           headerStyle: { backgroundColor: COLORS.primary },
-          headerTintColor: "#fff"
+          headerTintColor: "#fff",
         }}
       />
       <Stack.Screen name="EventDetailsScreen" component={EventDetailsScreen} />
@@ -166,7 +174,7 @@ const GamesStack = memo(() => {
       headerTintColor: "#fff" as const,
       headerTitleStyle: { fontWeight: "bold" as const },
     }),
-    [t]
+    [t],
   );
 
   return (
@@ -196,7 +204,7 @@ const SettingsStack = memo(() => {
       contact: { title: t("settings.contact.title") },
       userLists: { title: t("navigation.titles.myLists") },
     }),
-    [t]
+    [t],
   );
 
   return (
@@ -220,7 +228,9 @@ const SettingsStack = memo(() => {
         name="UserGamesScreen"
         component={UserGamesScreen}
         options={({ navigation: nav, route }) => ({
-          title: (route.params as { listName?: string } | undefined)?.listName ?? screenTitles.userGames.title,
+          title:
+            (route.params as { listName?: string } | undefined)?.listName ??
+            screenTitles.userGames.title,
           headerRight: () => (
             <TouchableOpacity
               onPress={() => nav.getParent()?.navigate("Games")}
@@ -269,7 +279,7 @@ export const MainAppTabs = memo(() => {
         console.log(
           status === "granted"
             ? "[Notifications] Permission granted."
-            : "[Notifications] Permission denied."
+            : "[Notifications] Permission denied.",
         );
       }
     };
@@ -283,42 +293,28 @@ export const MainAppTabs = memo(() => {
     return () => task.cancel();
   }, []);
 
-
   const screenOptions = useCallback(
     ({ route }: { route: { name: string } }): BottomTabNavigationOptions => {
       const routeName = route.name as keyof MainTabParamList;
-      const [focusedIcon, unfocusedIcon] = TAB_ICON_MAP[routeName];
-
       return {
         headerShown: false,
-        tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: COLORS.lightGray,
-        tabBarInactiveTintColor: COLORS.lightGray,
-
+        tabBarStyle: { display: "none" },
         tabBarLabel: t(`navigation.tabs.${routeName.toLowerCase()}`),
-        tabBarIcon: ({
-          focused,
-          color,
-          size,
-        }: {
-          focused: boolean;
-          color: string;
-          size: number;
-        }) => (
-          <Ionicons
-            name={focused ? focusedIcon : unfocusedIcon}
-            size={size}
-            color={color}
-          />
-        ),
+        animation: "shift",
       };
     },
-    [t]
+    [t],
   );
 
   return (
     <>
-      <Tab.Navigator id="MainTabs" screenOptions={screenOptions}>
+      <Tab.Navigator
+        id="MainTabs"
+        screenOptions={screenOptions}
+        tabBar={(props) => (
+          <LiquidGlassTabBar {...props} />
+        )}
+      >
         <Tab.Screen name="Home" component={HomeStack} />
         <Tab.Screen name="News" component={NewsStack} />
         <Tab.Screen name="Games" component={GamesStack} />
@@ -345,15 +341,7 @@ export const AuthStack = memo(() => (
 ));
 AuthStack.displayName = "AuthStack";
 
-
 const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: COLORS.darkBackground,
-    borderWidth: 0,
-    borderTopWidth: 0,
-    paddingTop: 5,
-    alignItems: "center",
-  },
   adContainer: {
     alignItems: "center",
     width: "100%",

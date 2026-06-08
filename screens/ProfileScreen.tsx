@@ -90,7 +90,6 @@ function ProfileScreen(): React.ReactElement {
   const [showSteamModal, setShowSteamModal] = useState<boolean>(false);
   const { t, i18n } = useTranslation();
 
-
   // Defer ad rendering until after the main UI has settled
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -232,23 +231,38 @@ function ProfileScreen(): React.ReactElement {
 
     // Validate all required fields
     if (!name.trim()) {
-      ToastAndroid.show(t("settings.profile.messages.missingName"), ToastAndroid.LONG);
+      ToastAndroid.show(
+        t("settings.profile.messages.missingName"),
+        ToastAndroid.LONG,
+      );
       return;
     }
     if (!dob) {
-      ToastAndroid.show(t("settings.profile.messages.missingDob"), ToastAndroid.LONG);
+      ToastAndroid.show(
+        t("settings.profile.messages.missingDob"),
+        ToastAndroid.LONG,
+      );
       return;
     }
     if (!gender) {
-      ToastAndroid.show(t("settings.profile.messages.missingGender"), ToastAndroid.LONG);
+      ToastAndroid.show(
+        t("settings.profile.messages.missingGender"),
+        ToastAndroid.LONG,
+      );
       return;
     }
     if (!country) {
-      ToastAndroid.show(t("settings.profile.messages.missingCountry"), ToastAndroid.LONG);
+      ToastAndroid.show(
+        t("settings.profile.messages.missingCountry"),
+        ToastAndroid.LONG,
+      );
       return;
     }
     if (!platform) {
-      ToastAndroid.show(t("settings.profile.messages.missingPlatform"), ToastAndroid.LONG);
+      ToastAndroid.show(
+        t("settings.profile.messages.missingPlatform"),
+        ToastAndroid.LONG,
+      );
       return;
     }
 
@@ -286,7 +300,17 @@ function ProfileScreen(): React.ReactElement {
         ToastAndroid.LONG,
       );
     }
-  }, [currentUser, imageUri, name, dob, gender, country, platform, t, uploadImage]);
+  }, [
+    currentUser,
+    imageUri,
+    name,
+    dob,
+    gender,
+    country,
+    platform,
+    t,
+    uploadImage,
+  ]);
 
   const handleDateChange = useCallback(
     (_event: DateTimePickerEvent, selectedDate?: Date): void => {
@@ -336,7 +360,13 @@ function ProfileScreen(): React.ReactElement {
     [t],
   );
 
-  if (!currentUser) return <ErrorState message={t("common.loginRequired")} showContactButton={false} />;
+  if (!currentUser)
+    return (
+      <ErrorState
+        message={t("common.loginRequired")}
+        showContactButton={false}
+      />
+    );
 
   return (
     <SafeAreaView style={styles.container} edges={["right", "left"]}>
@@ -428,18 +458,38 @@ function ProfileScreen(): React.ReactElement {
           {showAds && (
             <View style={styles.ad}>
               <Text style={styles.adText}>{t("common.ad")}</Text>
-              <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
+              <BannerAd
+                unitId={adUnitId}
+                size={BannerAdSize.MEDIUM_RECTANGLE}
+              />
             </View>
           )}
 
           {/* Sync Steam Library Button */}
           <SectionTitle title={t("settings.profile.connectedApps")} />
           <TouchableOpacity
-            style={[styles.saveBtn, { backgroundColor: '#171a21', marginTop: 10, width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}
+            style={[
+              styles.saveBtn,
+              {
+                backgroundColor: "#171a21",
+                marginTop: 10,
+                width: "100%",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+              },
+            ]}
             onPress={() => setShowSteamModal(true)}
           >
-            <Ionicons name="logo-steam" size={24} color="#fff" style={{ marginRight: 10 }} />
-            <Text style={styles.saveText}>{t("settings.profile.steam.modal.title") || "Sync Steam Library"}</Text>
+            <Ionicons
+              name="logo-steam"
+              size={24}
+              color="#fff"
+              style={{ marginRight: 10 }}
+            />
+            <Text style={styles.saveText}>
+              {t("settings.profile.steam.modal.title") || "Sync Steam Library"}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
@@ -459,8 +509,10 @@ function ProfileScreen(): React.ReactElement {
               </Text>
               <Text>
                 📦 App Config Version:{" "}
-                {(require("../app.json") as { expo: { version: string } }).expo
-                  .version}
+                {
+                  (require("../app.json") as { expo: { version: string } }).expo
+                    .version
+                }
               </Text>
             </View>
           )}
@@ -478,7 +530,7 @@ function ProfileScreen(): React.ReactElement {
 export default ProfileScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.primary },
+  container: { flex: 1, backgroundColor: COLORS.primary, paddingBottom: 90 },
   subContainer: { padding: 20 },
   avatarContainer: { alignItems: "center", marginBottom: 20 },
   avatar: {

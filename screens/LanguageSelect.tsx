@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, InteractionManager, I18nManager,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  InteractionManager,
+  I18nManager,
 } from "react-native";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import { useTranslation } from "react-i18next";
@@ -15,7 +21,9 @@ const LanguageSelect = memo((): React.ReactElement => {
   const [showAds, setShowAds] = useState<boolean>(false);
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
+    const task = InteractionManager.runAfterInteractions(() =>
+      setShowAds(true),
+    );
     return () => task.cancel();
   }, []);
 
@@ -27,8 +35,11 @@ const LanguageSelect = memo((): React.ReactElement => {
       I18nManager.allowRTL(isRTL);
       I18nManager.forceRTL(isRTL);
       setTimeout(async () => {
-        try { await Updates.reloadAsync(); }
-        catch { console.warn("[LanguageSelect] Failed to reload app"); }
+        try {
+          await Updates.reloadAsync();
+        } catch {
+          console.warn("[LanguageSelect] Failed to reload app");
+        }
       }, 500);
     }
   }, [i18n]);
@@ -39,17 +50,25 @@ const LanguageSelect = memo((): React.ReactElement => {
         {(["en", "ar"] as const).map((lang) => (
           <TouchableOpacity
             key={lang}
-            style={[styles.categoryHeader, { direction: lang === "en" ? "ltr" : "rtl" }]}
+            style={[
+              styles.categoryHeader,
+              { direction: lang === "en" ? "ltr" : "rtl" },
+            ]}
             onPress={toggleLanguage}
           >
-            <View style={[styles.categoryHeaderLeft, { direction: lang === "en" ? "ltr" : "rtl" }]}>
+            <View
+              style={[
+                styles.categoryHeaderLeft,
+                { direction: lang === "en" ? "ltr" : "rtl" },
+              ]}
+            >
               <Text
                 style={[
                   styles.categoryTitle,
                   {
                     writingDirection: lang === "en" ? "ltr" : "rtl",
-                    textAlign: lang === "en" ? "left" : "right"
-                  }
+                    textAlign: lang === "en" ? "left" : "right",
+                  },
                 ]}
               >
                 {lang === "en" ? "English" : "العربية"}
@@ -74,7 +93,7 @@ LanguageSelect.displayName = "LanguageSelect";
 export default LanguageSelect;
 
 const styles = StyleSheet.create({
-  container: { padding: 40 },
+  container: { padding: 40, paddingBottom: 90 },
   categoryHeader: {
     marginVertical: 15,
     flexDirection: "row",

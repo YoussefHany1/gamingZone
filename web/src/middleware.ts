@@ -22,8 +22,20 @@ export function middleware(request: NextRequest) {
   if (!locale) {
     const acceptLang = request.headers.get("accept-language");
     if (acceptLang) {
-      if (acceptLang.toLowerCase().includes("ar")) {
-        locale = "ar";
+      // Parse Accept-Language. e.g., "ar,en-US;q=0.9,en;q=0.8"
+      const parsedLanguages = acceptLang
+        .split(',')
+        .map(lang => lang.split(';')[0].trim().toLowerCase());
+      
+      for (const lang of parsedLanguages) {
+        if (lang === "ar" || lang.startsWith("ar-")) {
+          locale = "ar";
+          break;
+        }
+        if (lang === "en" || lang.startsWith("en-")) {
+          locale = "en";
+          break;
+        }
       }
     }
   }

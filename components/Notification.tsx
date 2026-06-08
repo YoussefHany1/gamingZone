@@ -369,7 +369,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   footer: {
-    paddingVertical: 30,
+    paddingTop: 15,
+    paddingBottom: 90,
     paddingHorizontal: 16,
   },
   testButton: {

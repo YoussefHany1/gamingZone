@@ -21,6 +21,7 @@ import useCachedData from "../../hooks/useCachedData";
 import { Game } from "../types";
 import { GameFilters } from "./FilterModal";
 import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
+import { useScrollDirection } from "../../hooks/useScrollDirection";
 
 const CARD_HEIGHT = 290;
 const CARD_WIDTH = 180;
@@ -47,7 +48,10 @@ async function fetchSearchResults(
   if (filters?.genre) params.genre = filters.genre;
   if (filters?.platform) params.platform = filters.platform;
   if (filters?.sort) params.sort = filters.sort;
-  const response = await axios.get<Game[]>(`${SERVER_URL}/search`, { params, timeout: 10000 });
+  const response = await axios.get<Game[]>(`${SERVER_URL}/search`, {
+    params,
+    timeout: 10000,
+  });
   return response.data;
 }
 
@@ -84,9 +88,7 @@ const GameCard = React.memo<GameCardProps>(({ item }) => {
         cachePolicy="memory-disk"
         allowDownscaling
       />
-      {shouldShowLabel && (
-        <Text style={styles.gameType}>{t(labelKey)}</Text>
-      )}
+      {shouldShowLabel && <Text style={styles.gameType}>{t(labelKey)}</Text>}
       {item.total_rating != null && (
         <Text
           style={[
@@ -115,6 +117,7 @@ interface GamesListProps {
 
 function GamesList({ query, filters, onBack }: GamesListProps) {
   const { t } = useTranslation();
+  const { onScroll } = useScrollDirection();
 
   const safeQuery = (query ?? "all").replace(/\s/g, "_");
   const safeFilters = `${filters?.year ?? ""}_${filters?.genre ?? ""}_${filters?.platform ?? ""}_${filters?.sort ?? ""}`;
@@ -126,14 +129,15 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     [query, filters?.year, filters?.genre, filters?.platform, filters?.sort],
   );
 
-  const { data, isLoading, isRefetching, error, refetch } =
-    useCachedData<Game[]>(STORAGE_KEY, fetchGames, [
-      query,
-      filters?.year,
-      filters?.genre,
-      filters?.platform,
-      filters?.sort,
-    ]);
+  const { data, isLoading, isRefetching, error, refetch } = useCachedData<
+    Game[]
+  >(STORAGE_KEY, fetchGames, [
+    query,
+    filters?.year,
+    filters?.genre,
+    filters?.platform,
+    filters?.sort,
+  ]);
 
   const games = data ?? [];
   const isInitialLoading = isLoading && games.length === 0;
@@ -159,7 +163,11 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
   const renderBackButton = useCallback(() => {
     if (!onBack) return null;
     return (
-      <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={onBack}
+        activeOpacity={0.7}
+      >
         <Ionicons name="arrow-back" size={20} color="#fff" />
       </TouchableOpacity>
     );
@@ -185,28 +193,30 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     [],
   );
 
-  const skeletonData = useMemo(() => Array.from({ length: 6 }, (_, i) => ({ id: i } as unknown as Game)), []);
+  const skeletonData = useMemo(
+    () => Array.from({ length: 6 }, (_, i) => ({ id: i }) as unknown as Game),
+    [],
+  );
 
   if (isInitialLoading) {
     return (
-      <FlashList         data={skeletonData}
+      <FlashList
+        data={skeletonData}
         numColumns={NUM_COLUMNS}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderSkeletonItem}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={renderBackButton}
         contentContainerStyle={styles.listContent}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         estimatedItemSize={290}
       />
     );
   }
 
   if (error || !Array.isArray(games)) {
-    return (
-      <ErrorState
-        message={t("games.list.serverError")}
-      />
-    );
+    return <ErrorState message={t("games.list.serverError")} />;
   }
 
   if (games.length === 0) {
@@ -219,7 +229,8 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
   }
 
   return (
-    <FlashList       data={games}
+    <FlashList
+      data={games}
       numColumns={NUM_COLUMNS}
       keyExtractor={(item) => String(item.id)}
       renderItem={renderItem}
@@ -227,6 +238,8 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
       ListHeaderComponent={renderBackButton}
       contentContainerStyle={styles.listContent}
       refreshControl={refreshControl}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
       estimatedItemSize={CARD_HEIGHT}
     />
   );
@@ -309,6 +322,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 5,
+    paddingBottom: 90,
   },
   cardWrapper: {
     flex: 1,
