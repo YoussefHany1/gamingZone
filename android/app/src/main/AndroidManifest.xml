@@ -41,7 +41,7 @@
         <data android:scheme="gaming-zone"/>
         <data android:scheme="exp+gaming-zone"/>
       </intent-filter>
-      <intent-filter data-generated="true">
+      <intent-filter data-generated="true" android:autoVerify="true">
         <action android:name="android.intent.action.VIEW"/>
         <data android:scheme="https" android:host="gz1.vercel.app" android:pathPrefix="/news"/>
         <data android:scheme="https" android:host="gz1.vercel.app" android:pathPrefix="/news-details"/>

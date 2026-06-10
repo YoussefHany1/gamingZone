@@ -1,14 +1,12 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import {
   View,
   Text,
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-  ViewToken,
-  I18nManager,
+  FlatList,
 } from "react-native";
-import { FlashList } from "@shopify/flash-list";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -65,42 +63,58 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<any>(null);
 
-  const slides = t("onboarding.slides", { returnObjects: true }) as Array<{
-    title: string;
-    description: string;
-  }>;
+  const slides = useMemo(
+    () =>
+      t("onboarding.slides", { returnObjects: true }) as Array<{
+        title: string;
+        description: string;
+      }>,
+    [t]
+  );
 
   const TOTAL = slides.length;
 
   // Single shared video player
-  const player = useVideoPlayer(SLIDE_VIDEOS[0], (p) => {
+  // IMPORTANT: the setup callback MUST be stable (useCallback with []).
+  // A new function reference on every render caused useVideoPlayer to
+  // re-initialise the player each render → setState inside commitLayout
+  // → "Maximum update depth exceeded" crash (Firebase issue #41dac7f6).
+  const setupPlayer = useCallback((p: any) => {
     p.loop = true;
     p.muted = true;
     p.play();
-  });
+  }, []); // empty deps → stable reference, never recreated
+
+  const player = useVideoPlayer(SLIDE_VIDEOS[0], setupPlayer);
 
   // Swap source whenever active slide changes
   useEffect(() => {
-    player.replace(SLIDE_VIDEOS[activeIndex]);
-    player.play();
-  }, [activeIndex, player]);
+    player.replaceAsync(SLIDE_VIDEOS[activeIndex])
+      .then(() => player.play())
+      .catch(() => {
+        player.replace(SLIDE_VIDEOS[activeIndex]);
+        player.play();
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIndex]); // ← intentionally omit player to prevent infinite loop
 
   // Handlers
-  const onViewableItemsChanged = useCallback(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems.length > 0 && viewableItems[0].index !== null) {
-        setActiveIndex(viewableItems[0].index);
-      }
-    },
-    []
-  );
-
-  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 });
+  const onMomentumScrollEnd = useCallback((event: any) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const newIndex = Math.round(offsetX / width);
+    if (newIndex >= 0 && newIndex < TOTAL) {
+      setActiveIndex(newIndex);
+    }
+  }, [TOTAL]);
 
   const goNext = useCallback(() => {
     if (activeIndex < TOTAL - 1) {
-      flatListRef.current?.scrollToIndex({
-        index: activeIndex + 1,
+      const nextIndex = activeIndex + 1;
+      // Update index immediately for dots/button state
+      setActiveIndex(nextIndex);
+      // Scroll without triggering onMomentumScrollEnd to avoid double setState
+      flatListRef.current?.scrollToOffset({
+        offset: nextIndex * width,
         animated: true,
       });
     } else {
@@ -143,17 +157,26 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
           />
         </View>
 
-        <FlashList           ref={flatListRef}
+        <FlatList<{ title: string; description: string }>
+          ref={flatListRef}
           data={slides}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
           horizontal
           pagingEnabled
+          scrollEnabled={true}
           showsHorizontalScrollIndicator={false}
           bounces={false}
-          onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={viewabilityConfig.current}
-          estimatedItemSize={width}
+          onMomentumScrollEnd={onMomentumScrollEnd}
+          getItemLayout={(_, index) => ({
+            length: width,
+            offset: width * index,
+            index,
+          })}
+          initialNumToRender={1}
+          maxToRenderPerBatch={2}
+          windowSize={3}
+          removeClippedSubviews={false}
         />
       </View>
 

@@ -154,14 +154,20 @@ export default function useFeed(
 
     return () => {
       // Unsubscribe on cleanup regardless of the shape client.subscribe returns
-      if (typeof subscription === "function") {
-        subscription();
-      } else if (
-        subscription &&
-        typeof (subscription as unknown as { unsubscribe: () => void })
-          .unsubscribe === "function"
-      ) {
-        (subscription as unknown as { unsubscribe: () => void }).unsubscribe();
+      // Wrap in try...catch to prevent "INVALID_STATE_ERR" crashes in React Native
+      // if the underlying WebSocket is already closed or disconnected.
+      try {
+        if (typeof subscription === "function") {
+          subscription();
+        } else if (
+          subscription &&
+          typeof (subscription as unknown as { unsubscribe: () => void })
+            .unsubscribe === "function"
+        ) {
+          (subscription as unknown as { unsubscribe: () => void }).unsubscribe();
+        }
+      } catch (error) {
+        console.warn("[Appwrite Realtime] Error during unsubscribe:", error);
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps

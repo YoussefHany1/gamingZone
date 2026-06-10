@@ -1,5 +1,3 @@
-# 🎮 Gaming Zone
-
 <p align="center">
   <img src="assets/logo.webp" width="320" style="border-radius: 24px; box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.3);" alt="Gaming Zone Logo" />
 </p>
