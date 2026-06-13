@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
-// Custom hook for a countdown timer
+// Countdown timer hook that ticks at a configurable interval.
+// Returns null for past dates or when no target is provided.
 
+// ---------------------------------------------------------------------------
 // Types
+// ---------------------------------------------------------------------------
 
 export interface TimeLeft {
   days: number;
@@ -10,56 +13,71 @@ export interface TimeLeft {
   minutes: number;
   seconds: number;
 }
+
 export type CountdownTarget = number | string;
 
+// ---------------------------------------------------------------------------
 // Constants
+// ---------------------------------------------------------------------------
 
-const MS = {
-  DAY: 1000 * 60 * 60 * 24,
-  HOUR: 1000 * 60 * 60,
-  MINUTE: 1000 * 60,
-  SECOND: 1000,
+const MS_PER = {
+  DAY: 1_000 * 60 * 60 * 24,
+  HOUR: 1_000 * 60 * 60,
+  MINUTE: 1_000 * 60,
+  SECOND: 1_000,
 } as const;
 
-// main
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function resolveDate(target: CountdownTarget): Date {
+  // Treat numeric targets as Unix timestamps (seconds → ms)
+  return typeof target === "number"
+    ? new Date(target * 1_000)
+    : new Date(target);
+}
+
+function computeTimeLeft(target: CountdownTarget): TimeLeft | null {
+  const distance = resolveDate(target).getTime() - Date.now();
+  if (distance <= 0) return null;
+
+  return {
+    days: Math.floor(distance / MS_PER.DAY),
+    hours: Math.floor((distance % MS_PER.DAY) / MS_PER.HOUR),
+    minutes: Math.floor((distance % MS_PER.HOUR) / MS_PER.MINUTE),
+    seconds: Math.floor((distance % MS_PER.MINUTE) / MS_PER.SECOND),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
 export const useCountdown = (
-  targetDate: CountdownTarget | undefined | null,
-  updateInterval: number = 1000
+  targetDate: CountdownTarget | null | undefined,
+  /** How often (ms) the timer ticks. Default: 1 000 ms. */
+  updateInterval: number = 1_000
 ): TimeLeft | null => {
-  const calculateTimeLeft = useCallback((): TimeLeft | null => {
-    if (!targetDate) return null;
-
-    // Handle Unix timestamps 
-    const releaseDate: Date =
-      typeof targetDate === "number"
-        ? new Date(targetDate * 1000)
-        : new Date(targetDate);
-
-    const distance = releaseDate.getTime() - Date.now();
-
-    // Return null for past dates
-    if (distance < 0) return null;
-
-    return {
-      days: Math.floor(distance / MS.DAY),
-      hours: Math.floor((distance % MS.DAY) / MS.HOUR),
-      minutes: Math.floor((distance % MS.HOUR) / MS.MINUTE),
-      seconds: Math.floor((distance % MS.MINUTE) / MS.SECOND),
-    };
-  }, [targetDate]);
-
-  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(calculateTimeLeft);
+  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(() =>
+    targetDate != null ? computeTimeLeft(targetDate) : null
+  );
 
   useEffect(() => {
-    // Sync immediately when targetDate changes
-    setTimeLeft(calculateTimeLeft());
+    if (targetDate == null) {
+      setTimeLeft(null);
+      return;
+    }
 
-    const interval = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
+    // Sync immediately when targetDate changes.
+    setTimeLeft(computeTimeLeft(targetDate));
+
+    const id = setInterval(() => {
+      setTimeLeft(computeTimeLeft(targetDate));
     }, updateInterval);
 
-    return () => clearInterval(interval);
-  }, [calculateTimeLeft, updateInterval]);
+    return () => clearInterval(id);
+  }, [targetDate, updateInterval]);
 
   return timeLeft;
 };

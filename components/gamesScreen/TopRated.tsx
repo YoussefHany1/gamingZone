@@ -4,7 +4,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  } from "react-native";
+} from "react-native";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -22,13 +22,15 @@ import { Game } from "../types";
 const CARD_WIDTH = 200;
 const CARD_HEIGHT = 320;
 const CARD_MARGIN = 5;
+const STORAGE_KEY = "GAMES_CACHE_TOP_RATED";
 
 // Helpers
+
 const fetchTopRatedGames = async (): Promise<Game[]> => {
   const response = await axios.get<Game[]>(`${SERVER_URL}/top-rated`);
   return response.data;
 };
-// rating color
+
 function getRatingColor(rating: number): [string, string] {
   if (rating <= 2) return ["#8B0000", "#B22222"];
   if (rating <= 4) return ["#FF4C4C", "#FF6B6B"];
@@ -36,7 +38,7 @@ function getRatingColor(rating: number): [string, string] {
   if (rating <= 8) return ["#7CB342", "#8BC34A"];
   return ["#2E7D32", "#4CAF50"];
 }
-//  medal emojis for top 3 games
+
 const getMedalEmoji = (rank: number): string => {
   if (rank === 1) return "🥇";
   if (rank === 2) return "🥈";
@@ -157,12 +159,12 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
     </TouchableOpacity>
   );
 });
+TopRatedCard.displayName = "TopRatedCard";
 
-// main
+// Main
 
 export default function TopRatedGames(): React.ReactElement {
   const { t } = useTranslation();
-  const STORAGE_KEY = "GAMES_CACHE_TOP_RATED";
 
   const { data: games, isLoading, error } = useCachedData<Game[]>(
     STORAGE_KEY,
@@ -180,27 +182,19 @@ export default function TopRatedGames(): React.ReactElement {
     [],
   );
 
-  const getItemLayout = useCallback(
-    (
-      _data: ArrayLike<Game> | null | undefined,
-      index: number,
-    ): { length: number; offset: number; index: number } => ({
-      length: CARD_WIDTH + CARD_MARGIN * 2,
-      offset: (CARD_WIDTH + CARD_MARGIN * 2) * index,
-      index,
-    }),
-    [],
-  );
-
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <SectionTitle title={t("games.list.topRated.title")} subtitle={t("games.list.topRated.subtitle")} fontSize={28} />
+        <SectionTitle
+          title={t("games.list.topRated.title")}
+          subtitle={t("games.list.topRated.subtitle")}
+          fontSize={28}
+        />
       </View>
 
       {/* Skeleton while loading with no cached data */}
       {isActuallyLoading && (
-        <FlashList 
+        <FlashList
           data={Array.from({ length: 5 }, (_, i) => ({ id: i }))}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -210,15 +204,15 @@ export default function TopRatedGames(): React.ReactElement {
           estimatedItemSize={210}
         />
       )}
-      {/* error */}
+
       {(error || !Array.isArray(gamesToShow)) && (
-        <View style={{ width: "100%", height: CARD_HEIGHT }}>
+        <View style={styles.errorContainer}>
           <ErrorState message={t("games.list.serverError")} />
         </View>
       )}
 
       {!error && Array.isArray(gamesToShow) && (
-        <FlashList 
+        <FlashList
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -227,9 +221,11 @@ export default function TopRatedGames(): React.ReactElement {
           snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
-            <ErrorState message={t("games.list.serverError")} />
-          </View>}
+          ListEmptyComponent={
+            <View style={styles.errorContainer}>
+              <ErrorState message={t("games.list.serverError")} />
+            </View>
+          }
           estimatedItemSize={210}
         />
       )}
@@ -244,6 +240,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexWrap: "wrap",
     margin: 18,
+  },
+  errorContainer: {
+    width: "100%",
+    height: CARD_HEIGHT,
   },
   cardBackground: { position: "absolute", width: "100%", height: "100%" },
   gameCard: {
@@ -353,19 +353,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "transparent",
     zIndex: -1,
-  },
-  error: {
-    color: "#ffcccc",
-    textAlign: "center",
-    marginTop: 20,
-    paddingHorizontal: 20,
-    fontSize: 16,
-  },
-  noResults: {
-    color: "#999",
-    textAlign: "center",
-    fontSize: 16,
-    marginVertical: 20,
   },
   listContent: { paddingHorizontal: 10, paddingVertical: 5 },
 });

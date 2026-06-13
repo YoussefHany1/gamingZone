@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useCallback } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -12,33 +12,61 @@ interface Props {
   onAddToList: () => void;
 }
 
-const GameActionButtons: React.FC<Props> = ({ claimUrl, store = "", onAddToList }) => {
+/** Capitalises the first character of a string. */
+function capitalise(str: string): string {
+  return str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
+}
+
+const GRADIENT_COLORS: [string, string] = ["#516996", "#3b4d6e"];
+const GRADIENT_START = { x: 0, y: 0 };
+const GRADIENT_END   = { x: 1, y: 0 };
+
+const GameActionButtons: React.FC<Props> = ({
+  claimUrl,
+  store = "",
+  onAddToList,
+}) => {
   const { t } = useTranslation();
 
+  const handleClaimPress = useCallback(() => {
+    if (claimUrl) openLink(claimUrl);
+  }, [claimUrl]);
+
   return (
-    <View style={{ marginVertical: 20 }}>
+    <View style={styles.container}>
       {claimUrl && (
-        <View style={styles.addToList}>
-          <TouchableOpacity activeOpacity={0.9} onPress={() => openLink(claimUrl)} style={{ width: "100%" }}>
-            <LinearGradient colors={["#516996", "#3b4d6e"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.addToListBtn}>
-              <Ionicons name="gift" size={24} color="#fff" style={{ marginRight: 10 }} />
-              <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold", letterSpacing: 0.5 }}>
-                {t("games.details.claimNow")}{store.charAt(0).toUpperCase() + store.slice(1)}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      )}
-      <View style={styles.addToList}>
-        <TouchableOpacity onPress={onAddToList} style={{ width: "100%" }}>
-          <LinearGradient colors={["#516996", "#3b4d6e"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.addToListBtn}>
-            <Ionicons name="add-circle-outline" size={24} color="white" />
-            <Text style={{ color: COLORS.textLight, fontSize: 18, fontWeight: "600", marginLeft: 8 }}>
-              {t("games.details.addToList") ?? "Add to List"}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={handleClaimPress}
+          style={styles.buttonWrapper}
+        >
+          <LinearGradient
+            colors={GRADIENT_COLORS}
+            start={GRADIENT_START}
+            end={GRADIENT_END}
+            style={styles.button}
+          >
+            <Ionicons name="gift" size={24} color="#fff" style={styles.claimIcon} />
+            <Text style={styles.buttonText}>
+              {t("games.details.claimNow")}{capitalise(store)}
             </Text>
           </LinearGradient>
         </TouchableOpacity>
-      </View>
+      )}
+
+      <TouchableOpacity onPress={onAddToList} style={styles.buttonWrapper}>
+        <LinearGradient
+          colors={GRADIENT_COLORS}
+          start={GRADIENT_START}
+          end={GRADIENT_END}
+          style={styles.button}
+        >
+          <Ionicons name="add-circle-outline" size={24} color={COLORS.textLight} />
+          <Text style={[styles.buttonText, styles.addToListText]}>
+            {t("games.details.addToList")}
+          </Text>
+        </LinearGradient>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -46,11 +74,15 @@ const GameActionButtons: React.FC<Props> = ({ claimUrl, store = "", onAddToList 
 export default memo(GameActionButtons);
 
 const styles = StyleSheet.create({
-  addToList: {
+  container: {
+    marginVertical: 20,
+  },
+  buttonWrapper: {
     alignItems: "center",
     margin: 10,
+    width: "100%",
   },
-  addToListBtn: {
+  button: {
     padding: 15,
     borderRadius: 12,
     flexDirection: "row",
@@ -62,5 +94,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 5,
     width: "100%",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+  },
+  claimIcon: {
+    marginRight: 10,
+  },
+  addToListText: {
+    fontWeight: "600",
+    letterSpacing: 0,
+    marginLeft: 8,
   },
 });

@@ -148,16 +148,18 @@ class NotificationService {
       let enabledCountAfterChange = 0;
 
       await db.runTransaction(async (transaction) => {
-        const prefSnapshot = await transaction.get(prefRef);
+        // Firestore requires ALL reads to happen before ANY writes.
+        const [prefSnapshot, statsSnapshot] = await Promise.all([
+          transaction.get(prefRef),
+          transaction.get(statsRef),
+        ]);
+
         const previousEnabled = prefSnapshot.exists()
           ? Boolean((prefSnapshot.data() as NotificationPreferenceData).enabled)
           : false;
 
         const delta = (enabled ? 1 : 0) - (previousEnabled ? 1 : 0);
 
-        transaction.set(prefRef, data, { merge: true });
-
-        const statsSnapshot = await transaction.get(statsRef);
         const statsData = statsSnapshot.exists()
           ? (statsSnapshot.data() as Partial<NotificationSourceStatsData>)
           : null;
@@ -170,15 +172,15 @@ class NotificationService {
         const nextCount = Math.max(0, currentCount + delta);
         enabledCountAfterChange = nextCount;
 
-        const statsPayload: NotificationSourceStatsData = {
+        // All writes happen after all reads.
+        transaction.set(prefRef, data, { merge: true });
+        transaction.set(statsRef, {
           category,
           sourceName,
           topicId,
           enabledCount: nextCount,
           updatedAt: serverTimestamp(),
-        };
-
-        transaction.set(statsRef, statsPayload, { merge: true });
+        } satisfies NotificationSourceStatsData, { merge: true });
       });
 
       const normalizedCategory = normalizeAnalyticsParam(category);

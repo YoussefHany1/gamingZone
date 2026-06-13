@@ -4,7 +4,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  } from "react-native";
+} from "react-native";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -19,8 +19,8 @@ import { SERVER_URL } from "../../constants/config";
 import useCachedData from "../../hooks/useCachedData";
 import { Game } from "../types";
 
-
 const CARD_HEIGHT = 200;
+const STORAGE_KEY = "GAMES_CACHE_RECENTLY_RELEASED";
 
 // Helpers
 
@@ -31,15 +31,14 @@ const fetchRecentlyReleasedGames = async (): Promise<Game[]> => {
 
 const formatReleaseDate = (timestamp: number | null | undefined, locale: string): string => {
   if (!timestamp) return "";
-  const date = new Date(timestamp * 1000);
-  return date.toLocaleDateString(locale, {
+  return new Date(timestamp * 1000).toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
   });
 };
 
-// rating color gradient based on score (0-10)
+// Rating color gradient based on score (0-10)
 function getRatingColor(rating: number): [string, string] {
   if (rating <= 2) return ["#8B0000", "#B22222"];
   if (rating <= 4) return ["#FF4C4C", "#FF6B6B"];
@@ -126,7 +125,7 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
           </View>
 
           {item.genres && item.genres.length > 0 && (
-            <Text style={{ color: COLORS.lightGray, fontSize: 13 }} numberOfLines={1}>
+            <Text style={styles.genreText} numberOfLines={1}>
               {item.genres.map((g) => g.name).join(" · ")}
             </Text>
           )}
@@ -149,12 +148,12 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
     </TouchableOpacity>
   );
 });
+RecentGameCard.displayName = "RecentGameCard";
 
-// main
+// Main
 
 function RecentlyReleasedGames(): React.ReactElement {
   const { t } = useTranslation();
-  const STORAGE_KEY = "GAMES_CACHE_RECENTLY_RELEASED";
 
   const { data: games, isLoading, error } = useCachedData<Game[]>(
     STORAGE_KEY,
@@ -170,27 +169,19 @@ function RecentlyReleasedGames(): React.ReactElement {
     [],
   );
 
-  const getItemLayout = useCallback(
-    (
-      _data: ArrayLike<Game> | null | undefined,
-      index: number,
-    ): { length: number; offset: number; index: number } => ({
-      length: CARD_HEIGHT,
-      offset: CARD_HEIGHT * index,
-      index,
-    }),
-    [],
-  );
-
   return (
     <View>
       <View style={styles.headerContainer}>
-        <SectionTitle title={t("games.list.recentlyReleased.title")} subtitle={t("games.list.recentlyReleased.subtitle")} fontSize={28} />
+        <SectionTitle
+          title={t("games.list.recentlyReleased.title")}
+          subtitle={t("games.list.recentlyReleased.subtitle")}
+          fontSize={28}
+        />
       </View>
 
       {/* Skeleton while loading with no cached data */}
       {isActuallyLoading && (
-        <FlashList 
+        <FlashList
           data={Array.from({ length: 5 }, (_, i) => ({ id: i }))}
           keyExtractor={(item) => String(item.id)}
           renderItem={() => <SkeletonRecentlyReleased />}
@@ -199,29 +190,32 @@ function RecentlyReleasedGames(): React.ReactElement {
           estimatedItemSize={216}
         />
       )}
-      {/* error */}
+
       {(error || !Array.isArray(gamesToShow)) && (
-        <View style={{ width: "100%", height: CARD_HEIGHT }}>
+        <View style={styles.errorContainer}>
           <ErrorState message={t("games.list.serverError")} />
         </View>
       )}
 
       {!error && Array.isArray(gamesToShow) && (
-        <FlashList 
+        <FlashList
           data={gamesToShow}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
-            <ErrorState message={t("games.list.serverError")} />
-          </View>}
+          ListEmptyComponent={
+            <View style={styles.errorContainer}>
+              <ErrorState message={t("games.list.serverError")} />
+            </View>
+          }
           estimatedItemSize={216}
         />
       )}
     </View>
   );
 }
+
 export default RecentlyReleasedGames;
 
 const styles = StyleSheet.create({
@@ -230,6 +224,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexWrap: "wrap",
     margin: 18,
+  },
+  errorContainer: {
+    width: "100%",
+    height: CARD_HEIGHT,
   },
   gameCard: {
     marginHorizontal: 15,
@@ -287,6 +285,7 @@ const styles = StyleSheet.create({
   },
   releaseDateContainer: {},
   releaseDate: { color: COLORS.lightGray, fontSize: 13, fontWeight: "bold" },
+  genreText: { color: COLORS.lightGray, fontSize: 13 },
   newBadgeText: {
     position: "absolute",
     top: 0,
@@ -298,18 +297,5 @@ const styles = StyleSheet.create({
   },
   platformsContainer: { flexDirection: "row", alignItems: "center", gap: 6 },
   platformsText: { color: COLORS.lightGray, fontSize: 13, flex: 1 },
-  error: {
-    color: "#779bdd",
-    textAlign: "center",
-    marginTop: 20,
-    paddingHorizontal: 20,
-    fontSize: 16,
-  },
-  noResults: {
-    color: "#9CB4DD",
-    textAlign: "center",
-    fontSize: 16,
-    marginVertical: 20,
-  },
   listContent: { paddingBottom: 20 },
 });

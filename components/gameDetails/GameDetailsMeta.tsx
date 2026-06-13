@@ -7,14 +7,20 @@ import { getRatingColor } from "./utils";
 
 interface Props {
   name: string;
-  releaseDate?: number; // Unix timestamp in seconds (from IGDB first_release_date)
+  /** Unix timestamp in seconds (IGDB first_release_date) */
+  releaseDate?: number;
   platforms?: Platform[];
   totalRating?: number;
   totalRatingCount?: number;
   ageRating: AgeRatingInfo | null;
 }
 
-// Maps i18next language codes to valid BCP-47 locales for Intl.DateTimeFormat
+// ─── i18n locale mapping ──────────────────────────────────────────────────────
+
+/**
+ * Maps i18next language codes to valid BCP-47 locales for Intl.DateTimeFormat.
+ * Falls back to the base language tag, then "en-US".
+ */
 const LOCALE_MAP: Record<string, string> = {
   ar: "ar-EG",
   en: "en-US",
@@ -29,13 +35,17 @@ const LOCALE_MAP: Record<string, string> = {
 };
 
 function formatReleaseDate(timestamp: number, lang: string): string {
-  const locale = LOCALE_MAP[lang] ?? LOCALE_MAP[lang.split("-")[0]] ?? "en-US";
+  const locale =
+    LOCALE_MAP[lang] ?? LOCALE_MAP[lang.split("-")[0]] ?? "en-US";
+
   return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
   }).format(new Date(timestamp * 1000));
 }
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 function GameDetailsMeta({
   name,
@@ -52,27 +62,42 @@ function GameDetailsMeta({
       ? formatReleaseDate(releaseDate, i18n.language)
       : undefined;
 
+  // Normalise rating to a 0–10 scale with one decimal place
+  const displayRating =
+    totalRating != null ? Math.round(totalRating) / 10 : null;
+
   return (
-    <View style={{ direction: "ltr" }}>
+    <View style={styles.container}>
       <Text style={styles.title}>{name}</Text>
+
       {formattedDate && (
         <Text style={styles.releaseDate}>{formattedDate}</Text>
       )}
 
-      <View style={styles.contentHeader}>
+      <View style={styles.metaRow}>
         <View style={styles.platformContainer}>
           {platforms?.map((p) => (
-            <Text key={p.id} style={styles.platform}>{p.abbreviation}</Text>
+            <Text key={p.id} style={styles.platform}>
+              {p.abbreviation}
+            </Text>
           ))}
         </View>
-        <View style={{ alignItems: "center", flexDirection: "column" }}>
-          {totalRating ? (
-            <Text style={[styles.rating, { backgroundColor: getRatingColor(totalRating / 10) }]}>
-              {Math.round(totalRating) / 10}
-            </Text>
-          ) : (
-            <Text style={[styles.rating, { backgroundColor: COLORS.secondary }]}>N/A</Text>
-          )}
+
+        <View style={styles.ratingContainer}>
+          <Text
+            style={[
+              styles.rating,
+              {
+                backgroundColor:
+                  displayRating != null
+                    ? getRatingColor(displayRating)
+                    : COLORS.secondary,
+              },
+            ]}
+          >
+            {displayRating ?? "N/A"}
+          </Text>
+
           {(totalRatingCount ?? 0) > 0 && (
             <Text style={styles.ratingCount}>
               {totalRatingCount} {t("games.details.userRatings", "user ratings")}
@@ -93,6 +118,10 @@ function GameDetailsMeta({
 export default memo(GameDetailsMeta);
 
 const styles = StyleSheet.create({
+  container: {
+    // Force LTR layout so game metadata always reads left-to-right
+    direction: "ltr",
+  },
   title: {
     color: COLORS.textLight,
     fontSize: 24,
@@ -104,7 +133,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     direction: "ltr",
   },
-  contentHeader: {
+  metaRow: {
     flexDirection: "row",
     alignItems: "center",
     direction: "ltr",
@@ -115,16 +144,20 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     flex: 1,
   },
+  /** BUG FIX: was `rgb(81, 105, 150, 0.3)` which is invalid — RGB does not accept alpha. */
   platform: {
     color: COLORS.textLight,
     fontSize: 17,
     fontWeight: "500",
-    backgroundColor: "rgb(81, 105,150, 0.3)",
+    backgroundColor: "rgba(81, 105, 150, 0.3)",
     paddingVertical: 3,
     paddingHorizontal: 10,
     marginRight: 10,
     marginBottom: 10,
     borderRadius: 14,
+  },
+  ratingContainer: {
+    alignItems: "center",
   },
   rating: {
     color: COLORS.textLight,

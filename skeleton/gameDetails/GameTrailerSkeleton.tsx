@@ -5,16 +5,18 @@ import COLORS from "../../constants/colors";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
+type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
+
 // Static "Trailer" header + shimmer video block
 const GameTrailerSkeleton: React.FC = () => {
   const { t } = useTranslation();
   const shimmer = useShimmer();
-  const S = (p: Omit<Omit<Parameters<typeof SkeletonBar>[0], "shimmer">, "shimmer">) => <SkeletonBar shimmer={shimmer} {...p} />;
+  const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{t("games.details.trailer")}</Text>
-      <S w="100%" h={210} r={12} style={{ marginTop: 16 }} />
+      <S width="100%" height={210} radius={12} style={{ marginTop: 16 }} />
     </View>
   );
 };

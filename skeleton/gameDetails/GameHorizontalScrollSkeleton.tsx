@@ -3,24 +3,32 @@ import { View, Text, StyleSheet, ScrollView } from "react-native";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
+type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
+
 interface Props {
-  title: string; // passed by caller (already translated)
+  /** Section title — passed by the caller (already translated). */
+  title: string;
 }
 
 // Static title + shimmer game cards in a horizontal row
 const GameHorizontalScrollSkeleton: React.FC<Props> = ({ title }) => {
   const shimmer = useShimmer();
-  const S = (p: Omit<Parameters<typeof SkeletonBar>[0], "shimmer">) => <SkeletonBar shimmer={shimmer} {...p} />;
+  const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{title}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }} scrollEnabled={false}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ marginTop: 10 }}
+        scrollEnabled={false}
+      >
         {[1, 2, 3, 4].map((i) => (
           <View key={i} style={styles.card}>
-            <S w={120} h={160} r={8} />
-            <S w="85%" h={12} r={4} style={{ marginTop: 8 }} />
-            <S w="60%" h={12} r={4} style={{ marginTop: 4 }} />
+            <S width={120} height={160} radius={8} />
+            <S width="85%" height={12} radius={4} style={{ marginTop: 8 }} />
+            <S width="60%" height={12} radius={4} style={{ marginTop: 4 }} />
           </View>
         ))}
       </ScrollView>

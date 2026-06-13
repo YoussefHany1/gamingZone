@@ -4,42 +4,73 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { useTranslation } from "react-i18next";
 
+// Checks once per app version whether a newer build is on the Play Store.
+// If one exists, shows a one-time dismissible Alert with an "Update Now" action.
+
+// ---------------------------------------------------------------------------
 // Constants
+// ---------------------------------------------------------------------------
+
 const PLAY_STORE_URL =
-  "https://play.google.com/store/apps/details?id=com.yh.gamingzone" as const;
+  "https://play.google.com/store/apps/details?id=com.yh.gamingzone";
+
 const PLAY_STORE_API_URL =
-  "https://play.google.com/store/apps/details?id=com.yh.gamingzone&hl=en&gl=US" as const;
-const SHOWN_KEY_PREFIX = "update_alert_shown_v" as const;
+  "https://play.google.com/store/apps/details?id=com.yh.gamingzone&hl=en&gl=US";
 
-// Parses a version string like "1.2.3" to an integer array [1, 2, 3] for comparison
-const parseVersion = (version: string): number[] =>
-  version.split(".").map((part) => parseInt(part, 10) || 0);
+/** AsyncStorage key prefix — keyed per version so alerts reset on each new local build. */
+const SHOWN_KEY_PREFIX = "update_alert_shown_v";
 
-// Returns true if remoteVersion > localVersion
-const isNewer = (remote: string, local: string): boolean => {
-  const remoteParts = parseVersion(remote);
-  const localParts = parseVersion(local);
-  const maxLen = Math.max(remoteParts.length, localParts.length);
-  for (let i = 0; i < maxLen; i++) {
-    const r = remoteParts[i] ?? 0;
-    const l = localParts[i] ?? 0;
-    if (r > l) return true;
-    if (r < l) return false;
+/** ms before the Play Store HTML fetch is abandoned. */
+const FETCH_TIMEOUT_MS = 8_000;
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Parses "1.2.3" into [1, 2, 3]. Non-numeric parts default to 0. */
+function parseVersion(version: string): number[] {
+  return version.split(".").map((part) => parseInt(part, 10) || 0);
+}
+
+/** Returns true if `remote` is strictly newer than `local`. */
+function isNewer(remote: string, local: string): boolean {
+  const r = parseVersion(remote);
+  const l = parseVersion(local);
+  const len = Math.max(r.length, l.length);
+
+  for (let i = 0; i < len; i++) {
+    const rv = r[i] ?? 0;
+    const lv = l[i] ?? 0;
+    if (rv > lv) return true;
+    if (rv < lv) return false;
   }
   return false;
-};
+}
 
-// Scrapes the latest version from the Play Store HTML page
-const fetchLatestVersion = async (): Promise<string | null> => {
+/**
+ * Scrapes the latest version string from the Play Store HTML page.
+ * Returns null when the page is unreachable or the version pattern is absent.
+ */
+async function fetchLatestVersion(): Promise<string | null> {
   try {
-    const response = await fetch(PLAY_STORE_API_URL);
-    const html = await response.text();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-    // The version appears in a pattern like: ","1.0.3"]
-    const match = html.match(/",\["(\d+\.\d+(?:\.\d+)*)"\]/);
-    if (match?.[1]) return match[1];
+    let html: string;
+    try {
+      const response = await fetch(PLAY_STORE_API_URL, {
+        signal: controller.signal,
+      });
+      html = await response.text();
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
-    // Fallback pattern
+    // Primary pattern: ,"1.0.3"]
+    const primary = html.match(/",\["(\d+\.\d+(?:\.\d+)*)"\]/);
+    if (primary?.[1]) return primary[1];
+
+    // Fallback pattern: [[["1.0.3"]]]
     const fallback = html.match(/\[\[\["(\d+\.\d+(?:\.\d+)*)"\]\]/);
     if (fallback?.[1]) return fallback[1];
 
@@ -47,10 +78,12 @@ const fetchLatestVersion = async (): Promise<string | null> => {
   } catch {
     return null;
   }
-};
+}
 
-// Checks once per app version whether a newer version is on the Play Store.
-// If so, shows a one-time Alert giving the user the option to update or continue.
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
 const useUpdateCheck = (): void => {
   const { t } = useTranslation();
 
@@ -60,26 +93,21 @@ const useUpdateCheck = (): void => {
         const currentVersion = Constants.expoConfig?.version ?? "0.0.0";
         const storageKey = `${SHOWN_KEY_PREFIX}${currentVersion}`;
 
-        // Already shown for this version — skip
+        // Already shown for this build — bail out immediately.
         const alreadyShown = await AsyncStorage.getItem(storageKey);
         if (alreadyShown === "true") return;
 
         const latestVersion = await fetchLatestVersion();
-        if (!latestVersion) return;
+        if (!latestVersion || !isNewer(latestVersion, currentVersion)) return;
 
-        if (!isNewer(latestVersion, currentVersion)) return;
-
-        // Mark as shown before displaying — avoids double-shows on re-render
+        // Persist before showing — prevents a double-prompt on fast re-renders.
         await AsyncStorage.setItem(storageKey, "true");
 
         Alert.alert(
           t("common.updateAlert.title"),
           t("common.updateAlert.message"),
           [
-            {
-              text: t("common.updateAlert.later"),
-              style: "cancel",
-            },
+            { text: t("common.updateAlert.later"), style: "cancel" },
             {
               text: t("common.updateAlert.updateNow"),
               onPress: () => Linking.openURL(PLAY_STORE_URL),

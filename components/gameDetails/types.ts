@@ -1,4 +1,4 @@
-// Shared types for GameDetails components
+// ─── Navigation ────────────────────────────────────────────────────────────────
 
 export type GamesStackParamList = {
   GameDetails: {
@@ -8,20 +8,22 @@ export type GamesStackParamList = {
   };
 };
 
+// ─── IGDB raw shapes ───────────────────────────────────────────────────────────
+
 export interface AgeRating {
   organization: number;
   rating_category: number;
 }
 
 export interface Platform { id: number; abbreviation?: string }
-export interface Genre { id: number; name: string }
+export interface Genre    { id: number; name: string }
 export interface GameMode { id: number; name: string }
-export interface Company { id: number; name: string }
-export interface Engine { id: number; name: string }
-export interface Video { video_id?: string; name?: string }
+export interface Company  { id: number; name: string }
+export interface Engine   { id: number; name: string }
+export interface Video    { video_id?: string; name?: string }
 export interface Screenshot { id?: string; image_id: string }
-export interface Cover { image_id?: string }
-export interface Website { id: number; type: number; url: string }
+export interface Cover    { image_id?: string }
+export interface Website  { id: number; type: number; url: string }
 export interface Language { name: string }
 export interface LangSupportType { name: string }
 
@@ -30,10 +32,18 @@ export interface LanguageSupport {
   language_support_type: LangSupportType;
 }
 
+/** All time values are in hours, sourced from HowLongToBeat via IGDB. */
 export interface GameTimeToBeat {
   hastily?: number;
   normally?: number;
   completely?: number;
+}
+
+export interface InvolvedCompany {
+  id: number;
+  developer: boolean;
+  publisher: boolean;
+  company: Company;
 }
 
 export interface GameData {
@@ -44,17 +54,13 @@ export interface GameData {
   total_rating?: number;
   total_rating_count?: number;
   release_dates?: { human?: string }[];
-  first_release_date?: number; // Unix timestamp (seconds)
+  /** Unix timestamp in seconds */
+  first_release_date?: number;
   platforms?: Platform[];
   genres?: Genre[];
   game_modes?: GameMode[];
   age_ratings?: AgeRating[];
-  involved_companies?: {
-    id: number;
-    developer: boolean;
-    publisher: boolean;
-    company: Company;
-  }[];
+  involved_companies?: InvolvedCompany[];
   game_engines?: Engine[];
   videos?: Video[];
   screenshots?: Screenshot[];
@@ -64,6 +70,8 @@ export interface GameData {
   collections?: { games?: { id: number; name: string; cover?: Cover }[] }[];
   similar_games?: { id: number; name: string; cover?: Cover }[];
 }
+
+// ─── Derived / UI shapes ───────────────────────────────────────────────────────
 
 export interface AgeRatingInfo { label: string; color: string }
 

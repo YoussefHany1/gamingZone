@@ -1,65 +1,28 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { View, StyleSheet, Dimensions } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  interpolate,
-} from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import COLORS from "../constants/colors";
+import Shimmer from "./Shimmer";
+import { useShimmerSweep } from "./shared";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
 const CARD_HEIGHT = 220;
 const CARD_MARGIN = 10;
 
-// Main
-
 const SkeletonGamingEvents: React.FC = () => {
-  const shimmerAnimation = useSharedValue(0);
-
-  useEffect(() => {
-    shimmerAnimation.value = withRepeat(
-      withTiming(1, { duration: 1500 }),
-      -1,
-      false,
-    );
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    const translateX = interpolate(
-      shimmerAnimation.value,
-      [0, 1],
-      [-CARD_WIDTH, CARD_WIDTH],
-    );
-
-    return {
-      transform: [{ translateX }],
-    };
-  });
+  const animatedStyle = useShimmerSweep();
 
   return (
     <View style={styles.eventCard}>
-      {/* Base background skeleton */}
-      <View style={styles.backgroundSkeleton} />
-
       {/* Dark gradient overlay */}
       <LinearGradient
         colors={["rgba(12, 26, 51, 0.4)", "rgba(12, 26, 51, 0.95)"]}
-        style={styles.gradientOverlay}
+        style={StyleSheet.absoluteFill}
       />
 
       {/* Sliding shimmer overlay */}
-      <Animated.View style={[styles.shimmerContainer, animatedStyle]}>
-        <LinearGradient
-          colors={["transparent", "rgba(255, 255, 255, 0.12)", "transparent"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.shimmer}
-        />
-      </Animated.View>
+      <Shimmer animatedStyle={animatedStyle} style={styles.shimmer} />
 
       <View style={styles.contentContainer}>
         {/* Status badge skeleton */}
@@ -85,6 +48,7 @@ const SkeletonGamingEvents: React.FC = () => {
     </View>
   );
 };
+
 export default React.memo(SkeletonGamingEvents);
 
 const styles = StyleSheet.create({
@@ -94,27 +58,10 @@ const styles = StyleSheet.create({
     marginHorizontal: CARD_MARGIN,
     borderRadius: 20,
     overflow: "hidden",
-    position: "relative",
     backgroundColor: COLORS.secondary,
-  },
-  backgroundSkeleton: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    backgroundColor: COLORS.secondary,
-  },
-  gradientOverlay: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-  },
-  shimmerContainer: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 1,
   },
   shimmer: {
-    width: CARD_WIDTH,
-    height: "100%",
+    zIndex: 1,
   },
   contentContainer: {
     flex: 1,

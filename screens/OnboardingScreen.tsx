@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
@@ -18,18 +24,15 @@ const { width, height } = Dimensions.get("window");
 // Assets
 const SLIDE_VIDEOS = [
   require("../assets/news.mp4"),
-  // require("../assets/games-news.mp4"),
   require("../assets/list.mp4"),
   require("../assets/free-games.mp4"),
   require("../assets/notification.mp4"),
 ] as const;
 
-// Props 
 interface OnboardingScreenProps {
   onDone: () => void;
 }
 
-// Static Slide (no player — text + icon only)
 interface SlideContentProps {
   index: number;
   title: string;
@@ -39,27 +42,21 @@ interface SlideContentProps {
 const SlideContent = React.memo(
   ({ index, title, description }: SlideContentProps) => (
     <View style={styles.slide}>
-      {/* Video placeholder — shared player renders on top */}
       <View style={styles.videoPlaceholder} />
-
-      {/* Content panel */}
       <LinearGradient
         colors={["#1a3560", "#0c1a33"]}
         style={styles.contentPanel}
       >
-        {/* <Text style={styles.icon}>{SLIDE_ICONS[index]}</Text> */}
         <Text style={styles.slideTitle}>{title}</Text>
         <Text style={styles.slideDescription}>{description}</Text>
       </LinearGradient>
     </View>
-  )
+  ),
 );
 SlideContent.displayName = "SlideContent";
 
-// Main Onboarding Screen
 export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
   const { t } = useTranslation();
-  // const isRTL = i18n.language === "ar" || I18nManager.isRTL;
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<any>(null);
 
@@ -69,50 +66,38 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
         title: string;
         description: string;
       }>,
-    [t]
+    [t],
   );
 
   const TOTAL = slides.length;
 
-  // Single shared video player
-  // IMPORTANT: the setup callback MUST be stable (useCallback with []).
-  // A new function reference on every render caused useVideoPlayer to
-  // re-initialise the player each render → setState inside commitLayout
-  // → "Maximum update depth exceeded" crash (Firebase issue #41dac7f6).
+  // 1. الدالة ثابتة كما هي
   const setupPlayer = useCallback((p: any) => {
     p.loop = true;
     p.muted = true;
     p.play();
-  }, []); // empty deps → stable reference, never recreated
+  }, []);
 
-  const player = useVideoPlayer(SLIDE_VIDEOS[0], setupPlayer);
-
-  // Swap source whenever active slide changes
-  useEffect(() => {
-    player.replaceAsync(SLIDE_VIDEOS[activeIndex])
-      .then(() => player.play())
-      .catch(() => {
-        player.replace(SLIDE_VIDEOS[activeIndex]);
-        player.play();
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeIndex]); // ← intentionally omit player to prevent infinite loop
+  // 2. تحديث المشغل تلقائياً عند تغير activeIndex
+  const player = useVideoPlayer(SLIDE_VIDEOS[activeIndex], setupPlayer);
 
   // Handlers
-  const onMomentumScrollEnd = useCallback((event: any) => {
-    const offsetX = event.nativeEvent.contentOffset.x;
-    const newIndex = Math.round(offsetX / width);
-    if (newIndex >= 0 && newIndex < TOTAL) {
-      setActiveIndex(newIndex);
-    }
-  }, [TOTAL]);
+  const onMomentumScrollEnd = useCallback(
+    (event: any) => {
+      const offsetX = event.nativeEvent.contentOffset.x;
+      const newIndex = Math.round(offsetX / width);
+      if (newIndex >= 0 && newIndex < TOTAL) {
+        // استخدام prev للتأكد التام من عدم تحديث الـ State إلا إذا تغير الرقم فعلاً
+        setActiveIndex((prev) => (prev === newIndex ? prev : newIndex));
+      }
+    },
+    [TOTAL],
+  );
 
   const goNext = useCallback(() => {
     if (activeIndex < TOTAL - 1) {
       const nextIndex = activeIndex + 1;
-      // Update index immediately for dots/button state
       setActiveIndex(nextIndex);
-      // Scroll without triggering onMomentumScrollEnd to avoid double setState
       flatListRef.current?.scrollToOffset({
         offset: nextIndex * width,
         animated: true,
@@ -136,7 +121,7 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
         description={item.description}
       />
     ),
-    []
+    [],
   );
 
   const keyExtractor = useCallback((_: unknown, i: number) => String(i), []);
@@ -145,9 +130,7 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom", "right", "left"]}>
-      {/* Slides */}
       <View style={styles.slidesWrapper}>
-        {/* Single shared video overlay — placed BEFORE FlatList so it naturally renders behind it! */}
         <View style={styles.sharedVideoContainer} pointerEvents="none">
           <VideoView
             player={player}
@@ -180,9 +163,7 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
         />
       </View>
 
-      {/* Bottom Controls */}
       <View style={styles.controls}>
-        {/* Progress dots */}
         <View style={styles.dotsRow}>
           {Array.from({ length: TOTAL }).map((_, i) => (
             <View
@@ -195,9 +176,7 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
           ))}
         </View>
 
-        {/* Buttons */}
         <View style={styles.buttonsRow}>
-          {/* Skip — hidden on the last slide */}
           <TouchableOpacity
             onPress={onDone}
             style={[styles.skipBtn, isLast && styles.invisible]}
@@ -207,7 +186,6 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
             <Text style={styles.skipText}>{t("onboarding.skip")}</Text>
           </TouchableOpacity>
 
-          {/* Next / Get Started */}
           <TouchableOpacity
             onPress={goNext}
             style={styles.nextBtn}

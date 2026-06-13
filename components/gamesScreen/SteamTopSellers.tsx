@@ -4,10 +4,11 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  } from "react-native";
+} from "react-native";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
 import ErrorState from "../ErrorState";
@@ -18,10 +19,12 @@ import { SERVER_URL } from "../../constants/config";
 import useCachedData from "../../hooks/useCachedData";
 import { Game } from "../types";
 import SectionTitle from "../SectionTitle";
+import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
 
 const CARD_WIDTH = 180;
 const CARD_HEIGHT = 280;
 const CARD_MARGIN = 6;
+const STORAGE_KEY = "GAMES_CACHE_STEAM_TOP_SELLERS";
 
 const STEAM_BLUE = "#9CB4DD";
 const STEAM_BLUE_DIM = "#516996";
@@ -41,22 +44,24 @@ const getReviewLabel = (rating: number): { label: string; color: string } => {
   return { label: "Mostly Negative", color: STEAM_BLUE_DIM };
 };
 
+// Card
+
 interface SteamTopSellersCardProps {
   item: Game;
   index: number;
 }
 
 const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(({ item, index }) => {
-  const navigation = useNavigation<any>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
   const rating = item.total_rating ? Math.round(item.total_rating) / 10 : 0;
   const rank = index + 1;
   const review = rating > 0 ? getReviewLabel(rating) : null;
+  const isTopThree = rank <= 3;
 
   const handlePress = useCallback(() => {
     navigation.navigate("GameDetails", { gameID: item.id });
   }, [navigation, item.id]);
-
-  const isTopThree = rank <= 3;
 
   return (
     <TouchableOpacity
@@ -80,7 +85,7 @@ const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(({ item, index 
           contentFit="cover"
           transition={400}
           cachePolicy="memory-disk"
-          allowDownscaling={true}
+          allowDownscaling
         />
 
         {/* Bottom gradient */}
@@ -95,7 +100,7 @@ const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(({ item, index 
           <Text style={styles.rankNumber}>{rank}</Text>
         </View>
 
-        {/* Steam icon watermark top-right */}
+        {/* Tiny "STEAM" watermark top-right */}
         <View style={styles.steamIconMark}>
           <Text style={styles.steamIconText}>STEAM</Text>
         </View>
@@ -103,7 +108,6 @@ const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(({ item, index 
 
       {/* Info section */}
       <View style={styles.infoSection}>
-        {/* Game title */}
         <Text style={styles.gameTitle} numberOfLines={3}>
           {item.name}
         </Text>
@@ -124,10 +128,12 @@ const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(({ item, index 
     </TouchableOpacity>
   );
 });
+SteamTopSellersCard.displayName = "SteamTopSellersCard";
+
+// Main
 
 function SteamTopSellers(): React.ReactElement {
   const { t } = useTranslation();
-  const STORAGE_KEY = "GAMES_CACHE_STEAM_TOP_SELLERS";
 
   const { data: games, isLoading, error } = useCachedData<Game[]>(
     STORAGE_KEY,
@@ -145,20 +151,10 @@ function SteamTopSellers(): React.ReactElement {
     [],
   );
 
-  const getItemLayout = useCallback(
-    (_: ArrayLike<Game> | null | undefined, index: number) => ({
-      length: CARD_WIDTH + CARD_MARGIN * 2,
-      offset: (CARD_WIDTH + CARD_MARGIN * 2) * index,
-      index,
-    }),
-    [],
-  );
-
   return (
     <View>
       {/* Section header */}
       <View style={styles.headerContainer}>
-        {/* Steam-style blue accent line */}
         <SectionTitle
           title={t("games.list.steamTopSellers.title", "Steam Top Sellers")}
           fontSize={26}
@@ -171,7 +167,8 @@ function SteamTopSellers(): React.ReactElement {
 
       {/* Skeleton loading */}
       {isActuallyLoading && (
-        <FlashList           data={Array.from({ length: 5 }, (_, i) => ({ id: i } as any))}
+        <FlashList
+          data={Array.from({ length: 5 }, (_, i) => ({ id: i }) as any)}
           horizontal
           renderItem={() => <SkeletonPopular />}
           showsHorizontalScrollIndicator={false}
@@ -182,14 +179,15 @@ function SteamTopSellers(): React.ReactElement {
 
       {/* Error state */}
       {(error || !Array.isArray(gamesToShow)) && (
-        <View style={{ width: "100%", height: CARD_HEIGHT }}>
+        <View style={styles.errorContainer}>
           <ErrorState message={t("games.list.serverError")} />
         </View>
       )}
 
       {/* Games list */}
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList           data={gamesToShow}
+        <FlashList
+          data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
@@ -198,7 +196,7 @@ function SteamTopSellers(): React.ReactElement {
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            <View style={{ width: "100%", height: CARD_HEIGHT }}>
+            <View style={styles.errorContainer}>
               <ErrorState message={t("games.list.noResults", "No games found")} />
             </View>
           }
@@ -220,6 +218,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 18,
     marginTop: 18,
     marginBottom: 10,
+  },
+
+  /* ── Error ── */
+  errorContainer: {
+    width: "100%",
+    height: CARD_HEIGHT,
   },
 
   /* ── Card ── */

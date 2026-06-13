@@ -3,9 +3,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 
 // Serves cached data immediately from AsyncStorage, then revalidates from the
-// network in the background, adhering to a Time-To-Live (TTL) cache policy.
+// network in the background, following a Time-To-Live (TTL) cache policy.
 
+// ---------------------------------------------------------------------------
 // Types
+// ---------------------------------------------------------------------------
+
 export interface CachedDataResult<T> {
   data: T | null;
   isLoading: boolean;
@@ -15,123 +18,144 @@ export interface CachedDataResult<T> {
   setData: (newData: T) => Promise<void>;
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Unwraps a stored value that may be either a raw T or a {data, timestamp} envelope. */
+function unwrapCachedValue<T>(raw: unknown): T {
+  if (
+    raw !== null &&
+    typeof raw === "object" &&
+    !Array.isArray(raw) &&
+    "data" in (raw as object) &&
+    "timestamp" in (raw as object)
+  ) {
+    return (raw as { data: T; timestamp: number }).data;
+  }
+  return raw as T;
+}
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
 export default function useCachedData<T>(
-  key: string, // cache key
-  fetchFunction: () => Promise<T>, // fetches data
-  dependencies: unknown[] = [], // refetch when changed
-  ttl: number = 300000 // default TTL: 5 minutes (300,000 milliseconds)
+  /** AsyncStorage key used for persistence. */
+  key: string,
+  /** Async function that fetches fresh data from the network. */
+  fetchFn: () => Promise<T>,
+  /** Re-fetch when any of these values change (same semantics as useEffect deps). */
+  dependencies: unknown[] = [],
+  /** How long (ms) cached data is considered fresh before a background re-fetch. Default: 5 minutes. */
+  ttl: number = 300_000
 ): CachedDataResult<T> {
   const [data, setDataState] = useState<T | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isRefetching, setIsRefetching] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefetching, setIsRefetching] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  // Holds the latest in-memory copy so the Realtime callback and TTL check
+  // can read it without triggering re-renders or being added to deps arrays.
   const currentDataRef = useRef<T | null>(null);
-  const isMountedRef = useRef<boolean>(true);
 
-  const loadData = useCallback(async (forceRefresh = false): Promise<void> => {
-    try {
-      if (isMountedRef.current) {
-        setIsRefetching(true);
-        setError(null);
-      }
+  // Stable ref to the fetch function so we don't need it in useCallback deps,
+  // preventing unnecessary re-subscriptions when the caller recreates it.
+  const fetchFnRef = useRef(fetchFn);
+  useEffect(() => {
+    fetchFnRef.current = fetchFn;
+  });
 
+  const loadData = useCallback(
+    async (forceRefresh = false, signal?: AbortSignal): Promise<void> => {
       const timestampKey = `${key}_timestamp`;
 
-      // 1. Serve whatever is in the cache immediately to the UI
-      if (!currentDataRef.current) {
-        const cached = await AsyncStorage.getItem(key);
-        if (cached && isMountedRef.current) {
-          const raw = JSON.parse(cached);
-          const parsed: T =
-            raw !== null &&
-            typeof raw === "object" &&
-            !Array.isArray(raw) &&
-            "data" in raw &&
-            "timestamp" in raw
-              ? (raw as { data: T; timestamp: number }).data
-              : (raw as T);
-          setDataState(parsed);
-          currentDataRef.current = parsed;
-          setIsLoading(false);
-        }
-      }
+      const safeSet = <S>(setter: (v: S) => void, value: S) => {
+        if (!signal?.aborted) setter(value);
+      };
 
-      // 2. Adhere to TTL Policy: check if cached data is still fresh
-      if (!forceRefresh) {
-        const cachedTimestampStr = await AsyncStorage.getItem(timestampKey);
-        if (cachedTimestampStr && currentDataRef.current) {
-          const cachedTimestamp = parseInt(cachedTimestampStr, 10);
-          const age = Date.now() - cachedTimestamp;
-          if (age < ttl) {
-            // Cache is fresh, skip initial background network fetch to reduce reads
-            if (isMountedRef.current) {
-              setIsLoading(false);
-              setIsRefetching(false);
-            }
-            return;
+      safeSet(setIsRefetching, true);
+      safeSet(setError, null);
+
+      try {
+        // 1. Serve whatever is in the cache immediately so the UI is never blank.
+        if (!currentDataRef.current) {
+          const cached = await AsyncStorage.getItem(key);
+          if (cached) {
+            const parsed = unwrapCachedValue<T>(JSON.parse(cached));
+            currentDataRef.current = parsed;
+            safeSet(setDataState, parsed);
+            safeSet(setIsLoading, false);
           }
         }
-      }
 
-      // If user is offline, stop here
-      const netState = await NetInfo.fetch();
-      if (!netState.isConnected) {
-        if (isMountedRef.current) {
+        // 2. Respect TTL — skip the network call if the cache is still fresh.
+        if (!forceRefresh) {
+          const cachedTimestampStr = await AsyncStorage.getItem(timestampKey);
+          if (cachedTimestampStr && currentDataRef.current) {
+            const age = Date.now() - parseInt(cachedTimestampStr, 10);
+            if (age < ttl) {
+              safeSet(setIsLoading, false);
+              safeSet(setIsRefetching, false);
+              return;
+            }
+          }
+        }
+
+        // 3. Bail out early when the device is offline.
+        const { isConnected } = await NetInfo.fetch();
+        if (!isConnected) {
+          safeSet(setIsLoading, false);
+          safeSet(setIsRefetching, false);
+          return;
+        }
+
+        // 4. Fetch fresh data and update state + cache only when it changed.
+        const freshData = await fetchFnRef.current();
+
+        const hasChanged =
+          JSON.stringify(freshData) !== JSON.stringify(currentDataRef.current);
+
+        if (hasChanged || forceRefresh) {
+          currentDataRef.current = freshData;
+          await AsyncStorage.setItem(key, JSON.stringify(freshData));
+          safeSet(setDataState, freshData);
+        }
+
+        // Always update the timestamp on a successful fetch.
+        await AsyncStorage.setItem(timestampKey, String(Date.now()));
+      } catch (err) {
+        if (signal?.aborted) return;
+        console.error(`[useCachedData] Error for key "${key}":`, err);
+        safeSet(
+          setError,
+          err instanceof Error ? err : new Error(String(err))
+        );
+      } finally {
+        if (!signal?.aborted) {
           setIsLoading(false);
           setIsRefetching(false);
         }
-        return;
       }
+    },
+    // fetchFn is intentionally excluded — we use the stable fetchFnRef instead.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [key, ttl, ...dependencies]
+  );
 
-      // 3. Fetch fresh data from the network
-      const freshData: T = await fetchFunction();
-
-      // Only update state AND cache when data actually changed
-      const isDataDifferent =
-        JSON.stringify(freshData) !== JSON.stringify(currentDataRef.current);
-
-      if (isDataDifferent || forceRefresh) {
-        currentDataRef.current = freshData;
-        await AsyncStorage.setItem(key, JSON.stringify(freshData));
-        if (isMountedRef.current) {
-          setDataState(freshData);
-        }
-      }
-      
-      // Update the timestamp on successful fetch
-      await AsyncStorage.setItem(timestampKey, String(Date.now()));
-    } catch (err) {
-      console.error(`[useCachedData] Error for key "${key}":`, err);
-      if (isMountedRef.current) {
-        setError(err instanceof Error ? err : new Error(String(err)));
-      }
-    } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false);
-        setIsRefetching(false);
-      }
-    }
-  }, [key, ttl, ...dependencies]);
-
-  // Track mount status to prevent state updates after unmount
+  // Run on mount and whenever the key, TTL, or deps change.
+  // AbortController replaces the isMountedRef anti-pattern.
   useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
-
-  // Run on mount and whenever loadData identity changes
-  useEffect(() => {
-    loadData();
+    const controller = new AbortController();
+    loadData(false, controller.signal);
+    return () => controller.abort();
   }, [loadData]);
 
-  // Manually update state and cache
+  // Manually push a new value into state and cache (e.g. from Realtime events).
   const updateLocalData = useCallback(
     async (newData: T): Promise<void> => {
-      setDataState(newData);
       currentDataRef.current = newData;
+      setDataState(newData);
       await AsyncStorage.setItem(key, JSON.stringify(newData));
       await AsyncStorage.setItem(`${key}_timestamp`, String(Date.now()));
     },

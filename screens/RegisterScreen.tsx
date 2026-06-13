@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, memo } from "react";
+import React, { useState, useMemo, useCallback, memo, useEffect } from "react";
 import {
   View,
   TextInput,
@@ -70,13 +70,32 @@ GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
 const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
   const { t, i18n } = useTranslation();
 
-  const deviceCountryCode = getLocales()[0]?.regionCode ?? "";
-
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [name, setName] = useState<string>("");
-  const [country, setCountry] = useState<string>(deviceCountryCode);
+  const [country, setCountry] = useState<string>("");
   const [gender, setGender] = useState<Gender>("male");
+
+  useEffect(() => {
+    const fetchCountryByIP = async () => {
+      try {
+        const response = await fetch("https://get.geojs.io/v1/ip/country.json");
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.country) {
+            setCountry(data.country);
+            return;
+          }
+        }
+      } catch (error) {
+        console.warn("Failed to get country by IP", error);
+      }
+      // Fallback to device locale
+      setCountry(getLocales()[0]?.regionCode ?? "");
+    };
+
+    fetchCountryByIP();
+  }, []);
 
   // Derived data
 

@@ -1,23 +1,22 @@
-import React, { useCallback, useState, useEffect, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  } from "react-native";
+} from "react-native";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import COLORS from "../../constants/colors";
 import SectionTitle from "../SectionTitle";
 import { SERVER_URL } from "../../constants/config";
 import SkeletonMostAnticipated from "../../skeleton/SkeletonMostAnticipated";
 import { useCountdown } from "../../hooks/useCountdown";
+import useCachedData from "../../hooks/useCachedData";
 import { Game, CountdownResult } from "../types";
 import ErrorState from "../ErrorState";
 
@@ -51,8 +50,8 @@ const AnticipatedCard = React.memo<AnticipatedCardProps>(({ item }) => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
 
-  // Update countdown every minute — precision beyond minutes isn't needed here
-  const timeLeft = useCountdown(item.first_release_date, 60000) as CountdownResult | null;
+  // Update countdown every minute — minute precision is sufficient here
+  const timeLeft = useCountdown(item.first_release_date, 60_000) as CountdownResult | null;
 
   const handlePress = useCallback(() => {
     navigation.navigate("GameDetails", { gameID: item.id });
@@ -75,7 +74,7 @@ const AnticipatedCard = React.memo<AnticipatedCardProps>(({ item }) => {
         contentFit="cover"
         transition={500}
         cachePolicy="memory-disk"
-        allowDownscaling={true}
+        allowDownscaling
       />
 
       <View style={styles.overlay} />
@@ -116,69 +115,51 @@ const AnticipatedCard = React.memo<AnticipatedCardProps>(({ item }) => {
     </TouchableOpacity>
   );
 });
+AnticipatedCard.displayName = "AnticipatedCard";
 
-// main
+// Main
 
 function MostAnticipated(): React.ReactElement {
   const { t } = useTranslation();
-  const [cachedGames, setCachedGames] = useState<Game[]>([]);
-
-  // Load persisted cache on mount
-  useEffect(() => {
-    const loadCache = async (): Promise<void> => {
-      try {
-        const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
-        if (jsonValue != null) setCachedGames(JSON.parse(jsonValue));
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    loadCache();
-  }, []);
 
   const {
-    data: freshGames,
-    isSuccess,
+    data: games,
+    isLoading,
     isError,
-    error,
-  } = useQuery<Game[]>({
-    queryKey: ["games", "most-anticipated"],
-    queryFn: fetchAnticipatedGames,
-    staleTime: 1000 * 60 * 60 * 24, // 24 hours
-    retry: 2,
-  });
-
-  if (isError) console.error("Failed to fetch games:", error);
-
-  // Persist fresh data to AsyncStorage whenever it arrives
-  useEffect(() => {
-    if (isSuccess && freshGames && freshGames.length > 0) {
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(freshGames));
-    }
-  }, [isSuccess, freshGames]);
+  } = useCachedData<Game[]>(STORAGE_KEY, fetchAnticipatedGames, []);
 
   const gamesToShow: Game[] = useMemo(
-    () => sortByReleaseDate(freshGames?.length ? freshGames : cachedGames),
-    [freshGames, cachedGames],
+    () => sortByReleaseDate(games ?? []),
+    [games],
   );
 
-  if (!isError && gamesToShow.length === 0 && !isSuccess) return <SkeletonMostAnticipated />;
+  const isInitialLoading = isLoading && gamesToShow.length === 0;
 
-  if (!Array.isArray(gamesToShow) && isError) return
-  <View style={{ width: "100%", height: CARD_HEIGHT }}>
-    <ErrorState message={t("games.list.serverError")} />
-  </View>;
-
-  const renderItem = ({ item }: ListRenderItemInfo<Game>) => (
-    <AnticipatedCard item={item} />
+  const renderItem = useCallback(
+    ({ item }: ListRenderItemInfo<Game>) => <AnticipatedCard item={item} />,
+    [],
   );
+
+  if (isInitialLoading) return <SkeletonMostAnticipated />;
+
+  if (isError && gamesToShow.length === 0) {
+    return (
+      <View style={styles.errorContainer}>
+        <ErrorState message={t("games.list.serverError")} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <SectionTitle title={t("games.list.mostAnticipated.title")} subtitle={t("games.list.mostAnticipated.subtitle")} fontSize={28} />
+        <SectionTitle
+          title={t("games.list.mostAnticipated.title")}
+          subtitle={t("games.list.mostAnticipated.subtitle")}
+          fontSize={28}
+        />
       </View>
-      <FlashList 
+      <FlashList
         data={gamesToShow}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -187,15 +168,18 @@ function MostAnticipated(): React.ReactElement {
         contentContainerStyle={styles.listContent}
         snapToInterval={CARD_WIDTH + 20}
         decelerationRate="fast"
-        ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
-          <ErrorState message={t("games.list.serverError")} />
-        </View>}
+        ListEmptyComponent={
+          <View style={styles.errorContainer}>
+            <ErrorState message={t("games.list.serverError")} />
+          </View>
+        }
         estimatedItemSize={CARD_WIDTH + 20}
       />
     </View>
   );
 }
-export default MostAnticipated
+
+export default MostAnticipated;
 
 const styles = StyleSheet.create({
   container: { marginVertical: 10 },
@@ -206,6 +190,10 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "space-between",
     margin: 18,
+  },
+  errorContainer: {
+    width: "100%",
+    height: CARD_HEIGHT,
   },
   cardContainer: {
     width: CARD_WIDTH,

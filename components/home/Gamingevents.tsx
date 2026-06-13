@@ -5,11 +5,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  Linking,
-  } from "react-native";
+} from "react-native";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
-import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
@@ -19,16 +17,25 @@ import COLORS from "../../constants/colors";
 import SectionTitle from "../SectionTitle";
 import { SERVER_URL } from "../../constants/config";
 import { useCountdown } from "../../hooks/useCountdown";
+import type { TimeLeft } from "../../hooks/useCountdown";
 import ErrorState from "../ErrorState";
 import useCachedData from "../../hooks/useCachedData";
 import { openLink } from "../../lib/browser";
-import { GamingEvent, CountdownResult } from "../types";
+import { GamingEvent } from "../types";
 import type { HomeStackParamList } from "../../navigation/AppNavigator";
+import axios from "axios";
+
+// ─── Layout constants ──────────────────────────────────────────────────────────
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
 const CARD_HEIGHT = 220;
 const CARD_MARGIN = 10;
+const CARD_ITEM_SIZE = CARD_WIDTH + CARD_MARGIN * 2;
+
+const STORAGE_KEY = "GAMES_CACHE_EVENTS";
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 const fetchEvents = async (): Promise<GamingEvent[]> => {
   const response = await axios.get<GamingEvent[]>(`${SERVER_URL}/events`);
@@ -47,16 +54,34 @@ const formatEventDate = (timestamp: number, language = "en"): string => {
   return date.toLocaleDateString(language, options);
 };
 
+// ─── Types ─────────────────────────────────────────────────────────────────────
+
 type EventStatus = "upcoming" | "live" | "ended";
 
-const getEventStatus = (start_time: number, end_time: number): EventStatus => {
+// ─── Pure functions ────────────────────────────────────────────────────────────
+
+const getEventStatus = (startTime: number, endTime: number): EventStatus => {
   const now = Date.now() / 1000;
-  if (now < start_time) return "upcoming";
-  if (now >= start_time && now <= end_time) return "live";
+  if (now < startTime) return "upcoming";
+  if (now <= endTime) return "live";
   return "ended";
 };
 
-// Card
+/** Builds a compact countdown string, e.g. "2d 4h 30m" or "45m". */
+const formatCountdown = (
+  timeUntil: TimeLeft,
+  t: (key: string) => string,
+): string => {
+  const parts: string[] = [];
+  if (timeUntil.days > 0) parts.push(`${timeUntil.days}${t("common.time.d")}`);
+  if (timeUntil.hours > 0 || timeUntil.days > 0)
+    parts.push(`${timeUntil.hours}${t("common.time.h")}`);
+  if (timeUntil.minutes > 0 || timeUntil.hours > 0 || timeUntil.days > 0)
+    parts.push(`${timeUntil.minutes}${t("common.time.m")}`);
+  return parts.join(" ");
+};
+
+// ─── EventCard ─────────────────────────────────────────────────────────────────
 
 interface EventCardProps {
   item: GamingEvent;
@@ -65,16 +90,14 @@ interface EventCardProps {
 
 const EventCard = React.memo<EventCardProps>(({ item, onPress }) => {
   const { t, i18n } = useTranslation();
-  // console.log(item)
+
   const status: EventStatus = getEventStatus(item.start_time, item.end_time);
-  const timeUntil = useCountdown(
-    status === "upcoming" ? item.start_time : null,
-  ) as CountdownResult | null;
+  const timeUntil = useCountdown(status === "upcoming" ? item.start_time : null);
 
   const handleStreamPress = useCallback((): void => {
     if (item.live_stream_url) {
       openLink(item.live_stream_url).catch(() =>
-        console.error("Failed to open URL"),
+        console.error("[GamingEvents] Failed to open stream URL"),
       );
     }
   }, [item.live_stream_url]);
@@ -95,7 +118,7 @@ const EventCard = React.memo<EventCardProps>(({ item, onPress }) => {
         style={styles.backgroundImage}
         contentFit="cover"
         cachePolicy="memory-disk"
-        allowDownscaling={true}
+        allowDownscaling
       />
 
       <LinearGradient
@@ -129,7 +152,7 @@ const EventCard = React.memo<EventCardProps>(({ item, onPress }) => {
             {item.name}
           </Text>
 
-          {/* Countdown timer for upcoming events */}
+          {/* Countdown timer — only shown for upcoming events with time remaining */}
           {timeUntil && (
             <View style={styles.dateTimeRow}>
               <View style={styles.dateContainer}>
@@ -139,15 +162,7 @@ const EventCard = React.memo<EventCardProps>(({ item, onPress }) => {
               </View>
               <View style={styles.countdownContainer}>
                 <Text style={styles.countdownText}>
-                  {timeUntil.days > 0 ? `${timeUntil.days}${t("common.time.d")} ` : ""}
-                  {timeUntil.hours > 0 || timeUntil.days > 0
-                    ? `${timeUntil.hours}${t("common.time.h")} `
-                    : ""}
-                  {timeUntil.minutes > 0 ||
-                    timeUntil.hours > 0 ||
-                    timeUntil.days > 0
-                    ? `${timeUntil.minutes}${t("common.time.m")}`
-                    : ""}
+                  {formatCountdown(timeUntil, t)}
                 </Text>
               </View>
             </View>
@@ -160,18 +175,27 @@ const EventCard = React.memo<EventCardProps>(({ item, onPress }) => {
   );
 });
 
-// main
+EventCard.displayName = "EventCard";
+
+// ─── Skeleton placeholder items ────────────────────────────────────────────────
+
+type SkeletonItem = { id: number };
+const SKELETON_DATA: SkeletonItem[] = Array.from({ length: 3 }, (_, i) => ({
+  id: i,
+}));
+
+// ─── GamingEvents ──────────────────────────────────────────────────────────────
 
 function GamingEvents(): React.ReactElement {
   const { t } = useTranslation();
-  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
-  const STORAGE_KEY = "GAMES_CACHE_EVENTS";
+  const navigation =
+    useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
 
-  const { data: events, isLoading, error } = useCachedData<GamingEvent[]>(
-    STORAGE_KEY,
-    fetchEvents,
-    [],
-  );
+  const {
+    data: events,
+    isLoading,
+    error,
+  } = useCachedData<GamingEvent[]>(STORAGE_KEY, fetchEvents, []);
 
   const eventsToShow: GamingEvent[] = events ?? [];
   const isActuallyLoading = isLoading && eventsToShow.length === 0;
@@ -185,59 +209,66 @@ function GamingEvents(): React.ReactElement {
     [navigation],
   );
 
-  const getItemLayout = useCallback(
-    (_data: ArrayLike<GamingEvent> | null | undefined, index: number) => ({
-      length: CARD_WIDTH + CARD_MARGIN * 2,
-      offset: (CARD_WIDTH + CARD_MARGIN * 2) * index,
-      index,
-    }),
+  const renderSkeletonItem = useCallback(
+    () => <SkeletonGamingevents />,
     [],
   );
 
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <SectionTitle title={t("home.gamingEvents.header")} subtitle={t("home.gamingEvents.subtitle")} fontSize={28} />
+        <SectionTitle
+          title={t("home.gamingEvents.header")}
+          subtitle={t("home.gamingEvents.subtitle")}
+          fontSize={28}
+        />
       </View>
 
       {isActuallyLoading && (
-        <FlashList 
-          data={Array.from({ length: 3 }, (_, i) => ({ id: i } as any))}
+        <FlashList
+          data={SKELETON_DATA}
           horizontal
-          renderItem={() => <SkeletonGamingevents />}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderSkeletonItem}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          estimatedItemSize={CARD_WIDTH + CARD_MARGIN * 2}
+          estimatedItemSize={CARD_ITEM_SIZE}
         />
       )}
 
-      {/* error */}
-      {(error || !Array.isArray(eventsToShow)) && (
-        <View style={{ width: "100%", height: CARD_HEIGHT }}>
+      {error && (
+        <View style={styles.errorWrapper}>
           <ErrorState message={t("games.list.serverError")} />
         </View>
       )}
 
-      {!error && Array.isArray(eventsToShow) && (
-        <FlashList 
+      {!error && (
+        <FlashList
           data={eventsToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           showsHorizontalScrollIndicator={false}
-          snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
+          snapToInterval={CARD_ITEM_SIZE}
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
-            <ErrorState message={t("games.list.serverError")} />
-          </View>}
-          estimatedItemSize={CARD_WIDTH + CARD_MARGIN * 2}
+          ListEmptyComponent={
+            !isActuallyLoading ? (
+              <View style={styles.errorWrapper}>
+                <ErrorState message={t("home.gamingEvents.noEvents")} />
+              </View>
+            ) : null
+          }
+          estimatedItemSize={CARD_ITEM_SIZE}
         />
       )}
     </View>
   );
 }
+
 export default GamingEvents;
+
+// ─── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { marginTop: 20 },
@@ -249,6 +280,7 @@ const styles = StyleSheet.create({
     margin: 18,
   },
   listContent: { padding: 10 },
+  errorWrapper: { width: "100%", height: CARD_HEIGHT },
   eventCard: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
@@ -362,18 +394,5 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#FF3B30",
     elevation: 10,
-  },
-  error: {
-    color: COLORS.lightGray,
-    textAlign: "center",
-    marginTop: 20,
-    paddingHorizontal: 20,
-    fontSize: 16,
-  },
-  noResults: {
-    color: "#9CB4DD",
-    textAlign: "center",
-    fontSize: 16,
-    marginVertical: 20,
   },
 });

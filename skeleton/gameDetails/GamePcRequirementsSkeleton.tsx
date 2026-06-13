@@ -5,22 +5,22 @@ import COLORS from "../../constants/colors";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
+type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
+
 // Static title + shimmer tab buttons + shimmer rows
 const GamePcRequirementsSkeleton: React.FC = () => {
   const { t } = useTranslation();
   const shimmer = useShimmer();
-  const S = (p: Omit<Omit<Parameters<typeof SkeletonBar>[0], "shimmer">, "shimmer">) => <SkeletonBar shimmer={shimmer} {...p} />;
+  const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>
-        {t("games.details.pcRequirements") ?? "PC System Requirements"}
-      </Text>
+      <Text style={styles.header}>{t("games.details.pcRequirements")}</Text>
 
       {/* Tab buttons */}
       <View style={styles.tabRow}>
-        <S w={100} h={36} r={8} />
-        <S w={120} h={36} r={8} style={{ marginLeft: 8 }} />
+        <S width={100} height={36} radius={8} />
+        <S width={120} height={36} radius={8} style={{ marginLeft: 8 }} />
       </View>
 
       {/* Rows */}
@@ -33,8 +33,8 @@ const GamePcRequirementsSkeleton: React.FC = () => {
               { backgroundColor: i % 2 !== 0 ? "rgba(81,105,150,0.12)" : "transparent" },
             ]}
           >
-            <S w="30%" h={12} r={4} style={{ marginBottom: 4 }} />
-            <S w="80%" h={14} r={5} />
+            <S width="30%" height={12} radius={4} style={{ marginBottom: 4 }} />
+            <S width="80%" height={14} radius={5} />
           </View>
         ))}
       </View>
@@ -45,7 +45,7 @@ const GamePcRequirementsSkeleton: React.FC = () => {
 export default GamePcRequirementsSkeleton;
 
 const styles = StyleSheet.create({
-  container: { marginTop: 20, marginBottom: 10, direction: "ltr", },
+  container: { marginTop: 20, marginBottom: 10, direction: "ltr" },
   header: {
     color: COLORS.textLight,
     fontSize: 24,

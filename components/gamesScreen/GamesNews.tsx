@@ -4,7 +4,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
-  } from "react-native";
+} from "react-native";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
@@ -67,6 +67,7 @@ interface NewsGameCardProps {
 
 const NewsGameCard = React.memo<NewsGameCardProps>(({ item, onPress }) => {
   const { t } = useTranslation();
+
   return (
     <TouchableOpacity
       style={styles.gameCard}
@@ -83,7 +84,7 @@ const NewsGameCard = React.memo<NewsGameCardProps>(({ item, onPress }) => {
           contentFit="cover"
           transition={500}
           cachePolicy="memory-disk"
-          allowDownscaling={true}
+          allowDownscaling
         />
         <LinearGradient
           colors={["transparent", COLORS.darkBackground + "99"]}
@@ -103,10 +104,11 @@ const NewsGameCard = React.memo<NewsGameCardProps>(({ item, onPress }) => {
         <Text style={styles.liveText}>{t("games.list.gamesNews.live")}</Text>
       </View>
     </TouchableOpacity>
-  )
+  );
 });
+NewsGameCard.displayName = "NewsGameCard";
 
-// main
+// Main
 
 function GamesNews(): React.ReactElement {
   const navigation = useNavigation<any>();
@@ -129,12 +131,16 @@ function GamesNews(): React.ReactElement {
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <SectionTitle title={t("games.list.gamesNews.title")} subtitle={t("games.list.gamesNews.subtitle")} fontSize={28} />
+        <SectionTitle
+          title={t("games.list.gamesNews.title")}
+          subtitle={t("games.list.gamesNews.subtitle")}
+          fontSize={28}
+        />
       </View>
 
-      <FlashList 
+      <FlashList
         data={GAMES_DATA}
-        horizontal={true}
+        horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}

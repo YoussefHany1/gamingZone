@@ -5,11 +5,13 @@ import COLORS from "../../constants/colors";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
-// 4 blocks (2x2): each with a static translated header + shimmer value lines
+type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
+
+// 4 blocks (2×2): each with a static translated header + shimmer value lines
 const GameDetailsGridSkeleton: React.FC = () => {
   const { t } = useTranslation();
   const shimmer = useShimmer();
-  const S = (p: Omit<Parameters<typeof SkeletonBar>[0], "shimmer">) => <SkeletonBar shimmer={shimmer} {...p} />;
+  const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
 
   const blocks = [
     t("games.details.genres"),
@@ -23,8 +25,8 @@ const GameDetailsGridSkeleton: React.FC = () => {
       {blocks.map((label) => (
         <View key={label} style={styles.block}>
           <Text style={styles.blockHeader}>{label}</Text>
-          <S w="85%" h={14} r={5} style={{ marginTop: 8 }} />
-          <S w="70%" h={14} r={5} style={{ marginTop: 6 }} />
+          <S width="85%" height={14} radius={5} style={{ marginTop: 8 }} />
+          <S width="70%" height={14} radius={5} style={{ marginTop: 6 }} />
         </View>
       ))}
     </View>

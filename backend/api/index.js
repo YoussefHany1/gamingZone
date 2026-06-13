@@ -406,12 +406,10 @@ app.get("/search", cacheMiddleware(300), async (req, res) => {
 
     // At least one of q, year, genre, or platform must be provided
     if (!q && !year && !genre && !platform) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "At least one filter (q, year, genre, or platform) is required",
-        });
+      return res.status(400).json({
+        message:
+          "At least one filter (q, year, genre, or platform) is required",
+      });
     }
 
     // Always include genres and platforms in fields so client can display them
@@ -604,13 +602,15 @@ app.get("/search-game-id", cacheMiddleware(3600), async (req, res) => {
 app.get("/events", cacheMiddleware(3600), async (req, res) => {
   try {
     const nowTs = Math.floor(Date.now() / 1000);
+    // Fetch events from the last 30 days and future
+    const thirtyDaysAgo = nowTs - 3 * 24 * 60 * 60;
     const query = `
       fields name, start_time, end_time, time_zone, event_logo.image_id, live_stream_url,
              description,
              games.name, games.cover.image_id,
              videos.name, videos.video_id,
              event_networks.url, event_networks.network_type;
-      where start_time > ${nowTs};
+      where end_time > ${thirtyDaysAgo};
       sort start_time asc;
       limit 15;
     `;
@@ -631,12 +631,14 @@ const STEAM_API_KEY = process.env.STEAM_API_KEY;
 // Get Steam Top Sellers and map to IGDB
 app.get("/steam-top-sellers", cacheMiddleware(3600), async (req, res) => {
   try {
-    const steamRes = await fetch("https://store.steampowered.com/api/featuredcategories/");
+    const steamRes = await fetch(
+      "https://store.steampowered.com/api/featuredcategories/",
+    );
     const steamData = await steamRes.json();
-    
+
     const topSellersItems = steamData?.top_sellers?.items || [];
-    const appIds = topSellersItems.map(item => `"${item.id}"`);
-    
+    const appIds = topSellersItems.map((item) => `"${item.id}"`);
+
     if (appIds.length === 0) {
       return res.json([]);
     }
@@ -648,7 +650,10 @@ app.get("/steam-top-sellers", cacheMiddleware(3600), async (req, res) => {
       limit 50;
     `;
     const extGames = await callIgdb("external_games", extQuery);
-    const gameIds = extGames.map(e => e.game).filter(id => id).join(",");
+    const gameIds = extGames
+      .map((e) => e.game)
+      .filter((id) => id)
+      .join(",");
 
     if (!gameIds) {
       return res.json([]);
@@ -665,12 +670,12 @@ app.get("/steam-top-sellers", cacheMiddleware(3600), async (req, res) => {
     // 3) Reorder based on Steam's top sellers list to maintain rank
     const sortedGames = [];
     const addedIds = new Set();
-    
+
     for (const appIdStr of appIds) {
-      const cleanId = appIdStr.replace(/"/g, '');
-      const extMatch = extGames.find(e => e.uid === cleanId);
+      const cleanId = appIdStr.replace(/"/g, "");
+      const extMatch = extGames.find((e) => e.uid === cleanId);
       if (extMatch) {
-        const game = igdbGames.find(g => g.id === extMatch.game);
+        const game = igdbGames.find((g) => g.id === extMatch.game);
         if (game && !addedIds.has(game.id)) {
           sortedGames.push(game);
           addedIds.add(game.id);

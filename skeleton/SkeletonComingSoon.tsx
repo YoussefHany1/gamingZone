@@ -1,69 +1,21 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { View, StyleSheet, ViewStyle } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-  Easing,
-} from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
+import COLORS from "../constants/colors";
+import SkeletonItem from "./SkeletonItem";
+import { usePulseAnimation } from "./shared";
 
-// Card dimensions
 const CARD_WIDTH = 300;
 const CARD_HEIGHT = 350;
 const CARD_MARGIN = 10;
-
-// Skeleton color palette
-const SKELETON_BASE_COLOR = "#1f3a60";
-const SKELETON_HIGHLIGHT_COLOR = "#2a4a75";
-const CARD_BG_COLOR = "#1a3052"; // Card background color
-
-// Types
-
-interface SkeletonItemProps {
-  style?: ViewStyle;
-  animatedStyle: ReturnType<typeof useAnimatedStyle>;
-}
-
-// SkeletonItem
-
-const SkeletonItem = React.memo<SkeletonItemProps>(({ style, animatedStyle }) => (
-  <Animated.View style={[styles.skeletonItem, style, animatedStyle]}>
-    <LinearGradient
-      colors={[SKELETON_BASE_COLOR, SKELETON_HIGHLIGHT_COLOR]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={StyleSheet.absoluteFill}
-    />
-  </Animated.View>
-));
-
-// Main
+const CARD_BG_COLOR = "#1a3052";
 
 const SkeletonComingSoonCard: React.FC = () => {
-  // Opacity pulse animation value
-  const opacity = useSharedValue(0.5);
-
-  useEffect(() => {
-    opacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.5, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      true,
-    );
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
+  const animatedStyle = usePulseAnimation();
 
   return (
     <View style={styles.cardContainer}>
-      {/* Date Calendar Skeleton */}
+      {/* Date calendar skeleton */}
       <SkeletonItem
         animatedStyle={animatedStyle}
         style={{
@@ -78,20 +30,20 @@ const SkeletonComingSoonCard: React.FC = () => {
       />
 
       <View style={styles.contentContainer}>
-        {/* Cover Image Skeleton */}
+        {/* Cover image skeleton */}
         <View style={styles.coverContainer}>
           <SkeletonItem animatedStyle={animatedStyle} style={styles.cover} />
         </View>
 
-        {/* Info Container */}
+        {/* Info container */}
         <View style={styles.infoContainer}>
-          {/* Title lines */}
+          {/* Title line */}
           <SkeletonItem
             animatedStyle={animatedStyle}
             style={{ width: 200, height: 22, borderRadius: 4, marginBottom: 8 }}
           />
 
-          {/* Platforms row */}
+          {/* Platform badges */}
           <View style={styles.platformsContainer}>
             <SkeletonItem animatedStyle={animatedStyle} style={styles.platformBadge} />
             <SkeletonItem animatedStyle={animatedStyle} style={styles.platformBadge} />
@@ -102,6 +54,7 @@ const SkeletonComingSoonCard: React.FC = () => {
     </View>
   );
 };
+
 export default React.memo(SkeletonComingSoonCard);
 
 const styles = StyleSheet.create({
@@ -147,9 +100,5 @@ const styles = StyleSheet.create({
     width: 50,
     height: 24,
     borderRadius: 12,
-  },
-  skeletonItem: {
-    backgroundColor: SKELETON_BASE_COLOR,
-    overflow: "hidden",
   },
 });

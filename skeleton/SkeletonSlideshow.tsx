@@ -1,44 +1,18 @@
-import React, { useEffect } from "react";
-import { View, StyleSheet, Dimensions } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
+import React from "react";
+import { View, StyleSheet } from "react-native";
 import COLORS from "../constants/colors";
-
-const { width } = Dimensions.get("window");
-
-// Main
+import Shimmer from "./Shimmer";
+import { useShimmerSweep } from "./shared";
 
 const SlideshowSkeleton: React.FC = () => {
-  // Horizontal translate value for the shimmer pass
-  const translateX = useSharedValue(-width);
-
-  // Infinite shimmer loop — sweeps left to right
-  useEffect(() => {
-    translateX.value = withRepeat(
-      withTiming(width, { duration: 1500 }), // sweep from left to right
-      -1, // infinite repetition
-      false // always restart from the left (no reverse)
-    );
-  }, []);
-
-  // Apply the animated transform
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  });
+  const animatedStyle = useShimmerSweep();
 
   return (
     <View style={styles.container}>
-      {/* image placeholder */}
+      {/* Full-screen background placeholder */}
       <View style={styles.imagePlaceholder} />
 
-      {/* text and cover layout matching the real Slideshow */}
+      {/* Bottom headline area — mirrors the real Slideshow layout */}
       <View style={styles.headline}>
         {/* Cover image skeleton */}
         <View style={styles.coverSkeleton} />
@@ -53,18 +27,12 @@ const SlideshowSkeleton: React.FC = () => {
         </View>
       </View>
 
-      {/* Animated shimmer overlay */}
-      <Animated.View style={[styles.shimmerOverlay, animatedStyle]}>
-        <LinearGradient
-          colors={["transparent", "rgba(255,255,255,0.15)", "transparent"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </Animated.View>
+      {/* Shimmer overlay — sits on top of everything with zIndex: 10 */}
+      <Shimmer animatedStyle={animatedStyle} style={styles.shimmerOverlay} />
     </View>
   );
 };
+
 export default React.memo(SlideshowSkeleton);
 
 const styles = StyleSheet.create({
@@ -120,9 +88,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   shimmerOverlay: {
-    ...StyleSheet.absoluteFillObject,
     zIndex: 10,
   },
 });
-
-

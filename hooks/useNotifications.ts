@@ -7,28 +7,18 @@ import NotificationService from "../notificationService";
 
 /**
  * Handles all FCM setup for the authenticated user:
- *   - Creates an Android notification channel
+ *   - Creates/updates the Android notification channel
  *   - Requests permission
  *   - Saves / refreshes the FCM token in Firestore
  *   - Syncs topic subscriptions from stored preferences
- *   - Presents foreground notifications as local Expo notifications
+ *   - Presents foreground messages as local Expo notifications
  */
 
-// Types
-type Unsubscribe = () => void;
-interface NotificationPayload {
-  title: string | undefined;
-  body: string;
-  data: Record<string, unknown>;
-  sound: string;
-  badge: number;
-  categoryIdentifier: string;
-  attachments?: Notifications.NotificationContentAttachmentIos[];
-}
-
+// ---------------------------------------------------------------------------
 // Constants
+// ---------------------------------------------------------------------------
 
-// Android notification channel config
+const NEWS_CHANNEL_ID = "news_notifications" as const;
 
 const NEWS_CHANNEL: Notifications.NotificationChannelInput = {
   name: "News Notifications",
@@ -42,36 +32,60 @@ const NEWS_CHANNEL: Notifications.NotificationChannelInput = {
   showBadge: true,
   bypassDnd: false,
 };
-const NEWS_CHANNEL_ID = "news_notifications" as const;
 
-// main
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type Unsubscribe = () => void;
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts the notification image URL from the remote message, checking
+ * Android-specific fields, then the generic notification object, then data.
+ */
+function extractImageUrl(
+  remoteMessage: FirebaseMessagingTypes.RemoteMessage
+): string | undefined {
+  return (
+    (remoteMessage.notification?.android as { imageUrl?: string } | undefined)
+      ?.imageUrl ??
+    (remoteMessage.data?.["thumbnail"] as string | undefined)
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
 const useNotifications = (
   user: FirebaseAuthTypes.User | null | undefined
 ): void => {
   useEffect(() => {
-    // Nothing to do until a user is authenticated
     if (!user) return;
 
     let unsubscribeOnMessage: Unsubscribe | undefined;
     let unsubscribeTokenRefresh: Unsubscribe | undefined;
 
-    const setupFcm = async (): Promise<void> => {
+    const setup = async (): Promise<void> => {
       try {
-        // Create / update Android notification channel
+        // Ensure the Android notification channel exists before doing anything else.
         await Notifications.setNotificationChannelAsync(
           NEWS_CHANNEL_ID,
           NEWS_CHANNEL
         );
 
-        // Request FCM permission
         const authStatus = await messaging().requestPermission();
-        const isEnabled =
+        const isAuthorized =
           authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
           authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-        if (!isEnabled) return;
+        if (!isAuthorized) return;
 
-        // Save token and sync topic subscriptions
+        // Register token and sync topic subscriptions with stored preferences.
         const token = await messaging().getToken();
         await NotificationService.saveFCMToken(user.uid, token);
 
@@ -80,17 +94,15 @@ const useNotifications = (
         );
         await NotificationService.syncUserPreferences(user.uid, preferences);
 
-        // Foreground message handler
+        // Foreground message handler — present silent messages are skipped.
         unsubscribeOnMessage = messaging().onMessage(
-          async (
-            remoteMessage: FirebaseMessagingTypes.RemoteMessage
-          ): Promise<void> => {
+          async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
             try {
               const title =
                 remoteMessage.notification?.title ??
                 (remoteMessage.data?.["title"] as string | undefined);
 
-              // Silent data-only messages → skip local notification
+              // Skip data-only messages without a visible title.
               if (!title) return;
 
               const body =
@@ -98,37 +110,27 @@ const useNotifications = (
                 (remoteMessage.data?.["body"] as string | undefined) ??
                 "";
 
-              const image =
-                (
-                  remoteMessage.notification
-                    ?.android as { imageUrl?: string } | undefined
-                )?.imageUrl ??
-                (remoteMessage.notification as { imageUrl?: string } | undefined)
-                  ?.imageUrl ??
-                (remoteMessage.data?.["thumbnail"] as string | undefined);
-
-              const content: NotificationPayload = {
-                title,
-                body,
-                data: (remoteMessage.data as Record<string, unknown>) ?? {},
-                sound: "default",
-                badge: 1,
-                categoryIdentifier: NEWS_CHANNEL_ID,
-              };
-
-              if (image) {
-                content.attachments = [
-                  {
-                    url: image,
-                    identifier: "news-image",
-                    type: "image",
-                    typeHint: "image",
-                  },
-                ];
-              }
+              const imageUrl = extractImageUrl(remoteMessage);
 
               await Notifications.scheduleNotificationAsync({
-                content,
+                content: {
+                  title,
+                  body,
+                  data: (remoteMessage.data as Record<string, unknown>) ?? {},
+                  sound: "default",
+                  badge: 1,
+                  categoryIdentifier: NEWS_CHANNEL_ID,
+                  ...(imageUrl && {
+                    attachments: [
+                      {
+                        url: imageUrl,
+                        identifier: "news-image",
+                        type: "image",
+                        typeHint: "image",
+                      },
+                    ],
+                  }),
+                },
                 trigger: null,
               });
             } catch (err) {
@@ -140,24 +142,24 @@ const useNotifications = (
           }
         );
 
-        // Keep the stored token fresh when FCM rotates it
+        // Keep the stored token current when FCM rotates it.
         unsubscribeTokenRefresh = messaging().onTokenRefresh(
-          async (newToken: string): Promise<void> => {
+          async (newToken: string) => {
             await NotificationService.saveFCMToken(user.uid, newToken);
           }
         );
       } catch (error) {
-        console.error("[useNotifications] FCM init error:", error);
+        console.error("[useNotifications] FCM setup error:", error);
       }
     };
 
-    setupFcm();
+    setup();
 
     return () => {
       unsubscribeOnMessage?.();
       unsubscribeTokenRefresh?.();
     };
-  }, [user]); // Re-run only when the authenticated user changes
+  }, [user]);
 };
 
 export default useNotifications;

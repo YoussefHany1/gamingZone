@@ -1,38 +1,30 @@
 import React, { memo } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
 import { useTranslation } from "react-i18next";
-import COLORS from "../../constants/colors";
+import { sharedStyles } from "./shared";
 
 interface Props {
   summary?: string;
 }
 
+const SUMMARY_STYLE = {
+  color: "#c1c1c1",
+  fontSize: 16,
+  marginTop: 5,
+  direction: "ltr" as const,
+} as const;
+
 const GameAbout: React.FC<Props> = ({ summary }) => {
   const { t } = useTranslation();
+
   if (!summary) return null;
 
   return (
     <View>
-      <Text style={styles.detailsHeader}>{t("games.details.about")}</Text>
-      <Text style={styles.summary}>{summary}</Text>
+      <Text style={sharedStyles.sectionHeader}>{t("games.details.about")}</Text>
+      <Text style={SUMMARY_STYLE}>{summary}</Text>
     </View>
   );
 };
 
 export default memo(GameAbout);
-
-const styles = StyleSheet.create({
-  detailsHeader: {
-    color: COLORS.textLight,
-    fontSize: 24,
-    fontWeight: "600",
-    textDecorationLine: "underline",
-    marginTop: 10,
-  },
-  summary: {
-    color: "#c1c1c1",
-    fontSize: 16,
-    marginTop: 5,
-    direction: "ltr",
-  },
-});

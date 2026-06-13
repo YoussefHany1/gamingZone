@@ -1,6 +1,28 @@
 import { Client, Databases } from "react-native-appwrite";
 import Constants from "expo-constants";
 
+// --------------------------------------------------------------------------
+// Patch WebSocket to prevent "INVALID_STATE_ERR" crashes in React Native
+// when Appwrite Realtime tries to send data on a closed connection.
+// --------------------------------------------------------------------------
+if (typeof WebSocket !== "undefined") {
+  const originalSend = WebSocket.prototype.send;
+  WebSocket.prototype.send = function (data) {
+    if (this.readyState === WebSocket.OPEN) {
+      try {
+        originalSend.call(this, data);
+      } catch (e) {
+        console.warn("[WebSocket Patch] Caught send error:", e);
+      }
+    } else {
+      console.warn(
+        `[WebSocket Patch] Ignored send because readyState is ${this.readyState} (not OPEN)`
+      );
+    }
+  };
+}
+// --------------------------------------------------------------------------
+
 // Types
 interface AppExtra {
   APPWRITE_PROJECT?: string;

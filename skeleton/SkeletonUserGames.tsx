@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, StyleSheet, Dimensions, ViewStyle } from "react-native";
+import { View, StyleSheet, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
@@ -14,30 +14,30 @@ import COLORS from "../constants/colors";
 
 const { width } = Dimensions.get("window");
 
-// Types
+// ---------------------------------------------------------------------------
+// ShimmerPlaceholder — each instance runs its own animation so sweeps are
+// independent of each other in the list.
+// ---------------------------------------------------------------------------
 
 interface ShimmerPlaceholderProps {
-  style?: ViewStyle;
+  style?: object;
 }
-
-// ShimmerPlaceholder
 
 const ShimmerPlaceholder = React.memo<ShimmerPlaceholderProps>(({ style }) => {
   const translateX = useSharedValue(-width);
 
   useEffect(() => {
+    // react-native-reanimated always runs on the UI thread (native driver active)
     translateX.value = withRepeat(
       withTiming(width, { duration: 1250, easing: Easing.linear }),
-      -1, // infinite repetition
-      false // always sweep left-to-right
+      -1,
+      false,
     );
   }, []);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  });
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
   return (
     <View style={[styles.placeholderBase, style, { overflow: "hidden" }]}>
@@ -53,53 +53,55 @@ const ShimmerPlaceholder = React.memo<ShimmerPlaceholderProps>(({ style }) => {
   );
 });
 
-// SkeletonItem
+ShimmerPlaceholder.displayName = "ShimmerPlaceholder";
 
-const SkeletonItem = React.memo(() => {
-  return (
-    <View style={styles.skeletonContainer}>
-      {/* Game cover image placeholder */}
-      <ShimmerPlaceholder style={styles.skeletonImage} />
+// ---------------------------------------------------------------------------
+// SkeletonItem — a single list row placeholder
+// ---------------------------------------------------------------------------
 
-      {/* Text info placeholders */}
-      <View style={styles.skeletonInfo}>
-        {/* Title placeholder */}
-        <ShimmerPlaceholder style={styles.skeletonTitle} />
-        {/* Date placeholder */}
-        <ShimmerPlaceholder style={styles.skeletonDate} />
-      </View>
+const SkeletonItem = React.memo(() => (
+  <View style={styles.skeletonContainer}>
+    {/* Game cover image placeholder */}
+    <ShimmerPlaceholder style={styles.skeletonImage} />
 
-      {/* Delete icon placeholder */}
-      <ShimmerPlaceholder style={styles.skeletonIcon} />
+    {/* Text info placeholders */}
+    <View style={styles.skeletonInfo}>
+      <ShimmerPlaceholder style={styles.skeletonTitle} />
+      <ShimmerPlaceholder style={styles.skeletonDate} />
     </View>
-  );
-});
 
-// Main
+    {/* Delete icon placeholder */}
+    <ShimmerPlaceholder style={styles.skeletonIcon} />
+  </View>
+));
 
-// Number of dummy rows displayed during loading
+SkeletonItem.displayName = "SkeletonItem";
+
+// ---------------------------------------------------------------------------
+// Main — UserGamesSkeleton
+// ---------------------------------------------------------------------------
+
 const DUMMY_COUNT = 4;
-const DUMMY_DATA = Array(DUMMY_COUNT).fill(0);
+const DUMMY_DATA = Array.from({ length: DUMMY_COUNT }, (_, i) => i);
 
-const UserGamesSkeleton: React.FC = () => {
-  return (
-    <SafeAreaView style={{ flex: 1 }} edges={["left", "right"]}>
-      <FlashList
-        data={DUMMY_DATA}
-        keyExtractor={(_, index) => index.toString()}
-        renderItem={() => <SkeletonItem />}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
-        showsVerticalScrollIndicator={false}
-        estimatedItemSize={150}
-      />
-    </SafeAreaView>
-  );
-};
+const UserGamesSkeleton: React.FC = () => (
+  <SafeAreaView style={{ flex: 1 }} edges={["left", "right"]}>
+    <FlashList
+      data={DUMMY_DATA}
+      keyExtractor={(item) => item.toString()}
+      renderItem={() => <SkeletonItem />}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+      showsVerticalScrollIndicator={false}
+      estimatedItemSize={150}
+    />
+  </SafeAreaView>
+);
+
 export default React.memo(UserGamesSkeleton);
 
 const styles = StyleSheet.create({
   placeholderBase: {
-    backgroundColor: COLORS.secondary ? COLORS.secondary + "40" : "#ccc",
+    backgroundColor: COLORS.secondary + "40",
   },
   skeletonContainer: {
     flexDirection: "row",

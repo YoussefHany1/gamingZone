@@ -1,90 +1,105 @@
 import { useState, useEffect, useCallback } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import auth from "@react-native-firebase/auth";
 import NotificationService, {
   NotificationPreferences,
 } from "../notificationService";
 
-// Show the user notification preferences
+// Loads, caches, and toggles a user's notification topic preferences.
+// Uses an in-memory module-level cache so repeated hook mounts within the
+// same session don't trigger redundant Firestore reads.
+
+// ---------------------------------------------------------------------------
+// Module-level cache (shared across all instances of this hook)
+// ---------------------------------------------------------------------------
 
 let globalPreferencesCache: NotificationPreferences | null = null;
 
+// ---------------------------------------------------------------------------
 // Types
+// ---------------------------------------------------------------------------
+
 export interface UseNotificationPreferencesResult {
   preferences: NotificationPreferences;
   loadingPreferences: boolean;
   toggleSource: (category: string, sourceName: string) => Promise<void>;
-  setPreferences: React.Dispatch<React.SetStateAction<NotificationPreferences>>;
+  setPreferences: Dispatch<SetStateAction<NotificationPreferences>>;
 }
 
-// main
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
 export const useNotificationPreferences =
   (): UseNotificationPreferencesResult => {
     const [preferences, setPreferences] = useState<NotificationPreferences>(
-      globalPreferencesCache ?? {}
+      () => globalPreferencesCache ?? {}
     );
-    const [loadingPreferences, setLoadingPreferences] = useState<boolean>(
+    const [loadingPreferences, setLoadingPreferences] = useState(
       !globalPreferencesCache
     );
 
-    // Load on mount
-
+    // Load preferences on mount (skips the spinner if the cache is warm).
     useEffect(() => {
-      const currentUser = auth().currentUser;
-
-      if (currentUser) {
-        loadUserPreferences(currentUser.uid);
-      } else {
+      const uid = auth().currentUser?.uid;
+      if (!uid) {
         setLoadingPreferences(false);
+        return;
       }
-      // Run once on mount
+
+      let cancelled = false;
+
+      const load = async (): Promise<void> => {
+        if (!globalPreferencesCache) setLoadingPreferences(true);
+
+        try {
+          const prefs = await NotificationService.getUserPreferences(uid);
+          if (cancelled) return;
+          globalPreferencesCache = prefs ?? {};
+          setPreferences(globalPreferencesCache);
+        } catch (error) {
+          console.error("[useNotificationPreferences] Load error:", error);
+        } finally {
+          if (!cancelled) setLoadingPreferences(false);
+        }
+      };
+
+      load();
+      return () => {
+        cancelled = true;
+      };
     }, []);
 
-    const loadUserPreferences = async (userId: string): Promise<void> => {
-      // Only show the spinner on the first load
-      if (!globalPreferencesCache) setLoadingPreferences(true);
-
-      try {
-        const prefs = await NotificationService.getUserPreferences(userId);
-        globalPreferencesCache = prefs ?? {};
-        setPreferences(globalPreferencesCache);
-      } catch (error) {
-        console.error("[useNotificationPreferences] Load error:", error);
-      } finally {
-        setLoadingPreferences(false);
-      }
-    };
-
-    // Toggle
+    // Optimistic toggle: update state immediately, roll back on failure.
     const toggleSource = useCallback(
       async (category: string, sourceName: string): Promise<void> => {
-        const userId = auth().currentUser?.uid;
-        if (!userId) return;
+        const uid = auth().currentUser?.uid;
+        if (!uid) return;
 
         const prefId = NotificationService.getTopicName(category, sourceName);
-        const previousValue = preferences[prefId] ?? false;
+        const previousValue = globalPreferencesCache?.[prefId] ?? false;
         const nextValue = !previousValue;
 
-        // cache first, then state
-        const optimisticPrefs: NotificationPreferences = {
+        const optimistic: NotificationPreferences = {
           ...(globalPreferencesCache ?? {}),
           [prefId]: nextValue,
         };
-        globalPreferencesCache = optimisticPrefs;
-        setPreferences(optimisticPrefs);
+        globalPreferencesCache = optimistic;
+        setPreferences(optimistic);
 
         try {
           await NotificationService.toggleNotificationPreference(
-            userId,
+            uid,
             category,
             sourceName,
             nextValue
           );
         } catch (error) {
-          // Roll back to the previous value on failure
           console.error(
             "[useNotificationPreferences] Failed to save preference:",
             error
           );
+          // Roll back both the cache and local state.
           const rolledBack: NotificationPreferences = {
             ...(globalPreferencesCache ?? {}),
             [prefId]: previousValue,
@@ -93,13 +108,8 @@ export const useNotificationPreferences =
           setPreferences(rolledBack);
         }
       },
-      [preferences]
+      [] // no deps — reads globalPreferencesCache directly via the module ref
     );
 
-    return {
-      preferences,
-      loadingPreferences,
-      toggleSource,
-      setPreferences,
-    };
+    return { preferences, loadingPreferences, toggleSource, setPreferences };
   };

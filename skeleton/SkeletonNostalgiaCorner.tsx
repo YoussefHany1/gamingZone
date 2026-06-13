@@ -1,62 +1,20 @@
-import React, { useEffect } from "react";
-import { View, StyleSheet, Dimensions, ViewStyle } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-  Easing,
-} from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import COLORS from "../constants/colors";
+import SkeletonItem from "./SkeletonItem";
+// usePulseAnimation(0.4, 0.8) gives the vintage card a subtler, dimmer pulse
+// that preserves the original intentional aesthetic difference.
+import { usePulseAnimation } from "./shared";
 
-const { width } = Dimensions.get("window");
-const CARD_WIDTH = width * 0.55;
+const CARD_WIDTH = 165; // Matches width * 0.55 at typical phone width
 const CARD_HEIGHT = 360;
 const CARD_MARGIN = 10;
 
-// Skeleton colors
-const SKELETON_BASE_COLOR = "#1a3052";
-const SKELETON_HIGHLIGHT_COLOR = "#2a4a75";
 const FRAME_BORDER_COLOR = "#1f3a60";
 
-// Types
-interface SkeletonItemProps {
-  style?: ViewStyle;
-  animatedStyle: ReturnType<typeof useAnimatedStyle>;
-}
-
-// SkeletonItem
-const SkeletonItem = React.memo<SkeletonItemProps>(({ style, animatedStyle }) => (
-  <Animated.View style={[styles.skeletonItem, style, animatedStyle]}>
-    <LinearGradient
-      colors={[SKELETON_BASE_COLOR, SKELETON_HIGHLIGHT_COLOR]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={StyleSheet.absoluteFill}
-    />
-  </Animated.View>
-));
-
-// Main
 const SkeletonNostalgiaCard: React.FC = () => {
-  // Opacity pulse animation
-  const opacity = useSharedValue(0.5);
-
-  useEffect(() => {
-    opacity.value = withRepeat(
-      withSequence(
-        withTiming(0.8, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.4, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      true,
-    );
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
+  // Dimmer pulse (0.4–0.8) to preserve the vintage card's subdued aesthetic
+  const animatedStyle = usePulseAnimation(0.4, 0.8);
 
   return (
     <View style={styles.gameCard}>
@@ -65,20 +23,20 @@ const SkeletonNostalgiaCard: React.FC = () => {
 
       {/* Outer decorative frame */}
       <View style={styles.outerFrame}>
-        {/* Decade badge skeleton */}
+        {/* Decade badge */}
         <SkeletonItem animatedStyle={animatedStyle} style={styles.decadeBadge} />
 
-        {/* Cover image skeleton */}
+        {/* Cover image */}
         <View style={styles.coverFrame}>
           <SkeletonItem animatedStyle={animatedStyle} style={styles.cover} />
         </View>
 
-        {/* Title ribbon skeleton */}
+        {/* Title ribbon */}
         <View style={styles.ribbonContainer}>
           <SkeletonItem animatedStyle={animatedStyle} style={styles.ribbonSkeleton} />
         </View>
 
-        {/* platform info skeleton */}
+        {/* Platform info */}
         <View style={styles.infoContainer}>
           <SkeletonItem animatedStyle={animatedStyle} style={styles.consoleSkeleton} />
         </View>
@@ -92,6 +50,7 @@ const SkeletonNostalgiaCard: React.FC = () => {
     </View>
   );
 };
+
 export default React.memo(SkeletonNostalgiaCard);
 
 const styles = StyleSheet.create({
@@ -106,14 +65,14 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     borderRadius: 12,
-    backgroundColor: "#0c1a33", // primary background color
+    backgroundColor: "#0c1a33",
   },
   outerFrame: {
     flex: 1,
     margin: 8,
     padding: 12,
     borderWidth: 3,
-    borderColor: FRAME_BORDER_COLOR, // subdued border color
+    borderColor: FRAME_BORDER_COLOR,
     borderRadius: 8,
     position: "relative",
   },
@@ -157,10 +116,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 24,
     borderRadius: 4,
-  },
-  skeletonItem: {
-    backgroundColor: SKELETON_BASE_COLOR,
-    overflow: "hidden",
   },
   cornerTopLeft: {
     position: "absolute",

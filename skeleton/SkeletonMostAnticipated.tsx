@@ -1,42 +1,17 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { View, StyleSheet, Dimensions } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  interpolate,
-} from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import COLORS from "../constants/colors";
+import Shimmer from "./Shimmer";
+import { useShimmerSweep } from "./shared";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
 const CARD_HEIGHT = 220;
 
-// SkeletonCard
+// Internal card — uses its own hook instance so each card animates independently
 const SkeletonCard: React.FC = () => {
-  const shimmerAnimation = useSharedValue(0);
-
-  useEffect(() => {
-    shimmerAnimation.value = withRepeat(
-      withTiming(1, { duration: 1500 }),
-      -1,
-      false,
-    );
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    const translateX = interpolate(
-      shimmerAnimation.value,
-      [0, 1],
-      [-CARD_WIDTH, CARD_WIDTH],
-    );
-
-    return {
-      transform: [{ translateX }],
-    };
-  });
+  const animatedStyle = useShimmerSweep();
 
   return (
     <View style={styles.cardContainer}>
@@ -44,30 +19,17 @@ const SkeletonCard: React.FC = () => {
       <View style={styles.backgroundSkeleton} />
 
       {/* Sliding shimmer overlay */}
-      <Animated.View style={[styles.shimmerContainer, animatedStyle]}>
-        <LinearGradient
-          colors={["transparent", "rgba(255, 255, 255, 0.15)", "transparent"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.shimmer}
-        />
-      </Animated.View>
+      <Shimmer animatedStyle={animatedStyle} />
 
       {/* Countdown boxes skeleton */}
       <View style={styles.content}>
         <View style={styles.countdownRow}>
-          <View style={styles.countdownBox}>
-            <View style={styles.countdownHeaderSkeleton} />
-            <View style={styles.countdownNumberSkeleton} />
-          </View>
-          <View style={styles.countdownBox}>
-            <View style={styles.countdownHeaderSkeleton} />
-            <View style={styles.countdownNumberSkeleton} />
-          </View>
-          <View style={styles.countdownBox}>
-            <View style={styles.countdownHeaderSkeleton} />
-            <View style={styles.countdownNumberSkeleton} />
-          </View>
+          {[1, 2, 3].map((i) => (
+            <View key={i} style={styles.countdownBox}>
+              <View style={styles.countdownHeaderSkeleton} />
+              <View style={styles.countdownNumberSkeleton} />
+            </View>
+          ))}
         </View>
       </View>
 
@@ -79,21 +41,19 @@ const SkeletonCard: React.FC = () => {
   );
 };
 
-// Main
-const SkeletonMostAnticipated: React.FC = () => {
-  return (
-    <View style={styles.container}>
-      {/* Section header skeleton */}
-      <View style={styles.headerSkeleton} />
+const SkeletonMostAnticipated: React.FC = () => (
+  <View style={styles.container}>
+    {/* Section header skeleton */}
+    <View style={styles.headerSkeleton} />
 
-      {/* Card skeletons */}
-      <View style={styles.listContent}>
-        <SkeletonCard />
-        <SkeletonCard />
-      </View>
+    {/* Card skeletons */}
+    <View style={styles.listContent}>
+      <SkeletonCard />
+      <SkeletonCard />
     </View>
-  );
-};
+  </View>
+);
+
 export default React.memo(SkeletonMostAnticipated);
 
 const styles = StyleSheet.create({
@@ -122,18 +82,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   backgroundSkeleton: {
-    width: "100%",
-    height: "100%",
-    position: "absolute",
-    backgroundColor: COLORS.secondary + "50",
-  },
-  shimmerContainer: {
     ...StyleSheet.absoluteFillObject,
-    overflow: "hidden",
-  },
-  shimmer: {
-    width: CARD_WIDTH,
-    height: "100%",
+    backgroundColor: COLORS.secondary + "50",
   },
   content: {
     flex: 1,

@@ -1,9 +1,12 @@
 import React, { memo, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import GamePcRequirementsSkeleton from "../../skeleton/gameDetails/GamePcRequirementsSkeleton";
 import { useTranslation } from "react-i18next";
 import COLORS from "../../constants/colors";
+import { sharedStyles } from "./shared";
+import GamePcRequirementsSkeleton from "../../skeleton/gameDetails/GamePcRequirementsSkeleton";
 import type { PcRequirements } from "./types";
+
+type Tab = "min" | "rec";
 
 interface Props {
   pcRequirements: PcRequirements | null;
@@ -12,56 +15,62 @@ interface Props {
 
 const GamePcRequirements: React.FC<Props> = ({ pcRequirements, pcReqLoading }) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<"min" | "rec">("min");
+  const [activeTab, setActiveTab] = useState<Tab>("min");
 
+  // Nothing to render while not loading and no data available
   if (!pcReqLoading && !pcRequirements) return null;
 
+  const activeRows =
+    activeTab === "min"
+      ? (pcRequirements?.minimum ?? [])
+      : (pcRequirements?.recommended ?? []);
+
   return (
-    <View style={styles.sysReqWrapper}>
-      <View style={styles.sysReqTitleRow}>
-        <Text style={styles.detailsHeader}>
-          {t("games.details.pcRequirements") ?? "PC System Requirements"}
-        </Text>
-      </View>
+    <View style={styles.wrapper}>
+      <Text style={sharedStyles.sectionHeader}>
+        {t("games.details.pcRequirements")}
+      </Text>
 
       {pcReqLoading && <GamePcRequirementsSkeleton />}
 
       {!pcReqLoading && pcRequirements && (
         <>
-          <View style={styles.sysReqTabRow}>
+          {/* Min / Recommended tab switcher */}
+          <View style={styles.tabRow}>
             {pcRequirements.minimum.length > 0 && (
               <TouchableOpacity
-                style={[styles.sysReqTab, activeTab === "min" && styles.sysReqTabActive]}
+                style={[styles.tab, activeTab === "min" && styles.tabActive]}
                 onPress={() => setActiveTab("min")}
               >
-                <Text style={[styles.sysReqTabText, activeTab === "min" && styles.sysReqTabTextActive]}>
-                  {t("games.details.minimum") ?? "Minimum"}
+                <Text style={[styles.tabText, activeTab === "min" && styles.tabTextActive]}>
+                  {t("games.details.minimum")}
                 </Text>
               </TouchableOpacity>
             )}
             {pcRequirements.recommended.length > 0 && (
               <TouchableOpacity
-                style={[styles.sysReqTab, activeTab === "rec" && styles.sysReqTabActive]}
+                style={[styles.tab, activeTab === "rec" && styles.tabActive]}
                 onPress={() => setActiveTab("rec")}
               >
-                <Text style={[styles.sysReqTabText, activeTab === "rec" && styles.sysReqTabTextActive]}>
-                  {t("games.details.recommended") ?? "Recommended"}
+                <Text style={[styles.tabText, activeTab === "rec" && styles.tabTextActive]}>
+                  {t("games.details.recommended")}
                 </Text>
               </TouchableOpacity>
             )}
           </View>
 
-          <View style={styles.sysReqContainer}>
-            {(activeTab === "min" ? pcRequirements.minimum : pcRequirements.recommended).map((row, i) => (
+          {/* Spec rows */}
+          <View style={styles.specContainer}>
+            {activeRows.map((row, i) => (
               <View
                 key={i}
                 style={[
-                  styles.sysReqRow,
+                  styles.specRow,
                   { backgroundColor: i % 2 === 0 ? "rgba(81,105,150,0.12)" : "transparent" },
                 ]}
               >
-                <Text style={styles.sysReqLabel}>{row.label}</Text>
-                <Text style={styles.sysReqValue}>{row.value}</Text>
+                <Text style={styles.specLabel}>{row.label}</Text>
+                <Text style={styles.specValue}>{row.value}</Text>
               </View>
             ))}
           </View>
@@ -74,31 +83,13 @@ const GamePcRequirements: React.FC<Props> = ({ pcRequirements, pcReqLoading }) =
 export default memo(GamePcRequirements);
 
 const styles = StyleSheet.create({
-  sysReqWrapper: {
+  wrapper: {
     marginTop: 20,
     marginBottom: 10,
   },
-  sysReqTitleRow: {
+  tabRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
-  },
-  detailsHeader: {
-    color: COLORS.textLight,
-    fontSize: 24,
-    fontWeight: "600",
-    textDecorationLine: "underline",
-    marginTop: 10,
-  },
-  sysReqLoading: {
-    color: "#9f9f9f",
-    fontSize: 15,
-    textAlign: "center",
-    marginVertical: 12,
-  },
-  sysReqTabRow: {
-    flexDirection: "row",
+    marginTop: 12,
     marginBottom: 10,
     borderRadius: 10,
     overflow: "hidden",
@@ -106,34 +97,35 @@ const styles = StyleSheet.create({
     borderColor: COLORS.secondary,
     alignSelf: "flex-start",
   },
-  sysReqTab: {
+  tab: {
     paddingVertical: 7,
     paddingHorizontal: 20,
   },
-  sysReqTabActive: {
+  tabActive: {
     backgroundColor: COLORS.secondary,
   },
-  sysReqTabText: {
+  tabText: {
     color: "#9f9f9f",
     fontSize: 14,
     fontWeight: "600",
   },
-  sysReqTabTextActive: {
+  tabTextActive: {
     color: "#fff",
   },
-  sysReqContainer: {
+  specContainer: {
     borderRadius: 12,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(81,105,150,0.4)", direction: "ltr",
+    borderColor: "rgba(81,105,150,0.4)",
+    direction: "ltr",
   },
-  sysReqRow: {
+  specRow: {
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderBottomWidth: 0.5,
     borderBottomColor: "rgba(81,105,150,0.25)",
   },
-  sysReqLabel: {
+  specLabel: {
     color: COLORS.secondary,
     fontSize: 12,
     fontWeight: "700",
@@ -141,7 +133,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     marginBottom: 2,
   },
-  sysReqValue: {
+  specValue: {
     color: "#cfcfcf",
     fontSize: 14,
     fontWeight: "500",

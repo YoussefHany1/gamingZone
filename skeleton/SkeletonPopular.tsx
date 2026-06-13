@@ -1,50 +1,25 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { View, StyleSheet, Dimensions } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
 import COLORS from "../constants/colors";
+import Shimmer from "./Shimmer";
+import { useShimmerSweep } from "./shared";
 
 const { width } = Dimensions.get("window");
+
 const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
 
-// Main
-
 const SkeletonPopular: React.FC = () => {
-  const translateX = useSharedValue(-width);
-
-  useEffect(() => {
-    translateX.value = withRepeat(
-      withTiming(width, { duration: 1500 }),
-      -1,
-      false,
-    );
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  });
+  const animatedStyle = useShimmerSweep();
 
   return (
     <View style={styles.cardContainer}>
       {/* Game cover image placeholder */}
       <View style={styles.coverContainer}>
         <View style={styles.coverPlaceholder}>
-          <Animated.View style={[styles.shimmerOverlay, animatedStyle]}>
-            <LinearGradient
-              colors={["transparent", "rgba(255,255,255,0.3)", "transparent"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFill}
-            />
-          </Animated.View>
+          {/* The shimmer overlay is intentionally wider than the card to ensure
+              the sweep is visible even at the edges of the container. */}
+          <Shimmer animatedStyle={animatedStyle} style={{ width: width * 1.5 }} />
         </View>
       </View>
 
@@ -59,6 +34,7 @@ const SkeletonPopular: React.FC = () => {
     </View>
   );
 };
+
 export default React.memo(SkeletonPopular);
 
 const styles = StyleSheet.create({
@@ -80,10 +56,6 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: COLORS.secondary,
     overflow: "hidden",
-  },
-  shimmerOverlay: {
-    width: width * 1.5,
-    height: "100%",
   },
   titlePlaceholder: {
     height: 24,

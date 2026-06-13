@@ -6,11 +6,19 @@ import COLORS from "../../constants/colors";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
+type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
+
+const COLUMN_HEADERS = [
+  { icon: "mic", key: "audio" },
+  { icon: "document-text", key: "subtitles" },
+  { icon: "desktop", key: "interface" },
+] as const;
+
 // Static title + static column headers + shimmer rows
 const GameLanguageTableSkeleton: React.FC = () => {
   const { t } = useTranslation();
   const shimmer = useShimmer();
-  const S = (p: Omit<Parameters<typeof SkeletonBar>[0], "shimmer">) => <SkeletonBar shimmer={shimmer} {...p} />;
+  const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
 
   return (
     <View style={styles.container}>
@@ -22,16 +30,10 @@ const GameLanguageTableSkeleton: React.FC = () => {
           <Ionicons name="language" size={18} color={COLORS.secondary} />
           <Text style={styles.headerLabel}>{t("games.details.languages.Language")}</Text>
         </View>
-        {(["mic", "document-text", "desktop"] as const).map((icon, i) => (
+        {COLUMN_HEADERS.map(({ icon, key }) => (
           <View key={icon} style={styles.iconHeaderCell}>
             <Ionicons name={icon} size={18} color={COLORS.secondary} />
-            <Text style={styles.headerLabel}>
-              {[
-                t("games.details.languages.audio"),
-                t("games.details.languages.subtitles"),
-                t("games.details.languages.interface"),
-              ][i]}
-            </Text>
+            <Text style={styles.headerLabel}>{t(`games.details.languages.${key}`)}</Text>
           </View>
         ))}
       </View>
@@ -46,11 +48,11 @@ const GameLanguageTableSkeleton: React.FC = () => {
           ]}
         >
           <View style={{ flex: 2, paddingLeft: 8 }}>
-            <S w="75%" h={14} r={5} />
+            <S width="75%" height={14} radius={5} />
           </View>
           {[1, 2, 3].map((j) => (
             <View key={j} style={styles.checkCell}>
-              <S w={20} h={20} r={10} />
+              <S width={20} height={20} radius={10} />
             </View>
           ))}
         </View>

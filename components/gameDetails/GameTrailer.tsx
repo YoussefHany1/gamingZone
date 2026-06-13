@@ -2,31 +2,46 @@ import React, { memo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import YoutubePlayer from "react-native-youtube-iframe";
 import { useTranslation } from "react-i18next";
-import COLORS from "../../constants/colors";
+import { sharedStyles } from "./shared";
 import type { Video } from "./types";
 
 interface Props {
   videos?: Video[];
 }
 
-const TRAILER_NAMES = ["Trailer", "Announcement Trailer", "Teaser", "Release Date Trailer", "Gameplay Trailer"];
+/**
+ * Priority order for selecting which video to display as the trailer.
+ * The first match found in this list wins.
+ */
+const TRAILER_NAME_PRIORITY = [
+  "Trailer",
+  "Announcement Trailer",
+  "Teaser",
+  "Release Date Trailer",
+  "Gameplay Trailer",
+] as const;
+
+/** Finds the highest-priority trailer video from the provided list, or undefined. */
+function findTrailer(videos: Video[]): Video | undefined {
+  for (const name of TRAILER_NAME_PRIORITY) {
+    const match = videos.find((v) => v.name === name);
+    if (match) return match;
+  }
+  return undefined;
+}
 
 const GameTrailer: React.FC<Props> = ({ videos }) => {
   const { t } = useTranslation();
 
-  if (!videos) return null;
+  if (!videos?.length) return null;
 
-  const trailer = TRAILER_NAMES.reduce<Video | undefined>(
-    (found, name) => found ?? videos.find((v) => v.name === name),
-    undefined
-  );
-
+  const trailer = findTrailer(videos);
   if (!trailer?.video_id) return null;
 
   return (
-    <View style={styles.trailerContainer}>
-      <Text style={styles.detailsHeader}>{t("games.details.trailer")}</Text>
-      <View style={styles.ytVid}>
+    <View style={styles.container}>
+      <Text style={sharedStyles.sectionHeader}>{t("games.details.trailer")}</Text>
+      <View style={styles.playerWrapper}>
         <YoutubePlayer height={250} videoId={trailer.video_id} />
       </View>
     </View>
@@ -36,17 +51,10 @@ const GameTrailer: React.FC<Props> = ({ videos }) => {
 export default memo(GameTrailer);
 
 const styles = StyleSheet.create({
-  detailsHeader: {
-    color: COLORS.textLight,
-    fontSize: 24,
-    fontWeight: "600",
-    textDecorationLine: "underline",
-    marginTop: 10,
-  },
-  trailerContainer: {
+  container: {
     marginTop: 20,
   },
-  ytVid: {
+  playerWrapper: {
     marginTop: 20,
   },
 });

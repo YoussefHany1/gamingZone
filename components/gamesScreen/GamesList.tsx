@@ -30,12 +30,22 @@ const VALID_GAME_TYPES = [1, 2, 5, 6, 7, 8, 9, 10];
 
 // Helpers
 
-function getRatingColor(rating: number): string {
-  if (rating <= 2) return "#8B0000";
-  if (rating <= 4) return "#FF4C4C";
-  if (rating <= 6) return "#FFA500";
-  if (rating <= 8) return "#71e047";
-  return "#006400";
+// Pre-built StyleSheet objects for rating badge backgrounds, keyed by tier
+const ratingStyles = StyleSheet.create({
+  tier1: { backgroundColor: "#8B0000" },
+  tier2: { backgroundColor: "#FF4C4C" },
+  tier3: { backgroundColor: "#FFA500" },
+  tier4: { backgroundColor: "#71e047" },
+  tier5: { backgroundColor: "#006400" },
+});
+
+// Returns the pre-built style for a given score (0-10 scale)
+function getRatingStyle(rating: number) {
+  if (rating <= 2) return ratingStyles.tier1;
+  if (rating <= 4) return ratingStyles.tier2;
+  if (rating <= 6) return ratingStyles.tier3;
+  if (rating <= 8) return ratingStyles.tier4;
+  return ratingStyles.tier5;
 }
 
 async function fetchSearchResults(
@@ -93,7 +103,7 @@ const GameCard = React.memo<GameCardProps>(({ item }) => {
         <Text
           style={[
             styles.rating,
-            { backgroundColor: getRatingColor(item.total_rating / 10) },
+            getRatingStyle(item.total_rating / 10),
           ]}
         >
           {Math.round(item.total_rating) / 10}
@@ -125,7 +135,6 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
 
   const fetchGames = useCallback(
     () => fetchSearchResults(query, filters),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [query, filters?.year, filters?.genre, filters?.platform, filters?.sort],
   );
 
@@ -148,15 +157,6 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
         <GameCard item={item} />
       </View>
     ),
-    [],
-  );
-
-  const getItemLayout = useCallback(
-    (_data: ArrayLike<Game> | null | undefined, index: number) => ({
-      length: CARD_HEIGHT,
-      offset: CARD_HEIGHT * Math.floor(index / NUM_COLUMNS),
-      index,
-    }),
     [],
   );
 

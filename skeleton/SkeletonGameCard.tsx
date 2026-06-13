@@ -1,47 +1,17 @@
-import React, { useEffect } from "react";
-import { View, StyleSheet, Dimensions } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
+import React from "react";
+import { View, StyleSheet } from "react-native";
 import COLORS from "../constants/colors";
-
-const { width } = Dimensions.get("window");
-
-// Main
+import Shimmer from "./Shimmer";
+import { useShimmerSweep } from "./shared";
 
 const SkeletonGameCard: React.FC = () => {
-  const translateX = useSharedValue(-width);
-
-  useEffect(() => {
-    translateX.value = withRepeat(
-      withTiming(width, { duration: 1500 }),
-      -1, // infinite repetition
-      false // always sweep left-to-right, no reverse
-    );
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  });
+  const animatedStyle = useShimmerSweep();
 
   return (
     <View style={styles.cardContainer}>
       {/* Game cover image placeholder */}
       <View style={styles.coverPlaceholder}>
-        <Animated.View style={[styles.shimmerOverlay, animatedStyle]}>
-          <LinearGradient
-            colors={["transparent", "rgba(255,255,255,0.3)", "transparent"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
+        <Shimmer animatedStyle={animatedStyle} />
       </View>
 
       {/* Game title placeholder */}
@@ -49,6 +19,7 @@ const SkeletonGameCard: React.FC = () => {
     </View>
   );
 };
+
 export default React.memo(SkeletonGameCard);
 
 const styles = StyleSheet.create({
@@ -68,7 +39,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 190,
     borderRadius: 10,
-    backgroundColor: COLORS.secondary, // base gray color
+    backgroundColor: COLORS.secondary,
     overflow: "hidden",
     marginBottom: 16,
   },
@@ -77,8 +48,5 @@ const styles = StyleSheet.create({
     height: 16,
     backgroundColor: COLORS.secondary,
     borderRadius: 4,
-  },
-  shimmerOverlay: {
-    ...StyleSheet.absoluteFillObject,
   },
 });

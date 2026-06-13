@@ -1,10 +1,4 @@
-import React, {
-  Suspense,
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useAuthStore } from "./store/useAuthStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { View, StyleSheet } from "react-native";
@@ -32,12 +26,9 @@ import Loading from "./Loading";
 import useNotifications from "./hooks/useNotifications";
 import useRateApp from "./hooks/useRateApp";
 import useUpdateCheck from "./hooks/useUpdateCheck";
-const MainAppTabs = React.lazy(() =>
-  import("./navigation/AppNavigator").then((m) => ({ default: m.MainAppTabs })),
-);
-const AuthStack = React.lazy(() =>
-  import("./navigation/AppNavigator").then((m) => ({ default: m.AuthStack })),
-);
+
+// التعديل: استبدال الـ React.lazy باستيراد ثابت مباشر لرفع كفاءة الـ Navigation
+import { MainAppTabs, AuthStack } from "./navigation/AppNavigator";
 import OnboardingScreen from "./screens/OnboardingScreen";
 
 // Types
@@ -105,19 +96,16 @@ const linking = {
   getStateFromPath(path: string, options: any) {
     let cleanPath = path;
 
-    // 1. Remove leading slash
     if (cleanPath.startsWith("/")) {
       cleanPath = cleanPath.substring(1);
     }
 
-    // 2. Strip locale prefixes like en/ or ar/ if present
     if (cleanPath.startsWith("en/")) {
       cleanPath = cleanPath.substring(3);
     } else if (cleanPath.startsWith("ar/")) {
       cleanPath = cleanPath.substring(3);
     }
 
-    // 3. Handle "/lists" deep links
     if (cleanPath.startsWith("lists/")) {
       const state = getStateFromPath(cleanPath, {
         screens: {
@@ -163,7 +151,6 @@ const linking = {
       return state;
     }
 
-    // 4. Handle old/fallback "/news-details" path with query params
     if (cleanPath.startsWith("news-details")) {
       return getStateFromPath(cleanPath, {
         screens: {
@@ -180,12 +167,10 @@ const linking = {
       } as any);
     }
 
-    // 5. Default parsing for modern "news/:id"
     return getStateFromPath(cleanPath, options);
   },
 };
 
-// Splash Guard
 SplashScreen.preventAutoHideAsync();
 
 function App(): React.ReactElement | null {
@@ -199,17 +184,14 @@ function App(): React.ReactElement | null {
   const navigationRef =
     useRef<NavigationContainerRef<RootStackParamList>>(null);
 
-  // Auth State — all listener / AppState / analytics logic lives in the store
   useEffect(() => {
     const cleanup = initAuth();
     return cleanup;
   }, [initAuth]);
 
-  // Onboarding & Language check — runs once auth has resolved
   useEffect(() => {
     if (loading) return;
     (async () => {
-      // 1. Check/Set Device Language on First Launch
       const langSet = await AsyncStorage.getItem("@language_set");
       if (!langSet) {
         const locales = Localization.getLocales();
@@ -226,7 +208,7 @@ function App(): React.ReactElement | null {
           } catch (e) {
             console.warn("Failed to reload", e);
           }
-          return; // Stop execution as the app will reload
+          return;
         } else if (sysLang === "en" && I18nManager.isRTL) {
           I18nManager.allowRTL(false);
           I18nManager.forceRTL(false);
@@ -242,7 +224,6 @@ function App(): React.ReactElement | null {
         }
       }
 
-      // 2. Check Onboarding
       const seen = await AsyncStorage.getItem("@onboarding_done");
       if (!seen) {
         setShowOnboarding(true);
@@ -250,19 +231,16 @@ function App(): React.ReactElement | null {
     })();
   }, [loading]);
 
-  // Splash Hide
   useEffect(() => {
     if (!loading) {
       SplashScreen.hideAsync();
     }
   }, [loading]);
 
-  // Hooks
   useNotifications(user);
   useRateApp();
   useUpdateCheck();
 
-  // Navigation Analytics
   const handleNavigationReady = useCallback(() => {
     routeNameRef.current = navigationRef.current?.getCurrentRoute()?.name;
   }, []);
@@ -312,15 +290,14 @@ function App(): React.ReactElement | null {
             onReady={handleNavigationReady}
             onStateChange={handleStateChange}
           >
-            <Suspense fallback={<Loading />}>
-              <Stack.Navigator
-                id="root"
-                screenOptions={{ headerShown: false, freezeOnBlur: true }}
-              >
-                <Stack.Screen name="MainApp" component={MainAppTabs} />
-                <Stack.Screen name="Auth" component={AuthStack} />
-              </Stack.Navigator>
-            </Suspense>
+            {/* التعديل: إزالة الـ Suspense المحيط بـ الـ Navigator لعدم الحاجة إليه الآن */}
+            <Stack.Navigator
+              id="root"
+              screenOptions={{ headerShown: false, freezeOnBlur: true }}
+            >
+              <Stack.Screen name="MainApp" component={MainAppTabs} />
+              <Stack.Screen name="Auth" component={AuthStack} />
+            </Stack.Navigator>
           </NavigationContainer>
         </GestureHandlerRootView>
       </SafeAreaProvider>

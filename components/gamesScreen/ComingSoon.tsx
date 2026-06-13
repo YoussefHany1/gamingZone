@@ -19,6 +19,7 @@ import { Game, CountdownResult } from "../types";
 const CARD_WIDTH = 300;
 const CARD_HEIGHT = 350;
 const CARD_MARGIN = 10;
+const STORAGE_KEY = "GAMES_CACHE_COMING_SOON";
 
 const fetchComingSoonGames = async (): Promise<Game[]> => {
   const response = await axios.get<Game[]>(`${SERVER_URL}/coming-soon`);
@@ -150,11 +151,11 @@ const ComingSoonCard = React.memo<ComingSoonCardProps>(({ item }) => {
     </TouchableOpacity>
   );
 });
+ComingSoonCard.displayName = "ComingSoonCard";
 
-// main
+// Main
 function ComingSoonGames(): React.ReactElement {
   const { t } = useTranslation();
-  const STORAGE_KEY = "GAMES_CACHE_COMING_SOON";
 
   const {
     data: games,
@@ -170,28 +171,11 @@ function ComingSoonGames(): React.ReactElement {
     [],
   );
 
-  const getItemLayout = useCallback(
-    (_data: ArrayLike<Game> | null | undefined, index: number) => ({
-      length: CARD_WIDTH + CARD_MARGIN * 2,
-      offset: (CARD_WIDTH + CARD_MARGIN * 2) * index,
-      index,
-    }),
-    [],
-  );
-
   const skeletonData = useMemo(
     () => Array.from({ length: 3 }, (_, i) => ({ id: i }) as any),
     [],
   );
   const renderSkeletonItem = useCallback(() => <SkeletonComingSoon />, []);
-  const renderEmpty = useCallback(
-    () => (
-      <View style={styles.emptyContainer}>
-        <ErrorState message={t("games.list.serverError")} />
-      </View>
-    ),
-    [t],
-  );
 
   return (
     <View style={styles.container}>
@@ -231,13 +215,18 @@ function ComingSoonGames(): React.ReactElement {
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
           pagingEnabled={false}
-          ListEmptyComponent={renderEmpty}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <ErrorState message={t("games.list.serverError")} />
+            </View>
+          }
           estimatedItemSize={320}
         />
       )}
     </View>
   );
 }
+
 export default ComingSoonGames;
 
 const styles = StyleSheet.create({
@@ -345,19 +334,6 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255, 255, 255, 0.2)",
   },
   platformText: { color: "white", fontSize: 12, fontWeight: "600" },
-  error: {
-    color: "#ffcccc",
-    textAlign: "center",
-    marginTop: 20,
-    paddingHorizontal: 20,
-    fontSize: 16,
-  },
-  noResults: {
-    color: "#999",
-    textAlign: "center",
-    fontSize: 16,
-    marginVertical: 20,
-  },
   listContent: { paddingHorizontal: 10, paddingVertical: 5 },
   hypeBadgeContainer: {
     position: "absolute",

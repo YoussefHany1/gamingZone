@@ -4,24 +4,27 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  } from "react-native";
+} from "react-native";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
-import ErrorState from "../ErrorState";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonPopular from "../../skeleton/SkeletonPopular";
+import ErrorState from "../ErrorState";
 import COLORS from "../../constants/colors";
 import { SERVER_URL } from "../../constants/config";
 import useCachedData from "../../hooks/useCachedData";
 import { Game } from "../types";
 import SectionTitle from "../SectionTitle";
+import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
 
 const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
 const CARD_MARGIN = 5;
+const STORAGE_KEY = "GAMES_CACHE_POPULAR";
 
 const fetchPopularGames = async (): Promise<Game[]> => {
   const response = await axios.get<Game[]>(`${SERVER_URL}/popular`);
@@ -36,7 +39,8 @@ interface PopularCardProps {
 }
 
 const PopularCard = React.memo<PopularCardProps>(({ item, index }) => {
-  const navigation = useNavigation<any>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
 
   const rating = item.total_rating ? Math.round(item.total_rating) / 10 : 0;
   const rank = index + 1;
@@ -68,7 +72,7 @@ const PopularCard = React.memo<PopularCardProps>(({ item, index }) => {
           contentFit="cover"
           transition={500}
           cachePolicy="memory-disk"
-          allowDownscaling={true}
+          allowDownscaling
         />
         <LinearGradient
           colors={["transparent", COLORS.darkBackground]}
@@ -108,12 +112,12 @@ const PopularCard = React.memo<PopularCardProps>(({ item, index }) => {
     </TouchableOpacity>
   );
 });
+PopularCard.displayName = "PopularCard";
 
-// main
+// Main
 
 function PopularGames(): React.ReactElement {
   const { t } = useTranslation();
-  const STORAGE_KEY = "GAMES_CACHE_POPULAR";
 
   const { data: games, isLoading, error } = useCachedData<Game[]>(
     STORAGE_KEY,
@@ -131,24 +135,19 @@ function PopularGames(): React.ReactElement {
     [],
   );
 
-  const getItemLayout = useCallback(
-    (_: ArrayLike<Game> | null | undefined, index: number) => ({
-      length: CARD_WIDTH + CARD_MARGIN * 2,
-      offset: (CARD_WIDTH + CARD_MARGIN * 2) * index,
-      index,
-    }),
-    [],
-  );
-
   return (
     <View>
       <View style={styles.headerContainer}>
-        <SectionTitle title={t("games.list.popular.title")} fontSize={28} subtitle={t("games.list.popular.subtitle")} />
+        <SectionTitle
+          title={t("games.list.popular.title")}
+          fontSize={28}
+          subtitle={t("games.list.popular.subtitle")}
+        />
       </View>
 
       {isActuallyLoading && (
-        <FlashList 
-          data={Array.from({ length: 5 }, (_, i) => ({ id: i } as any))}
+        <FlashList
+          data={Array.from({ length: 5 }, (_, i) => ({ id: i }) as any)}
           horizontal
           renderItem={() => <SkeletonPopular />}
           showsHorizontalScrollIndicator={false}
@@ -156,15 +155,15 @@ function PopularGames(): React.ReactElement {
           estimatedItemSize={175}
         />
       )}
-      {/* error */}
+
       {(error || !Array.isArray(gamesToShow)) && (
-        <View style={{ width: "100%", height: CARD_HEIGHT }}>
+        <View style={styles.errorContainer}>
           <ErrorState message={t("games.list.serverError")} />
         </View>
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList 
+        <FlashList
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -173,16 +172,19 @@ function PopularGames(): React.ReactElement {
           snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
-            <ErrorState message={t("games.list.serverError")} />
-          </View>}
+          ListEmptyComponent={
+            <View style={styles.errorContainer}>
+              <ErrorState message={t("games.list.serverError")} />
+            </View>
+          }
           estimatedItemSize={175}
         />
       )}
     </View>
   );
 }
-export default PopularGames
+
+export default PopularGames;
 
 const styles = StyleSheet.create({
   headerContainer: {
@@ -192,10 +194,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     margin: 18,
   },
+  errorContainer: {
+    width: "100%",
+    height: CARD_HEIGHT,
+  },
   gameCard: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    marginHorizontal: 5,
+    marginHorizontal: CARD_MARGIN,
     borderRadius: 16,
     overflow: "hidden",
     position: "relative",
@@ -255,18 +261,5 @@ const styles = StyleSheet.create({
     borderColor: "#516996",
   },
   platformText: { color: "#9CB4DD", fontSize: 10, fontWeight: "600" },
-  error: {
-    color: COLORS.lightGray,
-    textAlign: "center",
-    marginTop: 20,
-    paddingHorizontal: 20,
-    fontSize: 16,
-  },
-  noResults: {
-    color: "#9CB4DD",
-    textAlign: "center",
-    fontSize: 16,
-    marginVertical: 20,
-  },
   listContent: { paddingHorizontal: 10, paddingVertical: 5 },
 });

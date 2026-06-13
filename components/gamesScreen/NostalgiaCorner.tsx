@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  } from "react-native";
+} from "react-native";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -24,6 +24,7 @@ const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.55;
 const CARD_HEIGHT = 360;
 const CARD_MARGIN = 10;
+const STORAGE_KEY = "GAMES_CACHE_NOSTALGIA_CORNER";
 
 // Helpers
 
@@ -155,12 +156,12 @@ const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
     </TouchableOpacity>
   );
 });
+NostalgiaCard.displayName = "NostalgiaCard";
 
-// main
+// Main
 
 export default function NostalgiaCorner(): React.ReactElement {
   const { t } = useTranslation();
-  const STORAGE_KEY = "GAMES_CACHE_NOSTALGIA_CORNER";
 
   const { data: games, isLoading, error } = useCachedData<Game[]>(
     STORAGE_KEY,
@@ -176,27 +177,19 @@ export default function NostalgiaCorner(): React.ReactElement {
     [],
   );
 
-  const getItemLayout = useCallback(
-    (
-      _data: ArrayLike<Game> | null | undefined,
-      index: number,
-    ): { length: number; offset: number; index: number } => ({
-      length: CARD_WIDTH + CARD_MARGIN * 2,
-      offset: (CARD_WIDTH + CARD_MARGIN * 2) * index,
-      index,
-    }),
-    [],
-  );
-
   return (
     <View>
       <View style={styles.headerContainer}>
-        <SectionTitle title={t("games.list.nostalgiaCorner.title")} subtitle={t("games.list.nostalgiaCorner.subtitle")} fontSize={28} />
+        <SectionTitle
+          title={t("games.list.nostalgiaCorner.title")}
+          subtitle={t("games.list.nostalgiaCorner.subtitle")}
+          fontSize={28}
+        />
       </View>
 
       {/* Skeleton while loading with no cached data */}
       {isActuallyLoading && (
-        <FlashList 
+        <FlashList
           data={Array.from({ length: 4 }, (_, i) => ({ id: i }))}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -206,15 +199,15 @@ export default function NostalgiaCorner(): React.ReactElement {
           estimatedItemSize={CARD_WIDTH + CARD_MARGIN * 2}
         />
       )}
-      {/* error */}
+
       {(error || !Array.isArray(gamesToShow)) && (
-        <View style={{ width: "100%", height: CARD_HEIGHT }}>
+        <View style={styles.errorContainer}>
           <ErrorState message={t("games.list.serverError")} />
         </View>
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList 
+        <FlashList
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -223,9 +216,11 @@ export default function NostalgiaCorner(): React.ReactElement {
           snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
-            <ErrorState message={t("games.list.serverError")} />
-          </View>}
+          ListEmptyComponent={
+            <View style={styles.errorContainer}>
+              <ErrorState message={t("games.list.serverError")} />
+            </View>
+          }
           estimatedItemSize={CARD_WIDTH + CARD_MARGIN * 2}
         />
       )}
@@ -240,6 +235,10 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "space-between",
     margin: 18,
+  },
+  errorContainer: {
+    width: "100%",
+    height: CARD_HEIGHT,
   },
   gameCard: {
     width: CARD_WIDTH,
@@ -418,20 +417,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 3,
     borderRightWidth: 3,
     borderColor: "#516996",
-  },
-  error: {
-    color: "#779bdd",
-    textAlign: "center",
-    marginTop: 20,
-    paddingHorizontal: 20,
-    fontSize: 16,
-  },
-  noResults: {
-    color: "#9CB4DD",
-    textAlign: "center",
-    fontSize: 16,
-    marginVertical: 20,
-    fontStyle: "italic",
   },
   listContent: { paddingHorizontal: 10, paddingVertical: 5 },
 });

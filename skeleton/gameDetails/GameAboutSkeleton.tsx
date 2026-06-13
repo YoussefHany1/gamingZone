@@ -5,21 +5,24 @@ import COLORS from "../../constants/colors";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
+type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
+
 // Static "About" header + shimmer text lines
 const GameAboutSkeleton: React.FC = () => {
   const { t } = useTranslation();
   const shimmer = useShimmer();
-  const S = (p: Omit<Parameters<typeof SkeletonBar>[0], "shimmer">) => <SkeletonBar shimmer={shimmer} {...p} />;
+  const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{t("games.details.about")}</Text>
       <View style={{ direction: "ltr" }}>
-        <S w="100%" h={14} r={5} style={{ marginTop: 10 }} />
-        <S w="95%" h={14} r={5} style={{ marginTop: 6 }} />
-        <S w="88%" h={14} r={5} style={{ marginTop: 6 }} />
-        <S w="93%" h={14} r={5} style={{ marginTop: 6 }} />
-        <S w="75%" h={14} r={5} style={{ marginTop: 6 }} /></View>
+        <S width="100%" height={14} radius={5} style={{ marginTop: 10 }} />
+        <S width="95%" height={14} radius={5} style={{ marginTop: 6 }} />
+        <S width="88%" height={14} radius={5} style={{ marginTop: 6 }} />
+        <S width="93%" height={14} radius={5} style={{ marginTop: 6 }} />
+        <S width="75%" height={14} radius={5} style={{ marginTop: 6 }} />
+      </View>
     </View>
   );
 };

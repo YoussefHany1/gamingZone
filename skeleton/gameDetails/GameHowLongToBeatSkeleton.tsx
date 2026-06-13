@@ -5,11 +5,13 @@ import COLORS from "../../constants/colors";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
+type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
+
 // Static title + static labels + shimmer SVG circles
 const GameHowLongToBeatSkeleton: React.FC = () => {
   const { t } = useTranslation();
   const shimmer = useShimmer();
-  const S = (p: Omit<Parameters<typeof SkeletonBar>[0], "shimmer">) => <SkeletonBar shimmer={shimmer} {...p} />;
+  const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
 
   const labels = [
     t("games.details.howLongToBeat.main"),
@@ -24,8 +26,8 @@ const GameHowLongToBeatSkeleton: React.FC = () => {
         {labels.map((label) => (
           <View key={label} style={styles.block}>
             <Text style={styles.label}>{label}</Text>
-            <S w={80} h={80} r={40} style={{ marginTop: 10 }} />
-            <S w={40} h={12} r={4} style={{ marginTop: 8 }} />
+            <S width={80} height={80} radius={40} style={{ marginTop: 10 }} />
+            <S width={40} height={12} radius={4} style={{ marginTop: 8 }} />
           </View>
         ))}
       </View>

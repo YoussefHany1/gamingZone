@@ -5,18 +5,20 @@ import COLORS from "../../constants/colors";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
+type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
+
 // Static header + shimmer store icons
 const GameStoresSkeleton: React.FC = () => {
   const { t } = useTranslation();
   const shimmer = useShimmer();
-  const S = (p: Omit<Omit<Parameters<typeof SkeletonBar>[0], "shimmer">, "shimmer">) => <SkeletonBar shimmer={shimmer} {...p} />;
+  const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{t("games.details.availableStores")}</Text>
       <View style={styles.row}>
         {[1, 2, 3].map((i) => (
-          <S key={i} w={60} h={60} r={12} style={{ marginRight: 10 }} />
+          <S key={i} width={60} height={60} radius={12} style={{ marginRight: 10 }} />
         ))}
       </View>
     </View>

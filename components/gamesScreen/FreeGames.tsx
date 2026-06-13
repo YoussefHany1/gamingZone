@@ -1,84 +1,105 @@
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
-  Linking,
+  StyleSheet,
   ScrollView,
   ToastAndroid,
-  } from "react-native";
+} from "react-native";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
-import { useState, useEffect, memo, useCallback } from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import SkeletonFreeGames from "../../skeleton/SkeletonFreeGames";
-import { useTranslation } from "react-i18next";
-import COLORS from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import auth from "@react-native-firebase/auth";
-import NotificationService from "../../notificationService";
 import analytics from "@react-native-firebase/analytics";
 import NetInfo from "@react-native-community/netinfo";
-import { databases } from "../../lib/appwrite";
-import { Query } from "react-native-appwrite";
 import Constants from "expo-constants";
-import { useCountdown } from "../../hooks/useCountdown";
-import useCachedData from "../../hooks/useCachedData";
+import { Query } from "react-native-appwrite";
+import { databases } from "../../lib/appwrite";
 import { openLink } from "../../lib/browser";
-import { useNavigation } from "@react-navigation/native";
+import NotificationService from "../../notificationService";
+import SkeletonFreeGames from "../../skeleton/SkeletonFreeGames";
+import COLORS from "../../constants/colors";
+import useCachedData from "../../hooks/useCachedData";
+import { useCountdown } from "../../hooks/useCountdown";
 import { FreeGame, CountdownResult } from "../types";
 import ErrorState from "../ErrorState";
 import SectionTitle from "../SectionTitle";
 
+// Types
+
 type FreeGameItem = FreeGame & { slug?: string };
+
+// Constants
 
 const FREE_GAMES_COLLECTION_ID = "free_games";
 const NOTIF_CATEGORY = "free_games";
 const NOTIF_SOURCE = "alerts";
 const FREE_GAMES_CACHE_KEY = "FREE_GAMES_APPWRITE_CACHE";
-const dbId = Constants.expoConfig?.extra?.APPWRITE_DATABASE_ID as string;
 const CARD_HEIGHT = 300;
+const ESTIMATED_CARD_WIDTH = 185;
+const SKELETON_COUNT = 3;
 
-// Fetch free games from Appwrite, respecting connectivity state
+const dbId = Constants.expoConfig?.extra?.APPWRITE_DATABASE_ID as string;
+
+// Data fetching
+
 const fetchFreeGamesFromAppwrite = async (): Promise<FreeGameItem[]> => {
   const netState = await NetInfo.fetch();
-  if (!netState.isConnected) {
-    throw new Error("No internet connection");
-  }
+  if (!netState.isConnected) throw new Error("No internet connection");
 
-  try {
-    const response = await databases.listDocuments(
-      dbId,
-      FREE_GAMES_COLLECTION_ID,
-      [Query.orderAsc("type"), Query.limit(20)],
-    );
+  const response = await databases.listDocuments(
+    dbId,
+    FREE_GAMES_COLLECTION_ID,
+    [Query.orderAsc("type"), Query.limit(20)],
+  );
 
-    return response.documents.map((doc) => ({
-      id: doc.$id,
-      title: doc.title as string,
-      image: doc.image as string | undefined,
-      slug: doc.slug as string | undefined,
-      store: doc.store as string | undefined,
-      url: doc.url as string | undefined,
-      description: doc.description as string | undefined,
-      type: doc.type as string,
-      startDate: doc.startDate as string | number | undefined,
-      endDate: doc.endDate as string | number | undefined,
-      igdb_game_id: doc.igdb_game_id as number | undefined,
-    }));
-  } catch (err) {
-    console.error("Error fetching games from Appwrite:", err);
-    throw err;
-  }
+  return response.documents.map((doc) => ({
+    id: doc.$id,
+    title: doc.title as string,
+    image: doc.image as string | undefined,
+    slug: doc.slug as string | undefined,
+    store: doc.store as string | undefined,
+    url: doc.url as string | undefined,
+    description: doc.description as string | undefined,
+    type: doc.type as string,
+    startDate: doc.startDate as string | number | undefined,
+    endDate: doc.endDate as string | number | undefined,
+    igdb_game_id: doc.igdb_game_id as number | undefined,
+  }));
 };
 
-// Countdown Timer
+const resolveStoreIcon = (store?: string) => {
+  if (store === "steam") return require("../../assets/steam.webp");
+  if (store === "gog") return require("../../assets/gog.webp");
+  return require("../../assets/epic-games.webp");
+};
+
+// Sub-components
+
+interface TimeUnitProps {
+  value: number;
+  label: string;
+}
+
+const TimeUnit: React.FC<TimeUnitProps> = ({ value, label }) => (
+  <View style={styles.timeUnit}>
+    <View style={styles.timeValueBox}>
+      <Text style={styles.timeValue}>{value}</Text>
+    </View>
+    <Text style={styles.timeLabel}>{label}</Text>
+  </View>
+);
+
 interface CountdownTimerProps {
   t: (key: string) => string;
   startDate?: string | number;
 }
 
-const CountdownTimer = memo<CountdownTimerProps>(({ t, startDate }) => {
+const CountdownTimer = React.memo<CountdownTimerProps>(({ t, startDate }) => {
   const timeLeft = useCountdown(startDate, 1000) as CountdownResult | null;
   if (!timeLeft) return null;
 
@@ -102,27 +123,14 @@ const CountdownTimer = memo<CountdownTimerProps>(({ t, startDate }) => {
     </View>
   );
 });
-
-interface TimeUnitProps {
-  value: number;
-  label: string;
-}
-
-// countdown timer unit
-const TimeUnit: React.FC<TimeUnitProps> = ({ value, label }) => (
-  <View style={styles.timeUnit}>
-    <View style={styles.timeValueBox}>
-      <Text style={styles.timeValue}>{value}</Text>
-    </View>
-    <Text style={styles.timeLabel}>{label}</Text>
-  </View>
-);
+CountdownTimer.displayName = "CountdownTimer";
 
 // Main
+
 function FreeGames(): React.ReactElement {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
-  const [notifEnabled, setNotifEnabled] = useState<boolean>(false);
+  const [notifEnabled, setNotifEnabled] = useState(false);
   const userId = auth().currentUser?.uid;
 
   const { data: gamesList, isLoading, error } = useCachedData<FreeGameItem[]>(
@@ -132,34 +140,28 @@ function FreeGames(): React.ReactElement {
   );
 
   const isError = !!error;
+  const isInitialLoading = isLoading && !Array.isArray(gamesList);
 
+  // Check user's notification preference on mount / user change
   useEffect(() => {
+    if (!userId) return;
     let isMounted = true;
 
     const checkNotificationStatus = async (): Promise<void> => {
-      if (!userId) return;
       try {
         const prefs = await NotificationService.getUserPreferences(userId);
-        const topicName = NotificationService.getTopicName(
-          NOTIF_CATEGORY,
-          NOTIF_SOURCE,
-        );
-        if (isMounted) {
-          setNotifEnabled(prefs[topicName] === true);
-        }
+        const topicName = NotificationService.getTopicName(NOTIF_CATEGORY, NOTIF_SOURCE);
+        if (isMounted) setNotifEnabled(prefs[topicName] === true);
       } catch (e) {
-        console.log("Error reading pref from Firestore", e);
+        console.log("Error reading notification pref from Firestore", e);
       }
     };
 
     checkNotificationStatus();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [userId]);
 
-  const toggleNotifications = async (): Promise<void> => {
+  const toggleNotifications = useCallback(async (): Promise<void> => {
     if (!userId) {
       ToastAndroid.show(t("common.loginRequired"), ToastAndroid.LONG);
       return;
@@ -181,21 +183,40 @@ function FreeGames(): React.ReactElement {
           : t("games.list.freeGames.unsubscribed"),
         ToastAndroid.LONG,
       );
-    } catch (error) {
-      console.error("Toggle error:", error);
+    } catch (err) {
+      console.error("Toggle notifications error:", err);
       setNotifEnabled(!newStatus); // Revert on failure
       ToastAndroid.show(t("error"), ToastAndroid.LONG);
     }
-  };
+  }, [userId, notifEnabled, t]);
+
+  const handleClaimPress = useCallback(
+    async (item: FreeGameItem): Promise<void> => {
+      try {
+        await analytics().logEvent("click_free_game", {
+          item_id: item.id,
+          item_name: item.title,
+          content_type: "free_game_card",
+          game_type: item.type,
+          store: item.store ?? "epic",
+        });
+      } catch (analyticsError) {
+        console.log("Analytics error:", analyticsError);
+      }
+
+      if (item.url) {
+        openLink(item.url);
+      } else if (item.slug) {
+        openLink(`https://store.epicgames.com/en-US/p/${item.slug}`);
+      }
+    },
+    [],
+  );
 
   const renderGameItem = useCallback(
     ({ item }: ListRenderItemInfo<FreeGameItem>) => {
-      const StoreIcon =
-        item.store === "steam"
-          ? require("../../assets/steam.webp")
-          : item.store === "gog"
-            ? require("../../assets/gog.webp")
-            : require("../../assets/epic-games.webp");
+      const storeIcon = resolveStoreIcon(item.store);
+
       const handleCardPress = (): void => {
         if (item.igdb_game_id) {
           navigation.navigate("GameDetails", {
@@ -218,7 +239,7 @@ function FreeGames(): React.ReactElement {
             style={styles.cardGradient}
           />
 
-          {/* Countdown timer (visible only for upcoming "next" games) */}
+          {/* Image area with optional countdown overlay */}
           <View style={styles.imageContainer}>
             {item.type === "next" && item.startDate && (
               <CountdownTimer t={t} startDate={item.startDate} />
@@ -234,7 +255,7 @@ function FreeGames(): React.ReactElement {
               style={styles.cover}
               contentFit="cover"
               cachePolicy="memory-disk"
-              allowDownscaling={true}
+              allowDownscaling
             />
 
             <LinearGradient
@@ -242,11 +263,11 @@ function FreeGames(): React.ReactElement {
               style={styles.imageGradient}
             />
 
-            {/* Store icon badge (Epic / Steam) */}
+            {/* Store icon badge */}
             <View style={styles.storeIconBadge}>
               <Image
-                source={StoreIcon}
-                style={{ width: 20, height: 20 }}
+                source={storeIcon}
+                style={styles.storeIcon}
                 contentFit="contain"
               />
             </View>
@@ -264,27 +285,7 @@ function FreeGames(): React.ReactElement {
             {item.type === "current" && (
               <TouchableOpacity
                 style={styles.savingsContainer}
-                onPress={async () => {
-                  try {
-                    await analytics().logEvent("click_free_game", {
-                      item_id: item.id,
-                      item_name: item.title,
-                      content_type: "free_game_card",
-                      game_type: item.type,
-                      store: item.store ?? "epic",
-                    });
-                  } catch (error) {
-                    console.log("Analytics Error:", error);
-                  }
-
-                  if (item.url) {
-                    openLink(item.url);
-                  } else if (item.slug) {
-                    openLink(
-                      `https://store.epicgames.com/en-US/p/${item.slug}`,
-                    );
-                  }
-                }}
+                onPress={() => handleClaimPress(item)}
                 activeOpacity={0.9}
               >
                 <LinearGradient
@@ -293,11 +294,7 @@ function FreeGames(): React.ReactElement {
                   end={{ x: 1, y: 1 }}
                   style={styles.savingsButton}
                 >
-                  <Ionicons
-                    name="gift-outline"
-                    size={16}
-                    color={COLORS.textLight}
-                  />
+                  <Ionicons name="gift-outline" size={16} color={COLORS.textLight} />
                   <Text style={styles.savingsText}>
                     {t("games.list.freeGames.claimNow")}
                   </Text>
@@ -308,18 +305,19 @@ function FreeGames(): React.ReactElement {
         </TouchableOpacity>
       );
     },
-    [t, navigation],
+    [t, navigation, handleClaimPress],
   );
 
   return (
     <View>
       {/* Header with notification toggle */}
       <View style={styles.headerContainer}>
-        <SectionTitle title={t("games.list.freeGames.header")} fontSize={28} subtitle={t("games.list.freeGames.subtitle")} />
-        <TouchableOpacity
-          onPress={toggleNotifications}
-          style={styles.bellButton}
-        >
+        <SectionTitle
+          title={t("games.list.freeGames.header")}
+          fontSize={28}
+          subtitle={t("games.list.freeGames.subtitle")}
+        />
+        <TouchableOpacity onPress={toggleNotifications} style={styles.bellButton}>
           <Ionicons
             name={notifEnabled ? "notifications" : "notifications-off-outline"}
             size={24}
@@ -328,42 +326,45 @@ function FreeGames(): React.ReactElement {
         </TouchableOpacity>
       </View>
 
-      {/* loading */}
-      {isLoading && !isError && !Array.isArray(gamesList) && (
+      {/* Skeleton — shown on first load before any data arrives */}
+      {isInitialLoading && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {[1, 2, 3].map((item) => (
-            <SkeletonFreeGames key={item} />
+          {Array.from({ length: SKELETON_COUNT }, (_, i) => (
+            <SkeletonFreeGames key={i} />
           ))}
         </ScrollView>
       )}
 
-      {/* error */}
-      {(!Array.isArray(gamesList) || isError) && (
-        <View style={{ height: CARD_HEIGHT }}>
+      {/* Error state */}
+      {isError && (
+        <View style={styles.errorContainer}>
           <ErrorState message={t("games.list.serverError")} />
         </View>
       )}
 
-      {/* games list */}
+      {/* Games list */}
       {!isError && Array.isArray(gamesList) && (
-        <FlashList 
-          data={gamesList ?? []}
+        <FlashList
+          data={gamesList}
           renderItem={renderGameItem}
           keyExtractor={(item) => item.id}
-          horizontal={true}
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          snapToInterval={185}
+          snapToInterval={ESTIMATED_CARD_WIDTH}
           decelerationRate="fast"
-          ListEmptyComponent={<View style={{ width: "100%", height: CARD_HEIGHT }}>
-            <ErrorState message={t("games.list.serverError")} />
-          </View>}
-          estimatedItemSize={185}
+          ListEmptyComponent={
+            <View style={styles.errorContainer}>
+              <ErrorState message={t("games.list.serverError")} />
+            </View>
+          }
+          estimatedItemSize={ESTIMATED_CARD_WIDTH}
         />
       )}
     </View>
   );
 }
+
 export default FreeGames;
 
 const styles = StyleSheet.create({
@@ -382,6 +383,9 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 10,
     paddingVertical: 5,
+  },
+  errorContainer: {
+    height: CARD_HEIGHT,
   },
   gameCard: {
     width: 165,
@@ -421,6 +425,10 @@ const styles = StyleSheet.create({
     padding: 6,
     borderWidth: 1,
     borderColor: "#516996",
+  },
+  storeIcon: {
+    width: 20,
+    height: 20,
   },
   infoSection: {
     flex: 1,
