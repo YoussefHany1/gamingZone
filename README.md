@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.webp" width="320" style="border-radius: 24px; box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.3);" alt="Gaming Zone Logo" />
+  <img src="apps/mobile/assets/logo.webp" width="320" style="border-radius: 24px; box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.3);" alt="Gaming Zone Logo" />
 </p>
 
 <h1 align="center">🎮 Gaming Zone</h1>
@@ -131,18 +131,18 @@ These are triggered automatically via **GitHub Actions** to ensure the Appwrite 
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="assets/screenshots/home.jpg" width="30%" />
-  <img src="assets/screenshots/news.jpg" width="30%" />
-  <img src="assets/screenshots/news-details.jpg" width="30%" />
+  <img src="apps/mobile/assets/screenshots/home.jpg" width="30%" />
+  <img src="apps/mobile/assets/screenshots/news.jpg" width="30%" />
+  <img src="apps/mobile/assets/screenshots/news-details.jpg" width="30%" />
 </p>
 <p align="center">
-  <img src="assets/screenshots/games.jpg" width="30%" />
-  <img src="assets/screenshots/games-search.jpg" width="30%" />
-  <img src="assets/screenshots/game-details.jpg" width="30%" />
+  <img src="apps/mobile/assets/screenshots/games.jpg" width="30%" />
+  <img src="apps/mobile/assets/screenshots/games-search.jpg" width="30%" />
+  <img src="apps/mobile/assets/screenshots/game-details.jpg" width="30%" />
 </p>
 <p align="center">
-  <img src="assets/screenshots/games-list.jpg" width="30%" />
-  <img src="assets/screenshots/notifications.jpg" width="30%" />
+  <img src="apps/mobile/assets/screenshots/games-list.jpg" width="30%" />
+  <img src="apps/mobile/assets/screenshots/notifications.jpg" width="30%" />
 </p>
 
 ## 🤝 Contributing

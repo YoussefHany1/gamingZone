@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        working-directory: ./backend
+        working-directory: ./apps/backend
 
       - name: Run Summary Script
         env:
@@ -31,5 +31,5 @@ jobs:
           ARTICLES_COLLECTION_ID: ${{ secrets.ARTICLES_COLLECTION_ID }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
-        working-directory: ./backend
+        working-directory: ./apps/backend
         run: npm run summary:weekly
