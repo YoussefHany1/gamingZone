@@ -1,0 +1,8 @@
+{
+  "name": "gaming-zone",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

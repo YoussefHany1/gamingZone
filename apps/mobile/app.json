@@ -1,0 +1,116 @@
+{
+  "expo": {
+    "name": "Gaming Zone",
+    "slug": "gaming-zone",
+    "orientation": "default",
+    "scheme": "gaming-zone",
+    "version": "1.0.4",
+    "icon": "./assets/logo-background.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "jsEngine": "hermes",
+    "splash": {
+      "image": "./assets/logo-background.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#0c1a33"
+    },
+    "android": {
+      "resizeableActivity": true,
+      "versionCode": 15,
+      "runtimeVersion": "1.0.4",
+      "userInterfaceStyle": "light",
+      "package": "com.yh.gamingzone",
+      "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-4635812020796700~2053599689"
+      },
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0c1a33"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "gz1.vercel.app",
+              "pathPrefix": "/news"
+            },
+            {
+              "scheme": "https",
+              "host": "gz1.vercel.app",
+              "pathPrefix": "/news-details"
+            },
+            {
+              "scheme": "https",
+              "host": "gz1.vercel.app",
+              "pathPrefix": "/lists"
+            },
+            {
+              "scheme": "http",
+              "host": "gz1.vercel.app",
+              "pathPrefix": "/news"
+            },
+            {
+              "scheme": "http",
+              "host": "gz1.vercel.app",
+              "pathPrefix": "/news-details"
+            },
+            {
+              "scheme": "http",
+              "host": "gz1.vercel.app",
+              "pathPrefix": "/lists"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "notification": {
+      "icon": "./assets/icon.png",
+      "color": "#0c1a33",
+      "androidMode": "default",
+      "androidCollapsedTitle": "#{unread_notifications} new interactions"
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    },
+    "plugins": [
+      "expo-localization",
+      "expo-video",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-4635812020796700~2053599689",
+          "iosAppId": "ca-app-pub-4635812020796700~1466759291"
+        }
+      ]
+    ],
+    "react-native-google-mobile-ads": {
+      "android_app_id": "ca-app-pub-4635812020796700~2053599689",
+      "delay_app_measurement_init": true
+    },
+    "updates": {
+      "url": "https://u.expo.dev/25078fb9-8a54-4056-b988-2ac45be30e52"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "runtimeVersion": {
+        "policy": "appVersion"
+      },
+      "associatedDomains": ["applinks:gz1.vercel.app"]
+    },
+    "extra": {
+      "APPWRITE_PROJECT": "6930387e0009494a1c2a",
+      "APPWRITE_DATABASE_ID": "6930389a0033ba85bfe1",
+      "GOOGLE_WEB_CLIENT_ID": "1003577837647-jpm4m77muign33bu3inaihqf6p82b50v.apps.googleusercontent.com",
+      "CLOUDINARY_CLOUD_NAME": "\"dewusw0db\";",
+      "CLOUDINARY_API_KEY": "\"848952698676177\";",
+      "CLOUDINARY_UPLOAD_PRESET": "\"Gaming Zone\";",
+      "eas": {
+        "projectId": "25078fb9-8a54-4056-b988-2ac45be30e52"
+      }
+    }
+  }
+}
