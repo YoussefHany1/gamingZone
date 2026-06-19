@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "@/components/Link";
-import axios from "axios";
+
 import { useLangStore } from "../../store/useLangStore";
 import { useCountdown } from "../../hooks/useCountdown";
 import { Tv, Calendar, Flame, AlertCircle } from "lucide-react";
@@ -143,9 +143,13 @@ const GamingEvents = React.memo(function GamingEvents() {
         const SERVER_URL =
           process.env.NEXT_PUBLIC_SERVER_URL ||
           "https://igdb-api-omega.vercel.app";
-        const response = await axios.get<GamingEvent[]>(`${SERVER_URL}/events`);
-        if (Array.isArray(response.data)) {
-          setEvents(response.data);
+        const response = await fetch(`${SERVER_URL}/events`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: GamingEvent[] = await response.json();
+        if (Array.isArray(data)) {
+          setEvents(data);
         }
       } catch (err) {
         console.error("Error fetching events:", err);

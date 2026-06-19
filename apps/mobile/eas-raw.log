@@ -1,0 +1,455 @@
+AMD, 4 vCPUs, 15.62 GB RAM
+
+Using image "ubuntu-24.04-jdk-17-ndk-r27b" based on "ubuntu-2404-noble-amd64-v20250805"
+
+Installed software:
+- NDK 27.1.12297006
+- Node.js 20.19.4
+- Bun 1.2.20
+- Yarn 1.22.22
+- pnpm 10.14.0
+- npm 10.9.3
+- Java 17
+- node-gyp 11.3.0
+- Maestro 2.0.2
+
+Project environment variables:
+  EAS_PACKAGE_MANAGER=npm
+  EAS_USE_CACHE=1
+  EAS_USE_NPM_CACHE=0
+  __API_SERVER_URL=https://api.expo.dev/
+  npm_config_legacy_peer_deps=true
+
+Environment secrets:
+  EXPO_TOKEN=********
+
+EAS Build environment variables:
+  NVM_INC=/home/expo/.nvm/versions/node/v20.19.4/include/node
+  HOSTNAME=turtle-worker-feb415f2530a
+  JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+  WORKER_TARBALL_URL=https://storage.googleapis.com/eas-build-worker-tarballs/worker-android-production.tar.gz
+  PWD=/usr/local/eas-build-worker
+  HOME=/home/expo
+  ANDROID_NDK_HOME=/home/expo/Android/Sdk/ndk/27.1.12297006
+  NVM_DIR=/home/expo/.nvm
+  ANDROID_HOME=/home/expo/Android/Sdk
+  SHLVL=1
+  ANDROID_SDK_ROOT=/home/expo/Android/Sdk
+  PATH=/home/expo/workingdir/bin:/home/expo/.nvm/versions/node/v20.19.4/bin:/opt/bundletool:/home/expo/Android/Sdk/build-tools/29.0.3:/home/expo/Android/Sdk/build-tools/35.0.0:/home/expo/Android/Sdk/ndk/27.1.12297006:/home/expo/Android/Sdk/cmdline-tools/tools/bin:/home/expo/Android/Sdk/tools:/home/expo/Android/Sdk/tools/bin:/home/expo/Android/Sdk/platform-tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/home/expo/.bun/bin
+  LOGGER_LEVEL=debug
+  NVM_BIN=/home/expo/.nvm/versions/node/v20.19.4/bin
+  EAS_BUILD_WORKER_DIR=/home/expo/eas-build-worker
+  OLDPWD=/home/expo
+  _=/home/expo/.nvm/versions/node/v20.19.4/bin/node
+  CI=1
+  MAESTRO_DRIVER_STARTUP_TIMEOUT=120000
+  MAESTRO_CLI_NO_ANALYTICS=1
+  EAS_BUILD=true
+  EAS_BUILD_RUNNER=eas-build
+  EAS_BUILD_PLATFORM=android
+  EAS_CLI_SENTRY_DSN=https://ca4734dc503543b28d55fdaf0563f61c@o30871.ingest.sentry.io/1837720
+  NVM_NODEJS_ORG_MIRROR=http://nodejs.production.caches.eas-build.internal
+  EAS_BUILD_PROFILE=production
+  EAS_BUILD_GIT_COMMIT_HASH=9664de4fc0c68b1efb5a68da38698f6a77260a8a
+  EAS_BUILD_ID=d9d1f67f-8804-4af8-ac56-feb415f2530a
+  LANG=en_US.UTF-8
+  EAS_BUILD_WORKINGDIR=/home/expo/workingdir/build
+  EAS_BUILD_PROJECT_ID=25078fb9-8a54-4056-b988-2ac45be30e52
+  ANDROID_CCACHE=/usr/bin/ccache
+  EAS_BUILD_MAVEN_CACHE_URL=http://maven.production.caches.eas-build.internal
+  GRADLE_OPTS=-Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=1g -Xmx4g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" -Dorg.gradle.parallel=true -Dorg.gradle.daemon=false
+  EAS_BUILD_ANDROID_VERSION_CODE=33
+  EAS_BUILD_USERNAME=youssef_hany1
+  __EAS_BUILD_ENVS_DIR=/home/expo/workingdir/env
+
+Builder is ready, starting build
+End phase: SPIN_UP_BUILDER
+Start phase: INSTALL_CUSTOM_TOOLS
+End phase: INSTALL_CUSTOM_TOOLS
+Start phase: PREPARE_PROJECT
+.npmrc found at .npmrc
+End phase: PREPARE_PROJECT
+Start phase: PRE_INSTALL_HOOK
+End phase: PRE_INSTALL_HOOK
+Start phase: READ_EAS_JSON
+Using eas.json:
+{
+  "cli": {
+    "version": ">= 16.24.1",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development"
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview"
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "channel": "production",
+      "env": {
+        "EAS_PACKAGE_MANAGER": "npm",
+        "npm_config_legacy_peer_deps": "true"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
+
+End phase: READ_EAS_JSON
+Start phase: READ_PACKAGE_JSON
+Using package.json:
+{
+  "name": "gamingzone",
+  "version": "1.0.4",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.1.1",
+    "@gaming-zone/locales": "*",
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-community/datetimepicker": "8.4.4",
+    "@react-native-community/netinfo": "^11.4.1",
+    "@react-native-firebase/analytics": "^23.5.0",
+    "@react-native-firebase/app": "^23.5.0",
+    "@react-native-firebase/auth": "^23.5.0",
+    "@react-native-firebase/crashlytics": "^23.8.6",
+    "@react-native-firebase/firestore": "^23.5.0",
+    "@react-native-firebase/messaging": "^23.5.0",
+    "@react-native-google-signin/google-signin": "^16.0.0",
+    "@react-navigation/bottom-tabs": "^7.4.7",
+    "@react-navigation/native": "^7.1.17",
+    "@react-navigation/native-stack": "^7.5.1",
+    "@shopify/flash-list": "2.0.2",
+    "@tanstack/react-query": "^5.90.10",
+    "axios": "^1.13.2",
+    "date-fns": "^2.30.0",
+    "dotenv": "^17.2.3",
+    "expo": "~54.0.33",
+    "expo-av": "~16.0.8",
+    "expo-blur": "~15.0.8",
+    "expo-constants": "~18.0.13",
+    "expo-dev-client": "~6.0.20",
+    "expo-image": "~3.0.11",
+    "expo-image-picker": "~17.0.10",
+    "expo-linear-gradient": "~15.0.8",
+    "expo-linking": "~8.0.11",
+    "expo-localization": "~17.0.8",
+    "expo-notifications": "~0.32.16",
+    "expo-sharing": "~14.0.8",
+    "expo-splash-screen": "~31.0.13",
+    "expo-status-bar": "~3.0.9",
+    "expo-store-review": "~9.0.9",
+    "expo-system-ui": "~6.0.9",
+    "expo-updates": "~29.0.16",
+    "expo-video": "~3.0.16",
+    "expo-web-browser": "~15.0.11",
+    "i18n-iso-countries": "^7.14.0",
+    "i18next": "^25.6.2",
+    "react": "19.1.0",
+    "react-i18next": "^16.3.3",
+    "react-native": "0.81.5",
+    "react-native-appwrite": "^0.19.0",
+    "react-native-country-select": "^0.3.8",
+    "react-native-gesture-handler": "~2.28.0",
+    "react-native-google-mobile-ads": "^16.3.0",
+    "react-native-markdown-display": "^7.0.2",
+    "react-native-pager-view": "^6.9.1",
+    "react-native-reanimated": "~4.1.1",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-svg": "15.12.1",
+    "react-native-swiper": "^1.6.0",
+    "react-native-tab-view": "^4.1.3",
+    "react-native-webview": "13.15.0",
+    "react-native-worklets": "^0.9.2",
+    "react-native-youtube-iframe": "^2.4.1",
+    "zustand": "^5.0.13"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@react-native-community/cli": "latest",
+    "@types/react": "~19.1.10",
+    "babel-plugin-transform-remove-console": "^6.9.4",
+    "babel-preset-expo": "~54.0.10",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}
+End phase: READ_PACKAGE_JSON
+Start phase: INSTALL_DEPENDENCIES
+We detected that 'apps/mobile' is a yarn workspace
+Running "yarn install --frozen-lockfile --production false" in /home/expo/workingdir/build directory
+yarn install v1.22.22
+info No lockfile found.
+[1/4] Resolving packages...
+warning workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > react-native > glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+warning workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > react-native > @react-native/codegen > glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+warning workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone-scripts > got-scraping > ow > lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+warning workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone-scripts > got-scraping > header-generator > ow > lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+warning workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > react-native > glob > inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+warning workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone-scripts > firebase-admin > @google-cloud/storage > gaxios > uuid@9.0.1: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+warning workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone-scripts > firebase-admin > @google-cloud/storage > teeny-request > uuid@9.0.1: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+warning workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone-scripts > firebase-admin > @google-cloud/firestore > google-gax > uuid@9.0.1: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+warning workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > expo > @expo/config-plugins > xcode > uuid@7.0.3: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+warning workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > react-native > babel-jest > babel-plugin-istanbul > test-exclude > glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+warning workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > expo > @expo/cli > @react-native/dev-middleware > chromium-edge-launcher > rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+warning workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > expo > @expo/cli > @react-native/dev-middleware > chromium-edge-launcher > rimraf > glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+warning workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone-scripts > firebase-admin > google-auth-library > gaxios > node-fetch > fetch-blob > node-domexception@1.0.0: Use your platform's native DOMException instead
+[2/4] Fetching packages...
+warning bare-fs@4.7.2: The engine "bare" appears to be invalid.
+warning bare-os@3.9.1: The engine "bare" appears to be invalid.
+[3/4] Linking dependencies...
+warning "workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > @expo/vector-icons@15.1.1" has unmet peer dependency "expo-font@>=14.0.4".
+warning "workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > @shopify/flash-list@2.0.2" has unmet peer dependency "@babel/runtime@*".
+warning "workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > react-native-worklets@0.9.2" has unmet peer dependency "@react-native/metro-config@*".
+warning "workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > react-native-worklets@0.9.2" has incorrect peer dependency "react-native@0.83 - 0.86".
+warning "workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > react-native-appwrite > react-native@0.86.0" has incorrect peer dependency "react@^19.2.3".
+warning "workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > react-native-reanimated@4.1.7" has incorrect peer dependency "react-native-worklets@0.5 - 0.8".
+warning "workspace-aggregator-e7204b33-3202-4793-ab94-270d6e99e162 > gamingzone > babel-preset-expo@54.0.11" has unmet peer dependency "react-refresh@>=0.14.0 <1.0.0".
+[4/4] Building fresh packages...
+Done in 79.80s.
+End phase: INSTALL_DEPENDENCIES
+Start phase: READ_APP_CONFIG
+Using app configuration:
+{
+  "name": "Gaming Zone",
+  "slug": "gaming-zone",
+  "orientation": "default",
+  "scheme": "gaming-zone",
+  "version": "1.0.4",
+  "icon": "./assets/logo-background.png",
+  "userInterfaceStyle": "light",
+  "newArchEnabled": true,
+  "jsEngine": "hermes",
+  "splash": {
+    "image": "./assets/logo-background.png",
+    "resizeMode": "cover",
+    "backgroundColor": "#0c1a33"
+  },
+  "android": {
+    "resizeableActivity": true,
+    "versionCode": 15,
+    "runtimeVersion": "1.0.4",
+    "userInterfaceStyle": "light",
+    "package": "com.yh.gamingzone",
+    "googleServicesFile": "./google-services.json",
+    "adaptiveIcon": {
+      "foregroundImage": "./assets/icon.png",
+      "backgroundColor": "#0c1a33"
+    },
+    "intentFilters": [
+      {
+        "action": "VIEW",
+        "data": [
+          {
+            "scheme": "https",
+            "host": "gz1.vercel.app",
+            "pathPrefix": "/news"
+          },
+          {
+            "scheme": "https",
+            "host": "gz1.vercel.app",
+            "pathPrefix": "/news-details"
+          },
+          {
+            "scheme": "https",
+            "host": "gz1.vercel.app",
+            "pathPrefix": "/lists"
+          },
+          {
+            "scheme": "http",
+            "host": "gz1.vercel.app",
+            "pathPrefix": "/news"
+          },
+          {
+            "scheme": "http",
+            "host": "gz1.vercel.app",
+            "pathPrefix": "/news-details"
+          },
+          {
+            "scheme": "http",
+            "host": "gz1.vercel.app",
+            "pathPrefix": "/lists"
+          }
+        ],
+        "category": [
+          "BROWSABLE",
+          "DEFAULT"
+        ]
+      }
+    ]
+  },
+  "notification": {
+    "icon": "./assets/icon.png",
+    "color": "#0c1a33",
+    "androidMode": "default",
+    "androidCollapsedTitle": "#{unread_notifications} new interactions"
+  },
+  "web": {
+    "favicon": "./assets/icon.png"
+  },
+  "plugins": [
+    "expo-localization",
+    "expo-video",
+    [
+      "react-native-google-mobile-ads",
+      {
+        "androidAppId": "ca-app-pub-4635812020796700~2053599689",
+        "iosAppId": "ca-app-pub-4635812020796700~1466759291"
+      }
+    ]
+  ],
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-4635812020796700~2053599689",
+    "delay_app_measurement_init": true
+  },
+  "updates": {
+    "url": "https://u.expo.dev/25078fb9-8a54-4056-b988-2ac45be30e52"
+  },
+  "ios": {
+    "supportsTablet": true,
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "associatedDomains": [
+      "applinks:gz1.vercel.app"
+    ]
+  },
+  "extra": {
+    "eas": {
+      "projectId": "25078fb9-8a54-4056-b988-2ac45be30e52"
+    }
+  },
+  "sdkVersion": "54.0.0",
+  "platforms": [
+    "ios",
+    "android"
+  ]
+}
+End phase: READ_APP_CONFIG
+Start phase: RUN_EXPO_DOCTOR
+Running "expo doctor"
+Running 18 checks on your project...
+13/18 checks passed. 5 checks failed. Possible issues detected:
+Use the --verbose flag to see more details about passed checks.
+
+✖ Check for lock file
+No lock file detected.
+Advice:
+Install dependencies using the package manager of your choice to a generate a lock file.
+
+✖ Check Expo config (app.json/ app.config.js) schema
+Errors validating fields in /home/expo/workingdir/build/apps/mobile/app.json:
+ should NOT have additional property 'react-native-google-mobile-ads'.
+ Field: android - should NOT have additional property 'resizeableActivity'.
+Advice:
+Resolve schema errors in your app config. Learn more: https://docs.expo.dev/workflow/configuration/
+
+✖ Check that no duplicate dependencies are installed
+Your project contains duplicate native module dependencies, which should be de-duplicated.
+Native builds may only contain one version of any given native module, and having multiple versions of a single Native module installed may lead to unexpected build errors.
+Found duplicates for react-native:
+  ├─ react-native@0.81.5 (at: ../../node_modules/react-native)
+  ├─ react-native@0.86.0 (at: ../../node_modules/react-native-appwrite/node_modules/react-native)
+  └─ react-native@0.86.0 (at: ../../node_modules/expo-file-system/node_modules/react-native)
+Found duplicates for expo-file-system:
+  ├─ expo-file-system@18.1.11 (at: ../../node_modules/expo-file-system)
+  └─ expo-file-system@19.0.23 (at: ../../node_modules/expo/node_modules/expo-file-system)
+Advice:
+Resolve your dependency issues and deduplicate your dependencies. Learn more: https://expo.fyi/resolving-dependency-issues
+✖ Check for app config fields that may not be synced in a non-CNG project
+This project contains native project folders but also has native configuration properties in app.config.ts, indicating it is configured to use Prebuild. When the android/ios folders are present, EAS Build will not sync the following properties: orientation, scheme, icon, userInterfaceStyle, splash, android, notification, plugins, ios. 
+
+Advice:
+Add '/android' to your .easignore file if you intend to use CNG / Prebuild. Learn more: https://docs.expo.dev/workflow/prebuild/#usage-with-eas-build
+
+✖ Check that packages match versions required by installed Expo SDK
+
+⚠️ Minor version mismatches
+package                          expected  found   
+@react-native-community/netinfo  11.4.1    11.5.2  
+react-native-worklets            0.5.1     0.9.2   
+
+
+
+2 packages out of date.
+Advice:
+Use 'npx expo install --check' to review and upgrade your dependencies.
+To ignore specific packages, add them to "expo.install.exclude" in package.json. Learn more: https://expo.fyi/dependency-validation
+5 checks failed, indicating possible issues with the project.
+Command "expo doctor" failed.
+End phase: RUN_EXPO_DOCTOR
+Start phase: FIX_GRADLEW
+End phase: FIX_GRADLEW
+Start phase: PREBUILD
+Skipped running "expo prebuild" because the "android" directory already exists. Learn more about the build process: https://docs.expo.dev/build-reference/android-builds/
+End phase: PREBUILD
+Start phase: RESTORE_CACHE
+Restoring cache key: android-ccache-
+Matched cache key: android-ccache-224b6d13fe2cd2efffee059b5b92f133ea685b96cf9ed9d9a5c2d8b642f4bc71. Downloading...
+Cache restored successfully (prefix match)
+End phase: RESTORE_CACHE
+Start phase: POST_INSTALL_HOOK
+End phase: POST_INSTALL_HOOK
+Start phase: CALCULATE_EXPO_UPDATES_RUNTIME_VERSION
+Resolved runtime version: 1.0.4
+End phase: CALCULATE_EXPO_UPDATES_RUNTIME_VERSION
+Start phase: PREPARE_CREDENTIALS
+Writing secrets to the project's directory
+Injecting signing config into build.gradle
+Signing config injected
+End phase: PREPARE_CREDENTIALS
+Start phase: CONFIGURE_ANDROID_VERSION
+Injecting version config into build.gradle
+Version code: 33
+Version config injected
+End phase: CONFIGURE_ANDROID_VERSION
+Start phase: CONFIGURE_EXPO_UPDATES
+Setting the update request headers in 'AndroidManifest.xml' to '{"expo-channel-name":"production"}'
+End phase: CONFIGURE_EXPO_UPDATES
+Start phase: EAGER_BUNDLE
+yarn run v1.22.22
+$ /home/expo/workingdir/build/node_modules/.bin/expo export:embed --eager --platform android --dev false
+Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: Error loading Metro config at: /home/expo/workingdir/build/apps/mobile/metro.config.cjs
+Package subpath './src/defaults/exclusionList' is not defined by "exports" in /home/expo/workingdir/build/node_modules/metro-config/package.json
+Error: Package subpath './src/defaults/exclusionList' is not defined by "exports" in /home/expo/workingdir/build/node_modules/metro-config/package.json
+    at exportsNotFound (node:internal/modules/esm/resolve:322:10)
+    at packageExportsResolve (node:internal/modules/esm/resolve:670:9)
+    at resolveExports (node:internal/modules/cjs/loader:636:36)
+    at Function.Module._findPath (node:internal/modules/cjs/loader:716:31)
+    at Function.Module._resolveFilename (node:internal/modules/cjs/loader:1198:27)
+    at Function.Module._load (node:internal/modules/cjs/loader:1043:27)
+    at Module.require (node:internal/modules/cjs/loader:1298:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/home/expo/workingdir/build/apps/mobile/metro.config.cjs:19:23)
+    at Module._compile (node:internal/modules/cjs/loader:1529:14)
+error Command failed with exit code 1.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+
+End phase: EAGER_BUNDLE
+Start phase: ON_BUILD_ERROR_HOOK
+End phase: ON_BUILD_ERROR_HOOK
+Start phase: ON_BUILD_COMPLETE_HOOK
+End phase: ON_BUILD_COMPLETE_HOOK
+Start phase: UPLOAD_BUILD_ARTIFACTS
+End phase: UPLOAD_BUILD_ARTIFACTS
+Start phase: FAIL_BUILD
+Build failed
+
+End phase: FAIL_BUILD

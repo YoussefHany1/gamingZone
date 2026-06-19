@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/logo.webp" width="320" style="border-radius: 24px; box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.3);" alt="Gaming Zone Logo" />
+  <img src="apps/mobile/assets/logo.webp" width="320" style="border-radius: 24px; box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.3);" alt="Gaming Zone Logo" />
 </p>
 
-<h1 align="center">🎮 Gaming Zone</h1>
+<!-- <h1 align="center">🎮 Gaming Zone</h1> -->
 
 <p align="center">
   <strong>The Ultimate Video Game Hub & Library Tracker</strong>
@@ -87,14 +87,16 @@ Follow these instructions to get the project up and running on your local machin
 
 2.  **Install dependencies**:
     Install all dependencies for the entire monorepo from the root:
+
     ```bash
     npm install
     ```
 
 3.  **Environment Setup**:
-    Create `.env` files in the respective app directories (`apps/mobile`, `apps/web`, `apps/backend`) based on their environment requirements. 
+    Create `.env` files in the respective app directories (`apps/mobile`, `apps/web`, `apps/backend`) based on their environment requirements.
 
-    *Example Appwrite Config:*
+    _Example Appwrite Config:_
+
     ```env
     APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
     APPWRITE_PROJECT=your_project_id
@@ -106,13 +108,16 @@ Follow these instructions to get the project up and running on your local machin
     You can run each app from its directory or via npm workspaces.
 
     **To run the Mobile App:**
+
     ```bash
     cd apps/mobile
     npx expo start
     ```
-    *Scan the QR code with your phone (using Expo Go) or run on an emulator.*
+
+    _Scan the QR code with your phone (using Expo Go) or run on an emulator._
 
     **To run the Web App:**
+
     ```bash
     cd apps/web
     npm run dev
@@ -131,18 +136,18 @@ These are triggered automatically via **GitHub Actions** to ensure the Appwrite 
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="assets/screenshots/home.jpg" width="30%" />
-  <img src="assets/screenshots/news.jpg" width="30%" />
-  <img src="assets/screenshots/news-details.jpg" width="30%" />
+  <img src="apps/mobile/assets/1.png" width="100%" />
+  <!-- <img src="apps/mobile/assets/screenshots/news.jpg" width="30%" />
+  <img src="apps/mobile/assets/screenshots/news-details.jpg" width="30%" /> -->
 </p>
 <p align="center">
-  <img src="assets/screenshots/games.jpg" width="30%" />
-  <img src="assets/screenshots/games-search.jpg" width="30%" />
-  <img src="assets/screenshots/game-details.jpg" width="30%" />
+  <img src="apps/mobile/assets/2.png" width="100%" />
+  <!-- <img src="apps/mobile/assets/screenshots/games-search.jpg" width="30%" />
+  <img src="apps/mobile/assets/screenshots/game-details.jpg" width="30%" /> -->
 </p>
 <p align="center">
-  <img src="assets/screenshots/games-list.jpg" width="30%" />
-  <img src="assets/screenshots/notifications.jpg" width="30%" />
+  <img src="apps/mobile/assets/3.png" width="100%" />
+  <!-- <img src="apps/mobile/assets/screenshots/notifications.jpg" width="30%" /> -->
 </p>
 
 ## 🤝 Contributing

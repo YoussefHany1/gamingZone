@@ -16,5 +16,4 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
-
 module.exports = config;

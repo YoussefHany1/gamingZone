@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import React, { useEffect, useState, lazy, Suspense } from "react";
+const ReactMarkdown = lazy(() => import("react-markdown"));
 import remarkGfm from "remark-gfm";
 import { useLangStore } from "../../store/useLangStore";
 import { databases } from "../../lib/appwrite";
@@ -103,7 +103,9 @@ export default function WeeklyRecap({
           expanded ? "max-h-[5000px]" : "max-h-24 relative"
         }`}
       >
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        <Suspense fallback={<div className="h-20 animate-pulse bg-white/5 rounded-md" />}>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        </Suspense>
 
         {!expanded && (
           <div className="absolute bottom-0 inset-x-0 h-12 bg-gradient-to-t from-dark-bg/90 to-transparent pointer-events-none"></div>

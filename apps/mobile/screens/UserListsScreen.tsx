@@ -166,10 +166,6 @@ const UserListsScreen: React.FC<Props> = ({ navigation }) => {
           return aTime - bTime || a.name.localeCompare(b.name);
         });
         setLists(parsed);
-        console.log(
-          "[UserListsScreen] Loaded lists on mobile:",
-          parsed.map((p) => ({ id: p.id, name: p.name, type: p.type })),
-        );
       },
       (error) => {
         console.error("[UserListsScreen] onSnapshot error:", error);

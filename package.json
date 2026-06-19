@@ -4,5 +4,11 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "overrides": {
+    "react-native": "0.81.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0"
+  }
 }

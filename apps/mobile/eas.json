@@ -18,7 +18,12 @@
       "android": {
         "buildType": "app-bundle"
       },
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EAS_PACKAGE_MANAGER": "npm",
+        "npm_config_legacy_peer_deps": "true"
+      },
+      "eas-build-pre-install": "bash ./scripts/inject-google-services.sh"
     }
   },
   "submit": {
