@@ -86,7 +86,7 @@ next-env.d.ts
 # Monorepo / Tooling
 .turbo/
 .eslintcache
-apps/web/package-lock.json
+package-lock.json
 
 # OS Files
 Thumbs.db
