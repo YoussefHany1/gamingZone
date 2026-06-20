@@ -21,7 +21,6 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-        working-directory: ./apps/backend
 
       - name: Trigger Games Fetch
         env:
@@ -34,6 +33,6 @@ jobs:
           ARTICLES_COLLECTION_ID: "articles"
           FCM_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-        working-directory: ./backend
+        working-directory: ./apps/backend
         run: |
           npm run fetch:free-games

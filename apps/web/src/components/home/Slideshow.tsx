@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import axios from "axios";
+
 import { useLangStore } from "../../store/useLangStore";
 import { ChevronLeft, ChevronRight, PlayCircle, X } from "lucide-react";
 
@@ -59,11 +59,13 @@ const Slideshow = React.memo(function Slideshow() {
   useEffect(() => {
     async function fetchTrailers() {
       try {
-        const response = await axios.get<Game[]>(
-          `${SERVER_URL}/latest-trailers`,
-        );
-        if (Array.isArray(response.data)) {
-          setTrailers(response.data.filter(hasVideo));
+        const response = await fetch(`${SERVER_URL}/latest-trailers`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: Game[] = await response.json();
+        if (Array.isArray(data)) {
+          setTrailers(data.filter(hasVideo));
         }
       } catch (error) {
         console.error("Error fetching latest trailers:", error);

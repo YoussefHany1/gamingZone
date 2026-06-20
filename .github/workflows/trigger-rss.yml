@@ -21,7 +21,6 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-        working-directory: ./apps/backend
 
       - name: Run RSS fetch script
         env:
