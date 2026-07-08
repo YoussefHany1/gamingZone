@@ -8,10 +8,10 @@ import messaging, {
 import * as Notifications from "expo-notifications";
 import { enableScreens } from "react-native-screens";
 
-// Disable react-native-screens optimization to fix the notorious Android background resume blank screen.
-enableScreens(false);
+// Enable react-native-screens optimization for better memory usage across all devices.
+enableScreens(true);
 
-import App from "./App";
+import App from "./src/App";
 
 // Configure notification behavior
 Notifications.setNotificationHandler({

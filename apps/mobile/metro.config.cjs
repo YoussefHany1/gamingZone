@@ -15,5 +15,9 @@ config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(workspaceRoot, 'node_modules'),
 ];
+// 3. Ignore Gradle build output inside node_modules to suppress ENOENT warnings
+config.resolver.blockList = [
+  /node_modules\/.*\/android\/.*\/build\/.*/,
+];
 
 module.exports = config;

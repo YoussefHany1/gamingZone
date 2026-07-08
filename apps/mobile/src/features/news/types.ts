@@ -1,0 +1,90 @@
+import { RssFeedMap } from "@/src/hooks/useRssFeeds";
+
+export type RssFeedSource = {
+  name: string;
+  image: string | { uri: string };
+  language: "ar" | "en";
+  website?: string;
+  aboutSite?: string;
+};
+export type Article = {
+  $id?: string;
+  id?: string | number;
+  title: string;
+  description?: string;
+  pubDate?: string;
+  thumbnail?: string;
+  language?: string;
+  siteName?: string;
+  url?: string;
+};
+
+export type ArticleParams = {
+  id?: string;
+  $id?: string;
+  title?: string;
+  link?: string;
+  thumbnail?: string;
+  siteName?: string;
+  siteImage?: string;
+  pubDate?: string;
+  description?: string;
+  article?: ArticleParams;
+};
+
+export type RootParamList = { NewsDetails: ArticleParams };
+
+export type RouteShape = {
+  key: string;
+  title: string;
+};
+
+export type GenericNewsRouteProps = {
+  rssFeeds: RssFeedMap;
+  categoryKey: string;
+  loading: boolean;
+};
+
+export type LatestNewsProps = {
+  limit?: number;
+  language?: string;
+  category?: string;
+  website?: string;
+  selectedItem?: RssFeedSource;
+  onChangeFeed?: (item: RssFeedSource) => void;
+  showDropdown?: boolean;
+  websitesList?: RssFeedSource[];
+  showFooter?: boolean;
+  scrollEnabled?: boolean;
+  enablePagination?: boolean;
+  itemsPerPage?: number;
+  adInterval?: number;
+};
+
+// Memoized row component
+export type NewsItemProps = {
+  item: Article;
+  index: number;
+  language?: string;
+  onPress: (item: Article) => void;
+  t: (key: string, opts?: object) => string;
+  adInterval?: number;
+  showAds?: boolean;
+};
+
+export type DropdownPickerProps = {
+  category: string;
+  websites?: RssFeedSource[];
+  value?: RssFeedSource | null;
+  onChange?: (item: RssFeedSource) => void;
+};
+
+export type SectionData = {
+  title: string;
+  data: RssFeedSource[];
+};
+
+export type SkeletonNewsItemProps = {
+  /** ISO language code — used to determine text direction (e.g. "ar" for RTL). */
+  language?: string;
+};
