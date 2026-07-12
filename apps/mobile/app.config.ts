@@ -1,9 +1,8 @@
 import "dotenv/config";
 import { ExpoConfig, ConfigContext } from "expo/config";
 
-
 // Defining the structure of .env
-interface EnvVariables {
+type EnvVariables = {
   APPWRITE_PROJECT?: string;
   APPWRITE_DATABASE_ID?: string;
   APPWRITE_ENDPOINT?: string;
@@ -11,12 +10,12 @@ interface EnvVariables {
   CLOUDINARY_CLOUD_NAME?: string;
   CLOUDINARY_API_KEY?: string;
   CLOUDINARY_UPLOAD_PRESET?: string;
-}
+};
 
 // The extra extension in ExpoConfig with custom variables
-interface AppExtra extends EnvVariables {
+type AppExtra = EnvVariables & {
   eas?: Record<string, unknown>;
-}
+};
 
 function getEnvVariables(): EnvVariables {
   return {
@@ -65,7 +64,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           mainApplication["meta-data"] = mainApplication["meta-data"].filter(
             (item: { $: { "android:name": string } }) =>
               item.$["android:name"] !==
-              "expo.modules.updates.EXPO_UPDATES_CHANNEL"
+              "expo.modules.updates.EXPO_UPDATES_CHANNEL",
           );
 
           mainApplication["meta-data"].push(channelMetaData);
