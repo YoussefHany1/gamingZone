@@ -79,14 +79,12 @@ export default function Header() {
               href="/"
               className="flex items-center gap-2 group"
             >
-              <div className="bg-linear-to-tr from-light-blue to-secondary-blue rounded-xl shadow-md group-hover:scale-105 transition-transform duration-300">
                 <Image
                   src="/assets/icon.webp"
                   alt="Logo"
                   width={50}
                   height={50}
                 />
-              </div>
               <span className="text-xl text-nowrap font-extrabold tracking-wider text-white font-outfit">
                 Gaming Zone
               </span>

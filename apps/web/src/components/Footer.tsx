@@ -13,15 +13,12 @@ export default function Footer({ locale = "ar" }: { locale?: string }) {
           {/* Logo & Intro */}
           <div className="flex flex-col items-center md:items-start gap-3">
             <div className="flex items-center gap-2">
-              <div className="bg-linear-to-tr from-light-blue to-secondary-blue rounded-lg">
-                {/* <Gamepad2 className="w-5 h-5 text-white" /> */}
                 <Image
                   src="/assets/icon.webp"
                   alt="Logo"
                   width={50}
                   height={50}
                 />
-              </div>
               <span className="text-lg font-bold tracking-wider text-white">
                 Gaming Zone
               </span>

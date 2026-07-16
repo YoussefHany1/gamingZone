@@ -3,7 +3,7 @@ import Link from "../../../components/Link";
 import Image from "next/image";
 import { useLangStore } from "../../../store/useLangStore";
 
-import { NewsGame, NewsRowProps } from "../types";
+import { NewsRowProps } from "../types";
 
 import { NEWS_GAMES_DATA } from "../constants";
 

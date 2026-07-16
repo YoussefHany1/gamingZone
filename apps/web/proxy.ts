@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedRoutes = ["/profile", "/lists"];
+const protectedRoutes = ["/profile"];
 const locales = ["en", "ar"];
 const defaultLocale = "en";
 

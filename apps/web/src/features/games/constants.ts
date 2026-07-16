@@ -5,7 +5,7 @@ export const NEWS_GAMES_DATA: NewsGame[] = [
     id: "1",
     name: "League of Legends",
     image:
-      "https://newzoo.com/wp-content/uploads/api/games/artworks/game--league-of-legends.jpg",
+      "https://m.media-amazon.com/images/M/MV5BMDc3ZGI3MTUtOTM1OC00NjZmLWFkZTMtYzRhM2RiN2Q2MDVmXkEyXkFqcGc@._V1_.jpg",
     apiUrl:
       "https://news.google.com/rss/search?q=league%20of%20legends%20news&hl=",
     source: "https://www.leagueoflegends.com/news/",

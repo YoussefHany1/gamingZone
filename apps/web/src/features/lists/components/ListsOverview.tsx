@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "@/components/Link";
 
 
@@ -19,6 +20,7 @@ import { Input } from "@/components/ui/Input";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 export default function ListsOverview() {
+  const router = useRouter();
   const {
     t,
     user,
@@ -36,6 +38,12 @@ export default function ListsOverview() {
     handleCreateList,
     handleDeleteList,
   } = useLists();
+
+  useEffect(() => {
+    if (!isLoading && (!user || user.isAnonymous)) {
+      router.push("/auth/login");
+    }
+  }, [isLoading, router, user]);
 
   if (isLoading || !user || user.isAnonymous) {
     return (
