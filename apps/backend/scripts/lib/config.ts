@@ -11,7 +11,7 @@ const envSchema = z.object({
   APPWRITE_API_KEY: z.string().min(1),
   APPWRITE_DATABASE_ID: z.string().min(1),
 
-  GEMINI_API_KEY: z.string().min(1),
+  GEMINI_API_KEY: z.string().min(1).optional(),
 
   RSS_COLLECTION_ID: z.string().min(1).default('news_sources'),
   ARTICLES_COLLECTION_ID: z.string().min(1).default('articles'),
