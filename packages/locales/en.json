@@ -16,6 +16,7 @@
     "noInternet": "No Internet Connection",
     "share": "Share",
     "copied": "Copied!",
+    "or": "Or",
     "updateAlert": {
       "title": "Update Available",
       "message": "A new version of the app is available. Update now for the latest features and improvements.",
@@ -138,6 +139,7 @@
     "fetchError": "Error while fetching data, please try again later.",
     "contactSupport": "Contact Support",
     "endOfList": "End of Articles",
+    "backToNews": "Back to News",
     "details": {
       "readFullArticle": "Read the full article",
       "noDescription": "No description available here",

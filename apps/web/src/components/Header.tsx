@@ -12,8 +12,6 @@ import {
   Gamepad2,
   Newspaper,
   Home,
-  User,
-  MessageSquare,
   Globe,
   LogOut,
   Menu,
@@ -30,7 +28,7 @@ export default function Header() {
 
   const toggleLanguage = () => {
     const nextLang = lang === "en" ? "ar" : "en";
-    
+
     // Construct the new pathname with the toggled language
     let newPathname = pathname;
     if (pathname.startsWith("/en")) {
@@ -40,7 +38,7 @@ export default function Header() {
     } else {
       newPathname = `/${nextLang}${pathname === "/" ? "" : pathname}`;
     }
-    
+
     router.push(newPathname);
   };
 
@@ -48,6 +46,7 @@ export default function Header() {
   const handleSignOut = async () => {
     try {
       await signOut(firebaseAuth);
+      await fetch("/api/auth/session", { method: "DELETE" });
       await signInAnonymously(firebaseAuth);
     } catch (error) {
       console.error("Sign out error:", error);
@@ -80,7 +79,7 @@ export default function Header() {
               href="/"
               className="flex items-center gap-2 group"
             >
-              <div className="bg-gradient-to-tr from-light-blue to-secondary-blue rounded-xl shadow-md group-hover:scale-105 transition-transform duration-300">
+              <div className="bg-linear-to-tr from-light-blue to-secondary-blue rounded-xl shadow-md group-hover:scale-105 transition-transform duration-300">
                 <Image
                   src="/assets/icon.webp"
                   alt="Logo"
@@ -123,6 +122,9 @@ export default function Header() {
             <button
               id="lang-toggle-desktop"
               onClick={toggleLanguage}
+              aria-label={
+                lang === "en" ? "Switch to Arabic" : "Switch to English"
+              }
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-gray-300 hover:text-white hover:bg-white/5 text-sm font-medium transition-all duration-300"
             >
               <Globe className="w-4 h-4" />
@@ -135,6 +137,7 @@ export default function Header() {
                 <Link
                   id="nav-profile-desktop"
                   href="/profile"
+                  aria-label={t("navigation.titles.accountSettings")}
                   className="flex items-center gap-2 group"
                 >
                   {user.photoURL ? (
@@ -143,10 +146,11 @@ export default function Header() {
                       width={32}
                       height={32}
                       alt="Avatar"
+                      priority
                       className="w-8 h-8 rounded-full object-cover border border-light-blue/30 group-hover:border-light-blue/60 transition-colors"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-light-blue to-secondary-blue flex items-center justify-center font-bold text-white text-sm shadow-md">
+                    <div className="w-8 h-8 rounded-full bg-linear-to-tr from-light-blue to-secondary-blue flex items-center justify-center font-bold text-white text-sm shadow-md">
                       {user.displayName
                         ? user.displayName[0].toUpperCase()
                         : "G"}
@@ -158,6 +162,7 @@ export default function Header() {
                   onClick={handleSignOut}
                   className="p-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-300"
                   title={t("settings.menu.signOut")}
+                  aria-label={t("settings.menu.signOut")}
                 >
                   <LogOut className="w-5 h-5" />
                 </button>
@@ -166,7 +171,7 @@ export default function Header() {
               <Link
                 id="login-button-desktop"
                 href="/auth/login"
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-secondary-blue to-light-blue text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-300 shadow-md shadow-light-blue/20"
+                className="px-4 py-2 rounded-xl bg-linear-to-r from-secondary-blue to-light-blue text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-300 shadow-md shadow-light-blue/20"
               >
                 {t("auth.login.signInButton")}
               </Link>
@@ -178,6 +183,9 @@ export default function Header() {
             <button
               id="lang-toggle-mobile"
               onClick={toggleLanguage}
+              aria-label={
+                lang === "en" ? "Switch to Arabic" : "Switch to English"
+              }
               className="p-2 rounded-lg border border-white/10 text-gray-300 hover:text-white"
             >
               <Globe className="w-5 h-5" />
@@ -185,6 +193,8 @@ export default function Header() {
             <button
               id="mobile-menu-toggle"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
               className="p-2 rounded-lg text-gray-400 hover:text-white focus:outline-none"
             >
               {mobileMenuOpen ? (
@@ -230,13 +240,16 @@ export default function Header() {
                   className="flex items-center gap-3 px-4"
                 >
                   {user.photoURL ? (
-                    <img
+                    <Image
                       src={user.photoURL}
                       alt="Avatar"
-                      className="w-10 h-10 rounded-full object-cover border border-light-blue/30"
+                      width={40}
+                      height={40}
+                      fetchPriority="high"
+                      className="rounded-full object-cover border border-light-blue/30"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-light-blue to-secondary-blue flex items-center justify-center font-bold text-white text-base">
+                    <div className="w-10 h-10 rounded-full bg-linear-to-tr from-light-blue to-secondary-blue flex items-center justify-center font-bold text-white text-base">
                       {user.displayName
                         ? user.displayName[0].toUpperCase()
                         : "G"}
@@ -268,7 +281,7 @@ export default function Header() {
                 id="login-button-mobile"
                 href="/auth/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center py-3 rounded-xl bg-gradient-to-r from-secondary-blue to-light-blue font-semibold shadow-md shadow-light-blue/10"
+                className="w-full flex items-center justify-center py-3 rounded-xl bg-linear-to-r from-secondary-blue to-light-blue font-semibold shadow-md shadow-light-blue/10"
               >
                 {t("auth.login.signInButton")}
               </Link>

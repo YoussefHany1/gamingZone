@@ -4,11 +4,7 @@ import en from "@gaming-zone/locales/en.json";
 
 const translations: Record<string, any> = { ar, en };
 
-interface LangState {
-  lang: "en" | "ar";
-  setLang: (lang: "en" | "ar") => void;
-  t: (key: string, replacements?: Record<string, string | number>) => string;
-}
+import { LangState } from "./types";
 
 export const useLangStore = create<LangState>((set, get) => ({
   lang: "en",

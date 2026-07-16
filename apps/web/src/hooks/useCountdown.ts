@@ -1,13 +1,10 @@
 import { useEffect, useState } from "react";
 
-interface CountdownResult {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
+import { CountdownResult } from "./types";
 
-export function useCountdown(targetTimestamp: number | null): CountdownResult | null {
+export function useCountdown(
+  targetTimestamp: number | null,
+): CountdownResult | null {
   const [timeLeft, setTimeLeft] = useState<CountdownResult | null>(null);
 
   useEffect(() => {
@@ -21,7 +18,7 @@ export function useCountdown(targetTimestamp: number | null): CountdownResult | 
 
     function calculateTime() {
       const difference = targetNum * 1000 - Date.now();
-      
+
       if (difference <= 0) {
         return { days: 0, hours: 0, minutes: 0, seconds: 0 };
       }
@@ -39,7 +36,7 @@ export function useCountdown(targetTimestamp: number | null): CountdownResult | 
     const interval = setInterval(() => {
       const updatedTime = calculateTime();
       setTimeLeft(updatedTime);
-      
+
       const difference = targetNum * 1000 - Date.now();
       if (difference <= 0) {
         clearInterval(interval);

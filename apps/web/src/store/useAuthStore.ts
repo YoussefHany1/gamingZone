@@ -2,19 +2,7 @@ import { create } from "zustand";
 import { auth } from "../lib/firebase";
 import { onAuthStateChanged, signInAnonymously, User } from "firebase/auth";
 
-interface AuthState {
-  user: User | null;
-  isLoading: boolean;
-}
-
-interface AuthActions {
-  /** Call once on app mount. Returns the cleanup function for useEffect. */
-  initAuth: () => () => void;
-  /** Manually refresh the user snapshot (e.g. after updateProfile). */
-  refreshUser: () => void;
-}
-
-type AuthStore = AuthState & AuthActions;
+import { AuthStore } from "./types";
 
 export const useAuthStore = create<AuthStore>((set) => ({
   user: null,

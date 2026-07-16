@@ -13,14 +13,7 @@ import {
   deleteDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import {
-  X,
-  Check,
-  Square,
-  Plus,
-  Loader2,
-  List,
-} from "lucide-react";
+import { X, Check, Square, Plus, Loader2, List } from "lucide-react";
 
 interface UserList {
   id: string;
@@ -63,7 +56,7 @@ export default function ListSelectionModal({
           return originalName;
       }
     },
-    [t]
+    [t],
   );
 
   useEffect(() => {
@@ -98,10 +91,18 @@ export default function ListSelectionModal({
         const checkedLists = await Promise.all(
           initialLists.map(async (list) => {
             const gameDoc = await getDoc(
-              doc(db, "users", user.uid, "lists", list.id, "games", String(gameId))
+              doc(
+                db,
+                "users",
+                user.uid,
+                "lists",
+                list.id,
+                "games",
+                String(gameId),
+              ),
             );
             return { ...list, isChecked: gameDoc.exists() };
-          })
+          }),
         );
         setLists(checkedLists);
       } catch (error) {
@@ -132,7 +133,7 @@ export default function ListSelectionModal({
         "lists",
         listId,
         "games",
-        String(gameId)
+        String(gameId),
       );
 
       try {
@@ -145,11 +146,14 @@ export default function ListSelectionModal({
         console.error("Error toggling list:", error);
         // Revert on failure
         const reverted = [...lists];
-        reverted[targetIdx] = { ...reverted[targetIdx], isChecked: currentStatus };
+        reverted[targetIdx] = {
+          ...reverted[targetIdx],
+          isChecked: currentStatus,
+        };
         setLists(reverted);
       }
     },
-    [lists, gameId, gameData, user]
+    [lists, gameId, gameData, user],
   );
 
   const handleCreateList = useCallback(async () => {
@@ -157,7 +161,7 @@ export default function ListSelectionModal({
     if (!trimmed || !user) return;
 
     const exists = lists.some(
-      (l) => l.name.toLowerCase() === trimmed.toLowerCase()
+      (l) => l.name.toLowerCase() === trimmed.toLowerCase(),
     );
     if (exists) return;
 
@@ -187,7 +191,7 @@ export default function ListSelectionModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
@@ -229,11 +233,11 @@ export default function ListSelectionModal({
                   }`}
                 >
                   {item.isChecked ? (
-                    <div className="w-5 h-5 rounded bg-light-blue flex items-center justify-center flex-shrink-0">
-                      <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
+                    <div className="w-5 h-5 rounded bg-light-blue flex items-center justify-center shrink-0">
+                      <Check className="w-3.5 h-3.5 text-white stroke-3" />
                     </div>
                   ) : (
-                    <Square className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                    <Square className="w-5 h-5 text-gray-500 shrink-0" />
                   )}
                   <span
                     className={`text-sm ${
@@ -271,7 +275,7 @@ export default function ListSelectionModal({
                 <button
                   onClick={handleCreateList}
                   disabled={creatingLoading || !newListName.trim()}
-                  className="flex-1 py-2 rounded-xl bg-gradient-to-r from-secondary-blue to-light-blue text-sm font-bold text-white hover:opacity-90 transition-all disabled:opacity-40 flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2 rounded-xl bg-linear-to-r from-secondary-blue to-light-blue text-sm font-bold text-white hover:opacity-90 transition-all disabled:opacity-40 flex items-center justify-center gap-1.5"
                 >
                   {creatingLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

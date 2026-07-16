@@ -1,21 +1,19 @@
-"use client";
-
-import Link from "@/components/Link";
+import Link from "./Link";
 import Image from "next/image";
-import { useLangStore } from "../store/useLangStore";
+import { getTranslations } from "@/i18n/server";
 
-export default function Footer() {
-  const { t } = useLangStore();
+export default function Footer({ locale = "ar" }: { locale?: string }) {
+  const t = getTranslations(locale);
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="w-full bg-dark-bg/80 border-t border-white/5 py-12 mt-auto">
+    <footer className="w-full bg-dark-bg border-t border-white/5 py-12 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center border-b border-white/5 pb-8 mb-8">
           {/* Logo & Intro */}
           <div className="flex flex-col items-center md:items-start gap-3">
             <div className="flex items-center gap-2">
-              <div className="bg-gradient-to-tr from-light-blue to-secondary-blue rounded-lg">
+              <div className="bg-linear-to-tr from-light-blue to-secondary-blue rounded-lg">
                 {/* <Gamepad2 className="w-5 h-5 text-white" /> */}
                 <Image
                   src="/assets/icon.webp"
@@ -28,7 +26,9 @@ export default function Footer() {
                 Gaming Zone
               </span>
             </div>
-            <p className="text-sm text-gray-400 text-center md:text-left max-w-xs leading-relaxed">
+            <p
+              className={`text-sm text-gray-400 max-w-xs leading-relaxed ${locale === "ar" ? "text-right" : "text-center md:text-left"}`}
+            >
               {t("onboarding.slides.0.description")}
             </p>
             <a
@@ -121,18 +121,18 @@ export default function Footer() {
             &copy; {currentYear} Gaming Zone. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <a
-              href="#"
+            <Link
+              href="/docs/index.html"
               className="hover:underline hover:text-gray-400 transition-colors"
             >
               {t("settings.menu.privacyPolicy")}
-            </a>
-            <a
+            </Link>
+            <Link
               href="#"
               className="hover:underline hover:text-gray-400 transition-colors"
             >
               {t("settings.menu.contactUs")}
-            </a>
+            </Link>
           </div>
         </div>
       </div>

@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import Link from "@/components/Link";
+import Link from "./Link";
 import { MessageSquareCode } from "lucide-react";
 import { useLangStore } from "../store/useLangStore";
 
@@ -14,7 +13,7 @@ export default function ChatBubble() {
     >
       <Link
         href="/chat"
-        className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-secondary-blue to-light-blue shadow-lg shadow-light-blue/30 border border-white/20 text-white hover:scale-110 active:scale-95 transition-all duration-300 group"
+        className="flex items-center justify-center w-14 h-14 rounded-full bg-linear-to-tr from-secondary-blue to-light-blue shadow-lg shadow-light-blue/30 border border-white/20 text-white hover:scale-110 active:scale-95 transition-all duration-300 group"
         title={t("aiChat.title")}
       >
         <MessageSquareCode className="w-7 h-7 animate-pulse group-hover:rotate-6 transition-transform duration-300" />

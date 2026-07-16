@@ -28,7 +28,7 @@ export default function Link({
 
   if (isInternal && !hasLocalePrefix) {
     const localizedPath = hrefStr === "/" ? `/${lang}` : `/${lang}${hrefStr}`;
-    
+
     if (typeof href === "object") {
       href = { ...href, pathname: localizedPath };
     } else {
