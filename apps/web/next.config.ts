@@ -30,6 +30,7 @@ const nextConfig: NextConfig = {
   // Ensure workspace packages are properly resolved by Turbopack
   transpilePackages: ["@gaming-zone/locales"],
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
