@@ -135,6 +135,7 @@
       "hardware": "Hardware"
     },
     "latestHeader": "Latest {{category}}",
+    "newsHeader": "Gaming News & Articles",
     "noArticles": "No articles available at the moment.",
     "fetchError": "Error while fetching data, please try again later.",
     "contactSupport": "Contact Support",

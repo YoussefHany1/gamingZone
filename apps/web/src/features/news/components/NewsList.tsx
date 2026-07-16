@@ -46,7 +46,7 @@ export default function NewsList({
             </div>
             <div>
               <GradientText as="h1" className="text-xl sm:text-2xl font-black">
-                {t("home.newsFeed.title") || "Gaming News & Articles"}
+                {t("news.newsHeader") || "Gaming News & Articles"}
               </GradientText>
             </div>
           </div>
@@ -102,7 +102,7 @@ export default function NewsList({
                     {/* Thumbnail */}
                     <div className="relative w-full sm:w-44 h-40 sm:h-auto rounded-xl overflow-hidden shrink-0 z-0">
                       <Image
-                        src={thumbnail.replace(/&amp;/g, '&')}
+                        src={thumbnail.replace(/&amp;/g, "&")}
                         alt={art.title}
                         fill
                         sizes="(max-width: 640px) 100vw, 176px"
