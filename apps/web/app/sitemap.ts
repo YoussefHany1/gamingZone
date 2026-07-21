@@ -2,6 +2,8 @@ import { MetadataRoute } from 'next';
 import { fetchGamesList } from '@/features/games/services/api';
 import { fetchServerArticles } from '@/features/news/services/api';
 
+export const revalidate = 86400;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const locales = ['en', 'ar'];
