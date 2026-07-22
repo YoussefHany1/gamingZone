@@ -5,7 +5,7 @@ import { fetchServerArticles } from '@/features/news/services/api';
 export const revalidate = 86400;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const baseUrl = 'https://gz1.vercel.app';
   const locales = ['en', 'ar'];
   
   // 1. Static Routes
