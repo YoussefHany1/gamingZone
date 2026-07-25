@@ -67,7 +67,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
       );
       return;
     }
-    toggleSource(category, selectedItem?.name);
+    toggleSource(category, selectedItem!.name);
   };
 
   const handleVisitSite = async (url?: string): Promise<void> => {

@@ -1,4 +1,5 @@
 import { Query, Models } from 'node-appwrite';
+import { withRetry } from '../../lib/http';
 
 import { loadBackendEnv } from '../../lib/env';
 import { env } from '../../lib/config';
@@ -89,7 +90,10 @@ async function listAllDocuments(
     const queries = [Query.limit(pageSize)];
     if (cursor) queries.push(Query.cursorAfter(cursor));
 
-    const page = await databases.listDocuments(databaseId, collectionId, queries);
+    const page = await withRetry(() => databases.listDocuments(databaseId, collectionId, queries), {
+      label: 'listDocuments',
+      retries: 3,
+    });
     docs.push(...page.documents);
 
     if (page.documents.length < pageSize) break;
@@ -103,15 +107,14 @@ async function upsertGame(game: FreeGameData, activeIds: Set<string>): Promise<v
   const docId = generateDocId(game.slug);
   activeIds.add(docId);
 
-  logger.info(`\n🎮 Processing [${game.store}]: ${game.title}`);
+  logger.info(`🎮 Processing [${game.store}]: ${game.title}`);
 
-  let existingDoc: Models.Document | null = null;
+  let existingDoc: FreeGameDoc | null = null;
 
   try {
-    existingDoc = await databases.getDocument(
-      CONFIG.APPWRITE_DATABASE_ID,
-      CONFIG.COLLECTION_FREE_GAMES,
-      docId,
+    existingDoc = await withRetry(
+      () => databases.getDocument<FreeGameDoc>(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_FREE_GAMES, docId),
+      { label: `getDocument ${docId}`, retries: 2 },
     );
   } catch (error: any) {
     if (error?.code !== 404) {
@@ -141,11 +144,13 @@ async function createNewGame(docId: string, game: FreeGameData): Promise<void> {
       notificationSent = true;
     }
 
-    await databases.createDocument(
-      CONFIG.APPWRITE_DATABASE_ID,
-      CONFIG.COLLECTION_FREE_GAMES,
-      docId,
-      { ...game, notificationSent },
+    await withRetry(
+      () =>
+        databases.createDocument(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_FREE_GAMES, docId, {
+          ...game,
+          notificationSent,
+        }),
+      { label: `createDocument ${docId}` },
     );
 
     logger.info('   ✨ Created NEW game document.');
@@ -158,38 +163,44 @@ async function createNewGame(docId: string, game: FreeGameData): Promise<void> {
 async function updateExistingGame(
   docId: string,
   game: FreeGameData,
-  existingDoc: Models.Document,
+  existingDoc: FreeGameDoc,
 ): Promise<void> {
-  const alreadySent = (existingDoc as any).notificationSent === true;
+  const alreadySent = existingDoc.notificationSent === true;
 
-  if (!(existingDoc as any).igdb_game_id) {
+  if (!existingDoc.igdb_game_id) {
     logger.info('   🔍 Missing IGDB ID, searching...');
     const igdbId = await searchIgdbGameId(game.title || '', CONFIG.API_BASE_URL);
     game.igdb_game_id = igdbId || null;
     if (igdbId) logger.info(`   ✅ Found IGDB ID: ${igdbId}`);
   } else {
-    game.igdb_game_id = (existingDoc as any).igdb_game_id;
+    game.igdb_game_id = existingDoc.igdb_game_id;
   }
 
   if (game.type === 'current' && !alreadySent) {
     logger.info('   🔔 Sending delayed notification...');
     await sendGameNotification(game);
 
-    await databases.updateDocument(
-      CONFIG.APPWRITE_DATABASE_ID,
-      CONFIG.COLLECTION_FREE_GAMES,
-      docId,
-      { ...game, notificationSent: true },
+    await withRetry(
+      () =>
+        databases.updateDocument(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_FREE_GAMES, docId, {
+          ...game,
+          notificationSent: true,
+        }),
+      { label: `updateDocument ${docId}` },
     );
 
     logger.info('   ✅ Updated doc: Notification marked as SENT.');
     return;
   }
 
-  await databases.updateDocument(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_FREE_GAMES, docId, {
-    ...game,
-    notificationSent: alreadySent,
-  });
+  await withRetry(
+    () =>
+      databases.updateDocument(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_FREE_GAMES, docId, {
+        ...game,
+        notificationSent: alreadySent,
+      }),
+    { label: `updateDocument ${docId}` },
+  );
 
   logger.info(
     `   ℹ️ Updated details. Notification Status: ${
@@ -199,7 +210,7 @@ async function updateExistingGame(
 }
 
 async function cleanupOldGames(activeIds: Set<string>): Promise<void> {
-  logger.info('\n🧹 Cleaning up old games...');
+  logger.info('🧹 Cleaning up old games...');
 
   const existingDocs = await listAllDocuments(
     CONFIG.APPWRITE_DATABASE_ID,
@@ -207,13 +218,19 @@ async function cleanupOldGames(activeIds: Set<string>): Promise<void> {
     100,
   );
 
-  const deletePromises = existingDocs
-    .filter((doc) => !activeIds.has(doc.$id))
-    .map((doc) =>
-      databases.deleteDocument(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_FREE_GAMES, doc.$id),
+  const docsToDelete = existingDocs.filter((doc) => !activeIds.has(doc.$id));
+  
+  for (const doc of docsToDelete) {
+    await withRetry(
+      () =>
+        databases.deleteDocument(
+          CONFIG.APPWRITE_DATABASE_ID,
+          CONFIG.COLLECTION_FREE_GAMES,
+          doc.$id,
+        ),
+      { label: `deleteDocument ${doc.$id}` },
     );
-
-  await Promise.all(deletePromises);
+  }
 }
 
 async function runFetchFreeGames(): Promise<void> {
@@ -221,11 +238,7 @@ async function runFetchFreeGames(): Promise<void> {
 
   try {
     const [epicGames, steamGames, gogGames] = await Promise.all([
-      fetchEpicGames(CONFIG.EPIC_API_URL).catch((error) => {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        logger.error(errorMessage);
-        return [];
-      }),
+      fetchEpicGames(CONFIG.EPIC_API_URL),
       fetchSteamGames(CONFIG.STEAM_API_URL),
       fetchGogGames(CONFIG.GOG_API_URL),
     ]);
@@ -256,7 +269,18 @@ async function runFetchFreeGames(): Promise<void> {
     logger.error(error, 'Fatal Error');
   }
 
-  logger.info('\n--- Done. ---');
+  logger.info('--- Done. ---');
+}
+
+export async function teardownFreeGamesService(): Promise<void> {
+  if (firebaseState.enabled && firebaseState.admin) {
+    try {
+      await firebaseState.admin.app().delete();
+      logger.info('🛑 Firebase app deleted cleanly.');
+    } catch (error) {
+      logger.error(`❌ Error deleting Firebase app: ${error}`);
+    }
+  }
 }
 
 export { runFetchFreeGames };

@@ -42,7 +42,7 @@ export const incrementAILimit = async (): Promise<void> => {
     const docSnap = await docRef.get();
     let count = 1;
 
-    if (docSnap.exists) {
+    if (docSnap.exists()) {
       const data = docSnap.data();
       const aiUsage = data?.aiUsage as AILimitData | undefined;
 

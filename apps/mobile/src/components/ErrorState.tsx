@@ -1,6 +1,7 @@
 import React, { memo, useCallback } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import type { NavigationProp } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import COLORS from "../constants/colors";
@@ -23,7 +24,7 @@ const EmptyState = memo(
     iconColor,
     iconSize = 80,
   }: EmptyStateProps) => {
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
     const { t } = useTranslation();
 
     const handleContactPress = useCallback(() => {
@@ -50,6 +51,8 @@ const EmptyState = memo(
             style={styles.contactButton}
             android_ripple={{ color: "rgba(255,255,255,0.2)" }}
             onPress={handleContactPress}
+            accessibilityLabel={t("news.contactSupport")}
+            accessibilityRole="button"
           >
             <Text style={styles.contactButtonText}>
               {t("news.contactSupport")}

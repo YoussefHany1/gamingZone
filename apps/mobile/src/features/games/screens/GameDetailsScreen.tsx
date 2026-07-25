@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -39,7 +39,7 @@ import type { GamesStackParamList, Props } from "../types";
 export type { GamesStackParamList };
 import { useGameDetails } from "../hooks/useGameDetails";
 
-const GameDetails: React.FC<Props> = ({ route, navigation }) => {
+const GameDetails = ({ route, navigation }: Props) => {
   const { gameID: initialGameID, claimUrl, store = "" } = route.params;
 
   const {
@@ -195,7 +195,7 @@ const GameDetails: React.FC<Props> = ({ route, navigation }) => {
                   visible={showListModal}
                   onClose={handleCloseModal}
                   gameId={currentId}
-                  gameData={gameDataForList}
+                  gameData={gameDataForList || undefined}
                 />
 
                 {/* About */}

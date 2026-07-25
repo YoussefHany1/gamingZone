@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import { intervalToDuration } from "date-fns";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import {
   useNavigation,
   useRoute,

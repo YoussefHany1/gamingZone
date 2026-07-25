@@ -49,8 +49,8 @@ export type LatestNewsProps = {
   limit?: number;
   language?: string;
   category?: string;
-  website?: string;
-  selectedItem?: RssFeedSource;
+  website?: string | undefined;
+  selectedItem?: RssFeedSource | undefined;
   onChangeFeed?: (item: RssFeedSource) => void;
   showDropdown?: boolean;
   websitesList?: RssFeedSource[];
@@ -65,7 +65,7 @@ export type LatestNewsProps = {
 export type NewsItemProps = {
   item: Article;
   index: number;
-  language?: string;
+  language?: string | undefined;
   onPress: (item: Article) => void;
   t: (key: string, opts?: object) => string;
   adInterval?: number;
@@ -74,7 +74,7 @@ export type NewsItemProps = {
 
 export type DropdownPickerProps = {
   category: string;
-  websites?: RssFeedSource[];
+  websites?: RssFeedSource[] | undefined;
   value?: RssFeedSource | null;
   onChange?: (item: RssFeedSource) => void;
 };
@@ -86,5 +86,5 @@ export type SectionData = {
 
 export type SkeletonNewsItemProps = {
   /** ISO language code — used to determine text direction (e.g. "ar" for RTL). */
-  language?: string;
+  language?: string | undefined;
 };

@@ -19,7 +19,7 @@ import Constants from "expo-constants";
 import { openLink } from "@/src/lib/browser";
 import { useNotificationPreferences } from "@/src/hooks/useNotificationPreferences";
 import useCachedData from "@/src/hooks/useCachedData";
-import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { adUnitId } from "@/src/constants/config";
 import COLORS from "@/src/constants/colors";
 import Loading from "@/src/Loading";
@@ -34,8 +34,7 @@ import type {
   NewsSectionProps,
 } from "../types";
 
-const { APPWRITE_DATABASE_ID } = (Constants.expoConfig?.extra ??
-  {}) as AppExtra;
+const { APPWRITE_DATABASE_ID } = (Constants.expoConfig?.extra ?? {}) as AppExtra;
 
 const ARTICLES_COLLECTION_ID = "articles" as const;
 const RSS_COLLECTION_ID = "news_sources" as const;
@@ -81,10 +80,10 @@ const NewsItem = memo<NewsItemProps>(({ item, lang }) => {
           </Text>
           <Text style={styles.desc} numberOfLines={1}>
             {item.pubDate
-              ? new Date(item.pubDate).toLocaleString(
-                  lang === "ar" ? "ar-EG" : "en-US",
-                  { dateStyle: "medium", timeStyle: "short" },
-                )
+              ? new Date(item.pubDate).toLocaleString(lang === "ar" ? "ar-EG" : "en-US", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })
               : ""}
           </Text>
         </View>
@@ -165,10 +164,7 @@ const NewsSection = memo<NewsSectionProps>(
           const existing = await databases.listDocuments(
             APPWRITE_DATABASE_ID ?? "",
             RSS_COLLECTION_ID,
-            [
-              Query.equal("category", categorySafe),
-              Query.equal("language", lang),
-            ],
+            [Query.equal("category", categorySafe), Query.equal("language", lang)],
           );
           if (existing.total === 0 && rssUrl) {
             await databases.createDocument(
@@ -226,12 +222,8 @@ const NewsSection = memo<NewsSectionProps>(
             {loading ? (
               <Loading />
             ) : news.length === 0 ? (
-              <Text
-                style={{ color: "gray", textAlign: "center", marginTop: 10 }}
-              >
-                {lang === "ar"
-                  ? "Ù„Ø§ ØªÙˆØ¬Ø¯ Ø£Ø®Ø¨Ø§Ø± Ø­Ø§Ù„ÙŠØ§Ù‹"
-                  : "No news found."}
+              <Text style={{ color: "gray", textAlign: "center", marginTop: 10 }}>
+                {lang === "ar" ? "لا توجد أخبار حاليا" : "No news found."}
               </Text>
             ) : (
               <ScrollView
@@ -263,9 +255,7 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() =>
-      setShowAds(true),
-    );
+    const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
     return () => task.cancel();
   }, []);
 
@@ -275,7 +265,7 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
 
   return (
     <SafeAreaView style={styles.screen} edges={["left", "right"]}>
-      <ScrollView style={{ padding: 16 }}>
+      <ScrollView style={{ paddingHorizontal: 16, marginBottom: 100 }}>
         <NewsSection
           gameName={currentGame}
           title="English News"
@@ -293,19 +283,14 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
         )}
 
         {sourceLink && (
-          <TouchableOpacity
-            onPress={handleOpenSource}
-            style={{ marginBottom: 10 }}
-          >
-            <Text style={styles.sourceText}>
-              {t("games.list.gamesNews.source")}
-            </Text>
+          <TouchableOpacity onPress={handleOpenSource} style={{ marginBottom: 10 }}>
+            <Text style={styles.sourceText}>{t("games.list.gamesNews.source")}</Text>
           </TouchableOpacity>
         )}
 
         <NewsSection
           gameName={currentGame}
-          title="Ø§Ù„Ø£Ø®Ø¨Ø§Ø± Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©"
+          title="الأخبار العربية"
           sourceId="arabic_news"
           lang="ar"
           defaultExpanded
@@ -371,11 +356,11 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 8,
     marginLeft: 10,
-    backgroundColor: "#2a4d7d", // Ù„ÙˆÙ† Ø®Ù„ÙÙŠØ© Ù„Ù„ØµÙˆØ±Ø© Ø£Ø«Ù†Ø§Ø¡ Ø§Ù„ØªØ­Ù…ÙŠÙ„
+    backgroundColor: "#2a4d7d",
   },
   title: {
     color: "white",
-    fontSize: 15, // ØªÙ‚Ù„ÙŠÙ„ Ø§Ù„Ø­Ø¬Ù… Ù‚Ù„ÙŠÙ„Ø§Ù‹ Ù„ÙŠØªÙ†Ø§Ø³Ø¨ Ù…Ø¹ Ø§Ù„Ø¹Ù†Ø§ÙˆÙŠÙ† Ø§Ù„Ø·ÙˆÙŠÙ„Ø©
+    fontSize: 15,
     fontWeight: "bold",
     marginBottom: 5,
     textAlign: "left",

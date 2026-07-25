@@ -3,8 +3,11 @@ import { logger } from '../lib/logger';
 import { runGenerateWeeklySummary } from '../features/summary/summary.service';
 
 runGenerateWeeklySummary()
-  .then(() => process.exit(0))
+  .then(() => {
+    // Allow a short delay for final logs to flush before terminating
+    setTimeout(() => process.exit(0), 250);
+  })
   .catch((error) => {
     logger.error(error, 'Fatal Error');
-    process.exit(1);
+    setTimeout(() => process.exit(1), 250);
   });

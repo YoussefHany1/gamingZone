@@ -45,21 +45,63 @@ async function parseResponse(body: string): Promise<{ type: 'json' | 'xml'; data
   }
 }
 
+const PUPPETEER_LAUNCH_ARGS = [
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-accelerated-2d-canvas',
+  '--no-first-run',
+  '--no-zygote',
+  '--disable-gpu',
+  '--window-size=1920,1080',
+];
+
+async function extractDescriptionFromDoc(document: any): Promise<string | null> {
+  try {
+    const { Readability } = await import('@mozilla/readability');
+    const reader = new Readability(document);
+    const article = reader.parse();
+    if (article && article.textContent) {
+      return article.textContent.trim().replace(/\s+/g, ' ');
+    }
+  } catch (error: any) {
+    logger.debug(`Readability extraction failed: ${error.message}`);
+  }
+  return null;
+}
+
+function findImageInJsonLd(obj: any): any {
+  if (!obj) return null;
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      const res = findImageInJsonLd(item);
+      if (res) return res;
+    }
+  }
+  if (typeof obj === 'object') {
+    if (obj.image) {
+      if (typeof obj.image === 'string') return obj.image;
+      if (Array.isArray(obj.image) && typeof obj.image[0] === 'string') return obj.image[0];
+      if (typeof obj.image === 'object' && obj.image.url) return obj.image.url;
+    }
+    for (const key of Object.keys(obj)) {
+      if (typeof obj[key] === 'object') {
+        const res = findImageInJsonLd(obj[key]);
+        if (res) return res;
+      }
+    }
+  }
+  return null;
+}
+
 async function fetchArticleDataWithPuppeteer(url: string) {
   let browser = null;
   try {
     const puppeteer = await import('puppeteer');
     browser = await puppeteer.launch({
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-      ],
+      args: PUPPETEER_LAUNCH_ARGS,
+      channel: 'msedge' as any,
     });
     const page = await browser.newPage();
     await page.setUserAgent(
@@ -68,17 +110,10 @@ async function fetchArticleDataWithPuppeteer(url: string) {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
     const html = await page.content();
-    let fullDescription = null;
-    try {
-      const { Readability } = await import('@mozilla/readability');
-      const { JSDOM } = await import('jsdom');
-      const dom = new JSDOM(html, { url });
-      const reader = new Readability(dom.window.document);
-      const article = reader.parse();
-      if (article && article.textContent) {
-        fullDescription = article.textContent.trim().replace(/\s+/g, ' ');
-      }
-    } catch (_e) {}
+    const { JSDOM } = await import('jsdom');
+    const dom = new JSDOM(html, { url });
+    
+    const fullDescription = await extractDescriptionFromDoc(dom.window.document);
 
     const imageCandidates = await page.evaluate(() => {
       const candidates: string[] = [];
@@ -178,72 +213,31 @@ async function fetchArticleData(url: string) {
       return fetchArticleDataWithPuppeteer(url);
     }
 
-    let fullDescription = null;
-    try {
-      const { Readability } = await import('@mozilla/readability');
-      const { JSDOM } = await import('jsdom');
-      const dom = new JSDOM(body, { url });
-      const reader = new Readability(dom.window.document);
-      const article = reader.parse();
-      if (article && article.textContent) {
-        fullDescription = article.textContent.trim().replace(/\s+/g, ' ');
-      }
-    } catch (_e) {}
+    const { JSDOM } = await import('jsdom');
+    const dom = new JSDOM(body, { url });
+    const fullDescription = await extractDescriptionFromDoc(dom.window.document);
 
     // Try to extract from JSON-LD
-    const jsonLdMatches =
-      body.match(/<script\s+[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) ||
-      [];
-    for (const jsonLdScript of jsonLdMatches) {
+    const ldScripts = dom.window.document.querySelectorAll("script[type='application/ld+json']");
+    for (const script of ldScripts) {
       try {
-        const jsonContent = jsonLdScript.replace(/<script\s+[^>]*>|<\/script>/gi, '').trim();
-        const parsed = JSON.parse(jsonContent);
-
-        const findImageInLd = (obj: any): any => {
-          if (!obj) return null;
-          if (Array.isArray(obj)) {
-            for (const item of obj) {
-              const res = findImageInLd(item);
-              if (res) return res;
-            }
-          }
-          if (typeof obj === 'object') {
-            if (obj.image) {
-              if (typeof obj.image === 'string') return obj.image;
-              if (Array.isArray(obj.image) && typeof obj.image[0] === 'string') return obj.image[0];
-              if (typeof obj.image === 'object' && obj.image.url) return obj.image.url;
-            }
-            for (const key of Object.keys(obj)) {
-              if (typeof obj[key] === 'object') {
-                const res = findImageInLd(obj[key]);
-                if (res) return res;
-              }
-            }
-          }
-          return null;
-        };
-
-        const image = findImageInLd(parsed);
+        const parsed = JSON.parse(script.textContent || '{}');
+        const image = findImageInJsonLd(parsed);
         if (image && typeof image === 'string' && !isBadImage(image)) {
           return { imageUrl: image, fullDescription };
         }
-      } catch (_e) {}
+      } catch (error: any) {
+        logger.debug(`JSON-LD parse failed: ${error.message}`);
+      }
     }
 
-    // Find all meta and link tags in the document body
-    const tags = body.match(/<(?:meta|link)\s+[^>]*>/gi) || [];
+    // Find all meta and link tags using JSDOM
+    const tags = dom.window.document.querySelectorAll('meta, link');
     const images: Record<string, string> = {};
 
     for (const tag of tags) {
-      const attrRegex = /(\w+)\s*=\s*["']([^"']*)["']/gi;
-      let match;
-      const attrs: Record<string, string> = {};
-      while ((match = attrRegex.exec(tag)) !== null) {
-        attrs[match[1].toLowerCase()] = match[2];
-      }
-
-      const key = attrs.property || attrs.name || attrs.itemprop || attrs.rel;
-      const val = attrs.content || attrs.href;
+      const key = tag.getAttribute('property') || tag.getAttribute('name') || tag.getAttribute('itemprop') || tag.getAttribute('rel');
+      const val = tag.getAttribute('content') || tag.getAttribute('href');
 
       if (key && val) {
         const decodedVal = he.decode(val.trim());
@@ -288,16 +282,8 @@ async function fetchWithPuppeteer(url: string) {
     const puppeteer = await import('puppeteer');
     browser = await puppeteer.launch({
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--window-size=1920,1080',
-      ],
+      args: PUPPETEER_LAUNCH_ARGS,
+      channel: 'chrome',
     });
 
     const page = await browser.newPage();

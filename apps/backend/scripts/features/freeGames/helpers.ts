@@ -4,15 +4,16 @@ const cleanSlug = (rawSlug: string | undefined | null, title?: string | null): s
   if (rawSlug) return rawSlug.toLowerCase().trim();
   return String(title || '')
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, '-');
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 };
 
 const cleanGameNameForSearch = (gameName: string | undefined | null): string | undefined | null => {
   if (!gameName) return gameName;
 
   return String(gameName)
-    .replace(/\(Steam\)\s*Giveaway/gi, '')
-    .replace(/\(GOG\)\s*Giveaway/gi, '')
+    .replace(/\([^)]+\)\s*(Giveaway|Key)/gi, '')
     .replace(/Giveaway/gi, '')
     .replace(/\(\s*\)/g, '')
     .trim()

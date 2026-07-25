@@ -17,8 +17,8 @@ export type Props = NativeStackScreenProps<StackParamList, "UserGamesScreen">;
 // GameItem
 export type GameItemProps = {
   game: GameEntry;
-  onRemove?: (id: string | number, name: string) => void;
-  onRate?: (id: string | number, rating: number) => void;
+  onRemove?: ((id: string | number, name: string) => void) | undefined;
+  onRate?: ((id: string | number, rating: number) => void) | undefined;
 };
 
 export type ShimmerPlaceholderProps = {

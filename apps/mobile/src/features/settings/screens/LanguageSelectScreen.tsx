@@ -8,7 +8,7 @@ import {
   InteractionManager,
   I18nManager,
 } from "react-native";
-import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { useTranslation } from "react-i18next";
 import * as Updates from "expo-updates";
 import { Ionicons } from "@expo/vector-icons";

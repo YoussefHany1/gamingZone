@@ -56,8 +56,6 @@ const GameHowLongToBeat: React.FC<GameHowLongToBeatProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // BUG FIX: original used `!main` which treats 0 hours as falsy.
-  // Use explicit null check so games that take 0 hours still render.
   if (main == null && mainExtra == null && completionist == null) return null;
 
   return (
@@ -71,9 +69,7 @@ const GameHowLongToBeat: React.FC<GameHowLongToBeatProps> = ({
       <View style={styles.cardsContainer}>
         {main != null && (
           <View style={styles.card}>
-            <Text style={styles.cardHeader}>
-              {t("games.details.howLongToBeat.main")}
-            </Text>
+            <Text style={styles.cardHeader}>{t("games.details.howLongToBeat.main")}</Text>
             {/* Quarter-arc: top-right quadrant only */}
             <HoursCircle hours={main} pathD="M 42 4 A 38 38 0 0 1 80 42" />
             <Text style={styles.hoursLabel}>

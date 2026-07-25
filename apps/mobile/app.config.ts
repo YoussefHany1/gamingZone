@@ -43,7 +43,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     mods: {
       android: {
-        manifest: async (modConfig) => {
+        manifest: async (modConfig: any) => {
           const androidManifest = modConfig.modResults;
           const mainApplication = androidManifest.manifest.application?.[0];
 

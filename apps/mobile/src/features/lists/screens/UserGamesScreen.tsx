@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import React, { useState, useEffect, useRef, useCallback, memo } from "react";
 import {
   View,
   Text,
@@ -59,16 +59,12 @@ const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
         <Text style={styles.gameName} numberOfLines={2}>
           {game.name}
         </Text>
-        <Text style={styles.gameReleaseDate}>
-          {String(game.release_date ?? "")}
-        </Text>
+        <Text style={styles.gameReleaseDate}>{String(game.release_date ?? "")}</Text>
         <View style={styles.ratingRow}>
           {[1, 2, 3, 4, 5].map((star) => (
             <TouchableOpacity
               key={star}
-              onPress={() =>
-                onRate && onRate(game.id, game.rating === star ? 0 : star)
-              }
+              onPress={() => onRate && onRate(game.id, game.rating === star ? 0 : star)}
               disabled={!onRate}
               activeOpacity={0.7}
               style={{ paddingRight: 4, paddingVertical: 4 }}
@@ -76,9 +72,7 @@ const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
               <Ionicons
                 name={star <= (game.rating ?? 0) ? "star" : "star-outline"}
                 size={18}
-                color={
-                  star <= (game.rating ?? 0) ? "#ffc107" : COLORS.lightGray
-                }
+                color={star <= (game.rating ?? 0) ? "#ffc107" : COLORS.lightGray}
               />
             </TouchableOpacity>
           ))}
@@ -95,7 +89,7 @@ const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
 GameItem.displayName = "GameItem";
 
 // main
-const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
+const UserGamesScreen = ({ route, navigation }: Props) => {
   const { listId, listName, ownerId } = route.params;
   const [games, setGames] = useState<GameEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -107,14 +101,8 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
   const currentUser = auth().currentUser;
 
   const isSharedList = ownerId && (!currentUser || ownerId !== currentUser.uid);
-  const targetUserId = isSharedList
-    ? ownerId
-    : currentUser
-      ? currentUser.uid
-      : null;
-  const CACHE_KEY = targetUserId
-    ? `USER_GAMES_${targetUserId}_LIST_${listId}`
-    : null;
+  const targetUserId = isSharedList ? ownerId : currentUser ? currentUser.uid : null;
+  const CACHE_KEY = targetUserId ? `USER_GAMES_${targetUserId}_LIST_${listId}` : null;
 
   // List name i18n
   const getDisplayName = useCallback(
@@ -183,14 +171,7 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
         </View>
       ),
     });
-  }, [
-    listName,
-    getDisplayName,
-    navigation,
-    isSharedList,
-    handleShare,
-    targetUserId,
-  ]);
+  }, [listName, getDisplayName, navigation, isSharedList, handleShare, targetUserId]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -306,7 +287,7 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
                     if (listDoc.id === "rated") continue;
                     const gRef = listDoc.ref.collection("games").doc(gameIdStr);
                     const gSnap = await gRef.get();
-                    if (gSnap && gSnap.exists) {
+                    if (gSnap && gSnap.exists()) {
                       try {
                         await gRef.update({
                           rating: firestore.FieldValue.delete(),
@@ -399,7 +380,7 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
           if (listDoc.id === "rated") continue;
           const gRef = listDoc.ref.collection("games").doc(gameIdStr);
           const gSnap = await gRef.get();
-          if (gSnap && gSnap.exists) {
+          if (gSnap && gSnap.exists()) {
             try {
               if (newRating === 0) {
                 await gRef.update({ rating: firestore.FieldValue.delete() });
@@ -430,18 +411,14 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
     return (
       <View style={styles.emptyContainer}>
         <Ionicons name="bookmark-outline" size={80} color={COLORS.primary} />
-        <Text style={styles.emptyText}>
-          {t("settings.userGames.emptyText")}
-        </Text>
+        <Text style={styles.emptyText}>{t("settings.userGames.emptyText")}</Text>
         <Text style={styles.emptySubText}>{emptySubText}</Text>
         {!isSharedList && (
           <TouchableOpacity
             onPress={() => navigation.navigate("Games")}
             style={styles.findGameButton}
           >
-            <Text style={styles.findGameText}>
-              {t("settings.userGames.findButton")}
-            </Text>
+            <Text style={styles.findGameText}>{t("settings.userGames.findButton")}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -453,8 +430,7 @@ const UserGamesScreen: React.FC<Props> = ({ route, navigation }) => {
     ({ item, index }: { item: GameEntry; index: number }) => {
       const showAd =
         showAds &&
-        ((index + 1) % 4 === 0 ||
-          (games.length < 4 && index === games.length - 1));
+        ((index + 1) % 4 === 0 || (games.length < 4 && index === games.length - 1));
 
       return (
         <>

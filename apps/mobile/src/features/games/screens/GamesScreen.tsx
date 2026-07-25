@@ -1,16 +1,16 @@
-﻿import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import React, { useState, useEffect, useRef, useCallback, memo } from "react";
 import {
   StyleSheet,
   View,
   TextInput,
   TouchableOpacity,
   InteractionManager,
-  FlatList,
   Text,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { Ionicons } from "@expo/vector-icons";
 import SkeletonFreeGames from "../skeleton/gamesScreen/SkeletonFreeGames";
 import SkeletonNewsItem from "@/src/features/news/skeleton/SkeletonNewsItem";
@@ -57,9 +57,7 @@ const AdContainer = memo(() => {
   const { t } = useTranslation();
   const [showAds, setShowAds] = useState(false);
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() =>
-      setShowAds(true),
-    );
+    const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
     return () => task.cancel();
   }, []);
   if (!showAds) return null;
@@ -136,9 +134,7 @@ function GamesScreen(): React.ReactElement {
               end={{ x: 1, y: 0 }}
               style={styles.header}
             >
-              <Text style={styles.headerText}>
-                {tRef.current("games.header")}
-              </Text>
+              <Text style={styles.headerText}>{tRef.current("games.header")}</Text>
             </LinearGradient>
           );
         case "free_games":
@@ -195,10 +191,7 @@ function GamesScreen(): React.ReactElement {
 
         {/* Filter button */}
         <TouchableOpacity
-          style={[
-            styles.filterBtn,
-            activeFilterCount > 0 && styles.filterBtnActive,
-          ]}
+          style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
           onPress={openFilter}
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
@@ -230,18 +223,16 @@ function GamesScreen(): React.ReactElement {
           />
         </View>
       ) : (
-        <FlatList
+        <FlashList
           data={STATIC_FEED_ITEMS}
           renderItem={renderFeedItem}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
-          initialNumToRender={3}
-          windowSize={15}
-          removeClippedSubviews
           keyboardShouldPersistTaps="handled"
           onScroll={onScroll}
           scrollEventThrottle={16}
           contentContainerStyle={{ paddingBottom: 90 }}
+          estimatedItemSize={300}
         />
       )}
 

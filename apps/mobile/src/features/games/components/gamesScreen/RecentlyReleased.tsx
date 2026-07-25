@@ -1,29 +1,25 @@
-﻿import React, { useCallback } from "react";
+import React, { useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-import axios from "axios";
 import { useTranslation } from "react-i18next";
 import ErrorState from "../../../../components/ErrorState";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonRecentlyReleased from "../../skeleton/gamesScreen/SkeletonRecentlyReleased";
 import COLORS from "@/src/constants/colors";
 import SectionTitle from "@/src/components/SectionTitle";
-import { SERVER_URL } from "@/src/constants/config";
 import useCachedData from "@/src/hooks/useCachedData";
 import type { RecentGameCardProps } from "../../types";
 import type { Game } from "@/src/types/sharedTypes";
+import { fetchRecentlyReleasedGames } from "@/src/services/api/igdbApi";
 
 const CARD_HEIGHT = 200;
 const STORAGE_KEY = "GAMES_CACHE_RECENTLY_RELEASED";
 
 // Helpers
 
-const fetchRecentlyReleasedGames = async (): Promise<Game[]> => {
-  const response = await axios.get<Game[]>(`${SERVER_URL}/recently-released`);
-  return response.data;
-};
+
 
 const formatReleaseDate = (
   timestamp: number | null | undefined,

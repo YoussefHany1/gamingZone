@@ -1,10 +1,15 @@
 import { logger } from '../lib/logger';
 
-import { runFetchFreeGames } from '../features/freeGames/freeGames.service';
+import { runFetchFreeGames, teardownFreeGamesService } from '../features/freeGames/freeGames.service';
 
 runFetchFreeGames()
-  .then(() => process.exit(0))
-  .catch((error) => {
+  .then(async () => {
+    await teardownFreeGamesService();
+    // Allow a short delay for final logs to flush before terminating
+    setTimeout(() => process.exit(0), 250);
+  })
+  .catch(async (error) => {
     logger.error(error, 'Fatal Error');
-    process.exit(1);
+    await teardownFreeGamesService();
+    setTimeout(() => process.exit(1), 250);
   });

@@ -1,4 +1,4 @@
-﻿import React, { useCallback } from "react";
+import React, { useCallback } from "react";
 import {
   View,
   Text,
@@ -9,30 +9,25 @@ import {
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-import axios from "axios";
 import { useTranslation } from "react-i18next";
 import ErrorState from "@/src/components/ErrorState";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonNostalgiaCorner from "../../skeleton/gamesScreen/SkeletonNostalgiaCorner";
 import COLORS from "@/src/constants/colors";
 import SectionTitle from "@/src/components/SectionTitle";
-import { SERVER_URL } from "@/src/constants/config";
 import useCachedData from "@/src/hooks/useCachedData";
 import type { GamePlatform, NostalgiaCardProps } from "../../types";
 import type { Game } from "@/src/types/sharedTypes";
+import { fetchNostalgiaGames } from "@/src/services/api/igdbApi";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.55;
 const CARD_HEIGHT = 360;
 const CARD_MARGIN = 10;
 const STORAGE_KEY = "GAMES_CACHE_NOSTALGIA_CORNER";
+const SKELETON_DATA = Array.from({ length: 4 }, (_, i) => ({ id: i }) as any);
 
 // Helpers
-
-const fetchNostalgiaGames = async (): Promise<Game[]> => {
-  const response = await axios.get<Game[]>(`${SERVER_URL}/nostalgia-corner`);
-  return response.data;
-};
 
 const getYear = (timestamp: number | null | undefined): number | "" => {
   if (!timestamp) return "";
@@ -191,6 +186,8 @@ export default function NostalgiaCorner(): React.ReactElement {
     [],
   );
 
+  const renderSkeletonItem = useCallback(() => <SkeletonNostalgiaCorner />, []);
+
   return (
     <View>
       <View style={styles.headerContainer}>
@@ -204,10 +201,10 @@ export default function NostalgiaCorner(): React.ReactElement {
       {/* Skeleton while loading with no cached data */}
       {isActuallyLoading && (
         <FlashList
-          data={Array.from({ length: 4 }, (_, i) => ({ id: i }))}
+          data={SKELETON_DATA}
           horizontal
           keyExtractor={(item) => String(item.id)}
-          renderItem={() => <SkeletonNostalgiaCorner />}
+          renderItem={renderSkeletonItem}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
           estimatedItemSize={CARD_WIDTH + CARD_MARGIN * 2}

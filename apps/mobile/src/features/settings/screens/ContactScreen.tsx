@@ -68,7 +68,7 @@ const TypeButton = memo<TypeButtonProps>(
 TypeButton.displayName = "TypeButton";
 
 // main
-const ContactScreen: React.FC<Props> = ({ navigation }) => {
+const ContactScreen = ({ navigation }: Props) => {
   const { t } = useTranslation();
   const currentUser = auth().currentUser;
 

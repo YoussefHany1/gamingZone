@@ -29,6 +29,7 @@ import useRateApp from "./hooks/useRateApp";
 import useUpdateCheck from "./hooks/useUpdateCheck";
 import { MainAppTabs, AuthStack } from "./navigation/AppNavigator";
 import OnboardingScreen from "./features/onboarding/screens/OnboardingScreen";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Types
 export type RootStackParamList = {
@@ -92,7 +93,7 @@ const linking = {
       },
     },
   },
-  getStateFromPath(path: string, options: any) {
+  getStateFromPath(path: string, options: Parameters<typeof getStateFromPath>[1]) {
     let cleanPath = path;
 
     if (cleanPath.startsWith("/")) {
@@ -118,7 +119,7 @@ const linking = {
             },
           },
         },
-      } as any);
+      } as Parameters<typeof getStateFromPath>[1]);
 
       if (state) {
         try {
@@ -163,7 +164,7 @@ const linking = {
             },
           },
         },
-      } as any);
+      } as Parameters<typeof getStateFromPath>[1]);
     }
 
     return getStateFromPath(cleanPath, options);
@@ -272,40 +273,44 @@ function App(): React.ReactElement | null {
       setShowOnboarding(false);
     };
     return (
-      <SafeAreaProvider>
-        <GestureHandlerRootView style={styles.container}>
-          <StatusBar style="light" />
-          <OnboardingScreen onDone={handleOnboardingDone} />
-        </GestureHandlerRootView>
-      </SafeAreaProvider>
+      <ErrorBoundary sectionLabel="Onboarding">
+        <SafeAreaProvider>
+          <GestureHandlerRootView style={styles.container}>
+            <StatusBar style="light" />
+            <OnboardingScreen onDone={handleOnboardingDone} />
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
+      </ErrorBoundary>
     );
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <GestureHandlerRootView style={styles.container}>
-          <StatusBar style="light" />
+    <ErrorBoundary sectionLabel="Root">
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <GestureHandlerRootView style={styles.container}>
+            <StatusBar style="light" />
 
-          <NavigationContainer
-            ref={navigationRef}
-            theme={MyTheme}
-            linking={linking}
-            onReady={handleNavigationReady}
-            onStateChange={handleStateChange}
-          >
-            {/* التعديل: إزالة الـ Suspense المحيط بـ الـ Navigator لعدم الحاجة إليه الآن */}
-            <Stack.Navigator
-              id="root"
-              screenOptions={{ headerShown: false, freezeOnBlur: true }}
+            <NavigationContainer
+              ref={navigationRef}
+              theme={MyTheme}
+              linking={linking}
+              onReady={handleNavigationReady}
+              onStateChange={handleStateChange}
             >
-              <Stack.Screen name="MainApp" component={MainAppTabs} />
-              <Stack.Screen name="Auth" component={AuthStack} />
-            </Stack.Navigator>
-          </NavigationContainer>
-        </GestureHandlerRootView>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+              {/* التعديل: إزالة الـ Suspense المحيط بـ الـ Navigator لعدم الحاجة إليه الآن */}
+              <Stack.Navigator
+                id="root"
+                screenOptions={{ headerShown: false, freezeOnBlur: true }}
+              >
+                <Stack.Screen name="MainApp" component={MainAppTabs} />
+                <Stack.Screen name="Auth" component={AuthStack} />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

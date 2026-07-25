@@ -65,7 +65,7 @@ const TabIcon = memo(function TabIcon({
   tabWidth: number;
   onPress: () => void;
   onLongPress: () => void;
-  accessibilityLabel?: string;
+  accessibilityLabel?: string | undefined;
 }) {
   const scale = useSharedValue(isFocused ? 1.18 : 1);
   const glow = useSharedValue(isFocused ? 1 : 0);
@@ -218,7 +218,7 @@ const LiquidGlassTabBar = memo(
 
           {/* ── Tab items ── */}
           {state.routes.map((route, index) => {
-            const { options } = descriptors[route.key];
+            const options = descriptors[route.key]?.options || {};
             const isFocused = state.index === index;
 
             const onPress = () => {
@@ -244,7 +244,7 @@ const LiquidGlassTabBar = memo(
                 tabWidth={tabWidth}
                 onPress={onPress}
                 onLongPress={onLongPress}
-                accessibilityLabel={options.tabBarAccessibilityLabel}
+                accessibilityLabel={options.tabBarAccessibilityLabel as string | undefined}
               />
             );
           })}

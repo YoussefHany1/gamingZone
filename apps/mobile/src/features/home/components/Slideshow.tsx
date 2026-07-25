@@ -1,4 +1,4 @@
-﻿import React, { useCallback, memo, useState } from "react";
+import React, { useCallback, memo, useState, useRef, useEffect } from "react";
 import {
   Text,
   StyleSheet,
@@ -6,28 +6,27 @@ import {
   View,
   Modal,
   Pressable,
+  Dimensions,
 } from "react-native";
 import { Image } from "expo-image";
-import Swiper from "react-native-swiper";
+import PagerView from "react-native-pager-view";
 import { LinearGradient } from "expo-linear-gradient";
-import axios from "axios";
 import { useTranslation } from "react-i18next";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import SkeletonSlideshow from "../skeleton/SkeletonSlideshow";
 import ErrorState from "@/src/components/ErrorState";
 import COLORS from "@/src/constants/colors";
-import { SERVER_URL, adUnitId } from "@/src/constants/config";
+import { adUnitId } from "@/src/constants/config";
 import useCachedData from "@/src/hooks/useCachedData";
 import { Game } from "@/src/types/sharedTypes";
 import YoutubePlayer from "react-native-youtube-iframe";
+import { fetchLatestTrailers } from "@/src/services/api/igdbApi";
 
 const STORAGE_KEY = "GAMES_CACHE_LATEST_TRAILERS";
-
-const fetchLatestTrailers = async (): Promise<Game[]> => {
-  const response = await axios.get<Game[]>(`${SERVER_URL}/latest-trailers`);
-  return response.data;
-};
+const SLIDESHOW_HEIGHT = 300;
+const AUTOPLAY_INTERVAL_MS = 5000;
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 function getTrailerVideoId(item: Game): string | undefined {
   const video =
@@ -38,7 +37,7 @@ function getTrailerVideoId(item: Game): string | undefined {
 
 function getImageSource(item: Game): string | ReturnType<typeof require> {
   if (item.screenshots?.[0]?.image_id) {
-    return `https://images.igdb.com/igdb/image/upload/t_1080p/${item.screenshots[0].image_id}.webp`;
+    return `https://images.igdb.com/igdb/image/upload/t_720p/${item.screenshots[0].image_id}.webp`;
   }
   if (item.cover?.image_id) {
     return `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`;
@@ -62,11 +61,7 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
     : null;
 
   return (
-    <TouchableOpacity
-      style={styles.slide}
-      onPress={handlePress}
-      activeOpacity={0.8}
-    >
+    <TouchableOpacity style={styles.slide} onPress={handlePress} activeOpacity={0.8}>
       <Image
         style={styles.thumbnail}
         recyclingKey={String(item.id)}
@@ -76,10 +71,7 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
         cachePolicy="memory-disk"
         allowDownscaling
       />
-      <LinearGradient
-        colors={["transparent", COLORS.primary]}
-        style={styles.gradient}
-      />
+      <LinearGradient colors={["transparent", COLORS.primary]} style={styles.gradient} />
       <View style={styles.headline}>
         {coverUrl && (
           <Image
@@ -98,7 +90,7 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
             <Ionicons
               name="play-circle-outline"
               size={18}
-              color="#779bdd"
+              color={COLORS.lightGray}
               style={{ marginRight: 6 }}
             />
             <Text style={styles.subtitle} numberOfLines={1}>
@@ -112,11 +104,33 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
 });
 Slide.displayName = "Slide";
 
+// Pagination dots
+
+interface PaginationProps {
+  count: number;
+  activeIndex: number;
+}
+
+const Pagination = memo<PaginationProps>(({ count, activeIndex }) => (
+  <View style={styles.paginationContainer}>
+    {Array.from({ length: count }, (_, i) => (
+      <View
+        key={i}
+        style={[styles.dot, i === activeIndex ? styles.dotActive : styles.dotInactive]}
+      />
+    ))}
+  </View>
+));
+Pagination.displayName = "Pagination";
+
 // Slideshow
 
 function Slideshow(): React.ReactElement {
   const { t } = useTranslation();
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const pagerRef = useRef<PagerView>(null);
+  const activeIndexRef = useRef(0);
 
   const { data, isLoading, error } = useCachedData<Game[]>(
     STORAGE_KEY,
@@ -127,6 +141,24 @@ function Slideshow(): React.ReactElement {
   const trailers = Array.isArray(data)
     ? data.filter((item) => !!getTrailerVideoId(item))
     : [];
+
+  // Auto-play: advance to next page every 5 seconds
+  useEffect(() => {
+    if (trailers.length <= 1) return;
+
+    const interval = setInterval(() => {
+      const next = (activeIndexRef.current + 1) % trailers.length;
+      pagerRef.current?.setPage(next);
+    }, AUTOPLAY_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [trailers.length]);
+
+  const handlePageSelected = useCallback((e: { nativeEvent: { position: number } }) => {
+    const idx = e.nativeEvent.position;
+    activeIndexRef.current = idx;
+    setActiveIndex(idx);
+  }, []);
 
   const handlePressTrailer = useCallback((item: Game): void => {
     const videoId = getTrailerVideoId(item);
@@ -147,35 +179,23 @@ function Slideshow(): React.ReactElement {
 
   return (
     <>
-      <Swiper
-        showsButtons
-        autoplay
-        showsPagination={false}
-        autoplayTimeout={5}
-        style={styles.swiper}
-        nextButton={
-          <Text style={styles.swiperBtn}>
-            {/* <Ionicons name="chevron-back" size={48} color={COLORS.lightGray} /> */}
-          </Text>
-        }
-        prevButton={
-          <Text style={styles.swiperBtn}>
-            {/* <Ionicons
-              name="chevron-forward"
-              size={48}
-              color={COLORS.lightGray}
-            /> */}
-          </Text>
-        }
-      >
-        {trailers.map((item) => (
-          <Slide
-            key={String(item.id)}
-            item={item}
-            onPress={handlePressTrailer}
-          />
-        ))}
-      </Swiper>
+      <View style={styles.swiperContainer}>
+        <PagerView
+          ref={pagerRef}
+          style={styles.pager}
+          initialPage={0}
+          onPageSelected={handlePageSelected}
+          overdrag
+        >
+          {trailers.map((item) => (
+            <View key={String(item.id)}>
+              <Slide item={item} onPress={handlePressTrailer} />
+            </View>
+          ))}
+        </PagerView>
+
+        <Pagination count={trailers.length} activeIndex={activeIndex} />
+      </View>
 
       <Modal
         visible={!!playingVideoId}
@@ -184,10 +204,7 @@ function Slideshow(): React.ReactElement {
         onRequestClose={handleCloseModal}
       >
         <View style={styles.modalOverlay}>
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            onPress={handleCloseModal}
-          />
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleCloseModal} />
           <View style={styles.modalContent}>
             <View style={styles.videoContainer}>
               {/* Modal is only shown when playingVideoId is non-null, so the
@@ -209,20 +226,20 @@ export default SlideshowMemo;
 // Styles
 
 const styles = StyleSheet.create({
-  swiper: {
-    height: 300,
+  swiperContainer: {
+    height: SLIDESHOW_HEIGHT,
     backgroundColor: COLORS.secondary,
+    position: "relative",
   },
-  swiperBtn: {
-    color: "#506996",
-    fontSize: 70,
+  pager: {
+    flex: 1,
   },
   slide: {
     position: "relative",
-    width: "100%",
+    width: SCREEN_WIDTH,
   },
   thumbnail: {
-    height: 300,
+    height: SLIDESHOW_HEIGHT,
     width: "100%",
   },
   gradient: {
@@ -243,8 +260,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   coverImage: {
-    width: 65,
-    height: 90,
+    width: 75,
+    height: 110,
     borderRadius: 8,
     borderWidth: 1.5,
     borderColor: "rgba(255, 255, 255, 0.3)",
@@ -268,6 +285,29 @@ const styles = StyleSheet.create({
     color: "#779bdd",
     fontWeight: "600",
     fontSize: 14,
+  },
+  paginationContainer: {
+    position: "absolute",
+    bottom: 8,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+  },
+  dot: {
+    borderRadius: 4,
+    height: 6,
+    backgroundColor: COLORS.secondary,
+  },
+  dotActive: {
+    width: 18,
+    backgroundColor: COLORS.lightGray,
+  },
+  dotInactive: {
+    width: 6,
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
   },
   errorWrapper: {
     height: 350,

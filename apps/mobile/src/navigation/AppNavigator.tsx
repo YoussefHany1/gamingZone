@@ -21,7 +21,7 @@ import type { BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import type { ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
-import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import * as Notifications from "expo-notifications";
 import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
@@ -113,7 +113,11 @@ const TAB_ICON_MAP: TabIconMap = {
 };
 
 //  Navigators
-const Stack = createNativeStackNavigator();
+const HomeStackNav = createNativeStackNavigator<HomeStackParamList>();
+const NewsStackNav = createNativeStackNavigator<NewsStackParamList>();
+const GamesStackNav = createNativeStackNavigator<GamesStackParamList>();
+const SettingsStackNav = createNativeStackNavigator<SettingsStackParamList>();
+const AuthStackNav = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 // Shared Screen Options
@@ -141,10 +145,10 @@ AdBanner.displayName = "AdBanner";
 const HomeStack = memo(() => {
   const { t } = useTranslation();
   return (
-    <Stack.Navigator id="HomeStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
-      <Stack.Screen name="HomeScreen" component={HomeScreen} />
-      <Stack.Screen name="NewsDetails" component={NewsDetails} />
-      <Stack.Screen
+    <HomeStackNav.Navigator id="HomeStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
+      <HomeStackNav.Screen name="HomeScreen" component={HomeScreen} />
+      <HomeStackNav.Screen name="NewsDetails" component={NewsDetails} />
+      <HomeStackNav.Screen
         name="AIChatScreen"
         component={AIChatScreen}
         options={{
@@ -154,17 +158,17 @@ const HomeStack = memo(() => {
           headerTintColor: "#fff",
         }}
       />
-      <Stack.Screen name="EventDetailsScreen" component={EventDetailsScreen} />
-    </Stack.Navigator>
+      <HomeStackNav.Screen name="EventDetailsScreen" component={EventDetailsScreen} />
+    </HomeStackNav.Navigator>
   );
 });
 HomeStack.displayName = "HomeStack";
 
 const NewsStack = memo(() => (
-  <Stack.Navigator id="NewsStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
-    <Stack.Screen name="NewsScreen" component={NewsScreen} />
-    <Stack.Screen name="NewsDetails" component={NewsDetails} />
-  </Stack.Navigator>
+  <NewsStackNav.Navigator id="NewsStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
+    <NewsStackNav.Screen name="NewsScreen" component={NewsScreen} />
+    <NewsStackNav.Screen name="NewsDetails" component={NewsDetails} />
+  </NewsStackNav.Navigator>
 ));
 NewsStack.displayName = "NewsStack";
 
@@ -182,15 +186,15 @@ const GamesStack = memo(() => {
   );
 
   return (
-    <Stack.Navigator id="GamesStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
-      <Stack.Screen name="GamesScreen" component={GamesScreen} />
-      <Stack.Screen name="GameDetails" component={GameDetails} />
-      <Stack.Screen
+    <GamesStackNav.Navigator id="GamesStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
+      <GamesStackNav.Screen name="GamesScreen" component={GamesScreen} />
+      <GamesStackNav.Screen name="GameDetails" component={GameDetails as any} />
+      <GamesStackNav.Screen
         name="GameNewsScreen"
-        component={GameNewsScreen}
+        component={GameNewsScreen as any}
         options={gameNewsOptions}
       />
-    </Stack.Navigator>
+    </GamesStackNav.Navigator>
   );
 });
 GamesStack.displayName = "GamesStack";
@@ -212,25 +216,25 @@ const SettingsStack = memo(() => {
   );
 
   return (
-    <Stack.Navigator id="SettingsStack" screenOptions={settingsHeaderOptions}>
-      <Stack.Screen
+    <SettingsStackNav.Navigator id="SettingsStack" screenOptions={settingsHeaderOptions}>
+      <SettingsStackNav.Screen
         name="SettingsScreen"
         component={SettingsScreen}
         options={HIDDEN_HEADER_OPTIONS}
       />
-      <Stack.Screen
+      <SettingsStackNav.Screen
         name="NotificationSettings"
         component={NotificationSettings}
         options={screenTitles.notificationSettings}
       />
-      <Stack.Screen
+      <SettingsStackNav.Screen
         name="Profile"
         component={Profile}
         options={screenTitles.profile}
       />
-      <Stack.Screen
+      <SettingsStackNav.Screen
         name="UserGamesScreen"
-        component={UserGamesScreen}
+        component={UserGamesScreen as any}
         options={({ navigation: nav, route }) => ({
           title:
             (route.params as { listName?: string } | undefined)?.listName ??
@@ -245,27 +249,27 @@ const SettingsStack = memo(() => {
           ),
         })}
       />
-      <Stack.Screen
+      <SettingsStackNav.Screen
         name="LanguageScreen"
         component={LanguageScreen}
         options={screenTitles.language}
       />
-      <Stack.Screen
+      <SettingsStackNav.Screen
         name="GameDetails"
-        component={GameDetails}
+        component={GameDetails as any}
         options={HIDDEN_HEADER_OPTIONS}
       />
-      <Stack.Screen
+      <SettingsStackNav.Screen
         name="ContactScreen"
         component={ContactScreen}
         options={screenTitles.contact}
       />
-      <Stack.Screen
+      <SettingsStackNav.Screen
         name="UserListsScreen"
         component={UserListsScreen}
         options={screenTitles.userLists}
       />
-    </Stack.Navigator>
+    </SettingsStackNav.Navigator>
   );
 });
 SettingsStack.displayName = "SettingsStack";
@@ -334,11 +338,11 @@ MainAppTabs.displayName = "MainAppTabs";
 
 export const AuthStack = memo(() => (
   <Suspense fallback={<Loading />}>
-    <Stack.Navigator id="AuthStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
-      <Stack.Screen name="Register" component={RegisterScreen} />
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-    </Stack.Navigator>
+    <AuthStackNav.Navigator id="AuthStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
+      <AuthStackNav.Screen name="Register" component={RegisterScreen} />
+      <AuthStackNav.Screen name="Login" component={LoginScreen} />
+      <AuthStackNav.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+    </AuthStackNav.Navigator>
   </Suspense>
 ));
 AuthStack.displayName = "AuthStack";

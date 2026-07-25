@@ -25,7 +25,7 @@ const LOCALE_MAP: Record<string, string> = {
 };
 
 function formatReleaseDate(timestamp: number, lang: string): string {
-  const locale = LOCALE_MAP[lang] ?? LOCALE_MAP[lang.split("-")[0]] ?? "en-US";
+  const locale = LOCALE_MAP[lang] ?? LOCALE_MAP[lang.split("-")[0] ?? "en"] ?? "en-US";
 
   return new Intl.DateTimeFormat(locale, {
     year: "numeric",
@@ -52,8 +52,7 @@ function GameDetailsMeta({
       : undefined;
 
   // Normalise rating to a 0–10 scale with one decimal place
-  const displayRating =
-    totalRating != null ? Math.round(totalRating) / 10 : null;
+  const displayRating = totalRating != null ? Math.round(totalRating) / 10 : null;
 
   return (
     <View style={styles.container}>
@@ -87,17 +86,14 @@ function GameDetailsMeta({
 
           {(totalRatingCount ?? 0) > 0 && (
             <Text style={styles.ratingCount}>
-              {totalRatingCount}{" "}
-              {t("games.details.userRatings", "user ratings")}
+              {totalRatingCount} {t("games.details.userRatings", "user ratings")}
             </Text>
           )}
         </View>
       </View>
 
       {ageRating && (
-        <View
-          style={[styles.ageRatingBadge, { backgroundColor: ageRating.color }]}
-        >
+        <View style={[styles.ageRatingBadge, { backgroundColor: ageRating.color }]}>
           <Text style={styles.ageRatingText}>{ageRating.label}</Text>
         </View>
       )}
@@ -134,12 +130,11 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     flex: 1,
   },
-  /** BUG FIX: was `rgb(81, 105, 150, 0.3)` which is invalid — RGB does not accept alpha. */
   platform: {
     color: COLORS.textLight,
     fontSize: 17,
     fontWeight: "500",
-    backgroundColor: "rgba(81, 105, 150, 0.3)",
+    backgroundColor: "#5169964d",
     paddingVertical: 3,
     paddingHorizontal: 10,
     marginRight: 10,

@@ -1,4 +1,4 @@
-﻿import { Game } from "@/src/types/sharedTypes";
+import { Game } from "@/src/types/sharedTypes";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { StyleProp, ViewStyle } from "react-native";
 import { Models } from "react-native-appwrite";
@@ -20,15 +20,15 @@ export type GameGenre = {
 export type FreeGame = {
   id: string;
   title: string;
-  image?: string;
-  slug?: string;
-  store?: "steam" | "epic" | string;
-  url?: string;
-  description?: string;
+  image?: string | undefined;
+  slug?: string | undefined;
+  store?: "steam" | "epic" | string | undefined;
+  url?: string | undefined;
+  description?: string | undefined;
   type: "current" | "next" | string;
-  startDate?: string | number;
-  endDate?: string | number;
-  igdb_game_id?: number;
+  startDate?: string | number | undefined;
+  endDate?: string | number | undefined;
+  igdb_game_id?: number | undefined;
 };
 
 // â”€â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -54,7 +54,7 @@ export type AgeRating = {
 };
 
 export type Platform = {
-  name: any;
+  name: string;
   id: number;
   abbreviation?: string;
 };
@@ -134,34 +134,34 @@ export type PcRequirements = {
 // â”€â”€â”€ Component Props â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type GameAboutProps = {
-  summary?: string;
+  summary?: string | undefined;
 };
 
 export type GameActionButtonsProps = {
-  claimUrl?: string;
-  store?: string;
+  claimUrl?: string | undefined;
+  store?: string | undefined;
   onAddToList: () => void;
 };
 
 export type GameDetailsBackgroundProps = {
-  coverImageId?: string;
+  coverImageId?: string | undefined;
   currentLang: string;
 };
 
 export type GameDetailsGridProps = {
-  genres?: Genre[];
-  gameModes?: GameMode[];
-  involvedCompanies?: InvolvedCompany[];
-  gameEngines?: Engine[];
+  genres?: Genre[] | undefined;
+  gameModes?: GameMode[] | undefined;
+  involvedCompanies?: InvolvedCompany[] | undefined;
+  gameEngines?: Engine[] | undefined;
 };
 
 export type GameDetailsMetaProps = {
   name: string;
   /** Unix timestamp in seconds (IGDB first_release_date) */
-  releaseDate?: number;
-  platforms?: Platform[];
-  totalRating?: number;
-  totalRatingCount?: number;
+  releaseDate?: number | undefined;
+  platforms?: Platform[] | undefined;
+  totalRating?: number | undefined;
+  totalRatingCount?: number | undefined;
   ageRating: AgeRatingInfo | null;
 };
 
@@ -204,11 +204,11 @@ export type GamePcRequirementsProps = {
 };
 
 export type GameStoresProps = {
-  websites?: Website[];
+  websites?: Website[] | undefined;
 };
 
 export type GameTrailerProps = {
-  videos?: Video[];
+  videos?: Video[] | undefined;
 };
 
 export type GalleryImage = {
@@ -221,14 +221,14 @@ export type GalleryImage = {
 
 export type ZoomableImageProps = {
   imageUrl: string;
-  onSwipeLeft?: () => void; // navigate forward
-  onSwipeRight?: () => void; // navigate backward
-  onSwipeDown?: () => void; // close gallery
+  onSwipeLeft?: (() => void) | undefined; // navigate forward
+  onSwipeRight?: (() => void) | undefined; // navigate backward
+  onSwipeDown?: (() => void) | undefined; // close gallery
 };
 
 export type ImageGalleryAdvancedProps = {
-  coverImageId?: string;
-  screenshots?: Screenshot[];
+  coverImageId?: string | undefined;
+  screenshots?: Screenshot[] | undefined;
 };
 
 export type ComingSoonCardProps = {
@@ -262,7 +262,7 @@ export type SectionProps = {
   hideAny?: boolean;
 };
 
-export type FreeGameItem = FreeGame & { slug?: string };
+export type FreeGameItem = FreeGame & { slug?: string | undefined };
 
 export type TimeUnitProps = {
   value: number;
@@ -285,9 +285,9 @@ export type GameCardProps = {
 };
 
 export type GamesListProps = {
-  query?: string;
-  filters?: GameFilters;
-  onBack?: () => void;
+  query?: string | undefined;
+  filters?: GameFilters | undefined;
+  onBack?: (() => void) | undefined;
 };
 
 export type NewsGame = {
@@ -379,8 +379,8 @@ export type UseGameDetailsProps = {
 export type ListSelectionModalProps = {
   visible: boolean;
   onClose: () => void;
-  gameId?: string | number;
-  gameData?: Record<string, unknown>;
+  gameId?: string | number | undefined;
+  gameData?: Record<string, unknown> | undefined;
 };
 
 export type Props = NativeStackScreenProps<GamesStackParamList, "GameDetails">;

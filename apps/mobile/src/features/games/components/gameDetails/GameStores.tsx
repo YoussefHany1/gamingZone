@@ -25,6 +25,9 @@ const GameStores: React.FC<GameStoresProps> = ({ websites }) => {
             key={site.id}
             style={styles.storeButton}
             onPress={() => openLink(site.url)}
+            accessibilityLabel={site.url}
+            accessibilityRole="link"
+            accessibilityHint={t("games.details.openStoreHint")}
           >
             <Image
               style={styles.storeIcon}

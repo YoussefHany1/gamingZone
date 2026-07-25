@@ -1,19 +1,18 @@
-﻿import React, { useCallback } from "react";
+import React, { useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-import axios from "axios";
 import { useTranslation } from "react-i18next";
 import ErrorState from "@/src/components/ErrorState";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonTopRated from "@/src/features/games/skeleton/gamesScreen/SkeletonTopRated";
 import COLORS from "@/src/constants/colors";
 import SectionTitle from "@/src/components/SectionTitle";
-import { SERVER_URL } from "@/src/constants/config";
 import useCachedData from "@/src/hooks/useCachedData";
 import type { TopRatedCardProps } from "../../types";
 import type { Game } from "@/src/types/sharedTypes";
+import { fetchTopRatedGames } from "@/src/services/api/igdbApi";
 
 const CARD_WIDTH = 200;
 const CARD_HEIGHT = 320;
@@ -22,10 +21,7 @@ const STORAGE_KEY = "GAMES_CACHE_TOP_RATED";
 
 // Helpers
 
-const fetchTopRatedGames = async (): Promise<Game[]> => {
-  const response = await axios.get<Game[]>(`${SERVER_URL}/top-rated`);
-  return response.data;
-};
+
 
 function getRatingColor(rating: number): [string, string] {
   if (rating <= 2) return ["#8B0000", "#B22222"];

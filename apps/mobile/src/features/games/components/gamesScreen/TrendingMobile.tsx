@@ -1,31 +1,27 @@
-﻿import React, { useCallback } from "react";
+import React, { useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import axios from "axios";
 import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonPopular from "../../skeleton/gamesScreen/SkeletonPopular";
 import ErrorState from "@/src/components/ErrorState";
 import COLORS from "@/src/constants/colors";
-import { SERVER_URL } from "@/src/constants/config";
 import useCachedData from "@/src/hooks/useCachedData";
 import type { TrendingMobileCardProps } from "../../types";
 import type { Game } from "@/src/types/sharedTypes";
 import SectionTitle from "@/src/components/SectionTitle";
 import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
+import { fetchTrendingMobileGames } from "@/src/services/api/igdbApi";
 
 const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
 const CARD_MARGIN = 5;
 const STORAGE_KEY = "GAMES_CACHE_TRENDING_MOBILE";
 
-const fetchTrendingMobileGames = async (): Promise<Game[]> => {
-  const response = await axios.get<Game[]>(`${SERVER_URL}/trending-mobile`);
-  return response.data;
-};
+
 
 // Card
 

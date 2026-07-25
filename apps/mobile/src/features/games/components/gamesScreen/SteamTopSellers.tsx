@@ -1,21 +1,20 @@
-﻿import React, { useCallback } from "react";
+import React, { useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import axios from "axios";
 import { useTranslation } from "react-i18next";
 import ErrorState from "@/src/components/ErrorState";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonPopular from "@/src/features/games/skeleton/gamesScreen/SkeletonPopular";
 import COLORS from "@/src/constants/colors";
-import { SERVER_URL } from "@/src/constants/config";
 import useCachedData from "@/src/hooks/useCachedData";
 import type { SteamTopSellersCardProps } from "../../types";
 import type { Game } from "@/src/types/sharedTypes";
 import SectionTitle from "../../../../components/SectionTitle";
 import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
+import { fetchSteamTopSellerGames } from "@/src/services/api/igdbApi";
 
 const CARD_WIDTH = 180;
 const CARD_HEIGHT = 280;
@@ -27,10 +26,7 @@ const STEAM_BLUE_DIM = "#516996";
 const STEAM_DARK = COLORS.primary;
 const STEAM_CARD_BG = "#172a4a";
 
-const fetchSteamTopSellers = async (): Promise<Game[]> => {
-  const response = await axios.get<Game[]>(`${SERVER_URL}/steam-top-sellers`);
-  return response.data;
-};
+
 
 const getReviewLabel = (rating: number): { label: string; color: string } => {
   if (rating >= 9) return { label: "Overwhelmingly +", color: STEAM_BLUE };
@@ -135,7 +131,7 @@ function SteamTopSellers(): React.ReactElement {
     data: games,
     isLoading,
     error,
-  } = useCachedData<Game[]>(STORAGE_KEY, fetchSteamTopSellers, []);
+  } = useCachedData<Game[]>(STORAGE_KEY, fetchSteamTopSellerGames, []);
 
   const gamesToShow: Game[] = games ?? [];
   const isActuallyLoading = isLoading && gamesToShow.length === 0;

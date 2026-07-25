@@ -14,7 +14,6 @@
     "@hookform/resolvers": "^3.9.1",
     "appwrite": "^25.1.0",
     "axios": "^1.16.1",
-    "date-fns": "^4.2.1",
     "firebase": "^12.13.0",
     "firebase-admin": "^13.10.0",
     "i18n-iso-countries": "^7.14.0",

@@ -1,31 +1,26 @@
-﻿import React, { useCallback } from "react";
+import React, { useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import axios from "axios";
 import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonPopular from "../../skeleton/gamesScreen/SkeletonPopular";
 import ErrorState from "@/src/components/ErrorState";
 import COLORS from "@/src/constants/colors";
-import { SERVER_URL } from "@/src/constants/config";
 import useCachedData from "@/src/hooks/useCachedData";
 import type { PopularCardProps } from "../../types";
 import type { Game } from "@/src/types/sharedTypes";
 import SectionTitle from "@/src/components/SectionTitle";
 import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
+import { fetchPopularGames } from "@/src/services/api/igdbApi";
 
 const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
 const CARD_MARGIN = 5;
 const STORAGE_KEY = "GAMES_CACHE_POPULAR";
-
-const fetchPopularGames = async (): Promise<Game[]> => {
-  const response = await axios.get<Game[]>(`${SERVER_URL}/popular`);
-  return response.data;
-};
+const SKELETON_DATA = Array.from({ length: 5 }, (_, i) => ({ id: i }) as any);
 
 // Card
 
@@ -125,6 +120,8 @@ function PopularGames(): React.ReactElement {
     [],
   );
 
+  const renderSkeletonItem = useCallback(() => <SkeletonPopular />, []);
+
   return (
     <View>
       <View style={styles.headerContainer}>
@@ -137,9 +134,9 @@ function PopularGames(): React.ReactElement {
 
       {isActuallyLoading && (
         <FlashList
-          data={Array.from({ length: 5 }, (_, i) => ({ id: i }) as any)}
+          data={SKELETON_DATA}
           horizontal
-          renderItem={() => <SkeletonPopular />}
+          renderItem={renderSkeletonItem}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
           estimatedItemSize={175}

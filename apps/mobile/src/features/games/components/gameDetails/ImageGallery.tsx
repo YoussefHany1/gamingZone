@@ -319,6 +319,9 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
             activeOpacity={0.9}
             onPress={() => openFullScreen(index)}
             style={styles.thumbnailContainer}
+            accessibilityLabel={`Image ${index + 1} of ${allImages.length}`}
+            accessibilityRole="imagebutton"
+            accessibilityHint="Double tap to view full screen"
           >
             <Image
               style={styles.thumbnail}
@@ -392,6 +395,8 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={closeFullScreen}
+                accessibilityLabel="Close gallery"
+                accessibilityRole="button"
               >
                 <Ionicons name="close" size={28} color="#fff" />
               </TouchableOpacity>
@@ -418,11 +423,10 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
               </View>
             )}
 
-            {/* Zoomable image */}
             <View style={styles.imageArea}>
               <ZoomableImage
                 key={fullScreenIndex}
-                imageUrl={allImages[fullScreenIndex].url}
+                imageUrl={allImages[fullScreenIndex]?.url ?? ""}
                 onSwipeLeft={!isLast ? goToNext : undefined}
                 onSwipeRight={!isFirst ? goToPrevious : undefined}
                 onSwipeDown={closeFullScreen}

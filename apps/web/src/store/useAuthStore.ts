@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { auth } from "../lib/firebase";
-import { onAuthStateChanged, signInAnonymously, User } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 
 import { AuthStore } from "./types";
 
@@ -13,17 +13,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   initAuth: () => {
-    const unsubscribe = onAuthStateChanged(auth, async (newUser) => {
-      if (!newUser) {
-        try {
-          // If no user is logged in, sign in anonymously to keep database operations working
-          await signInAnonymously(auth);
-        } catch (error) {
-          console.error("Anonymous authentication failed:", error);
-          set({ isLoading: false });
-        }
-        return;
-      }
+    const unsubscribe = onAuthStateChanged(auth, (newUser) => {
+      // Set the user (or null if not logged in) and stop loading
       set({ user: newUser, isLoading: false });
     });
 

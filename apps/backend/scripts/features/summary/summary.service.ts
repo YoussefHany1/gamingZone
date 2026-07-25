@@ -12,10 +12,6 @@ const DATABASE_ID = env.APPWRITE_DATABASE_ID;
 const NEWS_COLLECTION_ID = env.ARTICLES_COLLECTION_ID;
 const SUMMARIES_COLLECTION_ID = env.SUMMARIES_COLLECTION_ID;
 
-if (!GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY is required for weekly summary generation.');
-}
-
 const databases = createAppwriteDatabases();
 
 interface SummaryResponse {

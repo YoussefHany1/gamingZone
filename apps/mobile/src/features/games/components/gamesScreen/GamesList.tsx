@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,17 +11,16 @@ import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import axios from "axios";
 import { useTranslation } from "react-i18next";
 import SkeletonGameCard from "../../skeleton/gamesScreen/SkeletonGameCard";
 import ErrorState from "@/src/components/ErrorState";
 import COLORS from "@/src/constants/colors";
-import { SERVER_URL } from "@/src/constants/config";
 import useCachedData from "@/src/hooks/useCachedData";
 import type { GameCardProps, GamesListProps, GameFilters } from "../../types";
 import type { Game } from "@/src/types/sharedTypes";
 import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
+import { searchGames } from "@/src/services/api/igdbApi";
 
 const CARD_HEIGHT = 290;
 const CARD_WIDTH = 180;
@@ -52,17 +51,7 @@ async function fetchSearchResults(
   query: string | undefined,
   filters?: GameFilters,
 ): Promise<Game[]> {
-  const params: Record<string, string> = {};
-  if (query) params.q = query;
-  if (filters?.year) params.year = filters.year;
-  if (filters?.genre) params.genre = filters.genre;
-  if (filters?.platform) params.platform = filters.platform;
-  if (filters?.sort) params.sort = filters.sort;
-  const response = await axios.get<Game[]>(`${SERVER_URL}/search`, {
-    params,
-    timeout: 10000,
-  });
-  return response.data;
+  return searchGames({ query, filters });
 }
 
 // Game Card

@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useRef, memo } from "react";
+import React, { useCallback, useRef, memo } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import SkeletonGamingevents from "../skeleton/SkeletonGamingevents";
 import COLORS from "@/src/constants/colors";
 import SectionTitle from "@/src/components/SectionTitle";
-import { SERVER_URL } from "@/src/constants/config";
 import { useCountdown } from "@/src/hooks/useCountdown";
 import type { TimeLeft } from "@/src/hooks/useCountdown";
 import ErrorState from "@/src/components/ErrorState";
@@ -23,7 +22,7 @@ import useCachedData from "@/src/hooks/useCachedData";
 import { openLink } from "@/src/lib/browser";
 import type { GamingEvent } from "@/src/types/sharedTypes";
 import type { HomeStackParamList } from "@/src/navigation/AppNavigator";
-import axios from "axios";
+import { fetchGamingEvents } from "@/src/services/api/igdbApi";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
@@ -33,10 +32,7 @@ const CARD_ITEM_SIZE = CARD_WIDTH + CARD_MARGIN * 2;
 
 const STORAGE_KEY = "GAMES_CACHE_EVENTS";
 
-const fetchEvents = async (): Promise<GamingEvent[]> => {
-  const response = await axios.get<GamingEvent[]>(`${SERVER_URL}/events`);
-  return response.data;
-};
+
 
 const formatEventDate = (timestamp: number, language = "en"): string => {
   if (!timestamp) return "";
@@ -191,14 +187,14 @@ const SKELETON_DATA: SkeletonItem[] = Array.from({ length: 3 }, (_, i) => ({
 
 // GamingEvents
 
-function GamingEvents(): React.ReactElement {
+function GamingEvents(): React.ReactElement | null {
   const { t } = useTranslation();
 
   const {
     data: events,
     isLoading,
     error,
-  } = useCachedData<GamingEvent[]>(STORAGE_KEY, fetchEvents, []);
+  } = useCachedData<GamingEvent[]>(STORAGE_KEY, fetchGamingEvents, []);
 
   const eventsToShow: GamingEvent[] = events ?? [];
   const isActuallyLoading = isLoading && eventsToShow.length === 0;

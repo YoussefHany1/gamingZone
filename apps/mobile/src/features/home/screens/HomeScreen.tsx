@@ -20,7 +20,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
-import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import { adUnitId } from "@/src/constants/config";
@@ -45,8 +45,8 @@ const DeferredNewsSection = memo(function DeferredNewsSection({
 }: {
   category: string;
   language: string;
-  website?: string;
-  delay?: number;
+  website?: string | undefined;
+  delay?: number | undefined;
 }) {
   const [mounted, setMounted] = useState(false);
 
@@ -100,7 +100,7 @@ const NewsSection = memo(function NewsSection({
 }: {
   category: string;
   language: string;
-  website?: string;
+  website?: string | undefined;
 }) {
   return (
     <LatestNews
@@ -110,7 +110,7 @@ const NewsSection = memo(function NewsSection({
       language={language}
       showFooter={false}
       website={website}
-      selectedItem={null}
+      selectedItem={undefined}
       onChangeFeed={noop}
       websitesList={[]}
       scrollEnabled={false}

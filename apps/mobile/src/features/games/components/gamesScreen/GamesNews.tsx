@@ -14,9 +14,8 @@ const GAMES_DATA: NewsGame[] = [
     id: "1",
     name: "League of Legends",
     image:
-      "https://newzoo.com/wp-content/uploads/api/games/artworks/game--league-of-legends.jpg",
-    apiUrl:
-      "https://news.google.com/rss/search?q=league%20of%20legends%20news&hl=",
+      "https://cdn1.epicgames.com/offer/24b9b5e323bc40eea252a10cdd3b2f10/EGS_LeagueofLegends_RiotGames_S2_1200x1600-112729f9da450fe377e11d40029c4831",
+    apiUrl: "https://news.google.com/rss/search?q=league%20of%20legends%20news&hl=",
     source: "https://www.leagueoflegends.com/news/",
   },
   {
@@ -62,10 +61,7 @@ const NewsGameCard = React.memo<NewsGameCardProps>(({ item, onPress }) => {
       onPress={() => onPress(item.name, item.apiUrl, item.source)}
       activeOpacity={0.9}
     >
-      <LinearGradient
-        colors={["#1a3052", "#0c1a33"]}
-        style={styles.cardGradient}
-      />
+      <LinearGradient colors={["#1a3052", "#0c1a33"]} style={styles.cardGradient} />
 
       <View style={styles.imageContainer}>
         <Image

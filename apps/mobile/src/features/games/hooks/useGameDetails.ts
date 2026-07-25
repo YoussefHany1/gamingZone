@@ -5,19 +5,20 @@ import {
   ScrollView,
   ToastAndroid,
 } from "react-native";
-import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
-import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { useTranslation } from "react-i18next";
 import useCachedData from "@/src/hooks/useCachedData";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
+import { useAuthStore } from "@/src/store/useAuthStore";
+import { useShallow } from "zustand/react/shallow";
 import type { GameData, LangRow, PcRequirements } from "../types";
 import {
-  fetchGameById,
   fetchSteamRequirements,
   extractSteamAppId,
   getAgeRatingInfo,
 } from "../components/gameDetails/utils";
+import { fetchGameById } from "@/src/services/api/igdbApi";
+import { withTrace } from "@/src/services/performanceService";
 
 import type { UseGameDetailsProps } from "../types";
 
@@ -30,16 +31,15 @@ export const useGameDetails = ({
   const mountedRef = useRef<boolean>(true);
 
   const [isReady, setIsReady] = useState(false);
-  const [user, setUser] = useState<FirebaseAuthTypes.User | null | undefined>(
-    undefined,
-  );
   const [showListModal, setShowListModal] = useState<boolean>(false);
-  const [authLoading, setAuthLoading] = useState<boolean>(true);
   const [rating, setRating] = useState<number>(0);
   const [pcRequirements, setPcRequirements] = useState<PcRequirements | null>(
     null,
   );
   const [pcReqLoading, setPcReqLoading] = useState<boolean>(false);
+
+  // ── Centralised auth — no duplicate listener ──────────────────────────────
+  const user = useAuthStore(useShallow((s) => s.user));
 
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
@@ -57,7 +57,7 @@ export const useGameDetails = ({
 
   const fetchGameData = useCallback(async (): Promise<GameData> => {
     if (!currentId) throw new Error("No game ID provided");
-    return fetchGameById(currentId);
+    return withTrace("game_details_load", () => fetchGameById(currentId));
   }, [currentId]);
 
   const {
@@ -180,7 +180,7 @@ export const useGameDetails = ({
           if (listDoc.id === "rated") continue;
           const gRef = listDoc.ref.collection("games").doc(String(currentId));
           const gSnap = await gRef.get();
-          if (gSnap && gSnap.exists) {
+          if (gSnap && gSnap.exists()) {
             try {
               if (newRating === 0) {
                 await gRef.update({ rating: firestore.FieldValue.delete() });
@@ -219,13 +219,7 @@ export const useGameDetails = ({
     };
   }, []);
 
-  useEffect(() => {
-    const unsub = auth().onAuthStateChanged((u) => {
-      setUser(u);
-      setAuthLoading(false);
-    });
-    return unsub;
-  }, []);
+  // Auth state is now read from useAuthStore — no local listener needed.
 
   useEffect(() => {
     if (!user || user.isAnonymous) {
@@ -240,7 +234,7 @@ export const useGameDetails = ({
 
     const unsub = ratingRef.onSnapshot(
       (doc) => {
-        if (doc && doc.exists) {
+        if (doc && doc.exists()) {
           setRating(doc.data()?.rating ?? 0);
         } else {
           setRating(0);
@@ -282,7 +276,9 @@ export const useGameDetails = ({
       setTimeout(() => {
         try {
           scrollRef.current?.scrollTo({ x: 0, y: 0, animated: true });
-        } catch (_) {}
+        } catch (_e) {
+          // scroll may fail if the ref is unmounted — safe to ignore
+        }
       }, 50);
     }
   }, [game, loading]);

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   User,
   Calendar,
@@ -10,11 +10,15 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
+import { useRouter } from "next/navigation";
+import { useLangStore } from "@/store/useLangStore";
 
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import Image from "next/image";
 
 export default function ProfileForm() {
+  const router = useRouter();
+  const { lang } = useLangStore();
   const {
     t,
     isLoading,
@@ -39,6 +43,13 @@ export default function ProfileForm() {
     handleFileChange,
     handleSave,
   } = useProfile();
+
+  // Redirect to login if not authenticated after loading completes
+  useEffect(() => {
+    if (!isLoading && (!currentUser || currentUser.isAnonymous)) {
+      router.replace(`/${lang}/auth/login`);
+    }
+  }, [isLoading, currentUser, router, lang]);
 
   if (isLoading || !currentUser || currentUser.isAnonymous) {
     return (

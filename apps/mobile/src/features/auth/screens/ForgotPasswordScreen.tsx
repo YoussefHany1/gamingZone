@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, memo } from "react";
 import {
   TextInput,
   TouchableOpacity,
@@ -24,7 +24,7 @@ type AuthStackParamList = {
 type Props = NativeStackScreenProps<AuthStackParamList, "ForgotPassword">;
 
 // main
-const ForgotPasswordScreen: React.FC<Props> = memo(({ navigation }) => {
+const ForgotPasswordScreen = memo(({ navigation }: Props) => {
   const { t } = useTranslation();
   const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);

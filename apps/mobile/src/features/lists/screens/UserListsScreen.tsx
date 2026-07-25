@@ -23,7 +23,7 @@ import firestore, {
 } from "@react-native-firebase/firestore";
 import COLORS from "@/src/constants/colors";
 import { useTranslation } from "react-i18next";
-import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { adUnitId } from "@/src/constants/config";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
@@ -52,7 +52,7 @@ const DEFAULT_LISTS: { id: string; name: string; type: ListType }[] = [
 ];
 
 // main
-const UserListsScreen: React.FC<Props> = ({ navigation }) => {
+const UserListsScreen = ({ navigation }: Props) => {
   const [lists, setLists] = useState<GameList[]>([]);
   const [newListName, setNewListName] = useState<string>("");
   const [isModalVisible, setModalVisible] = useState<boolean>(false);

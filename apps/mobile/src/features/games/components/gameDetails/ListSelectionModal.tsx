@@ -190,7 +190,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
         const targetListIndex = lists.findIndex((l) => l.id === listId);
         if (targetListIndex === -1) return;
 
-        const currentStatus = lists[targetListIndex].isChecked;
+        const currentStatus = lists[targetListIndex]?.isChecked ?? false;
         const newStatus = !currentStatus;
 
         // Optimistic UI update + update ref so reopen shows correct state

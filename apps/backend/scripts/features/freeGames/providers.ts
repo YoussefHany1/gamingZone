@@ -44,9 +44,16 @@ export interface NormalizedGame {
   url: string;
   store: string;
   type: 'current' | 'next';
-  startDate: string;
-  endDate: string;
+  startDate: string | null;
+  endDate: string | null;
   fetchedAt: string;
+}
+
+function parseDate(dateStr: string | null | undefined): string | null {
+  if (!dateStr || dateStr.toUpperCase() === 'N/A') return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
 }
 
 async function fetchSteamGames(steamApiUrl: string): Promise<NormalizedGame[]> {
@@ -64,8 +71,8 @@ async function fetchSteamGames(steamApiUrl: string): Promise<NormalizedGame[]> {
       url: game.open_giveaway_url,
       store: 'steam',
       type: 'current',
-      startDate: game.published_date,
-      endDate: game.end_date,
+      startDate: parseDate(game.published_date),
+      endDate: parseDate(game.end_date),
       fetchedAt: new Date().toISOString(),
     }));
   } catch (error) {
@@ -90,8 +97,8 @@ async function fetchGogGames(gogApiUrl: string): Promise<NormalizedGame[]> {
       url: game.open_giveaway_url,
       store: 'gog',
       type: 'current',
-      startDate: game.published_date,
-      endDate: game.end_date,
+      startDate: parseDate(game.published_date),
+      endDate: parseDate(game.end_date),
       fetchedAt: new Date().toISOString(),
     }));
   } catch (error) {
@@ -137,8 +144,8 @@ function normalizeEpicGame(item: EpicGame, type: 'current' | 'next'): Normalized
     store: 'epic',
     url: `https://store.epicgames.com/en-US/p/${finalSlug}`,
     type,
-    startDate: offer.startDate,
-    endDate: offer.endDate,
+    startDate: parseDate(offer?.startDate),
+    endDate: parseDate(offer?.endDate),
     fetchedAt: new Date().toISOString(),
   };
 }
@@ -160,7 +167,8 @@ async function fetchEpicGames(epicApiUrl: string): Promise<NormalizedGame[]> {
     return [...currentGames, ...nextGames];
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Fetch failed: ${errorMessage}`);
+    console.error(`⚠️ Epic Fetch failed: ${errorMessage}`);
+    return [];
   }
 }
 

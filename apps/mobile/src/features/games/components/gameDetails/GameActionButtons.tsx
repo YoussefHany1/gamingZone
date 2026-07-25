@@ -34,6 +34,8 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
           activeOpacity={0.9}
           onPress={handleClaimPress}
           style={styles.buttonWrapper}
+          accessibilityLabel={`${t("games.details.claimNow")} ${capitalise(store)}`}
+          accessibilityRole="button"
         >
           <LinearGradient
             colors={GRADIENT_COLORS}
@@ -55,7 +57,12 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity onPress={onAddToList} style={styles.buttonWrapper}>
+      <TouchableOpacity
+        onPress={onAddToList}
+        style={styles.buttonWrapper}
+        accessibilityLabel={t("games.details.addToList")}
+        accessibilityRole="button"
+      >
         <LinearGradient
           colors={GRADIENT_COLORS}
           start={GRADIENT_START}

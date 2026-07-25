@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -55,11 +55,10 @@ const fetchFreeGamesFromAppwrite = async (): Promise<FreeGameItem[]> => {
   const netState = await NetInfo.fetch();
   if (!netState.isConnected) throw new Error("No internet connection");
 
-  const response = await databases.listDocuments(
-    dbId,
-    FREE_GAMES_COLLECTION_ID,
-    [Query.orderAsc("type"), Query.limit(20)],
-  );
+  const response = await databases.listDocuments(dbId, FREE_GAMES_COLLECTION_ID, [
+    Query.orderAsc("type"),
+    Query.limit(20),
+  ]);
 
   return response.documents.map((doc) => ({
     id: doc.$id,
@@ -104,29 +103,15 @@ const CountdownTimer = React.memo<CountdownTimerProps>(({ t, startDate }) => {
         colors={["rgba(81, 105, 150, 0.9)", "rgba(12, 26, 51, 0.8)"]}
         style={styles.countdownGradient}
       >
-        <Text style={styles.countdownTitle}>
-          {t("games.list.freeGames.freeOn")}
-        </Text>
+        <Text style={styles.countdownTitle}>{t("games.list.freeGames.freeOn")}</Text>
         <View style={styles.timerContainer}>
-          <TimeUnit
-            value={timeLeft.days}
-            label={t("games.list.freeGames.days")}
-          />
+          <TimeUnit value={timeLeft.days} label={t("games.list.freeGames.days")} />
           <Text style={styles.separator}>:</Text>
-          <TimeUnit
-            value={timeLeft.hours}
-            label={t("games.list.freeGames.hours")}
-          />
+          <TimeUnit value={timeLeft.hours} label={t("games.list.freeGames.hours")} />
           <Text style={styles.separator}>:</Text>
-          <TimeUnit
-            value={timeLeft.minutes}
-            label={t("games.list.freeGames.minutes")}
-          />
+          <TimeUnit value={timeLeft.minutes} label={t("games.list.freeGames.minutes")} />
           <Text style={styles.separator}>:</Text>
-          <TimeUnit
-            value={timeLeft.seconds}
-            label={t("games.list.freeGames.seconds")}
-          />
+          <TimeUnit value={timeLeft.seconds} label={t("games.list.freeGames.seconds")} />
         </View>
       </LinearGradient>
     </View>
@@ -170,10 +155,7 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
       onPress={handleCardPress}
     >
       {/* Background gradient */}
-      <LinearGradient
-        colors={["#1a3052", "#0c1a33"]}
-        style={styles.cardGradient}
-      />
+      <LinearGradient colors={["#1a3052", "#0c1a33"]} style={styles.cardGradient} />
 
       {/* Image area with optional countdown overlay */}
       <View style={styles.imageContainer}>
@@ -211,10 +193,7 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
       </View>
 
       <View style={styles.infoSection}>
-        <Text
-          style={styles.title}
-          numberOfLines={item.type === "current" ? 2 : 4}
-        >
+        <Text style={styles.title} numberOfLines={item.type === "current" ? 2 : 4}>
           {item.title}
         </Text>
 
@@ -231,14 +210,8 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
               end={{ x: 1, y: 1 }}
               style={styles.savingsButton}
             >
-              <Ionicons
-                name="gift-outline"
-                size={16}
-                color={COLORS.textLight}
-              />
-              <Text style={styles.savingsText}>
-                {t("games.list.freeGames.claimNow")}
-              </Text>
+              <Ionicons name="gift-outline" size={16} color={COLORS.textLight} />
+              <Text style={styles.savingsText}>{t("games.list.freeGames.claimNow")}</Text>
             </LinearGradient>
           </TouchableOpacity>
         )}
@@ -259,11 +232,7 @@ function FreeGames(): React.ReactElement {
     data: gamesList,
     isLoading,
     error,
-  } = useCachedData<FreeGameItem[]>(
-    FREE_GAMES_CACHE_KEY,
-    fetchFreeGamesFromAppwrite,
-    [],
-  );
+  } = useCachedData<FreeGameItem[]>(FREE_GAMES_CACHE_KEY, fetchFreeGamesFromAppwrite, []);
 
   const isError = !!error;
   const isInitialLoading = isLoading && !Array.isArray(gamesList);
@@ -276,10 +245,7 @@ function FreeGames(): React.ReactElement {
     const checkNotificationStatus = async (): Promise<void> => {
       try {
         const prefs = await NotificationService.getUserPreferences(userId);
-        const topicName = NotificationService.getTopicName(
-          NOTIF_CATEGORY,
-          NOTIF_SOURCE,
-        );
+        const topicName = NotificationService.getTopicName(NOTIF_CATEGORY, NOTIF_SOURCE);
         if (isMounted) setNotifEnabled(prefs[topicName] === true);
       } catch (e) {
         console.log("Error reading notification pref from Firestore", e);
@@ -321,28 +287,25 @@ function FreeGames(): React.ReactElement {
     }
   }, [userId, notifEnabled, t]);
 
-  const handleClaimPress = useCallback(
-    async (item: FreeGameItem): Promise<void> => {
-      try {
-        await analytics().logEvent("click_free_game", {
-          item_id: item.id,
-          item_name: item.title,
-          content_type: "free_game_card",
-          game_type: item.type,
-          store: item.store ?? "epic",
-        });
-      } catch (analyticsError) {
-        console.log("Analytics error:", analyticsError);
-      }
+  const handleClaimPress = useCallback(async (item: FreeGameItem): Promise<void> => {
+    try {
+      await analytics().logEvent("click_free_game", {
+        item_id: item.id,
+        item_name: item.title,
+        content_type: "free_game_card",
+        game_type: item.type,
+        store: item.store ?? "epic",
+      });
+    } catch (analyticsError) {
+      console.log("Analytics error:", analyticsError);
+    }
 
-      if (item.url) {
-        openLink(item.url);
-      } else if (item.slug) {
-        openLink(`https://store.epicgames.com/en-US/p/${item.slug}`);
-      }
-    },
-    [],
-  );
+    if (item.url) {
+      openLink(item.url);
+    } else if (item.slug) {
+      openLink(`https://store.epicgames.com/en-US/p/${item.slug}`);
+    }
+  }, []);
 
   // renderItem has empty deps â€” navigation & t live inside FreeGameCard itself
   const renderGameItem = useCallback(
@@ -354,6 +317,12 @@ function FreeGames(): React.ReactElement {
 
   const keyExtractor = useCallback((item: FreeGameItem) => item.id, []);
 
+  const skeletonData = useMemo(
+    () => Array.from({ length: SKELETON_COUNT }, (_, i) => ({ id: i }) as any),
+    [],
+  );
+  const renderSkeletonItem = useCallback(() => <SkeletonFreeGames />, []);
+
   return (
     <View>
       {/* Header with notification toggle */}
@@ -363,10 +332,7 @@ function FreeGames(): React.ReactElement {
           fontSize={24}
           subtitle={t("games.list.freeGames.subtitle")}
         />
-        <TouchableOpacity
-          onPress={toggleNotifications}
-          style={styles.bellButton}
-        >
+        <TouchableOpacity onPress={toggleNotifications} style={styles.bellButton}>
           <Ionicons
             name={notifEnabled ? "notifications" : "notifications-off-outline"}
             size={22}
@@ -375,13 +341,16 @@ function FreeGames(): React.ReactElement {
         </TouchableOpacity>
       </View>
 
-      {/* Skeleton â€” shown on first load before any data arrives */}
+      {/* Skeleton — shown on first load before any data arrives */}
       {isInitialLoading && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {Array.from({ length: SKELETON_COUNT }, (_, i) => (
-            <SkeletonFreeGames key={i} />
-          ))}
-        </ScrollView>
+        <FlashList
+          data={skeletonData}
+          horizontal
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderSkeletonItem}
+          showsHorizontalScrollIndicator={false}
+          estimatedItemSize={ESTIMATED_CARD_WIDTH}
+        />
       )}
 
       {/* Error state */}

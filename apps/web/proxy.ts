@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedRoutes = ["/profile"];
 const locales = ["en", "ar"];
 const defaultLocale = "en";
+
+// Protected routes are handled client-side in each page component
+// Add routes back here once Firebase Admin session cookie is working
+const protectedRoutes: string[] = [];
 
 export function proxy(request: NextRequest) {
   const session = request.cookies.get("__session");
@@ -11,26 +14,26 @@ export function proxy(request: NextRequest) {
 
   // 1. Locale Routing
   const pathnameHasLocale = locales.some(
-    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`,
   );
 
   if (!pathnameHasLocale) {
-    // e.g. incoming request is /about
-    // The new URL is now /en/about
     request.nextUrl.pathname = `/${defaultLocale}${pathname}`;
     return NextResponse.redirect(request.nextUrl);
   }
 
-  // 2. Auth Protection
+  // 2. Auth Protection (only redirects if __session cookie is missing)
   const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.includes(route)
+    pathname.includes(route),
   );
 
   if (isProtectedRoute && !session) {
-    const currentLocale = locales.find(
-      (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
-    ) || defaultLocale;
-    
+    const currentLocale =
+      locales.find(
+        (locale) =>
+          pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`,
+      ) || defaultLocale;
+
     const loginUrl = new URL(`/${currentLocale}/auth/login`, request.url);
     return NextResponse.redirect(loginUrl);
   }
@@ -39,5 +42,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|assets|docs|favicon.ico).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|assets|docs|sitemap.xml|robots.txt|favicon.ico).*)",
+  ],
 };

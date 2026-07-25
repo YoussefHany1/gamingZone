@@ -85,21 +85,19 @@ const WeeklySummary = memo(function WeeklySummary() {
     height: animatedHeight.value,
   }));
 
-  const { data: summaryDoc, isLoading } =
-    useCachedData<WeeklySummaryDoc | null>(
-      CACHE_KEY,
-      fetchWeeklySummary,
-      [],
-      SUMMARY_TTL_MS,
-    );
+  const { data: summaryDoc, isLoading } = useCachedData<WeeklySummaryDoc | null>(
+    CACHE_KEY,
+    fetchWeeklySummary,
+    [],
+    SUMMARY_TTL_MS,
+  );
 
   // Animate between collapsed and expanded states whenever either changes.
   useEffect(() => {
     if (contentHeight > 0) {
-      animatedHeight.value = withTiming(
-        expanded ? contentHeight : COLLAPSED_HEIGHT,
-        { duration: 300 },
-      );
+      animatedHeight.value = withTiming(expanded ? contentHeight : COLLAPSED_HEIGHT, {
+        duration: 300,
+      });
     }
   }, [expanded, contentHeight, animatedHeight]);
 
@@ -110,28 +108,22 @@ const WeeklySummary = memo(function WeeklySummary() {
     }
   }, []);
 
-  const handleToggleExpand = useCallback(
-    () => setExpanded((prev) => !prev),
-    [],
-  );
+  const handleToggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
 
   if (isLoading && !summaryDoc) return <Loading />;
   if (!summaryDoc) return null;
 
   const currentLang: "ar" | "en" = i18n.language.startsWith("ar") ? "ar" : "en";
-  const content =
-    currentLang === "ar" ? summaryDoc.summary_ar : summaryDoc.summary_en;
+  const content = currentLang === "ar" ? summaryDoc.summary_ar : summaryDoc.summary_en;
   if (!content) return null;
 
   return (
     <View style={styles.card}>
       <View style={styles.headerContainer}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>
-            {t("home.seeklySummary.title")}
-          </Text>
+          <Text style={styles.headerTitle}>{t("home.weeklySummary.title")}</Text>
           <Text style={styles.date}>
-            {t("home.seeklySummary.createdBy")} Gemini 2.5 Flash
+            {t("home.weeklySummary.createdBy")} Gemini 2.5 Flash
           </Text>
         </View>
         <Text style={styles.date}>
@@ -153,9 +145,7 @@ const WeeklySummary = memo(function WeeklySummary() {
         activeOpacity={0.7}
       >
         <Text style={styles.readMoreText}>
-          {expanded
-            ? t("home.seeklySummary.readLess")
-            : t("home.seeklySummary.readMore")}
+          {expanded ? t("home.weeklySummary.readLess") : t("home.weeklySummary.readMore")}
         </Text>
       </TouchableOpacity>
     </View>

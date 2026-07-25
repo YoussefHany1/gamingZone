@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
 import NotificationService from "@/src/services/notificationService";
 import { useTranslation } from "react-i18next";
-import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { adUnitId } from "@/src/constants/config";
 import { useNotificationPreferences } from "@/src/hooks/useNotificationPreferences";
 import useRssFeeds from "@/src/hooks/useRssFeeds";

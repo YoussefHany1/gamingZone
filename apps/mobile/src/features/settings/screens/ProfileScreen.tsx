@@ -18,7 +18,7 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import SkeletonProfile from "../skeleton/SkeletonProfile";
 import { useTranslation } from "react-i18next";
-import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import COLORS from "@/src/constants/colors";
 import { adUnitId } from "@/src/constants/config";
 import { useAuthStore } from "@/src/store/useAuthStore";

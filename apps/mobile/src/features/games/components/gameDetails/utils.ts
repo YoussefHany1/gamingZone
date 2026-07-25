@@ -1,4 +1,4 @@
-﻿import axios from "axios";
+import axios from "axios";
 import COLORS from "@/src/constants/colors";
 import { SERVER_URL } from "@/src/constants/config";
 import type {
@@ -119,25 +119,6 @@ export async function fetchSteamRequirements(
   }
 }
 
-/** Fetches full game details from the GamingZone backend. */
-export async function fetchGameById(id: number | string): Promise<GameData> {
-  if (!id) throw new Error("fetchGameById: id is required");
-
-  try {
-    const res = await axios.get<GameData>(`${SERVER_URL}/game-details`, {
-      params: { id },
-    });
-    return res.data;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      if (error.response) {
-        throw new Error(`Server error: ${error.response.status}`);
-      }
-      throw new Error("Network error â€” check your connection.");
-    }
-    throw error;
-  }
-}
 
 // â”€â”€â”€ Color utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
