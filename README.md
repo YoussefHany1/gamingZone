@@ -8,11 +8,6 @@
   <strong>The Ultimate Video Game Hub & Library Tracker</strong>
 </p>
 
-<!-- <p align="center">
-  <a href="https://github.com/YoussefHany1/gamingZone/stargazers"><img src="https://img.shields.io/github/stars/YoussefHany1/gamingZone?style=for-the-badge&color=12c2e9" alt="GitHub Stars" /></a>
-  <a href="https://github.com/YoussefHany1/gamingZone/network/members"><img src="https://img.shields.io/github/forks/YoussefHany1/gamingZone?style=for-the-badge&color=c471ed" alt="GitHub Forks" /></a>
-</p> -->
-
 **Gaming Zone** is a comprehensive platform for video game enthusiasts. It features a modern **React Native (Expo)** mobile application and a powerful **Next.js** web platform, providing a seamless experience for tracking the latest gaming news, reviews, and free game offers.
 
 The platform aggregates content from top sources, and allows users to manage their personal game library, powered by a robust backend using **Appwrite**, **Firebase**, and a custom **API**.
@@ -133,21 +128,28 @@ The project includes automation scripts located in the `apps/backend/scripts/` f
 
 These are triggered automatically via **GitHub Actions** to ensure the Appwrite database is always up-to-date.
 
-## 📸 Screenshots
+## 📱 App Screenshots
 
 <p align="center">
-  <img src="apps/mobile/assets/1.png" width="100%" />
-  <!-- <img src="apps/mobile/assets/screenshots/news.jpg" width="30%" />
-  <img src="apps/mobile/assets/screenshots/news-details.jpg" width="30%" /> -->
+  <img src="assets/app/1.png" width="100%" alt="Gaming Zone Mobile App - Screen 1" />
 </p>
 <p align="center">
-  <img src="apps/mobile/assets/2.png" width="100%" />
-  <!-- <img src="apps/mobile/assets/screenshots/games-search.jpg" width="30%" />
-  <img src="apps/mobile/assets/screenshots/game-details.jpg" width="30%" /> -->
+  <img src="assets/app/2.png" width="100%" alt="Gaming Zone Mobile App - Screen 2" />
 </p>
 <p align="center">
-  <img src="apps/mobile/assets/3.png" width="100%" />
-  <!-- <img src="apps/mobile/assets/screenshots/notifications.jpg" width="30%" /> -->
+  <img src="assets/app/3.png" width="100%" alt="Gaming Zone Mobile App - Screen 3" />
+</p>
+
+## 🌐 Web Screenshots
+
+<p align="center">
+  <img src="assets/web/Screenshot_16-7-2026_202949_gz1.vercel.app.jpeg" width="100%" alt="Gaming Zone Web App - Home Page" />
+</p>
+<p align="center">
+  <img src="assets/web/Screenshot_16-7-2026_203214_gz1.vercel.app.jpeg" width="100%" alt="Gaming Zone Web App - Browse Page" />
+</p>
+<p align="center">
+  <img src="assets/web/Screenshot_16-7-2026_203430_gz1.vercel.app.jpeg" width="100%" alt="Gaming Zone Web App - Details Page" />
 </p>
 
 ## 🤝 Contributing
