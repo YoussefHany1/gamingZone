@@ -10,7 +10,7 @@ if (typeof WebSocket !== "undefined") {
   WebSocket.prototype.send = function (data) {
     if (this.readyState === WebSocket.OPEN) {
       try {
-        originalSend.call(this, data);
+        originalSend.call(this, data as any);
       } catch (e) {
         console.warn("[WebSocket Patch] Caught send error:", e);
       }

@@ -1,12 +1,4 @@
-﻿import {
-  useCallback,
-  memo,
-  useMemo,
-  Fragment,
-  useState,
-  useEffect,
-  useRef,
-} from "react";
+import { useCallback, memo, useMemo, Fragment, useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -15,6 +7,7 @@ import {
   RefreshControl,
   ToastAndroid,
   InteractionManager,
+  TouchableOpacity,
 } from "react-native";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
@@ -67,9 +60,9 @@ const NewsItem = memo(function NewsItem({
         language === "ar" ? { direction: "rtl" } : { direction: "ltr" },
       ]}
     >
-      <Pressable
+      <TouchableOpacity
         style={styles.NewsContainer}
-        android_ripple={{ color: COLORS.secondary }}
+        // android_ripple={{ color: COLORS.secondary }}
         onPress={() => onPress(item)}
       >
         <View style={styles.textContainer}>
@@ -99,8 +92,7 @@ const NewsItem = memo(function NewsItem({
                     uri: item.thumbnail,
                     headers: {
                       Referer: "https://www.saudigamer.com/",
-                      "User-Agent":
-                        "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36",
+                      "User-Agent": "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36",
                     },
                   }
                 : require("@/assets/image-not-found.webp")
@@ -111,8 +103,8 @@ const NewsItem = memo(function NewsItem({
           />
           <Text style={styles.website}>{item.siteName}</Text>
         </View>
-      </Pressable>
-      {shouldShowAd && <NativeAdComponent variant="news" language={language} />}
+      </TouchableOpacity>
+      {shouldShowAd && <NativeAdComponent variant="news" language={language ?? "en"} />}
     </View>
   );
 });
@@ -142,9 +134,7 @@ function LatestNews({
   const [showAds, setShowAds] = useState<boolean>(false);
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() =>
-      setShowAds(true),
-    );
+    const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
     return () => task.cancel();
   }, []);
 
@@ -162,9 +152,7 @@ function LatestNews({
 
   const feedCategory = category !== undefined ? category : undefined;
   const feedWebsite =
-    website !== undefined && website !== null && website !== ""
-      ? website
-      : undefined;
+    website !== undefined && website !== null && website !== "" ? website : undefined;
 
   const { articles, total, loading, error, refetch } = useFeed(
     feedCategory,
@@ -211,9 +199,7 @@ function LatestNews({
 
   const renderHeader = useCallback(() => {
     const safeCategory = category ? String(category).toLowerCase() : "";
-    const translatedCategory = safeCategory
-      ? t(`news.tabs.${safeCategory}`)
-      : "";
+    const translatedCategory = safeCategory ? t(`news.tabs.${safeCategory}`) : "";
     return (
       <>
         <Text style={styles.header}>
@@ -222,7 +208,7 @@ function LatestNews({
         {showDropdown !== false && (
           <DropdownPicker
             category={category ?? ""}
-            value={selectedItem}
+            value={selectedItem ?? null}
             websites={websitesList}
             onChange={(item) => onChangeFeed?.(item)}
           />
@@ -259,10 +245,7 @@ function LatestNews({
         <View style={styles.paginationContainer}>
           <Pressable
             disabled={currentPage === 1}
-            style={[
-              styles.pageButton,
-              currentPage === 1 && styles.disabledPageButton,
-            ]}
+            style={[styles.pageButton, currentPage === 1 && styles.disabledPageButton]}
             onPress={() => handlePageChange(currentPage - 1)}
           >
             <Ionicons name={prevIcon} size={18} color="white" />
@@ -312,9 +295,7 @@ function LatestNews({
 
           {endPage < totalPages && (
             <>
-              {endPage < totalPages - 1 && (
-                <Text style={styles.ellipsis}>...</Text>
-              )}
+              {endPage < totalPages - 1 && <Text style={styles.ellipsis}>...</Text>}
               <Pressable
                 style={[
                   styles.pageNumberButton,
@@ -351,9 +332,7 @@ function LatestNews({
     if (!showFooter || listData.length === 0) return null;
     return (
       <View style={styles.footerContainer}>
-        <Text style={styles.footerText}>
-          {t("news.endOfList") || "End of articles"}
-        </Text>
+        <Text style={styles.footerText}>{t("news.endOfList") || "End of articles"}</Text>
       </View>
     );
   }, [
@@ -373,8 +352,7 @@ function LatestNews({
     const state = await NetInfo.fetch();
     if (!state.isConnected) {
       ToastAndroid.show(
-        t("common.noInternet") ||
-          "No Internet Connection. Showing cached data.",
+        t("common.noInternet") || "No Internet Connection. Showing cached data.",
         ToastAndroid.LONG,
       );
       return;
@@ -413,9 +391,7 @@ function LatestNews({
         ) : (
           <View>
             {listData.map((item, index) => (
-              <Fragment
-                key={item.$id ? `${item.$id}-${index}` : index.toString()}
-              >
+              <Fragment key={item.$id ? `${item.$id}-${index}` : index.toString()}>
                 {renderItem({ item, index } as any)}
               </Fragment>
             ))}

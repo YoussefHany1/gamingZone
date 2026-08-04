@@ -19,6 +19,7 @@ export function useGames() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [submittedQuery, setSubmittedQuery] = useState<string>("");
   const [filterVisible, setFilterVisible] = useState<boolean>(false);
+  const [searchFocused, setSearchFocused] = useState<boolean>(false);
   const [filters, setFilters] = useState<GameFilters>({
     year: null,
     genre: null,
@@ -43,13 +44,32 @@ export function useGames() {
   const handleClearSearch = useCallback((): void => {
     setSearchQuery("");
     setSubmittedQuery("");
+    setSearchFocused(false);
     Keyboard.dismiss();
   }, []);
 
   const handleSubmitSearch = useCallback((): void => {
     setSubmittedQuery(searchQuery);
+    setSearchFocused(false);
     Keyboard.dismiss();
   }, [searchQuery]);
+
+  const handleSearchFocus = useCallback((): void => {
+    setSearchFocused(true);
+  }, []);
+
+  const handleSearchBlur = useCallback((): void => {
+    // Slight delay so a tap on a suggestion row fires before hiding
+    setTimeout(() => setSearchFocused(false), 150);
+  }, []);
+
+  /** Called when user picks a suggestion – clears input & hides autocomplete */
+  const handleAutocompleteSelect = useCallback((): void => {
+    setSearchQuery("");
+    setSubmittedQuery("");
+    setSearchFocused(false);
+    Keyboard.dismiss();
+  }, []);
 
   const handleApplyFilters = useCallback((newFilters: GameFilters): void => {
     setFilters(newFilters);
@@ -78,6 +98,9 @@ export function useGames() {
   const activeFilterCount = countActiveFilters(filters);
   const showResults = effectiveQuery !== "" || activeFilterCount > 0;
 
+  /** Autocomplete should be visible when the input is focused and has text */
+  const showAutocomplete = searchFocused && searchQuery.trim().length >= 2;
+
   return {
     t,
     searchQuery,
@@ -87,13 +110,19 @@ export function useGames() {
     effectiveQuery,
     activeFilterCount,
     showResults,
+    searchFocused,
+    showAutocomplete,
     onScroll,
     handleSearchTextChange,
     handleClearSearch,
     handleSubmitSearch,
+    handleSearchFocus,
+    handleSearchBlur,
+    handleAutocompleteSelect,
     handleApplyFilters,
     handleBack,
     openFilter,
     closeFilter,
   };
 }
+

@@ -47,7 +47,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
       // If they somehow pasted a strange URL, grab the end part
       if (vanity.includes("/")) {
         const parts = vanity.split("/");
-        vanity = parts[parts.length - 1];
+        vanity = parts[parts.length - 1] ?? "";
       }
     }
 

@@ -474,6 +474,34 @@ app.get('/search', cacheMiddleware(300), async (req, res) => {
   }
 });
 
+// Fetch Multiple Games by IDs
+app.get('/games', cacheMiddleware(3600), async (req, res) => {
+  try {
+    const { ids } = req.query;
+
+    if (!ids) {
+      return res.status(400).json({ message: 'Game IDs are required' });
+    }
+
+    // Always include genres and platforms in fields so client can display them
+    const fields = `${BASE_QUERY_FIELDS}, genres.name, platforms.name, platforms.abbreviation`;
+    const whereStr = `cover.image_id != null & game_type = (0,8,9,10) & id = (${ids})`;
+
+    const query = `
+      ${fields};
+      where ${whereStr};
+      limit 50;
+    `;
+
+    const data = await callIgdb('games', query);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: 'An error occurred on the server while fetching data. Please try again later.',
+    });
+  }
+});
+
 // Game Details
 app.get('/game-details', cacheMiddleware(3600), async (req, res) => {
   try {

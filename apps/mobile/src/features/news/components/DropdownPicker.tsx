@@ -96,7 +96,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
     category,
     selectedItem.name,
   );
-  const isNotifEnabled: boolean = notifTopic ? preferences[notifTopic] : false;
+  const isNotifEnabled: boolean = notifTopic ? (preferences[notifTopic] ?? false) : false;
 
   return (
     <View style={styles.wrapper}>

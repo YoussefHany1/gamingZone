@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
 import {
   View,
   Text,
@@ -132,9 +132,9 @@ const NewsDetails = memo((): React.ReactElement => {
   const formattedDate = useMemo<string>(() => {
     if (!pubDate) return "";
     try {
-      return format(new Date(pubDate), "dd MMMM yyyy - hh:mm a", {
-        locale: currentLang === "ar" ? ar : undefined,
-      });
+      const options: { locale?: Locale } = {};
+      if (currentLang === "ar") options.locale = ar;
+      return format(new Date(pubDate), "dd MMMM yyyy - hh:mm a", options);
     } catch {
       return "";
     }

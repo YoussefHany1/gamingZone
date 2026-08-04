@@ -12,8 +12,8 @@ import apiClient from "./client";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface SearchParams {
-  query?: string;
-  filters?: GameFilters;
+  query?: string | undefined;
+  filters?: GameFilters | undefined;
 }
 
 // ─── Endpoints ────────────────────────────────────────────────────────────────
@@ -23,6 +23,15 @@ export async function fetchGameById(id: number | string): Promise<GameData> {
   if (!id) throw new Error("fetchGameById: id is required");
   const response = await apiClient.get<GameData>("/game-details", {
     params: { id },
+  });
+  return response.data;
+}
+
+/** Fetch multiple games by their IGDB IDs. */
+export async function fetchGamesByIds(ids: (number | string)[]): Promise<Game[]> {
+  if (!ids || ids.length === 0) return [];
+  const response = await apiClient.get<Game[]>("/games", {
+    params: { ids: ids.join(",") },
   });
   return response.data;
 }
@@ -97,5 +106,19 @@ export async function searchGames({ query, filters }: SearchParams): Promise<Gam
   if (filters?.sort) params.sort = filters.sort;
 
   const response = await apiClient.get<Game[]>("/search", { params });
+  return response.data;
+}
+
+/**
+ * Lightweight autocomplete search – returns up to `limit` results (default 6)
+ * for fast live-dropdown suggestions.
+ */
+export async function searchGamesAutocomplete(
+  query: string,
+  limit = 6,
+): Promise<Game[]> {
+  const response = await apiClient.get<Game[]>("/search", {
+    params: { q: query, limit: String(limit) },
+  });
   return response.data;
 }

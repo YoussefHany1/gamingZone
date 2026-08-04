@@ -122,7 +122,7 @@ const Notification: React.FC = () => {
     const sources = rssFeeds[category] || [];
     if (sources.length === 0) return null;
 
-    const isExpanded: boolean = expandedCategories[category];
+    const isExpanded: boolean = expandedCategories[category] ?? false;
 
     const arabicSources = sources
       .filter((s) => s.language === "ar")
@@ -194,7 +194,7 @@ const Notification: React.FC = () => {
                     >
                       <View style={styles.sourceInfo}>
                         <Image
-                          source={source.image}
+                          source={source.image ?? null}
                           style={styles.sourceIcon as ImageStyle}
                         />
                         <Text style={styles.sourceName}>{source.name}</Text>

@@ -24,8 +24,10 @@ import TopRated from "../components/gamesScreen/TopRated";
 import NostalgiaCorner from "../components/gamesScreen/NostalgiaCorner";
 import SteamTopSellers from "../components/gamesScreen/SteamTopSellers";
 import Popular from "../components/gamesScreen/Popular";
+import RecommendedGames from "../components/gamesScreen/RecommendedGames";
 import TrendingMobileGames from "../components/gamesScreen/TrendingMobile";
 import FilterModal from "../components/gamesScreen/FilterModal";
+import SearchAutocomplete from "../components/gamesScreen/SearchAutocomplete";
 import type { FeedItemConfig } from "../types";
 import { adUnitId } from "@/src/constants/config";
 import COLORS from "@/src/constants/colors";
@@ -37,6 +39,7 @@ import { useGames } from "../hooks/useGames";
 const STATIC_FEED_ITEMS: FeedItemConfig[] = [
   { id: "header", type: "COMPONENT" },
   { id: "free_games", type: "COMPONENT" },
+  { id: "recommended", type: "COMPONENT" },
   { id: "news", type: "COMPONENT" },
   { id: "ad_1", type: "AD" },
   { id: "popular", type: "COMPONENT" },
@@ -73,6 +76,7 @@ AdContainer.displayName = "AdContainer";
 // Stable memoized section wrappers — defined at module scope so their
 // references never change, which lets renderItem remain dep-free.
 const FreeGamesSection = memo(() => <FreeGames />);
+const RecommendedSection = memo(() => <RecommendedGames />);
 const GamesNewsSection = memo(() => <GamesNews />);
 const PopularSection = memo(() => <Popular />);
 const SteamSection = memo(() => <SteamTopSellers />);
@@ -83,6 +87,7 @@ const AnticipatedSection = memo(() => <MostAnticipated />);
 const NostalgiaSection = memo(() => <NostalgiaCorner />);
 const TopRatedSection = memo(() => <TopRated />);
 FreeGamesSection.displayName = "FreeGamesSection";
+RecommendedSection.displayName = "RecommendedSection";
 GamesNewsSection.displayName = "GamesNewsSection";
 PopularSection.displayName = "PopularSection";
 SteamSection.displayName = "SteamSection";
@@ -105,10 +110,14 @@ function GamesScreen(): React.ReactElement {
     effectiveQuery,
     activeFilterCount,
     showResults,
+    showAutocomplete,
     onScroll,
     handleSearchTextChange,
     handleClearSearch,
     handleSubmitSearch,
+    handleSearchFocus,
+    handleSearchBlur,
+    handleAutocompleteSelect,
     handleApplyFilters,
     handleBack,
     openFilter,
@@ -139,6 +148,8 @@ function GamesScreen(): React.ReactElement {
           );
         case "free_games":
           return <FreeGamesSection />;
+        case "recommended":
+          return <RecommendedSection />;
         case "news":
           return <GamesNewsSection />;
         case "popular":
@@ -167,45 +178,58 @@ function GamesScreen(): React.ReactElement {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      {/* Search bar + filter button row */}
-      <View style={styles.searchRow}>
-        <View style={styles.searchBarContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t("games.searchPlaceholder")}
-            placeholderTextColor="#999"
-            value={searchQuery}
-            onChangeText={handleSearchTextChange}
-            onSubmitEditing={handleSubmitSearch}
-            returnKeyType="search"
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity
-              onPress={handleClearSearch}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="close-circle" size={24} color="#ccc" />
-            </TouchableOpacity>
-          )}
+      {/* Search bar + filter button row + autocomplete overlay */}
+      <View style={styles.searchSection}>
+        <View style={styles.searchRow}>
+          <View style={styles.searchBarContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder={t("games.searchPlaceholder")}
+              placeholderTextColor="#999"
+              value={searchQuery}
+              onChangeText={handleSearchTextChange}
+              onSubmitEditing={handleSubmitSearch}
+              onFocus={handleSearchFocus}
+              onBlur={handleSearchBlur}
+              returnKeyType="search"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                onPress={handleClearSearch}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close-circle" size={24} color="#ccc" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Filter button */}
+          <TouchableOpacity
+            style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
+            onPress={openFilter}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          >
+            <Ionicons
+              name="options-outline"
+              size={20}
+              color={activeFilterCount > 0 ? "#fff" : COLORS.lightGray}
+            />
+            {activeFilterCount > 0 && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
-        {/* Filter button */}
-        <TouchableOpacity
-          style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
-          onPress={openFilter}
-          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-        >
-          <Ionicons
-            name="options-outline"
-            size={20}
-            color={activeFilterCount > 0 ? "#fff" : COLORS.lightGray}
+        {/* Autocomplete dropdown — absolutely positioned below the search row */}
+        <View style={styles.autocompleteWrapper}>
+          <SearchAutocomplete
+            query={searchQuery}
+            visible={showAutocomplete}
+            onSelect={handleAutocompleteSelect}
           />
-          {activeFilterCount > 0 && (
-            <View style={styles.filterBadge}>
-              <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        </View>
       </View>
 
       {!isReady ? (
@@ -253,13 +277,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.primary,
   },
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  searchSection: {
+    zIndex: 100,
     marginHorizontal: 16,
     marginTop: 10,
     marginBottom: 20,
+  },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
+  },
+  autocompleteWrapper: {
+    position: "relative",
+    marginTop: 6,
   },
   searchBarContainer: {
     flex: 1,

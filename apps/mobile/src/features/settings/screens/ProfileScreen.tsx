@@ -1,4 +1,4 @@
-﻿import {
+import {
   View,
   ScrollView,
   Text,
@@ -168,7 +168,9 @@ function ProfileScreen(): React.ReactElement {
     });
 
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+      if (result.assets && result.assets.length > 0) {
+        setImageUri(result.assets[0]?.uri ?? null);
+      }
     }
   }, [t]);
 
@@ -305,7 +307,7 @@ function ProfileScreen(): React.ReactElement {
     (_event: DateTimePickerEvent, selectedDate?: Date): void => {
       setShowPicker(false);
       if (selectedDate) {
-        setDob(selectedDate.toISOString().split("T")[0]); // YYYY-MM-DD
+        setDob(selectedDate.toISOString().split("T")[0] ?? ""); // YYYY-MM-DD
       }
     },
     [],

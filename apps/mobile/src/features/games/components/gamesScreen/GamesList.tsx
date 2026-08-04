@@ -1,11 +1,5 @@
 import React, { useCallback, useMemo } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  RefreshControl,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, RefreshControl } from "react-native";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
@@ -22,8 +16,8 @@ import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import { searchGames } from "@/src/services/api/igdbApi";
 
-const CARD_HEIGHT = 290;
-const CARD_WIDTH = 180;
+const CARD_HEIGHT = 270;
+const CARD_WIDTH = 160;
 const NUM_COLUMNS = 2;
 const VALID_GAME_TYPES = [1, 2, 5, 6, 7, 8, 9, 10];
 
@@ -57,8 +51,7 @@ async function fetchSearchResults(
 // Game Card
 
 const GameCard = React.memo<GameCardProps>(({ item }) => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
   const { t } = useTranslation();
 
   const labelKey = `games.list.gameTypes.${item.game_type}`;
@@ -112,15 +105,11 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     [query, filters?.year, filters?.genre, filters?.platform, filters?.sort],
   );
 
-  const { data, isLoading, isRefetching, error, refetch } = useCachedData<
-    Game[]
-  >(STORAGE_KEY, fetchGames, [
-    query,
-    filters?.year,
-    filters?.genre,
-    filters?.platform,
-    filters?.sort,
-  ]);
+  const { data, isLoading, isRefetching, error, refetch } = useCachedData<Game[]>(
+    STORAGE_KEY,
+    fetchGames,
+    [query, filters?.year, filters?.genre, filters?.platform, filters?.sort],
+  );
 
   const games = data ?? [];
   const isInitialLoading = isLoading && games.length === 0;
@@ -137,11 +126,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
   const renderBackButton = useCallback(() => {
     if (!onBack) return null;
     return (
-      <TouchableOpacity
-        style={styles.backBtn}
-        onPress={onBack}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.7}>
         <Ionicons name="arrow-back" size={20} color="#fff" />
       </TouchableOpacity>
     );
@@ -221,8 +206,6 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
 
 export default React.memo(GamesList);
 
-// Styles
-
 const styles = StyleSheet.create({
   backBtn: {
     flexDirection: "row",
@@ -245,8 +228,8 @@ const styles = StyleSheet.create({
     margin: 10,
     alignItems: "center",
     justifyContent: "center",
-    height: 270,
-    width: 160,
+    height: CARD_HEIGHT,
+    width: CARD_WIDTH,
   },
   cover: {
     width: 140,

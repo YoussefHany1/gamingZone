@@ -51,7 +51,7 @@ function groupByCategory(documents: RawSource[]): RssFeedMap {
       ...doc,
       language: doc.language ?? "en",
       // Prefer rssUrl over website; expose as a generic 'url' field.
-      url: doc.rssUrl ?? doc.website,
+      url: doc.rssUrl ?? doc.website ?? "",
     };
 
     if (!map[category]) map[category] = [];
