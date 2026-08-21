@@ -4,14 +4,15 @@ import { NETWORK_ICONS } from "../constants";
 
 interface EventNetworksProps {
   networks?: { network_type: number; url: string }[];
+  title?: string;
 }
 
-export default function EventNetworks({ networks }: EventNetworksProps) {
+export default function EventNetworks({ networks, title = "Links & Social" }: EventNetworksProps) {
   if (!networks || networks.length === 0) return null;
 
   return (
     <div>
-      <h2 className="text-xl font-black text-white mb-4">Links & Social</h2>
+      <h2 className="text-xl font-black text-white mb-4">{title}</h2>
       <div className="flex flex-wrap gap-3">
         {networks.map((net, i) => {
           const info = NETWORK_ICONS[net.network_type] || {
@@ -33,9 +34,12 @@ export default function EventNetworks({ networks }: EventNetworksProps) {
             >
               {React.cloneElement(
                 info.icon as React.ReactElement<{ color?: string }>,
-                { color: info.color }
+                { color: info.color },
               )}
-              <span className="text-sm font-semibold" style={{ color: info.color }}>
+              <span
+                className="text-sm font-semibold"
+                style={{ color: info.color }}
+              >
                 {info.label}
               </span>
             </a>

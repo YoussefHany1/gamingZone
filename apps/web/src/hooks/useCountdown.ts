@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { CountdownResult } from "./types";
+import { computeTimeLeft } from "@gaming-zone/utils";
+import type { CountdownResult } from "./types";
 
 export function useCountdown(
   targetTimestamp: number | null,
@@ -14,31 +15,22 @@ export function useCountdown(
       return;
     }
 
-    const targetNum: number = target;
-
-    function calculateTime() {
-      const difference = targetNum * 1000 - Date.now();
-
-      if (difference <= 0) {
-        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-      }
-
-      return {
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / 1000 / 60) % 60),
-        seconds: Math.floor((difference / 1000) % 60),
-      };
-    }
+    const calculateTime = (): CountdownResult => {
+      return (
+        computeTimeLeft(target) ?? {
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+        }
+      );
+    };
 
     setTimeLeft(calculateTime());
 
     const interval = setInterval(() => {
-      const updatedTime = calculateTime();
-      setTimeLeft(updatedTime);
-
-      const difference = targetNum * 1000 - Date.now();
-      if (difference <= 0) {
+      setTimeLeft(calculateTime());
+      if (computeTimeLeft(target) === null) {
         clearInterval(interval);
       }
     }, 1000);

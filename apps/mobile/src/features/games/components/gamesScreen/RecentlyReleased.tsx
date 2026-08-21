@@ -1,5 +1,6 @@
 import React, { useCallback } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -18,8 +19,6 @@ const CARD_HEIGHT = 200;
 const STORAGE_KEY = "GAMES_CACHE_RECENTLY_RELEASED";
 
 // Helpers
-
-
 
 const formatReleaseDate = (
   timestamp: number | null | undefined,
@@ -45,15 +44,13 @@ function getRatingColor(rating: number): [string, string] {
 // Card
 
 const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
-  const navigation =
-    useNavigation<NavigationProp<Record<string, object | undefined>>>();
+  const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const { t, i18n } = useTranslation();
 
   // Derive how many days ago the game was released
   const daysSince: number | null = item.first_release_date
     ? Math.ceil(
-        Math.abs(Date.now() - item.first_release_date * 1000) /
-          (1000 * 60 * 60 * 24),
+        Math.abs(Date.now() - item.first_release_date * 1000) / (1000 * 60 * 60 * 24),
       )
     : null;
 
@@ -64,11 +61,7 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
   }, [navigation, item.id]);
 
   return (
-    <TouchableOpacity
-      style={styles.gameCard}
-      onPress={handlePress}
-      activeOpacity={0.9}
-    >
+    <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.9}>
       <LinearGradient
         colors={["#1a3052", COLORS.darkBackground]}
         style={styles.cardGradient}
@@ -96,47 +89,47 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
               colors={getRatingColor(item.total_rating / 10)}
               style={styles.ratingBadge}
             >
-              <Text style={styles.ratingText}>
+              <CustomText style={styles.ratingText}>
                 {(Math.round(item.total_rating) / 10).toFixed(1)}
-              </Text>
-              <Text style={styles.ratingIcon}>â­</Text>
+              </CustomText>
+              <CustomText style={styles.ratingIcon}>â­</CustomText>
             </LinearGradient>
           )}
         </View>
 
         {/* Info */}
         <View style={styles.infoContainer}>
-          <Text style={styles.title} numberOfLines={2}>
+          <CustomText style={styles.title} numberOfLines={2}>
             {item.name}
-          </Text>
+          </CustomText>
 
           <View style={styles.releaseDateContainer}>
-            <Text style={styles.releaseDate}>
+            <CustomText style={styles.releaseDate}>
               {formatReleaseDate(item.first_release_date, i18n.language)}
-            </Text>
+            </CustomText>
           </View>
 
           {item.genres && item.genres.length > 0 && (
-            <Text style={styles.genreText} numberOfLines={1}>
+            <CustomText style={styles.genreText} numberOfLines={1}>
               {item.genres.map((g) => g.name).join(" Â· ")}
-            </Text>
+            </CustomText>
           )}
 
           {/* "NEW" badge visible for games released within the last 7 days */}
           {isNew && (
-            <Text style={styles.newBadgeText}>
+            <CustomText style={styles.newBadgeText}>
               {t("games.list.recentlyReleased.new")}
-            </Text>
+            </CustomText>
           )}
 
           {item.platforms && item.platforms.length > 0 && (
             <View style={styles.platformsContainer}>
-              <Text style={styles.platformsText} numberOfLines={1}>
+              <CustomText style={styles.platformsText} numberOfLines={1}>
                 {item.platforms
                   .slice(0, 3)
                   .map((p) => p.abbreviation ?? p.name)
                   .join(" Â· ")}
-              </Text>
+              </CustomText>
             </View>
           )}
         </View>

@@ -1,6 +1,5 @@
 import Link from "@/components/Link";
 import { Metadata } from "next";
-
 import GameDetailsClient from "@/features/gameDetails/components/GameDetailsClient";
 import {
   fetchGameDetails,
@@ -36,43 +35,43 @@ export async function generateMetadata(props: {
     ? `https://images.igdb.com/igdb/image/upload/t_screenshot_med/${game.cover.image_id}.webp`
     : "/assets/cover2.png";
 
-    const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://gamingzone.com"}/${locale}/games/${id}`;
+  const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://gamingzone.com"}/${locale}/games/${id}`;
 
-    return {
-      title: ` Gaming Zone | ${game.name}`,
+  return {
+    title: ` Gaming Zone | ${game.name}`,
+    description:
+      game.summary ||
+      (locale === "en"
+        ? "Read game review, details, and system requirements."
+        : "اقرأ مراجعة وتفاصيل ومواصفات تشغيل اللعبة."),
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    icons: {
+      icon: "/assets/icon.webp",
+    },
+    openGraph: {
+      title: game.name,
       description:
         game.summary ||
         (locale === "en"
-          ? "Read game review, details, and system requirements."
-          : "اقرأ مراجعة وتفاصيل ومواصفات تشغيل اللعبة."),
-      alternates: {
-        canonical: canonicalUrl,
-      },
-      icons: {
-        icon: "/assets/icon.webp",
-      },
-      openGraph: {
-        title: game.name,
-        description:
-          game.summary ||
-          (locale === "en"
-            ? "Game details and system requirements."
-            : "تفاصيل اللعبة ومواصفات تشغيلها."),
-        images: [{ url: coverUrl, alt: game.name }],
-        type: "video.other",
-        siteName: "Gaming Zone",
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: game.name,
-        description:
-          game.summary ||
-          (locale === "en"
-            ? "Game details and system requirements."
-            : "تفاصيل اللعبة ومواصفات تشغيلها."),
-        images: [coverUrl],
-      },
-    };
+          ? "Game details and system requirements."
+          : "تفاصيل اللعبة ومواصفات تشغيلها."),
+      images: [{ url: coverUrl, alt: game.name }],
+      type: "video.other",
+      siteName: "Gaming Zone",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: game.name,
+      description:
+        game.summary ||
+        (locale === "en"
+          ? "Game details and system requirements."
+          : "تفاصيل اللعبة ومواصفات تشغيلها."),
+      images: [coverUrl],
+    },
+  };
 }
 
 import { getTranslations } from "@/i18n/server";
@@ -91,7 +90,7 @@ export default async function GameDetailsPage(props: {
       <div className="w-full flex flex-col text-white">
         <main className="grow flex flex-col justify-center items-center py-20 text-center">
           <h2 className="text-xl font-bold text-gray-400">
-            {t("errors.general")}
+            {t("auth.errors.general")}
           </h2>
           <Link
             href="/games"
@@ -128,7 +127,7 @@ export default async function GameDetailsPage(props: {
       return { ...w, ...sm };
     });
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://gamingzone.com";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://gz1.vercel.app";
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "VideoGame",

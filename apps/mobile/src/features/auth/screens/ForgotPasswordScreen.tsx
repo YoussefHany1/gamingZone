@@ -1,9 +1,9 @@
 import React, { useState, useCallback, memo } from "react";
+import CustomText from "@/src/components/CustomText";
+import CustomTextInput from "@/src/components/CustomTextInput";
 import {
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  Text,
   ToastAndroid,
   ImageBackground,
   KeyboardAvoidingView,
@@ -91,10 +91,10 @@ const ForgotPasswordScreen = memo(({ navigation }: Props) => {
             allowDownscaling
           />
           {/* Title */}
-          <Text style={styles.title}>{t("auth.forgotPassword.title")}</Text>
+          <CustomText style={styles.title}>{t("auth.forgotPassword.title")}</CustomText>
 
           {/* Email Input */}
-          <TextInput
+          <CustomTextInput
             style={styles.input}
             placeholder={t("auth.emailPlaceholder")}
             placeholderTextColor="#aaa"
@@ -109,15 +109,15 @@ const ForgotPasswordScreen = memo(({ navigation }: Props) => {
             onPress={handleResetPassword}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>
+            <CustomText style={styles.buttonText}>
               {t("auth.forgotPassword.sendButton")}
-            </Text>
+            </CustomText>
           </TouchableOpacity>
           {/* Back Button */}
           <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-            <Text style={styles.buttonText}>
+            <CustomText style={styles.buttonText}>
               {t("auth.forgotPassword.backToLogin")}
-            </Text>
+            </CustomText>
           </TouchableOpacity>
         </SafeAreaView>
       </KeyboardAvoidingView>

@@ -2,16 +2,18 @@ import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
 import { GameStoresGridProps } from "../types";
 
-export default function GameStoresGrid({ gameStores, t, lang}: GameStoresGridProps) {
+export default function GameStoresGrid({
+  gameStores,
+  t,
+  lang,
+}: GameStoresGridProps) {
   const isRtl = lang === "ar";
 
   if (gameStores.length === 0) return null;
 
   return (
     <section className="glass-panel border border-white/10 p-6 rounded-3xl space-y-4 shadow-xl">
-      <h2
-        className={`text-lg font-black text-white border-b border-white/5 pb-2 flex items-center gap-2 ${isRtl ? "flex-row-reverse" : "flex-row"}`}
-      >
+      <h2 className="text-lg font-black text-white border-b border-white/5 pb-2 flex items-center gap-2">
         <ShoppingCart className="w-5 h-5 text-light-blue" />
         <span>{t("games.details.availableStores")}</span>
       </h2>

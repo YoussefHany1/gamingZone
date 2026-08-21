@@ -1,16 +1,9 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-  memo,
-} from "react";
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
+import CustomTextInput from "@/src/components/CustomTextInput";
 import {
   View,
-  Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -33,6 +26,7 @@ import {
 } from "../lib/aiLimit";
 import { ChatMessage } from "../types";
 import COLORS from "@/src/constants/colors";
+import CustomText from "@/src/components/CustomText";
 
 const AIChatScreen: React.FC = memo(() => {
   const { t } = useTranslation();
@@ -46,11 +40,11 @@ const AIChatScreen: React.FC = memo(() => {
   useEffect(() => {
     const showSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      () => setKeyboardVisible(true)
+      () => setKeyboardVisible(true),
     );
     const hideSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => setKeyboardVisible(false)
+      () => setKeyboardVisible(false),
     );
     return () => {
       showSub.remove();
@@ -96,9 +90,7 @@ const AIChatScreen: React.FC = memo(() => {
       setRemaining((prev) => (prev && prev > 0 ? prev - 1 : 0));
 
       // We only pass the user/assistant history to the model, limit to last 10
-      const historyToPass = newChat
-        .filter((m) => m.role !== "system")
-        .slice(-10);
+      const historyToPass = newChat.filter((m) => m.role !== "system").slice(-10);
       const reply = await sendChatMessage(historyToPass);
 
       setMessages((prev) => [
@@ -116,18 +108,15 @@ const AIChatScreen: React.FC = memo(() => {
   const renderItem = useCallback(({ item }: { item: ChatMessage }) => {
     const isUser = item.role === "user";
     return (
-      <View
-        style={[
-          styles.messageBubble,
-          isUser ? styles.userBubble : styles.aiBubble,
-        ]}
-      >
+      <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.aiBubble]}>
         {isUser ? (
-          <Text style={styles.userText}>{item.content}</Text>
+          <CustomText style={styles.userText}>{item.content}</CustomText>
         ) : (
           <View>
             <Markdown style={markdownStyles}>{item.content}</Markdown>
-            {item.model && <Text style={styles.modelTag}>{item.model} ðŸ¤–</Text>}
+            {item.model && (
+              <CustomText style={styles.modelTag}>{item.model} ðŸ¤–</CustomText>
+            )}
           </View>
         )}
       </View>
@@ -135,7 +124,10 @@ const AIChatScreen: React.FC = memo(() => {
   }, []);
 
   return (
-    <SafeAreaView style={[styles.container, { paddingBottom: keyboardVisible ? 0 : 90 }]} edges={["left", "right"]}>
+    <SafeAreaView
+      style={[styles.container, { paddingBottom: keyboardVisible ? 0 : 90 }]}
+      edges={["left", "right"]}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "padding"}
@@ -146,16 +138,14 @@ const AIChatScreen: React.FC = memo(() => {
           keyExtractor={(_, index) => index.toString()}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
-          onContentSizeChange={() =>
-            flatListRef.current?.scrollToEnd({ animated: true })
-          }
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
           estimatedItemSize={80}
         />
         {isLoading && (
           <View style={styles.typingContainer}>
             <ActivityIndicator size="small" color={COLORS.secondary} />
-            <Text style={styles.typingText}>{t("aiChat.typing")}</Text>
+            <CustomText style={styles.typingText}>{t("aiChat.typing")}</CustomText>
           </View>
         )}
         {messages.length <= 1 && (
@@ -171,14 +161,14 @@ const AIChatScreen: React.FC = memo(() => {
                   style={styles.suggestionChip}
                   onPress={() => setInput(suggestion)}
                 >
-                  <Text style={styles.suggestionText}>{suggestion}</Text>
+                  <CustomText style={styles.suggestionText}>{suggestion}</CustomText>
                 </TouchableOpacity>
               ))}
             </ScrollView>
           </View>
         )}
         <View style={styles.inputContainer}>
-          <TextInput
+          <CustomTextInput
             style={styles.textInput}
             value={input}
             onChangeText={setInput}
@@ -192,10 +182,7 @@ const AIChatScreen: React.FC = memo(() => {
             maxLength={500}
           />
           <TouchableOpacity
-            style={[
-              styles.sendButton,
-              !input.trim() && styles.sendButtonDisabled,
-            ]}
+            style={[styles.sendButton, !input.trim() && styles.sendButtonDisabled]}
             onPress={handleSend}
             disabled={!input.trim() || isLoading}
           >
@@ -214,7 +201,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.primary,
-      },
+  },
   listContent: {
     padding: 16,
     paddingBottom: 20,
@@ -326,5 +313,3 @@ const markdownStyles = {
     fontWeight: "bold" as const,
   },
 };
-
-

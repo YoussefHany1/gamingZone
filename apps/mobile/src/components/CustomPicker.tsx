@@ -11,6 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import COLORS from "../constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
+import CustomText from "./CustomText";
 
 type PickerOption = {
   label: string;
@@ -35,9 +36,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
     const [modalVisible, setModalVisible] = useState<boolean>(false);
 
     const selectedLabel: string = useMemo(
-      () =>
-        options.find((opt) => opt.value === selectedValue)?.label ??
-        placeholder,
+      () => options.find((opt) => opt.value === selectedValue)?.label ?? placeholder,
       [options, selectedValue, placeholder],
     );
 
@@ -56,11 +55,9 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
           style={styles.pickerButton}
           onPress={() => setModalVisible(true)}
         >
-          <Text
-            style={[styles.pickerText, !selectedValue && { color: "#ccc" }]}
-          >
+          <CustomText style={[styles.pickerText, !selectedValue && { color: "#ccc" }]}>
             {selectedLabel}
-          </Text>
+          </CustomText>
           <Ionicons name="chevron-down" size={20} color="white" />
         </TouchableOpacity>
 
@@ -82,7 +79,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
             {/* Sheet content — lives above the overlay so touches work */}
             <SafeAreaView style={styles.modalContent} edges={["bottom"]}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{placeholder}</Text>
+                <CustomText style={styles.modalTitle}>{placeholder}</CustomText>
                 <TouchableOpacity onPress={() => setModalVisible(false)}>
                   <Ionicons name="close" size={24} color="#7eaafcff" />
                 </TouchableOpacity>
@@ -104,15 +101,14 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
                     onPress={() => handleSelect(item.value)}
                     activeOpacity={0.7}
                   >
-                    <Text
+                    <CustomText
                       style={[
                         styles.optionText,
-                        item.value === selectedValue &&
-                          styles.selectedOptionText,
+                        item.value === selectedValue && styles.selectedOptionText,
                       ]}
                     >
                       {item.label}
-                    </Text>
+                    </CustomText>
                     {item.value === selectedValue && (
                       <Ionicons name="checkmark" size={24} color="#7eaafcff" />
                     )}

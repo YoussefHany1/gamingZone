@@ -1,24 +1,24 @@
-﻿import React, { useCallback, useMemo, memo, useState, useEffect } from "react";
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import React, { useCallback, useMemo, memo, useEffect, useRef } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   InteractionManager,
+  Animated,
 } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import {
-  useNavigation,
-  useRoute,
-  type RouteProp,
-} from "@react-navigation/native";
+import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import { useCountdown } from "@/src/hooks/useCountdown";
+import { formatEventDate, getEventStatus } from "@gaming-zone/utils";
+import type { EventStatus } from "@gaming-zone/utils";
 import type { EventDetailsParamList } from "../types";
 import type { GamingEvent } from "@/src/types/sharedTypes";
 import { openLink } from "@/src/lib/browser";
@@ -30,47 +30,25 @@ import GameCard from "../components/GameCard";
 import VideoCard from "../components/VideoCard";
 import NetworkButton from "../components/NetworkButton";
 import CountdownBox from "../components/CountdownBox";
-import SkeletonEventDetails from "../skeleton/SkeletonEventDetails";
-
-//  Helpers
-const formatEventDate = (timestamp: number, language = "en"): string => {
-  if (!timestamp) return "";
-  const date = new Date(timestamp * 1000);
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  };
-  return date.toLocaleDateString(language, options);
-};
-
-type EventStatus = "upcoming" | "live" | "ended";
-
-const getEventStatus = (start_time: number, end_time: number): EventStatus => {
-  const now = Date.now() / 1000;
-  if (now < start_time) return "upcoming";
-  if (now >= start_time && now <= end_time) return "live";
-  return "ended";
-};
 
 //  Main Screen
 const EventDetailsScreen = memo((): React.ReactElement => {
   const navigation = useNavigation();
-  const route =
-    useRoute<RouteProp<EventDetailsParamList, "EventDetailsScreen">>();
+  const route = useRoute<RouteProp<EventDetailsParamList, "EventDetailsScreen">>();
   const { t, i18n } = useTranslation();
 
-  const [isReady, setIsReady] = useState(false);
+  const contentOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const interactionTask = InteractionManager.runAfterInteractions(() => {
-      setIsReady(true);
+      Animated.timing(contentOpacity, {
+        toValue: 1,
+        duration: 280,
+        useNativeDriver: true,
+      }).start();
     });
     return () => interactionTask.cancel();
-  }, []);
+  }, [contentOpacity]);
 
   const event: GamingEvent = route.params.event;
   const status: EventStatus = useMemo(
@@ -104,9 +82,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
   );
 
   const streamBtnColors: [string, string] =
-    status === "live"
-      ? ["#FF3B30", "#FF6B6B"]
-      : [COLORS.secondary, COLORS.lightGray];
+    status === "live" ? ["#FF3B30", "#FF6B6B"] : [COLORS.secondary, COLORS.lightGray];
 
   return (
     <View style={styles.screen}>
@@ -144,62 +120,50 @@ const EventDetailsScreen = memo((): React.ReactElement => {
         {/* Status badge */}
         <View style={styles.heroBadgeRow}>
           {status === "live" && (
-            <LinearGradient
-              colors={["#FF3B30", "#FF6B6B"]}
-              style={styles.liveBadge}
-            >
+            <LinearGradient colors={["#FF3B30", "#FF6B6B"]} style={styles.liveBadge}>
               <View style={styles.liveDot} />
-              <Text style={styles.liveText}>{t("home.gamingEvents.live")}</Text>
+              <CustomText style={styles.liveText}>
+                {t("home.gamingEvents.live")}
+              </CustomText>
             </LinearGradient>
           )}
           {status === "upcoming" && (
             <View style={styles.upcomingBadge}>
-              <Text style={styles.upcomingText}>
+              <CustomText style={styles.upcomingText}>
                 {t("home.gamingEvents.upcoming")}
-              </Text>
+              </CustomText>
             </View>
           )}
           {status === "ended" && (
             <View style={styles.endedBadge}>
-              <Text style={styles.endedText}>Ended</Text>
+              <CustomText style={styles.endedText}>Ended</CustomText>
             </View>
           )}
         </View>
 
-        <Text style={styles.heroTitle}>{event.name}</Text>
+        <CustomText style={styles.heroTitle}>{event.name}</CustomText>
       </View>
 
-      {/* â”€â”€ Scrollable content â”€â”€ */}
-      {!isReady ? (
-        <SkeletonEventDetails />
-      ) : (
+      {/* ── Scrollable content ── */}
+      <Animated.View style={[styles.scroll, { opacity: contentOpacity }]}>
         <ScrollView
-          style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           {/* Dates */}
           <View style={styles.datesRow}>
             <View style={styles.dateBlock}>
-              <Ionicons
-                name="calendar-outline"
-                size={18}
-                color={COLORS.lightGray}
-              />
+              <Ionicons name="calendar-outline" size={18} color={COLORS.lightGray} />
               <View>
-                <Text style={styles.dateBlockLabel}>Starts</Text>
-                <Text style={styles.dateBlockValue}>{startDateStr}</Text>
+                <CustomText style={styles.dateBlockLabel}>Starts</CustomText>
+                <CustomText style={styles.dateBlockValue}>{startDateStr}</CustomText>
               </View>
             </View>
             <View style={styles.dateBlock}>
-              <Ionicons
-                name="flag-outline"
-                size={18}
-                color={COLORS.lightGray}
-              />
+              <Ionicons name="flag-outline" size={18} color={COLORS.lightGray} />
               <View>
-                <Text style={styles.dateBlockLabel}>Ends</Text>
-                <Text style={styles.dateBlockValue}>{endDateStr}</Text>
+                <CustomText style={styles.dateBlockLabel}>Ends</CustomText>
+                <CustomText style={styles.dateBlockValue}>{endDateStr}</CustomText>
               </View>
             </View>
           </View>
@@ -207,14 +171,14 @@ const EventDetailsScreen = memo((): React.ReactElement => {
           {/* Countdown */}
           {timeUntil && (
             <View style={styles.section}>
-              <SectionTitle title="Starts In" />
+              <SectionTitle title={t("events.startsIn") || "Starts In"} />
               <View style={styles.countdownRow}>
                 <CountdownBox value={timeUntil.days} label="Days" />
-                <Text style={styles.countdownSep}>:</Text>
+                <CustomText style={styles.countdownSep}>:</CustomText>
                 <CountdownBox value={timeUntil.hours} label="Hours" />
-                <Text style={styles.countdownSep}>:</Text>
+                <CustomText style={styles.countdownSep}>:</CustomText>
                 <CountdownBox value={timeUntil.minutes} label="Min" />
-                <Text style={styles.countdownSep}>:</Text>
+                <CustomText style={styles.countdownSep}>:</CustomText>
                 <CountdownBox value={timeUntil.seconds} label="Sec" />
               </View>
             </View>
@@ -234,17 +198,15 @@ const EventDetailsScreen = memo((): React.ReactElement => {
                 end={{ x: 1, y: 1 }}
               >
                 <Ionicons
-                  name={
-                    status === "live" ? "radio-outline" : "play-circle-outline"
-                  }
+                  name={status === "live" ? "radio-outline" : "play-circle-outline"}
                   size={22}
                   color="#fff"
                 />
-                <Text style={styles.streamBtnText}>
+                <CustomText style={styles.streamBtnText}>
                   {status === "live"
                     ? t("home.gamingEvents.watchNowButton")
                     : t("home.gamingEvents.detailsButton")}
-                </Text>
+                </CustomText>
               </LinearGradient>
             </TouchableOpacity>
           )}
@@ -252,15 +214,15 @@ const EventDetailsScreen = memo((): React.ReactElement => {
           {/* Description */}
           {event.description ? (
             <View style={styles.section}>
-              <SectionTitle title="About" />
-              <Text style={styles.description}>{event.description}</Text>
+              <SectionTitle title={t("events.about") || "About"} />
+              <CustomText style={styles.description}>{event.description}</CustomText>
             </View>
           ) : null}
 
           {/* Social / Links */}
           {event.event_networks && event.event_networks.length > 0 && (
             <View style={styles.section}>
-              <SectionTitle title="Links & Social" />
+              <SectionTitle title={t("events.links") || "Links & Social"} />
               <View style={styles.networksWrap}>
                 {event.event_networks.map((net, i) => (
                   <NetworkButton key={i} network={net} />
@@ -274,6 +236,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
             <View style={styles.section}>
               <SectionTitle title="Videos" />
               <FlashList
+                renderScrollComponent={GHScrollView as any}
                 data={event.videos}
                 horizontal
                 keyExtractor={(v) => v.video_id}
@@ -289,8 +252,9 @@ const EventDetailsScreen = memo((): React.ReactElement => {
           {/* â”€â”€ Featured Games â”€â”€ */}
           {event.games && event.games.length > 0 && (
             <View style={styles.section}>
-              <SectionTitle title="Featured Games" />
+              <SectionTitle title={t("events.featuredGames") || "Featured Games"} />
               <FlashList
+                renderScrollComponent={GHScrollView as any}
                 data={event.games}
                 horizontal
                 keyExtractor={(g) => String(g.id)}
@@ -305,7 +269,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
 
           <View style={{ height: 40 }} />
         </ScrollView>
-      )}
+      </Animated.View>
     </View>
   );
 });
@@ -468,6 +432,8 @@ const styles = StyleSheet.create({
     color: "#b7becb",
     fontSize: 15,
     lineHeight: 24,
+    textAlign: "left",
+    direction: "ltr",
   },
   // Networks
   networksWrap: {

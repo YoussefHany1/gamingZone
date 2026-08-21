@@ -1,4 +1,7 @@
 import { RssFeedMap } from "@/src/hooks/useRssFeeds";
+import type { Article } from "@gaming-zone/core";
+
+export type { Article } from "@gaming-zone/core";
 
 export type RssFeedSource = {
   name: string;
@@ -7,21 +10,11 @@ export type RssFeedSource = {
   website?: string;
   aboutSite?: string;
 };
-export type Article = {
-  $id?: string;
-  id?: string | number;
-  title: string;
-  description?: string;
-  pubDate?: string;
-  thumbnail?: string;
-  language?: string;
-  siteName?: string;
-  url?: string;
-};
 
 export type ArticleParams = {
   id?: string;
   $id?: string;
+  language?: string;
   title?: string;
   link?: string;
   thumbnail?: string;
@@ -53,6 +46,7 @@ export type LatestNewsProps = {
   selectedItem?: RssFeedSource | undefined;
   onChangeFeed?: (item: RssFeedSource) => void;
   showDropdown?: boolean;
+  showHeaderTitle?: boolean;
   websitesList?: RssFeedSource[];
   showFooter?: boolean;
   scrollEnabled?: boolean;

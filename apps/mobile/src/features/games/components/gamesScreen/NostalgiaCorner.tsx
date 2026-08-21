@@ -1,7 +1,8 @@
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import React, { useCallback } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
@@ -110,7 +111,7 @@ const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
       <View style={styles.outerFrame}>
         {/* Decade badge positioned at the top edge */}
         <View style={styles.decadeBadge}>
-          <Text style={styles.decadeText}>{decade}</Text>
+          <CustomText style={styles.decadeText}>{decade}</CustomText>
         </View>
 
         {/* Cover image with sepia overlay */}
@@ -139,7 +140,7 @@ const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
         <View style={styles.titleRibbon}>
           <View style={styles.ribbonLeft} />
           <View style={styles.ribbonCenter}>
-            <Text style={styles.titleText}>{item.name}</Text>
+            <CustomText style={styles.titleText}>{item.name}</CustomText>
           </View>
           <View style={styles.ribbonRight} />
         </View>
@@ -149,8 +150,8 @@ const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
           {retroConsole && (
             <View style={styles.consoleContainer}>
               <View style={styles.consoleBadge}>
-                <Text style={styles.consoleIcon}>ðŸŽ®</Text>
-                <Text style={styles.consoleText}>{retroConsole}</Text>
+                <CustomText style={styles.consoleIcon}>ðŸŽ®</CustomText>
+                <CustomText style={styles.consoleText}>{retroConsole}</CustomText>
               </View>
             </View>
           )}
@@ -200,7 +201,7 @@ export default function NostalgiaCorner(): React.ReactElement {
 
       {/* Skeleton while loading with no cached data */}
       {isActuallyLoading && (
-        <FlashList
+        <FlashList renderScrollComponent={GHScrollView as any}
           data={SKELETON_DATA}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -218,7 +219,7 @@ export default function NostalgiaCorner(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList
+        <FlashList renderScrollComponent={GHScrollView as any}
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}

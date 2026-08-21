@@ -1,9 +1,8 @@
 import React, { useState, useCallback } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   Modal,
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
@@ -18,6 +17,7 @@ import firestore from "@react-native-firebase/firestore";
 import COLORS from "@/src/constants/colors";
 import axios from "axios";
 import { Props, SteamGame, IgdbGame, SteamWishlistResponse } from "../types";
+import CustomTextInput from "@/src/components/CustomTextInput";
 
 // Hardcoded raw Vercel deployment URL to bypass possible DNS caching issues on 'igdb-api-omega' domain
 const SERVER_URL = "https://igdb-api-omega.vercel.app";
@@ -161,10 +161,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
 
       console.log("==> Step 3 Result Length:", mappedGames?.length);
       console.log("==> Sample IGDB game:", JSON.stringify(mappedGames?.[0]));
-      console.log(
-        "==> Sample Steam game:",
-        JSON.stringify(gamesToProcess?.[0]),
-      );
+      console.log("==> Sample Steam game:", JSON.stringify(gamesToProcess?.[0]));
       // 4. Fetch wishlist AppIDs
       console.log("==> Step 4: Fetching Steam wishlist for ID:", steamId);
       let wishlistAppIds: number[] = [];
@@ -179,14 +176,11 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
         console.error("==> Wishlist fetch error:", err?.message || err);
       }
 
-      const playedAppIdSet = new Set(
-        gamesToProcess.map((g) => Number(g.appid)),
-      );
+      const playedAppIdSet = new Set(gamesToProcess.map((g) => Number(g.appid)));
       const uniqueWishlistAppIds = Array.from(
         new Set(
           wishlistAppIds.filter(
-            (appid) =>
-              Number.isFinite(appid) && !playedAppIdSet.has(Number(appid)),
+            (appid) => Number.isFinite(appid) && !playedAppIdSet.has(Number(appid)),
           ),
         ),
       );
@@ -326,9 +320,10 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
       }
 
       ToastAndroid.show(
-        (
-          t("settings.profile.steam.success") || "Imported {{count}} games!"
-        ).replace("{{count}}", totalImported.toString()),
+        (t("settings.profile.steam.success") || "Imported {{count}} games!").replace(
+          "{{count}}",
+          totalImported.toString(),
+        ),
         ToastAndroid.LONG,
       );
 
@@ -356,22 +351,16 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
               <Ionicons name="close" size={24} color="#fff" />
             </TouchableOpacity>
 
-            <Ionicons
-              name="logo-steam"
-              size={50}
-              color="#fff"
-              style={styles.logo}
-            />
-            <Text style={styles.title}>
-              {t("settings.profile.steam.modal.title") ||
-                "Sync Your Steam Library"}
-            </Text>
-            <Text style={styles.description}>
+            <Ionicons name="logo-steam" size={50} color="#fff" style={styles.logo} />
+            <CustomText style={styles.title}>
+              {t("settings.profile.steam.modal.title") || "Sync Your Steam Library"}
+            </CustomText>
+            <CustomText style={styles.description}>
               {t("settings.profile.steam.modal.instructions") ||
                 "Ensure your profile is public."}
-            </Text>
+            </CustomText>
 
-            <TextInput
+            <CustomTextInput
               style={styles.input}
               placeholder={
                 t("settings.profile.steam.modal.placeholder") ||
@@ -382,10 +371,10 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
               onChangeText={setSteamInput}
             />
 
-            <Text style={styles.description}>
+            <CustomText style={styles.description}>
               {t("settings.profile.steam.modal.privacy") ||
                 "Please ensure your Steam Profile and Game Details are set to 'Public' in your privacy settings."}
-            </Text>
+            </CustomText>
 
             <TouchableOpacity
               style={styles.syncBtn}
@@ -395,9 +384,9 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.syncBtnText}>
+                <CustomText style={styles.syncBtnText}>
                   {t("settings.profile.steam.modal.syncBtn") || "Sync Games"}
-                </Text>
+                </CustomText>
               )}
             </TouchableOpacity>
           </View>

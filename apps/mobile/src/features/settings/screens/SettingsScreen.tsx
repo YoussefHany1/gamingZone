@@ -1,7 +1,7 @@
-﻿import React, { useCallback, useMemo, memo } from "react";
+import React, { useCallback, useMemo, memo } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
@@ -138,7 +138,7 @@ const SettingsScreen = memo((): React.ReactElement => {
             color={COLORS.lightGray}
             style={styles.menuIcon}
           />
-          <Text style={styles.menuLabel}>{item.label}</Text>
+          <CustomText style={styles.menuLabel}>{item.label}</CustomText>
         </View>
       </TouchableOpacity>
     );
@@ -165,7 +165,7 @@ const SettingsScreen = memo((): React.ReactElement => {
             cachePolicy="memory-disk"
             allowDownscaling
           />
-          <Text style={styles.displayName}>{displayName}</Text>
+          <CustomText style={styles.displayName}>{displayName}</CustomText>
           {!isGuest && (
             <Ionicons name="chevron-forward" size={24} color="#fff" />
           )}
@@ -186,9 +186,9 @@ const SettingsScreen = memo((): React.ReactElement => {
                 color="red"
                 style={styles.menuIcon}
               />
-              <Text style={styles.signOutText}>
+              <CustomText style={styles.signOutText}>
                 {t("settings.menu.signOut")}
-              </Text>
+              </CustomText>
             </View>
           </TouchableOpacity>
         )}

@@ -381,7 +381,7 @@ app.get('/nostalgia-corner', cacheMiddleware(3600), async (req, res) => {
 
 app.get('/search', cacheMiddleware(300), async (req, res) => {
   try {
-    const { q, year, genre, platform, sort } = req.query;
+    const { q, year, genre, platform, sort, page } = req.query;
 
     // At least one of q, year, genre, or platform must be provided
     if (!q && !year && !genre && !platform) {
@@ -389,6 +389,9 @@ app.get('/search', cacheMiddleware(300), async (req, res) => {
         message: 'At least one filter (q, year, genre, or platform) is required',
       });
     }
+
+    const pageNum = parseInt(page, 10) || 1;
+    const offset = (pageNum - 1) * 50;
 
     // Always include genres and platforms in fields so client can display them
     const fields = `${BASE_QUERY_FIELDS}, genres.name, platforms.name, platforms.abbreviation`;
@@ -432,6 +435,7 @@ app.get('/search', cacheMiddleware(300), async (req, res) => {
         search "${safeQ}";
         where ${whereStr};
         limit 50;
+        offset ${offset};
       `;
     } else {
       // Browse/filter only — server-side sort is fine here.
@@ -450,6 +454,7 @@ app.get('/search', cacheMiddleware(300), async (req, res) => {
         where ${whereStr} ${ratingFilter};
         ${serverSort}
         limit 50;
+        offset ${offset};
       `;
     }
 

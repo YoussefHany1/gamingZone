@@ -1,5 +1,7 @@
 import React, { useCallback, useMemo } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
@@ -53,7 +55,7 @@ const AnticipatedCard = React.memo<AnticipatedCardProps>(({ item }) => {
       {/* Timeline Section */}
       <View style={styles.timelineContainer}>
         <View style={styles.timelineLine} />
-        <Text style={styles.timelineDate}>{formattedDate}</Text>
+        <CustomText style={styles.timelineDate}>{formattedDate}</CustomText>
         <View style={styles.timelineDot} />
       </View>
 
@@ -73,9 +75,9 @@ const AnticipatedCard = React.memo<AnticipatedCardProps>(({ item }) => {
       />
 
       {/* Title */}
-      <Text style={styles.title} numberOfLines={2}>
+      <CustomText style={styles.title} numberOfLines={2}>
         {item.name}
-      </Text>
+      </CustomText>
     </TouchableOpacity>
   );
 });
@@ -120,7 +122,7 @@ function MostAnticipated(): React.ReactElement {
           fontSize={24}
         />
       </View>
-      <FlashList
+      <FlashList renderScrollComponent={GHScrollView as any}
         data={gamesToShow}
         horizontal
         showsHorizontalScrollIndicator={false}

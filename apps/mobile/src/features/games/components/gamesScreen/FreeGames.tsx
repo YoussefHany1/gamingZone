@@ -8,7 +8,6 @@ import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import auth from "@react-native-firebase/auth";
 import analytics from "@react-native-firebase/analytics";
-import NetInfo from "@react-native-community/netinfo";
 import Constants from "expo-constants";
 import { Query } from "react-native-appwrite";
 import { databases } from "@/src/lib/appwrite";
@@ -45,9 +44,6 @@ const dbId = Constants.expoConfig?.extra?.APPWRITE_DATABASE_ID as string;
 // Data fetching
 
 const fetchFreeGamesFromAppwrite = async (): Promise<FreeGameItem[]> => {
-  const netState = await NetInfo.fetch();
-  if (!netState.isConnected) throw new Error("No internet connection");
-
   const response = await databases.listDocuments(dbId, FREE_GAMES_COLLECTION_ID, [
     Query.orderAsc("type"),
     Query.limit(20),
@@ -118,7 +114,7 @@ CountdownTimer.displayName = "CountdownTimer";
 
 const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
   const navigation = useNavigation<any>();
-  const storeIcon = resolveStoreIcon(item.store);
+  const storeIcon = useMemo(() => resolveStoreIcon(item.store), [item.store]);
 
   // Use refs so callbacks are stable â€” no item object in deps
   const itemRef = React.useRef(item);

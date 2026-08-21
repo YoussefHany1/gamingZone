@@ -1,5 +1,6 @@
 import React, { memo } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, StyleSheet, ActivityIndicator } from "react-native";
+import CustomText from "./components/CustomText";
 import { useTranslation } from "react-i18next";
 import COLORS from "./constants/colors";
 
@@ -9,7 +10,7 @@ const Loading: React.FC = memo(() => {
   return (
     <View style={styles.loadingContainer}>
       <ActivityIndicator size="large" color="#779bdd" />
-      <Text style={styles.loadingText}>{t("common.loading")}</Text>
+      <CustomText style={styles.loadingText}>{t("common.loading")}</CustomText>
     </View>
   );
 });

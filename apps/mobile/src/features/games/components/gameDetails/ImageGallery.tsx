@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useMemo } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
   StyleSheet,
@@ -7,7 +8,6 @@ import {
   Modal,
   StatusBar,
   Animated,
-  Text,
   NativeSyntheticEvent,
   NativeScrollEvent,
   ScrollView,
@@ -41,10 +41,7 @@ const SWIPE_DOWN_VEL = 800; // px/s downward velocity to trigger close
 const SWIPE_HORIZ_DIST = 60; // px horizontal to trigger navigation
 const SWIPE_HORIZ_VEL = 400; // px/s horizontal velocity to trigger navigation
 
-// ─── IGDB image URL builders ──────────────────────────────────────────────────
-
-const igdbUrl = (size: string, imageId: string) =>
-  `https://images.igdb.com/igdb/image/upload/${size}/${imageId}.webp`;
+import { igdbImageUrl } from "@gaming-zone/utils";
 
 import type {
   GalleryImage,
@@ -250,16 +247,16 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
     if (coverImageId) {
       images.push({
         id: "cover",
-        url: igdbUrl("t_1080p", coverImageId),
-        thumbnail: igdbUrl("t_screenshot_med", coverImageId),
+        url: igdbImageUrl(coverImageId, "1080p"),
+        thumbnail: igdbImageUrl(coverImageId, "screenshot_med"),
       });
     }
 
     for (const shot of screenshots) {
       images.push({
         id: shot.id ?? shot.image_id,
-        url: igdbUrl("t_1080p", shot.image_id),
-        thumbnail: igdbUrl("t_screenshot_med", shot.image_id),
+        url: igdbImageUrl(shot.image_id, "1080p"),
+        thumbnail: igdbImageUrl(shot.image_id, "screenshot_med"),
       });
     }
 
@@ -373,9 +370,9 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
         <View style={styles.counter}>
           <Ionicons name="images-outline" size={16} color="#fff" />
           <View style={styles.counterBadge}>
-            <Text style={styles.counterText}>
+            <CustomText style={styles.counterText}>
               {activeIndex + 1}/{imageCount}
-            </Text>
+            </CustomText>
           </View>
         </View>
       )}
@@ -401,9 +398,9 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
                 <Ionicons name="close" size={28} color="#fff" />
               </TouchableOpacity>
               <View style={styles.fullScreenCounter}>
-                <Text style={styles.fullScreenCounterText}>
+                <CustomText style={styles.fullScreenCounterText}>
                   {fullScreenIndex + 1} / {imageCount}
-                </Text>
+                </CustomText>
               </View>
             </View>
 

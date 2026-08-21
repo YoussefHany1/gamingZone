@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Star, ShieldAlert, Bookmark } from "lucide-react";
 import { getAgeRatingLabel } from "../utils";
-import { GameData, GameHeroProps } from "../types";
+import { GameHeroProps } from "../types";
 
 export default function GameHero({
   game,
@@ -11,12 +11,12 @@ export default function GameHero({
   user,
   userRating,
   handleRateGame,
-  setListModalOpen, t, lang,}: GameHeroProps) {
-  const isRtl = lang === "ar";
-
+  setListModalOpen,
+  t,
+}: GameHeroProps) {
   return (
     <>
-      <div className="relative w-full h-[320px] sm:h-[450px] overflow-hidden z-0 border-b border-white/5 shadow-2xl">
+      <div className="relative w-full h-80 sm:h-112.5 overflow-hidden z-0 border-b border-white/5 shadow-2xl">
         <Image
           src={
             game.screenshots?.[0]?.image_id
@@ -32,9 +32,7 @@ export default function GameHero({
         <div className="absolute inset-0 bg-linear-to-t from-primary-bg via-primary-bg/60 to-transparent"></div>
 
         {/* Floating Hero details */}
-        <div
-          className={`absolute bottom-6 inset-x-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center sm:items-end gap-6 z-10 text-center sm:${isRtl ? "text-right" : "text-left"}`}
-        >
+        <div className="absolute bottom-6 inset-x-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center sm:items-end gap-6 z-10 text-center">
           {/* Cover Art */}
           <div className="relative w-28 sm:w-36 aspect-3/4 rounded-2xl overflow-hidden shadow-2xl border border-white/10 shrink-0 bg-white/5">
             <Image
@@ -49,9 +47,7 @@ export default function GameHero({
           {/* Core Info */}
           <div className="space-y-3 grow pb-1">
             {/* Title & Star Rating on same line */}
-            <div
-              className={`flex flex-wrap items-center gap-4 justify-center sm:justify-between ${isRtl ? "flex-row-reverse" : "flex-row"}`}
-            >
+            <div className="flex flex-wrap items-center gap-4 justify-center sm:justify-between">
               <div>
                 <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white leading-tight tracking-tight">
                   {game.name}
@@ -108,7 +104,7 @@ export default function GameHero({
             }
             setListModalOpen(true);
           }}
-          className={`flex items-center gap-2 px-5 py-3 rounded-xl bg-linear-to-r from-secondary-blue to-light-blue font-bold text-sm shadow-lg shadow-light-blue/20 hover:opacity-90 active:scale-[0.98] transition-all duration-300 ${isRtl ? "flex-row-reverse" : "flex-row"}`}
+          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-linear-to-r from-secondary-blue to-light-blue font-bold text-sm shadow-lg shadow-light-blue/20 hover:opacity-90 active:scale-[0.98] transition-all duration-300"
         >
           <Bookmark className="w-4 h-4" />
           {t("games.details.addToList")}
@@ -116,9 +112,7 @@ export default function GameHero({
 
         {/* Rating Section */}
         {user && !user.isAnonymous && (
-          <div
-            className={`flex items-center gap-3 bg-white/5 border border-white/10 px-5 py-2.5 rounded-xl ${isRtl ? "flex-row-reverse" : "flex-row"}`}
-          >
+          <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-5 py-2.5 rounded-xl">
             <span className="text-sm font-bold text-white/70">
               {t("games.details.rateThisGame") ?? "Rate this Game"}
             </span>

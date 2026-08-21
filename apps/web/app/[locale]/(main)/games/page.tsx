@@ -67,6 +67,7 @@ export default async function GamesPage(props: {
     genre?: string;
     platform?: string;
     sort?: string;
+    page?: string;
   }>;
 }) {
   const searchParams = await props.searchParams;
@@ -74,6 +75,7 @@ export default async function GamesPage(props: {
   const genre = searchParams.genre || "";
   const platform = searchParams.platform || "";
   const sort = searchParams.sort || "relevance";
+  const page = parseInt(searchParams.page || "1", 10) || 1;
 
   const isSearching = query !== "" || genre !== "" || platform !== "";
 
@@ -91,7 +93,7 @@ export default async function GamesPage(props: {
   let trendingMobile: Game[] = [];
 
   if (isSearching) {
-    searchResults = await searchGames(query, genre, platform, sort);
+    searchResults = await searchGames(query, genre, platform, sort, page);
   } else {
     // parallel fetch in Server Component
     const [
@@ -132,6 +134,7 @@ export default async function GamesPage(props: {
       genre={genre}
       platform={platform}
       sort={sort}
+      page={page}
       isSearching={isSearching}
       searchResults={searchResults}
       freeGames={freeGames}

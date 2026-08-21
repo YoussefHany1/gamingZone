@@ -1,5 +1,7 @@
 import React, { useCallback } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
@@ -25,8 +27,7 @@ const SKELETON_DATA = Array.from({ length: 5 }, (_, i) => ({ id: i }) as any);
 // Card
 
 const PopularCard = React.memo<PopularCardProps>(({ item, index }) => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
 
   const rating = item.total_rating ? Math.round(item.total_rating) / 10 : 0;
   const rank = index + 1;
@@ -36,15 +37,8 @@ const PopularCard = React.memo<PopularCardProps>(({ item, index }) => {
   }, [navigation, item.id]);
 
   return (
-    <TouchableOpacity
-      style={styles.gameCard}
-      onPress={handlePress}
-      activeOpacity={0.9}
-    >
-      <LinearGradient
-        colors={["#172a4a", "#0c1a33"]}
-        style={styles.cardBackground}
-      />
+    <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.9}>
+      <LinearGradient colors={["#172a4a", "#0c1a33"]} style={styles.cardBackground} />
 
       <View style={styles.coverContainer}>
         <Image
@@ -65,29 +59,29 @@ const PopularCard = React.memo<PopularCardProps>(({ item, index }) => {
         />
         {/* Rank badge */}
         <View style={styles.trendBadge}>
-          <Text style={styles.trendRank}>#{rank}</Text>
+          <CustomText style={styles.trendRank}>#{rank}</CustomText>
         </View>
       </View>
 
       <View style={styles.infoContainer}>
-        <Text style={styles.title} numberOfLines={2}>
+        <CustomText style={styles.title} numberOfLines={2}>
           {item.name}
-        </Text>
+        </CustomText>
 
         <View style={styles.statsContainer}>
           {rating > 0 && (
             <View style={styles.statItem}>
-              <Text style={styles.statIcon}>â­</Text>
-              <Text style={styles.statValue}>{rating.toFixed(1)}</Text>
+              <CustomText style={styles.statIcon}>â­</CustomText>
+              <CustomText style={styles.statValue}>{rating.toFixed(1)}</CustomText>
             </View>
           )}
           {item.platforms && item.platforms.length > 0 && (
             <View style={styles.platformsContainer}>
               {item.platforms.slice(0, 3).map((platform, idx) => (
                 <View key={idx} style={styles.platformChip}>
-                  <Text style={styles.platformText} numberOfLines={1}>
+                  <CustomText style={styles.platformText} numberOfLines={1}>
                     {platform.abbreviation ?? platform.name}
-                  </Text>
+                  </CustomText>
                 </View>
               ))}
             </View>
@@ -133,7 +127,7 @@ function PopularGames(): React.ReactElement {
       </View>
 
       {isActuallyLoading && (
-        <FlashList
+        <FlashList renderScrollComponent={GHScrollView as any}
           data={SKELETON_DATA}
           horizontal
           renderItem={renderSkeletonItem}
@@ -150,7 +144,7 @@ function PopularGames(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList
+        <FlashList renderScrollComponent={GHScrollView as any}
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}

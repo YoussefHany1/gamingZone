@@ -1,5 +1,6 @@
 import React, { memo } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { LinearGradient } from "expo-linear-gradient";
 import COLORS from "@/src/constants/colors";
 
@@ -10,9 +11,11 @@ const CountdownBox = memo<CountdownBoxProps>(({ value, label }) => (
       colors={[COLORS.secondary, COLORS.primary]}
       style={styles.countdownBoxGrad}
     >
-      <Text style={styles.countdownNum}>{String(value).padStart(2, "0")}</Text>
+      <CustomText style={styles.countdownNum}>
+        {String(value).padStart(2, "0")}
+      </CustomText>
     </LinearGradient>
-    <Text style={styles.countdownLabel}>{label}</Text>
+    <CustomText style={styles.countdownLabel}>{label}</CustomText>
   </View>
 ));
 CountdownBox.displayName = "CountdownBox";

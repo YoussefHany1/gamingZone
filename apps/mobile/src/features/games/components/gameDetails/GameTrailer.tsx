@@ -1,5 +1,6 @@
 import React, { memo } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import YoutubePlayer from "react-native-youtube-iframe";
 import { useTranslation } from "react-i18next";
 import { sharedStyles } from "./shared";
@@ -36,9 +37,9 @@ const GameTrailer: React.FC<GameTrailerProps> = ({ videos }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={sharedStyles.sectionHeader}>
+      <CustomText style={sharedStyles.sectionHeader}>
         {t("games.details.trailer")}
-      </Text>
+      </CustomText>
       <View style={styles.playerWrapper}>
         <YoutubePlayer height={250} videoId={trailer.video_id} />
       </View>

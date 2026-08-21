@@ -17,7 +17,7 @@ export default function EventVideoCard({ video }: { video: Video }) {
       >
         <Image
           src={getYoutubeThumbnailUrl(video.video_id)}
-          alt={video.name}
+          alt={video.name ?? "Video trailer"}
           fill
           className="object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300"
         />

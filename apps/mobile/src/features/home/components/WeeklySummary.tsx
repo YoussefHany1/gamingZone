@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState, memo } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   LayoutChangeEvent,
@@ -121,14 +121,14 @@ const WeeklySummary = memo(function WeeklySummary() {
     <View style={styles.card}>
       <View style={styles.headerContainer}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>{t("home.weeklySummary.title")}</Text>
-          <Text style={styles.date}>
+          <CustomText style={styles.headerTitle}>{t("home.weeklySummary.title")}</CustomText>
+          <CustomText style={styles.date}>
             {t("home.weeklySummary.createdBy")} Gemini 2.5 Flash
-          </Text>
+          </CustomText>
         </View>
-        <Text style={styles.date}>
+        <CustomText style={styles.date}>
           {new Date(summaryDoc.$createdAt).toLocaleDateString(currentLang)}
-        </Text>
+        </CustomText>
       </View>
 
       <Animated.View style={[styles.animatedContainer, animatedStyle]}>
@@ -144,9 +144,9 @@ const WeeklySummary = memo(function WeeklySummary() {
         style={styles.readMoreButton}
         activeOpacity={0.7}
       >
-        <Text style={styles.readMoreText}>
+        <CustomText style={styles.readMoreText}>
           {expanded ? t("home.weeklySummary.readLess") : t("home.weeklySummary.readMore")}
-        </Text>
+        </CustomText>
       </TouchableOpacity>
     </View>
   );

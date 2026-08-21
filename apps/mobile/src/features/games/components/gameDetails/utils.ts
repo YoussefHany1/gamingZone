@@ -1,36 +1,15 @@
-import axios from "axios";
 import COLORS from "@/src/constants/colors";
-import { SERVER_URL } from "@/src/constants/config";
-import type {
-  AgeRating,
-  AgeRatingInfo,
-  GameData,
-  PcRequirements,
-  SpecRow,
-  Website,
-} from "../../types";
+import type { AgeRating, AgeRatingInfo } from "../../types";
+import { AGE_RATING_MAP } from "@gaming-zone/utils";
 
-// â”€â”€â”€ Age-rating lookup tables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export {
+  AGE_RATING_MAP,
+  extractSteamAppId,
+  fetchSteamRequirements,
+  parseSpecHtml,
+} from "@gaming-zone/utils";
 
-/** Maps IGDB rating_category â†’ human-readable age label */
-export const AGE_RATING_MAP: Record<number, string> = {
-  // PEGI
-  1: "3+",
-  2: "7+",
-  3: "12+",
-  4: "16+",
-  5: "18+",
-  // ESRB
-  6: "RP",
-  7: "EC",
-  8: "E",
-  9: "E10+",
-  10: "T",
-  11: "M",
-  12: "AO",
-};
-
-// â”€â”€â”€ Store icon map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Store icon map ──────────────────────────────────────────────────────────
 
 /**
  * Maps IGDB website type IDs to locally bundled store icons.
@@ -47,86 +26,13 @@ export const STORE_ICONS: Record<number, ReturnType<typeof require>> = {
   10: require("@/assets/apple-store.webp"),
 };
 
-// â”€â”€â”€ Helper functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-/** Extracts the Steam App ID from a game's website list, or returns null. */
-export function extractSteamAppId(websites?: Website[]): string | null {
-  const steamSite = websites?.find((w) => w.type === 13);
-  if (!steamSite) return null;
-  const match = steamSite.url.match(/store\.steampowered\.com\/app\/(\d+)/);
-  return match?.[1] ?? null;
-}
-
-/** Parses Steam's HTML PC requirements blob into structured label/value rows. */
-export function parseSpecHtml(html: string): SpecRow[] {
-  const lines = html
-    // Convert closing list-item and line-break tags to newlines; strip everything else
-    .replace(/<[^>]+>/g, (tag) => {
-      const lower = tag.toLowerCase();
-      if (lower.startsWith("</li") || lower.startsWith("<br")) return "\n";
-      return "";
-    })
-    .split("\n");
-
-  const rows: SpecRow[] = [];
-
-  for (const line of lines) {
-    const clean = line
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&nbsp;/g, " ")
-      .trim();
-
-    if (!clean) continue;
-
-    const colonIdx = clean.indexOf(":");
-    if (colonIdx <= 0) continue;
-
-    const label = clean
-      .slice(0, colonIdx)
-      .replace(/\s*\*$/, "")
-      .trim();
-    const value = clean.slice(colonIdx + 1).trim();
-
-    if (label && value && !/additional/i.test(label)) {
-      rows.push({ label, value });
-    }
-  }
-
-  return rows;
-}
-
-/** Fetches PC system requirements for a Steam app from the Steam API. */
-export async function fetchSteamRequirements(
-  appId: string,
-): Promise<PcRequirements | null> {
-  try {
-    const res = await axios.get(
-      `https://store.steampowered.com/api/appdetails?appids=${appId}`,
-      { timeout: 8000 },
-    );
-    const data = res.data?.[appId];
-    if (!data?.success || !data?.data?.pc_requirements) return null;
-
-    const { minimum, recommended } = data.data.pc_requirements;
-    return {
-      minimum: minimum ? parseSpecHtml(minimum) : [],
-      recommended: recommended ? parseSpecHtml(recommended) : [],
-    };
-  } catch {
-    return null;
-  }
-}
-
-
-// â”€â”€â”€ Color utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Color utilities ─────────────────────────────────────────────────────────
 
 /**
  * Returns a badge colour for IGDB age-rating categories.
- * Green  â†’ all-ages ratings (PEGI 3 / ESRB RPâ€“E)
- * Amber  â†’ teen-rated categories
- * Red    â†’ mature-rated categories
+ * Green  → all-ages ratings (PEGI 3 / ESRB RP–E)
+ * Amber  → teen-rated categories
+ * Red    → mature-rated categories
  */
 export function getRatingColorCode(ratingCategory: number): string {
   if ([1, 2, 6, 7, 8].includes(ratingCategory)) return "#a5c400"; // green
@@ -136,7 +42,7 @@ export function getRatingColorCode(ratingCategory: number): string {
 }
 
 /**
- * Returns a badge colour for a game's aggregate rating (0â€“100 scale).
+ * Returns a badge colour for a game's aggregate rating (0–100 scale).
  * Used for the score circle on the game detail page.
  */
 export function getRatingColor(rating: number): string {

@@ -1,12 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from "react";
-import {
-  StyleSheet,
-  View,
-  TextInput,
-  TouchableOpacity,
-  InteractionManager,
-  Text,
-} from "react-native";
+import CustomText from "@/src/components/CustomText";
+import CustomTextInput from "@/src/components/CustomTextInput";
+import { StyleSheet, View, TouchableOpacity, InteractionManager } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -66,7 +61,7 @@ const AdContainer = memo(() => {
   if (!showAds) return null;
   return (
     <View style={styles.adContainer}>
-      <Text style={styles.adLabel}>{t("common.ad")}</Text>
+      <CustomText style={styles.adLabel}>{t("common.ad")}</CustomText>
       <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
     </View>
   );
@@ -99,7 +94,6 @@ NostalgiaSection.displayName = "NostalgiaSection";
 TopRatedSection.displayName = "TopRatedSection";
 
 // main
-
 function GamesScreen(): React.ReactElement {
   const {
     t,
@@ -143,7 +137,9 @@ function GamesScreen(): React.ReactElement {
               end={{ x: 1, y: 0 }}
               style={styles.header}
             >
-              <Text style={styles.headerText}>{tRef.current("games.header")}</Text>
+              <CustomText style={styles.headerText}>
+                {tRef.current("games.header")}
+              </CustomText>
             </LinearGradient>
           );
         case "free_games":
@@ -182,7 +178,7 @@ function GamesScreen(): React.ReactElement {
       <View style={styles.searchSection}>
         <View style={styles.searchRow}>
           <View style={styles.searchBarContainer}>
-            <TextInput
+            <CustomTextInput
               style={styles.searchInput}
               placeholder={t("games.searchPlaceholder")}
               placeholderTextColor="#999"
@@ -216,7 +212,9 @@ function GamesScreen(): React.ReactElement {
             />
             {activeFilterCount > 0 && (
               <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+                <CustomText style={styles.filterBadgeText}>
+                  {activeFilterCount}
+                </CustomText>
               </View>
             )}
           </TouchableOpacity>
@@ -299,7 +297,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1e2a45",
     paddingHorizontal: 15,
     paddingBottom: 2,
-    borderRadius: 24,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.secondary,
   },
@@ -311,7 +309,7 @@ const styles = StyleSheet.create({
   filterBtn: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.secondary,
     backgroundColor: "#1e2a45",

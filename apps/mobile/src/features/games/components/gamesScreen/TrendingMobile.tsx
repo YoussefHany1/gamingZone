@@ -1,5 +1,7 @@
 import React, { useCallback } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
@@ -21,84 +23,72 @@ const CARD_HEIGHT = 300;
 const CARD_MARGIN = 5;
 const STORAGE_KEY = "GAMES_CACHE_TRENDING_MOBILE";
 
-
-
 // Card
 
-const TrendingMobileCard = React.memo<TrendingMobileCardProps>(
-  ({ item, index }) => {
-    const navigation =
-      useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
-    const rating = item.total_rating ? Math.round(item.total_rating) / 10 : 0;
-    const rank = index + 1;
+const TrendingMobileCard = React.memo<TrendingMobileCardProps>(({ item, index }) => {
+  const navigation = useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
+  const rating = item.total_rating ? Math.round(item.total_rating) / 10 : 0;
+  const rank = index + 1;
 
-    const handlePress = useCallback(() => {
-      navigation.navigate("GameDetails", { gameID: item.id });
-    }, [navigation, item.id]);
+  const handlePress = useCallback(() => {
+    navigation.navigate("GameDetails", { gameID: item.id });
+  }, [navigation, item.id]);
 
-    return (
-      <TouchableOpacity
-        style={styles.gameCard}
-        onPress={handlePress}
-        activeOpacity={0.9}
-      >
-        <LinearGradient
-          colors={["#172a4a", "#0c1a33"]}
-          style={styles.cardBackground}
+  return (
+    <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.9}>
+      <LinearGradient colors={["#172a4a", "#0c1a33"]} style={styles.cardBackground} />
+
+      <View style={styles.coverContainer}>
+        <Image
+          source={
+            item.cover
+              ? {
+                  uri: `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`,
+                }
+              : require("@/assets/image-not-found.webp")
+          }
+          style={styles.cover}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          recyclingKey={item.cover?.image_id || item.id.toString()}
         />
-
-        <View style={styles.coverContainer}>
-          <Image
-            source={
-              item.cover
-                ? {
-                    uri: `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`,
-                  }
-                : require("@/assets/image-not-found.webp")
-            }
-            style={styles.cover}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            recyclingKey={item.cover?.image_id || item.id.toString()}
-          />
-          <LinearGradient
-            colors={["transparent", COLORS.darkBackground]}
-            style={styles.coverGradient}
-          />
-          <View style={styles.trendBadge}>
-            <Text style={styles.trendRank}>#{rank}</Text>
-          </View>
+        <LinearGradient
+          colors={["transparent", COLORS.darkBackground]}
+          style={styles.coverGradient}
+        />
+        <View style={styles.trendBadge}>
+          <CustomText style={styles.trendRank}>#{rank}</CustomText>
         </View>
+      </View>
 
-        <View style={styles.infoContainer}>
-          <Text style={styles.title} numberOfLines={2}>
-            {item.name}
-          </Text>
+      <View style={styles.infoContainer}>
+        <CustomText style={styles.title} numberOfLines={2}>
+          {item.name}
+        </CustomText>
 
-          <View style={styles.statsContainer}>
-            {rating > 0 && (
-              <View style={styles.statItem}>
-                <Text style={styles.statIcon}>â­</Text>
-                <Text style={styles.statValue}>{rating.toFixed(1)}</Text>
-              </View>
-            )}
-            {item.platforms && item.platforms.length > 0 && (
-              <View style={styles.platformsContainer}>
-                {item.platforms.slice(0, 3).map((platform, idx) => (
-                  <View key={idx} style={styles.platformChip}>
-                    <Text style={styles.platformText} numberOfLines={1}>
-                      {platform.abbreviation ?? platform.name}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
+        <View style={styles.statsContainer}>
+          {rating > 0 && (
+            <View style={styles.statItem}>
+              <CustomText style={styles.statIcon}>â­</CustomText>
+              <CustomText style={styles.statValue}>{rating.toFixed(1)}</CustomText>
+            </View>
+          )}
+          {item.platforms && item.platforms.length > 0 && (
+            <View style={styles.platformsContainer}>
+              {item.platforms.slice(0, 3).map((platform, idx) => (
+                <View key={idx} style={styles.platformChip}>
+                  <CustomText style={styles.platformText} numberOfLines={1}>
+                    {platform.abbreviation ?? platform.name}
+                  </CustomText>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
-      </TouchableOpacity>
-    );
-  },
-);
+      </View>
+    </TouchableOpacity>
+  );
+});
 TrendingMobileCard.displayName = "TrendingMobileCard";
 
 // Main
@@ -128,10 +118,7 @@ function TrendingMobileGames(): React.ReactElement {
         <SectionTitle
           title={t("games.list.trendingMobile.title", "Trending Mobile ðŸ”¥")}
           fontSize={24}
-          subtitle={t(
-            "games.list.trendingMobile.subtitle",
-            "Best games on the go",
-          )}
+          subtitle={t("games.list.trendingMobile.subtitle", "Best games on the go")}
         />
       </View>
 
@@ -153,7 +140,7 @@ function TrendingMobileGames(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList
+        <FlashList renderScrollComponent={GHScrollView as any}
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -164,9 +151,7 @@ function TrendingMobileGames(): React.ReactElement {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.errorContainer}>
-              <ErrorState
-                message={t("games.list.noResults", "No games found")}
-              />
+              <ErrorState message={t("games.list.noResults", "No games found")} />
             </View>
           }
           estimatedItemSize={175}

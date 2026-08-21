@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 
-
-
 import {
   EventCountdown,
   EventVideoCard,
@@ -83,20 +81,30 @@ export default async function EventDetailsPage(props: {
 
   return (
     <div className="w-full flex flex-col text-white bg-primary relative">
-      
-
       <main className="grow w-full flex flex-col pb-16">
-        <EventHero event={event} status={status} />
+        <EventHero
+          event={event}
+          status={status}
+          liveText={t("events.live") || "LIVE"}
+          upcomingText={t("events.upcoming") || "Upcoming"}
+          endedText={t("events.ended") || "Ended"}
+        />
 
         {/* CONTENT SECTION */}
         <section className="w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 mt-8 space-y-12">
-          <EventDates startTime={event.start_time} endTime={event.end_time} />
+          <EventDates
+            startTime={event.start_time}
+            endTime={event.end_time}
+            startsText={t("events.starts") || "Starts"}
+            endsText={t("events.ends") || "Ends"}
+            locale={locale}
+          />
 
           {/* Countdown */}
           {status === "upcoming" && (
             <div className="flex flex-col items-center sm:items-start">
               <h2 className="text-xl font-black text-white mb-2">
-                {t("home.events.startsIn") || "Starts In"}
+                {t("events.startsIn") || "Starts In"}
               </h2>
               <EventCountdown startTime={event.start_time} />
             </div>
@@ -113,7 +121,7 @@ export default async function EventDetailsPage(props: {
           {event.description && (
             <div>
               <h2 className="text-xl font-black text-white mb-4">
-                {t("games.details.about")}
+                {t("events.about") || "About"}
               </h2>
               <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
                 {event.description}
@@ -121,13 +129,16 @@ export default async function EventDetailsPage(props: {
             </div>
           )}
 
-          <EventNetworks networks={event.event_networks} />
+          <EventNetworks
+            networks={event.event_networks}
+            title={t("events.links") || "Links & Social"}
+          />
 
           {/* Videos */}
           {event.videos && event.videos.length > 0 && (
             <div>
               <h2 className="text-xl font-black text-white mb-4">
-                {t("games.details.videos")}
+                {t("events.videos")}
               </h2>
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar">
                 {event.videos.map((vid) => (
@@ -141,7 +152,7 @@ export default async function EventDetailsPage(props: {
           {event.games && event.games.length > 0 && (
             <div>
               <h2 className="text-xl font-black text-white mb-4">
-                {t("home.events.featuredGames") || "Featured Games"}
+                {t("events.featuredGames") || "Featured Games"}
               </h2>
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar">
                 {event.games.map((g) => (
@@ -152,8 +163,6 @@ export default async function EventDetailsPage(props: {
           )}
         </section>
       </main>
-
-      
     </div>
   );
 }

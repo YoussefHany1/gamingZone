@@ -7,6 +7,44 @@ import {
   storageSetTimestamp,
 } from "../lib/storage";
 
+// ---------------------------------------------------------------------------
+// NetInfo cache — shared across all useCachedData instances.
+// Avoids redundant network round-trips when multiple hooks trigger
+// connectivity checks within a short window (e.g. on initial mount).
+// ---------------------------------------------------------------------------
+let _netInfoCache: { isConnected: boolean | null; ts: number } | null = null;
+const NET_INFO_CACHE_MS = 5_000; // 5 seconds
+
+async function getNetworkStatus(): Promise<{ isConnected: boolean | null }> {
+  const now = Date.now();
+  if (_netInfoCache && now - _netInfoCache.ts < NET_INFO_CACHE_MS) {
+    return _netInfoCache;
+  }
+  const state = await NetInfo.fetch();
+  _netInfoCache = { isConnected: state.isConnected, ts: Date.now() };
+  return _netInfoCache;
+}
+
+// ---------------------------------------------------------------------------
+// Lightweight data-equality check.
+// For arrays we compare length + the $id of the first element, which is
+// enough to detect new content without serialising the entire payload.
+// Falls back to JSON.stringify only for non-array objects.
+// ---------------------------------------------------------------------------
+function isDataEqual<T>(a: T | null, b: T | null): boolean {
+  if (a === b) return true;
+  if (a == null || b == null) return false;
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    // Compare first-item $id as a fast proxy for "same content".
+    const firstA = (a as unknown[])[0] as Record<string, unknown> | undefined;
+    const firstB = (b as unknown[])[0] as Record<string, unknown> | undefined;
+    if (firstA?.$id !== undefined) return firstA.$id === firstB?.$id;
+    return JSON.stringify(a[0]) === JSON.stringify(b[0]);
+  }
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 /**
  * useCachedData — MMKV-backed stale-while-revalidate cache.
  *
@@ -134,7 +172,7 @@ export default function useCachedData<T>(
         }
 
         // 3. Bail out early when the device is offline.
-        const { isConnected } = await NetInfo.fetch();
+        const { isConnected } = await getNetworkStatus();
         if (!isConnected) {
           safeSet(setIsLoading, false);
           safeSet(setIsRefetching, false);
@@ -144,8 +182,7 @@ export default function useCachedData<T>(
         // 4. Fetch fresh data and update state + cache only when it changed.
         const freshData = await fetchFnRef.current();
 
-        const hasChanged =
-          JSON.stringify(freshData) !== JSON.stringify(currentDataRef.current);
+        const hasChanged = !isDataEqual(freshData, currentDataRef.current);
 
         if (hasChanged || forceRefresh) {
           currentDataRef.current = freshData;

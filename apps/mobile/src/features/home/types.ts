@@ -1,12 +1,9 @@
-export type WeeklySummaryDoc = {
-  $id: string;
-  $createdAt: string;
-  summary_ar?: string;
-  summary_en?: string;
-};
+import type { WeeklySummaryDoc } from "@gaming-zone/core";
+
+export type { WeeklySummaryDoc } from "@gaming-zone/core";
 
 export type SectionItem = {
-  type: "slideshow" | "news" | "weekly_summary" | "events" | "ad";
+  type: "slideshow" | "news" | "weekly_summary" | "recommended" | "events" | "ad";
   category?: string;
   website?: string;
   _key: string;

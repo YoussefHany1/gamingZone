@@ -72,7 +72,9 @@ export default function GameDetailsClient({
         userRating={userRating}
         handleRateGame={handleRateGame}
         setListModalOpen={setListModalOpen}
-       t={t} lang={lang} />
+        t={t}
+        lang={lang}
+      />
 
       {/* ListSelectionModal */}
       <ListSelectionModal
@@ -86,10 +88,10 @@ export default function GameDetailsClient({
       <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8 z-10 relative">
         {/* Left Col (About, Trailer, Specs, Collections) */}
         <div className="lg:col-span-2 space-y-8">
-          <GameStoresGrid gameStores={gameStores}  t={t} lang={lang} />
-          
-          <GameAbout summary={game.summary}  t={t} lang={lang} />
-          
+          <GameStoresGrid gameStores={gameStores} t={t} lang={lang} />
+
+          <GameAbout summary={game.summary} t={t} lang={lang} />
+
           <GameScreenshots
             screenshots={game.screenshots}
             activeScreenshotIdx={activeScreenshotIdx}
@@ -98,28 +100,32 @@ export default function GameDetailsClient({
             handlePrevScreenshot={handlePrevScreenshot}
             zoomScale={zoomScale}
             setZoomScale={setZoomScale}
-           t={t} lang={lang} />
-          
-          <GamePcRequirements pcSpecs={pcSpecs}  t={t} lang={lang} />
-          
-          <GameLanguages languageRows={languageRows}  t={t} lang={lang} />
-          
-          <GameSeries seriesGames={seriesGames}  t={t} lang={lang} />
-          
-          <GameSimilar similarGames={similarGames}  t={t} lang={lang} />
+            t={t}
+            lang={lang}
+          />
+
+          <GamePcRequirements pcSpecs={pcSpecs} t={t} lang={lang} />
+
+          <GameLanguages languageRows={languageRows} t={t} lang={lang} />
+
+          <GameSeries seriesGames={seriesGames} t={t} lang={lang} />
+
+          <GameSimilar similarGames={similarGames} t={t} lang={lang} />
         </div>
 
         {/* Right Col (Specifications, HLTB, Videos) */}
         <div className="space-y-6">
-          <GameSpecifications game={game}  t={t} lang={lang} />
-          
-          <GamePlayTime playTime={playTime}  t={t} lang={lang} />
-          
+          <GameSpecifications game={game} t={t} lang={lang} />
+
+          <GamePlayTime playTime={playTime} t={t} lang={lang} />
+
           <GameVideos
             videos={game.videos}
             activeVideoId={activeVideoId}
             setActiveVideoId={setActiveVideoId}
-           t={t} lang={lang} />
+            t={t}
+            lang={lang}
+          />
         </div>
       </main>
     </div>

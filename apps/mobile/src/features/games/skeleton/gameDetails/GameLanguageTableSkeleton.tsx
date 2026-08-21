@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
@@ -22,22 +23,22 @@ const GameLanguageTableSkeleton: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>{t("games.details.languages.title")}</Text>
+      <CustomText style={styles.header}>{t("games.details.languages.title")}</CustomText>
 
       {/* Column headers — fully static */}
       <View style={styles.tableHeader}>
         <View style={styles.langHeaderCell}>
           <Ionicons name="language" size={18} color={COLORS.secondary} />
-          <Text style={styles.headerLabel}>
+          <CustomText style={styles.headerLabel}>
             {t("games.details.languages.Language")}
-          </Text>
+          </CustomText>
         </View>
         {COLUMN_HEADERS.map(({ icon, key }) => (
           <View key={icon} style={styles.iconHeaderCell}>
             <Ionicons name={icon} size={18} color={COLORS.secondary} />
-            <Text style={styles.headerLabel}>
+            <CustomText style={styles.headerLabel}>
               {t(`games.details.languages.${key}`)}
-            </Text>
+            </CustomText>
           </View>
         ))}
       </View>
@@ -49,8 +50,7 @@ const GameLanguageTableSkeleton: React.FC = () => {
           style={[
             styles.tableRow,
             {
-              backgroundColor:
-                i % 2 !== 0 ? "rgba(81,105,150,0.1)" : "transparent",
+              backgroundColor: i % 2 !== 0 ? "rgba(81,105,150,0.1)" : "transparent",
             },
           ]}
         >

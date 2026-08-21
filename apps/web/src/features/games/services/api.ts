@@ -49,12 +49,33 @@ export async function searchGames(
   genre: string,
   platform: string,
   sort: string,
+  page: number = 1,
 ): Promise<Game[]> {
   try {
     const params: Record<string, string> = {};
     if (query) params.q = query;
-    if (genre) params.genre = genre;
-    if (platform) params.platform = platform;
+    if (page) params.page = page.toString();
+
+    // Map short names to IGDB exact names
+    const genreMap: Record<string, string> = {
+      rpg: "Role-playing (RPG)",
+      shooter: "Shooter",
+      fighting: "Fighting",
+      racing: "Racing",
+      strategy: "Strategy",
+      adventure: "Adventure",
+      indie: "Indie",
+    };
+
+    const platformMap: Record<string, string> = {
+      pc: "PC (Microsoft Windows)",
+      ps5: "PlayStation 5",
+      xboxSeries: "Xbox Series X|S",
+      switch: "Nintendo Switch",
+    };
+
+    if (genre) params.genre = genreMap[genre] || genre;
+    if (platform) params.platform = platformMap[platform] || platform;
     if (sort) params.sort = sort;
 
     const res = await axios.get<Game[]>(`${SERVER_URL}/search`, {

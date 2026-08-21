@@ -20,6 +20,8 @@ import analytics from "@react-native-firebase/analytics";
 import * as SplashScreen from "expo-splash-screen";
 import * as Localization from "expo-localization";
 import * as Updates from "expo-updates";
+import { useFonts } from "expo-font";
+import { APP_FONTS } from "./utils/fontUtils";
 import { I18nManager } from "react-native";
 import i18n from "./i18n";
 import COLORS from "./constants/colors";
@@ -70,15 +72,14 @@ const MyTheme: Theme = {
 const linking = {
   prefixes: [
     "gaming-zone://",
-    "https://gz1.vercel.app/",
-    "http://gz1.vercel.app/",
-    "https://igdb-api-omega.vercel.app/",
-    "http://igdb-api-omega.vercel.app/",
+    "https://gz1.vercel.app",
+    "http://gz1.vercel.app",
   ],
   config: {
     screens: {
       MainApp: {
         screens: {
+          // All news deep links open in the News tab
           News: {
             screens: {
               NewsDetails: "news/:id",
@@ -94,18 +95,13 @@ const linking = {
     },
   },
   getStateFromPath(path: string, options: Parameters<typeof getStateFromPath>[1]) {
-    let cleanPath = path;
+    let cleanPath = path.startsWith("/") ? path.substring(1) : path;
 
-    if (cleanPath.startsWith("/")) {
-      cleanPath = cleanPath.substring(1);
-    }
+    // Strip locale prefix (e.g. /en/news/123 or /ar/lists/456)
+    if (cleanPath.startsWith("en/")) cleanPath = cleanPath.substring(3);
+    else if (cleanPath.startsWith("ar/")) cleanPath = cleanPath.substring(3);
 
-    if (cleanPath.startsWith("en/")) {
-      cleanPath = cleanPath.substring(3);
-    } else if (cleanPath.startsWith("ar/")) {
-      cleanPath = cleanPath.substring(3);
-    }
-
+    // lists/:listId → Settings > UserGamesScreen
     if (cleanPath.startsWith("lists/")) {
       const state = getStateFromPath(cleanPath, {
         screens: {
@@ -121,52 +117,36 @@ const linking = {
         },
       } as Parameters<typeof getStateFromPath>[1]);
 
+      // Map query param "name" → "listName" (what UserGamesScreen expects)
       if (state) {
         try {
-          const route = state.routes[0];
-          if (route && route.state && route.state.routes) {
-            const settingsRoute = route.state.routes.find(
-              (r) => r.name === "Settings",
-            );
-            if (
-              settingsRoute &&
-              settingsRoute.state &&
-              settingsRoute.state.routes
-            ) {
-              const userGamesRoute = settingsRoute.state.routes.find(
-                (r) => r.name === "UserGamesScreen",
-              );
-              if (userGamesRoute && userGamesRoute.params) {
-                const params = userGamesRoute.params as any;
-                if (params.name && !params.listName) {
-                  params.listName = params.name;
-                }
+          // Recursively find the UserGamesScreen route anywhere in the state tree
+          const findRoute = (routes: any[]): any => {
+            for (const r of routes) {
+              if (r.name === "UserGamesScreen") return r;
+              if (r.state?.routes) {
+                const found = findRoute(r.state.routes);
+                if (found) return found;
               }
+            }
+            return null;
+          };
+          const userGamesRoute = findRoute(state.routes);
+          if (userGamesRoute?.params) {
+            const params = userGamesRoute.params as Record<string, unknown>;
+            // "name" query param → "listName" (required by UserGamesScreen)
+            if (params.name && !params.listName) {
+              params.listName = params.name;
             }
           }
         } catch (e) {
-          console.error("Error mapping query params for lists deep link:", e);
+          if (__DEV__) console.warn("[DeepLink] lists param mapping error:", e);
         }
       }
       return state;
     }
 
-    if (cleanPath.startsWith("news-details")) {
-      return getStateFromPath(cleanPath, {
-        screens: {
-          MainApp: {
-            screens: {
-              News: {
-                screens: {
-                  NewsDetails: "news-details",
-                },
-              },
-            },
-          },
-        },
-      } as Parameters<typeof getStateFromPath>[1]);
-    }
-
+    // news/:id — let the default config resolve it
     return getStateFromPath(cleanPath, options);
   },
 };
@@ -174,6 +154,8 @@ const linking = {
 SplashScreen.preventAutoHideAsync();
 
 function App(): React.ReactElement | null {
+  const [fontsLoaded, fontError] = useFonts(APP_FONTS);
+
   const { user, loading, initAuth } = useAuthStore(
     useShallow((state) => ({
       user: state.user,
@@ -237,10 +219,10 @@ function App(): React.ReactElement | null {
   }, [loading]);
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && (fontsLoaded || fontError)) {
       SplashScreen.hideAsync();
     }
-  }, [loading]);
+  }, [loading, fontsLoaded, fontError]);
 
   useNotifications(user);
   useRateApp();
@@ -263,15 +245,16 @@ function App(): React.ReactElement | null {
     routeNameRef.current = currentRouteName;
   }, []);
 
-  if (loading) {
+  const handleOnboardingDone = useCallback(async () => {
+    storage.set("@onboarding_done", "true");
+    setShowOnboarding(false);
+  }, []);
+
+  if (loading || (!fontsLoaded && !fontError)) {
     return <Loading />;
   }
 
   if (showOnboarding) {
-    const handleOnboardingDone = async () => {
-      storage.set("@onboarding_done", "true");
-      setShowOnboarding(false);
-    };
     return (
       <ErrorBoundary sectionLabel="Onboarding">
         <SafeAreaProvider>

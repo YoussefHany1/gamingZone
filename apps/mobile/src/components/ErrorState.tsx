@@ -1,5 +1,6 @@
 import React, { memo, useCallback } from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
+import CustomText from "./CustomText";
 import { useNavigation } from "@react-navigation/native";
 import type { NavigationProp } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
@@ -43,8 +44,8 @@ const EmptyState = memo(
             style={styles.iconStyles}
           />
         )}
-        <Text style={styles.noDataText}>{message || t("news.noArticles")}</Text>
-        {subMessage && <Text style={styles.subMessageText}>{subMessage}</Text>}
+        <CustomText style={styles.noDataText}>{message || t("news.noArticles")}</CustomText>
+        {subMessage && <CustomText style={styles.subMessageText}>{subMessage}</CustomText>}
 
         {showContactButton && (
           <Pressable
@@ -54,9 +55,9 @@ const EmptyState = memo(
             accessibilityLabel={t("news.contactSupport")}
             accessibilityRole="button"
           >
-            <Text style={styles.contactButtonText}>
+            <CustomText style={styles.contactButtonText}>
               {t("news.contactSupport")}
-            </Text>
+            </CustomText>
           </Pressable>
         )}
       </View>

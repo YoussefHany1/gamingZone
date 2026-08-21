@@ -1,7 +1,7 @@
 import { useCallback, memo, useMemo, Fragment, useState, useEffect, useRef } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   StyleSheet,
   Pressable,
   RefreshControl,
@@ -22,7 +22,7 @@ import ErrorState from "@/src/components/ErrorState";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import { useNavigation } from "@react-navigation/native";
-import type { Article, NewsItemProps, LatestNewsProps } from "../types";
+import type { Article, NewsItemProps, LatestNewsProps, RssFeedSource } from "../types";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 
 const NewsItem = memo(function NewsItem({
@@ -53,6 +53,10 @@ const NewsItem = memo(function NewsItem({
     return `${minutes}${t("news.duration.minutes")}`;
   }, [item?.pubDate, t]);
 
+  const itemRef = useRef(item);
+  itemRef.current = item;
+  const handlePress = useCallback(() => onPress(itemRef.current), [onPress]);
+
   return (
     <View
       style={[
@@ -63,10 +67,10 @@ const NewsItem = memo(function NewsItem({
       <TouchableOpacity
         style={styles.NewsContainer}
         // android_ripple={{ color: COLORS.secondary }}
-        onPress={() => onPress(item)}
+        onPress={handlePress}
       >
         <View style={styles.textContainer}>
-          <Text
+          <CustomText
             numberOfLines={3}
             style={[
               styles.headline,
@@ -74,13 +78,13 @@ const NewsItem = memo(function NewsItem({
             ]}
           >
             {item?.title ? item.title.substring(0, 100) : ""}
-          </Text>
+          </CustomText>
           {item?.description ? (
-            <Text numberOfLines={2} style={styles.par}>
+            <CustomText numberOfLines={2} style={styles.par}>
               {item.description}..
-            </Text>
+            </CustomText>
           ) : null}
-          <Text style={styles.timeAgoText}>{timeAgo}</Text>
+          <CustomText style={styles.timeAgoText}>{timeAgo}</CustomText>
         </View>
         <View>
           <Image
@@ -100,14 +104,55 @@ const NewsItem = memo(function NewsItem({
             contentFit="cover"
             cachePolicy="memory-disk"
             allowDownscaling={true}
+            transition={200}
           />
-          <Text style={styles.website}>{item.siteName}</Text>
+          <CustomText style={styles.website}>{item.siteName}</CustomText>
         </View>
       </TouchableOpacity>
       {shouldShowAd && <NativeAdComponent variant="news" language={language ?? "en"} />}
     </View>
   );
 });
+
+// ─── ListHeader (stable memo component — avoids 6-dep useCallback) ───────────
+const ListHeader = memo(function ListHeader({
+  category,
+  t,
+  showDropdown,
+  selectedItem,
+  websitesList,
+  onChangeFeed,
+  showHeaderTitle,
+}: {
+  category?: string | undefined;
+  t: (key: string, opts?: object) => string;
+  showDropdown?: boolean | undefined;
+  selectedItem?: RssFeedSource | null | undefined;
+  websitesList: RssFeedSource[];
+  onChangeFeed?: ((item: RssFeedSource) => void) | undefined;
+  showHeaderTitle?: boolean | undefined;
+}) {
+  const safeCategory = category ? String(category).toLowerCase() : "";
+  const translatedCategory = safeCategory ? t(`news.tabs.${safeCategory}`) : "";
+  const headerTitle = translatedCategory ? t("news.latestHeader", { category: translatedCategory }) : "";
+  
+  return (
+    <>
+      {showHeaderTitle && headerTitle ? (
+        <CustomText style={styles.header}>{headerTitle}</CustomText>
+      ) : null}
+      {showDropdown !== false && (
+        <DropdownPicker
+          category={category ?? ""}
+          value={selectedItem ?? null}
+          websites={websitesList}
+          onChange={(item) => onChangeFeed?.(item)}
+        />
+      )}
+    </>
+  );
+});
+ListHeader.displayName = "ListHeader";
 
 // Main component
 function LatestNews({
@@ -118,6 +163,7 @@ function LatestNews({
   selectedItem,
   onChangeFeed,
   showDropdown,
+  showHeaderTitle,
   websitesList,
   showFooter = true,
   scrollEnabled = true,
@@ -197,25 +243,22 @@ function LatestNews({
     [language, handlePressArticle, t, adInterval, showAds],
   );
 
-  const renderHeader = useCallback(() => {
-    const safeCategory = category ? String(category).toLowerCase() : "";
-    const translatedCategory = safeCategory ? t(`news.tabs.${safeCategory}`) : "";
-    return (
-      <>
-        <Text style={styles.header}>
-          {t("news.latestHeader", { category: translatedCategory })}
-        </Text>
-        {showDropdown !== false && (
-          <DropdownPicker
-            category={category ?? ""}
-            value={selectedItem ?? null}
-            websites={websitesList}
-            onChange={(item) => onChangeFeed?.(item)}
-          />
-        )}
-      </>
-    );
-  }, [category, t, showDropdown, selectedItem, websitesList, onChangeFeed]);
+  const headerComponent = (
+    <ListHeader
+      category={category}
+      t={t as (key: string, opts?: object) => string}
+      showDropdown={showDropdown}
+      selectedItem={selectedItem}
+      websitesList={websitesList ?? []}
+      onChangeFeed={onChangeFeed}
+      showHeaderTitle={showHeaderTitle}
+    />
+  );
+
+  // Stable ref for listData.length — avoids adding it to renderFooter's deps
+  // array, which would recreate the footer callback on every list insertion.
+  const listDataLengthRef = useRef(listData.length);
+  listDataLengthRef.current = listData.length;
 
   const renderFooter = useCallback(() => {
     if (loading) return null;
@@ -260,16 +303,16 @@ function LatestNews({
                 ]}
                 onPress={() => handlePageChange(1)}
               >
-                <Text
+                <CustomText
                   style={[
                     styles.pageNumberText,
                     currentPage === 1 && styles.activePageNumberText,
                   ]}
                 >
                   1
-                </Text>
+                </CustomText>
               </Pressable>
-              {startPage > 2 && <Text style={styles.ellipsis}>...</Text>}
+              {startPage > 2 && <CustomText style={styles.ellipsis}>...</CustomText>}
             </>
           )}
 
@@ -282,20 +325,22 @@ function LatestNews({
               ]}
               onPress={() => handlePageChange(page)}
             >
-              <Text
+              <CustomText
                 style={[
                   styles.pageNumberText,
                   currentPage === page && styles.activePageNumberText,
                 ]}
               >
                 {page}
-              </Text>
+              </CustomText>
             </Pressable>
           ))}
 
           {endPage < totalPages && (
             <>
-              {endPage < totalPages - 1 && <Text style={styles.ellipsis}>...</Text>}
+              {endPage < totalPages - 1 && (
+                <CustomText style={styles.ellipsis}>...</CustomText>
+              )}
               <Pressable
                 style={[
                   styles.pageNumberButton,
@@ -303,14 +348,14 @@ function LatestNews({
                 ]}
                 onPress={() => handlePageChange(totalPages)}
               >
-                <Text
+                <CustomText
                   style={[
                     styles.pageNumberText,
                     currentPage === totalPages && styles.activePageNumberText,
                   ]}
                 >
                   {totalPages}
-                </Text>
+                </CustomText>
               </Pressable>
             </>
           )}
@@ -329,10 +374,12 @@ function LatestNews({
       );
     }
 
-    if (!showFooter || listData.length === 0) return null;
+    if (!showFooter || listDataLengthRef.current === 0) return null;
     return (
       <View style={styles.footerContainer}>
-        <Text style={styles.footerText}>{t("news.endOfList") || "End of articles"}</Text>
+        <CustomText style={styles.footerText}>
+          {t("news.endOfList") || "End of articles"}
+        </CustomText>
       </View>
     );
   }, [
@@ -343,7 +390,6 @@ function LatestNews({
     currentPage,
     language,
     showFooter,
-    listData.length,
     t,
     handlePageChange,
   ]);
@@ -368,7 +414,7 @@ function LatestNews({
   if (loading && articles.length === 0) {
     return (
       <View style={styles.container}>
-        {renderHeader()}
+        {headerComponent}
         <View style={{ marginTop: 10 }}>
           {Array.from({ length: 4 }).map((_, i) => (
             <SkeletonNewsItem key={i} language={language} />
@@ -385,7 +431,7 @@ function LatestNews({
   if (scrollEnabled === false) {
     return (
       <View style={styles.container}>
-        {renderHeader()}
+        {headerComponent}
         {listData.length === 0 ? (
           renderEmptyComponent()
         ) : (
@@ -411,7 +457,7 @@ function LatestNews({
         keyExtractor={(item, index) =>
           item.$id ? `${item.$id}-${index}` : index.toString()
         }
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={headerComponent}
         ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}
@@ -466,13 +512,14 @@ const styles = StyleSheet.create({
   headline: {
     fontSize: 14,
     fontWeight: "bold",
-    marginBottom: 12,
+    lineHeight: 18,
+    marginBottom: 8,
     color: "white",
   },
   par: {
     fontSize: 12,
     color: "#779bdd",
-    marginRight: 12,
+    lineHeight: 18,
   },
   thumbnail: {
     width: 135,

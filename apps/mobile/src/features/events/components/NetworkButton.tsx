@@ -1,14 +1,12 @@
 import React, { memo, useCallback } from "react";
-import { Text, StyleSheet, TouchableOpacity } from "react-native";
+import { StyleSheet, TouchableOpacity } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { Ionicons } from "@expo/vector-icons";
 import { openLink } from "@/src/lib/browser";
 import type { NetworkButtonProps } from "../types";
 
 // Maps IGDB event_network enum to icon names
-const NETWORK_ICONS: Record<
-  number,
-  { icon: string; color: string; label: string }
-> = {
+const NETWORK_ICONS: Record<number, { icon: string; color: string; label: string }> = {
   1: { icon: "logo-x", color: "#fff", label: "X" },
   2: { icon: "logo-instagram", color: "#E1306C", label: "Instagram" },
   3: { icon: "logo-youtube", color: "#FF0000", label: "YouTube" },
@@ -36,9 +34,9 @@ const NetworkButton = memo<NetworkButtonProps>(({ network }) => {
       activeOpacity={0.8}
     >
       <Ionicons name={info.icon as any} size={22} color={info.color} />
-      <Text style={[styles.networkLabel, { color: info.color }]}>
+      <CustomText style={[styles.networkLabel, { color: info.color }]}>
         {info.label}
-      </Text>
+      </CustomText>
     </TouchableOpacity>
   );
 });

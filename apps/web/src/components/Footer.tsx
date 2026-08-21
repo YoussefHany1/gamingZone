@@ -13,12 +13,12 @@ export default function Footer({ locale = "ar" }: { locale?: string }) {
           {/* Logo & Intro */}
           <div className="flex flex-col items-center md:items-start gap-3">
             <div className="flex items-center gap-2">
-                <Image
-                  src="/assets/icon.webp"
-                  alt="Logo"
-                  width={50}
-                  height={50}
-                />
+              <Image
+                src="/assets/icon.webp"
+                alt="Logo"
+                width={50}
+                height={50}
+              />
               <span className="text-lg font-bold tracking-wider text-white">
                 Gaming Zone
               </span>
@@ -35,16 +35,28 @@ export default function Footer({ locale = "ar" }: { locale?: string }) {
               className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors group"
             >
               <svg
-                viewBox="0 0 512 512"
-                className="w-5 h-5 group-hover:scale-110 transition-transform"
+                xmlns="http://www.w3.org/2000/svg"
+                width="0.91em"
+                height="1em"
+                viewBox="0 0 256 283"
+                className="w-7 h-7 group-hover:scale-110 transition-transform"
               >
-                <path fill="#4CAF50" d="M32.8 44.8L256 256 32.8 467.2z" />
-                <path fill="#2196F3" d="M32.8 44.8l323.5 178.6-100.3 32.6z" />
                 <path
-                  fill="#FFC107"
-                  d="M356.3 223.4l117.8 65.1c11.2 6.2 11.2 22.8 0 29l-117.8 65.1-100.3-95.2z"
+                  fill="#ea4335"
+                  d="M119.553 134.916L1.06 259.061a32.14 32.14 0 0 0 47.062 19.071l133.327-75.934z"
                 />
-                <path fill="#F44336" d="M32.8 467.2l323.5-178.6-100.3-32.6z" />
+                <path
+                  fill="#fbbc04"
+                  d="M239.37 113.814L181.715 80.79l-64.898 56.95l65.162 64.28l57.216-32.67a31.345 31.345 0 0 0 0-55.537z"
+                />
+                <path
+                  fill="#4285f4"
+                  d="M1.06 23.487A30.6 30.6 0 0 0 0 31.61v219.327a32.3 32.3 0 0 0 1.06 8.124l122.555-120.966z"
+                />
+                <path
+                  fill="#34a853"
+                  d="m120.436 141.274l61.278-60.483L48.564 4.503A32.85 32.85 0 0 0 32.051 0C17.644-.028 4.978 9.534 1.06 23.399z"
+                />
               </svg>
               <span className="text-xs font-semibold text-gray-300 group-hover:text-white transition-colors">
                 {t("appAdvertisement.getItOnFooter")}
@@ -74,7 +86,7 @@ export default function Footer({ locale = "ar" }: { locale?: string }) {
             </Link>
             <Link
               href="/chat"
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-white transition-colors sm:whitespace-nowrap"
             >
               {t("aiChat.title")}
             </Link>
@@ -119,13 +131,13 @@ export default function Footer({ locale = "ar" }: { locale?: string }) {
           </p>
           <div className="flex gap-6">
             <Link
-              href="/docs/index.html"
+              href="/privacy-policy"
               className="hover:underline hover:text-gray-400 transition-colors"
             >
               {t("settings.menu.privacyPolicy")}
             </Link>
             <Link
-              href="#"
+              href="/contact"
               className="hover:underline hover:text-gray-400 transition-colors"
             >
               {t("settings.menu.contactUs")}

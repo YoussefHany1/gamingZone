@@ -1,7 +1,7 @@
 import React, { memo, useCallback } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   Dimensions,
@@ -39,9 +39,9 @@ const VideoCard = memo<VideoCardProps>(({ video }) => {
         <Ionicons name="play-circle" size={44} color="#fff" />
       </View>
       {video.name ? (
-        <Text style={styles.videoName} numberOfLines={1}>
+        <CustomText style={styles.videoName} numberOfLines={1}>
           {video.name}
-        </Text>
+        </CustomText>
       ) : null}
     </TouchableOpacity>
   );

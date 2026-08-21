@@ -1,6 +1,1 @@
-export interface CountdownResult {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
+export type { CountdownResult } from "@gaming-zone/core";

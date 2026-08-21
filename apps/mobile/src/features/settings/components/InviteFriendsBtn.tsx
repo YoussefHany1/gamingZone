@@ -1,10 +1,10 @@
 import React, { memo, useCallback } from "react";
-import { View, Text, TouchableOpacity, Share, StyleSheet } from "react-native";
+import { View, TouchableOpacity, Share, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
-const STORE_URL =
-  "https://play.google.com/store/apps/details?id=com.yh.gamingzone";
+const STORE_URL = "https://play.google.com/store/apps/details?id=com.yh.gamingzone";
 
 const InviteFriendsBtn: React.FC = memo(() => {
   const { t } = useTranslation();
@@ -41,9 +41,9 @@ const InviteFriendsBtn: React.FC = memo(() => {
           color="#779bdd"
           style={styles.chevronIcon}
         />
-        <Text style={styles.categoryTitle}>
+        <CustomText style={styles.categoryTitle}>
           {t("settings.menu.inviteFriends")}
-        </Text>
+        </CustomText>
       </View>
     </TouchableOpacity>
   );
@@ -78,4 +78,3 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
 });
-

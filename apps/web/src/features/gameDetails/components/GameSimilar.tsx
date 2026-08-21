@@ -3,25 +3,17 @@ import Link from "@/components/Link";
 import { Gamepad2 } from "lucide-react";
 import { GameSimilarProps } from "../types";
 
-export default function GameSimilar({ similarGames, t, lang}: GameSimilarProps) {
-  const isRtl = lang === "ar";
-  const textDirectionClass = isRtl ? "text-right" : "text-left";
-
+export default function GameSimilar({ similarGames, t }: GameSimilarProps) {
   if (similarGames.length === 0) return null;
 
   return (
     <section className="space-y-4">
-      <h2
-        className={`text-lg font-black text-white flex items-center gap-2 ${isRtl ? "flex-row-reverse" : "flex-row"}`}
-      >
+      <h2 className="text-lg font-black text-white flex items-center gap-2">
         <Gamepad2 className="w-5 h-5 text-light-blue animate-pulse" />
         <span>{t("games.details.similar")}</span>
       </h2>
 
-      <div
-        className="flex gap-4 overflow-x-auto pb-3 scrollbar"
-        dir={isRtl ? "rtl" : "ltr"}
-      >
+      <div className="flex gap-4 overflow-x-auto pb-3 scrollbar">
         {similarGames.map((g) => {
           const sCover = g.cover?.image_id
             ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${g.cover.image_id}.webp`
@@ -42,7 +34,7 @@ export default function GameSimilar({ similarGames, t, lang}: GameSimilarProps) 
                 />
               </div>
               <span
-                className={`text-[11px] font-bold text-gray-300 group-hover:text-light-blue transition-colors line-clamp-2 block leading-snug ${textDirectionClass}`}
+                className={`text-[11px] font-bold text-gray-300 group-hover:text-light-blue transition-colors line-clamp-2 block leading-snug`}
               >
                 {g.name}
               </span>

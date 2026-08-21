@@ -4,7 +4,10 @@ import { GameVideosProps } from "../types";
 export default function GameVideos({
   videos,
   activeVideoId,
-  setActiveVideoId, t, lang,}: GameVideosProps) {
+  setActiveVideoId,
+  t,
+  lang,
+}: GameVideosProps) {
   const isRtl = lang === "ar";
   const textDirectionClass = isRtl ? "text-right" : "text-left";
 
@@ -12,9 +15,7 @@ export default function GameVideos({
 
   return (
     <div className="glass-panel border border-white/10 p-6 rounded-3xl space-y-4 shadow-xl">
-      <h2
-        className={`text-base font-black text-white border-b border-white/5 pb-2 flex items-center gap-1.5 ${isRtl ? "flex-row-reverse" : "flex-row"}`}
-      >
+      <h2 className="text-base font-black text-white border-b border-white/5 pb-2 flex items-center gap-1.5">
         <Play className="w-4 h-4 text-light-blue" />
         <span>{t("games.details.trailer")}</span>
       </h2>
@@ -61,9 +62,7 @@ export default function GameVideos({
               >
                 <Play className="w-4 h-4 fill-white" />
               </div>
-              <span
-                className={`truncate grow text-xs font-bold ${textDirectionClass}`}
-              >
+              <span className=" text-xs font-bold">
                 {vid.name ||
                   (isRtl
                     ? "مشاهدة العرض التشويقي للعبة"

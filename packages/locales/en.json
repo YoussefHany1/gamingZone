@@ -17,6 +17,8 @@
     "share": "Share",
     "copied": "Copied!",
     "or": "Or",
+    "next": "Next",
+    "previous": "Previous",
     "updateAlert": {
       "title": "Update Available",
       "message": "A new version of the app is available. Update now for the latest features and improvements.",
@@ -126,6 +128,19 @@
       "noEvents": "No gaming events available at the moment.",
       "subtitle": "Watch upcoming and live gaming events"
     }
+  },
+  "events": {
+    "live": "Live",
+    "upcoming": "Upcoming",
+    "starts": "Starts",
+    "ends": "Ends",
+    "ended": "Ended",
+    "startsIn": "Starts In",
+    "about": "About",
+    "links": "Links & Social",
+    "eventDetails": "Event Details",
+    "videos": "Videos",
+    "featuredGames": "Featured Games"
   },
   "news": {
     "tabs": {
@@ -237,6 +252,10 @@
         "8": "Remake",
         "9": "Remaster",
         "10": "Expanded"
+      },
+      "recommended": {
+        "title": "Recommended for You",
+        "subtitle": "Based on your played games"
       }
     },
     "details": {
@@ -246,6 +265,7 @@
       "rateThisGame": "Rate this Game",
       "yourRating": "Your Rating",
       "about": "About",
+      "screenshotsGallery": "Screenshots",
       "genres": "Genres",
       "gameModes": "Game Modes",
       "developer": "Developer",

@@ -1,9 +1,8 @@
 import React, { useState, useCallback, memo } from "react";
 import { storage } from "@/src/lib/storage";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
@@ -18,6 +17,7 @@ import COLORS from "@/src/constants/colors";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import type { ComponentProps } from "react";
+import CustomTextInput from "@/src/components/CustomTextInput";
 
 // Types
 
@@ -27,15 +27,18 @@ type RootStackParamList = { ContactScreen: undefined };
 type Props = NativeStackScreenProps<RootStackParamList, "ContactScreen">;
 
 // EmailJS Config
-const EMAILJS_SERVICE_ID = (
-  process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID ?? ""
-).replace(/^"|"$/g, "");
-const EMAILJS_TEMPLATE_ID = (
-  process.env.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID ?? ""
-).replace(/^"|"$/g, "");
-const EMAILJS_PUBLIC_KEY = (
-  process.env.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY ?? ""
-).replace(/^"|"$/g, "");
+const EMAILJS_SERVICE_ID = (process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID ?? "").replace(
+  /^"|"$/g,
+  "",
+);
+const EMAILJS_TEMPLATE_ID = (process.env.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID ?? "").replace(
+  /^"|"$/g,
+  "",
+);
+const EMAILJS_PUBLIC_KEY = (process.env.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY ?? "").replace(
+  /^"|"$/g,
+  "",
+);
 
 // Other constants
 const MAX_MESSAGE_LENGTH = 5000 as const;
@@ -52,19 +55,17 @@ interface TypeButtonProps {
   onPress: (value: FeedbackType) => void;
 }
 
-const TypeButton = memo<TypeButtonProps>(
-  ({ value, icon, label, active, onPress }) => (
-    <TouchableOpacity
-      style={[styles.typeButton, active && styles.typeButtonActive]}
-      onPress={() => onPress(value)}
-    >
-      <Ionicons name={icon} size={24} color="#fff" />
-      <Text style={[styles.typeText, active && styles.typeTextActive]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  ),
-);
+const TypeButton = memo<TypeButtonProps>(({ value, icon, label, active, onPress }) => (
+  <TouchableOpacity
+    style={[styles.typeButton, active && styles.typeButtonActive]}
+    onPress={() => onPress(value)}
+  >
+    <Ionicons name={icon} size={24} color="#fff" />
+    <CustomText style={[styles.typeText, active && styles.typeTextActive]}>
+      {label}
+    </CustomText>
+  </TouchableOpacity>
+));
 TypeButton.displayName = "TypeButton";
 
 // main
@@ -78,10 +79,7 @@ const ContactScreen = ({ navigation }: Props) => {
   const [email, setEmail] = useState<string>(currentUser?.email ?? "");
 
   // Validation
-  const isValidEmail = useCallback(
-    (addr: string): boolean => EMAIL_REGEX.test(addr),
-    [],
-  );
+  const isValidEmail = useCallback((addr: string): boolean => EMAIL_REGEX.test(addr), []);
 
   // Handlers
   const handleTypePress = useCallback((value: FeedbackType) => {
@@ -116,10 +114,7 @@ const ContactScreen = ({ navigation }: Props) => {
       return;
     }
     if (message.length > MAX_MESSAGE_LENGTH) {
-      ToastAndroid.show(
-        t("settings.contact.messageTooLong"),
-        ToastAndroid.LONG,
-      );
+      ToastAndroid.show(t("settings.contact.messageTooLong"), ToastAndroid.LONG);
       return;
     }
     if (email.trim() && !isValidEmail(email)) {
@@ -130,35 +125,29 @@ const ContactScreen = ({ navigation }: Props) => {
     // Rate limit check — synchronous now
     const recentTimestamps = getRateLimitTimestamps();
     if (recentTimestamps.length >= MAX_MESSAGES_PER_HOUR) {
-      ToastAndroid.show(
-        t("settings.contact.rateLimitError"),
-        ToastAndroid.LONG,
-      );
+      ToastAndroid.show(t("settings.contact.rateLimitError"), ToastAndroid.LONG);
       return;
     }
 
     setLoading(true);
     try {
-      const response = await fetch(
-        "https://api.emailjs.com/api/v1.0/email/send",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            service_id: EMAILJS_SERVICE_ID,
-            template_id: EMAILJS_TEMPLATE_ID,
-            user_id: EMAILJS_PUBLIC_KEY,
-            template_params: {
-              feedback_type: type,
-              message,
-              from_email: email || "(not provided)",
-              user_id: currentUser?.uid ?? "anonymous",
-            },
-          }),
+      const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_TEMPLATE_ID,
+          user_id: EMAILJS_PUBLIC_KEY,
+          template_params: {
+            feedback_type: type,
+            message,
+            from_email: email || "(not provided)",
+            user_id: currentUser?.uid ?? "anonymous",
+          },
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -195,7 +184,7 @@ const ContactScreen = ({ navigation }: Props) => {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Feedback type selection */}
-        <Text style={styles.label}>{t("settings.contact.typeLabel")}</Text>
+        <CustomText style={styles.label}>{t("settings.contact.typeLabel")}</CustomText>
         <View style={styles.typesContainer}>
           <TypeButton
             value="suggestion"
@@ -221,9 +210,9 @@ const ContactScreen = ({ navigation }: Props) => {
         </View>
 
         {/* Message input */}
-        <Text style={styles.label}>{t("settings.contact.messageLabel")}</Text>
+        <CustomText style={styles.label}>{t("settings.contact.messageLabel")}</CustomText>
         <View style={styles.inputContainer}>
-          <TextInput
+          <CustomTextInput
             style={[styles.input, styles.textArea]}
             placeholder={t("settings.contact.messagePlaceholder")}
             placeholderTextColor="#999"
@@ -234,20 +223,20 @@ const ContactScreen = ({ navigation }: Props) => {
             textAlignVertical="top"
             maxLength={MAX_MESSAGE_LENGTH}
           />
-          <Text
+          <CustomText
             style={[
               styles.charCount,
               message.length === MAX_MESSAGE_LENGTH && styles.charCountLimit,
             ]}
           >
             {message.length} / {MAX_MESSAGE_LENGTH}
-          </Text>
+          </CustomText>
         </View>
 
         {/* Email input */}
-        <Text style={styles.label}>{t("settings.contact.emailLabel")}</Text>
+        <CustomText style={styles.label}>{t("settings.contact.emailLabel")}</CustomText>
         <View style={styles.inputContainer}>
-          <TextInput
+          <CustomTextInput
             style={[styles.input, styles.emailInput]}
             placeholder="example@email.com"
             placeholderTextColor="#999"
@@ -267,7 +256,9 @@ const ContactScreen = ({ navigation }: Props) => {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitText}>{t("settings.contact.send")}</Text>
+            <CustomText style={styles.submitText}>
+              {t("settings.contact.send")}
+            </CustomText>
           )}
         </TouchableOpacity>
       </ScrollView>

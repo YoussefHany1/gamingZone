@@ -1,6 +1,6 @@
 import React, { useCallback, memo, useState, useRef, useEffect } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
-  Text,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -20,6 +20,7 @@ import COLORS from "@/src/constants/colors";
 import { adUnitId } from "@/src/constants/config";
 import useCachedData from "@/src/hooks/useCachedData";
 import { Game } from "@/src/types/sharedTypes";
+import { igdbImageUrl } from "@gaming-zone/utils";
 import YoutubePlayer from "react-native-youtube-iframe";
 import { fetchLatestTrailers } from "@/src/services/api/igdbApi";
 
@@ -37,10 +38,10 @@ function getTrailerVideoId(item: Game): string | undefined {
 
 function getImageSource(item: Game): string | ReturnType<typeof require> {
   if (item.screenshots?.[0]?.image_id) {
-    return `https://images.igdb.com/igdb/image/upload/t_720p/${item.screenshots[0].image_id}.webp`;
+    return igdbImageUrl(item.screenshots[0].image_id, "720p");
   }
   if (item.cover?.image_id) {
-    return `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`;
+    return igdbImageUrl(item.cover.image_id, "cover_big");
   }
   return require("@/assets/image-not-found.webp");
 }
@@ -57,7 +58,7 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
   const handlePress = useCallback(() => onPress(item), [onPress, item]);
 
   const coverUrl = item.cover?.image_id
-    ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`
+    ? igdbImageUrl(item.cover.image_id, "cover_big")
     : null;
 
   return (
@@ -83,9 +84,9 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
           />
         )}
         <View style={styles.textContainer}>
-          <Text style={styles.title} numberOfLines={2}>
+          <CustomText style={styles.title} numberOfLines={2}>
             {item.name}
-          </Text>
+          </CustomText>
           <View style={styles.playRow}>
             <Ionicons
               name="play-circle-outline"
@@ -93,9 +94,9 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
               color={COLORS.lightGray}
               style={{ marginRight: 6 }}
             />
-            <Text style={styles.subtitle} numberOfLines={1}>
+            <CustomText style={styles.subtitle} numberOfLines={1}>
               {t("home.slideshow.subtitle")}
-            </Text>
+            </CustomText>
           </View>
         </View>
       </View>
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: "#779bdd",
-    fontWeight: "600",
+    fontWeight: "200",
     fontSize: 14,
   },
   paginationContainer: {

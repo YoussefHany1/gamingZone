@@ -89,7 +89,7 @@ export default async function NewsDetailsPage(props: {
       <div className="w-full flex flex-col text-white">
         <main className="grow flex flex-col justify-center items-center gap-4 py-20 text-center">
           <h2 className="text-xl font-bold text-gray-300">
-            {t("errors.general")}
+            {t("auth.errors.general")}
           </h2>
           <Link
             href="/news"

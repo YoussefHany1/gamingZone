@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import useShimmer from "./useShimmer";
@@ -15,7 +16,7 @@ const GameAboutSkeleton: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>{t("games.details.about")}</Text>
+      <CustomText style={styles.header}>{t("games.details.about")}</CustomText>
       <View style={{ direction: "ltr" }}>
         <S width="100%" height={14} radius={5} style={{ marginTop: 10 }} />
         <S width="95%" height={14} radius={5} style={{ marginTop: 6 }} />

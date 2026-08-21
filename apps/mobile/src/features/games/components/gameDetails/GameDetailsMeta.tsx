@@ -1,5 +1,6 @@
 import { memo } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import type { GameDetailsMetaProps } from "../../types";
@@ -56,21 +57,23 @@ function GameDetailsMeta({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{name}</Text>
+      <CustomText style={styles.title}>{name}</CustomText>
 
-      {formattedDate && <Text style={styles.releaseDate}>{formattedDate}</Text>}
+      {formattedDate && (
+        <CustomText style={styles.releaseDate}>{formattedDate}</CustomText>
+      )}
 
       <View style={styles.metaRow}>
         <View style={styles.platformContainer}>
           {platforms?.map((p) => (
-            <Text key={p.id} style={styles.platform}>
+            <CustomText key={p.id} style={styles.platform}>
               {p.abbreviation}
-            </Text>
+            </CustomText>
           ))}
         </View>
 
         <View style={styles.ratingContainer}>
-          <Text
+          <CustomText
             style={[
               styles.rating,
               {
@@ -82,19 +85,19 @@ function GameDetailsMeta({
             ]}
           >
             {displayRating ?? "N/A"}
-          </Text>
+          </CustomText>
 
           {(totalRatingCount ?? 0) > 0 && (
-            <Text style={styles.ratingCount}>
+            <CustomText style={styles.ratingCount}>
               {totalRatingCount} {t("games.details.userRatings", "user ratings")}
-            </Text>
+            </CustomText>
           )}
         </View>
       </View>
 
       {ageRating && (
         <View style={[styles.ageRatingBadge, { backgroundColor: ageRating.color }]}>
-          <Text style={styles.ageRatingText}>{ageRating.label}</Text>
+          <CustomText style={styles.ageRatingText}>{ageRating.label}</CustomText>
         </View>
       )}
     </View>

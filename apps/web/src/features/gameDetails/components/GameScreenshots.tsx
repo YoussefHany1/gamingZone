@@ -1,5 +1,12 @@
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  X,
+} from "lucide-react";
 import { GameScreenshotsProps } from "../types";
 
 export default function GameScreenshots({
@@ -14,16 +21,13 @@ export default function GameScreenshots({
   lang,
 }: GameScreenshotsProps) {
   const isRtl = lang === "ar";
-  const textDirectionClass = isRtl ? "text-right" : "text-left";
 
   if (!screenshots || screenshots.length === 0) return null;
 
   return (
     <>
       <section className="space-y-4">
-        <h2
-          className={`text-lg font-black text-white ${textDirectionClass}`}
-        >
+        <h2 className="text-lg font-black text-white">
           {t("games.details.screenshotsGallery")}
         </h2>
         <div className="flex gap-4 overflow-x-auto pb-2 scrollbar px-1">

@@ -1,7 +1,8 @@
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import React, { useCallback, useMemo } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
@@ -66,35 +67,35 @@ const ComingSoonCard = React.memo<ComingSoonCardProps>(({ item }) => {
       {/* Countdown row */}
       <View style={styles.content}>
         <View style={styles.dateContainer}>
-          <Text style={styles.countdownHeader}>
+          <CustomText style={styles.countdownHeader}>
             {t("games.list.mostAnticipated.countdown.days")}
-          </Text>
-          <Text style={styles.countdownText}>
+          </CustomText>
+          <CustomText style={styles.countdownText}>
             {timeLeft ? timeLeft.days : "—"}
-          </Text>
+          </CustomText>
         </View>
         <View style={styles.dateContainer}>
-          <Text style={styles.countdownHeader}>
+          <CustomText style={styles.countdownHeader}>
             {t("games.list.mostAnticipated.countdown.hours")}
-          </Text>
-          <Text style={styles.countdownText}>
+          </CustomText>
+          <CustomText style={styles.countdownText}>
             {timeLeft ? timeLeft.hours : "—"}
-          </Text>
+          </CustomText>
         </View>
         <View style={styles.dateContainer}>
-          <Text style={styles.countdownHeader}>
+          <CustomText style={styles.countdownHeader}>
             {t("games.list.mostAnticipated.countdown.minutes")}
-          </Text>
-          <Text style={styles.countdownText}>
+          </CustomText>
+          <CustomText style={styles.countdownText}>
             {timeLeft ? timeLeft.minutes : "—"}
-          </Text>
+          </CustomText>
         </View>
       </View>
 
       <View style={styles.textWrapper}>
-        <Text style={styles.title} numberOfLines={2}>
+        <CustomText style={styles.title} numberOfLines={2}>
           {item.name}
-        </Text>
+        </CustomText>
       </View>
     </TouchableOpacity>
   );
@@ -140,7 +141,7 @@ function ComingSoonGames(): React.ReactElement {
           fontSize={24}
         />
       </View>
-      <FlashList
+      <FlashList renderScrollComponent={GHScrollView as any}
         data={gamesToShow}
         horizontal
         showsHorizontalScrollIndicator={false}

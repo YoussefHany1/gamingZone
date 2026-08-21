@@ -37,14 +37,29 @@ export default function AppAdvertisement({
             className="inline-flex items-center transition-all duration-300 hover:scale-105 active:scale-95 group"
           >
             <div className="bg-white px-6 py-3 rounded-xl flex items-center gap-3 shadow-[0_0_20px_rgba(255,255,255,0.1)] group-hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] border border-transparent group-hover:border-white/30 transition-all">
-              <svg viewBox="0 0 512 512" className="w-8 h-8">
-                <path fill="#4CAF50" d="M32.8 44.8L256 256 32.8 467.2z" />
-                <path fill="#2196F3" d="M32.8 44.8l323.5 178.6-100.3 32.6z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="0.91em"
+                height="1em"
+                viewBox="0 0 256 283"
+                className="w-8 h-8"
+              >
                 <path
-                  fill="#FFC107"
-                  d="M356.3 223.4l117.8 65.1c11.2 6.2 11.2 22.8 0 29l-117.8 65.1-100.3-95.2z"
+                  fill="#ea4335"
+                  d="M119.553 134.916L1.06 259.061a32.14 32.14 0 0 0 47.062 19.071l133.327-75.934z"
                 />
-                <path fill="#F44336" d="M32.8 467.2l323.5-178.6-100.3-32.6z" />
+                <path
+                  fill="#fbbc04"
+                  d="M239.37 113.814L181.715 80.79l-64.898 56.95l65.162 64.28l57.216-32.67a31.345 31.345 0 0 0 0-55.537z"
+                />
+                <path
+                  fill="#4285f4"
+                  d="M1.06 23.487A30.6 30.6 0 0 0 0 31.61v219.327a32.3 32.3 0 0 0 1.06 8.124l122.555-120.966z"
+                />
+                <path
+                  fill="#34a853"
+                  d="m120.436 141.274l61.278-60.483L48.564 4.503A32.85 32.85 0 0 0 32.051 0C17.644-.028 4.978 9.534 1.06 23.399z"
+                />
               </svg>
               <div
                 className={`flex flex-col ${locale === "ar" ? "items-end" : "items-start"}`}

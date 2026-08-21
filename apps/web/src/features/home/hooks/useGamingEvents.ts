@@ -1,6 +1,7 @@
 import useSWR from "swr";
 import { fetchGamingEvents } from "@/features/events";
 import { useCountdown } from "@/hooks/useCountdown";
+import { formatEventDateShort, getEventStatus } from "@gaming-zone/utils";
 import { GamingEvent } from "@/types";
 
 export function useGamingEvents(initialEvents?: GamingEvent[]) {
@@ -19,22 +20,10 @@ export function useGamingEvents(initialEvents?: GamingEvent[]) {
 }
 
 export function useEventCard(item: GamingEvent, lang: string) {
-  const now = Date.now() / 1000;
-  let status: "upcoming" | "live" | "ended" = "ended";
-  
-  if (now < item.start_time) status = "upcoming";
-  else if (now >= item.start_time && now <= item.end_time) status = "live";
+  const status = getEventStatus(item.start_time, item.end_time);
 
-  const formatEventDate = (timestamp: number) => {
-    if (!timestamp) return "";
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const formatEventDate = (timestamp: number) =>
+    formatEventDateShort(timestamp, lang);
 
   const countdown = useCountdown(status === "upcoming" ? item.start_time : null);
 

@@ -17,6 +17,7 @@ import {
   extractSteamAppId,
   getAgeRatingInfo,
 } from "../components/gameDetails/utils";
+import { formatLanguageRows, formatPlayTime } from "@gaming-zone/utils";
 import { fetchGameById } from "@/src/services/api/igdbApi";
 import { withTrace } from "@/src/services/performanceService";
 
@@ -72,38 +73,20 @@ export const useGameDetails = ({
     [game?.age_ratings],
   );
 
-  const languageList: LangRow[] = useMemo(() => {
-    if (!game?.language_supports) return [];
-    const langMap: Record<string, LangRow> = {};
-    game.language_supports.forEach((item) => {
-      const langName = item.language.name;
-      const supportType = item.language_support_type.name as keyof Omit<
-        LangRow,
-        "name"
-      >;
-      if (!langMap[langName]) {
-        langMap[langName] = {
-          name: langName,
-          Audio: false,
-          Subtitles: false,
-          Interface: false,
-        };
-      }
-      langMap[langName][supportType] = true;
-    });
-    return Object.values(langMap);
-  }, [game?.language_supports]);
+  const languageList: LangRow[] = useMemo(
+    () => formatLanguageRows(game?.language_supports),
+    [game?.language_supports],
+  );
 
-  const { main, mainExtra, completionist } = useMemo(() => {
-    if (!game?.game_time_to_beats)
-      return { main: null, mainExtra: null, completionist: null };
-    const { hastily, normally, completely } = game.game_time_to_beats;
-    return {
-      main: hastily ? Math.floor(hastily / 3600) : null,
-      mainExtra: normally ? Math.floor(normally / 3600) : null,
-      completionist: completely ? Math.floor(completely / 3600) : null,
-    };
-  }, [game?.game_time_to_beats]);
+  const { main, mainExtra, completionist } = useMemo(
+    () =>
+      formatPlayTime(game?.game_time_to_beats) ?? {
+        main: null,
+        mainExtra: null,
+        completionist: null,
+      },
+    [game?.game_time_to_beats],
+  );
 
   const gameDataForList = useMemo(() => {
     if (!game) return null;

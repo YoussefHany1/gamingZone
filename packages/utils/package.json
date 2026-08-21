@@ -1,0 +1,12 @@
+{
+  "name": "@gaming-zone/utils",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "sideEffects": false,
+  "dependencies": {
+    "@gaming-zone/core": "*",
+    "axios": "^1.13.2"
+  }
+}

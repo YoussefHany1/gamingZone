@@ -1,7 +1,7 @@
-﻿import React, { memo } from "react";
+import React, { memo } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -25,7 +25,7 @@ const GameHorizontalScroll: React.FC<GameHorizontalScrollProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={sharedStyles.sectionHeader}>{title}</Text>
+      <CustomText style={sharedStyles.sectionHeader}>{title}</CustomText>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -50,9 +50,9 @@ const GameHorizontalScroll: React.FC<GameHorizontalScrollProps> = ({
               cachePolicy="memory-disk"
               allowDownscaling
             />
-            <Text style={styles.gameName} numberOfLines={2}>
+            <CustomText style={styles.gameName} numberOfLines={2}>
               {game.name}
-            </Text>
+            </CustomText>
           </TouchableOpacity>
         ))}
       </ScrollView>

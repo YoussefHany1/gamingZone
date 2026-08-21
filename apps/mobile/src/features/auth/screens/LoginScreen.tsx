@@ -1,10 +1,10 @@
-﻿import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, memo } from "react";
+import CustomText from "@/src/components/CustomText";
+import CustomTextInput from "@/src/components/CustomTextInput";
 import {
   View,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  Text,
   ToastAndroid,
   ImageBackground,
   ScrollView,
@@ -158,10 +158,10 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
               allowDownscaling={true}
             />
 
-            <Text style={styles.title}>{t("auth.login.title")}</Text>
+            <CustomText style={styles.title}>{t("auth.login.title")}</CustomText>
 
             <View style={styles.inputContainer}>
-              <TextInput
+              <CustomTextInput
                 style={styles.input}
                 placeholder={t("auth.emailPlaceholder")}
                 placeholderTextColor="#aaa"
@@ -171,7 +171,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
                 autoCapitalize="none"
               />
 
-              <TextInput
+              <CustomTextInput
                 style={styles.input}
                 placeholder={t("auth.passwordPlaceholder")}
                 placeholderTextColor="#aaa"
@@ -184,15 +184,15 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
                 onPress={handleNavigateToForgotPassword}
                 style={styles.forgotPasswordButton}
               >
-                <Text style={styles.forgotPasswordText}>
+                <CustomText style={styles.forgotPasswordText}>
                   {t("auth.login.forgotPassword")}
-                </Text>
+                </CustomText>
               </TouchableOpacity>
             </View>
 
             {/* Email login button */}
             <TouchableOpacity onPress={handleLogin} style={styles.button}>
-              <Text style={styles.buttonText}>{t("auth.login.title")}</Text>
+              <CustomText style={styles.buttonText}>{t("auth.login.title")}</CustomText>
             </TouchableOpacity>
 
             {/* Google sign-in button */}
@@ -207,10 +207,10 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
                 end={{ x: 1, y: 1 }}
               >
                 <Ionicons name="logo-google" size={28} color="white" />
-                <Text style={styles.buttonText}>
+                <CustomText style={styles.buttonText}>
                   {" "}
                   {t("auth.login.googleSignIn")}
-                </Text>
+                </CustomText>
               </LinearGradient>
             </TouchableOpacity>
 
@@ -219,9 +219,9 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
               onPress={handleNavigateToRegister}
               style={styles.newAccButton}
             >
-              <Text style={styles.buttonText}>
+              <CustomText style={styles.buttonText}>
                 {t("auth.login.createAccount")}
-              </Text>
+              </CustomText>
             </TouchableOpacity>
 
             {/* Continue as guest button */}
@@ -229,9 +229,9 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
               onPress={handleAnonymousLogin}
               style={styles.guestButton}
             >
-              <Text style={styles.guestButtonText}>
+              <CustomText style={styles.guestButtonText}>
                 {t("auth.guest") || "Continue as Guest"}
-              </Text>
+              </CustomText>
             </TouchableOpacity>
           </KeyboardAvoidingView>
         </ScrollView>

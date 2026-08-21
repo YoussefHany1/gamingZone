@@ -46,11 +46,11 @@ export default function WeeklyRecap({ initialSummary }: WeeklyRecapProps) {
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <GradientText as="h2" className="text-xl font-bold">
-              {t("home.seeklySummary.title")}
-            </GradientText>
+            <h2 className="text-xl font-bold">
+              {t("home.weeklySummary.title")}
+            </h2>
             <p className="text-xs text-gray-400 mt-0.5">
-              {t("home.seeklySummary.createdBy")} Gemini 2.5 Flash
+              {t("home.weeklySummary.createdBy")} Gemini 2.5 Flash
             </p>
           </div>
         </div>
@@ -86,8 +86,8 @@ export default function WeeklyRecap({ initialSummary }: WeeklyRecapProps) {
       >
         <span>
           {expanded
-            ? t("home.seeklySummary.readLess")
-            : t("home.seeklySummary.readMore")}
+            ? t("home.weeklySummary.readLess")
+            : t("home.weeklySummary.readMore")}
         </span>
         {expanded ? (
           <ChevronUp className="w-4 h-4" />

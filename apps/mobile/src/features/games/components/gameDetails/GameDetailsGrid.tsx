@@ -1,5 +1,6 @@
 import React, { memo, useMemo } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import { sharedStyles } from "./shared";
 import type { GameDetailsGridProps } from "../../types";
@@ -25,65 +26,65 @@ const GameDetailsGrid: React.FC<GameDetailsGridProps> = ({
     <View style={styles.grid}>
       {genres && (
         <View style={styles.cell}>
-          <Text style={sharedStyles.sectionHeader}>
+          <CustomText style={sharedStyles.sectionHeader}>
             {t("games.details.genres")}
-          </Text>
+          </CustomText>
           {genres.map((g) => (
-            <Text key={g.id} style={styles.cellText}>
+            <CustomText key={g.id} style={styles.cellText}>
               {g.name}
-            </Text>
+            </CustomText>
           ))}
         </View>
       )}
 
       {gameModes && (
         <View style={styles.cell}>
-          <Text style={sharedStyles.sectionHeader}>
+          <CustomText style={sharedStyles.sectionHeader}>
             {t("games.details.gameModes")}
-          </Text>
+          </CustomText>
           {gameModes.map((m) => (
-            <Text key={m.id} style={styles.cellText}>
+            <CustomText key={m.id} style={styles.cellText}>
               {m.name}
-            </Text>
+            </CustomText>
           ))}
         </View>
       )}
 
       {developers.length > 0 && (
         <View style={styles.cell}>
-          <Text style={sharedStyles.sectionHeader}>
+          <CustomText style={sharedStyles.sectionHeader}>
             {t("games.details.developer")}
-          </Text>
+          </CustomText>
           {developers.map((c) => (
-            <Text key={c.id} style={styles.cellText}>
+            <CustomText key={c.id} style={styles.cellText}>
               {c.company.name}
-            </Text>
+            </CustomText>
           ))}
         </View>
       )}
 
       {publishers.length > 0 && (
         <View style={styles.cell}>
-          <Text style={sharedStyles.sectionHeader}>
+          <CustomText style={sharedStyles.sectionHeader}>
             {t("games.details.publisher")}
-          </Text>
+          </CustomText>
           {publishers.map((c) => (
-            <Text key={c.id} style={styles.cellText}>
+            <CustomText key={c.id} style={styles.cellText}>
               {c.company.name}
-            </Text>
+            </CustomText>
           ))}
         </View>
       )}
 
       {gameEngines && (
         <View style={styles.cell}>
-          <Text style={sharedStyles.sectionHeader}>
+          <CustomText style={sharedStyles.sectionHeader}>
             {t("games.details.engines")}
-          </Text>
+          </CustomText>
           {gameEngines.map((e) => (
-            <Text key={e.id} style={styles.cellText}>
+            <CustomText key={e.id} style={styles.cellText}>
               {e.name}
-            </Text>
+            </CustomText>
           ))}
         </View>
       )}

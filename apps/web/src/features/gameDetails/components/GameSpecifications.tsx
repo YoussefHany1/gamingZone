@@ -1,8 +1,42 @@
 import { GameSpecificationsProps } from "../types";
 
-export default function GameSpecifications({ game, t, lang}: GameSpecificationsProps) {
+export default function GameSpecifications({
+  game,
+  t,
+  lang,
+}: GameSpecificationsProps) {
   const isRtl = lang === "ar";
   const textDirectionClass = isRtl ? "text-right" : "text-left";
+
+  const getGenreTranslation = (genreName: string) => {
+    const mapping: Record<string, string> = {
+      "Role-playing (RPG)": "rpg",
+      Shooter: "shooter",
+      Fighting: "fighting",
+      Music: "music",
+      Platform: "platform",
+      Puzzle: "puzzle",
+      Racing: "racing",
+      "Real Time Strategy (RTS)": "rts",
+      Simulator: "simulator",
+      Sport: "sport",
+      Strategy: "strategy",
+      "Turn-based strategy (TBS)": "turnBased",
+      Tactical: "tactical",
+      "Hack and slash/Beat 'em up": "hackSlash",
+      "Quiz/Trivia": "quiz",
+      Adventure: "adventure",
+      Indie: "indie",
+      Arcade: "arcade",
+      MOBA: "moba",
+    };
+
+    const key = mapping[genreName];
+    if (key) {
+      return t(`games.filter.genres.${key}`) || genreName;
+    }
+    return genreName;
+  };
 
   return (
     <div className="glass-panel border border-white/10 p-6 rounded-3xl space-y-5 shadow-xl">
@@ -53,15 +87,13 @@ export default function GameSpecifications({ game, t, lang}: GameSpecificationsP
             <span className="text-gray-400 font-bold uppercase tracking-wider block text-[9px]">
               {t("games.details.genres")}
             </span>
-            <div
-              className={`flex flex-wrap gap-1.5 mt-1 ${isRtl ? "justify-start flex-row-reverse" : "justify-start"}`}
-            >
+            <div className="flex flex-wrap gap-1.5 mt-1">
               {game.genres.map((g) => (
                 <span
                   key={g.id}
                   className="bg-white/5 border border-white/5 px-2 py-0.5 rounded text-[10px] text-gray-300 font-bold"
                 >
-                  {g.name}
+                  {getGenreTranslation(g.name)}
                 </span>
               ))}
             </div>
@@ -70,15 +102,11 @@ export default function GameSpecifications({ game, t, lang}: GameSpecificationsP
 
         {/* Game Modes */}
         {game.game_modes && game.game_modes.length > 0 && (
-          <div
-            className={`space-y-1 pt-3 border-t border-white/5 ${textDirectionClass}`}
-          >
+          <div className="space-y-1 pt-3 border-t border-white/5">
             <span className="text-gray-400 font-bold uppercase tracking-wider block text-[9px]">
               {t("games.details.gameModes")}
             </span>
-            <div
-              className={`flex flex-wrap gap-1.5 mt-1 ${isRtl ? "justify-start flex-row-reverse" : "justify-start"}`}
-            >
+            <div className="flex flex-wrap gap-1.5 mt-1">
               {game.game_modes.map((m) => (
                 <span
                   key={m.id}
@@ -93,9 +121,7 @@ export default function GameSpecifications({ game, t, lang}: GameSpecificationsP
 
         {/* Game Engines */}
         {game.game_engines && game.game_engines.length > 0 && (
-          <div
-            className={`space-y-1 pt-3 border-t border-white/5 ${textDirectionClass}`}
-          >
+          <div className="space-y-1 pt-3 border-t border-white/5">
             <span className="text-gray-400 font-bold uppercase tracking-wider block text-[9px]">
               {t("games.details.engines")}
             </span>

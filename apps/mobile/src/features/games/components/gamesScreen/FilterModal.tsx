@@ -1,8 +1,8 @@
 import React, { memo, useCallback, useState } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   Modal,
   View,
-  Text,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
@@ -76,7 +76,7 @@ const FilterSection = memo<SectionProps>(
 
     return (
       <View style={styles.wrapper}>
-        <Text style={styles.title}>{title}</Text>
+        <CustomText style={styles.title}>{title}</CustomText>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -88,14 +88,14 @@ const FilterSection = memo<SectionProps>(
               style={[styles.chip, selected === null && styles.chipActive]}
               onPress={() => onSelect(null)}
             >
-              <Text
+              <CustomText
                 style={[
                   styles.chipText,
                   selected === null && styles.chipTextActive,
                 ]}
               >
                 {t("games.filter.any")}
-              </Text>
+              </CustomText>
             </TouchableOpacity>
           )}
 
@@ -115,11 +115,11 @@ const FilterSection = memo<SectionProps>(
                   }
                 }}
               >
-                <Text
+                <CustomText
                   style={[styles.chipText, isActive && styles.chipTextActive]}
                 >
                   {t(item.label)}
-                </Text>
+                </CustomText>
               </TouchableOpacity>
             );
           })}
@@ -188,7 +188,7 @@ function FilterModal({ visible, filters, onApply, onClose }: FilterModalProps) {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t("games.filter.title")}</Text>
+          <CustomText style={styles.headerTitle}>{t("games.filter.title")}</CustomText>
           <TouchableOpacity
             onPress={onClose}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -231,13 +231,13 @@ function FilterModal({ visible, filters, onApply, onClose }: FilterModalProps) {
         {/* Footer buttons */}
         <View style={styles.footer}>
           <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
-            <Text style={styles.resetText}>{t("games.filter.reset")}</Text>
+            <CustomText style={styles.resetText}>{t("games.filter.reset")}</CustomText>
           </TouchableOpacity>
           <TouchableOpacity style={styles.applyBtn} onPress={handleApply}>
-            <Text style={styles.applyText}>
+            <CustomText style={styles.applyText}>
               {t("games.filter.apply")}
               {activeCount > 0 ? ` (${activeCount})` : ""}
-            </Text>
+            </CustomText>
           </TouchableOpacity>
         </View>
       </View>

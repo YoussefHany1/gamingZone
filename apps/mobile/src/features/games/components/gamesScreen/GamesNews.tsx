@@ -1,5 +1,7 @@
 import React, { useCallback } from "react";
-import { Text, StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
@@ -77,15 +79,15 @@ const NewsGameCard = React.memo<NewsGameCardProps>(({ item, onPress }) => {
       </View>
 
       <View style={styles.infoSection}>
-        <Text style={styles.title} numberOfLines={2}>
+        <CustomText style={styles.title} numberOfLines={2}>
           {item.name}
-        </Text>
+        </CustomText>
       </View>
 
       {/* Live indicator badge */}
       <View style={styles.liveIndicator}>
         <View style={styles.liveDot} />
-        <Text style={styles.liveText}>{t("games.list.gamesNews.live")}</Text>
+        <CustomText style={styles.liveText}>{t("games.list.gamesNews.live")}</CustomText>
       </View>
     </TouchableOpacity>
   );
@@ -122,7 +124,7 @@ function GamesNews(): React.ReactElement {
         />
       </View>
 
-      <FlashList
+      <FlashList renderScrollComponent={GHScrollView as any}
         data={GAMES_DATA}
         horizontal
         showsHorizontalScrollIndicator={false}

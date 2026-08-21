@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
@@ -17,7 +18,7 @@ const GameHorizontalScrollSkeleton: React.FC<Props> = ({ title }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>{title}</Text>
+      <CustomText style={styles.header}>{title}</CustomText>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

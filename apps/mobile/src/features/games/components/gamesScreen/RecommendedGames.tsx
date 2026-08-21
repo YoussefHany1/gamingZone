@@ -1,5 +1,7 @@
 import React, { useCallback } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
@@ -25,8 +27,7 @@ type RecommendedCardProps = {
 
 // Card
 const RecommendedCard = React.memo<RecommendedCardProps>(({ item }) => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
 
   const rating = item.total_rating ? Math.round(item.total_rating) / 10 : 0;
 
@@ -35,15 +36,8 @@ const RecommendedCard = React.memo<RecommendedCardProps>(({ item }) => {
   }, [navigation, item.id]);
 
   return (
-    <TouchableOpacity
-      style={styles.gameCard}
-      onPress={handlePress}
-      activeOpacity={0.9}
-    >
-      <LinearGradient
-        colors={["#172a4a", "#0c1a33"]}
-        style={styles.cardBackground}
-      />
+    <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.9}>
+      <LinearGradient colors={["#172a4a", "#0c1a33"]} style={styles.cardBackground} />
 
       <View style={styles.coverContainer}>
         <Image
@@ -65,24 +59,24 @@ const RecommendedCard = React.memo<RecommendedCardProps>(({ item }) => {
       </View>
 
       <View style={styles.infoContainer}>
-        <Text style={styles.title} numberOfLines={2}>
+        <CustomText style={styles.title} numberOfLines={2}>
           {item.name}
-        </Text>
+        </CustomText>
 
         <View style={styles.statsContainer}>
           {rating > 0 && (
             <View style={styles.statItem}>
-              <Text style={styles.statIcon}>⭐</Text>
-              <Text style={styles.statValue}>{rating.toFixed(1)}</Text>
+              <CustomText style={styles.statIcon}>⭐</CustomText>
+              <CustomText style={styles.statValue}>{rating.toFixed(1)}</CustomText>
             </View>
           )}
           {item.platforms && item.platforms.length > 0 && (
             <View style={styles.platformsContainer}>
               {item.platforms.slice(0, 3).map((platform, idx) => (
                 <View key={idx} style={styles.platformChip}>
-                  <Text style={styles.platformText} numberOfLines={1}>
+                  <CustomText style={styles.platformText} numberOfLines={1}>
                     {platform.abbreviation ?? platform.name}
-                  </Text>
+                  </CustomText>
                 </View>
               ))}
             </View>
@@ -100,38 +94,35 @@ function RecommendedGames(): React.ReactElement | null {
   const { t } = useTranslation();
   const { recommendedGames, loading, basedOnGenre } = useRecommendedGames();
 
-  // If not loading and no recommendations are available, hide the section entirely
-  if (!loading && (!recommendedGames || recommendedGames.length === 0)) {
-    return null;
-  }
-
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<Game>) => (
-      <RecommendedCard item={item} />
-    ),
+    ({ item }: ListRenderItemInfo<Game>) => <RecommendedCard item={item} />,
     [],
   );
 
   const renderSkeletonItem = useCallback(() => <SkeletonPopular />, []);
 
+  // If not loading and no recommendations are available, hide the section entirely
+  if (!loading && (!recommendedGames || recommendedGames.length === 0)) {
+    return null;
+  }
+
   // Title depends on the extracted genre
   const title = t("games.list.recommended.title", "Recommended for You");
-  const subtitle = basedOnGenre 
-    ? t("games.list.recommended.subtitle", { genre: basedOnGenre, defaultValue: `Because you like ${basedOnGenre} games` })
+  const subtitle = basedOnGenre
+    ? t("games.list.recommended.subtitle", {
+        genre: basedOnGenre,
+        defaultValue: `Based on your played games`,
+      })
     : "";
 
   return (
     <View>
       <View style={styles.headerContainer}>
-        <SectionTitle
-          title={title}
-          fontSize={24}
-          subtitle={subtitle}
-        />
+        <SectionTitle title={title} fontSize={24} subtitle={subtitle} />
       </View>
 
       {loading && (
-        <FlashList
+        <FlashList renderScrollComponent={GHScrollView as any}
           data={SKELETON_DATA}
           horizontal
           renderItem={renderSkeletonItem}
@@ -142,7 +133,7 @@ function RecommendedGames(): React.ReactElement | null {
       )}
 
       {!loading && recommendedGames && recommendedGames.length > 0 && (
-        <FlashList
+        <FlashList renderScrollComponent={GHScrollView as any}
           data={recommendedGames}
           horizontal
           keyExtractor={(item) => String(item.id)}

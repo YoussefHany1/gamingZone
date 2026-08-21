@@ -4,7 +4,6 @@ import React from "react";
 import Link from "@/components/Link";
 import Image from "next/image";
 
-
 import {
   Gamepad2,
   Search,
@@ -23,6 +22,7 @@ import { useLangStore } from "@/store/useLangStore";
 import GameRow from "./GameRow";
 import NewsRow from "./NewsRow";
 import FreeGamesRow from "./FreeGamesRow";
+import GameSearchAutocomplete from "./GameSearchAutocomplete";
 import { Game, FreeGame } from "../types";
 
 interface GamesClientProps {
@@ -30,6 +30,7 @@ interface GamesClientProps {
   genre: string;
   platform: string;
   sort: string;
+  page?: number;
   isSearching: boolean;
   searchResults: Game[];
   freeGames: FreeGame[];
@@ -48,6 +49,7 @@ export default function GamesClient({
   genre,
   platform,
   sort,
+  page = 1,
   isSearching,
   searchResults,
   freeGames,
@@ -108,13 +110,9 @@ export default function GamesClient({
 
   return (
     <div className="w-full flex flex-col text-white">
-      
-
       <main className="grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-10">
         {/* Games Directory Header */}
-        <div className="glass-panel border border-white/10 p-6 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl relative overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-light-blue/15 rounded-full blur-3xl pointer-events-none"></div>
-
+        <div className="glass-panel border border-white/10 p-6 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl relative">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-linear-to-tr from-light-blue to-secondary-blue rounded-2xl text-white">
               <Gamepad2 className="w-6 h-6" />
@@ -126,34 +124,11 @@ export default function GamesClient({
             </div>
           </div>
 
-          {/* Form wrapper for full Server Side search submission */}
-          <form
-            method="GET"
-            action="/games"
-            className="flex flex-col sm:flex-row gap-3 w-full md:max-w-xl"
-          >
-            <div className="relative grow">
-              <input
-                type="text"
-                name="query"
-                id="game-search-input"
-                defaultValue={query}
-                placeholder={t("games.searchPlaceholder")}
-                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-light-blue transition-colors text-sm"
-              />
-              <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
-            </div>
-            <button
-              type="submit"
-              id="game-search-submit"
-              className="px-6 py-3 bg-linear-to-r from-secondary-blue to-light-blue rounded-2xl font-extrabold text-sm hover:opacity-95 shadow-md shadow-light-blue/15 active:scale-95 transition-all"
-            >
-              <Search className="w-4 h-4 inline-block sm:hidden" />
-              <span className="hidden sm:inline-block">
-                {t("games.search")}
-              </span>
-            </button>
-          </form>
+          <GameSearchAutocomplete
+            initialQuery={query}
+            placeholder={t("games.searchPlaceholder")}
+            submitText={t("games.search")}
+          />
         </div>
 
         {/* Filter Toolbar */}
@@ -287,6 +262,45 @@ export default function GamesClient({
                     </Link>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {searchResults.length > 0 && (
+              <div className="flex justify-center items-center gap-4 pt-8 pb-4">
+                {page > 1 ? (
+                  <Link
+                    href={`/games?query=${encodeURIComponent(query)}&genre=${encodeURIComponent(genre)}&platform=${encodeURIComponent(platform)}&sort=${encodeURIComponent(sort)}&page=${page - 1}`}
+                    className="px-6 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-sm font-bold rounded-xl flex items-center gap-2 transition-all"
+                  >
+                    <span>{t("common.previous") || "Previous"}</span>
+                  </Link>
+                ) : (
+                  <button
+                    disabled
+                    className="px-6 py-2.5 bg-white/5 border border-white/5 text-gray-500 text-sm font-bold rounded-xl flex items-center gap-2 cursor-not-allowed"
+                  >
+                    <span>{t("common.previous") || "Previous"}</span>
+                  </button>
+                )}
+
+                <span className="text-sm font-bold text-gray-300">{page}</span>
+
+                {searchResults.length === 50 ? (
+                  <Link
+                    href={`/games?query=${encodeURIComponent(query)}&genre=${encodeURIComponent(genre)}&platform=${encodeURIComponent(platform)}&sort=${encodeURIComponent(sort)}&page=${page + 1}`}
+                    className="px-6 py-2.5 bg-linear-to-r from-secondary-blue to-light-blue text-white text-sm font-bold rounded-xl flex items-center gap-2 shadow-md shadow-light-blue/15 hover:opacity-95 active:scale-95 transition-all"
+                  >
+                    <span>{t("common.next") || "Next"}</span>
+                  </Link>
+                ) : (
+                  <button
+                    disabled
+                    className="px-6 py-2.5 bg-white/5 border border-white/5 text-gray-500 text-sm font-bold rounded-xl flex items-center gap-2 cursor-not-allowed"
+                  >
+                    <span>{t("common.next") || "Next"}</span>
+                  </button>
+                )}
               </div>
             )}
           </section>
@@ -458,8 +472,6 @@ export default function GamesClient({
           </div>
         )}
       </main>
-
-      
     </div>
   );
 }

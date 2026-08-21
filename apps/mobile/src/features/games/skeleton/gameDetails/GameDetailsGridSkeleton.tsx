@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import useShimmer from "./useShimmer";
@@ -24,7 +25,7 @@ const GameDetailsGridSkeleton: React.FC = () => {
     <View style={styles.grid}>
       {blocks.map((label) => (
         <View key={label} style={styles.block}>
-          <Text style={styles.blockHeader}>{label}</Text>
+          <CustomText style={styles.blockHeader}>{label}</CustomText>
           <S width="85%" height={14} radius={5} style={{ marginTop: 8 }} />
           <S width="70%" height={14} radius={5} style={{ marginTop: 6 }} />
         </View>

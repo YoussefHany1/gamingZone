@@ -1,5 +1,6 @@
-﻿import React, { memo } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { memo } from "react";
+import { View, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import type { GameCardProps } from "../types";
 
@@ -16,9 +17,9 @@ const GameCard = memo<GameCardProps>(({ game }) => (
       contentFit="cover"
       cachePolicy="memory-disk"
     />
-    <Text style={styles.gameName} numberOfLines={2}>
+    <CustomText style={styles.gameName} numberOfLines={2}>
       {game.name}
-    </Text>
+    </CustomText>
   </View>
 ));
 GameCard.displayName = "GameCard";

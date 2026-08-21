@@ -1,15 +1,13 @@
 import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
-  Linking,
   TouchableOpacity,
   InteractionManager,
   Share,
   ToastAndroid,
-  ActivityIndicator,
   Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,11 +19,7 @@ import { intervalToDuration } from "date-fns";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
-import {
-  useNavigation,
-  useRoute,
-  type RouteProp,
-} from "@react-navigation/native";
+import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import Constants from "expo-constants";
 import { databases } from "@/src/lib/appwrite";
 import COLORS from "@/src/constants/colors";
@@ -52,12 +46,9 @@ const NewsDetails = memo((): React.ReactElement => {
   const article = (params.article ?? params) as ArticleParams;
 
   const [loadingArticle, setLoadingArticle] = useState<boolean>(false);
-  const [fetchedArticle, setFetchedArticle] = useState<ArticleParams | null>(
-    null,
-  );
+  const [fetchedArticle, setFetchedArticle] = useState<ArticleParams | null>(null);
   const [showAds, setShowAds] = useState<boolean>(false);
   const [isReady, setIsReady] = useState<boolean>(false);
-  const currentLang = i18n.language;
   const { onScroll } = useScrollDirection();
 
   const articleId = params.id ?? params.$id ?? article.id ?? article.$id;
@@ -85,13 +76,11 @@ const NewsDetails = memo((): React.ReactElement => {
               siteImage: doc.siteImage,
               pubDate: doc.pubDate,
               description: doc.description,
+              language: doc.language,
             });
           }
         } catch (err: any) {
-          console.error(
-            "[NewsDetails] Error fetching article by ID:",
-            err.message,
-          );
+          console.error("[NewsDetails] Error fetching article by ID:", err.message);
           ToastAndroid.show(
             t("news.fetchError") || "Error loading news details",
             ToastAndroid.SHORT,
@@ -118,6 +107,8 @@ const NewsDetails = memo((): React.ReactElement => {
   const siteImage = activeArticle.siteImage ?? "";
   const pubDate = activeArticle.pubDate ?? "";
   const description = activeArticle.description ?? "";
+
+  const currentLang = activeArticle.language ?? i18n.language;
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -168,30 +159,25 @@ const NewsDetails = memo((): React.ReactElement => {
 
   const onShare = useCallback(async (): Promise<void> => {
     try {
-      const excerpt = description ? description.substring(0, 200) + "..." : "";
-      const longUrl = articleId
+      // All articles have an Appwrite ID → always generate a clean /news/:id deep link.
+      // If somehow no ID exists, fall back to the original article source URL.
+      const shareUrl = articleId
         ? `${SHARE_DOMAIN}/news/${articleId}`
-        : `${SHARE_DOMAIN}/news-details?title=${encodeURIComponent(title)}&link=${encodeURIComponent(link)}&thumbnail=${encodeURIComponent(thumbnail)}&siteName=${encodeURIComponent(siteName)}&siteImage=${encodeURIComponent(siteImage)}&pubDate=${encodeURIComponent(pubDate)}&description=${encodeURIComponent(excerpt)}`;
+        : link;
 
-      let finalUrl = longUrl;
+      let finalUrl = shareUrl;
       try {
         const res = await fetch(
-          `https://is.gd/create.php?format=simple&url=${encodeURIComponent(longUrl)}`,
+          `https://is.gd/create.php?format=simple&url=${encodeURIComponent(shareUrl)}`,
         );
         if (res.ok) {
           const short = await res.text();
           if (short.startsWith("http")) finalUrl = short;
         } else {
-          ToastAndroid.show(
-            t("news.details.shareShortenError"),
-            ToastAndroid.LONG,
-          );
+          ToastAndroid.show(t("news.details.shareShortenError"), ToastAndroid.LONG);
         }
       } catch {
-        ToastAndroid.show(
-          t("news.details.shareShortenError"),
-          ToastAndroid.LONG,
-        );
+        ToastAndroid.show(t("news.details.shareShortenError"), ToastAndroid.LONG);
       }
 
       await Share.share({
@@ -202,17 +188,7 @@ const NewsDetails = memo((): React.ReactElement => {
     } catch (error: unknown) {
       console.warn("[NewsDetails] Share error:", (error as Error).message);
     }
-  }, [
-    articleId,
-    title,
-    link,
-    thumbnail,
-    siteName,
-    siteImage,
-    pubDate,
-    description,
-    t,
-  ]);
+  }, [articleId, title, link, t]);
 
   if (loadingArticle || !isReady) {
     return (
@@ -226,10 +202,15 @@ const NewsDetails = memo((): React.ReactElement => {
   }
 
   return (
-    <View style={styles.modalContainer}>
+    <View
+      style={[styles.modalContainer, { direction: currentLang === "ar" ? "rtl" : "ltr" }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.iconButton} onPress={handleGoBack}>
           <Ionicons name="arrow-back" size={28} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconButton} onPress={onShare}>
+          <Ionicons name="share-social-outline" size={28} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -259,7 +240,7 @@ const NewsDetails = memo((): React.ReactElement => {
         />
 
         <View style={styles.content}>
-          <Text style={styles.title}>{title}</Text>
+          <CustomText style={styles.title}>{title}</CustomText>
 
           <View style={styles.site}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -271,31 +252,29 @@ const NewsDetails = memo((): React.ReactElement => {
                 cachePolicy="memory-disk"
                 allowDownscaling
               />
-              <Text style={styles.siteName}>{siteName}</Text>
+              <CustomText style={styles.siteName}>{siteName}</CustomText>
             </View>
-            <Text style={styles.date}>{timeAgo}</Text>
+            <CustomText style={styles.date}>{timeAgo}</CustomText>
           </View>
 
           <View style={styles.site}>
-            <Text style={styles.date}>{formattedDate}</Text>
-            <TouchableOpacity style={styles.shareButton} onPress={onShare}>
-              <Ionicons name="share-social-outline" size={26} color="#fff" />
-            </TouchableOpacity>
+            <CustomText style={styles.date}>{formattedDate}</CustomText>
           </View>
-
-          <Text style={styles.description}>
+          <CustomText
+            style={[
+              styles.description,
+              { fontFamily: currentLang == "ar" ? "Cairo" : "Inter" },
+            ]}
+          >
             {description
               ? `${description.substring(0, 400)}..`
               : t("news.details.noDescription")}
-          </Text>
+          </CustomText>
 
           {showAds && (
             <View style={styles.ad}>
-              <Text style={styles.adText}>{t("common.ad")}</Text>
-              <BannerAd
-                unitId={adUnitId}
-                size={BannerAdSize.MEDIUM_RECTANGLE}
-              />
+              <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
+              <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
             </View>
           )}
 
@@ -310,9 +289,9 @@ const NewsDetails = memo((): React.ReactElement => {
               color="white"
               style={{ marginRight: 8 }}
             />
-            <Text style={styles.buttonText}>
+            <CustomText style={styles.buttonText}>
               {t("news.details.readFullArticle")}
-            </Text>
+            </CustomText>
           </Pressable>
         </View>
       </ScrollView>
@@ -329,11 +308,16 @@ const styles = StyleSheet.create({
   },
   header: {
     position: "absolute",
-    width: 40,
+    width: "90%",
     height: 40,
     top: 40,
     left: 15,
+    right: 15,
     zIndex: 1000,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   iconButton: {
     width: 40,
@@ -400,13 +384,6 @@ const styles = StyleSheet.create({
     color: COLORS.secondary,
     marginTop: 5,
     marginRight: 12,
-  },
-  shareButton: {
-    padding: 10,
-    borderRadius: 50,
-    backgroundColor: COLORS.secondary,
-    justifyContent: "center",
-    alignItems: "center",
   },
   description: {
     fontSize: 16,

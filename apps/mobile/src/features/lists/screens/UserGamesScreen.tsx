@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   Alert,
@@ -56,10 +56,12 @@ const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
         allowDownscaling
       />
       <View style={styles.gameInfo}>
-        <Text style={styles.gameName} numberOfLines={2}>
+        <CustomText style={styles.gameName} numberOfLines={2}>
           {game.name}
-        </Text>
-        <Text style={styles.gameReleaseDate}>{String(game.release_date ?? "")}</Text>
+        </CustomText>
+        <CustomText style={styles.gameReleaseDate}>
+          {String(game.release_date ?? "")}
+        </CustomText>
         <View style={styles.ratingRow}>
           {[1, 2, 3, 4, 5].map((star) => (
             <TouchableOpacity
@@ -411,14 +413,18 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
     return (
       <View style={styles.emptyContainer}>
         <Ionicons name="bookmark-outline" size={80} color={COLORS.primary} />
-        <Text style={styles.emptyText}>{t("settings.userGames.emptyText")}</Text>
-        <Text style={styles.emptySubText}>{emptySubText}</Text>
+        <CustomText style={styles.emptyText}>
+          {t("settings.userGames.emptyText")}
+        </CustomText>
+        <CustomText style={styles.emptySubText}>{emptySubText}</CustomText>
         {!isSharedList && (
           <TouchableOpacity
             onPress={() => navigation.navigate("Games")}
             style={styles.findGameButton}
           >
-            <Text style={styles.findGameText}>{t("settings.userGames.findButton")}</Text>
+            <CustomText style={styles.findGameText}>
+              {t("settings.userGames.findButton")}
+            </CustomText>
           </TouchableOpacity>
         )}
       </View>
@@ -472,6 +478,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.primary,
+    direction: "ltr",
   },
   emptyContainer: {
     flex: 1,

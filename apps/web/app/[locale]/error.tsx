@@ -35,7 +35,7 @@ export default function ErrorPage({
             <h1 className="text-2xl font-bold text-white">
               {t("common.error") || "Something went wrong!"}
             </h1>
-            <p className="text-gray-400 text-sm">{t("errors.general")}</p>
+            <p className="text-gray-400 text-sm">{t("auth.errors.general")}</p>
           </div>
 
           <button

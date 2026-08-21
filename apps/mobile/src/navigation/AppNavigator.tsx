@@ -1,31 +1,19 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-  memo,
-  Suspense,
-  lazy,
-} from "react";
-import {
-  InteractionManager,
-  View,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
+import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
+import { InteractionManager, View, StyleSheet, TouchableOpacity } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import LiquidGlassTabBar from "./LiquidGlassTabBar";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import type { BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import type {
+  MaterialTopTabNavigationOptions,
+  MaterialTopTabBarProps,
+} from "@react-navigation/material-top-tabs";
 import { Ionicons } from "@expo/vector-icons";
-import type { ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import * as Notifications from "expo-notifications";
 import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
-// screens
 import HomeScreen from "../features/home/screens/HomeScreen";
 import NewsScreen from "../features/news/screens/NewsScreen";
 import GamesScreen from "../features/games/screens/GamesScreen";
@@ -40,20 +28,11 @@ import EventDetailsScreen from "../features/events/screens/EventDetailsScreen";
 import type { GamingEvent } from "@/src/types/sharedTypes";
 import UserListsScreen from "../features/lists/screens/UserListsScreen";
 import NewsDetails from "../features/news/screens/NewsDetailsScreen";
-import Loading from "../Loading";
-const LanguageScreen = lazy(
-  () => import("../features/settings/screens/LanguageSelectScreen"),
-);
-const ContactScreen = lazy(
-  () => import("../features/settings/screens/ContactScreen"),
-);
-const LoginScreen = lazy(() => import("../features/auth/screens/LoginScreen"));
-const RegisterScreen = lazy(
-  () => import("../features/auth/screens/RegisterScreen"),
-);
-const ForgotPasswordScreen = lazy(
-  () => import("../features/auth/screens/ForgotPasswordScreen"),
-);
+import LanguageScreen from "../features/settings/screens/LanguageSelectScreen";
+import ContactScreen from "../features/settings/screens/ContactScreen";
+import LoginScreen from "../features/auth/screens/LoginScreen";
+import RegisterScreen from "../features/auth/screens/RegisterScreen";
+import ForgotPasswordScreen from "../features/auth/screens/ForgotPasswordScreen";
 
 // Navigator Param Lists
 
@@ -79,7 +58,7 @@ export type SettingsStackParamList = {
   SettingsScreen: undefined;
   NotificationSettings: undefined;
   Profile: undefined;
-  UserGamesScreen: undefined;
+  UserGamesScreen: { listId: string; listName: string; ownerId?: string } | undefined;
   LanguageScreen: undefined;
   GameDetails: { id: string } | undefined;
   ContactScreen: undefined;
@@ -99,26 +78,13 @@ export type AuthStackParamList = {
   ForgotPassword: undefined;
 };
 
-// Icon Map Type
-
-type IoniconName = ComponentProps<typeof Ionicons>["name"];
-type TabIconMap = Record<keyof MainTabParamList, [IoniconName, IoniconName]>;
-
-// Static icon map
-const TAB_ICON_MAP: TabIconMap = {
-  Home: ["home", "home-outline"],
-  News: ["newspaper", "newspaper-outline"],
-  Games: ["game-controller", "game-controller-outline"],
-  Settings: ["settings", "settings-outline"],
-};
-
 //  Navigators
 const HomeStackNav = createNativeStackNavigator<HomeStackParamList>();
 const NewsStackNav = createNativeStackNavigator<NewsStackParamList>();
 const GamesStackNav = createNativeStackNavigator<GamesStackParamList>();
 const SettingsStackNav = createNativeStackNavigator<SettingsStackParamList>();
 const AuthStackNav = createNativeStackNavigator<AuthStackParamList>();
-const Tab = createBottomTabNavigator<MainTabParamList>();
+const Tab = createMaterialTopTabNavigator<MainTabParamList>();
 
 // Shared Screen Options
 const HIDDEN_HEADER_OPTIONS = {
@@ -128,7 +94,11 @@ const HIDDEN_HEADER_OPTIONS = {
 const settingsHeaderOptions = {
   headerStyle: { backgroundColor: COLORS.primary },
   headerTintColor: "#fff" as const,
-  headerTitleStyle: { fontWeight: "bold" as const },
+  headerTitle: ({ children }: any) => (
+    <CustomText style={{ fontSize: 18, fontWeight: "bold", color: "#fff" }}>
+      {children}
+    </CustomText>
+  ),
   animation: "slide_from_right",
 } as const;
 
@@ -153,9 +123,13 @@ const HomeStack = memo(() => {
         component={AIChatScreen}
         options={{
           headerShown: true,
-          title: t("aiChat.title"),
           headerStyle: { backgroundColor: COLORS.primary },
           headerTintColor: "#fff",
+          headerTitle: () => (
+            <CustomText style={{ fontSize: 18, fontWeight: "bold", color: "#fff" }}>
+              {t("aiChat.title")}
+            </CustomText>
+          ),
         }}
       />
       <HomeStackNav.Screen name="EventDetailsScreen" component={EventDetailsScreen} />
@@ -180,7 +154,11 @@ const GamesStack = memo(() => {
       title: t("games.list.gamesNews.title"),
       headerStyle: { backgroundColor: COLORS.primary },
       headerTintColor: "#fff" as const,
-      headerTitleStyle: { fontWeight: "bold" as const },
+      headerTitle: () => (
+        <CustomText style={{ fontSize: 18, fontWeight: "bold", color: "#fff" }}>
+          {t("games.list.gamesNews.title")}
+        </CustomText>
+      ),
     }),
     [t],
   );
@@ -274,12 +252,11 @@ const SettingsStack = memo(() => {
 });
 SettingsStack.displayName = "SettingsStack";
 
-// Main Tab Navigator
+// Main Tab Navigator with Swipe (MaterialTopTabs)
 export const MainAppTabs = memo(() => {
   const { t } = useTranslation();
   const [showAds, setShowAds] = useState<boolean>(false);
 
-  // Request notification permission once on mount, then defer ad rendering
   useEffect(() => {
     const requestPermission = async (): Promise<void> => {
       const { status } = await Notifications.requestPermissionsAsync();
@@ -291,24 +268,21 @@ export const MainAppTabs = memo(() => {
         );
       }
     };
-
     requestPermission();
-
     const task = InteractionManager.runAfterInteractions(() => {
       setShowAds(true);
     });
-
     return () => task.cancel();
   }, []);
 
   const screenOptions = useCallback(
-    ({ route }: { route: { name: string } }): BottomTabNavigationOptions => {
+    ({ route }: { route: { name: string } }): MaterialTopTabNavigationOptions => {
       const routeName = route.name as keyof MainTabParamList;
       return {
-        headerShown: false,
-        tabBarStyle: { display: "none" },
+        swipeEnabled: true,
+        lazy: true,
+        lazyPreloadDistance: 0,
         tabBarLabel: t(`navigation.tabs.${routeName.toLowerCase()}`),
-        animation: "shift",
       };
     },
     [t],
@@ -318,8 +292,9 @@ export const MainAppTabs = memo(() => {
     <>
       <Tab.Navigator
         id="MainTabs"
+        tabBarPosition="bottom"
         screenOptions={screenOptions}
-        tabBar={(props) => <LiquidGlassTabBar {...props} />}
+        tabBar={(props: MaterialTopTabBarProps) => <LiquidGlassTabBar {...props} />}
       >
         <Tab.Screen name="Home" component={HomeStack} />
         <Tab.Screen name="News" component={NewsStack} />
@@ -327,7 +302,6 @@ export const MainAppTabs = memo(() => {
         <Tab.Screen name="Settings" component={SettingsStack} />
       </Tab.Navigator>
 
-      {/* Lazy ad mount, only shown after interactions complete */}
       {showAds && <AdBanner />}
     </>
   );
@@ -337,13 +311,11 @@ MainAppTabs.displayName = "MainAppTabs";
 // Auth Stack
 
 export const AuthStack = memo(() => (
-  <Suspense fallback={<Loading />}>
-    <AuthStackNav.Navigator id="AuthStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
-      <AuthStackNav.Screen name="Register" component={RegisterScreen} />
-      <AuthStackNav.Screen name="Login" component={LoginScreen} />
-      <AuthStackNav.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-    </AuthStackNav.Navigator>
-  </Suspense>
+  <AuthStackNav.Navigator id="AuthStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
+    <AuthStackNav.Screen name="Register" component={RegisterScreen} />
+    <AuthStackNav.Screen name="Login" component={LoginScreen} />
+    <AuthStackNav.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+  </AuthStackNav.Navigator>
 ));
 AuthStack.displayName = "AuthStack";
 

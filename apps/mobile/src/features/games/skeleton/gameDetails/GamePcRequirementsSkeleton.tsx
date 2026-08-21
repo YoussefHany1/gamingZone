@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import useShimmer from "./useShimmer";
@@ -15,7 +16,7 @@ const GamePcRequirementsSkeleton: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>{t("games.details.pcRequirements")}</Text>
+      <CustomText style={styles.header}>{t("games.details.pcRequirements")}</CustomText>
 
       {/* Tab buttons */}
       <View style={styles.tabRow}>
@@ -31,8 +32,7 @@ const GamePcRequirementsSkeleton: React.FC = () => {
             style={[
               styles.row,
               {
-                backgroundColor:
-                  i % 2 !== 0 ? "rgba(81,105,150,0.12)" : "transparent",
+                backgroundColor: i % 2 !== 0 ? "rgba(81,105,150,0.12)" : "transparent",
               },
             ]}
           >

@@ -1,11 +1,5 @@
 import React, { useState, useEffect, memo } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  ViewStyle,
-} from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, ViewStyle } from "react-native";
 import { Image } from "expo-image";
 import {
   NativeAd,
@@ -16,6 +10,7 @@ import {
 import COLORS from "../constants/colors";
 import { nativeAdUnitId } from "../constants/config";
 import { t } from "i18next";
+import CustomText from "./CustomText";
 
 export type NativeAdVariant = "game" | "news";
 
@@ -90,7 +85,7 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
           <NativeAdView nativeAd={ad} style={styles.newsAdInner}>
             <View style={styles.newsTextContainer}>
               <NativeAsset assetType={NativeAssetType.HEADLINE}>
-                <Text
+                <CustomText
                   style={[
                     styles.newsHeadline,
                     language === "ar" ? { marginLeft: 8 } : { marginRight: 8 },
@@ -98,14 +93,14 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
                   numberOfLines={3}
                 >
                   {ad.headline}
-                </Text>
+                </CustomText>
               </NativeAsset>
 
               {ad.body ? (
                 <NativeAsset assetType={NativeAssetType.BODY}>
-                  <Text style={styles.newsPar} numberOfLines={2}>
+                  <CustomText style={styles.newsPar} numberOfLines={2}>
                     {ad.body}..
-                  </Text>
+                  </CustomText>
                 </NativeAsset>
               ) : null}
 
@@ -118,7 +113,7 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
               >
                 {ad.callToAction ? (
                   <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
-                    <Text style={styles.newsCtaText}>{ad.callToAction}</Text>
+                    <CustomText style={styles.newsCtaText}>{ad.callToAction}</CustomText>
                   </NativeAsset>
                 ) : null}
               </View>
@@ -137,7 +132,7 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
               ) : (
                 <View style={styles.newsIconPlaceholder} />
               )}
-              <Text style={styles.newsWebsite}>{t("common.ad")}</Text>
+              <CustomText style={styles.newsWebsite}>{t("common.ad")}</CustomText>
             </View>
           </NativeAdView>
         </View>
@@ -160,25 +155,25 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
           <View style={styles.adInfo}>
             <View style={styles.headlineRow}>
               <NativeAsset assetType={NativeAssetType.HEADLINE}>
-                <Text style={styles.adHeadline} numberOfLines={1}>
+                <CustomText style={styles.adHeadline} numberOfLines={1}>
                   {ad.headline}
-                </Text>
+                </CustomText>
               </NativeAsset>
-              <Text style={styles.badge}>{t("common.ad")}</Text>
+              <CustomText style={styles.badge}>{t("common.ad")}</CustomText>
             </View>
 
             {ad.body ? (
               <NativeAsset assetType={NativeAssetType.BODY}>
-                <Text style={styles.adBody} numberOfLines={2}>
+                <CustomText style={styles.adBody} numberOfLines={2}>
                   {ad.body}
-                </Text>
+                </CustomText>
               </NativeAsset>
             ) : null}
 
             {/* CTA Button */}
             {ad.callToAction ? (
               <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
-                <Text style={styles.ctaButtonText}>{ad.callToAction}</Text>
+                <CustomText style={styles.ctaButtonText}>{ad.callToAction}</CustomText>
               </NativeAsset>
             ) : null}
           </View>

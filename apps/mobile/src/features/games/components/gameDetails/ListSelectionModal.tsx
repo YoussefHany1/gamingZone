@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback, memo, useRef } from "react";
+import CustomText from "@/src/components/CustomText";
+import CustomTextInput from "@/src/components/CustomTextInput";
 import {
   View,
-  Text,
   Modal,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
   ToastAndroid,
@@ -309,11 +309,11 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
             size={24}
             color={COLORS.secondary}
           />
-          <Text
+          <CustomText
             style={[styles.listName, item.isChecked && { fontWeight: "bold" }]}
           >
             {getDisplayName(item.name)}
-          </Text>
+          </CustomText>
         </TouchableOpacity>
       ),
       [toggleList, getDisplayName],
@@ -339,9 +339,9 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
               style={styles.modalContent}
               onStartShouldSetResponder={() => true}
             >
-              <Text style={styles.modalTitle}>
+              <CustomText style={styles.modalTitle}>
                 {t("games.details.listStatus.add") || "Add to..."}
-              </Text>
+              </CustomText>
 
               {loading ? (
                 <ActivityIndicator size="large" color={COLORS.secondary} />
@@ -352,7 +352,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                     showsVerticalScrollIndicator={true}
                   >
                     {lists.length === 0 ? (
-                      <Text
+                      <CustomText
                         style={{
                           color: "#ccc",
                           textAlign: "center",
@@ -360,7 +360,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                         }}
                       >
                         {t("userLists.empty.title")}
-                      </Text>
+                      </CustomText>
                     ) : (
                       lists.map(renderListItem)
                     )}
@@ -370,7 +370,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                   <View style={styles.createSection}>
                     {isCreating ? (
                       <View style={styles.creationForm}>
-                        <TextInput
+                        <CustomTextInput
                           style={styles.input}
                           placeholder={t("userLists.placeholders.newListName")}
                           placeholderTextColor="#aaa"
@@ -386,9 +386,9 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                             ]}
                             onPress={() => setIsCreating(false)}
                           >
-                            <Text style={styles.smallBtnText}>
+                            <CustomText style={styles.smallBtnText}>
                               {t("common.cancel")}
-                            </Text>
+                            </CustomText>
                           </TouchableOpacity>
 
                           <TouchableOpacity
@@ -402,9 +402,9 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                             {creatingLoading ? (
                               <ActivityIndicator size="small" color="white" />
                             ) : (
-                              <Text style={styles.smallBtnText}>
+                              <CustomText style={styles.smallBtnText}>
                                 {t("common.create")}
-                              </Text>
+                              </CustomText>
                             )}
                           </TouchableOpacity>
                         </View>
@@ -428,9 +428,9 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                           size={24}
                           color={COLORS.lightGray}
                         />
-                        <Text style={styles.addButtonText}>
+                        <CustomText style={styles.addButtonText}>
                           {t("userLists.actions.createNewList")}
-                        </Text>
+                        </CustomText>
                       </TouchableOpacity>
                     )}
                   </View>

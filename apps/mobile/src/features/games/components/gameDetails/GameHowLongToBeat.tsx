@@ -1,5 +1,6 @@
 import React, { memo } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import Svg, { Circle, Text as SvgText, Path } from "react-native-svg";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
@@ -61,46 +62,48 @@ const GameHowLongToBeat: React.FC<GameHowLongToBeatProps> = ({
   return (
     <>
       <View style={styles.titleRow}>
-        <Text style={sharedStyles.sectionHeader}>
+        <CustomText style={sharedStyles.sectionHeader}>
           {t("games.details.howLongToBeat.title")}
-        </Text>
+        </CustomText>
       </View>
 
       <View style={styles.cardsContainer}>
         {main != null && (
           <View style={styles.card}>
-            <Text style={styles.cardHeader}>{t("games.details.howLongToBeat.main")}</Text>
+            <CustomText style={styles.cardHeader}>
+              {t("games.details.howLongToBeat.main")}
+            </CustomText>
             {/* Quarter-arc: top-right quadrant only */}
             <HoursCircle hours={main} pathD="M 42 4 A 38 38 0 0 1 80 42" />
-            <Text style={styles.hoursLabel}>
+            <CustomText style={styles.hoursLabel}>
               {t("games.details.howLongToBeat.hours")}
-            </Text>
+            </CustomText>
           </View>
         )}
 
         {mainExtra != null && (
           <View style={styles.card}>
-            <Text style={styles.cardHeader}>
+            <CustomText style={styles.cardHeader}>
               {t("games.details.howLongToBeat.mainExtra")}
-            </Text>
+            </CustomText>
             {/* Half-arc: right semicircle */}
             <HoursCircle hours={mainExtra} pathD="M 42 4 A 38 38 0 0 1 42 80" />
-            <Text style={styles.hoursLabel}>
+            <CustomText style={styles.hoursLabel}>
               {t("games.details.howLongToBeat.hours")}
-            </Text>
+            </CustomText>
           </View>
         )}
 
         {completionist != null && (
           <View style={styles.card}>
-            <Text style={styles.cardHeader}>
+            <CustomText style={styles.cardHeader}>
               {t("games.details.howLongToBeat.completionist")}
-            </Text>
+            </CustomText>
             {/* Full circle */}
             <HoursCircle hours={completionist} />
-            <Text style={styles.hoursLabel}>
+            <CustomText style={styles.hoursLabel}>
               {t("games.details.howLongToBeat.hours")}
-            </Text>
+            </CustomText>
           </View>
         )}
       </View>

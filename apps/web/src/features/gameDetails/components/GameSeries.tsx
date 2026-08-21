@@ -3,25 +3,17 @@ import Link from "@/components/Link";
 import { Gamepad2 } from "lucide-react";
 import { GameSeriesProps } from "../types";
 
-export default function GameSeries({ seriesGames, t, lang}: GameSeriesProps) {
-  const isRtl = lang === "ar";
-  const textDirectionClass = isRtl ? "text-right" : "text-left";
-
+export default function GameSeries({ seriesGames, t }: GameSeriesProps) {
   if (seriesGames.length === 0) return null;
 
   return (
     <section className="space-y-4">
-      <h2
-        className={`text-lg font-black text-white flex items-center gap-2 ${isRtl ? "flex-row-reverse" : "flex-row"}`}
-      >
+      <h2 className="text-lg font-black text-white flex items-center gap-2">
         <Gamepad2 className="w-5 h-5 text-light-blue" />
         <span>{t("games.details.series")}</span>
       </h2>
 
-      <div
-        className="flex gap-4 overflow-x-auto pb-3 scrollbar"
-        dir={isRtl ? "rtl" : "ltr"}
-      >
+      <div className="flex gap-4 overflow-x-auto pb-3 scrollbar">
         {seriesGames.map((g) => {
           const sCover = g.cover?.image_id
             ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${g.cover.image_id}.webp`
@@ -41,9 +33,7 @@ export default function GameSeries({ seriesGames, t, lang}: GameSeriesProps) {
                   className="object-cover"
                 />
               </div>
-              <span
-                className={`text-[11px] font-bold text-gray-300 group-hover:text-light-blue transition-colors line-clamp-2 block leading-snug ${textDirectionClass}`}
-              >
+              <span className="text-[11px] font-bold text-gray-300 group-hover:text-light-blue transition-colors line-clamp-2 block leading-snug">
                 {g.name}
               </span>
             </Link>

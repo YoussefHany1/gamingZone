@@ -1,20 +1,14 @@
 import React, { memo } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import * as Localization from "expo-localization";
 import COLORS from "@/src/constants/colors";
 import { sharedStyles } from "./shared";
-import {
-  COLUMN_KEYS,
-  type GameLanguageTableProps,
-  type ColumnKey,
-} from "../../types";
+import { COLUMN_KEYS, type GameLanguageTableProps, type ColumnKey } from "../../types";
 
-const COLUMN_ICONS: Record<
-  ColumnKey,
-  React.ComponentProps<typeof Ionicons>["name"]
-> = {
+const COLUMN_ICONS: Record<ColumnKey, React.ComponentProps<typeof Ionicons>["name"]> = {
   Audio: "mic",
   Subtitles: "document-text",
   Interface: "desktop",
@@ -45,18 +39,13 @@ const LANGUAGE_NAME_FALLBACK: Record<string, string> = {
 function getLanguageDisplayName(code: string): string | null {
   try {
     // Intl.DisplayNames is available on modern React Native hermes builds
-    return (
-      new (Intl as any).DisplayNames(["en"], { type: "language" }).of(code) ??
-      null
-    );
+    return new (Intl as any).DisplayNames(["en"], { type: "language" }).of(code) ?? null;
   } catch {
     return LANGUAGE_NAME_FALLBACK[code] ?? null;
   }
 }
 
-const GameLanguageTable: React.FC<GameLanguageTableProps> = ({
-  languageList,
-}) => {
+const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) => {
   const { t } = useTranslation();
 
   const deviceLanguageName = React.useMemo(() => {
@@ -68,29 +57,25 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={sharedStyles.sectionHeader}>
+      <CustomText style={sharedStyles.sectionHeader}>
         {t("games.details.languages.title")}
-      </Text>
+      </CustomText>
 
       {/* Table header */}
       <View style={styles.tableHeader}>
         <View style={styles.langHeaderCell}>
           <Ionicons name="language" size={18} color={COLORS.secondary} />
-          <Text style={styles.headerCellLabel}>
+          <CustomText style={styles.headerCellLabel}>
             {t("games.details.languages.Language")}
-          </Text>
+          </CustomText>
         </View>
 
         {COLUMN_KEYS.map((key) => (
           <View key={key} style={styles.iconHeaderCell}>
-            <Ionicons
-              name={COLUMN_ICONS[key]}
-              size={18}
-              color={COLORS.secondary}
-            />
-            <Text style={styles.headerCellLabel}>
+            <Ionicons name={COLUMN_ICONS[key]} size={18} color={COLORS.secondary} />
+            <CustomText style={styles.headerCellLabel}>
               {t(COLUMN_I18N_KEYS[key])}
-            </Text>
+            </CustomText>
           </View>
         ))}
       </View>
@@ -111,23 +96,16 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({
               },
             ]}
           >
-            <Text
-              style={[
-                styles.langCell,
-                isDeviceLang && styles.langCellHighlighted,
-              ]}
+            <CustomText
+              style={[styles.langCell, isDeviceLang && styles.langCellHighlighted]}
             >
               {t(`games.details.languages.names.${lang.name}`, lang.name)}
-            </Text>
+            </CustomText>
 
             {COLUMN_KEYS.map((key) => (
               <View key={key} style={styles.checkCell}>
                 {lang[key] && (
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={20}
-                    color={COLORS.lightGray}
-                  />
+                  <Ionicons name="checkmark-circle" size={20} color={COLORS.lightGray} />
                 )}
               </View>
             ))}

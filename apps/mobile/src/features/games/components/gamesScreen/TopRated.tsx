@@ -1,5 +1,7 @@
 import React, { useCallback } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -21,8 +23,6 @@ const STORAGE_KEY = "GAMES_CACHE_TOP_RATED";
 
 // Helpers
 
-
-
 function getRatingColor(rating: number): [string, string] {
   if (rating <= 2) return ["#8B0000", "#B22222"];
   if (rating <= 4) return ["#FF4C4C", "#FF6B6B"];
@@ -41,8 +41,7 @@ const getMedalEmoji = (rank: number): string => {
 // Card
 
 const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
-  const navigation =
-    useNavigation<NavigationProp<Record<string, object | undefined>>>();
+  const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
 
   const rating = item.total_rating ? Math.round(item.total_rating) / 10 : 0;
   const ratingColors = getRatingColor(rating);
@@ -61,11 +60,7 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
         : ["#CD7F32", "#8B4513", "transparent"];
 
   return (
-    <TouchableOpacity
-      style={styles.gameCard}
-      onPress={handlePress}
-      activeOpacity={0.9}
-    >
+    <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.9}>
       <LinearGradient
         colors={["transparent", COLORS.darkBackground + "AA"]}
         style={styles.cardBackground}
@@ -74,7 +69,7 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
       {/* Medal badge for top-3 */}
       {rank <= 3 && (
         <View style={styles.rankBadge}>
-          <Text style={styles.rankText}>{getMedalEmoji(rank)}</Text>
+          <CustomText style={styles.rankText}>{getMedalEmoji(rank)}</CustomText>
         </View>
       )}
 
@@ -100,16 +95,16 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
 
       {/* Game info */}
       <View style={styles.infoContainer}>
-        <Text style={styles.title} numberOfLines={2}>
+        <CustomText style={styles.title} numberOfLines={2}>
           {item.name}{" "}
           {item.first_release_date && (
             <View style={styles.yearContainer}>
-              <Text style={styles.yearText}>
+              <CustomText style={styles.yearText}>
                 {new Date(item.first_release_date * 1000).getFullYear()}
-              </Text>
+              </CustomText>
             </View>
           )}
-        </Text>
+        </CustomText>
 
         {/* Rating circle + genre badges */}
         <View style={styles.ratingMainContainer}>
@@ -119,9 +114,9 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
             end={{ x: 1, y: 1 }}
             style={styles.ratingCircle}
           >
-            <Text style={styles.ratingNumber}>{rating.toFixed(1)}</Text>
+            <CustomText style={styles.ratingNumber}>{rating.toFixed(1)}</CustomText>
             <View style={styles.starContainer}>
-              <Text style={styles.starIcon}>â­</Text>
+              <CustomText style={styles.starIcon}>â­</CustomText>
             </View>
           </LinearGradient>
 
@@ -129,9 +124,9 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
             <View style={styles.genresContainer}>
               {item.genres.slice(0, 2).map((genre, idx) => (
                 <View key={idx} style={styles.genreBadge}>
-                  <Text style={styles.genreText} numberOfLines={1}>
+                  <CustomText style={styles.genreText} numberOfLines={1}>
                     {genre.name}
-                  </Text>
+                  </CustomText>
                 </View>
               ))}
             </View>
@@ -140,9 +135,7 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
       </View>
 
       {/* Coloured border glow for top-3 */}
-      {rank <= 3 && (
-        <LinearGradient colors={glowColors} style={styles.glowBorder} />
-      )}
+      {rank <= 3 && <LinearGradient colors={glowColors} style={styles.glowBorder} />}
     </TouchableOpacity>
   );
 });
@@ -199,7 +192,7 @@ export default function TopRatedGames(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && (
-        <FlashList
+        <FlashList renderScrollComponent={GHScrollView as any}
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}

@@ -2,10 +2,7 @@ import React, { memo } from "react";
 import { ImageBackground, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import COLORS from "@/src/constants/colors";
-
-/** IGDB image URL for the blurred background cover art. */
-const igdbImageUrl = (imageId: string) =>
-  `https://images.igdb.com/igdb/image/upload/t_720p/${imageId}.webp`;
+import { igdbImageUrl } from "@gaming-zone/utils";
 
 import type { GameDetailsBackgroundProps } from "../../types";
 
@@ -40,7 +37,7 @@ const GameDetailsBackground: React.FC<GameDetailsBackgroundProps> = ({
 
       <ImageBackground
         blurRadius={2}
-        source={coverImageId ? { uri: igdbImageUrl(coverImageId) } : undefined}
+        source={coverImageId ? { uri: igdbImageUrl(coverImageId, "720p") } : undefined}
         style={styles.bgImage}
         imageStyle={styles.bgImageInner}
       />

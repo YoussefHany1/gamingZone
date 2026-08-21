@@ -1,20 +1,15 @@
-import { GamingEvent } from "@/src/types/sharedTypes";
+import type { GamingEvent } from "@/src/types/sharedTypes";
+import type {
+  GamingEventGame,
+  GamingEventNetwork,
+  GamingEventVideo,
+} from "@gaming-zone/core";
 
-export type GamingEventGame = {
-  id: number;
-  name: string;
-  cover?: { image_id: string };
-};
-
-export type GamingEventVideo = {
-  name?: string;
-  video_id: string;
-};
-
-export type GamingEventNetwork = {
-  url: string;
-  network_type: number;
-};
+export type {
+  GamingEventGame,
+  GamingEventNetwork,
+  GamingEventVideo,
+} from "@gaming-zone/core";
 
 export type EventDetailsParamList = {
   EventDetailsScreen: { event: GamingEvent };

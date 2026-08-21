@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   Switch,
@@ -98,9 +98,9 @@ const Notification: React.FC = () => {
               color="#779bdd"
               style={styles.chevronIcon}
             />
-            <Text style={styles.categoryTitle}>
+            <CustomText style={styles.categoryTitle}>
               {t("games.list.freeGames.header")}
-            </Text>
+            </CustomText>
           </View>
 
           <Switch
@@ -164,8 +164,8 @@ const Notification: React.FC = () => {
               color="#779bdd"
               style={styles.chevronIcon}
             />
-            <Text style={styles.categoryTitle}>{title}</Text>
-            <Text style={styles.sourceCount}>({sources.length})</Text>
+            <CustomText style={styles.categoryTitle}>{title}</CustomText>
+            <CustomText style={styles.sourceCount}>({sources.length})</CustomText>
           </View>
         </TouchableOpacity>
 
@@ -176,7 +176,7 @@ const Notification: React.FC = () => {
                 {/* عرض عنوان المجموعة فقط إذا كان هناك أكثر من مجموعة أو لترتيب الشكل */}
                 {groups.length > 0 && (
                   <View style={styles.groupHeaderContainer}>
-                    <Text style={styles.groupHeaderText}>{group.title}</Text>
+                    <CustomText style={styles.groupHeaderText}>{group.title}</CustomText>
                   </View>
                 )}
 
@@ -197,7 +197,7 @@ const Notification: React.FC = () => {
                           source={source.image ?? null}
                           style={styles.sourceIcon as ImageStyle}
                         />
-                        <Text style={styles.sourceName}>{source.name}</Text>
+                        <CustomText style={styles.sourceName}>{source.name}</CustomText>
                       </View>
                       <Switch
                         value={isEnabled}
@@ -226,9 +226,9 @@ const Notification: React.FC = () => {
     <SafeAreaView style={styles.container} edges={["right", "left"]}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.Textheader}>
-          <Text style={styles.subtitle}>
+          <CustomText style={styles.subtitle}>
             {t("settings.notifications.description")}
-          </Text>
+          </CustomText>
         </View>
 
         {renderCategorySection("news", `${t("news.tabs.news")}`)}
@@ -236,12 +236,12 @@ const Notification: React.FC = () => {
         {renderCategorySection("esports", `${t("news.tabs.esports")}`)}
         {renderCategorySection("hardware", `${t("news.tabs.hardware")}`)}
         {renderFreeGamesSection()}
-        <Text style={styles.footerText}>
+        <CustomText style={styles.footerText}>
           {t("settings.notifications.footer")}
-        </Text>
+        </CustomText>
         {showAds && (
           <View style={styles.ad}>
-            <Text style={styles.adText}>{t("common.ad")}</Text>
+            <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
             <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
           </View>
         )}
@@ -252,9 +252,9 @@ const Notification: React.FC = () => {
             onPress={NotificationService.testLocalNotification}
           >
             <Ionicons name="notifications" size={20} color="#ffffff" />
-            <Text style={styles.testButtonText}>
+            <CustomText style={styles.testButtonText}>
               {t("settings.notifications.testNotification")}
-            </Text>
+            </CustomText>
           </TouchableOpacity>
         </View>
       </ScrollView>

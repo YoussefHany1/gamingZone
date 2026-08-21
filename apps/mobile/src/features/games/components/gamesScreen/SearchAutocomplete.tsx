@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   FlatList,
@@ -65,9 +65,9 @@ const SuggestionRow = React.memo<RowProps>(({ item, onPress }) => {
           contentFit="cover"
         />
       )}
-      <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
+      <CustomText style={styles.name} numberOfLines={1} ellipsizeMode="tail">
         {item.name}
-      </Text>
+      </CustomText>
     </TouchableOpacity>
   );
 });

@@ -12,7 +12,11 @@ import useCachedData from "@/src/hooks/useCachedData";
 // ---------------------------------------------------------------------------
 
 const ARTICLES_COLLECTION_ID = "articles";
-const CACHE_TTL_MS = 600_000; // 10 minutes
+// Primary feed (news + page 1) has a Realtime subscription that pushes updates,
+// so a longer TTL is fine. Other category/page combinations get a shorter TTL
+// so users see fresh content without waiting too long.
+const CACHE_TTL_PRIMARY_MS = 600_000; // 10 minutes — backed by Realtime
+const CACHE_TTL_SECONDARY_MS = 300_000; // 5 minutes — no live subscription
 
 // ---------------------------------------------------------------------------
 // Types
@@ -115,6 +119,11 @@ export default function useFeed(
     };
   }, [category, siteName, page, limit, language]);
 
+  // Use the longer TTL only for the primary feed (news, page 1) which has a
+  // Realtime subscription keeping it fresh. All other feeds use the shorter one.
+  const isPrimaryFeed = category === "news" && page === 1;
+  const cacheTtl = isPrimaryFeed ? CACHE_TTL_PRIMARY_MS : CACHE_TTL_SECONDARY_MS;
+
   const {
     data,
     isLoading: loading,
@@ -126,7 +135,7 @@ export default function useFeed(
     cacheKey,
     fetchArticles,
     [category, siteName, page, limit, language],
-    CACHE_TTL_MS,
+    cacheTtl,
   );
 
   const articles = data?.articles ?? [];

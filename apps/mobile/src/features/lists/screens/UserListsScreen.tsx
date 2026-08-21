@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   TouchableOpacity,
-  TextInput,
   Alert,
   ToastAndroid,
   Modal,
@@ -18,9 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import SkeletonUserLists from "../skeleton/SkeletonUserLists";
 import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
-import firestore, {
-  FirebaseFirestoreTypes,
-} from "@react-native-firebase/firestore";
+import firestore, { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
 import COLORS from "@/src/constants/colors";
 import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
@@ -28,6 +25,7 @@ import { adUnitId } from "@/src/constants/config";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import { useAuthUser } from "@/src/hooks/useAuthUser";
+import CustomTextInput from "@/src/components/CustomTextInput";
 
 // Types
 type ListType = "default" | "custom";
@@ -91,10 +89,7 @@ const UserListsScreen = ({ navigation }: Props) => {
   useEffect(() => {
     if (!user || isAnonymous) return;
 
-    const listsRef = firestore()
-      .collection("users")
-      .doc(user.uid)
-      .collection("lists");
+    const listsRef = firestore().collection("users").doc(user.uid).collection("lists");
 
     const initDefaults = async (): Promise<void> => {
       try {
@@ -121,18 +116,10 @@ const UserListsScreen = ({ navigation }: Props) => {
           });
           await batch.commit();
         } else {
-          const allowedDefaultIds = [
-            "played",
-            "wantToPlay",
-            "playing",
-            "rated",
-          ];
+          const allowedDefaultIds = ["played", "wantToPlay", "playing", "rated"];
           for (const doc of snap.docs) {
             const data = doc.data();
-            if (
-              data.type === "default" &&
-              !allowedDefaultIds.includes(doc.id)
-            ) {
+            if (data.type === "default" && !allowedDefaultIds.includes(doc.id)) {
               await doc.ref.delete();
             }
           }
@@ -176,13 +163,10 @@ const UserListsScreen = ({ navigation }: Props) => {
     const trimmed = newListName.trim();
     if (!trimmed) return;
 
-    const exists = lists.some(
-      (l) => l.name.toLowerCase() === trimmed.toLowerCase(),
-    );
+    const exists = lists.some((l) => l.name.toLowerCase() === trimmed.toLowerCase());
     if (exists) {
       ToastAndroid.show(
-        t("userLists.errors.listAlreadyExists") ??
-          "A list with this name already exists",
+        t("userLists.errors.listAlreadyExists") ?? "A list with this name already exists",
         ToastAndroid.LONG,
       );
       return;
@@ -207,10 +191,7 @@ const UserListsScreen = ({ navigation }: Props) => {
       setModalVisible(false);
     } catch (error) {
       console.error("[UserListsScreen] Create list error:", error);
-      ToastAndroid.show(
-        t("userLists.errors.couldNotCreateList"),
-        ToastAndroid.LONG,
-      );
+      ToastAndroid.show(t("userLists.errors.couldNotCreateList"), ToastAndroid.LONG);
     } finally {
       setIsCreating(false);
     }
@@ -248,8 +229,7 @@ const UserListsScreen = ({ navigation }: Props) => {
     ({ item, index }: { item: GameList; index: number }) => {
       const showAd =
         showAds &&
-        ((index + 1) % 4 === 0 ||
-          (lists.length < 4 && index === lists.length - 1));
+        ((index + 1) % 4 === 0 || (lists.length < 4 && index === lists.length - 1));
       return (
         <>
           <TouchableOpacity
@@ -267,23 +247,18 @@ const UserListsScreen = ({ navigation }: Props) => {
                 size={24}
                 color={COLORS.lightGray}
               />
-              <Text style={styles.listName}>{getDisplayName(item.name)}</Text>
+              <CustomText style={styles.listName}>{getDisplayName(item.name)}</CustomText>
             </View>
             {item.type === "custom" && (
-              <TouchableOpacity
-                onPress={() => handleDeleteList(item.id, item.name)}
-              >
+              <TouchableOpacity onPress={() => handleDeleteList(item.id, item.name)}>
                 <Ionicons name="trash-outline" size={20} color="red" />
               </TouchableOpacity>
             )}
           </TouchableOpacity>
           {showAd && (
             <View style={styles.ad}>
-              <Text style={styles.adText}>{t("common.ad")}</Text>
-              <BannerAd
-                unitId={adUnitId}
-                size={BannerAdSize.MEDIUM_RECTANGLE}
-              />
+              <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
+              <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
             </View>
           )}
         </>
@@ -295,13 +270,10 @@ const UserListsScreen = ({ navigation }: Props) => {
   // Footer
   const ListFooter = useCallback(
     () => (
-      <TouchableOpacity
-        onPress={() => setModalVisible(true)}
-        style={styles.addListBtn}
-      >
-        <Text style={styles.addListText}>
+      <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addListBtn}>
+        <CustomText style={styles.addListText}>
           {t("userLists.actions.createNewList")}
-        </Text>
+        </CustomText>
         <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>
     ),
@@ -312,15 +284,11 @@ const UserListsScreen = ({ navigation }: Props) => {
     return (
       <SafeAreaView style={styles.container} edges={["right", "left"]}>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>
-            <Ionicons
-              name="warning-outline"
-              size={182}
-              color={COLORS.lightGray}
-            />
+          <CustomText style={styles.emptyText}>
+            <Ionicons name="warning-outline" size={182} color={COLORS.lightGray} />
             {"\n"}
             {t("common.loginRequired")}
-          </Text>
+          </CustomText>
         </View>
       </SafeAreaView>
     );
@@ -349,10 +317,10 @@ const UserListsScreen = ({ navigation }: Props) => {
         >
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>
+              <CustomText style={styles.modalTitle}>
                 {t("userLists.actions.createNewList")}
-              </Text>
-              <TextInput
+              </CustomText>
+              <CustomTextInput
                 style={styles.input}
                 value={newListName}
                 onChangeText={setNewListName}
@@ -364,14 +332,14 @@ const UserListsScreen = ({ navigation }: Props) => {
                   onPress={() => setModalVisible(false)}
                   style={styles.cancelBtn}
                 >
-                  <Text style={styles.textBtn}>{t("common.cancel")}</Text>
+                  <CustomText style={styles.textBtn}>{t("common.cancel")}</CustomText>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleCreateList}
                   style={styles.createBtn}
                   disabled={isCreating}
                 >
-                  <Text style={styles.textBtn}>{t("common.create")}</Text>
+                  <CustomText style={styles.textBtn}>{t("common.create")}</CustomText>
                 </TouchableOpacity>
               </View>
             </View>

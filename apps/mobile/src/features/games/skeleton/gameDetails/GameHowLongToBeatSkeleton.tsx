@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import useShimmer from "./useShimmer";
@@ -21,13 +22,13 @@ const GameHowLongToBeatSkeleton: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>
+      <CustomText style={styles.header}>
         {t("games.details.howLongToBeat.title")}
-      </Text>
+      </CustomText>
       <View style={styles.row}>
         {labels.map((label) => (
           <View key={label} style={styles.block}>
-            <Text style={styles.label}>{label}</Text>
+            <CustomText style={styles.label}>{label}</CustomText>
             <S width={80} height={80} radius={40} style={{ marginTop: 10 }} />
             <S width={40} height={12} radius={4} style={{ marginTop: 8 }} />
           </View>

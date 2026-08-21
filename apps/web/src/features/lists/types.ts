@@ -1,16 +1,10 @@
+export type { GameEntry } from "@gaming-zone/core";
+
 export interface GameList {
   id: string;
   name: string;
   type: "default" | "custom";
   createdAt?: any;
-}
-
-export interface GameEntry {
-  id: string | number;
-  name: string;
-  cover_image_id?: string | null;
-  release_date?: string;
-  rating?: number;
 }
 
 export const DEFAULT_LISTS = [

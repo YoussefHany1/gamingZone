@@ -1,5 +1,6 @@
 import React, { memo } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
@@ -16,9 +17,9 @@ const GameStores: React.FC<GameStoresProps> = ({ websites }) => {
 
   return (
     <>
-      <Text style={sharedStyles.sectionHeader}>
+      <CustomText style={sharedStyles.sectionHeader}>
         {t("games.details.availableStores")}
-      </Text>
+      </CustomText>
       <View style={styles.storesContainer}>
         {storeWebsites.map((site) => (
           <TouchableOpacity

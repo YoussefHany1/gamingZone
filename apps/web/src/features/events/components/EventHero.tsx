@@ -6,9 +6,12 @@ import { GamingEvent } from "@/types";
 interface EventHeroProps {
   event: GamingEvent;
   status: "upcoming" | "live" | "ended";
+  liveText?: string;
+  upcomingText?: string;
+  endedText?: string;
 }
 
-export default function EventHero({ event, status }: EventHeroProps) {
+export default function EventHero({ event, status, liveText = "LIVE", upcomingText = "Upcoming", endedText = "Ended" }: EventHeroProps) {
   const logoUri = event.event_logo?.image_id
     ? `https://images.igdb.com/igdb/image/upload/t_screenshot_big/${event.event_logo.image_id}.webp`
     : null;
@@ -37,17 +40,17 @@ export default function EventHero({ event, status }: EventHeroProps) {
           {status === "live" && (
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-linear-to-r from-live-red to-red-400 text-xs font-bold text-white uppercase shadow-lg shadow-live-red/30">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-              LIVE
+              {liveText}
             </span>
           )}
           {status === "upcoming" && (
             <span className="px-3 py-1.5 rounded-xl bg-secondary-blue/80 border border-light-blue/50 text-xs font-bold text-white uppercase backdrop-blur-md">
-              Upcoming
+              {upcomingText}
             </span>
           )}
           {status === "ended" && (
             <span className="px-3 py-1.5 rounded-xl bg-gray-600/80 border border-gray-400/50 text-xs font-bold text-gray-300 uppercase backdrop-blur-md">
-              Ended
+              {endedText}
             </span>
           )}
         </div>

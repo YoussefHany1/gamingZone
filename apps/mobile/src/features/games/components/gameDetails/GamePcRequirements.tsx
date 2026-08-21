@@ -1,13 +1,11 @@
 import React, { memo, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import { sharedStyles } from "./shared";
 import GamePcRequirementsSkeleton from "../../skeleton/gameDetails/GamePcRequirementsSkeleton";
-import type {
-  GamePcRequirementsProps,
-  PcRequirementsTab as Tab,
-} from "../../types";
+import type { GamePcRequirementsProps, PcRequirementsTab as Tab } from "../../types";
 
 const GamePcRequirements: React.FC<GamePcRequirementsProps> = ({
   pcRequirements,
@@ -26,9 +24,9 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps> = ({
 
   return (
     <View style={styles.wrapper}>
-      <Text style={sharedStyles.sectionHeader}>
+      <CustomText style={sharedStyles.sectionHeader}>
         {t("games.details.pcRequirements")}
-      </Text>
+      </CustomText>
 
       {pcReqLoading && <GamePcRequirementsSkeleton />}
 
@@ -41,14 +39,11 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps> = ({
                 style={[styles.tab, activeTab === "min" && styles.tabActive]}
                 onPress={() => setActiveTab("min")}
               >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === "min" && styles.tabTextActive,
-                  ]}
+                <CustomText
+                  style={[styles.tabText, activeTab === "min" && styles.tabTextActive]}
                 >
                   {t("games.details.minimum")}
-                </Text>
+                </CustomText>
               </TouchableOpacity>
             )}
             {pcRequirements.recommended.length > 0 && (
@@ -56,14 +51,11 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps> = ({
                 style={[styles.tab, activeTab === "rec" && styles.tabActive]}
                 onPress={() => setActiveTab("rec")}
               >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === "rec" && styles.tabTextActive,
-                  ]}
+                <CustomText
+                  style={[styles.tabText, activeTab === "rec" && styles.tabTextActive]}
                 >
                   {t("games.details.recommended")}
-                </Text>
+                </CustomText>
               </TouchableOpacity>
             )}
           </View>
@@ -81,8 +73,8 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps> = ({
                   },
                 ]}
               >
-                <Text style={styles.specLabel}>{row.label}</Text>
-                <Text style={styles.specValue}>{row.value}</Text>
+                <CustomText style={styles.specLabel}>{row.label}</CustomText>
+                <CustomText style={styles.specValue}>{row.value}</CustomText>
               </View>
             ))}
           </View>

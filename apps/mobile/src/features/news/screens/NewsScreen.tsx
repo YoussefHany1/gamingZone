@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
-import { useWindowDimensions, StyleSheet, View, Text } from "react-native";
+import { useWindowDimensions, StyleSheet, View } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   TabView,
@@ -28,14 +29,10 @@ const GenericNewsRoute = memo<GenericNewsRouteProps>(
       const enList = list
         .filter((item) => item.language !== "ar")
         .sort((a, b) => a.name.localeCompare(b.name, "en"));
-      return i18n.language === "ar"
-        ? [...arList, ...enList]
-        : [...enList, ...arList];
+      return i18n.language === "ar" ? [...arList, ...enList] : [...enList, ...arList];
     }, [rssFeeds, categoryKey, i18n.language]);
 
-    const [selected, setSelected] = useState<RssSource | undefined>(
-      feedList[0],
-    );
+    const [selected, setSelected] = useState<RssSource | undefined>(feedList[0]);
 
     useEffect(() => {
       if (
@@ -73,7 +70,7 @@ const GenericNewsRoute = memo<GenericNewsRouteProps>(
     }
     return (
       <View style={styles.scene}>
-        <Text style={styles.noDataText}>{t("common.noInternet")}</Text>
+        <CustomText style={styles.noDataText}>{t("common.noInternet")}</CustomText>
       </View>
     );
   },
@@ -112,8 +109,8 @@ function NewsScreen(): React.ReactElement {
         {...props}
         style={styles.tabBar}
         indicatorStyle={styles.tabIndicator}
-        activeColor={COLORS.secondary}
-        inactiveColor="#a9b7d0"
+        activeColor="#fff"
+        inactiveColor={COLORS.lightGray}
       />
     ),
     [],
@@ -124,11 +121,7 @@ function NewsScreen(): React.ReactElement {
    */
   const renderScene = useCallback(
     ({ route }: { route: RouteShape }) => (
-      <GenericNewsRoute
-        rssFeeds={rssFeeds}
-        categoryKey={route.key}
-        loading={loading}
-      />
+      <GenericNewsRoute rssFeeds={rssFeeds} categoryKey={route.key} loading={loading} />
     ),
     [rssFeeds, loading],
   );
@@ -166,7 +159,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.secondary,
   },
   tabLabel: {
-    // color: "#a9b7d0",
     fontSize: 16,
     fontWeight: "600",
   },

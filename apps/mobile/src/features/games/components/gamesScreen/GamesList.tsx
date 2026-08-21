@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, RefreshControl } from "react-native";
+import { View, TouchableOpacity, StyleSheet, RefreshControl } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
@@ -76,15 +77,15 @@ const GameCard = React.memo<GameCardProps>(({ item }) => {
         cachePolicy="memory-disk"
         recyclingKey={item.cover?.image_id || item.id.toString()}
       />
-      {shouldShowLabel && <Text style={styles.gameType}>{t(labelKey)}</Text>}
+      {shouldShowLabel && <CustomText style={styles.gameType}>{t(labelKey)}</CustomText>}
       {item.total_rating != null && (
-        <Text style={[styles.rating, getRatingStyle(item.total_rating / 10)]}>
+        <CustomText style={[styles.rating, getRatingStyle(item.total_rating / 10)]}>
           {Math.round(item.total_rating) / 10}
-        </Text>
+        </CustomText>
       )}
-      <Text style={styles.title} numberOfLines={2}>
+      <CustomText style={styles.title} numberOfLines={2}>
         {item.name}
-      </Text>
+      </CustomText>
     </TouchableOpacity>
   );
 });
@@ -182,7 +183,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     return (
       <View>
         {renderBackButton()}
-        <Text style={styles.noResults}>{t("games.list.noResults")}</Text>
+        <CustomText style={styles.noResults}>{t("games.list.noResults")}</CustomText>
       </View>
     );
   }

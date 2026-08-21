@@ -1,4 +1,1 @@
-export interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-}
+export type { ChatMessage } from "@gaming-zone/core";

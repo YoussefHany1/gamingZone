@@ -72,8 +72,7 @@ export default function ListDetailsClient({
                   {getDisplayName(listName) || t("navigation.titles.gamesList")}
                 </h1>
                 <p className="text-sm text-gray-400">
-                  {games.length}{" "}
-                  {games.length >= 1 && t("userLists.gamesCount")}
+                  {t("userLists.gamesCount", { count: games.length })}
                 </p>
               </div>
             </div>

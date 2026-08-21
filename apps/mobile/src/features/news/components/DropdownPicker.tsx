@@ -1,6 +1,6 @@
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   Modal,
@@ -18,6 +18,7 @@ import { useState, memo, useMemo } from "react";
 import SkeletonDropdown from "../skeleton/SkeletonDropdown";
 import { useTranslation } from "react-i18next";
 import NetInfo from "@react-native-community/netinfo";
+import SiteDescription from "./SiteDescription";
 import type { DropdownPickerProps, SectionData, RssFeedSource } from "../types";
 
 const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
@@ -92,10 +93,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
     setModalVisible(false);
   };
 
-  const notifTopic = NotificationService.getTopicName(
-    category,
-    selectedItem.name,
-  );
+  const notifTopic = NotificationService.getTopicName(category, selectedItem.name);
   const isNotifEnabled: boolean = notifTopic ? (preferences[notifTopic] ?? false) : false;
 
   return (
@@ -117,80 +115,20 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
           />
         ) : null}
 
-        <Text style={styles.pickerButtonText} numberOfLines={1}>
+        <CustomText style={styles.pickerButtonText} numberOfLines={1}>
           {selectedItem?.name || "Select a website..."}
-        </Text>
+        </CustomText>
 
         <Ionicons name="chevron-down" size={20} color="#fff" />
       </TouchableOpacity>
 
       {/* Site description card */}
-      <View style={styles.siteDesc}>
-        {selectedItem?.image ? (
-          <Image
-            recyclingKey={String(selectedItem.image)}
-            source={selectedItem.image}
-            style={styles.siteImg}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            allowDownscaling={true}
-          />
-        ) : (
-          <View
-            style={[styles.siteImg, { backgroundColor: COLORS.secondary }]}
-          />
-        )}
-        <View style={styles.siteText}>
-          <Text style={styles.siteName}>{selectedItem?.name ?? ""}</Text>
-          <Text style={styles.siteAbout}>{selectedItem?.aboutSite ?? ""}</Text>
-          <View style={styles.buttons}>
-            {/* Visit site — label changes based on site language */}
-            {selectedItem?.language === "ar" ? (
-              <TouchableOpacity
-                onPress={() => handleVisitSite(selectedItem?.website)}
-                style={styles.visitSiteBtn}
-              >
-                <Text style={styles.visitSiteText}>
-                  زور الموقع{" "}
-                  <Ionicons
-                    name="arrow-up-right-box-outline"
-                    size={18}
-                    color="white"
-                  />
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={() => handleVisitSite(selectedItem?.website)}
-                style={styles.visitSiteBtn}
-              >
-                <Text style={styles.visitSiteText}>
-                  Visit Website{" "}
-                  <Ionicons
-                    name="arrow-up-right-box-outline"
-                    size={18}
-                    color="white"
-                  />
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Notification toggle */}
-            <TouchableOpacity
-              onPress={handleToggleNotification}
-              style={styles.bellButton}
-            >
-              <Ionicons
-                name={
-                  isNotifEnabled ? "notifications" : "notifications-off-outline"
-                }
-                size={24}
-                color={isNotifEnabled ? "#779bdd" : "#666"}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
+      <SiteDescription
+        selectedItem={selectedItem}
+        isNotifEnabled={isNotifEnabled}
+        onVisitSite={handleVisitSite}
+        onToggleNotification={handleToggleNotification}
+      />
 
       {/* Selection modal */}
       <Modal
@@ -205,9 +143,9 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
           onPress={() => setModalVisible(false)}
         >
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
+            <CustomText style={styles.modalTitle}>
               {t("news.dropdown.selectSource")}
-            </Text>
+            </CustomText>
             <SectionList<RssFeedSource, SectionData>
               sections={sections}
               keyExtractor={(item) => item.name}
@@ -218,15 +156,14 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                 section: SectionListData<RssFeedSource, SectionData>;
               }) => (
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionHeaderText}>{title}</Text>
+                  <CustomText style={styles.sectionHeaderText}>{title}</CustomText>
                 </View>
               )}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[
                     styles.modalItem,
-                    selectedItem?.name === item.name &&
-                      styles.modalItemSelected,
+                    selectedItem?.name === item.name && styles.modalItemSelected,
                   ]}
                   onPress={() => handleSelect(item)}
                 >
@@ -239,7 +176,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                       cachePolicy="memory-disk"
                       allowDownscaling={true}
                     />
-                    <Text
+                    <CustomText
                       style={[
                         styles.modalItemText,
                         selectedItem?.name === item.name && {
@@ -248,14 +185,10 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                       ]}
                     >
                       {item.name}
-                    </Text>
+                    </CustomText>
                   </View>
                   {selectedItem?.name === item.name && (
-                    <Ionicons
-                      name="checkmark-sharp"
-                      size={24}
-                      color={COLORS.secondary}
-                    />
+                    <Ionicons name="checkmark-sharp" size={24} color={COLORS.secondary} />
                   )}
                 </TouchableOpacity>
               )}
@@ -264,9 +197,9 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
               style={styles.closeButton}
               onPress={() => setModalVisible(false)}
             >
-              <Text style={styles.closeButtonText}>
+              <CustomText style={styles.closeButtonText}>
                 {t("news.dropdown.cancel")}
-              </Text>
+              </CustomText>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -308,52 +241,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: COLORS.secondary,
   },
-  siteDesc: {
-    flexDirection: "row-reverse",
-    marginTop: 20,
-    alignItems: "center",
-  },
-  siteImg: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: COLORS.secondary,
-  },
-  siteText: {
-    marginHorizontal: 10,
-  },
-  siteName: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 28,
-  },
-  siteAbout: {
-    color: "white",
-    width: 250,
-  },
-  buttons: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 12,
-  },
-  visitSiteBtn: {
-    color: "white",
-    backgroundColor: COLORS.secondary,
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginRight: 24,
-  },
-  visitSiteText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  bellButton: {
-    padding: 8,
-    backgroundColor: COLORS.secondary + "50",
-    borderRadius: 20,
-  },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.7)",

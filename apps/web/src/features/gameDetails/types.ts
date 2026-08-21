@@ -1,74 +1,17 @@
 import React from "react";
 
-export interface Website {
-  id: number;
-  type: number;
-  url: string;
-}
+import type { GameData, PcRequirements } from "@gaming-zone/core";
 
-export interface Company {
-  id: number;
-  name: string;
-}
-
-export interface InvolvedCompany {
-  id: number;
-  developer: boolean;
-  publisher: boolean;
-  company: Company;
-}
-
-export interface CollectionGame {
-  id: number;
-  name: string;
-  cover?: { image_id: string };
-}
-
-export interface SimilarGame {
-  id: number;
-  name: string;
-  cover?: { image_id: string };
-}
-
-export interface SpecRow {
-  label: string;
-  value: string;
-}
-
-export interface PcRequirements {
-  minimum: SpecRow[];
-  recommended: SpecRow[];
-}
-
-export interface GameData {
-  id: number;
-  name: string;
-  summary?: string;
-  cover?: { image_id: string };
-  total_rating?: number;
-  total_rating_count?: number;
-  release_dates?: { human?: string }[];
-  platforms?: { id: number; name: string; abbreviation?: string }[];
-  genres?: { id: number; name: string }[];
-  game_modes?: { id: number; name: string }[];
-  age_ratings?: { organization: number; rating_category: number }[];
-  involved_companies?: InvolvedCompany[];
-  game_engines?: { id: number; name: string }[];
-  videos?: { name?: string; video_id: string }[];
-  screenshots?: { image_id: string }[];
-  language_supports?: {
-    language: { name: string };
-    language_support_type: { name: string };
-  }[];
-  game_time_to_beats?: {
-    hastily?: number;
-    normally?: number;
-    completely?: number;
-  };
-  websites?: Website[];
-  collections?: { games?: CollectionGame[] }[];
-  similar_games?: SimilarGame[];
-}
+export type {
+  GameData,
+  PcRequirements,
+  Website,
+  Company,
+  InvolvedCompany,
+  CollectionGame,
+  SimilarGame,
+  SpecRow,
+} from "@gaming-zone/core";
 
 export interface GameDetailsClientProps {
   t?: any;

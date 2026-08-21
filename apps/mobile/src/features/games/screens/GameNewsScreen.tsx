@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect, useCallback, useMemo } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
-  Text,
   View,
   TouchableOpacity,
   StyleSheet,
@@ -72,20 +72,20 @@ const NewsItem = memo<NewsItemProps>(({ item, lang }) => {
     <TouchableOpacity style={styles.card} onPress={handlePress}>
       <View style={styles.cardContent}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title} numberOfLines={2}>
+          <CustomText style={styles.title} numberOfLines={2}>
             {item.title}
-          </Text>
-          <Text style={styles.desc} numberOfLines={3}>
+          </CustomText>
+          <CustomText style={styles.desc} numberOfLines={3}>
             {item.description ?? item.body ?? ""}
-          </Text>
-          <Text style={styles.desc} numberOfLines={1}>
+          </CustomText>
+          <CustomText style={styles.desc} numberOfLines={1}>
             {item.pubDate
               ? new Date(item.pubDate).toLocaleString(lang === "ar" ? "ar-EG" : "en-US", {
                   dateStyle: "medium",
                   timeStyle: "short",
                 })
               : ""}
-          </Text>
+          </CustomText>
         </View>
         {imageUrl && (
           <Image
@@ -206,7 +206,7 @@ const NewsSection = memo<NewsSectionProps>(
               color="#779bdd"
               style={styles.chevronIcon}
             />
-            <Text style={styles.categoryTitle}>{title}</Text>
+            <CustomText style={styles.categoryTitle}>{title}</CustomText>
           </View>
           <Switch
             trackColor={{ false: "#3e3e3e", true: "#779bdd" }}
@@ -222,9 +222,9 @@ const NewsSection = memo<NewsSectionProps>(
             {loading ? (
               <Loading />
             ) : news.length === 0 ? (
-              <Text style={{ color: "gray", textAlign: "center", marginTop: 10 }}>
+              <CustomText style={{ color: "gray", textAlign: "center", marginTop: 10 }}>
                 {lang === "ar" ? "لا توجد أخبار حاليا" : "No news found."}
-              </Text>
+              </CustomText>
             ) : (
               <ScrollView
                 style={{ maxHeight: 250, borderRadius: 8 }}
@@ -277,14 +277,14 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
 
         {showAds && (
           <View style={styles.ad}>
-            <Text style={styles.adText}>{t("common.ad")}</Text>
+            <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
             <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
           </View>
         )}
 
         {sourceLink && (
           <TouchableOpacity onPress={handleOpenSource} style={{ marginBottom: 10 }}>
-            <Text style={styles.sourceText}>{t("games.list.gamesNews.source")}</Text>
+            <CustomText style={styles.sourceText}>{t("games.list.gamesNews.source")}</CustomText>
           </TouchableOpacity>
         )}
 

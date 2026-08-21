@@ -1,9 +1,8 @@
+import CustomText from "@/src/components/CustomText";
 import {
   View,
   ScrollView,
-  Text,
   StyleSheet,
-  TextInput,
   InteractionManager,
   TouchableOpacity,
   ToastAndroid,
@@ -35,6 +34,7 @@ import SteamLinkModal from "../components/SteamLinkModal";
 import { Ionicons } from "@expo/vector-icons";
 import SectionTitle from "@/src/components/SectionTitle";
 import { FirestoreUser, CloudinaryResponse } from "../types";
+import CustomTextInput from "@/src/components/CustomTextInput";
 
 // Cloudinary config
 
@@ -153,10 +153,7 @@ function ProfileScreen(): React.ReactElement {
   const pickImage = useCallback(async (): Promise<void> => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      ToastAndroid.show(
-        t("settings.profile.messages.permissionMsg"),
-        ToastAndroid.LONG,
-      );
+      ToastAndroid.show(t("settings.profile.messages.permissionMsg"), ToastAndroid.LONG);
       return;
     }
 
@@ -207,10 +204,7 @@ function ProfileScreen(): React.ReactElement {
         }
       } catch (e) {
         console.error("Error uploading image:", e);
-        ToastAndroid.show(
-          t("settings.profile.messages.uploadFailed"),
-          ToastAndroid.LONG,
-        );
+        ToastAndroid.show(t("settings.profile.messages.uploadFailed"), ToastAndroid.LONG);
         throw e;
       }
     },
@@ -222,31 +216,19 @@ function ProfileScreen(): React.ReactElement {
 
     // Validate all required fields
     if (!name.trim()) {
-      ToastAndroid.show(
-        t("settings.profile.messages.missingName"),
-        ToastAndroid.LONG,
-      );
+      ToastAndroid.show(t("settings.profile.messages.missingName"), ToastAndroid.LONG);
       return;
     }
     if (!dob) {
-      ToastAndroid.show(
-        t("settings.profile.messages.missingDob"),
-        ToastAndroid.LONG,
-      );
+      ToastAndroid.show(t("settings.profile.messages.missingDob"), ToastAndroid.LONG);
       return;
     }
     if (!gender) {
-      ToastAndroid.show(
-        t("settings.profile.messages.missingGender"),
-        ToastAndroid.LONG,
-      );
+      ToastAndroid.show(t("settings.profile.messages.missingGender"), ToastAndroid.LONG);
       return;
     }
     if (!country) {
-      ToastAndroid.show(
-        t("settings.profile.messages.missingCountry"),
-        ToastAndroid.LONG,
-      );
+      ToastAndroid.show(t("settings.profile.messages.missingCountry"), ToastAndroid.LONG);
       return;
     }
     if (!platform) {
@@ -279,29 +261,13 @@ function ProfileScreen(): React.ReactElement {
 
       refreshUser();
       setLoading(false);
-      ToastAndroid.show(
-        t("settings.profile.messages.saveSuccessMsg"),
-        ToastAndroid.LONG,
-      );
+      ToastAndroid.show(t("settings.profile.messages.saveSuccessMsg"), ToastAndroid.LONG);
     } catch (error) {
       setLoading(false);
       console.error("Error saving profile:", error);
-      ToastAndroid.show(
-        t("settings.profile.messages.saveError"),
-        ToastAndroid.LONG,
-      );
+      ToastAndroid.show(t("settings.profile.messages.saveError"), ToastAndroid.LONG);
     }
-  }, [
-    currentUser,
-    imageUri,
-    name,
-    dob,
-    gender,
-    country,
-    platform,
-    t,
-    uploadImage,
-  ]);
+  }, [currentUser, imageUri, name, dob, gender, country, platform, t, uploadImage]);
 
   const handleDateChange = useCallback(
     (_event: DateTimePickerEvent, selectedDate?: Date): void => {
@@ -352,12 +318,7 @@ function ProfileScreen(): React.ReactElement {
   );
 
   if (!currentUser)
-    return (
-      <ErrorState
-        message={t("common.loginRequired")}
-        showContactButton={false}
-      />
-    );
+    return <ErrorState message={t("common.loginRequired")} showContactButton={false} />;
 
   return (
     <SafeAreaView style={styles.container} edges={["right", "left"]}>
@@ -370,22 +331,20 @@ function ProfileScreen(): React.ReactElement {
             <Image
               recyclingKey={imageUri ?? ""}
               style={styles.avatar}
-              source={
-                imageUri ? imageUri : require("@/assets/default_profile.webp")
-              }
+              source={imageUri ? imageUri : require("@/assets/default_profile.webp")}
               contentFit="cover"
               transition={500}
               cachePolicy="memory-disk"
               allowDownscaling
             />
-            <Text style={styles.changePicText}>
+            <CustomText style={styles.changePicText}>
               {t("settings.profile.changePic")}
-            </Text>
+            </CustomText>
           </TouchableOpacity>
 
           {/* Name */}
           <SectionTitle title={t("settings.profile.nameLabel")} />
-          <TextInput
+          <CustomTextInput
             style={styles.input}
             placeholder={t("settings.profile.placeholders.name")}
             placeholderTextColor="#888"
@@ -396,7 +355,7 @@ function ProfileScreen(): React.ReactElement {
           {/* Date of Birth */}
           <SectionTitle title={t("settings.profile.dobLabel")} />
           <TouchableOpacity onPress={() => setShowPicker(true)}>
-            <TextInput
+            <CustomTextInput
               style={styles.input}
               placeholder={t("settings.profile.placeholders.dob")}
               placeholderTextColor="#888"
@@ -419,9 +378,7 @@ function ProfileScreen(): React.ReactElement {
             options={genderOptions}
             selectedValue={gender}
             onValueChange={setGender}
-            placeholder={
-              t("settings.profile.placeholders.gender") || "Select Gender"
-            }
+            placeholder={t("settings.profile.placeholders.gender") || "Select Gender"}
           />
 
           {/* Country */}
@@ -430,9 +387,7 @@ function ProfileScreen(): React.ReactElement {
             options={countriesList}
             selectedValue={country}
             onValueChange={setCountry}
-            placeholder={
-              t("settings.profile.placeholders.country") || "Select Country"
-            }
+            placeholder={t("settings.profile.placeholders.country") || "Select Country"}
           />
 
           {/* Platform */}
@@ -441,18 +396,13 @@ function ProfileScreen(): React.ReactElement {
             options={platformOptions}
             selectedValue={platform}
             onValueChange={setPlatform}
-            placeholder={
-              t("settings.profile.placeholders.platform") || "Select Platform"
-            }
+            placeholder={t("settings.profile.placeholders.platform") || "Select Platform"}
           />
 
           {showAds && (
             <View style={styles.ad}>
-              <Text style={styles.adText}>{t("common.ad")}</Text>
-              <BannerAd
-                unitId={adUnitId}
-                size={BannerAdSize.MEDIUM_RECTANGLE}
-              />
+              <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
+              <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
             </View>
           )}
 
@@ -478,42 +428,36 @@ function ProfileScreen(): React.ReactElement {
               color="#fff"
               style={{ marginRight: 10 }}
             />
-            <Text style={styles.saveText}>
+            <CustomText style={styles.saveText}>
               {t("settings.profile.steam.modal.title") || "Sync Steam Library"}
-            </Text>
+            </CustomText>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
-            <Text style={styles.saveText}>{t("common.saveChanges")}</Text>
+            <CustomText style={styles.saveText}>{t("common.saveChanges")}</CustomText>
           </TouchableOpacity>
 
           {/* Admin dashboard â€” only visible to admin users */}
           {isAdmin && (
             <View style={{ backgroundColor: "gold", padding: 15, margin: 20 }}>
-              <Text>Admin Dashboard ðŸ‘‘</Text>
-              <Text>Channel: {Updates.channel ?? "Not Defined"}</Text>
-              <Text>
+              <CustomText>Admin Dashboard ðŸ‘‘</CustomText>
+              <CustomText>Channel: {Updates.channel ?? "Not Defined"}</CustomText>
+              <CustomText>
                 Runtime Version: {Updates.runtimeVersion ?? "Not Defined"}
-              </Text>
-              <Text>
+              </CustomText>
+              <CustomText>
                 Update ID: {Updates.updateId ?? "Running Native Build"}
-              </Text>
-              <Text>
+              </CustomText>
+              <CustomText>
                 App Config Version:{" "}
-                {
-                  (require("@/app.json") as { expo: { version: string } }).expo
-                    .version
-                }
-              </Text>
+                {(require("@/app.json") as { expo: { version: string } }).expo.version}
+              </CustomText>
             </View>
           )}
         </ScrollView>
       )}
 
-      <SteamLinkModal
-        visible={showSteamModal}
-        onClose={() => setShowSteamModal(false)}
-      />
+      <SteamLinkModal visible={showSteamModal} onClose={() => setShowSteamModal(false)} />
     </SafeAreaView>
   );
 }

@@ -5,9 +5,9 @@ import React, {
   useEffect,
   useMemo,
 } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   StyleSheet,
   Dimensions,
   TouchableOpacity,
@@ -47,8 +47,8 @@ const SlideContent = React.memo(
         colors={["#1a3560", "#0c1a33"]}
         style={styles.contentPanel}
       >
-        <Text style={styles.slideTitle}>{title}</Text>
-        <Text style={styles.slideDescription}>{description}</Text>
+        <CustomText style={styles.slideTitle}>{title}</CustomText>
+        <CustomText style={styles.slideDescription}>{description}</CustomText>
       </LinearGradient>
     </View>
   ),
@@ -200,7 +200,7 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
             disabled={isLast}
             activeOpacity={0.7}
           >
-            <Text style={styles.skipText}>{t("onboarding.skip")}</Text>
+            <CustomText style={styles.skipText}>{t("onboarding.skip")}</CustomText>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -214,9 +214,9 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
               end={{ x: 1, y: 0 }}
               style={styles.nextGradient}
             >
-              <Text style={styles.nextText}>
+              <CustomText style={styles.nextText}>
                 {isLast ? t("onboarding.getStarted") : t("onboarding.next")}
-              </Text>
+              </CustomText>
             </LinearGradient>
           </TouchableOpacity>
         </View>

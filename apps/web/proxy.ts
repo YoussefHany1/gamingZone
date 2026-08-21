@@ -43,6 +43,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|assets|docs|sitemap.xml|robots.txt|favicon.ico).*)",
+    // Exclude static files, API routes, and well-known files from locale redirect
+    "/((?!api|_next/static|_next/image|assets|docs|sitemap.xml|robots.txt|favicon.ico|\\.well-known).*)",
   ],
 };

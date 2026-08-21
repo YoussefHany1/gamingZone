@@ -1,10 +1,10 @@
-﻿import React, { useState, useMemo, useCallback, memo, useEffect } from "react";
+import React, { useState, useMemo, useCallback, memo, useEffect } from "react";
+import CustomText from "@/src/components/CustomText";
+import CustomTextInput from "@/src/components/CustomTextInput";
 import {
   View,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  Text,
   Alert,
   ToastAndroid,
   ImageBackground,
@@ -254,17 +254,17 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
               allowDownscaling={true}
             />
 
-            <Text style={styles.title}>{t("auth.register.title")}</Text>
+            <CustomText style={styles.title}>{t("auth.register.title")}</CustomText>
 
             <View style={styles.inputContainer}>
-              <TextInput
+              <CustomTextInput
                 style={styles.input}
                 placeholder={t("auth.register.namePlaceholder")}
                 value={name}
                 onChangeText={setName}
                 placeholderTextColor="#aaa"
               />
-              <TextInput
+              <CustomTextInput
                 style={styles.input}
                 placeholder={t("auth.emailPlaceholder")}
                 value={email}
@@ -291,7 +291,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 }
               />
 
-              <TextInput
+              <CustomTextInput
                 style={styles.input}
                 placeholder={t("auth.passwordPlaceholder")}
                 value={password}
@@ -303,9 +303,9 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
 
             {/* Email sign-up button */}
             <TouchableOpacity style={styles.button} onPress={handleSignup}>
-              <Text style={styles.buttonText}>
+              <CustomText style={styles.buttonText}>
                 {t("auth.register.signUpButton")}
-              </Text>
+              </CustomText>
             </TouchableOpacity>
 
             {/* Google sign-up button */}
@@ -320,10 +320,10 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 end={{ x: 1, y: 1 }}
               >
                 <Ionicons name="logo-google" size={28} color="white" />
-                <Text style={styles.buttonText}>
+                <CustomText style={styles.buttonText}>
                   {" "}
                   {t("auth.register.googleSignUp")}
-                </Text>
+                </CustomText>
               </LinearGradient>
             </TouchableOpacity>
 
@@ -332,9 +332,9 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
               style={styles.newAccButton}
               onPress={handleNavigateToLogin}
             >
-              <Text style={styles.buttonText}>
+              <CustomText style={styles.buttonText}>
                 {t("auth.register.haveAnAccount")}
-              </Text>
+              </CustomText>
             </TouchableOpacity>
 
             {/* Continue as guest button */}
@@ -342,9 +342,9 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
               onPress={handleAnonymousLogin}
               style={styles.guestButton}
             >
-              <Text style={styles.guestButtonText}>
+              <CustomText style={styles.guestButtonText}>
                 {t("auth.guest") || "Continue as Guest"}
-              </Text>
+              </CustomText>
             </TouchableOpacity>
           </KeyboardAvoidingView>
         </ScrollView>

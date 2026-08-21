@@ -1,16 +1,13 @@
-import {
-  GamingEventGame,
-  GamingEventNetwork,
+import type {
+  CountdownResult,
+  GameCover,
+  GameGenre,
+  GamePlatform,
+  GamingEvent,
   GamingEventVideo,
-} from "../features/events/types";
-import { GameCover, GameGenre, GamePlatform } from "../features/games/types";
+} from "@gaming-zone/core";
 
-export type CountdownResult = {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-};
+export type { CountdownResult, GamingEvent } from "@gaming-zone/core";
 
 export type UserList = {
   id: string;
@@ -21,19 +18,6 @@ export type UserList = {
 export type PickerOption = {
   label: string;
   value: string;
-};
-
-export type GamingEvent = {
-  id: number;
-  name: string;
-  event_logo?: { image_id: string };
-  start_time: number;
-  end_time: number;
-  live_stream_url?: string;
-  description?: string;
-  games?: GamingEventGame[];
-  videos?: GamingEventVideo[];
-  event_networks?: GamingEventNetwork[];
 };
 
 export type Game = {

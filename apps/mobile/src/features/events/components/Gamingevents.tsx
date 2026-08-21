@@ -1,7 +1,8 @@
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import React, { useCallback, useRef, memo } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
@@ -17,6 +18,8 @@ import COLORS from "@/src/constants/colors";
 import SectionTitle from "@/src/components/SectionTitle";
 import { useCountdown } from "@/src/hooks/useCountdown";
 import type { TimeLeft } from "@/src/hooks/useCountdown";
+import { formatEventDateShort, getEventStatus } from "@gaming-zone/utils";
+import type { EventStatus } from "@gaming-zone/utils";
 import ErrorState from "@/src/components/ErrorState";
 import useCachedData from "@/src/hooks/useCachedData";
 import { openLink } from "@/src/lib/browser";
@@ -34,30 +37,7 @@ const STORAGE_KEY = "GAMES_CACHE_EVENTS";
 
 
 
-const formatEventDate = (timestamp: number, language = "en"): string => {
-  if (!timestamp) return "";
-  const date = new Date(timestamp * 1000);
-  const options: Intl.DateTimeFormatOptions = {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  };
-  return date.toLocaleDateString(language, options);
-};
-
-// Types
-
-type EventStatus = "upcoming" | "live" | "ended";
-
 //  Pure functions
-
-const getEventStatus = (startTime: number, endTime: number): EventStatus => {
-  const now = Date.now() / 1000;
-  if (now < startTime) return "upcoming";
-  if (now <= endTime) return "live";
-  return "ended";
-};
 
 /** Builds a compact countdown string, e.g. "2d 4h 30m" or "45m". */
 const formatCountdown = (
@@ -136,35 +116,35 @@ const EventCard = memo<EventCardProps>(({ item }) => {
               style={styles.liveBadge}
             >
               <View style={styles.liveDot} />
-              <Text style={styles.liveText}>{t("home.gamingEvents.live")}</Text>
+              <CustomText style={styles.liveText}>{t("home.gamingEvents.live")}</CustomText>
             </LinearGradient>
           )}
           {status === "upcoming" && (
             <View style={styles.upcomingBadge}>
-              <Text style={styles.upcomingText}>
+              <CustomText style={styles.upcomingText}>
                 {t("home.gamingEvents.upcoming")}
-              </Text>
+              </CustomText>
             </View>
           )}
         </View>
 
         <View style={styles.infoContainer}>
-          <Text style={styles.eventTitle} numberOfLines={2}>
+          <CustomText style={styles.eventTitle} numberOfLines={2}>
             {item.name}
-          </Text>
+          </CustomText>
 
           {/* Countdown timer â€” only shown for upcoming events with time remaining */}
           {timeUntil && (
             <View style={styles.dateTimeRow}>
               <View style={styles.dateContainer}>
-                <Text style={styles.dateText}>
-                  {formatEventDate(item.start_time, i18n.language)}
-                </Text>
+                <CustomText style={styles.dateText}>
+                  {formatEventDateShort(item.start_time, i18n.language)}
+                </CustomText>
               </View>
               <View style={styles.countdownContainer}>
-                <Text style={styles.countdownText}>
+                <CustomText style={styles.countdownText}>
                   {formatCountdown(timeUntil, t)}
-                </Text>
+                </CustomText>
               </View>
             </View>
           )}
@@ -231,7 +211,7 @@ function GamingEvents(): React.ReactElement | null {
       </View>
 
       {isActuallyLoading && (
-        <FlashList
+        <FlashList renderScrollComponent={GHScrollView as any}
           data={SKELETON_DATA}
           horizontal
           keyExtractor={keyExtractorSkeleton}
@@ -249,7 +229,7 @@ function GamingEvents(): React.ReactElement | null {
       )}
 
       {!error && (
-        <FlashList
+        <FlashList renderScrollComponent={GHScrollView as any}
           data={eventsToShow}
           horizontal
           keyExtractor={keyExtractorEvents}

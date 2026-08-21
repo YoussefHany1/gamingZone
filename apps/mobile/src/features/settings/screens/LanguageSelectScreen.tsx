@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
@@ -62,7 +62,7 @@ const LanguageSelect = memo((): React.ReactElement => {
                 { direction: lang === "en" ? "ltr" : "rtl" },
               ]}
             >
-              <Text
+              <CustomText
                 style={[
                   styles.categoryTitle,
                   {
@@ -72,7 +72,7 @@ const LanguageSelect = memo((): React.ReactElement => {
                 ]}
               >
                 {lang === "en" ? "English" : "العربية"}
-              </Text>
+              </CustomText>
               {i18n.language === lang && (
                 <Ionicons name="checkmark-sharp" size={24} color="#779bdd" />
               )}
@@ -81,7 +81,7 @@ const LanguageSelect = memo((): React.ReactElement => {
         ))}
         {showAds && (
           <View style={styles.ad}>
-            <Text style={styles.adText}>{t("common.ad")}</Text>
+            <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
             <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
           </View>
         )}

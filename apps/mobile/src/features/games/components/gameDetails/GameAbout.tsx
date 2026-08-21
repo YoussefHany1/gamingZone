@@ -1,5 +1,6 @@
 import React, { memo } from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import { sharedStyles } from "./shared";
 import type { GameAboutProps } from "../../types";
@@ -18,8 +19,10 @@ const GameAbout: React.FC<GameAboutProps> = ({ summary }) => {
 
   return (
     <View>
-      <Text style={sharedStyles.sectionHeader}>{t("games.details.about")}</Text>
-      <Text style={SUMMARY_STYLE}>{summary}</Text>
+      <CustomText style={sharedStyles.sectionHeader}>
+        {t("games.details.about")}
+      </CustomText>
+      <CustomText style={SUMMARY_STYLE}>{summary}</CustomText>
     </View>
   );
 };

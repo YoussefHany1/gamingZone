@@ -1,7 +1,7 @@
 import React from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -159,9 +159,9 @@ const GameDetails = ({ route, navigation }: Props) => {
                 {/* Rating Section */}
                 {user && !user.isAnonymous && game && (
                   <View style={styles.ratingSection}>
-                    <Text style={styles.ratingTitle}>
+                    <CustomText style={styles.ratingTitle}>
                       {t("games.details.rateThisGame") ?? "Rate this Game"}
-                    </Text>
+                    </CustomText>
                     <View style={styles.starsRow}>
                       {[1, 2, 3, 4, 5].map((star) => (
                         <TouchableOpacity
@@ -183,10 +183,10 @@ const GameDetails = ({ route, navigation }: Props) => {
                       ))}
                     </View>
                     {rating > 0 && (
-                      <Text style={styles.ratingValueText}>
+                      <CustomText style={styles.ratingValueText}>
                         {t("games.details.yourRating") ?? "Your Rating"}:{" "}
                         {rating} / 5
-                      </Text>
+                      </CustomText>
                     )}
                   </View>
                 )}
@@ -226,7 +226,7 @@ const GameDetails = ({ route, navigation }: Props) => {
 
                 {/* Ad — always shown */}
                 <View style={styles.ad}>
-                  <Text style={styles.adText}>{t("common.ad")}</Text>
+                  <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
                   <BannerAd
                     unitId={adUnitId}
                     size={BannerAdSize.MEDIUM_RECTANGLE}
@@ -253,7 +253,7 @@ const GameDetails = ({ route, navigation }: Props) => {
 
                 {/* Second ad — always shown */}
                 <View style={styles.ad}>
-                  <Text style={styles.adText}>{t("common.ad")}</Text>
+                  <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
                   <BannerAd
                     unitId={adUnitId}
                     size={BannerAdSize.MEDIUM_RECTANGLE}

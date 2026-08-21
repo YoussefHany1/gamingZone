@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import useShimmer from "./useShimmer";
@@ -15,16 +16,10 @@ const GameStoresSkeleton: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>{t("games.details.availableStores")}</Text>
+      <CustomText style={styles.header}>{t("games.details.availableStores")}</CustomText>
       <View style={styles.row}>
         {[1, 2, 3].map((i) => (
-          <S
-            key={i}
-            width={60}
-            height={60}
-            radius={12}
-            style={{ marginRight: 10 }}
-          />
+          <S key={i} width={60} height={60} radius={12} style={{ marginRight: 10 }} />
         ))}
       </View>
     </View>

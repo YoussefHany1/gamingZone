@@ -1,7 +1,11 @@
 import { Globe, Check } from "lucide-react";
 import { GameLanguagesProps } from "../types";
 
-export default function GameLanguages({ languageRows, t, lang}: GameLanguagesProps) {
+export default function GameLanguages({
+  languageRows,
+  t,
+  lang,
+}: GameLanguagesProps) {
   const isRtl = lang === "ar";
   const textDirectionClass = isRtl ? "text-right" : "text-left";
 
@@ -9,9 +13,7 @@ export default function GameLanguages({ languageRows, t, lang}: GameLanguagesPro
 
   return (
     <section className="glass-panel border border-white/10 p-6 rounded-3xl space-y-4 shadow-xl overflow-hidden">
-      <h2
-        className={`text-lg font-black text-white border-b border-white/5 pb-2 flex items-center gap-2 ${isRtl ? "flex-row-reverse" : "flex-row"}`}
-      >
+      <h2 className="text-lg font-black text-white border-b border-white/5 pb-2 flex items-center gap-2">
         <Globe className="w-5 h-5 text-light-blue" />
         <span>{t("games.details.languages.title")}</span>
       </h2>
@@ -22,9 +24,7 @@ export default function GameLanguages({ languageRows, t, lang}: GameLanguagesPro
             <tr
               className={`border-b border-white/10 text-gray-400 uppercase font-black tracking-wider text-[9px] sm:text-[10px] ${textDirectionClass}`}
             >
-              <th
-                className={`py-3 px-4 ${isRtl ? "text-right" : "text-left"}`}
-              >
+              <th className={`py-3 px-4 ${isRtl ? "text-right" : "text-left"}`}>
                 {t("games.details.languages.Language")}
               </th>
               <th className="py-3 px-4 text-center">

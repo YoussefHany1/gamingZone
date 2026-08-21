@@ -1,16 +1,9 @@
+import type { GameBrief, Video } from "@gaming-zone/core";
+
+export type { GameBrief as Game, Video } from "@gaming-zone/core";
+
 export interface EventCountdownProps {
   startTime: number;
-}
-
-export interface Video {
-  video_id: string;
-  name: string;
-}
-
-export interface Game {
-  id: number;
-  name: string;
-  cover?: { image_id: string };
 }
 
 export interface EventStreamButtonProps {

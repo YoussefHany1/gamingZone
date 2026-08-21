@@ -1,13 +1,13 @@
 {
   "applinks": {
-    "apps": [],
     "details": [
       {
-        "appID": "TEAM_ID.com.yh.gamingzone",
-        "paths": [
-          "/news/*",
-          "/news-details*",
-          "/lists/*"
+        "appIDs": ["TEAM_ID.com.yh.gamingzone"],
+        "components": [
+          { "/": "/news/*", "comment": "Open news article in app" },
+          { "/": "/*/news/*", "comment": "Localized news article (en/ar)" },
+          { "/": "/lists/*", "comment": "Open user game list in app" },
+          { "/": "/*/lists/*", "comment": "Localized user game list (en/ar)" }
         ]
       }
     ]

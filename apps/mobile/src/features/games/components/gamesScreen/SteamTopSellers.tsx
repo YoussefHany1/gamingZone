@@ -1,5 +1,7 @@
 import React, { useCallback } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
@@ -26,8 +28,6 @@ const STEAM_BLUE_DIM = "#516996";
 const STEAM_DARK = COLORS.primary;
 const STEAM_CARD_BG = "#172a4a";
 
-
-
 const getReviewLabel = (rating: number): { label: string; color: string } => {
   if (rating >= 9) return { label: "Overwhelmingly +", color: STEAM_BLUE };
   if (rating >= 8) return { label: "Very Positive", color: STEAM_BLUE };
@@ -38,88 +38,77 @@ const getReviewLabel = (rating: number): { label: string; color: string } => {
 
 // Card
 
-const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(
-  ({ item, index }) => {
-    const navigation =
-      useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
-    const rating = item.total_rating ? Math.round(item.total_rating) / 10 : 0;
-    const rank = index + 1;
-    const review = rating > 0 ? getReviewLabel(rating) : null;
-    const isTopThree = rank <= 3;
+const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(({ item, index }) => {
+  const navigation = useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
+  const rating = item.total_rating ? Math.round(item.total_rating) / 10 : 0;
+  const rank = index + 1;
+  const review = rating > 0 ? getReviewLabel(rating) : null;
+  const isTopThree = rank <= 3;
 
-    const handlePress = useCallback(() => {
-      navigation.navigate("GameDetails", { gameID: item.id });
-    }, [navigation, item.id]);
+  const handlePress = useCallback(() => {
+    navigation.navigate("GameDetails", { gameID: item.id });
+  }, [navigation, item.id]);
 
-    return (
-      <TouchableOpacity
-        style={styles.gameCard}
-        onPress={handlePress}
-        activeOpacity={0.85}
-      >
-        {/* Steam-style top accent border */}
-        <View
-          style={[styles.topAccentBar, isTopThree && styles.topAccentBarGold]}
+  return (
+    <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.85}>
+      {/* Steam-style top accent border */}
+      <View style={[styles.topAccentBar, isTopThree && styles.topAccentBarGold]} />
+
+      {/* Cover image area */}
+      <View style={styles.coverContainer}>
+        <Image
+          source={
+            item.cover
+              ? {
+                  uri: `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`,
+                }
+              : require("@/assets/image-not-found.webp")
+          }
+          style={styles.cover}
+          contentFit="cover"
+          cachePolicy="memory-disk"
         />
 
-        {/* Cover image area */}
-        <View style={styles.coverContainer}>
-          <Image
-            source={
-              item.cover
-                ? {
-                    uri: `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`,
-                  }
-                : require("@/assets/image-not-found.webp")
-            }
-            style={styles.cover}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-          />
+        {/* Bottom gradient */}
+        <LinearGradient
+          colors={["transparent", STEAM_DARK]}
+          style={styles.coverGradient}
+        />
 
-          {/* Bottom gradient */}
-          <LinearGradient
-            colors={["transparent", STEAM_DARK]}
-            style={styles.coverGradient}
-          />
-
-          {/* Rank badge â€” Steam "Top Seller" ribbon style */}
-          <View style={[styles.rankBadge, isTopThree && styles.rankBadgeGold]}>
-            <Text style={styles.rankHashSymbol}>#</Text>
-            <Text style={styles.rankNumber}>{rank}</Text>
-          </View>
-
-          {/* Tiny "STEAM" watermark top-right */}
-          <View style={styles.steamIconMark}>
-            <Text style={styles.steamIconText}>STEAM</Text>
-          </View>
+        {/* Rank badge â€” Steam "Top Seller" ribbon style */}
+        <View style={[styles.rankBadge, isTopThree && styles.rankBadgeGold]}>
+          <CustomText style={styles.rankHashSymbol}>#</CustomText>
+          <CustomText style={styles.rankNumber}>{rank}</CustomText>
         </View>
 
-        {/* Info section */}
-        <View style={styles.infoSection}>
-          <Text style={styles.gameTitle} numberOfLines={3}>
-            {item.name}
-          </Text>
-
-          {/* Divider */}
-          <View style={styles.divider} />
-
-          {/* Review score row */}
-          {review && (
-            <View style={styles.reviewRow}>
-              <View
-                style={[styles.reviewDot, { backgroundColor: review.color }]}
-              />
-              <Text style={[styles.reviewLabel, { color: review.color }]}>
-                {review.label}
-              </Text>
-            </View>
-          )}
+        {/* Tiny "STEAM" watermark top-right */}
+        <View style={styles.steamIconMark}>
+          <CustomText style={styles.steamIconText}>STEAM</CustomText>
         </View>
-      </TouchableOpacity>
-    );
-  },
-);
+      </View>
+
+      {/* Info section */}
+      <View style={styles.infoSection}>
+        <CustomText style={styles.gameTitle} numberOfLines={3}>
+          {item.name}
+        </CustomText>
+
+        {/* Divider */}
+        <View style={styles.divider} />
+
+        {/* Review score row */}
+        {review && (
+          <View style={styles.reviewRow}>
+            <View style={[styles.reviewDot, { backgroundColor: review.color }]} />
+            <CustomText style={[styles.reviewLabel, { color: review.color }]}>
+              {review.label}
+            </CustomText>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+});
 SteamTopSellersCard.displayName = "SteamTopSellersCard";
 
 // Main
@@ -178,7 +167,7 @@ function SteamTopSellers(): React.ReactElement {
 
       {/* Games list */}
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList
+        <FlashList renderScrollComponent={GHScrollView as any}
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -189,9 +178,7 @@ function SteamTopSellers(): React.ReactElement {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.errorContainer}>
-              <ErrorState
-                message={t("games.list.noResults", "No games found")}
-              />
+              <ErrorState message={t("games.list.noResults", "No games found")} />
             </View>
           }
           estimatedItemSize={192}

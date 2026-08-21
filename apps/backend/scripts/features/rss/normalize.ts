@@ -53,7 +53,7 @@ function normalizeJsonItems(data: any, sourceUrl: string): NormalizedArticle[] {
 
     return {
       title,
-      description: desc,
+      description: cleanHtmlText(desc),
       link: link || sourceUrl,
       thumbnail: extractThumbnail(item, sourceUrl, true),
       guid: String(uniqueKey),
@@ -61,6 +61,15 @@ function normalizeJsonItems(data: any, sourceUrl: string): NormalizedArticle[] {
       pubDate: item.pubDate || item.date || item.publishedAt || new Date(),
     };
   });
+}
+
+function cleanHtmlText(html: any): string {
+  if (!html) return '';
+  const spaced = String(html)
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<\/(p|div|h[1-6]|li|tr|th|td|ul|ol|blockquote)>/gi, ' ')
+    .replace(/<(p|div|h[1-6]|li|tr|th|td|ul|ol|blockquote)[^>]*>/gi, ' ');
+  return he.decode(striptags(spaced)).replace(/\s+/g, ' ').trim();
 }
 
 function normalizeXmlItems(parsedData: any, sourceUrl: string): NormalizedArticle[] {
@@ -81,18 +90,13 @@ function normalizeXmlItems(parsedData: any, sourceUrl: string): NormalizedArticl
 
     if (!link) return;
 
-    const description = item.description
-      ? he.decode(striptags(String(item.description))).trim()
-      : item.summary
-        ? he.decode(striptags(String(item.summary))).trim()
-        : '';
-
+    const descriptionRaw = item.description || item.summary || '';
     const pubDateRaw = item.pubDate || item['dc:date'] || item.published || item.updated;
     const pubDate = pubDateRaw ? new Date(pubDateRaw as string | number | Date) : new Date();
 
     items.push({
       title: typeof item.title === 'string' ? item.title : (item.title as any)?._ || 'No Title',
-      description: description.replace(/\s+/g, ' '),
+      description: cleanHtmlText(descriptionRaw),
       link,
       thumbnail: extractThumbnail(item, sourceUrl, false),
       guid: (typeof item.guid === 'string' ? item.guid : item.guid?._) || link,

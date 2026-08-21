@@ -1,9 +1,9 @@
 import React, { useMemo, useEffect, useState, memo, useRef } from "react";
+import CustomText from "@/src/components/CustomText";
 import {
   ScrollView,
   StyleSheet,
   View,
-  Text,
   InteractionManager,
   TouchableOpacity,
   Platform,
@@ -28,6 +28,7 @@ import Slideshow from "../components/Slideshow";
 import WeeklySummary from "../components/WeeklySummary";
 import LatestNews from "@/src/features/news/components/LatestNews";
 import GamingEvents from "@/src/features/events/components/Gamingevents";
+import RecommendedGames from "@/src/features/games/components/gamesScreen/RecommendedGames";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import type { SectionItem } from "../types";
 
@@ -60,9 +61,7 @@ const DeferredNewsSection = memo(function DeferredNewsSection({
     return <View style={{ height: 280 }} />;
   }
 
-  return (
-    <NewsSection category={category} language={language} website={website} />
-  );
+  return <NewsSection category={category} language={language} website={website} />;
 });
 DeferredNewsSection.displayName = "DeferredNewsSection";
 
@@ -77,16 +76,14 @@ const AdBanner = memo(() => {
   const [showAds, setShowAds] = useState(false);
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() =>
-      setShowAds(true),
-    );
+    const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
     return () => task.cancel();
   }, []);
 
   if (!showAds) return null;
   return (
     <View style={homeStyles.ad}>
-      <Text style={homeStyles.adText}>{t("common.ad")}</Text>
+      <CustomText style={homeStyles.adText}>{t("common.ad")}</CustomText>
       <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
     </View>
   );
@@ -107,6 +104,7 @@ const NewsSection = memo(function NewsSection({
       category={category}
       limit={4}
       showDropdown={false}
+      showHeaderTitle={true}
       language={language}
       showFooter={false}
       website={website}
@@ -129,16 +127,18 @@ const WeeklySummarySection = memo(function WeeklySummarySection() {
 });
 WeeklySummarySection.displayName = "WeeklySummarySection";
 
+const RecommendedGamesSection = memo(function RecommendedGamesSection() {
+  return <RecommendedGames />;
+});
+RecommendedGamesSection.displayName = "RecommendedGamesSection";
+
 const GamingEventsSection = memo(function GamingEventsSection() {
   return <GamingEvents />;
 });
 GamingEventsSection.displayName = "GamingEventsSection";
 
 // ─── Section renderer (module-scope → never recreated) ────────────────────────
-function renderSection(
-  item: SectionItem,
-  lang: string,
-): React.ReactElement | null {
+function renderSection(item: SectionItem, lang: string): React.ReactElement | null {
   switch (item.type) {
     case "slideshow":
       return <SlideshowSection key={item._key} />;
@@ -164,6 +164,8 @@ function renderSection(
       );
     case "weekly_summary":
       return <WeeklySummarySection key={item._key} />;
+    case "recommended":
+      return <RecommendedGamesSection key={item._key} />;
     case "events":
       return <GamingEventsSection key={item._key} />;
     case "ad":
@@ -203,6 +205,7 @@ function HomeScreen(): React.ReactElement {
       // ── Immediate (above the fold) ──────────────────────────────────────────
       { type: "news", category: "news", _key: `news_0_${currentLang}` },
       { type: "weekly_summary", _key: "weekly" },
+
       { type: "ad", _key: "ad_0" },
       // ── Staggered — fire 1.5 s apart so setState calls never stack up ───────
       {
@@ -211,7 +214,8 @@ function HomeScreen(): React.ReactElement {
         delay: 1500,
         _key: `news_1_${currentLang}`,
       },
-      { type: "events", _key: "events" },
+      { type: "recommended", _key: "recommended" },
+
       { type: "ad", _key: "ad_1" },
       {
         type: "news",
@@ -219,6 +223,7 @@ function HomeScreen(): React.ReactElement {
         delay: 3000,
         _key: `news_2_${currentLang}`,
       },
+      { type: "events", _key: "events" },
       { type: "ad", _key: "ad_2" },
       {
         type: "news",
@@ -228,6 +233,11 @@ function HomeScreen(): React.ReactElement {
       },
     ];
   }, [currentLang]);
+
+  const renderedSections = useMemo(
+    () => sections.map((item) => renderSection(item, currentLang)),
+    [sections, currentLang],
+  );
 
   return (
     <SafeAreaView edges={["right", "left"]} style={homeStyles.container}>
@@ -243,7 +253,7 @@ function HomeScreen(): React.ReactElement {
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: 90 }}
       >
-        {sections.map((item) => renderSection(item, currentLang))}
+        {renderedSections}
       </ScrollView>
 
       <Animated.View style={[homeStyles.fabWrapper, pulseStyle]}>
@@ -253,11 +263,7 @@ function HomeScreen(): React.ReactElement {
           activeOpacity={0.8}
         >
           {Platform.OS === "ios" ? (
-            <BlurView
-              intensity={60}
-              tint="dark"
-              style={StyleSheet.absoluteFill}
-            />
+            <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
             <View style={[StyleSheet.absoluteFill, homeStyles.fabBaseFill]} />
           )}
@@ -274,12 +280,7 @@ function HomeScreen(): React.ReactElement {
             style={homeStyles.fabSpecular}
           />
           <View style={[StyleSheet.absoluteFill, homeStyles.fabBorder]} />
-          <Ionicons
-            name="chatbubbles"
-            size={28}
-            color="#fff"
-            style={{ zIndex: 1 }}
-          />
+          <Ionicons name="chatbubbles" size={28} color="#fff" style={{ zIndex: 1 }} />
         </TouchableOpacity>
       </Animated.View>
     </SafeAreaView>
