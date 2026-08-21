@@ -10,7 +10,9 @@
     "postinstall": "node -e \"const fs=require('fs'),p=require('path');['debug','picocolors'].forEach(d=>{const t=p.resolve(__dirname,'node_modules',d),s=p.resolve(__dirname,'../../node_modules',d);if(!fs.existsSync(t)&&fs.existsSync(s)){fs.mkdirSync(p.dirname(t),{recursive:true});fs.symlinkSync(s,t,'junction');console.log('Linked',d)}});\""
   },
   "dependencies": {
+    "@gaming-zone/core": "*",
     "@gaming-zone/locales": "*",
+    "@gaming-zone/utils": "*",
     "@hookform/resolvers": "^3.9.1",
     "appwrite": "^25.1.0",
     "axios": "^1.16.1",
