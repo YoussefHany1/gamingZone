@@ -1,0 +1,16 @@
+diff --git a/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/NativeProxy.kt b/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/NativeProxy.kt
+index 48e3771..7e5c13f 100644
+--- a/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/NativeProxy.kt
++++ b/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/NativeProxy.kt
+@@ -255,7 +255,10 @@ open class NativeProxy {
+                 try {
+                     updatePropsSynchronouslyMethod.invoke(mountingManager, viewTag, props)
+                 } catch (e: Exception) {
+-                    Log.w("Reanimated", "synchronouslyUpdateUIProps failed for tag $viewTag", e)
++                    // Do NOT pass the Throwable to Log.w here: printStackTrace() allocates a
++                    // StringBuilder/String on the main thread, which blocks the RenderView draw
++                    // pass (dispatched via SVG VirtualView.setClientRect) and causes ANRs.
++                    Log.w("Reanimated", "synchronouslyUpdateUIProps failed for tag $viewTag")
+                 }
+             } else {
+                 mFabricUIManager.synchronouslyUpdateViewOnUIThread(viewTag, props)

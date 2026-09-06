@@ -23,15 +23,9 @@ web-build/
 *.jks
 *.keystore
 
-# ملفات Android (لتجنب رفع ملفات البناء المؤقتة مع الإبقاء على كود الأندرويد نفسه)
-android/build/
-android/app/build/
-android/.gradle/
-android/local.properties
-
-# ملفات iOS (بحال وجودها مستقبلا)
-ios/Pods/
-ios/build/
+# ملفات Android و iOS (يجب تجاهلها بالكامل لأن المشروع يعتمد على Expo Prebuild - CNG)
+android/
+ios/
 
 /web
 
@@ -40,7 +34,3 @@ vercel.json
 .vercel/
 firebase.json
 firestore.rules
-
-assets/cover2.png
-assets/logo.png
-assets/icon.webp

@@ -5,18 +5,18 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  InteractionManager,
   Share,
   ToastAndroid,
   Pressable,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
+import { ArrowLeft, ArrowRight, ExternalLink, Share2 } from "lucide-react-native";
 import { Image } from "expo-image";
 import ImageGallerySkeleton from "../../games/skeleton/gameDetails/ImageGallerySkeleton";
 import GameDetailsMetaSkeleton from "../../games/skeleton/gameDetails/GameDetailsMetaSkeleton";
 import { useTranslation } from "react-i18next";
 import { intervalToDuration } from "date-fns";
-import { format } from "date-fns";
+import { format, type Locale } from "date-fns";
 import { ar } from "date-fns/locale";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
@@ -111,7 +111,7 @@ const NewsDetails = memo((): React.ReactElement => {
   const currentLang = activeArticle.language ?? i18n.language;
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
+    const task = runAfterInteractions(() => {
       setShowAds(true);
       setIsReady(true);
     });
@@ -207,10 +207,14 @@ const NewsDetails = memo((): React.ReactElement => {
     >
       <View style={styles.header}>
         <TouchableOpacity style={styles.iconButton} onPress={handleGoBack}>
-          <Ionicons name="arrow-back" size={28} color="#fff" />
+          {currentLang === "ar" ? (
+            <ArrowRight size={28} color="#fff" />
+          ) : (
+            <ArrowLeft size={28} color="#fff" />
+          )}
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} onPress={onShare}>
-          <Ionicons name="share-social-outline" size={28} color="#fff" />
+          <Share2 size={28} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -266,9 +270,7 @@ const NewsDetails = memo((): React.ReactElement => {
               { fontFamily: currentLang == "ar" ? "Cairo" : "Inter" },
             ]}
           >
-            {description
-              ? `${description.substring(0, 400)}..`
-              : t("news.details.noDescription")}
+            {description || t("news.details.noDescription")}
           </CustomText>
 
           {showAds && (
@@ -283,8 +285,7 @@ const NewsDetails = memo((): React.ReactElement => {
             android_ripple={{ color: "#779bdd" }}
             onPress={handleOpenLink}
           >
-            <Ionicons
-              name="open-outline"
+            <ExternalLink
               size={20}
               color="white"
               style={{ marginRight: 8 }}

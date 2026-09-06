@@ -1,5 +1,6 @@
 import React, { memo } from "react";
-import { ImageBackground, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import COLORS from "@/src/constants/colors";
 import { igdbImageUrl } from "@gaming-zone/utils";
@@ -35,11 +36,14 @@ const GameDetailsBackground: React.FC<GameDetailsBackgroundProps> = ({
         />
       </View>
 
-      <ImageBackground
-        blurRadius={2}
-        source={coverImageId ? { uri: igdbImageUrl(coverImageId, "720p") } : undefined}
+      {/* Blurred background image using expo-image for proper memory management */}
+      <Image
+        {...(coverImageId && { source: { uri: igdbImageUrl(coverImageId, "720p") } })}
         style={styles.bgImage}
-        imageStyle={styles.bgImageInner}
+        contentFit="cover"
+        blurRadius={2}
+        cachePolicy="memory-disk"
+        allowDownscaling
       />
     </>
   );
@@ -70,8 +74,5 @@ const styles = StyleSheet.create({
     marginTop: 350,
     backgroundColor: COLORS.primary,
     opacity: 0.4,
-  },
-  bgImageInner: {
-    resizeMode: "cover",
   },
 });

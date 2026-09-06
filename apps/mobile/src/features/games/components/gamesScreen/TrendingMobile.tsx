@@ -17,6 +17,7 @@ import type { Game } from "@/src/types/sharedTypes";
 import SectionTitle from "@/src/components/SectionTitle";
 import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
 import { fetchTrendingMobileGames } from "@/src/services/api/igdbApi";
+import { Star } from "lucide-react-native";
 
 const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
@@ -69,7 +70,7 @@ const TrendingMobileCard = React.memo<TrendingMobileCardProps>(({ item, index })
         <View style={styles.statsContainer}>
           {rating > 0 && (
             <View style={styles.statItem}>
-              <CustomText style={styles.statIcon}>â­</CustomText>
+              <Star size={12} color={COLORS.lightGray} />
               <CustomText style={styles.statValue}>{rating.toFixed(1)}</CustomText>
             </View>
           )}
@@ -116,7 +117,7 @@ function TrendingMobileGames(): React.ReactElement {
     <View>
       <View style={styles.headerContainer}>
         <SectionTitle
-          title={t("games.list.trendingMobile.title", "Trending Mobile ðŸ”¥")}
+          title={t("games.list.trendingMobile.title", "Trending Mobile")}
           fontSize={24}
           subtitle={t("games.list.trendingMobile.subtitle", "Best games on the go")}
         />
@@ -129,7 +130,6 @@ function TrendingMobileGames(): React.ReactElement {
           renderItem={() => <SkeletonPopular />}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          estimatedItemSize={175}
         />
       )}
 
@@ -140,7 +140,8 @@ function TrendingMobileGames(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList renderScrollComponent={GHScrollView as any}
+        <FlashList
+          renderScrollComponent={GHScrollView as any}
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -154,7 +155,6 @@ function TrendingMobileGames(): React.ReactElement {
               <ErrorState message={t("games.list.noResults", "No games found")} />
             </View>
           }
-          estimatedItemSize={175}
         />
       )}
     </View>

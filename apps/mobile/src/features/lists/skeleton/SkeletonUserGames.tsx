@@ -89,7 +89,6 @@ const UserGamesSkeleton: React.FC = () => (
       renderItem={() => <SkeletonItem />}
       contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
       showsVerticalScrollIndicator={false}
-      estimatedItemSize={150}
     />
   </SafeAreaView>
 );

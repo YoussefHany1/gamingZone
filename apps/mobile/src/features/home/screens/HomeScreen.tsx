@@ -1,13 +1,12 @@
-import React, { useMemo, useEffect, useState, memo, useRef } from "react";
+import React, { useMemo, useEffect, useState, memo } from "react";
 import CustomText from "@/src/components/CustomText";
 import {
   ScrollView,
   StyleSheet,
   View,
-  InteractionManager,
   TouchableOpacity,
-  Platform,
 } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -17,9 +16,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
+import { MessagesSquare } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
@@ -76,7 +74,7 @@ const AdBanner = memo(() => {
   const [showAds, setShowAds] = useState(false);
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
+    const task = runAfterInteractions(() => setShowAds(true));
     return () => task.cancel();
   }, []);
 
@@ -262,25 +260,17 @@ function HomeScreen(): React.ReactElement {
           onPress={() => navigation.navigate("AIChatScreen")}
           activeOpacity={0.8}
         >
-          {Platform.OS === "ios" ? (
-            <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, homeStyles.fabBaseFill]} />
-          )}
+          <View style={[StyleSheet.absoluteFill, homeStyles.fabBaseFill]} />
           <LinearGradient
             colors={["rgba(12,26,51,0.72)", "rgba(0,0,28,0.90)"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
-          <LinearGradient
-            colors={["rgba(255, 255, 255, 0.18)", "rgba(255, 255, 255, 0.00)"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={homeStyles.fabSpecular}
-          />
           <View style={[StyleSheet.absoluteFill, homeStyles.fabBorder]} />
-          <Ionicons name="chatbubbles" size={28} color="#fff" style={{ zIndex: 1 }} />
+          <View collapsable={false}>
+            <MessagesSquare size={28} color="#fff" style={{ zIndex: 1 }} />
+          </View>
         </TouchableOpacity>
       </Animated.View>
     </SafeAreaView>
@@ -309,11 +299,11 @@ const homeStyles = StyleSheet.create({
     right: 20,
     width: 60,
     height: 60,
-    elevation: 28,
+    elevation: 8,
     shadowColor: "#779bdd",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   fabGlass: {
     flex: 1,
@@ -325,15 +315,6 @@ const homeStyles = StyleSheet.create({
   fabBaseFill: {
     backgroundColor: "rgba(4, 8, 30, 0.4)",
     borderRadius: 30,
-  },
-  fabSpecular: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
   },
   fabBorder: {
     borderRadius: 30,

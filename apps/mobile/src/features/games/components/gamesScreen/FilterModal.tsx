@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Platform,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { X } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import type {
@@ -193,7 +193,7 @@ function FilterModal({ visible, filters, onApply, onClose }: FilterModalProps) {
             onPress={onClose}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="close" size={22} color="#ccc" />
+            <X size={22} color="#ccc" />
           </TouchableOpacity>
         </View>
 

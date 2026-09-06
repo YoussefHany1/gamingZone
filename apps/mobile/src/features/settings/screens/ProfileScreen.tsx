@@ -3,10 +3,10 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  InteractionManager,
   TouchableOpacity,
   ToastAndroid,
 } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { Image } from "expo-image";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -31,7 +31,9 @@ import enLang from "i18n-iso-countries/langs/en.json";
 import arLang from "i18n-iso-countries/langs/ar.json";
 import { PickerOption } from "@/src/types/sharedTypes";
 import SteamLinkModal from "../components/SteamLinkModal";
-import { Ionicons } from "@expo/vector-icons";
+import { Mars, Monitor, Venus } from "lucide-react-native";
+import { AndroidIcon, AppleIcon, PlayStationIcon, XboxIcon } from "@/src/components/icons/BrandIcons";
+import { SteamIcon } from "@/src/components/icons/StoreIcons";
 import SectionTitle from "@/src/components/SectionTitle";
 import { FirestoreUser, CloudinaryResponse } from "../types";
 import CustomTextInput from "@/src/components/CustomTextInput";
@@ -72,7 +74,6 @@ function ProfileScreen(): React.ReactElement {
   const [showPicker, setShowPicker] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [stats, setStats] = useState({ userCount: 0, newsCount: 0 });
   const [showAds, setShowAds] = useState<boolean>(false);
   const [isReady, setIsReady] = useState<boolean>(false);
   const [showSteamModal, setShowSteamModal] = useState<boolean>(false);
@@ -80,7 +81,7 @@ function ProfileScreen(): React.ReactElement {
 
   // Defer ad rendering until after the main UI has settled
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
+    const task = runAfterInteractions(() => {
       setShowAds(true);
       setIsReady(true);
     });
@@ -126,29 +127,6 @@ function ProfileScreen(): React.ReactElement {
       isMounted = false;
     };
   }, [currentUser]);
-
-  useEffect(() => {
-    if (isAdmin) {
-      let isMounted = true;
-
-      const fetchStats = async () => {
-        const usersSnap = await firestore().collection("users").count().get();
-        const newsSnap = await firestore().collection("news").count().get(); // Ø§ÙØªØ±Ø¶Øª ÙˆØ¬ÙˆØ¯ collection Ø¨Ø§Ø³Ù… news
-        if (isMounted) {
-          setStats({
-            userCount: usersSnap.data().count,
-            newsCount: newsSnap.data().count,
-          });
-        }
-      };
-
-      fetchStats();
-
-      return () => {
-        isMounted = false;
-      };
-    }
-  }, [isAdmin]);
 
   const pickImage = useCallback(async (): Promise<void> => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -279,14 +257,6 @@ function ProfileScreen(): React.ReactElement {
     [],
   );
 
-  const genderOptions: PickerOption[] = useMemo(
-    () => [
-      { label: t("auth.register.male") || "Male", value: "male" },
-      { label: t("auth.register.female") || "Female", value: "female" },
-    ],
-    [t],
-  );
-
   // Build localised, sorted country list â€” recomputed only when language changes
   const countriesList: PickerOption[] = useMemo(() => {
     const langCode = i18n.language.startsWith("ar") ? "ar" : "en";
@@ -298,24 +268,6 @@ function ProfileScreen(): React.ReactElement {
       .map(([code, name]) => ({ label: name, value: code }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [i18n.language]);
-
-  const platformOptions: PickerOption[] = useMemo(
-    () => [
-      { label: "", value: "" },
-      { label: t("settings.profile.platforms.pc") || "PC", value: "pc" },
-      {
-        label: t("settings.profile.platforms.playstation") || "PlayStation",
-        value: "playstation",
-      },
-      { label: t("settings.profile.platforms.xbox") || "Xbox", value: "xbox" },
-      {
-        label: t("settings.profile.platforms.android") || "Android",
-        value: "android",
-      },
-      { label: t("settings.profile.platforms.ios") || "iOS", value: "ios" },
-    ],
-    [t],
-  );
 
   if (!currentUser)
     return <ErrorState message={t("common.loginRequired")} showContactButton={false} />;
@@ -341,6 +293,44 @@ function ProfileScreen(): React.ReactElement {
               {t("settings.profile.changePic")}
             </CustomText>
           </TouchableOpacity>
+
+          {/* Email verification */}
+          {!currentUser.emailVerified && (
+            <View style={styles.verifyContainer}>
+              <TouchableOpacity
+                style={styles.verifyBox}
+                onPress={async () => {
+                  try {
+                    await currentUser.sendEmailVerification();
+                    ToastAndroid.show(
+                      t("auth.verificationEmailSent"),
+                      ToastAndroid.LONG,
+                    );
+                  } catch (e) {
+                    console.error("Failed to send verification email:", e);
+                    ToastAndroid.show(
+                      t("settings.profile.messages.saveError"),
+                      ToastAndroid.LONG,
+                    );
+                  }
+                }}
+              >
+                <CustomText style={styles.verifyText}>
+                  {t("auth.emailNotVerified")}
+                </CustomText>
+                <CustomText style={styles.verifyAction}>
+                  {t("auth.verifyEmail")}
+                </CustomText>
+              </TouchableOpacity>
+            </View>
+          )}
+          {currentUser.emailVerified && (
+            <View style={[styles.verifyContainer, styles.verifyBoxVerified]}>
+              <CustomText style={styles.verifyText}>
+                {t("auth.emailVerified")}
+              </CustomText>
+            </View>
+          )}
 
           {/* Name */}
           <SectionTitle title={t("settings.profile.nameLabel")} />
@@ -374,12 +364,44 @@ function ProfileScreen(): React.ReactElement {
 
           {/* Gender */}
           <SectionTitle title={t("settings.profile.genderLabel")} />
-          <CustomPicker
-            options={genderOptions}
-            selectedValue={gender}
-            onValueChange={setGender}
-            placeholder={t("settings.profile.placeholders.gender") || "Select Gender"}
-          />
+          <View style={styles.platformContainer}>
+            {[
+              {
+                id: "male",
+                icon: Mars,
+                label: t("auth.register.male") || "Male",
+              },
+              {
+                id: "female",
+                icon: Venus,
+                label: t("auth.register.female") || "Female",
+              },
+            ].map((g) => (
+              <TouchableOpacity
+                key={g.id}
+                style={[
+                  styles.platformButton,
+                  { minWidth: "45%" },
+                  gender === g.id && styles.platformButtonSelected,
+                ]}
+                onPress={() => setGender(g.id)}
+                activeOpacity={0.7}
+              >
+                <g.icon
+                  size={32}
+                  color={gender === g.id ? "#fff" : COLORS.lightGray}
+                />
+                <CustomText
+                  style={[
+                    styles.platformText,
+                    gender === g.id && styles.platformTextSelected,
+                  ]}
+                >
+                  {g.label}
+                </CustomText>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           {/* Country */}
           <SectionTitle title={t("settings.profile.countryLabel")} />
@@ -392,12 +414,65 @@ function ProfileScreen(): React.ReactElement {
 
           {/* Platform */}
           <SectionTitle title={t("settings.profile.platformLabel")} />
-          <CustomPicker
-            options={platformOptions}
-            selectedValue={platform}
-            onValueChange={setPlatform}
-            placeholder={t("settings.profile.placeholders.platform") || "Select Platform"}
-          />
+          <View style={styles.platformContainer}>
+            {[
+              {
+                id: "pc",
+                icon: Monitor,
+                label: t("settings.profile.platforms.pc") || "PC",
+              },
+              {
+                id: "playstation",
+                icon: PlayStationIcon,
+                label: t("settings.profile.platforms.playstation") || "PlayStation",
+              },
+              {
+                id: "xbox",
+                icon: XboxIcon,
+                label: t("settings.profile.platforms.xbox") || "Xbox",
+              },
+              {
+                id: "android",
+                icon: AndroidIcon,
+                label: t("settings.profile.platforms.android") || "Android",
+              },
+              {
+                id: "ios",
+                icon: AppleIcon,
+                label: t("settings.profile.platforms.ios") || "iOS",
+              },
+            ].map((p) => (
+              <TouchableOpacity
+                key={p.id}
+                style={[
+                  styles.platformButton,
+                  platform === p.id && styles.platformButtonSelected,
+                ]}
+                onPress={() => setPlatform(p.id)}
+                activeOpacity={0.7}
+              >
+                {p.icon === Monitor ? (
+                  <p.icon
+                    size={32}
+                    color={platform === p.id ? "#fff" : COLORS.lightGray}
+                  />
+                ) : (
+                  <p.icon
+                    size={32}
+                    fill={platform === p.id ? "#fff" : COLORS.lightGray}
+                  />
+                )}
+                <CustomText
+                  style={[
+                    styles.platformText,
+                    platform === p.id && styles.platformTextSelected,
+                  ]}
+                >
+                  {p.label}
+                </CustomText>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           {showAds && (
             <View style={styles.ad}>
@@ -422,12 +497,9 @@ function ProfileScreen(): React.ReactElement {
             ]}
             onPress={() => setShowSteamModal(true)}
           >
-            <Ionicons
-              name="logo-steam"
-              size={24}
-              color="#fff"
-              style={{ marginRight: 10 }}
-            />
+            <View style={{ marginRight: 10 }}>
+              <SteamIcon size={24} fill="#fff" />
+            </View>
             <CustomText style={styles.saveText}>
               {t("settings.profile.steam.modal.title") || "Sync Steam Library"}
             </CustomText>
@@ -440,7 +512,7 @@ function ProfileScreen(): React.ReactElement {
           {/* Admin dashboard â€” only visible to admin users */}
           {isAdmin && (
             <View style={{ backgroundColor: "gold", padding: 15, margin: 20 }}>
-              <CustomText>Admin Dashboard ðŸ‘‘</CustomText>
+              <CustomText>Admin Dashboard</CustomText>
               <CustomText>Channel: {Updates.channel ?? "Not Defined"}</CustomText>
               <CustomText>
                 Runtime Version: {Updates.runtimeVersion ?? "Not Defined"}
@@ -477,6 +549,31 @@ const styles = StyleSheet.create({
     borderColor: "#779bdd",
   },
   changePicText: { color: "#779bdd", marginTop: 10, fontSize: 16 },
+  verifyContainer: { marginBottom: 20 },
+  verifyBox: {
+    backgroundColor: "rgba(255, 193, 7, 0.15)",
+    borderColor: "#ffc107",
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 15,
+    alignItems: "center",
+  },
+  verifyBoxVerified: {
+    backgroundColor: "rgba(76, 175, 80, 0.15)",
+    borderColor: "#4caf50",
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 15,
+    alignItems: "center",
+  },
+  verifyText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  verifyAction: {
+    color: "#ffc107",
+    fontSize: 14,
+    fontWeight: "700",
+    marginTop: 6,
+    textDecorationLine: "underline",
+  },
   input: {
     width: "100%",
     backgroundColor: COLORS.button,
@@ -502,4 +599,35 @@ const styles = StyleSheet.create({
   },
   ad: { alignItems: "center", width: "100%", marginVertical: 30 },
   adText: { color: "#fff", marginBottom: 10 },
+  platformContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+    marginBottom: 20,
+    gap: 10,
+  },
+  platformButton: {
+    width: "30%",
+    backgroundColor: "rgba(119, 155, 221, 0.1)",
+    borderRadius: 12,
+    padding: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  platformButtonSelected: {
+    backgroundColor: "rgba(119, 155, 221, 0.3)",
+    borderColor: COLORS.secondary,
+  },
+  platformText: {
+    color: COLORS.lightGray,
+    marginTop: 8,
+    fontSize: 12,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  platformTextSelected: {
+    color: "#fff",
+  },
 });

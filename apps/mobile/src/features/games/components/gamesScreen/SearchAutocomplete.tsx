@@ -4,11 +4,11 @@ import {
   View,
   TouchableOpacity,
   StyleSheet,
-  FlatList,
   ActivityIndicator,
   Animated,
   Platform,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -45,11 +45,7 @@ const SuggestionRow = React.memo<RowProps>(({ item, onPress }) => {
   const handlePress = useCallback(() => onPress(item), [onPress, item]);
 
   return (
-    <TouchableOpacity
-      style={styles.row}
-      onPress={handlePress}
-      activeOpacity={0.7}
-    >
+    <TouchableOpacity style={styles.row} onPress={handlePress} activeOpacity={0.7}>
       {coverUri ? (
         <Image
           source={{ uri: coverUri }}
@@ -80,8 +76,7 @@ export default function SearchAutocomplete({
   visible,
   onSelect,
 }: SearchAutocompleteProps) {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
 
   const [suggestions, setSuggestions] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
@@ -137,9 +132,7 @@ export default function SearchAutocomplete({
 
   const keyExtractor = useCallback((item: Game) => String(item.id), []);
   const renderItem = useCallback(
-    ({ item }: { item: Game }) => (
-      <SuggestionRow item={item} onPress={handleSelect} />
-    ),
+    ({ item }: { item: Game }) => <SuggestionRow item={item} onPress={handleSelect} />,
     [handleSelect],
   );
 
@@ -152,7 +145,7 @@ export default function SearchAutocomplete({
           <ActivityIndicator size="small" color={COLORS.secondary} />
         </View>
       ) : (
-        <FlatList
+        <FlashList
           data={suggestions}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
@@ -173,7 +166,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#151f33",
+    backgroundColor: COLORS.darkBackground,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: COLORS.secondary,

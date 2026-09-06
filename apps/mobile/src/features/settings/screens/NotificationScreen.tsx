@@ -6,13 +6,13 @@ import {
   ScrollView,
   Switch,
   TouchableOpacity,
-  InteractionManager,
   ImageStyle,
 } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Loading from "../../../Loading";
-import { Ionicons } from "@expo/vector-icons";
+import { Bell, ChevronDown, ChevronRight, Gift } from "lucide-react-native";
 import auth from "@react-native-firebase/auth";
 import NotificationService from "@/src/services/notificationService";
 import { useTranslation } from "react-i18next";
@@ -35,7 +35,7 @@ const Notification: React.FC = () => {
   const { t, i18n } = useTranslation();
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
+    const task = runAfterInteractions(() => {
       setShowAds(true);
     });
     return () => task.cancel();
@@ -92,12 +92,7 @@ const Notification: React.FC = () => {
       <View style={styles.categorySection}>
         <View style={styles.categoryHeader}>
           <View style={styles.categoryHeaderLeft}>
-            <Ionicons
-              name="gift"
-              size={24}
-              color="#779bdd"
-              style={styles.chevronIcon}
-            />
+            <Gift size={24} color="#779bdd" style={styles.chevronIcon} />
             <CustomText style={styles.categoryTitle}>
               {t("games.list.freeGames.header")}
             </CustomText>
@@ -158,12 +153,11 @@ const Notification: React.FC = () => {
           activeOpacity={0.7}
         >
           <View style={styles.categoryHeaderLeft}>
-            <Ionicons
-              name={isExpanded ? "chevron-down" : "chevron-forward"}
-              size={20}
-              color="#779bdd"
-              style={styles.chevronIcon}
-            />
+            {isExpanded ? (
+              <ChevronDown size={20} color="#779bdd" style={styles.chevronIcon} />
+            ) : (
+              <ChevronRight size={20} color="#779bdd" style={styles.chevronIcon} />
+            )}
             <CustomText style={styles.categoryTitle}>{title}</CustomText>
             <CustomText style={styles.sourceCount}>({sources.length})</CustomText>
           </View>
@@ -251,7 +245,7 @@ const Notification: React.FC = () => {
             style={styles.testButton}
             onPress={NotificationService.testLocalNotification}
           >
-            <Ionicons name="notifications" size={20} color="#ffffff" />
+            <Bell size={20} color="#ffffff" />
             <CustomText style={styles.testButtonText}>
               {t("settings.notifications.testNotification")}
             </CustomText>

@@ -18,15 +18,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import COLORS from "@/src/constants/colors";
+import { cacheVideo, preloadVideos } from "@/src/utils/videoPreloader";
 
 const { width, height } = Dimensions.get("window");
 
-// Assets
+// Assets (q_auto + f_auto optimize size/codec; reducing doesn't exist server-side)
 const SLIDE_VIDEOS = [
-  require("@/assets/news.mp4"),
-  require("@/assets/list.mp4"),
-  require("@/assets/free-games.mp4"),
-  require("@/assets/notification.mp4"),
+  "https://res.cloudinary.com/dewusw0db/video/upload/q_auto,f_auto/v1787524025/news.mp4",
+  "https://res.cloudinary.com/dewusw0db/video/upload/q_auto,f_auto/v1787524037/list.mp4",
+  "https://res.cloudinary.com/dewusw0db/video/upload/q_auto,f_auto/v1787524017/free-games.mp4",
+  "https://res.cloudinary.com/dewusw0db/video/upload/q_auto,f_auto/v1787523999/notification.mp4",
 ] as const;
 
 interface OnboardingScreenProps {
@@ -72,26 +73,56 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
 
   const TOTAL = slides.length;
 
-  // Player ثابت يُنشأ مرة واحدة فقط مع أول فيديو
+  // Player: يبدأ من المصدر المحلي للفيديو الأول إذا كان مُخزناً مؤقتاً
+  const [cachedSources, setCachedSources] = useState<Record<number, string>>({});
+
+  // تحميل الفيديو الحالي محلياً أولاً ثم تشغيله من القرص (بدون انتظار الشبكة)
+  useEffect(() => {
+    let cancelled = false;
+    const url = SLIDE_VIDEOS[activeIndex];
+    if (!url) return;
+    cacheVideo(url).then((localUri) => {
+      if (!cancelled) {
+        setCachedSources((prev) =>
+          prev[activeIndex] === localUri ? prev : { ...prev, [activeIndex]: localUri },
+        );
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeIndex]);
+
+  // تحميل الفيديو التالي في الخلفية ليكون جاهزاً عند التمرير
+  useEffect(() => {
+    const next = activeIndex + 1;
+    const nextUrl = SLIDE_VIDEOS[next];
+    if (nextUrl) {
+      preloadVideos([nextUrl]);
+    }
+  }, [activeIndex]);
+
   const initPlayer = useCallback((p: any) => {
     p.loop = true;
     p.muted = true;
     p.play();
   }, []);
 
-  const player = useVideoPlayer(SLIDE_VIDEOS[0], initPlayer);
+  const player = useVideoPlayer(
+    cachedSources[activeIndex] ?? SLIDE_VIDEOS[activeIndex]!,
+    initPlayer,
+  );
 
-  // عند تغيير الـ slide نستبدل الـ source بـ replace() بدلاً من إعادة إنشاء player
+  // عند تغيير الـ slide استبدل الـ source: محلي من الكاش إن وُجد، وإلا من الرابط
   useEffect(() => {
-    // لا تُشغّل replace إلا إذا تغيّر الـ index فعلاً
     if (prevIndexRef.current === activeIndex) return;
     prevIndexRef.current = activeIndex;
-    if (activeIndex === 0) return; // الأول محمّل مسبقاً
-    player.replace(SLIDE_VIDEOS[activeIndex]);
+    const localUri = cachedSources[activeIndex];
+    player.replace(localUri ?? SLIDE_VIDEOS[activeIndex]!);
     player.loop = true;
     player.muted = true;
     player.play();
-  }, [activeIndex, player]);
+  }, [activeIndex, player, cachedSources]);
 
   // Handlers
   const onMomentumScrollEnd = useCallback(

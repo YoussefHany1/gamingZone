@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   backgroundSkeleton: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: COLORS.secondary + "50",
   },
   content: {

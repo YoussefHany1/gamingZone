@@ -1,7 +1,7 @@
 import React, { memo, useCallback } from "react";
 import { View, TouchableOpacity, Share, StyleSheet } from "react-native";
 import CustomText from "@/src/components/CustomText";
-import { Ionicons } from "@expo/vector-icons";
+import { Share2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
 const STORE_URL = "https://play.google.com/store/apps/details?id=com.yh.gamingzone";
@@ -35,12 +35,7 @@ const InviteFriendsBtn: React.FC = memo(() => {
   return (
     <TouchableOpacity style={styles.categoryHeader} onPress={onShare}>
       <View style={styles.categoryHeaderLeft}>
-        <Ionicons
-          name="share-social-sharp"
-          size={20}
-          color="#779bdd"
-          style={styles.chevronIcon}
-        />
+        <Share2 size={20} color="#779bdd" style={styles.chevronIcon} />
         <CustomText style={styles.categoryTitle}>
           {t("settings.menu.inviteFriends")}
         </CustomText>

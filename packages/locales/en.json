@@ -25,6 +25,12 @@
       "updateNow": "Update Now",
       "later": "Later"
     },
+    "update": {
+      "tagline": "Your ultimate destination for gaming",
+      "title": "New Update Available",
+      "subtitle": "We're downloading improvements for you...",
+      "footer": "Please wait, the app will restart automatically"
+    },
     "time": {
       "d": "d",
       "h": "h",
@@ -59,6 +65,10 @@
       "success": "Sign up successful",
       "emptyFields": "Please fill in all required fields"
     },
+    "verifyEmail": "Verify Email",
+    "emailVerified": "Email Verified",
+    "emailNotVerified": "Email Not Verified",
+    "verificationEmailSent": "A verification email has been sent to your inbox",
     "forgotPassword": {
       "title": "Reset your Password",
       "sendButton": "Send a reset password link",
@@ -411,14 +421,20 @@
     "language": "language",
     "currentLang": "English",
     "menu": {
-      "notifications": "Notification Settings",
+      "notifications": "Manage Notifications",
       "myLists": "My Lists",
       "rateUs": "Rate Us",
       "inviteFriends": "Invite Friends",
       "contactUs": "Contact Us",
       "changeLanguage": "Change Language",
       "privacyPolicy": "Privacy Policy",
-      "signOut": "Sign Out"
+      "signOut": "Log out"
+    },
+    "signOut": {
+      "confirmTitle": "Log Out",
+      "confirmMessage": "Are you sure you want to log out?",
+      "errorTitle": "Error",
+      "errorMessage": "An error occurred while logging out. Please try again."
     },
     "profile": {
       "changePic": "Change your profile picture",

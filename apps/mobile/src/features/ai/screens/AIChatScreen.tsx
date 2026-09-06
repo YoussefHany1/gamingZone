@@ -1,4 +1,3 @@
-import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import CustomTextInput from "@/src/components/CustomTextInput";
 import {
@@ -14,7 +13,7 @@ import {
 } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Send } from "lucide-react-native";
 import Markdown from "react-native-markdown-display";
 import { useTranslation } from "react-i18next";
 import { sendChatMessage } from "../lib/aiService";
@@ -114,9 +113,7 @@ const AIChatScreen: React.FC = memo(() => {
         ) : (
           <View>
             <Markdown style={markdownStyles}>{item.content}</Markdown>
-            {item.model && (
-              <CustomText style={styles.modelTag}>{item.model} ðŸ¤–</CustomText>
-            )}
+            {item.model && <CustomText style={styles.modelTag}>{item.model}</CustomText>}
           </View>
         )}
       </View>
@@ -140,7 +137,6 @@ const AIChatScreen: React.FC = memo(() => {
           contentContainerStyle={styles.listContent}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          estimatedItemSize={80}
         />
         {isLoading && (
           <View style={styles.typingContainer}>
@@ -186,7 +182,7 @@ const AIChatScreen: React.FC = memo(() => {
             onPress={handleSend}
             disabled={!input.trim() || isLoading}
           >
-            <Ionicons name="send" size={24} color="#fff" />
+            <Send size={24} color="#fff" />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
-import { InteractionManager, View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import CustomText from "@/src/components/CustomText";
 import LiquidGlassTabBar from "./LiquidGlassTabBar";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import type {
   MaterialTopTabNavigationOptions,
   MaterialTopTabBarProps,
 } from "@react-navigation/material-top-tabs";
-import { Ionicons } from "@expo/vector-icons";
+import { CirclePlus } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import * as Notifications from "expo-notifications";
@@ -41,6 +43,7 @@ export type HomeStackParamList = {
   NewsDetails: { id: string } | undefined;
   AIChatScreen: undefined;
   EventDetailsScreen: { event: GamingEvent };
+  GameDetails: { gameID: number | string; claimUrl?: string; store?: string } | undefined;
 };
 
 export type NewsStackParamList = {
@@ -50,7 +53,7 @@ export type NewsStackParamList = {
 
 export type GamesStackParamList = {
   GamesScreen: undefined;
-  GameDetails: { id: string } | undefined;
+  GameDetails: { gameID: number | string; claimUrl?: string; store?: string } | undefined;
   GameNewsScreen: undefined;
 };
 
@@ -60,7 +63,7 @@ export type SettingsStackParamList = {
   Profile: undefined;
   UserGamesScreen: { listId: string; listName: string; ownerId?: string } | undefined;
   LanguageScreen: undefined;
-  GameDetails: { id: string } | undefined;
+  GameDetails: { gameID: number | string; claimUrl?: string; store?: string } | undefined;
   ContactScreen: undefined;
   UserListsScreen: undefined;
 };
@@ -118,6 +121,7 @@ const HomeStack = memo(() => {
     <HomeStackNav.Navigator id="HomeStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
       <HomeStackNav.Screen name="HomeScreen" component={HomeScreen} />
       <HomeStackNav.Screen name="NewsDetails" component={NewsDetails} />
+      <HomeStackNav.Screen name="GameDetails" component={GameDetails as any} />
       <HomeStackNav.Screen
         name="AIChatScreen"
         component={AIChatScreen}
@@ -222,7 +226,7 @@ const SettingsStack = memo(() => {
               onPress={() => nav.getParent()?.navigate("Games")}
               style={{ marginRight: 4, padding: 6 }}
             >
-              <Ionicons name="add-circle-outline" size={28} color="#fff" />
+              <CirclePlus size={28} color="#fff" />
             </TouchableOpacity>
           ),
         })}
@@ -269,17 +273,27 @@ export const MainAppTabs = memo(() => {
       }
     };
     requestPermission();
-    const task = InteractionManager.runAfterInteractions(() => {
+    const task = runAfterInteractions(() => {
       setShowAds(true);
     });
     return () => task.cancel();
   }, []);
 
   const screenOptions = useCallback(
-    ({ route }: { route: { name: string } }): MaterialTopTabNavigationOptions => {
+    ({ route }: any): MaterialTopTabNavigationOptions => {
       const routeName = route.name as keyof MainTabParamList;
+      const focusedRouteName = getFocusedRouteNameFromRoute(route);
+
+      // Only enable swipe on the main screens of each tab
+      const isBaseScreen =
+        !focusedRouteName ||
+        focusedRouteName === "HomeScreen" ||
+        focusedRouteName === "NewsScreen" ||
+        focusedRouteName === "GamesScreen" ||
+        focusedRouteName === "SettingsScreen";
+
       return {
-        swipeEnabled: true,
+        swipeEnabled: isBaseScreen,
         lazy: true,
         lazyPreloadDistance: 0,
         tabBarLabel: t(`navigation.tabs.${routeName.toLowerCase()}`),

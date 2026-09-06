@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ToastAndroid } from "react-na
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { Bell, BellOff, Gift } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import auth from "@react-native-firebase/auth";
@@ -26,7 +26,8 @@ import {
 import { CountdownResult } from "@/src/types/sharedTypes";
 import ErrorState from "@/src/components/ErrorState";
 import SectionTitle from "@/src/components/SectionTitle";
-
+import CustomText from "@/src/components/CustomText";
+import { SteamIcon, GogIcon, EpicGamesIcon } from "@/src/components/icons/StoreIcons";
 const STORAGE_KEY = "GAMES_CACHE_FREE_GAMES";
 
 // Constants
@@ -64,10 +65,10 @@ const fetchFreeGamesFromAppwrite = async (): Promise<FreeGameItem[]> => {
   }));
 };
 
-const resolveStoreIcon = (store?: string) => {
-  if (store === "steam") return require("@/assets/steam.webp");
-  if (store === "gog") return require("@/assets/gog.webp");
-  return require("@/assets/epic-games.webp");
+const renderStoreIcon = (store?: string) => {
+  if (store === "steam") return <SteamIcon size={20} fill="white" />;
+  if (store === "gog") return <GogIcon size={20} fill="white" />;
+  return <EpicGamesIcon size={20} fill="white" />;
 };
 
 // Helpers
@@ -75,9 +76,9 @@ const resolveStoreIcon = (store?: string) => {
 const TimeUnit = React.memo<TimeUnitProps>(({ value, label }) => (
   <View style={styles.timeUnit}>
     <View style={styles.timeValueBox}>
-      <Text style={styles.timeValue}>{value}</Text>
+      <CustomText style={styles.timeValue}>{value}</CustomText>
     </View>
-    <Text style={styles.timeLabel}>{label}</Text>
+    <CustomText style={styles.timeLabel}>{label}</CustomText>
   </View>
 ));
 TimeUnit.displayName = "TimeUnit";
@@ -92,14 +93,16 @@ const CountdownTimer = React.memo<CountdownTimerProps>(({ t, startDate }) => {
         colors={["rgba(81, 105, 150, 0.9)", "rgba(12, 26, 51, 0.8)"]}
         style={styles.countdownGradient}
       >
-        <Text style={styles.countdownTitle}>{t("games.list.freeGames.freeOn")}</Text>
+        <CustomText style={styles.countdownTitle}>
+          {t("games.list.freeGames.freeOn")}
+        </CustomText>
         <View style={styles.timerContainer}>
           <TimeUnit value={timeLeft.days} label={t("games.list.freeGames.days")} />
-          <Text style={styles.separator}>:</Text>
+          <CustomText style={styles.separator}>:</CustomText>
           <TimeUnit value={timeLeft.hours} label={t("games.list.freeGames.hours")} />
-          <Text style={styles.separator}>:</Text>
+          <CustomText style={styles.separator}>:</CustomText>
           <TimeUnit value={timeLeft.minutes} label={t("games.list.freeGames.minutes")} />
-          <Text style={styles.separator}>:</Text>
+          <CustomText style={styles.separator}>:</CustomText>
           <TimeUnit value={timeLeft.seconds} label={t("games.list.freeGames.seconds")} />
         </View>
       </LinearGradient>
@@ -114,7 +117,7 @@ CountdownTimer.displayName = "CountdownTimer";
 
 const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
   const navigation = useNavigation<any>();
-  const storeIcon = useMemo(() => resolveStoreIcon(item.store), [item.store]);
+  const storeIcon = useMemo(() => renderStoreIcon(item.store), [item.store]);
 
   // Use refs so callbacks are stable â€” no item object in deps
   const itemRef = React.useRef(item);
@@ -172,19 +175,14 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
 
         {/* Store icon badge */}
         <View style={styles.storeIconBadge}>
-          <Image
-            source={storeIcon}
-            style={styles.storeIcon}
-            contentFit="contain"
-            cachePolicy="memory-disk"
-          />
+          {storeIcon}
         </View>
       </View>
 
       <View style={styles.infoSection}>
-        <Text style={styles.title} numberOfLines={item.type === "current" ? 2 : 4}>
+        <CustomText style={styles.title} numberOfLines={item.type === "current" ? 2 : 4}>
           {item.title}
-        </Text>
+        </CustomText>
 
         {/* Claim button â€” only for currently available games */}
         {item.type === "current" && (
@@ -199,8 +197,10 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
               end={{ x: 1, y: 1 }}
               style={styles.savingsButton}
             >
-              <Ionicons name="gift-outline" size={16} color={COLORS.textLight} />
-              <Text style={styles.savingsText}>{t("games.list.freeGames.claimNow")}</Text>
+              <Gift size={16} color={COLORS.textLight} />
+              <CustomText style={styles.savingsText}>
+                {t("games.list.freeGames.claimNow")}
+              </CustomText>
             </LinearGradient>
           </TouchableOpacity>
         )}
@@ -322,11 +322,17 @@ function FreeGames(): React.ReactElement {
           subtitle={t("games.list.freeGames.subtitle")}
         />
         <TouchableOpacity onPress={toggleNotifications} style={styles.bellButton}>
-          <Ionicons
-            name={notifEnabled ? "notifications" : "notifications-off-outline"}
-            size={22}
-            color={COLORS.textLight}
-          />
+          {notifEnabled ? (
+            <Bell
+              size={22}
+              color={COLORS.textLight}
+            />
+          ) : (
+            <BellOff
+              size={22}
+              color={COLORS.textLight}
+            />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -338,7 +344,6 @@ function FreeGames(): React.ReactElement {
           keyExtractor={(item) => String(item.id)}
           renderItem={renderSkeletonItem}
           showsHorizontalScrollIndicator={false}
-          estimatedItemSize={ESTIMATED_CARD_WIDTH}
         />
       )}
 
@@ -365,7 +370,6 @@ function FreeGames(): React.ReactElement {
               <ErrorState message={t("games.list.serverError")} />
             </View>
           }
-          estimatedItemSize={ESTIMATED_CARD_WIDTH}
         />
       )}
     </View>

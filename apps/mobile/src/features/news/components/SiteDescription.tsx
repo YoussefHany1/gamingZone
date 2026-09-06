@@ -1,7 +1,7 @@
 import React from "react";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Image } from "expo-image";
-import { Ionicons } from "@expo/vector-icons";
+import { Bell, BellOff, SquareArrowOutUpRight } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import COLORS from "@/src/constants/colors";
 import type { RssFeedSource } from "../../news/types";
@@ -20,7 +20,7 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
   onToggleNotification,
 }) => {
   const isLangArbic = selectedItem?.language === "ar";
-  console.log(isLangArbic);
+
   return (
     <View style={[styles.siteDesc, { direction: isLangArbic ? "rtl" : "ltr" }]}>
       {selectedItem?.image ? (
@@ -47,7 +47,7 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
             >
               <CustomText style={styles.visitSiteText}>
                 زور الموقع{" "}
-                <Ionicons name="arrow-up-right-box-outline" size={18} color="white" />
+                <SquareArrowOutUpRight size={18} color="white" />
               </CustomText>
             </TouchableOpacity>
           ) : (
@@ -57,18 +57,18 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
             >
               <CustomText style={styles.visitSiteText}>
                 Visit Website{" "}
-                <Ionicons name="arrow-up-right-box-outline" size={18} color="white" />
+                <SquareArrowOutUpRight size={18} color="white" />
               </CustomText>
             </TouchableOpacity>
           )}
 
           {/* Notification toggle */}
           <TouchableOpacity onPress={onToggleNotification} style={styles.bellButton}>
-            <Ionicons
-              name={isNotifEnabled ? "notifications" : "notifications-off-outline"}
-              size={24}
-              color={isNotifEnabled ? "#779bdd" : "#666"}
-            />
+            {isNotifEnabled ? (
+              <Bell size={24} color="#779bdd" />
+            ) : (
+              <BellOff size={24} color="#666" />
+            )}
           </TouchableOpacity>
         </View>
       </View>

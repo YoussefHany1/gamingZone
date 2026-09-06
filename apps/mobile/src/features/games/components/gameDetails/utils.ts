@@ -1,6 +1,9 @@
 import COLORS from "@/src/constants/colors";
 import type { AgeRating, AgeRatingInfo } from "../../types";
 import { AGE_RATING_MAP } from "@gaming-zone/utils";
+import type { ComponentType } from "react";
+import { SteamIcon, EpicGamesIcon, GogIcon, NintendoSwitchIcon } from "@/src/components/icons/StoreIcons";
+import { AppleIcon, GooglePlayIcon, PlayStationIcon, XboxIcon } from "@/src/components/icons/BrandIcons";
 
 export {
   AGE_RATING_MAP,
@@ -13,17 +16,16 @@ export {
 
 /**
  * Maps IGDB website type IDs to locally bundled store icons.
- * require() calls must be at module level to satisfy Metro's static analysis.
  */
-export const STORE_ICONS: Record<number, ReturnType<typeof require>> = {
-  13: require("@/assets/steam.webp"),
-  16: require("@/assets/epic-games.webp"),
-  17: require("@/assets/gog.webp"),
-  23: require("@/assets/playstation.webp"),
-  22: require("@/assets/xbox.webp"),
-  24: require("@/assets/nintendo-switch.webp"),
-  12: require("@/assets/play-store.webp"),
-  10: require("@/assets/apple-store.webp"),
+export const STORE_ICONS: Record<number, ComponentType<{ size?: number; fill?: string }>> = {
+  13: SteamIcon,
+  16: EpicGamesIcon,
+  17: GogIcon,
+  23: PlayStationIcon,
+  22: XboxIcon,
+  24: NintendoSwitchIcon,
+  12: GooglePlayIcon,
+  10: AppleIcon,
 };
 
 // ── Color utilities ─────────────────────────────────────────────────────────

@@ -17,6 +17,7 @@ import type { Game } from "@/src/types/sharedTypes";
 import SectionTitle from "@/src/components/SectionTitle";
 import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
 import { fetchPopularGames } from "@/src/services/api/igdbApi";
+import { Star } from "lucide-react-native";
 
 const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
@@ -71,7 +72,7 @@ const PopularCard = React.memo<PopularCardProps>(({ item, index }) => {
         <View style={styles.statsContainer}>
           {rating > 0 && (
             <View style={styles.statItem}>
-              <CustomText style={styles.statIcon}>â­</CustomText>
+              <Star size={12} color={COLORS.lightGray} />
               <CustomText style={styles.statValue}>{rating.toFixed(1)}</CustomText>
             </View>
           )}
@@ -127,13 +128,13 @@ function PopularGames(): React.ReactElement {
       </View>
 
       {isActuallyLoading && (
-        <FlashList renderScrollComponent={GHScrollView as any}
+        <FlashList
+          renderScrollComponent={GHScrollView as any}
           data={SKELETON_DATA}
           horizontal
           renderItem={renderSkeletonItem}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          estimatedItemSize={175}
         />
       )}
 
@@ -144,7 +145,8 @@ function PopularGames(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList renderScrollComponent={GHScrollView as any}
+        <FlashList
+          renderScrollComponent={GHScrollView as any}
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -158,7 +160,6 @@ function PopularGames(): React.ReactElement {
               <ErrorState message={t("games.list.serverError")} />
             </View>
           }
-          estimatedItemSize={175}
         />
       )}
     </View>
@@ -222,6 +223,7 @@ const styles = StyleSheet.create({
   },
   statItem: {
     flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "rgba(119, 155, 221, 0.15)",
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -230,7 +232,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.lightGray + "99",
   },
-  statIcon: { fontSize: 12 },
   statValue: { color: COLORS.lightGray, fontSize: 12, fontWeight: "bold" },
   platformsContainer: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
   platformChip: {

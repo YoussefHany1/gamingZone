@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Alert, Linking } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { storage } from "../lib/storage";
 import Constants from "expo-constants";
 import { useTranslation } from "react-i18next";
@@ -120,7 +121,16 @@ const useUpdateCheck = (): void => {
       }
     };
 
-    checkForUpdate();
+    // Defer network fetch until after all startup interactions finish,
+    // then add an extra delay so it doesn't compete with initial renders.
+    // Running this eagerly on mount is a common cause of ANR on slow devices.
+    const task = runAfterInteractions(() => {
+      const timer = setTimeout(() => {
+        checkForUpdate();
+      }, 2000);
+      return () => clearTimeout(timer);
+    });
+    return () => task.cancel();
   }, []); // runs exactly once on mount
 };
 

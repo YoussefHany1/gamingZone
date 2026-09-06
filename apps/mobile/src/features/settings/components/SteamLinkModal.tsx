@@ -11,7 +11,8 @@ import {
   Platform,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Ionicons } from "@expo/vector-icons";
+import { X } from "lucide-react-native";
+import { SteamIcon } from "@/src/components/icons/StoreIcons";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import COLORS from "@/src/constants/colors";
@@ -348,10 +349,12 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
         <View style={styles.overlay}>
           <View style={styles.modalContent}>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="close" size={24} color="#fff" />
+              <X size={24} color="#fff" />
             </TouchableOpacity>
 
-            <Ionicons name="logo-steam" size={50} color="#fff" style={styles.logo} />
+            <View style={styles.logo}>
+              <SteamIcon size={50} fill="#fff" />
+            </View>
             <CustomText style={styles.title}>
               {t("settings.profile.steam.modal.title") || "Sync Your Steam Library"}
             </CustomText>

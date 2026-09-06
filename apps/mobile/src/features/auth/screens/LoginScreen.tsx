@@ -6,19 +6,20 @@ import {
   TouchableOpacity,
   StyleSheet,
   ToastAndroid,
-  ImageBackground,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
-import { Image } from "expo-image";
+import { Image, ImageBackground } from "expo-image";
 import auth from "@react-native-firebase/auth";
 import {
   GoogleSignin,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { Eye, EyeOff } from "lucide-react-native";
+import { GoogleIcon } from "@/src/components/icons/BrandIcons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -50,8 +51,10 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
   const { t } = useTranslation();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  // Centralised Firebase auth error handler â€” avoids duplicating toast logic
+  // Centralised Firebase auth error handler — avoids duplicating toast logic
   const handleAuthError = useCallback(
     (error: { code?: string; message?: string }): void => {
       let errorMessage = t("common.error");
@@ -84,25 +87,29 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
       );
       return;
     }
+    setIsLoading(true);
     try {
       await auth().signInWithEmailAndPassword(email, password);
       navigation.replace("MainApp");
     } catch (error) {
       console.error("Login failed", error);
       handleAuthError(error as { code?: string });
+    } finally {
+      setIsLoading(false);
     }
   }, [email, password, t, handleAuthError, navigation]);
 
   // Google Sign-In handler
 
   const onGoogleButtonPress = useCallback(async (): Promise<void> => {
+    setIsLoading(true);
     try {
       await GoogleSignin.hasPlayServices();
       const userInfoResponse = await GoogleSignin.signIn();
       const idToken = userInfoResponse.data?.idToken;
 
       if (!idToken) {
-        // idToken missing â€” Google sign-in response incomplete
+        // idToken missing — Google sign-in response incomplete
         return;
       }
 
@@ -114,20 +121,27 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
       if ((error as { code?: string }).code !== statusCodes.SIGN_IN_CANCELLED) {
         console.error("Google sign-in error", error);
       }
+    } finally {
+      setIsLoading(false);
     }
   }, [navigation]);
 
   // Anonymous / Guest login handler
 
   const handleAnonymousLogin = useCallback(async (): Promise<void> => {
+    if (isLoading) return;
+
+    setIsLoading(true);
     try {
       await auth().signInAnonymously();
       navigation.replace("MainApp");
     } catch (error) {
       console.error("Anonymous login failed", error);
       ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
+    } finally {
+      setIsLoading(false);
     }
-  }, [navigation, t]);
+  }, [isLoading, navigation, t]);
 
   const handleNavigateToForgotPassword = useCallback(() => {
     navigation.navigate("ForgotPassword");
@@ -141,7 +155,8 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
     <ImageBackground
       source={require("@/assets/background.webp")}
       style={styles.background}
-      resizeMode="cover"
+      contentFit="cover"
+      cachePolicy="memory-disk"
     >
       <SafeAreaView style={styles.container}>
         <ScrollView>
@@ -171,14 +186,27 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
                 autoCapitalize="none"
               />
 
-              <CustomTextInput
-                style={styles.input}
-                placeholder={t("auth.passwordPlaceholder")}
-                placeholderTextColor="#aaa"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+              <View style={styles.passwordWrapper}>
+                <CustomTextInput
+                  style={styles.passwordInput}
+                  placeholder={t("auth.passwordPlaceholder")}
+                  placeholderTextColor="#aaa"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword((v) => !v)}
+                  style={styles.eyeButton}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  {showPassword ? (
+                  <EyeOff size={22} color="#aaa" />
+                ) : (
+                  <Eye size={22} color="#aaa" />
+                )}
+                </TouchableOpacity>
+              </View>
 
               <TouchableOpacity
                 onPress={handleNavigateToForgotPassword}
@@ -191,14 +219,23 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
             </View>
 
             {/* Email login button */}
-            <TouchableOpacity onPress={handleLogin} style={styles.button}>
-              <CustomText style={styles.buttonText}>{t("auth.login.title")}</CustomText>
+            <TouchableOpacity
+              onPress={handleLogin}
+              style={[styles.button, isLoading && styles.buttonDisabled]}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <CustomText style={styles.buttonText}>{t("auth.login.title")}</CustomText>
+              )}
             </TouchableOpacity>
 
             {/* Google sign-in button */}
             <TouchableOpacity
               onPress={onGoogleButtonPress}
-              style={styles.googleButtonWrapper}
+              style={[styles.googleButtonWrapper, isLoading && styles.buttonDisabled]}
+              disabled={isLoading}
             >
               <LinearGradient
                 colors={["#10574b", "#3174f1", "#e92d18", "#c38d0c"]}
@@ -206,18 +243,25 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Ionicons name="logo-google" size={28} color="white" />
-                <CustomText style={styles.buttonText}>
-                  {" "}
-                  {t("auth.login.googleSignIn")}
-                </CustomText>
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <GoogleIcon size={28} fill="#fff" />
+                    <CustomText style={styles.buttonText}>
+                      {" "}
+                      {t("auth.login.googleSignIn")}
+                    </CustomText>
+                  </>
+                )}
               </LinearGradient>
             </TouchableOpacity>
 
             {/* Create new account button */}
             <TouchableOpacity
               onPress={handleNavigateToRegister}
-              style={styles.newAccButton}
+              style={[styles.newAccButton, isLoading && styles.buttonDisabled]}
+              disabled={isLoading}
             >
               <CustomText style={styles.buttonText}>
                 {t("auth.login.createAccount")}
@@ -228,6 +272,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
             <TouchableOpacity
               onPress={handleAnonymousLogin}
               style={styles.guestButton}
+              disabled={isLoading}
             >
               <CustomText style={styles.guestButtonText}>
                 {t("auth.guest") || "Continue as Guest"}
@@ -268,6 +313,22 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
   },
+  passwordWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingRight: 12,
+  },
+  passwordInput: {
+    flex: 1,
+    color: "white",
+    padding: 15,
+  },
+  eyeButton: {
+    padding: 4,
+  },
   forgotPasswordButton: {},
   forgotPasswordText: { color: "#779bdd" },
   button: {
@@ -278,6 +339,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginBottom: 15,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   googleButtonWrapper: { justifyContent: "center" },
   gradient: {

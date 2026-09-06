@@ -3,7 +3,7 @@ import { View, TouchableOpacity, StyleSheet, RefreshControl } from "react-native
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
@@ -128,7 +128,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     if (!onBack) return null;
     return (
       <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.7}>
-        <Ionicons name="arrow-back" size={20} color="#fff" />
+        <ArrowLeft size={20} color="#fff" />
       </TouchableOpacity>
     );
   }, [onBack]);
@@ -170,7 +170,6 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
         contentContainerStyle={styles.listContent}
         onScroll={onScroll}
         scrollEventThrottle={16}
-        estimatedItemSize={290}
       />
     );
   }
@@ -200,7 +199,6 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
       refreshControl={refreshControl}
       onScroll={onScroll}
       scrollEventThrottle={16}
-      estimatedItemSize={CARD_HEIGHT}
     />
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Keyboard, InteractionManager } from "react-native";
+import { Keyboard } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { useTranslation } from "react-i18next";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import type { GameFilters } from "../types";
@@ -30,7 +31,7 @@ export function useGames() {
   const { onScroll } = useScrollDirection();
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
+    const task = runAfterInteractions(() => {
       setIsReady(true);
     });
     return () => task.cancel();

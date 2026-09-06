@@ -12,7 +12,7 @@ import { Image } from "expo-image";
 import PagerView from "react-native-pager-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import { CirclePlay } from "lucide-react-native";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import SkeletonSlideshow from "../skeleton/SkeletonSlideshow";
 import ErrorState from "@/src/components/ErrorState";
@@ -88,8 +88,7 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
             {item.name}
           </CustomText>
           <View style={styles.playRow}>
-            <Ionicons
-              name="play-circle-outline"
+            <CirclePlay
               size={18}
               color={COLORS.lightGray}
               style={{ marginRight: 6 }}

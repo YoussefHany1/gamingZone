@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import * as StoreReview from "expo-store-review";
 import { storage } from "../lib/storage";
 
@@ -75,7 +76,12 @@ const useRateApp = (): void => {
       }
     };
 
-    checkRatingEligibility();
+    // Defer until all startup interactions finish to avoid blocking the main
+    // thread (which causes ANR on slow devices).
+    const task = runAfterInteractions(() => {
+      checkRatingEligibility();
+    });
+    return () => task.cancel();
   }, []); // runs exactly once on mount
 };
 

@@ -5,11 +5,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ToastAndroid,
-  ImageBackground,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Image } from "expo-image";
+import { Image, ImageBackground } from "expo-image";
 import auth from "@react-native-firebase/auth";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -74,7 +73,8 @@ const ForgotPasswordScreen = memo(({ navigation }: Props) => {
     <ImageBackground
       source={require("@/assets/background.webp")}
       style={styles.background}
-      resizeMode="cover"
+      contentFit="cover"
+      cachePolicy="memory-disk"
     >
       <KeyboardAvoidingView
         style={{ flex: 1 }}

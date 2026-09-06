@@ -12,7 +12,7 @@ import {
   ToastAndroid,
 } from "react-native";
 import { ScrollView } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { CirclePlus, Square, SquareCheckBig } from "lucide-react-native";
 import firestore from "@react-native-firebase/firestore";
 import COLORS from "@/src/constants/colors";
 import { useTranslation } from "react-i18next";
@@ -304,11 +304,17 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
           style={[styles.listItem, item.isChecked && styles.selectedOption]}
           onPress={() => toggleList(item.id)}
         >
-          <Ionicons
-            name={item.isChecked ? "checkbox" : "square-outline"}
-            size={24}
-            color={COLORS.secondary}
-          />
+          {item.isChecked ? (
+            <SquareCheckBig
+              size={24}
+              color={COLORS.secondary}
+            />
+          ) : (
+            <Square
+              size={24}
+              color={COLORS.secondary}
+            />
+          )}
           <CustomText
             style={[styles.listName, item.isChecked && { fontWeight: "bold" }]}
           >
@@ -423,8 +429,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                           }
                         }}
                       >
-                        <Ionicons
-                          name="add-circle"
+                        <CirclePlus
                           size={24}
                           color={COLORS.lightGray}
                         />

@@ -9,7 +9,7 @@ import {
   SectionListData,
 } from "react-native";
 import { Image } from "expo-image";
-import { Ionicons } from "@expo/vector-icons";
+import { Check, ChevronDown } from "lucide-react-native";
 import COLORS from "@/src/constants/colors";
 import { openLink } from "@/src/lib/browser";
 import { useNotificationPreferences } from "@/src/hooks/useNotificationPreferences";
@@ -119,7 +119,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
           {selectedItem?.name || "Select a website..."}
         </CustomText>
 
-        <Ionicons name="chevron-down" size={20} color="#fff" />
+        <ChevronDown size={20} color="#fff" />
       </TouchableOpacity>
 
       {/* Site description card */}
@@ -188,7 +188,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                     </CustomText>
                   </View>
                   {selectedItem?.name === item.name && (
-                    <Ionicons name="checkmark-sharp" size={24} color={COLORS.secondary} />
+                    <Check size={24} color={COLORS.secondary} />
                   )}
                 </TouchableOpacity>
               )}

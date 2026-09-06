@@ -1,6 +1,5 @@
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { ComponentProps } from "react";
-import { Ionicons } from "@expo/vector-icons";
+import type { LucideIcon } from "lucide-react-native";
 
 export type FirestoreUser = {
   displayName?: string;
@@ -17,7 +16,7 @@ export type CloudinaryResponse = {
   [key: string]: unknown;
 };
 
-export type IoniconName = ComponentProps<typeof Ionicons>["name"];
+export type IoniconName = LucideIcon;
 
 export type MenuItem = {
   id: string;

@@ -8,7 +8,7 @@ import {
   ScrollView,
   ViewStyle,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Check, ChevronDown, X } from "lucide-react-native";
 import COLORS from "../constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomText from "./CustomText";
@@ -35,9 +35,14 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
   }) => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
 
+    const filteredOptions = useMemo(
+      () => options.filter((opt) => opt.value !== "" && opt.label !== ""),
+      [options],
+    );
+
     const selectedLabel: string = useMemo(
-      () => options.find((opt) => opt.value === selectedValue)?.label ?? placeholder,
-      [options, selectedValue, placeholder],
+      () => filteredOptions.find((opt) => opt.value === selectedValue)?.label ?? placeholder,
+      [filteredOptions, selectedValue, placeholder],
     );
 
     const handleSelect = useCallback(
@@ -58,7 +63,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
           <CustomText style={[styles.pickerText, !selectedValue && { color: "#ccc" }]}>
             {selectedLabel}
           </CustomText>
-          <Ionicons name="chevron-down" size={20} color="white" />
+          <ChevronDown size={20} color="white" />
         </TouchableOpacity>
 
         {/* Options modal */}
@@ -71,7 +76,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
           <View style={styles.modalOverlay}>
             {/* Dimmed background — tap to close */}
             <TouchableOpacity
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
               activeOpacity={1}
               onPress={() => setModalVisible(false)}
             />
@@ -81,7 +86,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
               <View style={styles.modalHeader}>
                 <CustomText style={styles.modalTitle}>{placeholder}</CustomText>
                 <TouchableOpacity onPress={() => setModalVisible(false)}>
-                  <Ionicons name="close" size={24} color="#7eaafcff" />
+                  <X size={24} color="#7eaafcff" />
                 </TouchableOpacity>
               </View>
 
@@ -91,7 +96,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               >
-                {options.map((item) => (
+                {filteredOptions.map((item) => (
                   <TouchableOpacity
                     key={item.value}
                     style={[
@@ -110,7 +115,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
                       {item.label}
                     </CustomText>
                     {item.value === selectedValue && (
-                      <Ionicons name="checkmark" size={24} color="#7eaafcff" />
+                      <Check size={24} color="#7eaafcff" />
                     )}
                   </TouchableOpacity>
                 ))}

@@ -48,8 +48,6 @@ export function storageSetTimestamp(key: string, ts: number): void {
 
 /** Delete a key (and its timestamp companion). */
 export function storageDelete(key: string): void {
-  // @ts-expect-error - MMKV type missing delete in some environments
-  storage.delete(key);
-  // @ts-expect-error - MMKV type missing delete in some environments
-  storage.delete(`${key}_timestamp`);
+  storage.remove(key);
+  storage.remove(`${key}_timestamp`);
 }

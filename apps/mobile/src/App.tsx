@@ -12,6 +12,7 @@ import {
   NavigationContainerRef,
   Theme,
   getStateFromPath,
+  LinkingOptions,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -26,9 +27,11 @@ import { I18nManager } from "react-native";
 import i18n from "./i18n";
 import COLORS from "./constants/colors";
 import Loading from "./Loading";
+import UpdateScreen from "./components/UpdateScreen";
 import useNotifications from "./hooks/useNotifications";
 import useRateApp from "./hooks/useRateApp";
 import useUpdateCheck from "./hooks/useUpdateCheck";
+import useOTAUpdate from "./hooks/useOTAUpdate";
 import { MainAppTabs, AuthStack } from "./navigation/AppNavigator";
 import OnboardingScreen from "./features/onboarding/screens/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -69,12 +72,8 @@ const MyTheme: Theme = {
 };
 
 // Deep Linking Config
-const linking = {
-  prefixes: [
-    "gaming-zone://",
-    "https://gz1.vercel.app",
-    "http://gz1.vercel.app",
-  ],
+const linking: LinkingOptions<any> = {
+  prefixes: ["gaming-zone://", "https://gz1.vercel.app", "http://gz1.vercel.app"],
   config: {
     screens: {
       MainApp: {
@@ -167,8 +166,7 @@ function App(): React.ReactElement | null {
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
 
   const routeNameRef = useRef<string | undefined>(undefined);
-  const navigationRef =
-    useRef<NavigationContainerRef<RootStackParamList>>(null);
+  const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
 
   useEffect(() => {
     const cleanup = initAuth();
@@ -190,21 +188,27 @@ function App(): React.ReactElement | null {
           I18nManager.allowRTL(true);
           I18nManager.forceRTL(true);
           await i18n.changeLanguage("ar");
-          try {
-            await Updates.reloadAsync();
-          } catch (e) {
-            console.warn("Failed to reload", e);
-          }
+          // Defer reload to avoid ANR on slow devices — give the main thread
+          // time to finish its current frame before triggering a full JS reload.
+          setTimeout(async () => {
+            try {
+              await Updates.reloadAsync();
+            } catch (e) {
+              console.warn("Failed to reload", e);
+            }
+          }, 300);
           return;
         } else if (sysLang === "en" && I18nManager.isRTL) {
           I18nManager.allowRTL(false);
           I18nManager.forceRTL(false);
           await i18n.changeLanguage("en");
-          try {
-            await Updates.reloadAsync();
-          } catch (e) {
-            console.warn("Failed to reload", e);
-          }
+          setTimeout(async () => {
+            try {
+              await Updates.reloadAsync();
+            } catch (e) {
+              console.warn("Failed to reload", e);
+            }
+          }, 300);
           return;
         } else {
           await i18n.changeLanguage(sysLang);
@@ -220,13 +224,23 @@ function App(): React.ReactElement | null {
 
   useEffect(() => {
     if (!loading && (fontsLoaded || fontError)) {
-      SplashScreen.hideAsync();
+      // Wrap in try/catch to handle the Android NullPointerException
+      // that occurs when SurfaceControl is released before hideAsync completes.
+      // Adding a small delay ensures the Activity's drawing phase is fully ready.
+      const timer = setTimeout(() => {
+        SplashScreen.hideAsync().catch((e) => {
+          if (__DEV__) console.warn("[SplashScreen] hideAsync failed:", e);
+        });
+      }, 50);
+      return () => clearTimeout(timer);
     }
   }, [loading, fontsLoaded, fontError]);
 
   useNotifications(user);
   useRateApp();
   useUpdateCheck();
+
+  const otaState = useOTAUpdate();
 
   const handleNavigationReady = useCallback(() => {
     routeNameRef.current = navigationRef.current?.getCurrentRoute()?.name;
@@ -249,6 +263,21 @@ function App(): React.ReactElement | null {
     storage.set("@onboarding_done", "true");
     setShowOnboarding(false);
   }, []);
+
+  // Show OTA update progress screen while downloading an EAS update
+  if (
+    otaState.status === "checking" ||
+    otaState.status === "downloading" ||
+    otaState.status === "ready"
+  ) {
+    const progress =
+      otaState.status === "downloading"
+        ? otaState.progress
+        : otaState.status === "ready"
+          ? 1
+          : 0;
+    return <UpdateScreen progress={progress} />;
+  }
 
   if (loading || (!fontsLoaded && !fontError)) {
     return <Loading />;

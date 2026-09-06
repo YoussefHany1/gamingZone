@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from "react";
 import CustomText from "@/src/components/CustomText";
 import CustomTextInput from "@/src/components/CustomTextInput";
-import { StyleSheet, View, TouchableOpacity, InteractionManager } from "react-native";
+import { StyleSheet, View, TouchableOpacity } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
-import { Ionicons } from "@expo/vector-icons";
+import { CircleX, Search, SlidersHorizontal } from "lucide-react-native";
 import SkeletonFreeGames from "../skeleton/gamesScreen/SkeletonFreeGames";
 import SkeletonNewsItem from "@/src/features/news/skeleton/SkeletonNewsItem";
 import FreeGames from "../components/gamesScreen/FreeGames";
@@ -55,7 +56,7 @@ const AdContainer = memo(() => {
   const { t } = useTranslation();
   const [showAds, setShowAds] = useState(false);
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
+    const task = runAfterInteractions(() => setShowAds(true));
     return () => task.cancel();
   }, []);
   if (!showAds) return null;
@@ -178,6 +179,7 @@ function GamesScreen(): React.ReactElement {
       <View style={styles.searchSection}>
         <View style={styles.searchRow}>
           <View style={styles.searchBarContainer}>
+            <Search size={18} color="#999" style={styles.searchIcon} />
             <CustomTextInput
               style={styles.searchInput}
               placeholder={t("games.searchPlaceholder")}
@@ -194,7 +196,7 @@ function GamesScreen(): React.ReactElement {
                 onPress={handleClearSearch}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Ionicons name="close-circle" size={24} color="#ccc" />
+                <CircleX size={24} color="#ccc" />
               </TouchableOpacity>
             )}
           </View>
@@ -205,8 +207,7 @@ function GamesScreen(): React.ReactElement {
             onPress={openFilter}
             hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           >
-            <Ionicons
-              name="options-outline"
+            <SlidersHorizontal
               size={20}
               color={activeFilterCount > 0 ? "#fff" : COLORS.lightGray}
             />
@@ -245,17 +246,19 @@ function GamesScreen(): React.ReactElement {
           />
         </View>
       ) : (
-        <FlashList
-          data={STATIC_FEED_ITEMS}
-          renderItem={renderFeedItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          onScroll={onScroll}
-          scrollEventThrottle={16}
-          contentContainerStyle={{ paddingBottom: 90 }}
-          estimatedItemSize={300}
-        />
+        <View style={{ flex: 1 }}>
+          <FlashList
+            data={STATIC_FEED_ITEMS}
+            renderItem={renderFeedItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            onScroll={onScroll}
+            scrollEventThrottle={16}
+            getItemType={(item) => (item.type === "AD" ? "AD" : item.id)}
+            contentContainerStyle={{ paddingBottom: 90 }}
+          />
+        </View>
       )}
 
       <FilterModal
@@ -300,6 +303,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.secondary,
+  },
+  searchIcon: {
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,

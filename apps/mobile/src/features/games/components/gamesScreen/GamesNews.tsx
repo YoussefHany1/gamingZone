@@ -133,7 +133,6 @@ function GamesNews(): React.ReactElement {
         contentContainerStyle={styles.listContent}
         snapToInterval={175}
         decelerationRate="fast"
-        estimatedItemSize={175}
       />
     </View>
   );

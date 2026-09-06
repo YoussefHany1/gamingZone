@@ -218,7 +218,6 @@ function GamingEvents(): React.ReactElement | null {
           renderItem={renderSkeletonItem}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          estimatedItemSize={CARD_ITEM_SIZE}
         />
       )}
 
@@ -245,7 +244,6 @@ function GamingEvents(): React.ReactElement | null {
               </View>
             ) : null
           }
-          estimatedItemSize={CARD_ITEM_SIZE}
         />
       )}
     </View>

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { InteractionManager } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import messaging from "@react-native-firebase/messaging";
+import auth from "@react-native-firebase/auth";
 import type { FirebaseMessagingTypes } from "@react-native-firebase/messaging";
 import * as Notifications from "expo-notifications";
 import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
@@ -26,7 +27,6 @@ const NEWS_CHANNEL: Notifications.NotificationChannelInput = {
   importance: Notifications.AndroidImportance.MAX,
   vibrationPattern: [0, 250, 250, 250],
   lightColor: "#779bdd",
-  sound: "default",
   lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
   enableVibrate: true,
   enableLights: true,
@@ -67,8 +67,28 @@ const useNotifications = (
   useEffect(() => {
     if (!user) return;
 
+    let cancelled = false;
+
+    /**
+     * True while `user` is still the signed-in (non-anonymous) Firebase user.
+     * Guards every async step so a logout mid-setup can never fire Firestore
+     * requests with a stale uid / mismatched auth token.
+     */
+    const isSessionValid = (): boolean => {
+      const currentUser = auth().currentUser;
+      return (
+        !!currentUser && !currentUser.isAnonymous && currentUser.uid === user.uid
+      );
+    };
+
     let unsubscribeOnMessage: Unsubscribe | undefined;
     let unsubscribeTokenRefresh: Unsubscribe | undefined;
+
+    // Guests keep foreground-notification presentation, but skip all
+    // Firestore token/preference syncing: their session is ephemeral and any
+    // sync right after a logout races against Firestore picking up the fresh
+    // anonymous credentials -> firestore/permission-denied noise.
+    const isGuest = user.isAnonymous;
 
     const setup = async (): Promise<void> => {
       try {
@@ -78,21 +98,28 @@ const useNotifications = (
           NEWS_CHANNEL,
         );
 
-        const authStatus = await messaging().requestPermission();
-        const isAuthorized =
-          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+        if (!isGuest) {
+          const authStatus = await messaging().requestPermission();
+          const isAuthorized =
+            authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+            authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-        if (!isAuthorized) return;
+          if (!isAuthorized) return;
 
-        // Register token and sync topic subscriptions with stored preferences.
-        const token = await messaging().getToken();
-        await NotificationService.saveFCMToken(user.uid, token);
+          // Bail out if the session changed while requesting permission.
+          if (cancelled || !isSessionValid()) return;
 
-        const preferences = await NotificationService.getUserPreferences(
-          user.uid,
-        );
-        await NotificationService.syncUserPreferences(user.uid, preferences);
+          // Register token and sync topic subscriptions with stored preferences.
+          const token = await messaging().getToken();
+          if (cancelled || !isSessionValid()) return;
+          await NotificationService.saveFCMToken(user.uid, token);
+
+          const preferences = await NotificationService.getUserPreferences(
+            user.uid,
+          );
+          if (cancelled || !isSessionValid()) return;
+          await NotificationService.syncUserPreferences(user.uid, preferences);
+        }
 
         // Foreground message handler — present silent messages are skipped.
         unsubscribeOnMessage = messaging().onMessage(
@@ -117,7 +144,7 @@ const useNotifications = (
                   title,
                   body,
                   data: (remoteMessage.data as Record<string, unknown>) ?? {},
-                  sound: "default",
+                  sound: true,
                   badge: 1,
                   categoryIdentifier: NEWS_CHANNEL_ID,
                   ...(imageUrl && {
@@ -145,6 +172,8 @@ const useNotifications = (
         // Keep the stored token current when FCM rotates it.
         unsubscribeTokenRefresh = messaging().onTokenRefresh(
           async (newToken: string) => {
+            // Session may have ended between the rotation and this callback.
+            if (cancelled || !isSessionValid()) return;
             await NotificationService.saveFCMToken(user.uid, newToken);
           },
         );
@@ -155,11 +184,12 @@ const useNotifications = (
 
     // Defer FCM setup until after app startup interactions are done
     // so it doesn't compete with rendering on weak devices.
-    const task = InteractionManager.runAfterInteractions(() => {
+    const task = runAfterInteractions(() => {
       setup();
     });
 
     return () => {
+      cancelled = true;
       task.cancel();
       unsubscribeOnMessage?.();
       unsubscribeTokenRefresh?.();

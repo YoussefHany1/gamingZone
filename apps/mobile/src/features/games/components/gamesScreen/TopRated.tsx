@@ -32,9 +32,9 @@ function getRatingColor(rating: number): [string, string] {
 }
 
 const getMedalEmoji = (rank: number): string => {
-  if (rank === 1) return "ðŸ¥‡";
-  if (rank === 2) return "ðŸ¥ˆ";
-  if (rank === 3) return "ðŸ¥‰";
+  if (rank === 1) return "🥇";
+  if (rank === 2) return "🥈";
+  if (rank === 3) return "🥉";
   return `#${rank}`;
 };
 
@@ -95,14 +95,13 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
 
       {/* Game info */}
       <View style={styles.infoContainer}>
-        <CustomText style={styles.title} numberOfLines={2}>
-          {item.name}{" "}
+        <CustomText style={styles.title} numberOfLines={3}>
+          {item.name}
+          {"\n"}
           {item.first_release_date && (
-            <View style={styles.yearContainer}>
-              <CustomText style={styles.yearText}>
-                {new Date(item.first_release_date * 1000).getFullYear()}
-              </CustomText>
-            </View>
+            <CustomText style={styles.yearText}>
+              {new Date(item.first_release_date * 1000).getFullYear()}
+            </CustomText>
           )}
         </CustomText>
 
@@ -115,9 +114,6 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
             style={styles.ratingCircle}
           >
             <CustomText style={styles.ratingNumber}>{rating.toFixed(1)}</CustomText>
-            <View style={styles.starContainer}>
-              <CustomText style={styles.starIcon}>â­</CustomText>
-            </View>
           </LinearGradient>
 
           {item.genres && item.genres.length > 0 && (
@@ -181,7 +177,6 @@ export default function TopRatedGames(): React.ReactElement {
           renderItem={() => <SkeletonTopRated />}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          estimatedItemSize={210}
         />
       )}
 
@@ -192,7 +187,8 @@ export default function TopRatedGames(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && (
-        <FlashList renderScrollComponent={GHScrollView as any}
+        <FlashList
+          renderScrollComponent={GHScrollView as any}
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -206,7 +202,6 @@ export default function TopRatedGames(): React.ReactElement {
               <ErrorState message={t("games.list.serverError")} />
             </View>
           }
-          estimatedItemSize={210}
         />
       )}
     </View>
@@ -238,14 +233,14 @@ const styles = StyleSheet.create({
     top: -5,
     left: -5,
     zIndex: 10,
-    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    backgroundColor: COLORS.darkBackground + "AA",
     width: 50,
     height: 50,
     borderRadius: 25,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 3,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderWidth: 1,
+    borderColor: COLORS.lightGray + "40",
     elevation: 6,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -267,7 +262,13 @@ const styles = StyleSheet.create({
     padding: 12,
     justifyContent: "space-between",
   },
-  title: { color: "white", fontSize: 16, fontWeight: "bold", lineHeight: 20 },
+  title: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    lineHeight: 20,
+    alignItems: "center",
+  },
   ratingMainContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -322,7 +323,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 8,
   },
-  yearText: { color: "#999", fontSize: 11, fontWeight: "600" },
+  yearText: {
+    color: "#999",
+    fontSize: 11,
+    fontWeight: "600",
+  },
   glowBorder: {
     position: "absolute",
     top: 0,

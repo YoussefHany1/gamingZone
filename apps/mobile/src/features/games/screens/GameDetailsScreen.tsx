@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, ArrowRight, Star } from "lucide-react-native";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import ImageGallerySkeleton from "../skeleton/gameDetails/ImageGallerySkeleton";
 import GameDetailsMetaSkeleton from "../skeleton/gameDetails/GameDetailsMetaSkeleton";
@@ -57,6 +57,8 @@ const GameDetails = ({ route, navigation }: Props) => {
     languageList,
     pcRequirements,
     pcReqLoading,
+    storePrices,
+    storePricesLoading,
     main,
     mainExtra,
     completionist,
@@ -76,8 +78,12 @@ const GameDetails = ({ route, navigation }: Props) => {
     <SafeAreaView edges={["right", "left"]} style={styles.container}>
       {/* Back button — always visible */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-          <Ionicons name="arrow-back" size={28} color="#fff" />
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleGoBack}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          {currentLang === "ar" ? <ArrowRight size={28} color="#fff" /> : <ArrowLeft size={28} color="#fff" />}
         </TouchableOpacity>
       </View>
 
@@ -146,7 +152,11 @@ const GameDetails = ({ route, navigation }: Props) => {
                 {loading ? (
                   <GameStoresSkeleton />
                 ) : game ? (
-                  <GameStores websites={game.websites} />
+                  <GameStores
+                  websites={game.websites}
+                  prices={storePrices ?? undefined}
+                  pricesLoading={storePricesLoading}
+                />
                 ) : null}
 
                 {/* Action buttons — static (route params), always shown */}
@@ -172,8 +182,7 @@ const GameDetails = ({ route, navigation }: Props) => {
                           activeOpacity={0.7}
                           style={{ paddingHorizontal: 6 }}
                         >
-                          <Ionicons
-                            name={star <= rating ? "star" : "star-outline"}
+                          <Star
                             size={32}
                             color={
                               star <= rating ? "#ffc107" : COLORS.lightGray

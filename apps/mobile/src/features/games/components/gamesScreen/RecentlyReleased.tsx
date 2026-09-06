@@ -92,7 +92,6 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
               <CustomText style={styles.ratingText}>
                 {(Math.round(item.total_rating) / 10).toFixed(1)}
               </CustomText>
-              <CustomText style={styles.ratingIcon}>â­</CustomText>
             </LinearGradient>
           )}
         </View>
@@ -111,7 +110,7 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
 
           {item.genres && item.genres.length > 0 && (
             <CustomText style={styles.genreText} numberOfLines={1}>
-              {item.genres.map((g) => g.name).join(" Â· ")}
+              {item.genres.map((g) => g.name).join(", ")}
             </CustomText>
           )}
 
@@ -128,7 +127,7 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
                 {item.platforms
                   .slice(0, 3)
                   .map((p) => p.abbreviation ?? p.name)
-                  .join(" Â· ")}
+                  .join(", ")}
               </CustomText>
             </View>
           )}
@@ -176,7 +175,6 @@ function RecentlyReleasedGames(): React.ReactElement {
           renderItem={() => <SkeletonRecentlyReleased />}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          estimatedItemSize={216}
         />
       )}
 
@@ -198,7 +196,6 @@ function RecentlyReleasedGames(): React.ReactElement {
               <ErrorState message={t("games.list.serverError")} />
             </View>
           }
-          estimatedItemSize={216}
         />
       )}
     </View>

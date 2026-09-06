@@ -1,7 +1,7 @@
 import React, { memo, useCallback } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import CustomText from "@/src/components/CustomText";
-import { Ionicons } from "@expo/vector-icons";
+import { CirclePlus, Gift } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
@@ -44,7 +44,7 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
             end={GRADIENT_END}
             style={styles.button}
           >
-            <Ionicons name="gift" size={24} color="#fff" style={styles.claimIcon} />
+            <Gift size={24} color="#fff" style={styles.claimIcon} />
             <CustomText style={styles.buttonText}>
               {t("games.details.claimNow")}
               {capitalise(store)}
@@ -65,7 +65,7 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
           end={GRADIENT_END}
           style={styles.button}
         >
-          <Ionicons name="add-circle-outline" size={24} color={COLORS.textLight} />
+          <CirclePlus size={24} color={COLORS.textLight} />
           <CustomText style={[styles.buttonText, styles.addToListText]}>
             {t("games.details.addToList")}
           </CustomText>

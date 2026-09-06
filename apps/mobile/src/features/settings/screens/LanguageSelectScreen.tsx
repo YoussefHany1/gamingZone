@@ -5,13 +5,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  InteractionManager,
   I18nManager,
 } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { useTranslation } from "react-i18next";
 import * as Updates from "expo-updates";
-import { Ionicons } from "@expo/vector-icons";
+import { Check } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import COLORS from "@/src/constants/colors";
 import { adUnitId } from "@/src/constants/config";
@@ -21,7 +21,7 @@ const LanguageSelect = memo((): React.ReactElement => {
   const [showAds, setShowAds] = useState<boolean>(false);
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() =>
+    const task = runAfterInteractions(() =>
       setShowAds(true),
     );
     return () => task.cancel();
@@ -74,7 +74,7 @@ const LanguageSelect = memo((): React.ReactElement => {
                 {lang === "en" ? "English" : "العربية"}
               </CustomText>
               {i18n.language === lang && (
-                <Ionicons name="checkmark-sharp" size={24} color="#779bdd" />
+                <Check size={24} color="#779bdd" />
               )}
             </View>
           </TouchableOpacity>

@@ -1,7 +1,8 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import CustomText from "@/src/components/CustomText";
-import { Ionicons } from "@expo/vector-icons";
+import { FileText, Languages, Mic, Monitor } from "lucide-react-native";
+import type { LucideIcon } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import useShimmer from "./useShimmer";
@@ -9,11 +10,11 @@ import SkeletonBar from "./SkeletonBar";
 
 type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
 
-const COLUMN_HEADERS = [
-  { icon: "mic", key: "audio" },
-  { icon: "document-text", key: "subtitles" },
-  { icon: "desktop", key: "interface" },
-] as const;
+const COLUMN_HEADERS: { icon: LucideIcon; key: string }[] = [
+  { icon: Mic, key: "audio" },
+  { icon: FileText, key: "subtitles" },
+  { icon: Monitor, key: "interface" },
+];
 
 // Static title + static column headers + shimmer rows
 const GameLanguageTableSkeleton: React.FC = () => {
@@ -28,14 +29,14 @@ const GameLanguageTableSkeleton: React.FC = () => {
       {/* Column headers — fully static */}
       <View style={styles.tableHeader}>
         <View style={styles.langHeaderCell}>
-          <Ionicons name="language" size={18} color={COLORS.secondary} />
+          <Languages size={18} color={COLORS.secondary} />
           <CustomText style={styles.headerLabel}>
             {t("games.details.languages.Language")}
           </CustomText>
         </View>
-        {COLUMN_HEADERS.map(({ icon, key }) => (
-          <View key={icon} style={styles.iconHeaderCell}>
-            <Ionicons name={icon} size={18} color={COLORS.secondary} />
+        {COLUMN_HEADERS.map(({ icon: Icon, key }) => (
+          <View key={key} style={styles.iconHeaderCell}>
+            <Icon size={18} color={COLORS.secondary} />
             <CustomText style={styles.headerLabel}>
               {t(`games.details.languages.${key}`)}
             </CustomText>

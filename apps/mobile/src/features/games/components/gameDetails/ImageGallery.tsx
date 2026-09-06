@@ -13,7 +13,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Image } from "expo-image";
-import { Ionicons } from "@expo/vector-icons";
+import { ChevronLeft, ChevronRight, Images, X } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   GestureHandlerRootView,
@@ -368,7 +368,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
       {/* ── Image counter badge ────────────────────────────────────────── */}
       {imageCount > 1 && (
         <View style={styles.counter}>
-          <Ionicons name="images-outline" size={16} color="#fff" />
+          <Images size={16} color="#fff" />
           <View style={styles.counterBadge}>
             <CustomText style={styles.counterText}>
               {activeIndex + 1}/{imageCount}
@@ -395,7 +395,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
                 accessibilityLabel="Close gallery"
                 accessibilityRole="button"
               >
-                <Ionicons name="close" size={28} color="#fff" />
+                <X size={28} color="#fff" />
               </TouchableOpacity>
               <View style={styles.fullScreenCounter}>
                 <CustomText style={styles.fullScreenCounterText}>
@@ -407,13 +407,11 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
             {/* Swipe-hint chevrons (non-interactive — hint only) */}
             {imageCount > 1 && (
               <View style={styles.swipeHints} pointerEvents="none">
-                <Ionicons
-                  name="chevron-back"
+                <ChevronLeft
                   size={28}
                   color={isFirst ? "transparent" : "rgba(255,255,255,0.25)"}
                 />
-                <Ionicons
-                  name="chevron-forward"
+                <ChevronRight
                   size={28}
                   color={isLast ? "transparent" : "rgba(255,255,255,0.25)"}
                 />

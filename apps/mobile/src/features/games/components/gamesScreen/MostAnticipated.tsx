@@ -136,7 +136,6 @@ function MostAnticipated(): React.ReactElement {
             <ErrorState message={t("games.list.serverError")} />
           </View>
         }
-        estimatedItemSize={CARD_WIDTH}
       />
     </View>
   );

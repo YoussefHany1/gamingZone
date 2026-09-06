@@ -1,12 +1,7 @@
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import React, { useCallback } from "react";
 import CustomText from "@/src/components/CustomText";
-import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-} from "react-native";
+import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -67,9 +62,7 @@ const RETRO_PRIORITY: string[] = [
 ];
 
 // Returns the most iconic retro platform name for a given list of platforms
-const getRetroConsole = (
-  platforms: GamePlatform[] | null | undefined,
-): string | null => {
+const getRetroConsole = (platforms: GamePlatform[] | null | undefined): string | null => {
   if (!platforms || platforms.length === 0) return null;
 
   for (const priority of RETRO_PRIORITY) {
@@ -85,8 +78,7 @@ const getRetroConsole = (
 // Card
 
 const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
-  const navigation =
-    useNavigation<NavigationProp<Record<string, object | undefined>>>();
+  const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
 
   const year = getYear(item.first_release_date);
   const decade = getDecade(year);
@@ -97,11 +89,7 @@ const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
   }, [navigation, item.id]);
 
   return (
-    <TouchableOpacity
-      style={styles.gameCard}
-      onPress={handlePress}
-      activeOpacity={0.85}
-    >
+    <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.85}>
       {/* Vintage dark background */}
       <LinearGradient
         colors={["#0c1a33", "#172a4a", "#1a3052"]}
@@ -148,11 +136,8 @@ const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
         {/* Console info */}
         <View style={styles.infoContainer}>
           {retroConsole && (
-            <View style={styles.consoleContainer}>
-              <View style={styles.consoleBadge}>
-                <CustomText style={styles.consoleIcon}>ðŸŽ®</CustomText>
-                <CustomText style={styles.consoleText}>{retroConsole}</CustomText>
-              </View>
+            <View style={styles.consoleBadge}>
+              <CustomText style={styles.consoleText}>{retroConsole}</CustomText>
             </View>
           )}
         </View>
@@ -201,14 +186,14 @@ export default function NostalgiaCorner(): React.ReactElement {
 
       {/* Skeleton while loading with no cached data */}
       {isActuallyLoading && (
-        <FlashList renderScrollComponent={GHScrollView as any}
+        <FlashList
+          renderScrollComponent={GHScrollView as any}
           data={SKELETON_DATA}
           horizontal
           keyExtractor={(item) => String(item.id)}
           renderItem={renderSkeletonItem}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          estimatedItemSize={CARD_WIDTH + CARD_MARGIN * 2}
         />
       )}
 
@@ -219,7 +204,8 @@ export default function NostalgiaCorner(): React.ReactElement {
       )}
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList renderScrollComponent={GHScrollView as any}
+        <FlashList
+          renderScrollComponent={GHScrollView as any}
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -233,7 +219,6 @@ export default function NostalgiaCorner(): React.ReactElement {
               <ErrorState message={t("games.list.serverError")} />
             </View>
           }
-          estimatedItemSize={CARD_WIDTH + CARD_MARGIN * 2}
         />
       )}
     </View>
@@ -375,21 +360,21 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  infoContainer: { flex: 1, gap: 6 },
-  consoleContainer: { alignItems: "center", marginTop: 6 },
+  infoContainer: { flex: 1 },
   consoleBadge: {
-    flexDirection: "row",
+    // flexDirection: "row",
+    alignSelf: "center",
     alignItems: "center",
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    backgroundColor: COLORS.secondary + "20",
     borderWidth: 1,
-    borderColor: "#779bdd",
+    borderColor: COLORS.lightGray,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 4,
     gap: 6,
   },
   consoleIcon: { fontSize: 12 },
-  consoleText: { color: "#779bdd", fontSize: 12, fontWeight: "bold" },
+  consoleText: { color: COLORS.lightGray, fontSize: 12, fontWeight: "bold" },
   cornerTopLeft: {
     position: "absolute",
     top: 5,

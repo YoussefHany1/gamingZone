@@ -104,15 +104,27 @@ function NewsScreen(): React.ReactElement {
       props: SceneRendererProps & {
         navigationState: NavigationState<RouteShape>;
       },
-    ) => (
-      <TabBar
-        {...props}
-        style={styles.tabBar}
-        indicatorStyle={styles.tabIndicator}
-        activeColor="#fff"
-        inactiveColor={COLORS.lightGray}
-      />
-    ),
+    ) => {
+      const options: Record<string, any> = {};
+      props.navigationState.routes.forEach((route) => {
+        options[route.key] = {
+          label: ({ color }: { color: string }) => (
+            <CustomText style={[styles.tabLabel, { color }]}>{route.title}</CustomText>
+          ),
+        };
+      });
+
+      return (
+        <TabBar
+          {...props}
+          style={styles.tabBar}
+          indicatorStyle={styles.tabIndicator}
+          activeColor="#fff"
+          inactiveColor={COLORS.lightGray}
+          options={options}
+        />
+      );
+    },
     [],
   );
 
@@ -159,7 +171,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.secondary,
   },
   tabLabel: {
-    fontSize: 16,
+    textAlign: "center",
     fontWeight: "600",
   },
   noDataText: { color: COLORS.textLight },

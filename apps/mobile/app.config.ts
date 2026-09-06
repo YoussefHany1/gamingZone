@@ -32,14 +32,31 @@ function getEnvVariables(): EnvVariables {
 export default ({ config }: ConfigContext): ExpoConfig => {
   const envVars = getEnvVariables();
 
+  // Determine build variant — set by eas.json "env" per profile
+  const APP_VARIANT = process.env["APP_VARIANT"] ?? "production";
+
+  const isDev = APP_VARIANT === "development";
+  const isPreview = APP_VARIANT === "preview";
+
+  // Package name — dev/preview get a ".dev" suffix so both can coexist on device
+  const androidPackage =
+    isDev || isPreview ? "com.yh.gamingzone.dev" : "com.yh.gamingzone";
+
+  // App display name — dev/preview get a badge so you can tell them apart
+  const appName = isDev
+    ? "GamingZone (Dev)"
+    : isPreview
+      ? "GamingZone (Preview)"
+      : "Gaming Zone";
+
   return {
     ...(config as any),
     ...config,
-    name: config.name ?? "GamingZone",
+    name: appName,
     slug: config.slug ?? "gaming-zone",
     android: {
       ...config.android,
-      package: "com.yh.gamingzone",
+      package: androidPackage,
     },
     mods: {
       android: {
@@ -63,11 +80,30 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           // Ensuring no duplicate channel definitions
           mainApplication["meta-data"] = mainApplication["meta-data"].filter(
             (item: { $: { "android:name": string } }) =>
-              item.$["android:name"] !==
-              "expo.modules.updates.EXPO_UPDATES_CHANNEL",
+              item.$["android:name"] !== "expo.modules.updates.EXPO_UPDATES_CHANNEL",
           );
 
           mainApplication["meta-data"].push(channelMetaData);
+
+          // react-native-firebase/messaging declares its own notification color,
+          // which collides with expo-notifications during manifest merging.
+          // Force our value to win.
+          const notificationColorKeys = [
+            "com.google.firebase.messaging.default_notification_color",
+            "expo.modules.notifications.default_notification_color",
+          ];
+
+          mainApplication["meta-data"].forEach((item: { $: Record<string, string> }) => {
+            const itemName = item.$["android:name"];
+
+            if (
+              itemName &&
+              notificationColorKeys.includes(itemName) &&
+              item.$["android:resource"]
+            ) {
+              item.$["tools:replace"] = "android:resource";
+            }
+          });
 
           return modConfig;
         },

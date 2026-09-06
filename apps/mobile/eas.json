@@ -7,11 +7,17 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "channel": "development"
+      "channel": "development",
+      "env": {
+        "APP_VARIANT": "development"
+      }
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview"
+      "channel": "preview",
+      "env": {
+        "APP_VARIANT": "preview"
+      }
     },
     "production": {
       "autoIncrement": true,
@@ -20,12 +26,30 @@
       },
       "channel": "production",
       "env": {
+        "APP_VARIANT": "production",
         "EAS_PACKAGE_MANAGER": "npm",
-        "npm_config_legacy_peer_deps": "true"
+        "npm_config_legacy_peer_deps": "true",
+        "APPWRITE_PROJECT": "$APPWRITE_PROJECT",
+        "APPWRITE_DATABASE_ID": "$APPWRITE_DATABASE_ID",
+        "APPWRITE_ENDPOINT": "$APPWRITE_ENDPOINT",
+        "GOOGLE_WEB_CLIENT_ID": "$GOOGLE_WEB_CLIENT_ID",
+        "CLOUDINARY_CLOUD_NAME": "$CLOUDINARY_CLOUD_NAME",
+        "CLOUDINARY_API_KEY": "$CLOUDINARY_API_KEY",
+        "CLOUDINARY_UPLOAD_PRESET": "$CLOUDINARY_UPLOAD_PRESET",
+        "EXPO_PUBLIC_GEMINI_API_KEY": "$EXPO_PUBLIC_GEMINI_API_KEY",
+        "EXPO_PUBLIC_GROQ_API_KEY": "$EXPO_PUBLIC_GROQ_API_KEY",
+        "EXPO_PUBLIC_EMAILJS_SERVICE_ID": "$EXPO_PUBLIC_EMAILJS_SERVICE_ID",
+        "EXPO_PUBLIC_EMAILJS_TEMPLATE_ID": "$EXPO_PUBLIC_EMAILJS_TEMPLATE_ID",
+        "EXPO_PUBLIC_EMAILJS_PUBLIC_KEY": "$EXPO_PUBLIC_EMAILJS_PUBLIC_KEY"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./gaming-zone-ca485-66fbe859f676.json",
+        "track": "production"
+      }
+    }
   }
 }

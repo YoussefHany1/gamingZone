@@ -13,15 +13,4 @@ echo "📄 Injecting google-services.json from EAS Secret..."
 echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > ./google-services.json
 echo "✅ Written to ./google-services.json"
 
-# Write to android/app/ (where Gradle expects it)
-if [ -d "./android/app" ]; then
-  echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > ./android/app/google-services.json
-  echo "✅ Written to ./android/app/google-services.json"
-else
-  echo "⚠️  android/app directory not found yet, creating it..."
-  mkdir -p ./android/app
-  echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > ./android/app/google-services.json
-  echo "✅ Written to ./android/app/google-services.json"
-fi
-
 echo "✅ google-services.json injection complete"

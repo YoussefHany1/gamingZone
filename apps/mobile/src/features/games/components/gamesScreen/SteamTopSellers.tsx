@@ -154,7 +154,6 @@ function SteamTopSellers(): React.ReactElement {
           renderItem={() => <SkeletonPopular />}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          estimatedItemSize={192}
         />
       )}
 
@@ -181,7 +180,6 @@ function SteamTopSellers(): React.ReactElement {
               <ErrorState message={t("games.list.noResults", "No games found")} />
             </View>
           }
-          estimatedItemSize={192}
         />
       )}
     </View>

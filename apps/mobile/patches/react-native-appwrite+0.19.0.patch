@@ -1,0 +1,24 @@
+diff --git a/node_modules/react-native-appwrite/dist/cjs/sdk.js b/node_modules/react-native-appwrite/dist/cjs/sdk.js
+index c8367cc..6d2f380 100644
+--- a/node_modules/react-native-appwrite/dist/cjs/sdk.js
++++ b/node_modules/react-native-appwrite/dist/cjs/sdk.js
+@@ -1,7 +1,7 @@
+ 'use strict';
+ 
+ var reactNative = require('react-native');
+-var FileSystem = require('expo-file-system');
++var FileSystem = require('expo-file-system/legacy');
+ 
+ function _interopNamespace(e) {
+     if (e && e.__esModule) return e;
+diff --git a/node_modules/react-native-appwrite/dist/esm/sdk.js b/node_modules/react-native-appwrite/dist/esm/sdk.js
+index 13dd032..70212e3 100644
+--- a/node_modules/react-native-appwrite/dist/esm/sdk.js
++++ b/node_modules/react-native-appwrite/dist/esm/sdk.js
+@@ -1,5 +1,5 @@
+ import { Platform } from 'react-native';
+-import * as FileSystem from 'expo-file-system';
++import * as FileSystem from 'expo-file-system/legacy';
+ 
+ /******************************************************************************
+ Copyright (c) Microsoft Corporation.

@@ -145,7 +145,13 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
           {/* Icon Asset */}
           {ad.icon ? (
             <NativeAsset assetType={NativeAssetType.ICON}>
-              <Image source={{ uri: ad.icon.url }} style={styles.adIcon} />
+              <Image
+                source={{ uri: ad.icon.url }}
+                style={styles.adIcon}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                recyclingKey={ad.icon.url}
+              />
             </NativeAsset>
           ) : (
             <View style={styles.iconPlaceholder} />

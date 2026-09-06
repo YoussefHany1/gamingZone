@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
-  InteractionManager,
   ScrollView,
   ToastAndroid,
 } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import firestore from "@react-native-firebase/firestore";
 import { useTranslation } from "react-i18next";
 import useCachedData from "@/src/hooks/useCachedData";
+import { storageGet } from "@/src/lib/storage";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { useShallow } from "zustand/react/shallow";
-import type { GameData, LangRow, PcRequirements } from "../types";
+import type { GameData, LangRow, PcRequirements, StorePrice } from "../types";
 import {
   fetchSteamRequirements,
   extractSteamAppId,
@@ -19,6 +20,11 @@ import {
 } from "../components/gameDetails/utils";
 import { formatLanguageRows, formatPlayTime } from "@gaming-zone/utils";
 import { fetchGameById } from "@/src/services/api/igdbApi";
+import {
+  fetchCheapSharkDeals,
+  buildStorePrices,
+} from "@/src/services/api/cheapSharkApi";
+import { fetchPsnPrice } from "@/src/services/api/psnApi";
 import { withTrace } from "@/src/services/performanceService";
 
 import type { UseGameDetailsProps } from "../types";
@@ -31,13 +37,21 @@ export const useGameDetails = ({
   const scrollRef = useRef<ScrollView>(null);
   const mountedRef = useRef<boolean>(true);
 
-  const [isReady, setIsReady] = useState(false);
+  // Start ready immediately if cached data exists — no skeleton on repeat visits.
+  // Only defer rendering (via InteractionManager) on the very first load when
+  // there is no cache, to avoid jank during the navigation animation.
+  const [isReady, setIsReady] = useState<boolean>(() => {
+    if (!initialGameID) return false;
+    return storageGet<unknown>(`GAME_DETAILS_CACHE_${initialGameID}`) !== null;
+  });
   const [showListModal, setShowListModal] = useState<boolean>(false);
   const [rating, setRating] = useState<number>(0);
   const [pcRequirements, setPcRequirements] = useState<PcRequirements | null>(
     null,
   );
   const [pcReqLoading, setPcReqLoading] = useState<boolean>(false);
+  const [storePrices, setStorePrices] = useState<StorePrice[] | null>(null);
+  const [storePricesLoading, setStorePricesLoading] = useState<boolean>(false);
 
   // ── Centralised auth — no duplicate listener ──────────────────────────────
   const user = useAuthStore(useShallow((s) => s.user));
@@ -47,11 +61,12 @@ export const useGameDetails = ({
   const { onScroll } = useScrollDirection();
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
+    if (isReady) return; // Already ready from cache
+    const task = runAfterInteractions(() => {
       setIsReady(true);
     });
     return () => task.cancel();
-  }, []);
+  }, [isReady]);
 
   // Data fetching
   const cacheKey = currentId ? `GAME_DETAILS_CACHE_${currentId}` : "";
@@ -255,6 +270,31 @@ export const useGameDetails = ({
   }, [game?.websites]);
 
   useEffect(() => {
+    setStorePrices(null);
+    if (!game?.name) return;
+    let cancelled = false;
+    setStorePricesLoading(true);
+
+    // Run CheapShark (PC stores) and PSN in parallel
+    Promise.all([
+      fetchCheapSharkDeals(game.name),
+      fetchPsnPrice(game.name, game.websites),
+    ]).then(([deals, psnPrice]) => {
+      if (!cancelled) {
+        const pcPrices = buildStorePrices(game.name, game.websites, deals);
+        const allPrices = psnPrice
+          ? [...pcPrices, psnPrice]
+          : pcPrices;
+        setStorePrices(allPrices);
+        setStorePricesLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [game?.name, game?.websites]);
+
+  useEffect(() => {
     if (game && !loading) {
       setTimeout(() => {
         try {
@@ -301,6 +341,8 @@ export const useGameDetails = ({
     languageList,
     pcRequirements,
     pcReqLoading,
+    storePrices,
+    storePricesLoading,
     main,
     mainExtra,
     completionist,

@@ -7,15 +7,14 @@ import {
   ToastAndroid,
   Modal,
   StyleSheet,
-  InteractionManager,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
 } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SkeletonUserLists from "../skeleton/SkeletonUserLists";
-import { Ionicons } from "@expo/vector-icons";
+import { CirclePlus, FolderOpen, List, Trash2, TriangleAlert } from "lucide-react-native";
 import auth from "@react-native-firebase/auth";
 import firestore, { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
 import COLORS from "@/src/constants/colors";
@@ -63,12 +62,27 @@ const UserListsScreen = ({ navigation }: Props) => {
 
   // Ad
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
+    const task = runAfterInteractions(() => {
       setShowAds(true);
       setIsReady(true);
     });
     return () => task.cancel();
   }, []);
+
+  // Header button
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () =>
+        user && !isAnonymous ? (
+          <TouchableOpacity
+            onPress={() => setModalVisible(true)}
+            style={{ padding: 6, marginRight: 6 }}
+          >
+            <CirclePlus size={28} color="#fff" />
+          </TouchableOpacity>
+        ) : null,
+    });
+  }, [navigation, user, isAnonymous]);
 
   // i18n list name
   const getDisplayName = useCallback(
@@ -242,16 +256,12 @@ const UserListsScreen = ({ navigation }: Props) => {
             }
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Ionicons
-                name={item.type === "default" ? "list" : "folder-open-outline"}
-                size={24}
-                color={COLORS.lightGray}
-              />
+              {item.type === "default" ? <List size={24} color={COLORS.lightGray} /> : <FolderOpen size={24} color={COLORS.lightGray} />}
               <CustomText style={styles.listName}>{getDisplayName(item.name)}</CustomText>
             </View>
             {item.type === "custom" && (
               <TouchableOpacity onPress={() => handleDeleteList(item.id, item.name)}>
-                <Ionicons name="trash-outline" size={20} color="red" />
+                <Trash2 size={20} color="red" />
               </TouchableOpacity>
             )}
           </TouchableOpacity>
@@ -267,25 +277,14 @@ const UserListsScreen = ({ navigation }: Props) => {
     [showAds, lists.length, getDisplayName, handleDeleteList, navigation, t],
   );
 
-  // Footer
-  const ListFooter = useCallback(
-    () => (
-      <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addListBtn}>
-        <CustomText style={styles.addListText}>
-          {t("userLists.actions.createNewList")}
-        </CustomText>
-        <Ionicons name="add" size={24} color="#fff" />
-      </TouchableOpacity>
-    ),
-    [t],
-  );
+
 
   if (isAnonymous || !user) {
     return (
       <SafeAreaView style={styles.container} edges={["right", "left"]}>
         <View style={styles.emptyContainer}>
           <CustomText style={styles.emptyText}>
-            <Ionicons name="warning-outline" size={182} color={COLORS.lightGray} />
+            <TriangleAlert size={182} color={COLORS.lightGray} />
             {"\n"}
             {t("common.loginRequired")}
           </CustomText>
@@ -303,11 +302,10 @@ const UserListsScreen = ({ navigation }: Props) => {
           data={lists}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
-          ListFooterComponent={<ListFooter />}
+
           contentContainerStyle={{ paddingTop: 15, paddingBottom: 90 }}
           onScroll={onScroll}
           scrollEventThrottle={16}
-          estimatedItemSize={75}
         />
       )}
       <Modal visible={isModalVisible} transparent animationType="slide">
@@ -415,21 +413,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: COLORS.textLight,
   },
-  addListBtn: {
-    padding: 10,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: COLORS.secondary,
-    marginTop: 16,
-    borderRadius: 8,
-    marginHorizontal: 70,
-  },
-  addListText: {
-    color: COLORS.textLight,
-    fontSize: 16,
-    fontWeight: "bold",
-  },
+
   modalButtons: { flexDirection: "row", justifyContent: "space-around" },
   cancelBtn: { padding: 10, fontWeight: "bold" },
   createBtn: {

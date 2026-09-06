@@ -1,17 +1,18 @@
 import React, { memo } from "react";
 import { View, StyleSheet } from "react-native";
 import CustomText from "@/src/components/CustomText";
-import { Ionicons } from "@expo/vector-icons";
+import { CircleCheck, FileText, Languages, Mic, Monitor } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import * as Localization from "expo-localization";
 import COLORS from "@/src/constants/colors";
 import { sharedStyles } from "./shared";
 import { COLUMN_KEYS, type GameLanguageTableProps, type ColumnKey } from "../../types";
+import type { LucideIcon } from "lucide-react-native";
 
-const COLUMN_ICONS: Record<ColumnKey, React.ComponentProps<typeof Ionicons>["name"]> = {
-  Audio: "mic",
-  Subtitles: "document-text",
-  Interface: "desktop",
+const COLUMN_ICONS: Record<ColumnKey, LucideIcon> = {
+  Audio: Mic,
+  Subtitles: FileText,
+  Interface: Monitor,
 };
 
 const COLUMN_I18N_KEYS: Record<ColumnKey, string> = {
@@ -64,20 +65,23 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
       {/* Table header */}
       <View style={styles.tableHeader}>
         <View style={styles.langHeaderCell}>
-          <Ionicons name="language" size={18} color={COLORS.secondary} />
+          <Languages size={18} color={COLORS.secondary} />
           <CustomText style={styles.headerCellLabel}>
             {t("games.details.languages.Language")}
           </CustomText>
         </View>
 
-        {COLUMN_KEYS.map((key) => (
-          <View key={key} style={styles.iconHeaderCell}>
-            <Ionicons name={COLUMN_ICONS[key]} size={18} color={COLORS.secondary} />
-            <CustomText style={styles.headerCellLabel}>
-              {t(COLUMN_I18N_KEYS[key])}
-            </CustomText>
-          </View>
-        ))}
+        {COLUMN_KEYS.map((key) => {
+          const Icon = COLUMN_ICONS[key];
+          return (
+            <View key={key} style={styles.iconHeaderCell}>
+              <Icon size={18} color={COLORS.secondary} />
+              <CustomText style={styles.headerCellLabel}>
+                {t(COLUMN_I18N_KEYS[key])}
+              </CustomText>
+            </View>
+          );
+        })}
       </View>
 
       {/* Table body */}
@@ -105,7 +109,7 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
             {COLUMN_KEYS.map((key) => (
               <View key={key} style={styles.checkCell}>
                 {lang[key] && (
-                  <Ionicons name="checkmark-circle" size={20} color={COLORS.lightGray} />
+                  <CircleCheck size={20} color={COLORS.lightGray} />
                 )}
               </View>
             ))}

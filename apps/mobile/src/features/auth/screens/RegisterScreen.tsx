@@ -7,20 +7,16 @@ import {
   StyleSheet,
   Alert,
   ToastAndroid,
-  ImageBackground,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Image } from "expo-image";
+import { Image, ImageBackground } from "expo-image";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
-import {
-  GoogleSignin,
-  statusCodes,
-} from "@react-native-google-signin/google-signin";
+import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { GoogleIcon } from "@/src/components/icons/BrandIcons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -149,12 +145,16 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
     }
 
     try {
-      const { user } = await auth().createUserWithEmailAndPassword(
-        email,
-        password,
-      );
+      const { user } = await auth().createUserWithEmailAndPassword(email, password);
 
       await user.updateProfile({ displayName: name });
+
+      // Send email verification
+      try {
+        await user.sendEmailVerification();
+      } catch (e) {
+        console.warn("Failed to send verification email:", e);
+      }
 
       // Store additional user profile data in Firestore
       await firestore().collection("users").doc(user.uid).set({
@@ -237,13 +237,18 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
     <ImageBackground
       source={require("@/assets/background.webp")}
       style={styles.background}
-      resizeMode="cover"
+      contentFit="cover"
+      cachePolicy="memory-disk"
     >
-      <SafeAreaView style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.keyboardView}
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <SafeAreaView style={styles.container}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.scrollContent}
           >
             <Image
               source={require("@/assets/logo.webp")}
@@ -278,17 +283,13 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 options={genderOptions}
                 selectedValue={gender}
                 onValueChange={(val) => setGender(val as Gender)}
-                placeholder={
-                  t("auth.register.genderPlaceholder") || "Select Gender"
-                }
+                placeholder={t("auth.register.genderPlaceholder") || "Select Gender"}
               />
               <CustomPicker
                 options={countriesList}
                 selectedValue={country}
                 onValueChange={setCountry}
-                placeholder={
-                  t("auth.register.countryPlaceholder") || "Select Country"
-                }
+                placeholder={t("auth.register.countryPlaceholder") || "Select Country"}
               />
 
               <CustomTextInput
@@ -319,7 +320,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Ionicons name="logo-google" size={28} color="white" />
+                <GoogleIcon size={28} fill="#fff" />
                 <CustomText style={styles.buttonText}>
                   {" "}
                   {t("auth.register.googleSignUp")}
@@ -328,27 +329,21 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
             </TouchableOpacity>
 
             {/* Already have an account button */}
-            <TouchableOpacity
-              style={styles.newAccButton}
-              onPress={handleNavigateToLogin}
-            >
+            <TouchableOpacity style={styles.newAccButton} onPress={handleNavigateToLogin}>
               <CustomText style={styles.buttonText}>
                 {t("auth.register.haveAnAccount")}
               </CustomText>
             </TouchableOpacity>
 
             {/* Continue as guest button */}
-            <TouchableOpacity
-              onPress={handleAnonymousLogin}
-              style={styles.guestButton}
-            >
+            <TouchableOpacity onPress={handleAnonymousLogin} style={styles.guestButton}>
               <CustomText style={styles.guestButtonText}>
                 {t("auth.guest") || "Continue as Guest"}
               </CustomText>
             </TouchableOpacity>
-          </KeyboardAvoidingView>
-        </ScrollView>
-      </SafeAreaView>
+          </ScrollView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </ImageBackground>
   );
 });
@@ -368,6 +363,7 @@ const styles = StyleSheet.create({
   },
   container: { flex: 1, justifyContent: "center", paddingHorizontal: 20 },
   keyboardView: { flex: 1 },
+  scrollContent: { flexGrow: 1, justifyContent: "center" },
   logo: { width: 220, height: 220, alignSelf: "center" },
   title: {
     fontSize: 28,

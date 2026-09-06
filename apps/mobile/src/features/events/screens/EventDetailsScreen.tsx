@@ -6,12 +6,12 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  InteractionManager,
   Animated,
 } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, Calendar, CirclePlay, Flag, Radio } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
@@ -40,7 +40,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
   const contentOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const interactionTask = InteractionManager.runAfterInteractions(() => {
+    const interactionTask = runAfterInteractions(() => {
       Animated.timing(contentOpacity, {
         toValue: 1,
         duration: 280,
@@ -114,7 +114,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
           onPress={handleGoBack}
           activeOpacity={0.8}
         >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
 
         {/* Status badge */}
@@ -153,14 +153,18 @@ const EventDetailsScreen = memo((): React.ReactElement => {
           {/* Dates */}
           <View style={styles.datesRow}>
             <View style={styles.dateBlock}>
-              <Ionicons name="calendar-outline" size={18} color={COLORS.lightGray} />
+              <View collapsable={false}>
+                <Calendar size={18} color={COLORS.lightGray} />
+              </View>
               <View>
                 <CustomText style={styles.dateBlockLabel}>Starts</CustomText>
                 <CustomText style={styles.dateBlockValue}>{startDateStr}</CustomText>
               </View>
             </View>
             <View style={styles.dateBlock}>
-              <Ionicons name="flag-outline" size={18} color={COLORS.lightGray} />
+              <View collapsable={false}>
+                <Flag size={18} color={COLORS.lightGray} />
+              </View>
               <View>
                 <CustomText style={styles.dateBlockLabel}>Ends</CustomText>
                 <CustomText style={styles.dateBlockValue}>{endDateStr}</CustomText>
@@ -197,11 +201,15 @@ const EventDetailsScreen = memo((): React.ReactElement => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Ionicons
-                  name={status === "live" ? "radio-outline" : "play-circle-outline"}
-                  size={22}
-                  color="#fff"
-                />
+                {status === "live" ? (
+                  <View collapsable={false}>
+                    <Radio size={22} color="#fff" />
+                  </View>
+                ) : (
+                  <View collapsable={false}>
+                    <CirclePlay size={22} color="#fff" />
+                  </View>
+                )}
                 <CustomText style={styles.streamBtnText}>
                   {status === "live"
                     ? t("home.gamingEvents.watchNowButton")
@@ -244,7 +252,6 @@ const EventDetailsScreen = memo((): React.ReactElement => {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 4 }}
                 scrollEnabled
-                estimatedItemSize={200}
               />
             </View>
           )}
@@ -262,7 +269,6 @@ const EventDetailsScreen = memo((): React.ReactElement => {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 4 }}
                 scrollEnabled
-                estimatedItemSize={120}
               />
             </View>
           )}
@@ -283,6 +289,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: COLORS.primary,
+    marginBottom: 52,
   },
   // Hero
   hero: {

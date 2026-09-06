@@ -1,4 +1,4 @@
-import React, { useEffect, memo } from "react";
+import { useEffect, memo } from "react";
 import {
   View,
   TouchableOpacity,
@@ -10,24 +10,21 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
-import type { ComponentProps } from "react";
+import { Gamepad2, House, Newspaper, Settings } from "lucide-react-native";
+import type { LucideIcon } from "lucide-react-native";
 import { useTabBarStore } from "../store/useTabBarStore";
 import COLORS from "../constants/colors";
-
-type IoniconName = ComponentProps<typeof Ionicons>["name"];
 
 export const TAB_ROUTES = ["Home", "News", "Games", "Settings"] as const;
 export type TabRoute = (typeof TAB_ROUTES)[number];
 
-const TAB_ICON_MAP: Record<TabRoute, [IoniconName, IoniconName]> = {
-  Home: ["home", "home-outline"],
-  News: ["newspaper", "newspaper-outline"],
-  Games: ["game-controller", "game-controller-outline"],
-  Settings: ["settings", "settings-outline"],
+const TAB_ICON_MAP: Record<TabRoute, LucideIcon> = {
+  Home: House,
+  News: Newspaper,
+  Games: Gamepad2,
+  Settings,
 };
 
 // ── Palette ───────────────────────────────────────────────────────────────────
@@ -35,8 +32,6 @@ const GLASS_BORDER = "rgba(119, 155, 221, 0.25)";
 const PILL_START = "rgba(119, 155, 221, 0.35)";
 const PILL_END = "rgba(119, 155, 221, 0.05)";
 const PILL_BORDER = "rgba(119, 155, 221, 0.4)";
-const SPEC_START = "rgba(255, 255, 255, 0.15)";
-const SPEC_END = "rgba(255, 255, 255, 0.00)";
 const ICON_ACTIVE = "#ffffff";
 const ICON_INACTIVE = "rgba(119, 155, 221, 0.7)";
 
@@ -57,29 +52,9 @@ const TabIcon = memo(function TabIcon({
   tabWidth: number;
   onPress: () => void;
 }) {
-  const scale = useSharedValue(isFocused ? 1.18 : 1);
-  const glow = useSharedValue(isFocused ? 1 : 0);
-
-  useEffect(() => {
-    scale.value = withSpring(isFocused ? 1.18 : 1, TAB_SPRING_CONFIG);
-    glow.value = withTiming(isFocused ? 1 : 0, { duration: 200 });
-  }, [isFocused, scale, glow]);
-
-  const iconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: 0.06 + glow.value * 0.16,
-    transform: [{ scale: 0.85 + glow.value * 0.2 }],
-  }));
-
-  const dotStyle = useAnimatedStyle(() => ({
-    opacity: glow.value,
-    transform: [{ scale: glow.value }],
-  }));
-
-  const [focusedIcon, unfocusedIcon] = TAB_ICON_MAP[route];
+  const Icon = TAB_ICON_MAP[route];
+  const iconColor = isFocused ? ICON_ACTIVE : ICON_INACTIVE;
+  const iconScale = isFocused ? 1.18 : 1;
 
   return (
     <TouchableOpacity
@@ -89,19 +64,10 @@ const TabIcon = memo(function TabIcon({
       activeOpacity={0.75}
       style={styles.tabItem}
     >
-      <Animated.View
-        style={[styles.iconGlow, { left: (tabWidth - 42) / 2 }, glowStyle]}
-      />
-      <Animated.View style={iconStyle}>
-        <Ionicons
-          name={isFocused ? focusedIcon : unfocusedIcon}
-          size={23}
-          color={isFocused ? ICON_ACTIVE : ICON_INACTIVE}
-        />
-      </Animated.View>
-      <Animated.View
-        style={[styles.activeDot, { left: (tabWidth - 4) / 2 }, dotStyle]}
-      />
+      <View collapsable={false} style={{ transform: [{ scale: iconScale }] }}>
+        <Icon size={23} color={iconColor} accessible={false} />
+      </View>
+      {isFocused && <View style={[styles.activeDot, { left: (tabWidth - 4) / 2 }]} />}
     </TouchableOpacity>
   );
 });
@@ -148,25 +114,12 @@ const LiquidGlassTabBar = memo(
         pointerEvents={isVisible ? "box-none" : "none"}
       >
         <View style={styles.bar}>
-          <View style={[StyleSheet.absoluteFill, styles.baseFill]} />
-
           <LinearGradient
-            colors={[
-              "rgba(119,155,221,0.12)",
-              "rgba(0,0,28,0.05)",
-              "rgba(0,0,28,0)",
-            ]}
-            locations={[0, 0.4, 1]}
+            colors={["rgba(40, 54, 78, 1)", COLORS.darkBackground, COLORS.darkBackground]}
+            locations={[0, 0.3, 1]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
             style={StyleSheet.absoluteFill}
-          />
-
-          <LinearGradient
-            colors={[SPEC_START, SPEC_END]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={styles.specular}
           />
 
           <View style={[StyleSheet.absoluteFill, styles.barBorder]} />
@@ -179,12 +132,6 @@ const LiquidGlassTabBar = memo(
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={[StyleSheet.absoluteFill, styles.pillRadius]}
-            />
-            <LinearGradient
-              colors={["rgba(255,255,255,0.18)", "rgba(255,255,255,0.00)"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={[styles.pillShine, styles.pillRadius]}
             />
             <View style={[StyleSheet.absoluteFill, styles.pillBorder]} />
           </Animated.View>
@@ -238,20 +185,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     alignItems: "center",
   },
-  baseFill: {
-    backgroundColor: COLORS.darkBackground,
-    borderTopEndRadius: 34,
-    borderTopStartRadius: 34,
-  },
-  specular: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    borderTopEndRadius: 34,
-    borderTopStartRadius: 34,
-  },
   barBorder: {
     borderTopEndRadius: 34,
     borderTopStartRadius: 34,
@@ -267,13 +200,6 @@ const styles = StyleSheet.create({
   pillRadius: {
     borderRadius: 23,
   },
-  pillShine: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "55%",
-  },
   pillBorder: {
     borderRadius: 23,
     borderWidth: 1,
@@ -285,14 +211,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1,
-  },
-  iconGlow: {
-    position: "absolute",
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "rgba(119,155,221,0.18)",
-    top: 11,
   },
   activeDot: {
     position: "absolute",

@@ -6,13 +6,13 @@ import {
   Pressable,
   RefreshControl,
   ToastAndroid,
-  InteractionManager,
   TouchableOpacity,
 } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { NativeAdComponent } from "@/src/components/NativeAd";
-import { Ionicons } from "@expo/vector-icons";
+import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import NetInfo from "@react-native-community/netinfo";
 import useFeed from "../hooks/useFeed";
 import { intervalToDuration } from "date-fns";
@@ -180,7 +180,7 @@ function LatestNews({
   const [showAds, setShowAds] = useState<boolean>(false);
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
+    const task = runAfterInteractions(() => setShowAds(true));
     return () => task.cancel();
   }, []);
 
@@ -215,10 +215,20 @@ function LatestNews({
     }
   }, [total, itemsPerPage, currentPage]);
 
-  const listData: Article[] =
-    typeof limit === "number" && !enablePagination
-      ? (articles as Article[]).slice(0, limit)
-      : (articles as Article[]);
+  const listData: Article[] = useMemo(() => {
+    // Force client-side sort to guarantee descending order (newest first)
+    // in case of cache issues or server-side ordering anomalies in production.
+    const sorted = [...(articles as Article[])].sort((a, b) => {
+      const timeA = a.pubDate ? new Date(a.pubDate).getTime() : 0;
+      const timeB = b.pubDate ? new Date(b.pubDate).getTime() : 0;
+      // Valid dates sort descending; invalid dates fallback to 0
+      return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
+    });
+
+    return typeof limit === "number" && !enablePagination
+      ? sorted.slice(0, limit)
+      : sorted;
+  }, [articles, limit, enablePagination]);
 
   // Navigate to the article detail screen
   const handlePressArticle = useCallback(
@@ -281,8 +291,6 @@ function LatestNews({
       }
 
       const isRtl = language === "ar";
-      const prevIcon = isRtl ? "chevron-forward" : "chevron-back";
-      const nextIcon = isRtl ? "chevron-back" : "chevron-forward";
 
       return (
         <View style={styles.paginationContainer}>
@@ -291,7 +299,11 @@ function LatestNews({
             style={[styles.pageButton, currentPage === 1 && styles.disabledPageButton]}
             onPress={() => handlePageChange(currentPage - 1)}
           >
-            <Ionicons name={prevIcon} size={18} color="white" />
+            {isRtl ? (
+              <ChevronRight size={18} color="white" />
+            ) : (
+              <ChevronLeft size={18} color="white" />
+            )}
           </Pressable>
 
           {startPage > 1 && (
@@ -368,7 +380,11 @@ function LatestNews({
             ]}
             onPress={() => handlePageChange(currentPage + 1)}
           >
-            <Ionicons name={nextIcon} size={18} color="white" />
+            {isRtl ? (
+              <ChevronLeft size={18} color="white" />
+            ) : (
+              <ChevronRight size={18} color="white" />
+            )}
           </Pressable>
         </View>
       );
@@ -475,7 +491,6 @@ function LatestNews({
             : { paddingBottom: 90 }
         }
         ListEmptyComponent={renderEmptyComponent}
-        estimatedItemSize={140}
       />
     </View>
   );

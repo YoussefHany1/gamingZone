@@ -5,6 +5,7 @@
     "fetch:free-games": "tsx ./scripts/jobs/fetchFreeGames.job.ts",
     "fetch:rss": "tsx ./scripts/jobs/fetchRss.job.ts",
     "summary:weekly": "tsx ./scripts/jobs/weeklySummary.job.ts",
+    "admin:claim": "tsx ./scripts/setAdminClaim.ts",
     "check:scripts": "tsc --noEmit",
     "lint": "eslint \"scripts/**/*.ts\"",
     "format": "prettier --write \"scripts/**/*.ts\"",

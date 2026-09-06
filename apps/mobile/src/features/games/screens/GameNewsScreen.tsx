@@ -7,10 +7,11 @@ import {
   Switch,
   LayoutAnimation,
   ScrollView,
-  InteractionManager,
 } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
-import { Ionicons } from "@expo/vector-icons";
+import { ChevronDown, ChevronUp } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { databases } from "@/src/lib/appwrite";
@@ -200,12 +201,11 @@ const NewsSection = memo<NewsSectionProps>(
           activeOpacity={0.7}
         >
           <View style={styles.categoryHeaderLeft}>
-            <Ionicons
-              name={expanded ? "chevron-up" : "chevron-down"}
-              size={20}
-              color="#779bdd"
-              style={styles.chevronIcon}
-            />
+            {expanded ? (
+              <ChevronUp size={20} color="#779bdd" style={styles.chevronIcon} />
+            ) : (
+              <ChevronDown size={20} color="#779bdd" style={styles.chevronIcon} />
+            )}
             <CustomText style={styles.categoryTitle}>{title}</CustomText>
           </View>
           <Switch
@@ -226,15 +226,15 @@ const NewsSection = memo<NewsSectionProps>(
                 {lang === "ar" ? "لا توجد أخبار حاليا" : "No news found."}
               </CustomText>
             ) : (
-              <ScrollView
-                style={{ maxHeight: 250, borderRadius: 8 }}
-                nestedScrollEnabled
-                showsVerticalScrollIndicator={false}
-              >
-                {news.map((item) => (
-                  <NewsItem key={item.$id} item={item} lang={lang} />
-                ))}
-              </ScrollView>
+              <View style={{ height: 250, borderRadius: 8 }}>
+                <FlashList
+                  data={news}
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator={false}
+                  keyExtractor={(item) => item.$id}
+                  renderItem={({ item }) => <NewsItem item={item} lang={lang} />}
+                />
+              </View>
             )}
           </View>
         )}
@@ -255,7 +255,7 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => setShowAds(true));
+    const task = runAfterInteractions(() => setShowAds(true));
     return () => task.cancel();
   }, []);
 
@@ -284,7 +284,9 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
 
         {sourceLink && (
           <TouchableOpacity onPress={handleOpenSource} style={{ marginBottom: 10 }}>
-            <CustomText style={styles.sourceText}>{t("games.list.gamesNews.source")}</CustomText>
+            <CustomText style={styles.sourceText}>
+              {t("games.list.gamesNews.source")}
+            </CustomText>
           </TouchableOpacity>
         )}
 

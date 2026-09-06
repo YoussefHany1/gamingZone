@@ -829,6 +829,69 @@ app.post('/steam/map-to-igdb', async (req, res) => {
   }
 });
 
+
+// ======= PLAYSTATION STORE INTEGRATION =======
+
+// Search PlayStation Store for a game's price
+// Usage: GET /psn/search?query=Spider-Man&country=US
+// country defaults to US. Other examples: GB, EG, DE, FR, SA
+app.get('/psn/search', cacheMiddleware(3600), async (req, res) => {
+  try {
+    const { query, country = 'US' } = req.query;
+
+    if (!query) {
+      return res.status(400).json({ message: 'query parameter is required' });
+    }
+
+    // PSN internal search API — returns structured JSON, no HTML scraping needed
+    const psnSearchUrl = `https://store.playstation.com/store/api/chihiro/00_09_000/tumbler/${country}/en/999/search/${encodeURIComponent(query)}?suggested_size=5&mode=game`;
+
+    const response = await fetch(psnSearchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        Accept: 'application/json, text/plain, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        Referer: 'https://store.playstation.com/',
+      },
+    });
+
+    if (!response.ok) {
+      return res.status(502).json({
+        message: `PlayStation Store returned status ${response.status}. Try a different country code.`,
+      });
+    }
+
+    const data = await response.json();
+
+    const links = data?.links ?? [];
+    const results = links
+      .filter((item) => item?.top_category === 'games' || item?.game_content_type != null)
+      .map((item) => {
+        const priceObj = item?.default_sku?.display_price;
+        const strikethroughPrice = item?.default_sku?.strikethrough_price;
+        const isOnSale = strikethroughPrice != null;
+
+        return {
+          id: item?.id ?? null,
+          name: item?.name ?? null,
+          imageUrl: item?.images?.[0]?.url ?? null,
+          price: priceObj ?? null,
+          originalPrice: strikethroughPrice ?? null,
+          isOnSale,
+          url: item?.url
+            ? `https://store.playstation.com${item.url}`
+            : `https://store.playstation.com/${country.toLowerCase()}/en/search/${encodeURIComponent(query)}`,
+          contentType: item?.game_content_type ?? null,
+          platforms: item?.platforms ?? [],
+        };
+      });
+
+    res.json({ query, country, results });
+  } catch (error) {
+    console.error('PSN Search Error:', error);
+    res.status(500).json({ message: 'An error occurred while searching the PlayStation Store.' });
+  }
+});
 // invalid route handler (404)
 app.get('*', (req, res) => {
   res.redirect('https://play.google.com/store/apps/details?id=com.yh.gamingzone');

@@ -128,7 +128,6 @@ function RecommendedGames(): React.ReactElement | null {
           renderItem={renderSkeletonItem}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          estimatedItemSize={175}
         />
       )}
 
@@ -142,7 +141,6 @@ function RecommendedGames(): React.ReactElement | null {
           snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
-          estimatedItemSize={175}
         />
       )}
     </View>

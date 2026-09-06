@@ -14,8 +14,14 @@ module.exports = function(api) {
     plugins.push('babel-plugin-transform-remove-console');
   }
 
+  // Required for react-native-reanimated v4 — must be last plugin.
+  // Without this, Reanimated uses synchronouslyUpdateUIProps on the main thread,
+  // which blocks UI rendering (especially with SVG + ScrollView) and causes ANR.
+  plugins.push('react-native-reanimated/plugin');
+
   return {
     presets: ['babel-preset-expo'],
     plugins,
   };
 };
+

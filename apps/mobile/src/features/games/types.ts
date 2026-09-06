@@ -203,8 +203,23 @@ export type GamePcRequirementsProps = {
   pcReqLoading: boolean;
 };
 
+export type StorePrice = {
+  /** IGDB website type associated with the store. */
+  type: number;
+  /** Current (sale) price in USD. */
+  salePrice: number;
+  /** Regular price in USD. */
+  normalPrice: number;
+  /** True when the game is currently discounted. */
+  isOnSale: boolean;
+  /** CheapShark deal page URL for the current offer. */
+  url: string;
+};
+
 export type GameStoresProps = {
   websites?: Website[] | undefined;
+  prices?: StorePrice[] | undefined;
+  pricesLoading?: boolean;
 };
 
 export type GameTrailerProps = {

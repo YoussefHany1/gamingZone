@@ -6,14 +6,14 @@ import {
   TouchableOpacity,
   Alert,
   ToastAndroid,
-  InteractionManager,
 } from "react-native";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Ionicons } from "@expo/vector-icons";
+import { Bookmark, CirclePlus, Share2, Star, Trash2 } from "lucide-react-native";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import { NativeAdComponent } from "@/src/components/NativeAd";
@@ -71,8 +71,7 @@ const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
               activeOpacity={0.7}
               style={{ paddingRight: 4, paddingVertical: 4 }}
             >
-              <Ionicons
-                name={star <= (game.rating ?? 0) ? "star" : "star-outline"}
+              <Star
                 size={18}
                 color={star <= (game.rating ?? 0) ? "#ffc107" : COLORS.lightGray}
               />
@@ -82,7 +81,7 @@ const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
       </View>
       {onRemove && (
         <TouchableOpacity style={styles.removeButton} onPress={handleRemove}>
-          <Ionicons name="trash-outline" size={24} color="#FF6347" />
+          <Trash2 size={24} color="#FF6347" />
         </TouchableOpacity>
       )}
     </TouchableOpacity>
@@ -142,7 +141,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
 
   // Effects
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
+    const task = runAfterInteractions(() => {
       setShowAds(true);
       setIsReady(true);
     });
@@ -154,26 +153,26 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
       title: getDisplayName(listName),
       headerRight: () => (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {targetUserId && (
+          {targetUserId && games.length > 0 ? (
             <TouchableOpacity
               onPress={handleShare}
               style={{ marginRight: 12, padding: 6 }}
             >
-              <Ionicons name="share-social-outline" size={24} color="#fff" />
+              <Share2 size={24} color="#fff" />
             </TouchableOpacity>
-          )}
+          ) : null}
           {!isSharedList && (
             <TouchableOpacity
               onPress={() => navigation.getParent()?.navigate("Games")}
               style={{ padding: 6 }}
             >
-              <Ionicons name="add-circle-outline" size={28} color="#fff" />
+              <CirclePlus size={28} color="#fff" />
             </TouchableOpacity>
           )}
         </View>
       ),
     });
-  }, [listName, getDisplayName, navigation, isSharedList, handleShare, targetUserId]);
+  }, [listName, getDisplayName, navigation, isSharedList, handleShare, targetUserId, games.length]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -412,7 +411,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
         : t("settings.userGames.emptySubText");
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="bookmark-outline" size={80} color={COLORS.primary} />
+        <Bookmark size={80} color={COLORS.primary} />
         <CustomText style={styles.emptyText}>
           {t("settings.userGames.emptyText")}
         </CustomText>
@@ -465,7 +464,6 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 90 }}
           onScroll={onScroll}
           scrollEventThrottle={16}
-          estimatedItemSize={150}
         />
       )}
     </SafeAreaView>

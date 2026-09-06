@@ -155,7 +155,6 @@ function ComingSoonGames(): React.ReactElement {
             <ErrorState message={t("games.list.serverError")} />
           </View>
         }
-        estimatedItemSize={CARD_WIDTH + 20}
       />
     </View>
   );
@@ -192,7 +191,7 @@ const styles = StyleSheet.create({
     position: "absolute",
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.4)",
   },
   content: {

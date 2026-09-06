@@ -15,13 +15,13 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import auth from "@react-native-firebase/auth";
 import COLORS from "@/src/constants/colors";
 import { useTranslation } from "react-i18next";
-import { Ionicons } from "@expo/vector-icons";
-import type { ComponentProps } from "react";
+import { Lightbulb, MessageSquare, TriangleAlert } from "lucide-react-native";
+import type { LucideIcon } from "lucide-react-native";
 import CustomTextInput from "@/src/components/CustomTextInput";
 
 // Types
 
-type IoniconName = ComponentProps<typeof Ionicons>["name"];
+type IoniconName = LucideIcon;
 type FeedbackType = "suggestion" | "problem" | "other";
 type RootStackParamList = { ContactScreen: undefined };
 type Props = NativeStackScreenProps<RootStackParamList, "ContactScreen">;
@@ -55,17 +55,19 @@ interface TypeButtonProps {
   onPress: (value: FeedbackType) => void;
 }
 
-const TypeButton = memo<TypeButtonProps>(({ value, icon, label, active, onPress }) => (
-  <TouchableOpacity
-    style={[styles.typeButton, active && styles.typeButtonActive]}
-    onPress={() => onPress(value)}
-  >
-    <Ionicons name={icon} size={24} color="#fff" />
-    <CustomText style={[styles.typeText, active && styles.typeTextActive]}>
-      {label}
-    </CustomText>
-  </TouchableOpacity>
-));
+const TypeButton = memo<TypeButtonProps>(
+  ({ value, icon: Icon, label, active, onPress }) => (
+    <TouchableOpacity
+      style={[styles.typeButton, active && styles.typeButtonActive]}
+      onPress={() => onPress(value)}
+    >
+      <Icon size={24} color="#fff" />
+      <CustomText style={[styles.typeText, active && styles.typeTextActive]}>
+        {label}
+      </CustomText>
+    </TouchableOpacity>
+  ),
+);
 TypeButton.displayName = "TypeButton";
 
 // main
@@ -188,21 +190,21 @@ const ContactScreen = ({ navigation }: Props) => {
         <View style={styles.typesContainer}>
           <TypeButton
             value="suggestion"
-            icon="bulb-outline"
+            icon={Lightbulb}
             label={t("settings.contact.types.suggestion")}
             active={type === "suggestion"}
             onPress={handleTypePress}
           />
           <TypeButton
             value="problem"
-            icon="warning-outline"
+            icon={TriangleAlert}
             label={t("settings.contact.types.problem")}
             active={type === "problem"}
             onPress={handleTypePress}
           />
           <TypeButton
             value="other"
-            icon="chatbubble-ellipses-outline"
+            icon={MessageSquare}
             label={t("settings.contact.types.other")}
             active={type === "other"}
             onPress={handleTypePress}

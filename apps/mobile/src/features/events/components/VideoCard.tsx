@@ -7,7 +7,7 @@ import {
   Dimensions,
 } from "react-native";
 import { Image } from "expo-image";
-import { Ionicons } from "@expo/vector-icons";
+import { CirclePlay } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { openLink } from "@/src/lib/browser";
 import type { VideoCardProps } from "../types";
@@ -36,7 +36,7 @@ const VideoCard = memo<VideoCardProps>(({ video }) => {
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.playButton}>
-        <Ionicons name="play-circle" size={44} color="#fff" />
+        <CirclePlay size={44} color="#fff" />
       </View>
       {video.name ? (
         <CustomText style={styles.videoName} numberOfLines={1}>
@@ -59,10 +59,10 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   videoThumb: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   playButton: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: "center",
     alignItems: "center",
   },

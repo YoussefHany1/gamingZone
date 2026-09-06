@@ -4,14 +4,14 @@ import CustomText from "./CustomText";
 import { useNavigation } from "@react-navigation/native";
 import type { NavigationProp } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
-import { Ionicons } from "@expo/vector-icons";
+import type { LucideIcon } from "lucide-react-native";
 import COLORS from "../constants/colors";
 
 interface EmptyStateProps {
   message?: string;
   subMessage?: string;
   showContactButton?: boolean;
-  icon?: React.ComponentProps<typeof Ionicons>["name"];
+  icon?: LucideIcon;
   iconColor?: string;
   iconSize?: number;
 }
@@ -36,14 +36,17 @@ const EmptyState = memo(
 
     return (
       <View style={styles.emptyContainer}>
-        {icon && (
-          <Ionicons
-            name={icon}
-            size={iconSize}
-            color={iconColor || COLORS.primary}
-            style={styles.iconStyles}
-          />
-        )}
+        {icon &&
+          (() => {
+            const Icon = icon;
+            return (
+              <Icon
+                size={iconSize}
+                color={iconColor || COLORS.primary}
+                style={styles.iconStyles}
+              />
+            );
+          })()}
         <CustomText style={styles.noDataText}>{message || t("news.noArticles")}</CustomText>
         {subMessage && <CustomText style={styles.subMessageText}>{subMessage}</CustomText>}
 
