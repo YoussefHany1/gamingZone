@@ -69,6 +69,40 @@ const AdContainer = memo(() => {
 });
 AdContainer.displayName = "AdContainer";
 
+// ─── DeferredSection ──────────────────────────────────────────────────────────
+// Placeholder height used while a section is waiting to mount, so the list
+// measurements stay stable (same trick as HomeScreen's DeferredNewsSection).
+const DEFERRED_PLACEHOLDER_HEIGHT = 340;
+
+/**
+ * Mounts children only after `delay` ms. Each deferred section is given a
+ * different delay so their network fetches and expo-image loads never fire at
+ * the same time — this caps the cold-start network/image burst that otherwise
+ * spawns dozens of OkHttp threads and starves the main thread (Crashlytics ANR
+ * "nativeFinishInputEvent").
+ */
+const DeferredSection = memo(function DeferredSection({
+  delay,
+  children,
+}: {
+  delay: number;
+  children: React.ReactElement;
+}) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+
+  if (!mounted) {
+    return <View style={{ height: DEFERRED_PLACEHOLDER_HEIGHT }} />;
+  }
+
+  return children;
+});
+DeferredSection.displayName = "DeferredSection";
+
 // Stable memoized section wrappers — defined at module scope so their
 // references never change, which lets renderItem remain dep-free.
 const FreeGamesSection = memo(() => <FreeGames />);
@@ -126,6 +160,10 @@ function GamesScreen(): React.ReactElement {
   // renderFeedItem is fully stable (empty deps). It reads t() via tRef at
   // call-time. Each memoized section wrapper is defined at module scope so
   // its reference never changes.
+  //
+  // Sections below the fold are wrapped in DeferredSection with staggered
+  // delays so their fetches and image loads don't all fire at once on cold
+  // start (see DeferredSection comment).
   const renderFeedItem = useCallback(
     ({ item }: { item: FeedItemConfig }) => {
       if (item.type === "AD") return <AdContainer />;
@@ -146,25 +184,65 @@ function GamesScreen(): React.ReactElement {
         case "free_games":
           return <FreeGamesSection />;
         case "recommended":
-          return <RecommendedSection />;
+          return (
+            <DeferredSection delay={600}>
+              <RecommendedSection />
+            </DeferredSection>
+          );
         case "news":
-          return <GamesNewsSection />;
+          return (
+            <DeferredSection delay={300}>
+              <GamesNewsSection />
+            </DeferredSection>
+          );
         case "popular":
-          return <PopularSection />;
+          return (
+            <DeferredSection delay={900}>
+              <PopularSection />
+            </DeferredSection>
+          );
         case "steam_top_sellers":
-          return <SteamSection />;
+          return (
+            <DeferredSection delay={1800}>
+              <SteamSection />
+            </DeferredSection>
+          );
         case "trending_mobile":
-          return <TrendingSection />;
+          return (
+            <DeferredSection delay={1200}>
+              <TrendingSection />
+            </DeferredSection>
+          );
         case "recently_released":
-          return <ReleasedSection />;
+          return (
+            <DeferredSection delay={2100}>
+              <ReleasedSection />
+            </DeferredSection>
+          );
         case "coming_soon":
-          return <ComingSoonSection />;
+          return (
+            <DeferredSection delay={2400}>
+              <ComingSoonSection />
+            </DeferredSection>
+          );
         case "anticipated":
-          return <AnticipatedSection />;
+          return (
+            <DeferredSection delay={1500}>
+              <AnticipatedSection />
+            </DeferredSection>
+          );
         case "nostalgia":
-          return <NostalgiaSection />;
+          return (
+            <DeferredSection delay={2700}>
+              <NostalgiaSection />
+            </DeferredSection>
+          );
         case "top_rated":
-          return <TopRatedSection />;
+          return (
+            <DeferredSection delay={3000}>
+              <TopRatedSection />
+            </DeferredSection>
+          );
         default:
           return null;
       }

@@ -10,9 +10,10 @@
     "expo-file-system": "~57.0.6"
   },
   "scripts": {
-    "postinstall": "patch-package"
+    "postinstall": "npx patch-package"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "patch-package": "^8.0.1"
   }
 }
