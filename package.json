@@ -10,7 +10,7 @@
     "expo-file-system": "~57.0.6"
   },
   "scripts": {
-    "postinstall": "npx patch-package"
+    "postinstall": "node -e \"try { require('child_process').execSync('npx patch-package', {stdio:'inherit'}) } catch(e) { console.log('patch-package skipped or failed') }\""
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
