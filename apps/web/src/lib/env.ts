@@ -12,11 +12,11 @@ const envSchema = z.object({
   NEXT_PUBLIC_CLOUDINARY_API_KEY: z.string().min(1, "Cloudinary API Key is required"),
   NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: z.string().min(1, "Cloudinary Upload Preset is required"),
 
-  FIREBASE_CLIENT_EMAIL: typeof window === "undefined" ? z.string().min(1, "Firebase Client Email is required") : z.string().optional(),
-  FIREBASE_PRIVATE_KEY: typeof window === "undefined" ? z.string().min(1, "Firebase Private Key is required") : z.string().optional(),
+  FIREBASE_CLIENT_EMAIL: z.string().optional(),
+  FIREBASE_PRIVATE_KEY: z.string().optional(),
 });
 
-export const env = envSchema.parse({
+const parsed = envSchema.safeParse({
   NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -31,3 +31,10 @@ export const env = envSchema.parse({
   FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL,
   FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY,
 });
+
+if (!parsed.success) {
+  console.error("❌ Invalid environment variables:", JSON.stringify(parsed.error.format(), null, 2));
+  throw new Error("Invalid environment variables. Check Netlify logs for details.");
+}
+
+export const env = parsed.data;
