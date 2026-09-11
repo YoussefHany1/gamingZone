@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { SlideshowGame as Game } from "../types";
 import { hasVideo } from "../utils";
 
-const SERVER_URL = "https://igdb-api-omega.vercel.app";
+const SERVER_URL = "https://gamingzone-api.onrender.com/";
 
 export function useSlideshow() {
   const [trailers, setTrailers] = useState<Game[]>([]);
@@ -22,7 +22,9 @@ export function useSlideshow() {
           setTrailers(data.filter(hasVideo));
         }
       } catch (error) {
-        console.warn("Failed to fetch latest trailers (network error or proxy down).");
+        console.warn(
+          "Failed to fetch latest trailers (network error or proxy down).",
+        );
       } finally {
         setLoading(false);
       }
@@ -48,5 +50,14 @@ export function useSlideshow() {
     setCurrentIndex((prev) => (prev + 1) % trailers.length);
   };
 
-  return { trailers, currentIndex, setCurrentIndex, loading, playingVideoId, setPlayingVideoId, nextSlide, prevSlide };
+  return {
+    trailers,
+    currentIndex,
+    setCurrentIndex,
+    loading,
+    playingVideoId,
+    setPlayingVideoId,
+    nextSlide,
+    prevSlide,
+  };
 }

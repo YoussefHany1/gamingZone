@@ -7,11 +7,12 @@ export {
   fetchSteamRequirements,
 } from "@gaming-zone/utils";
 
-const SERVER_URL = "https://igdb-api-omega.vercel.app";
+const SERVER_URL = "https://gamingzone-api.onrender.com";
 
 export async function fetchGameDetails(id: string): Promise<GameData | null> {
   try {
-    const res = await axios.get<GameData>(`${SERVER_URL}/game-details`, {
+    const baseUrl = SERVER_URL.endsWith('/') ? SERVER_URL.slice(0, -1) : SERVER_URL;
+    const res = await axios.get<GameData>(`${baseUrl}/game-details`, {
       params: { id },
       timeout: 8000,
     });
