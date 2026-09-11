@@ -41,6 +41,14 @@
       "favicon": "./assets/icon.png"
     },
     "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "useLegacyPackaging": true
+          }
+        }
+      ],
       "@react-native-firebase/app",
       "@react-native-firebase/crashlytics",
       "expo-localization",

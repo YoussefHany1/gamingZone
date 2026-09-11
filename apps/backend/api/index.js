@@ -1,4 +1,4 @@
-import 'dotenv/config';
+ï»¿import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 const app = express();
@@ -829,7 +829,6 @@ app.post('/steam/map-to-igdb', async (req, res) => {
   }
 });
 
-
 // ======= PLAYSTATION STORE INTEGRATION =======
 
 // Search PlayStation Store for a game's price
@@ -843,12 +842,13 @@ app.get('/psn/search', cacheMiddleware(3600), async (req, res) => {
       return res.status(400).json({ message: 'query parameter is required' });
     }
 
-    // PSN internal search API — returns structured JSON, no HTML scraping needed
+    // PSN internal search API ï¿½ returns structured JSON, no HTML scraping needed
     const psnSearchUrl = `https://store.playstation.com/store/api/chihiro/00_09_000/tumbler/${country}/en/999/search/${encodeURIComponent(query)}?suggested_size=5&mode=game`;
 
     const response = await fetch(psnSearchUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         Accept: 'application/json, text/plain, */*',
         'Accept-Language': 'en-US,en;q=0.9',
         Referer: 'https://store.playstation.com/',
@@ -896,4 +896,7 @@ app.get('/psn/search', cacheMiddleware(3600), async (req, res) => {
 app.get('*', (req, res) => {
   res.redirect('https://play.google.com/store/apps/details?id=com.yh.gamingzone');
 });
-export default app;
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
