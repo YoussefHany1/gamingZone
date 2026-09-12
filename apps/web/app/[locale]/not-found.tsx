@@ -12,7 +12,7 @@ export default function NotFoundPage() {
   const { lang, t } = useLangStore();
 
   return (
-    <div className="min-h-screen flex flex-col text-white font-outfit" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="min-h-screen flex flex-col text-white font-inter" dir={lang === "ar" ? "rtl" : "ltr"}>
       <Header />
       <main className="grow flex flex-col items-center justify-center p-6 text-center">
         <div className="glass-panel p-10 rounded-3xl max-w-lg w-full flex flex-col items-center gap-6 border border-white/10 shadow-2xl relative overflow-hidden">

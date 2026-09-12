@@ -38,11 +38,11 @@ export function Providers({
       
       // Toggle font classes on the body
       if (lang === "ar") {
-        document.body.classList.remove("font-outfit");
+        document.body.classList.remove("font-inter");
         document.body.classList.add("font-cairo");
       } else {
         document.body.classList.remove("font-cairo");
-        document.body.classList.add("font-outfit");
+        document.body.classList.add("font-inter");
       }
     }
   }, [lang]);

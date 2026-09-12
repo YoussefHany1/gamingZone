@@ -1,19 +1,59 @@
 import type { Metadata } from "next";
-import { Cairo, Outfit } from "next/font/google";
+import localFont from "next/font/local";
 import { Providers } from "./providers";
 import "../globals.css";
 
-const cairo = Cairo({
-  subsets: ["arabic", "latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+const cairo = localFont({
+  src: [
+    {
+      path: "../../public/font/cairo/Cairo-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/font/cairo/Cairo-Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../../public/font/cairo/Cairo-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../../public/font/cairo/Cairo-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
   variable: "--font-cairo",
   display: "swap",
 });
 
-const outfit = Outfit({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-outfit",
+const inter = localFont({
+  src: [
+    {
+      path: "../../public/font/Inter/Inter_18pt-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/font/Inter/Inter_18pt-Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../../public/font/Inter/Inter_18pt-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../../public/font/Inter/Inter_18pt-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -101,11 +141,11 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${cairo.variable} ${outfit.variable} h-full antialiased`}
+      className={`${cairo.variable} ${inter.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body
-        className="min-h-full flex flex-col text-white font-outfit"
+        className="min-h-full flex flex-col text-white font-inter"
         suppressHydrationWarning
       >
         <Providers locale={locale}>{children}</Providers>

@@ -5,10 +5,9 @@ import Image from "next/image";
 import Link from "@/components/Link";
 import { useGamingEvents, useEventCard } from "../hooks/useGamingEvents";
 import { useLangStore } from "@/store/useLangStore";
-import { Tv, Calendar, Flame, AlertCircle } from "lucide-react";
+import { Tv, Calendar, AlertCircle, Ticket } from "lucide-react";
 import { GamingEvent } from "@/types";
 import { Card } from "@/components/ui/Card";
-import { GradientText } from "@/components/ui/GradientText";
 
 const EventCard = React.memo(function EventCard({
   item,
@@ -116,13 +115,10 @@ const GamingEvents = React.memo(function GamingEvents({
   return (
     <section className="my-10">
       <div className="flex flex-col gap-1 mb-6 px-4 md:px-0">
-        <GradientText
-          as="h2"
-          className="text-2xl font-black flex items-center gap-2"
-        >
-          <Flame className="w-6 h-6 text-live-red fill-live-red" />
+        <h2 className="text-2xl font-black flex items-center gap-2 text-white">
+          <Ticket className="w-6 h-6 text-light-blue" />
           {t("home.gamingEvents.header")}
-        </GradientText>
+        </h2>
         <p className="text-sm text-gray-400">
           {t("home.gamingEvents.subtitle")}
         </p>

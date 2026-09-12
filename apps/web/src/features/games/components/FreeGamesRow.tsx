@@ -5,7 +5,7 @@ import { Gift } from "lucide-react";
 import FreeGameCountdown from "./FreeGameCountdown";
 import { useLangStore } from "@/store/useLangStore";
 
-import { FreeGame, FreeGamesRowProps } from "../types";
+import { FreeGamesRowProps } from "../types";
 import Link from "next/link";
 
 const FreeGamesRow = React.memo(function FreeGamesRow({
@@ -32,16 +32,18 @@ const FreeGamesRow = React.memo(function FreeGamesRow({
           return (
             <div
               key={fg.id}
-              className="group shrink-0 w-[165px] h-[300px] rounded-[16px] overflow-hidden relative shadow-lg flex flex-col bg-linear-to-b from-[#1a3052] to-primary-bg border border-white/10 transition-transform duration-300 hover:-translate-y-1"
+              className="group shrink-0 w-41.25 h-75 rounded-2xl overflow-hidden relative shadow-lg flex flex-col bg-linear-to-b from-[#1a3052] to-primary-bg border border-white/10 transition-transform duration-300 hover:-translate-y-1"
             >
-              <div className="relative w-full h-[200px] z-0 overflow-hidden">
+              <div className="relative w-full h-50 z-0 overflow-hidden">
                 {/* Image */}
                 <Image
                   src={fg.image || "/assets/image-not-found.webp"}
                   alt={fg.title}
                   fill
                   sizes="165px"
-                  className="object-cover"
+                  className="object-cover hover:scale-[1.05] transition-transform duration-500"
+                  loading="eager"
+                  quality={75}
                 />
 
                 {/* Bottom dark gradient over image */}
@@ -54,7 +56,7 @@ const FreeGamesRow = React.memo(function FreeGamesRow({
                     alt={fg.store || "store"}
                     width={20}
                     height={20}
-                    className="object-contain"
+                    className="object-contain w-5 h-5"
                   />
                 </div>
 

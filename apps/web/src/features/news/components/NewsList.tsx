@@ -1,13 +1,10 @@
-import React from "react";
 import Link from "@/components/Link";
 import Image from "next/image";
-
 import { Newspaper, Calendar } from "lucide-react";
 import SourceDropdown from "./SourceDropdown";
 import TimeAgoClient from "./TimeAgoClient";
 import { Article } from "@/types";
 import { Card } from "@/components/ui/Card";
-import { GradientText } from "@/components/ui/GradientText";
 import { getTranslations } from "@/i18n/server";
 
 interface NewsListProps {
@@ -41,13 +38,13 @@ export default function NewsList({
         {/* News Header Card */}
         <Card className="p-6 rounded-3xl flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-xl">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-linear-to-tr from-light-blue to-secondary-blue rounded-2xl text-white">
-              <Newspaper className="w-6 h-6" />
+            <div className="p-3 rounded-2xl text-white">
+              <Newspaper className="w-6 h-6 text-light-blue" />
             </div>
             <div>
-              <GradientText as="h1" className="text-xl sm:text-2xl font-black">
+              <h1 className="text-xl sm:text-2xl font-black text-white">
                 {t("news.newsHeader") || "Gaming News & Articles"}
-              </GradientText>
+              </h1>
             </div>
           </div>
 

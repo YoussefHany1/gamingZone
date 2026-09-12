@@ -50,7 +50,7 @@ const GameRow = React.memo(function GameRow({
                   <GameCountdown timestamp={game.first_release_date} />
                 )}
               </div>
-              <h3 className="font-extrabold text-xs text-white group-hover:text-light-blue line-clamp-2 min-h-[32px] transition-colors leading-snug">
+              <h3 className="font-extrabold text-xs text-white group-hover:text-light-blue line-clamp-2 min-h-8 transition-colors leading-snug">
                 {game.name}
               </h3>
             </Link>

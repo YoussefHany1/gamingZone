@@ -46,14 +46,14 @@ export default function NewsDetailsLayout({
             </div>
 
             <h1
-              className={`text-xl sm:text-2xl md:text-3xl font-black text-white leading-tight ${art.language === "ar" ? "text-right font-cairo" : "text-left font-outfit"}`}
+              className={`text-xl sm:text-2xl md:text-3xl font-black text-white leading-tight ${art.language === "ar" ? "text-right font-cairo" : "text-left font-inter"}`}
             >
               {art.title}
             </h1>
           </div>
 
           {/* Thumbnail Cover */}
-          <div className="relative w-full h-64 sm:h-[400px] rounded-2xl overflow-hidden shadow-lg border border-white/5 z-0">
+          <div className="relative w-full h-64 sm:h-100 rounded-2xl overflow-hidden shadow-lg border border-white/5 z-0">
             <Image
               src={
                 art.thumbnail?.replace(/&amp;/g, "&") ||
@@ -99,7 +99,7 @@ export default function NewsDetailsLayout({
             className={`text-sm sm:text-base text-gray-300 leading-relaxed space-y-4 ${
               art.language === "ar"
                 ? "font-cairo text-right"
-                : "font-outfit text-left"
+                : "font-inter text-left"
             }`}
           >
             {art.description ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "../../../components/Link";
 import { useLatestNewsFeed } from "../hooks/useLatestNewsFeed";
@@ -8,7 +8,6 @@ import { useLangStore } from "../../../store/useLangStore";
 import { Newspaper, ChevronRight, Calendar } from "lucide-react";
 import { LatestNewsFeedProps } from "../types";
 import { Card } from "@/components/ui/Card";
-import { GradientText } from "@/components/ui/GradientText";
 
 const LatestNewsFeed = React.memo(function LatestNewsFeed({
   category,
@@ -17,16 +16,20 @@ const LatestNewsFeed = React.memo(function LatestNewsFeed({
 }: LatestNewsFeedProps) {
   const { lang, t } = useLangStore();
   const activeLang = locale || lang;
-  const { articles, loading, formatDate } = useLatestNewsFeed(category, activeLang, initialArticles);
+  const { articles, loading, formatDate } = useLatestNewsFeed(
+    category,
+    activeLang,
+    initialArticles,
+  );
 
   return (
     <section className="my-10">
       {/* Category Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-white/5 pb-4">
-        <GradientText as="h2" className="text-2xl font-black flex items-center gap-2 px-4 sm:px-0">
+        <h2 className="text-2xl font-black flex items-center gap-2 px-4 sm:px-0">
           <Newspaper className="w-6 h-6 text-light-blue" />
           {t(`home.sections.${category}`)}
-        </GradientText>
+        </h2>
       </div>
 
       {/* Grid List */}

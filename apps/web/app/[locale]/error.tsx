@@ -21,7 +21,7 @@ export default function ErrorPage({
 
   return (
     <div
-      className="min-h-screen flex flex-col text-white font-outfit"
+      className="min-h-screen flex flex-col text-white font-inter"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <Header />

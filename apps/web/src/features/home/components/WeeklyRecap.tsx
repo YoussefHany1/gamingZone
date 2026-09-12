@@ -8,7 +8,6 @@ import { useWeeklyRecap } from "../hooks/useWeeklyRecap";
 import { Calendar, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { WeeklyRecapProps } from "../types";
 import { Card } from "@/components/ui/Card";
-import { GradientText } from "@/components/ui/GradientText";
 
 export default function WeeklyRecap({ initialSummary }: WeeklyRecapProps) {
   const { lang, t } = useLangStore();

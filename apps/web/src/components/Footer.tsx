@@ -7,7 +7,7 @@ export default function Footer({ locale = "ar" }: { locale?: string }) {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="w-full bg-dark-bg border-t border-white/5 py-12 mt-auto">
+    <footer className="w-full glass-panel border-r-0! border-l-0! border-b-0! py-12 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center border-b border-white/5 pb-8 mb-8">
           {/* Logo & Intro */}

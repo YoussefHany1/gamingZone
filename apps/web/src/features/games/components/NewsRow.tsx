@@ -2,9 +2,7 @@ import React from "react";
 import Link from "../../../components/Link";
 import Image from "next/image";
 import { useLangStore } from "../../../store/useLangStore";
-
 import { NewsRowProps } from "../types";
-
 import { NEWS_GAMES_DATA } from "../constants";
 
 const NewsRow = React.memo(function NewsRow({ title, icon }: NewsRowProps) {
@@ -21,9 +19,9 @@ const NewsRow = React.memo(function NewsRow({ title, icon }: NewsRowProps) {
           <Link
             key={game.id}
             href={`/news?source=${game.name.toLowerCase()}`}
-            className="group shrink-0 w-[165px] h-[250px] rounded-[16px] overflow-hidden relative shadow-lg flex flex-col bg-linear-to-b from-[#1a3052] to-primary-bg border border-white/10 transition-transform duration-300 hover:-translate-y-1"
+            className="group shrink-0 w-41.25 h-62.5 rounded-2xl overflow-hidden relative shadow-lg flex flex-col bg-linear-to-b from-[#1a3052] to-primary-bg border border-white/10 transition-transform duration-300 hover:-translate-y-1"
           >
-            <div className="relative w-full h-[200px] z-0 overflow-hidden">
+            <div className="relative w-full h-50 z-0 overflow-hidden">
               <Image
                 src={game.image}
                 alt={game.name}
@@ -35,7 +33,7 @@ const NewsRow = React.memo(function NewsRow({ title, icon }: NewsRowProps) {
             </div>
 
             <div className="flex-1 p-3 flex flex-col justify-center">
-              <h3 className="text-white text-[15px] font-bold leading-[18px] text-center line-clamp-2">
+              <h3 className="text-white text-[15px] font-bold leading-4.5 text-center line-clamp-2">
                 {game.name}
               </h3>
             </div>

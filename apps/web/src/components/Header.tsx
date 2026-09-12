@@ -85,7 +85,7 @@ export default function Header() {
                   width={50}
                   height={50}
                 />
-              <span className="text-xl text-nowrap font-extrabold tracking-wider text-white font-outfit">
+              <span className="text-xl text-nowrap font-extrabold tracking-wider text-white font-inter">
                 Gaming Zone
               </span>
             </Link>

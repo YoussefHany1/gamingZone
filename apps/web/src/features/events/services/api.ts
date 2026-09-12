@@ -2,9 +2,10 @@ import { GamingEvent } from "@/types";
 
 export const fetchGamingEvents = async (): Promise<GamingEvent[]> => {
   const SERVER_URL =
-    process.env.NEXT_PUBLIC_SERVER_URL ||
-    "https://gamingzone-api.onrender.com";
-  const baseUrl = SERVER_URL.endsWith('/') ? SERVER_URL.slice(0, -1) : SERVER_URL;
+    process.env.NEXT_PUBLIC_SERVER_URL || "https://gamingzone-api.onrender.com";
+  const baseUrl = SERVER_URL.endsWith("/")
+    ? SERVER_URL.slice(0, -1)
+    : SERVER_URL;
 
   const response = await fetch(`${baseUrl}/events`);
   if (!response.ok) {
@@ -19,9 +20,10 @@ export const fetchEventDetails = async (
   id: string,
 ): Promise<GamingEvent | null> => {
   const SERVER_URL =
-    process.env.NEXT_PUBLIC_SERVER_URL ||
-    "https://gamingzone-api.onrender.com";
-  const baseUrl = SERVER_URL.endsWith('/') ? SERVER_URL.slice(0, -1) : SERVER_URL;
+    process.env.NEXT_PUBLIC_SERVER_URL || "https://gamingzone-api.onrender.com";
+  const baseUrl = SERVER_URL.endsWith("/")
+    ? SERVER_URL.slice(0, -1)
+    : SERVER_URL;
 
   try {
     const response = await fetch(`${baseUrl}/events`);

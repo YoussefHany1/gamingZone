@@ -3,7 +3,7 @@ import { databases } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { Game, FreeGame } from "../types";
 
-const SERVER_URL = "https://gamingzone-api.onrender.com/";
+const SERVER_URL = "https://gamingzone-api.onrender.com";
 
 export async function fetchGamesList(endpoint: string): Promise<Game[]> {
   try {

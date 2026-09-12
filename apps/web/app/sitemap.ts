@@ -12,8 +12,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/games",
     "/news",
     "/events",
-    "/auth/login",
-    "/auth/register",
   ];
   const sitemapEntries: MetadataRoute.Sitemap = [];
 

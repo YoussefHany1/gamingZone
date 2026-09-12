@@ -3,10 +3,8 @@
 import React from "react";
 import Link from "@/components/Link";
 import Image from "next/image";
-
 import {
   Gamepad2,
-  Search,
   Sliders,
   Calendar,
   Sparkles,
@@ -14,7 +12,6 @@ import {
   Flame,
   Trophy,
   History,
-  Newspaper,
   TrendingUp,
 } from "lucide-react";
 import { useLangStore } from "@/store/useLangStore";
@@ -114,11 +111,11 @@ export default function GamesClient({
         {/* Games Directory Header */}
         <div className="glass-panel border border-white/10 p-6 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl relative">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-linear-to-tr from-light-blue to-secondary-blue rounded-2xl text-white">
-              <Gamepad2 className="w-6 h-6" />
+            <div className="p-3 bg-linear-to-tr rounded-2xl text-white">
+              <Gamepad2 className="w-6 h-6 text-light-blue" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-black bg-linear-to-r from-white to-light-blue bg-clip-text text-transparent">
+              <h1 className="text-xl sm:text-2xl font-black text-white">
                 {t("games.header")}
               </h1>
             </div>
@@ -310,10 +307,10 @@ export default function GamesClient({
             {/* Free Games Promo */}
             <FreeGamesRow games={freeGames as any} />
 
-            <NewsRow
+            {/* <NewsRow
               title={t("games.list.gamesNews.title")}
               icon={<Newspaper className="w-5 h-5 text-light-blue" />}
-            />
+            /> */}
 
             {/* Popular Right Now */}
             <section className="space-y-6">
