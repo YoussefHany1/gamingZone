@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Viewport } from "next";
 import localFont from "next/font/local";
 import { Providers } from "./providers";
+import { createLocalizedMetadata } from "@/lib/metadata";
 import "../globals.css";
 
 const cairo = localFont({
@@ -57,77 +58,30 @@ const inter = localFont({
   display: "swap",
 });
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
+export function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ar" }];
+}
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0c1a33",
+};
 
-  if (locale === "en") {
-    return {
-      metadataBase: new URL(baseUrl),
-      title: "Gaming Zone | News, Game Tracker & Free Games",
-      description:
-        "Your ultimate destination for gaming news, game tracker and free games alerts. Join our community of gamers and stay updated with the latest trends in the world of gaming.",
-      keywords: ["gaming", "news", "free games", "tracker", "videogames", "esports", "steam", "epic games"],
-      alternates: {
-        canonical: `${baseUrl}/en`,
-      },
-      icons: {
-        icon: "/assets/icon.webp",
-      },
-      openGraph: {
-        title: "Gaming Zone | News, Game Tracker & Free Games",
-        description:
-          "Your ultimate destination for gaming news, game tracker and free games alerts. Join our community of gamers and stay updated with the latest trends in the world of gaming.",
-        siteName: "Gaming Zone",
-        images: [
-          {
-            url: "/assets/cover2.png",
-            width: 1024,
-            height: 500,
-            alt: "Gaming Zone Banner",
-          },
-        ],
-        locale: "en_US",
-        type: "website",
-      },
-    };
-  }
-
-  return {
-    metadataBase: new URL(baseUrl),
+export const generateMetadata = createLocalizedMetadata({
+  en: {
+    title: "Gaming Zone | News, Game Tracker & Free Games",
+    description:
+      "Your ultimate destination for gaming news, game tracker and free games alerts. Join our community of gamers and stay updated with the latest trends in the world of gaming.",
+    keywords: ["gaming", "news", "free games", "tracker", "videogames", "esports", "steam", "epic games"],
+  },
+  ar: {
     title: "Gaming Zone | أخبار، مراجعات، ألعاب مجانية",
     description:
       "الموقع العربي الأول لمتابعة أخبار ألعاب الفيديو، المراجعات، فعاليات وعروض الألعاب المجانية، وتنظيم قوائم ومكتبة ألعابك المفضلة.",
     keywords: ["ألعاب", "أخبار", "ألعاب مجانية", "مراجعات", "إكسبوكس", "بلايستيشن", "كمبيوتر", "جيمرز"],
-    alternates: {
-      canonical: `${baseUrl}/ar`,
-    },
-    icons: {
-      icon: "/assets/icon.webp",
-    },
-    openGraph: {
-      title: "Gaming Zone | أخبار، مراجعات، ألعاب مجانية",
-      description:
-        "تابع أخبار ألعاب الفيديو، المراجعات، فعاليات وعروض الألعاب المجانية، وتنظيم قوائم ومكتبة ألعابك المفضلة.",
-      siteName: "Gaming Zone",
-      images: [
-        {
-          url: "/assets/cover2.png",
-          width: 1024,
-          height: 500,
-          alt: "Gaming Zone Banner",
-        },
-      ],
-      locale: "ar_EG",
-      type: "website",
-    },
-  };
-}
+  },
+});
 
 export default async function RootLayout({
   children,

@@ -9,7 +9,7 @@ export default function GameVideos({
   lang,
 }: GameVideosProps) {
   const isRtl = lang === "ar";
-  const textDirectionClass = isRtl ? "text-right" : "text-left";
+
 
   if (!videos || videos.length === 0) return null;
 

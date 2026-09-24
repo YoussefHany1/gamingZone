@@ -1,0 +1,603 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "remove": "Retirer",
+    "ok": "OK",
+    "create": "Créer",
+    "saveChanges": "Enregistrer les modifications",
+    "noData": "Aucune donnée à afficher",
+    "retryButton": "Réessayer",
+    "imageNotFound": "Image introuvable",
+    "ad": "Publicité",
+    "loginRequired": "Vous devez être connecté pour effectuer cette action",
+    "noInternet": "Pas de connexion Internet",
+    "offlineBanner": "Vous êtes hors ligne – affichage du contenu enregistré",
+    "dataLoadError": "Impossible de charger ce contenu. Veuillez réessayer.",
+    "share": "Partager",
+    "copied": "Copié !",
+    "or": "Ou",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "continue": "Continuer",
+    "updateAlert": {
+      "title": "Mise à jour disponible",
+      "message": "Une nouvelle version de l'application est disponible. Mettez-la à jour maintenant pour profiter des dernières fonctionnalités et améliorations.",
+      "updateNow": "Mettre à jour maintenant",
+      "later": "Plus tard"
+    },
+    "update": {
+      "tagline": "Votre destination ultime pour le gaming",
+      "title": "Nouvelle mise à jour disponible",
+      "subtitle": "Nous téléchargeons des améliorations pour vous...",
+      "footer": "Veuillez patienter, l'application redémarrera automatiquement"
+    },
+    "time": {
+      "d": "j",
+      "h": "h",
+      "m": "min"
+    }
+  },
+  "auth": {
+    "emailPlaceholder": "E-mail",
+    "passwordPlaceholder": "Mot de passe",
+    "guest": "Continuer en tant qu’invité",
+    "emptyFields": "Veuillez saisir votre e-mail et votre mot de passe",
+    "idTokenError": "Impossible d'obtenir le jeton d'ID Google",
+    "login": {
+      "title": "Connexion",
+      "forgotPassword": "Mot de passe oublié ?",
+      "signInButton": "Se connecter",
+      "googleSignIn": "Se connecter avec Google",
+      "createAccount": "Créer un nouveau compte",
+      "success": "Connexion réussie",
+      "failed": "Échec de la connexion"
+    },
+    "register": {
+      "title": "Inscription",
+      "signUpButton": "S'inscrire",
+      "namePlaceholder": "Nom complet",
+      "countryPlaceholder": "Sélectionnez votre pays",
+      "genderPlaceholder": "Sélectionnez votre genre",
+      "male": "Homme",
+      "female": "Femme",
+      "googleSignUp": "S'inscrire avec Google",
+      "haveAnAccount": "Vous avez déjà un compte ?",
+      "success": "Inscription réussie",
+      "emptyFields": "Veuillez remplir tous les champs obligatoires"
+    },
+    "verifyEmail": "Vérifier l'e-mail",
+    "emailVerified": "E-mail vérifié",
+    "emailNotVerified": "E-mail non vérifié",
+    "verificationEmailSent": "Un e-mail de vérification a été envoyé à votre boîte de réception",
+    "forgotPassword": {
+      "title": "Réinitialiser votre mot de passe",
+      "sendButton": "Envoyer le lien de réinitialisation",
+      "sending": "Envoi en cours...",
+      "backToLogin": "Retour à la connexion",
+      "emptyEmail": "Veuillez saisir votre adresse e-mail",
+      "successTitle": "Envoyé avec succès",
+      "successMessage": "Un lien de réinitialisation du mot de passe a été envoyé à votre e-mail. (Vérifiez également votre dossier de spam)",
+      "userNotFound": "Aucun compte n'est enregistré avec cette adresse e-mail",
+      "errors": {
+        "userNotFound": "Aucun compte n'est enregistré avec cet e-mail",
+        "general": "Une erreur s'est produite lors de l'envoi du lien. Veuillez réessayer plus tard"
+      }
+    },
+    "errors": {
+      "general": "Une erreur inattendue s'est produite. Veuillez réessayer plus tard.",
+      "invalidCredentials": "E-mail ou mot de passe incorrect",
+      "userNotFound": "Aucun compte n'est associé à cet e-mail",
+      "network": "Veuillez vérifier votre connexion internet",
+      "emailAlreadyInUse": "Cet e-mail est déjà utilisé",
+      "invalidEmail": "L'adresse e-mail n'est pas valide",
+      "weakPassword": "Le mot de passe est trop faible",
+      "googleSignIn": "Échec de la connexion avec Google. Veuillez réessayer",
+      "emailRequired": "L'e-mail est obligatoire",
+      "emailInvalid": "Veuillez saisir une adresse e-mail valide",
+      "passwordShort": "Le mot de passe est trop court",
+      "passwordLetter": "Le mot de passe doit contenir au moins une lettre",
+      "passwordNumber": "Le mot de passe doit contenir au moins un chiffre",
+      "nameShort": "Le nom doit contenir au moins 2 caractères",
+      "genderRequired": "Veuillez sélectionner votre genre",
+      "countryRequired": "Veuillez sélectionner votre pays",
+      "playServices": "Les services Google Play ne sont pas disponibles sur cet appareil."
+    },
+    "validation": {
+      "passwordTitle": "Mot de passe invalide",
+      "passwordRequirements": "Le mot de passe doit comporter au moins 8 caractères et contenir des lettres et des chiffres."
+    }
+  },
+  "navigation": {
+    "tabs": {
+      "home": "Accueil",
+      "news": "Actualités",
+      "games": "Jeux",
+      "settings": "Paramètres"
+    },
+    "titles": {
+      "notificationSettings": "Paramètres de notification",
+      "accountSettings": "Paramètres du compte",
+      "gamesList": "Ma liste de jeux",
+      "myLists": "Mes listes"
+    }
+  },
+  "home": {
+    "slideshow": {
+      "subtitle": "Regarder la bande-annonce",
+      "error": "Erreur lors du chargement du diaporama"
+    },
+    "sections": {
+      "news": "Actualités",
+      "reviews": "Critiques",
+      "esports": "Esports",
+      "hardware": "Matériel"
+    },
+    "weeklySummary": {
+      "title": "🗞️ Résumé hebdomadaire",
+      "createdBy": "Créé par",
+      "readMore": "Lire plus…",
+      "readLess": "Lire moins"
+    },
+    "gamingEvents": {
+      "header": "Événements gaming",
+      "upcoming": "À venir",
+      "live": "En direct",
+      "watchNowButton": "Regarder maintenant",
+      "detailsButton": "Voir le direct",
+      "noEvents": "Aucun événement gaming disponible pour le moment.",
+      "subtitle": "Regardez les événements gaming à venir et en direct"
+    }
+  },
+  "events": {
+    "live": "En direct",
+    "upcoming": "À venir",
+    "starts": "Commence",
+    "ends": "Se termine",
+    "ended": "Terminé",
+    "startsIn": "Commence dans",
+    "about": "À propos",
+    "links": "Liens et réseaux sociaux",
+    "eventDetails": "Détails de l'événement",
+    "videos": "Vidéos",
+    "featuredGames": "Jeux en vedette"
+  },
+  "news": {
+    "tabs": {
+      "news": "Actualités",
+      "reviews": "Critiques",
+      "esports": "Esports",
+      "hardware": "Matériel"
+    },
+    "latestHeader": "Dernières {{category}}",
+    "newsHeader": "Actualités et articles gaming",
+    "noArticles": "Aucun article disponible pour le moment.",
+    "fetchError": "Erreur lors de la récupération des données. Veuillez réessayer plus tard.",
+    "contactSupport": "Contacter le support",
+    "endOfList": "Fin des articles",
+    "backToNews": "Retour aux actualités",
+    "noSources": "Aucune source d'actualités disponible pour cette catégorie.",
+    "details": {
+      "readFullArticle": "Lire l'article complet",
+      "noDescription": "Aucune description disponible.",
+      "shareShortenError": "Une erreur s'est produite. Veuillez réessayer plus tard.",
+      "shareMessage": "J'ai trouvé un article intéressant sur Gaming Zone.\nJetez-y un coup d'œil : "
+    },
+    "dropdown": {
+      "selectSource": "Sélectionnez une source",
+      "cancel": "Annuler",
+      "englishSources": "Sources en anglais",
+      "arabicSources": "Sources en arabe",
+      "visitWebsite": "Visiter le site web"
+    },
+    "duration": {
+      "years": "ans",
+      "months": "mois",
+      "days": "jours",
+      "hours": "heures",
+      "minutes": "minutes"
+    }
+  },
+  "games": {
+    "searchPlaceholder": "Rechercher des jeux...",
+    "search": "Rechercher",
+    "header": "Trouvez votre prochaine aventure gaming",
+    "list": {
+      "freeGames": {
+        "header": "Obtenez vos jeux gratuits !",
+        "freeOn": "Gratuit sur",
+        "days": "Jours",
+        "hours": "Heures",
+        "minutes": "Minutes",
+        "seconds": "Secondes",
+        "claimNow": "Obtenir maintenant",
+        "not": "Nouveau jeu gratuit !",
+        "subscribed": "Vous êtes abonné aux notifications des jeux gratuits",
+        "unsubscribed": "Vous vous êtes désabonné des notifications des jeux gratuits",
+        "subtitle": "D'Epic Games, Steam et GOG"
+      },
+      "gamesNews": {
+        "title": "Actualités des Jeux",
+        "subtitle": "Suivez les dernières actualités de vos jeux préférés",
+        "live": "En Direct",
+        "source": "Source : site officiel du jeu",
+        "noNews": "Aucune actualité.",
+        "loadError": "Impossible de charger les actualités. Veuillez réessayer."
+      },
+      "popular": {
+        "title": "Populaire en ce moment",
+        "subtitle": "Les jeux les plus tendance en ce moment"
+      },
+      "steamTopSellers": {
+        "title": "Meilleures ventes sur Steam",
+        "subtitle": "Les jeux les plus vendus au monde sur Steam"
+      },
+      "trendingMobile": {
+        "title": "Jeux mobiles populaires\nen ce moment",
+        "subtitle": "Les jeux mobiles les plus tendance en ce moment"
+      },
+      "recentlyReleased": {
+        "title": "Sortis récemment",
+        "subtitle": "Découvrez les dernières nouveautés",
+        "new": "Nouveau"
+      },
+      "comingSoon": {
+        "title": "Bientôt disponibles",
+        "subtitle": "Jeux à venir à surveiller"
+      },
+      "mostAnticipated": {
+        "title": "Les plus attendus",
+        "subtitle": "Les jeux à venir les plus attendus",
+        "countdown": {
+          "days": "Jours",
+          "hours": "Heures",
+          "minutes": "Minutes",
+          "seconds": "Secondes"
+        }
+      },
+      "nostalgiaCorner": {
+        "title": "Coin nostalgie",
+        "subtitle": "Redécouvrez des chefs-d'œuvre classiques"
+      },
+      "topRated": {
+        "title": "Les mieux notés",
+        "subtitle": "Les mieux notés par la communauté"
+      },
+      "searchResults": "Résultats de recherche",
+      "noResults": "Aucun jeu trouvé.",
+      "serverError": "Échec de la connexion au serveur. Veuillez vous assurer que votre connexion internet est active et réessayer.",
+      "gameTypes": {
+        "1": "DLC",
+        "2": "Extension",
+        "5": "MOD",
+        "6": "Épisode",
+        "7": "Saison",
+        "8": "Remake",
+        "9": "Remaster",
+        "10": "Édition Étendue"
+      },
+      "recommended": {
+        "title": "Recommandé pour vous",
+        "subtitle": "Basé sur les jeux auxquels vous avez joué"
+      }
+    },
+    "details": {
+      "availableStores": "Disponible sur ces boutiques",
+      "addToList": "Ajouter à ma liste",
+      "claimNow": "Obtenez ce jeu gratuitement sur ",
+      "rateThisGame": "Noter ce jeu",
+      "yourRating": "Votre note",
+      "ratingFailed": "Impossible d'enregistrer votre note. Veuillez réessayer.",
+      "about": "À propos",
+      "screenshotsGallery": "Captures d'écran",
+      "genres": "Genres",
+      "gameModes": "Modes de Jeu",
+      "developer": "Développeur",
+      "publisher": "Éditeur",
+      "languages": {
+        "title": "Langues prises en charge",
+        "Language": "Langue",
+        "audio": "Audio",
+        "subtitles": "Sous-titres",
+        "interface": "Interface",
+        "names": {
+          "Arabic": "Arabe",
+          "English": "Anglais",
+          "French": "Français",
+          "German": "Allemand",
+          "Spanish": "Espagnol",
+          "Spanish (Spain)": "Espagnol (Espagne)",
+          "Spanish (Latin America)": "Espagnol (Amérique Latine)",
+          "Portuguese": "Portugais",
+          "Portuguese (Brazil)": "Portugais (Brésil)",
+          "Portuguese (Portugal)": "Portugais (Portugal)",
+          "Italian": "Italien",
+          "Japanese": "Japonais",
+          "Korean": "Coréen",
+          "Russian": "Russe",
+          "Chinese": "Chinois",
+          "Chinese (Simplified)": "Chinois (Simplifié)",
+          "Chinese (Traditional)": "Chinois (Traditionnel)",
+          "Polish": "Polonais",
+          "Swedish": "Suédois",
+          "Norwegian": "Norvégien",
+          "Danish": "Danois",
+          "Finnish": "Finnois",
+          "Turkish": "Turc",
+          "Dutch": "Néerlandais",
+          "Thai": "Thaï",
+          "Ukrainian": "Ukrainien",
+          "Czech": "Tchèque",
+          "Hungarian": "Hongrois",
+          "Romanian": "Roumain",
+          "Vietnamese": "Vietnamien",
+          "Hindi": "Hindi"
+        }
+      },
+      "engines": "Moteurs de jeu",
+      "howLongToBeat": {
+        "title": "Durée du jeu",
+        "main": "Histoire Principale",
+        "mainExtra": "Principale + Extra",
+        "completionist": "Complétiste",
+        "hours": "Heures"
+      },
+      "userRatings": "Notes des utilisateurs",
+      "trailer": "Bande-annonce du jeu",
+      "series": "Série du jeu",
+      "similar": "Jeux similaires",
+      "pcRequirements": "Configuration requise pour PC",
+      "minimum": "Minimum",
+      "recommended": "Recommandé",
+      "listStatus": {
+        "add": "Ajouter à...",
+        "played": "Joué",
+        "playing": "En cours",
+        "wantToPlay": "À jouer",
+        "rated": "Noté"
+      }
+    },
+    "filter": {
+      "title": "Filtrer les jeux",
+      "year": "Année de sortie",
+      "genre": "Genre",
+      "platform": "Plateforme",
+      "sort": "Trier par",
+      "sortOptions": {
+        "relevance": "Pertinence",
+        "title": "Titre",
+        "release_date": "Date de Sortie",
+        "rating": "Note"
+      },
+      "reset": "Réinitialiser",
+      "apply": "Appliquer",
+      "any": "Peu importe",
+      "genres": {
+        "rpg": "RPG",
+        "shooter": "Tir",
+        "fighting": "Combat",
+        "music": "Musique",
+        "platform": "Plateforme",
+        "puzzle": "Puzzle",
+        "racing": "Course",
+        "rts": "RTS",
+        "simulator": "Simulation",
+        "sport": "Sport",
+        "strategy": "Stratégie",
+        "turnBased": "Tour par tour",
+        "tactical": "Tactique",
+        "hackSlash": "Hack & Slash",
+        "quiz": "Quiz / Questions",
+        "adventure": "Aventure",
+        "indie": "Indé",
+        "arcade": "Arcade",
+        "moba": "MOBA"
+      },
+      "platforms": {
+        "pc": "PC",
+        "ps5": "PS5",
+        "ps4": "PS4",
+        "xboxSeries": "Xbox Series X|S",
+        "xboxOne": "Xbox One",
+        "switch": "Switch",
+        "linux": "Linux",
+        "mac": "Mac",
+        "android": "Android",
+        "ios": "iOS"
+      }
+    }
+  },
+  "userLists": {
+    "gamesCount": "{{count}} jeux",
+    "empty": {
+      "title": "Votre liste est vide",
+      "playedSub": "Ajoutez ici les jeux que vous avez joués.",
+      "wantSub": "Ajoutez les jeux que vous voulez jouer.",
+      "ratedSub": "Notez et commentez ici les jeux que vous avez joués.",
+      "findButton": "Trouver votre jeu",
+      "findButtonNew": "Trouver votre nouveau jeu"
+    },
+    "actions": {
+      "confirmDeleteTitle": "Confirmer la suppression",
+      "confirmDeleteMessage": "Êtes-vous sûr de vouloir supprimer \"{{gameName}}\" de votre liste ?",
+      "createNewList": "Créer une nouvelle liste",
+      "shareMessage": "Découvrez ma liste de jeux \"{{listName}}\" sur Gaming Zone !"
+    },
+    "placeholders": {
+      "newListName": "ex. Favoris RPG"
+    },
+    "errors": {
+      "couldNotCreateList": "Impossible de créer la liste. Veuillez réessayer plus tard",
+      "listAlreadyExists": "Une liste avec ce nom existe déjà",
+      "couldNotDeleteList": "Impossible de supprimer la liste. Veuillez réessayer plus tard."
+    }
+  },
+  "settings": {
+    "language": "Langue",
+    "currentLang": "Français",
+    "languageSelect": {
+      "confirmTitle": "Changer de langue",
+      "confirmMessage": "L'application redémarrera pour appliquer la nouvelle langue."
+    },
+    "menu": {
+      "notifications": "Gérer les notifications",
+      "myLists": "Mes listes",
+      "rateUs": "Notez-nous",
+      "inviteFriends": "Inviter des amis",
+      "contactUs": "Nous contacter",
+      "changeLanguage": "Changer de langue",
+      "privacyPolicy": "Politique de confidentialité",
+      "showAds": "Afficher les publicités",
+      "signOut": "Se déconnecter"
+    },
+    "signOut": {
+      "confirmTitle": "Déconnexion",
+      "confirmMessage": "Êtes-vous sûr de vouloir vous déconnecter ?",
+      "errorTitle": "Erreur",
+      "errorMessage": "Une erreur s'est produite lors de la déconnexion. Veuillez réessayer."
+    },
+    "profile": {
+      "changePic": "Changer votre photo de profil",
+      "nameLabel": "Votre Nom :",
+      "dobLabel": "Votre Date de Naissance :",
+      "genderLabel": "Genre :",
+      "countryLabel": "Pays :",
+      "platformLabel": "Plateforme :",
+      "platforms": {
+        "pc": "PC",
+        "playstation": "PlayStation",
+        "xbox": "Xbox",
+        "android": "Android",
+        "ios": "iOS"
+      },
+      "saveSuccessTitle": "C'est fait !",
+      "saveSuccessMessage": "Vos informations ont été mises à jour avec succès",
+      "permissionError": "Autorisation d'accès aux images requise",
+      "placeholders": {
+        "name": "Saisissez votre nom",
+        "dob": "Date de naissance (AAAA-MM-JJ)",
+        "gender": "Sélectionnez votre Genre",
+        "country": "Sélectionnez votre Pays",
+        "platform": "Sélectionnez votre Plateforme"
+      },
+      "connectedApps": "Applications connectées",
+      "steam": {
+        "modal": {
+          "title": "Synchroniser votre bibliothèque Steam",
+          "instructions": "Saisissez votre URL personnalisée Steam ou votre Steam ID pour importer vos jeux dans vos listes (En cours, Joué, À jouer).",
+          "placeholder": "https://steamcommunity.com/profiles/76561198818022625",
+          "privacy": "Assurez-vous que votre profil Steam et les détails de vos jeux sont définis sur « Public » dans vos paramètres de confidentialité.",
+          "syncing": "Synchronisation...",
+          "syncBtn": "Synchroniser les jeux",
+          "cancel": "Annuler"
+        },
+        "errors": {
+          "empty": "Veuillez saisir un ID ou une URL Steam",
+          "resolveFailed": "Utilisateur Steam introuvable",
+          "privateProfile": "Votre profil est privé ou ne contient aucun jeu.",
+          "fetchFailed": "Échec de la récupération des jeux",
+          "igdbFailed": "Échec du mappage des jeux"
+        },
+        "success": "{{count}} jeux importés avec succès !"
+      },
+      "messages": {
+        "permissionTitle": "Autorisation d'Accès aux Photos",
+        "permissionMsg": "Nous avons besoin d'accéder à votre galerie photo pour mettre à jour votre photo de profil",
+        "uploadFailed": "Échec du téléchargement de l'image. Veuillez vérifier votre connexion internet et réessayer",
+        "saveError": "Impossible d'enregistrer les modifications",
+        "saveSuccessTitle": "Enregistré",
+        "saveSuccessMsg": "Les informations de votre profil ont été mises à jour avec succès",
+        "missingName": "Veuillez saisir votre nom.",
+        "missingDob": "Veuillez sélectionner votre date de naissance.",
+        "missingGender": "Veuillez sélectionner votre genre.",
+        "missingCountry": "Veuillez sélectionner votre pays.",
+        "missingPlatform": "Veuillez sélectionner votre plateforme.",
+        "missingImage": "Veuillez ajouter une photo de profil."
+      }
+    },
+    "notifications": {
+      "description": "Choisissez les sources d'actualités pour lesquelles vous souhaitez recevoir des notifications\nAssurez-vous d'autoriser les notifications pour cette application",
+      "footer": "Des notifications seront envoyées lorsque de nouveaux articles seront publiés par les sources activées.",
+      "testNotification": "Envoyer une notification de test",
+      "updateFailed": "Échec de la mise à jour des paramètres de notification. Veuillez réessayer."
+    },
+    "userGames": {
+      "emptyText": "Votre liste est vide",
+      "emptySubText": "Ajoutez les jeux que vous souhaitez.",
+      "findButton": "Trouvez Votre Jeu",
+      "viewOnly": "Vous consultez une liste en lecture seule partagée avec vous.",
+      "messages": {
+        "loadError": "Nous avons rencontré un problème lors du chargement de votre liste. Veuillez réessayer plus tard",
+        "removeError": "Une erreur s'est produite lors de la tentative de suppression du jeu"
+      }
+    },
+    "contact": {
+      "title": "Nous Contacter",
+      "typeLabel": "Type de message",
+      "types": {
+        "suggestion": "Suggestion",
+        "problem": "Signaler un problème",
+        "other": "Demande générale"
+      },
+      "rateLimitError": "Vous avez atteint la limite de messages. Réessayez plus tard.",
+      "messageLabel": "Votre message *",
+      "messagePlaceholder": "Écrivez ici les détails de votre suggestion ou problème...",
+      "messageError": "Écrivez les détails de votre suggestion",
+      "emailLabel": "E-mail (pour vous contacter)",
+      "send": "Envoyer",
+      "sending": "Envoi en cours...",
+      "success": "Merci de nous avoir contactés !",
+      "error": "Une erreur s'est produite lors de l'envoi. Veuillez réessayer",
+      "messageTooLong": "Le message est trop long. La limite maximale est de 5000 caractères.",
+      "invalidEmail": "L'adresse e-mail n'est pas valide"
+    }
+  },
+  "aiChat": {
+    "title": "Assistant gaming (bêta)",
+    "placeholder": "Demandez-moi n'importe quoi sur le gaming...",
+    "limitReached": "Vous avez atteint votre limite quotidienne de 20 messages.",
+    "error": "Une erreur s'est produite. Veuillez réessayer.",
+    "typing": "Écriture en cours...",
+    "emptyList": "Commencez à discuter avec votre assistant IA !",
+    "suggestions": {
+      "basedOnList": "Suggérer un jeu en fonction de ma liste de jeux",
+      "bestAdventure": "Quels sont les meilleurs jeux d'aventure ?",
+      "coopGames": "Suggère des jeux coopératifs à jouer avec des amis",
+      "newReleases": "Quels sont les derniers jeux sortis ce mois-ci ?"
+    }
+  },
+  "appAdvertisement": {
+    "titlePrefix": "Téléchargez",
+    "titleHighlight": "Gaming Zone",
+    "titleSuffix": "maintenant !",
+    "description": "Rejoignez la communauté gaming, suivez les dernières actualités et critiques, et ajoutez facilement vos jeux préférés à votre bibliothèque grâce à notre application disponible sur Google Play.",
+    "getItOn": "DISPONIBLE SUR",
+    "googlePlay": "Google Play",
+    "getItOnFooter": "Disponible sur Google Play"
+  },
+  "onboarding": {
+    "skip": "Ignorer",
+    "next": "Suivant",
+    "getStarted": "Commencer",
+    "slides": [
+      {
+        "title": "📰 Restez informé",
+        "description": "Avec les dernières actualités sur les Jeux, Critiques, Esports et Matériel de vos sources préférées, le tout au même endroit."
+      },
+      {
+        "title": "📃 Bibliothèque de jeux",
+        "description": "Organisez votre collection, suivez les jeux terminés et créez une liste de souhaits pour les prochaines sorties."
+      },
+      {
+        "title": "🎁 Ne manquez jamais un jeu gratuit",
+        "description": "Réclamez-le en un seul geste avant que l'offre n'expire sur Epic Games, Steam et GOG !"
+      },
+      {
+        "title": "🔔 Notifications instantanées",
+        "description": "Restez informé grâce aux alertes instantanées sur les nouveaux jeux gratuits et les actualités."
+      }
+    ]
+  }
+}

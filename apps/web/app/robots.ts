@@ -1,13 +1,14 @@
-import { MetadataRoute } from 'next';
+import { MetadataRoute } from "next";
+import { getSiteBaseUrl } from "@/lib/metadata";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://gz1.vercel.app';
+  const baseUrl = getSiteBaseUrl();
 
   return {
     rules: {
-      userAgent: '*',
-      allow: '/',
-      disallow: ['/api/', '/admin/', '/profile'],
+      userAgent: "*",
+      allow: "/",
+      disallow: ["/api/", "/admin/", "/profile"],
     },
     sitemap: `${baseUrl}/sitemap.xml`,
   };

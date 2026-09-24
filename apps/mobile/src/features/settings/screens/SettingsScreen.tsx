@@ -24,12 +24,14 @@ import { useAuthStore } from "@/src/store/useAuthStore";
 import InviteFriendsBtn from "../components/InviteFriendsBtn";
 import { openLink } from "@/src/lib/browser";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
+import { useIsAdmin } from "@/src/hooks/useIsAdmin";
+import AdminAdsToggle from "../components/AdminAdsToggle";
 import type { MenuItem, SettingsNavProp } from "../types";
 
 //  Constants
 const PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.yh.gamingzone" as const;
-const PRIVACY_POLICY_URL = "https://gz1.vercel.app/docs/index.html" as const;
+const PRIVACY_POLICY_URL = "https://gz1.games/privacy-policy" as const;
 
 // main
 
@@ -39,6 +41,7 @@ const SettingsScreen = memo((): React.ReactElement => {
 
   const currentUser = useAuthStore((state) => state.user);
   const isGuest = !currentUser || currentUser.isAnonymous;
+  const isAdmin = useIsAdmin();
   const { onScroll } = useScrollDirection();
 
   // Derived values
@@ -109,6 +112,7 @@ const SettingsScreen = memo((): React.ReactElement => {
         label: t("settings.menu.notifications"),
         onPress: () => navigation.navigate("NotificationSettings"),
       },
+      ...(isAdmin ? [{ id: "adminAds", component: AdminAdsToggle }] : []),
       {
         id: "rate",
         icon: Star,
@@ -135,40 +139,43 @@ const SettingsScreen = memo((): React.ReactElement => {
         onPress: () => handleOpenURL(PRIVACY_POLICY_URL),
       },
     ],
-    [t, navigation, handleOpenURL],
+    [t, navigation, handleOpenURL, isAdmin],
   );
 
-  const renderMenuItem = useCallback((item: MenuItem) => {
-    if (item.component) {
-      const Component = item.component;
-      return <Component key={item.id} />;
-    }
-    const isExternal = item.id === "privacy" || item.id === "rate";
-    const isRtl = i18n.language === "ar";
-    const TrailingIcon = isExternal
-      ? isRtl
-        ? SquareArrowOutUpLeft
-        : SquareArrowOutUpRight
-      : isRtl
-        ? ChevronLeft
-        : ChevronRight;
-    return (
-      <TouchableOpacity
-        key={item.id}
-        style={styles.menuItem}
-        onPress={item.onPress}
-        activeOpacity={0.7}
-      >
-        <View style={styles.menuItemLeft}>
-          {item.icon && (
-            <item.icon size={20} color={COLORS.lightGray} style={styles.menuIcon} />
-          )}
-          <CustomText style={styles.menuLabel}>{item.label}</CustomText>
-        </View>
-        <TrailingIcon size={18} color={COLORS.lightGray} />
-      </TouchableOpacity>
-    );
-  }, [i18n.language]);
+  const renderMenuItem = useCallback(
+    (item: MenuItem) => {
+      if (item.component) {
+        const Component = item.component;
+        return <Component key={item.id} />;
+      }
+      const isExternal = item.id === "privacy" || item.id === "rate";
+      const isRtl = i18n.language === "ar";
+      const TrailingIcon = isExternal
+        ? isRtl
+          ? SquareArrowOutUpLeft
+          : SquareArrowOutUpRight
+        : isRtl
+          ? ChevronLeft
+          : ChevronRight;
+      return (
+        <TouchableOpacity
+          key={item.id}
+          style={styles.menuItem}
+          onPress={item.onPress}
+          activeOpacity={0.7}
+        >
+          <View style={styles.menuItemLeft}>
+            {item.icon && (
+              <item.icon size={20} color={COLORS.lightGray} style={styles.menuIcon} />
+            )}
+            <CustomText style={styles.menuLabel}>{item.label}</CustomText>
+          </View>
+          <TrailingIcon size={18} color={COLORS.lightGray} />
+        </TouchableOpacity>
+      );
+    },
+    [i18n.language],
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "right", "left"]}>

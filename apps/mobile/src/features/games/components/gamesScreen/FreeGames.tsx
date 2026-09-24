@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ToastAndroid } from "react-native";
+import { View, TouchableOpacity, StyleSheet, ToastAndroid } from "react-native";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
@@ -174,9 +174,7 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
         />
 
         {/* Store icon badge */}
-        <View style={styles.storeIconBadge}>
-          {storeIcon}
-        </View>
+        <View style={styles.storeIconBadge}>{storeIcon}</View>
       </View>
 
       <View style={styles.infoSection}>
@@ -323,15 +321,9 @@ function FreeGames(): React.ReactElement {
         />
         <TouchableOpacity onPress={toggleNotifications} style={styles.bellButton}>
           {notifEnabled ? (
-            <Bell
-              size={22}
-              color={COLORS.textLight}
-            />
+            <Bell size={22} color={COLORS.textLight} />
           ) : (
-            <BellOff
-              size={22}
-              color={COLORS.textLight}
-            />
+            <BellOff size={22} color={COLORS.textLight} />
           )}
         </TouchableOpacity>
       </View>
@@ -390,6 +382,7 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: COLORS.secondary + "80",
     borderRadius: 12,
+    marginLeft: "auto",
   },
   listContent: {
     paddingHorizontal: 10,

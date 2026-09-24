@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
   ToastAndroid,
+  RefreshControl,
 } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { FlashList } from "@shopify/flash-list";
@@ -96,6 +97,8 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [showAds, setShowAds] = useState<boolean>(false);
   const [isReady, setIsReady] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
   const mountedRef = useRef<boolean>(true);
   const { t } = useTranslation();
   const { onScroll } = useScrollDirection();
@@ -120,9 +123,16 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
   );
 
   // Handlers
+  const handleRefresh = useCallback((): void => {
+    setRefreshing(true);
+    // Bumping refreshKey re-runs the snapshot effect, forcing a fresh
+    // Firestore read that supersedes the cached data.
+    setRefreshKey((k) => k + 1);
+  }, []);
+
   const handleShare = useCallback(async () => {
     try {
-      const shareUrl = `https://gz1.vercel.app/lists/${listId}?ownerId=${targetUserId}&name=${encodeURIComponent(listName)}`;
+      const shareUrl = `https://gz1.games/lists/${listId}?ownerId=${targetUserId}&name=${encodeURIComponent(listName)}`;
       const message = `${
         t("userLists.actions.shareMessage", {
           listName: getDisplayName(listName),
@@ -172,7 +182,15 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
         </View>
       ),
     });
-  }, [listName, getDisplayName, navigation, isSharedList, handleShare, targetUserId, games.length]);
+  }, [
+    listName,
+    getDisplayName,
+    navigation,
+    isSharedList,
+    handleShare,
+    targetUserId,
+    games.length,
+  ]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -218,6 +236,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
           }));
           setGames(list);
           setLoading(false);
+          setRefreshing(false);
           if (CACHE_KEY) {
             // Synchronous MMKV write â€” won't block the snapshot callback
             storageSet(CACHE_KEY, list);
@@ -225,7 +244,10 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
         },
         (error) => {
           console.error("[UserGamesScreen] Snapshot error:", error);
-          if (mountedRef.current) setLoading(false);
+          if (mountedRef.current) {
+            setLoading(false);
+            setRefreshing(false);
+          }
           if (games.length === 0)
             ToastAndroid.show(
               t("settings.userGames.messages.loadError"),
@@ -240,7 +262,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
       mountedRef.current = false;
       unsubscribe();
     };
-  }, [targetUserId, listId, CACHE_KEY]);
+  }, [targetUserId, listId, CACHE_KEY, refreshKey]);
 
   const handleRemoveGame = useCallback(
     (gameId: string | number, gameName: string): void => {
@@ -461,9 +483,26 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           ListEmptyComponent={renderEmptyList}
+          ListHeaderComponent={
+            isSharedList ? (
+              <View style={styles.viewOnlyBanner}>
+                <CustomText style={styles.viewOnlyText}>
+                  {t("settings.userGames.viewOnly")}
+                </CustomText>
+              </View>
+            ) : null
+          }
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 90 }}
           onScroll={onScroll}
           scrollEventThrottle={16}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={COLORS.secondary}
+              colors={[COLORS.secondary]}
+            />
+          }
         />
       )}
     </SafeAreaView>
@@ -483,6 +522,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingTop: 100,
+  },
+  viewOnlyBanner: {
+    marginTop: 16,
+    backgroundColor: "rgba(255, 196, 87, 0.15)",
+    borderColor: "rgba(255, 196, 87, 0.45)",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  viewOnlyText: {
+    color: "#ffc457",
+    fontSize: 13,
+    textAlign: "center",
+    fontWeight: "600",
   },
   emptyText: {
     color: "white",

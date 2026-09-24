@@ -10,6 +10,7 @@ import {
 } from "react-native-tab-view";
 import LatestNews from "../components/LatestNews";
 import Loading from "@/src/Loading";
+import ErrorState from "@/src/components/ErrorState";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import useRssFeeds, { type RssSource } from "@/src/hooks/useRssFeeds";
@@ -18,7 +19,7 @@ import type { RouteShape, GenericNewsRouteProps } from "../types";
 // GenericNewsRoute
 
 const GenericNewsRoute = memo<GenericNewsRouteProps>(
-  ({ rssFeeds, categoryKey, loading }) => {
+  ({ rssFeeds, categoryKey, loading, error, refetch }) => {
     const { i18n, t } = useTranslation();
 
     const feedList = useMemo<RssSource[]>(() => {
@@ -68,9 +69,20 @@ const GenericNewsRoute = memo<GenericNewsRouteProps>(
         </View>
       );
     }
+    if (error && feedList.length === 0) {
+      return (
+        <View style={styles.scene}>
+          <ErrorState
+            message={t("news.fetchError")}
+            showContactButton={false}
+            onRetry={() => refetch(true)}
+          />
+        </View>
+      );
+    }
     return (
       <View style={styles.scene}>
-        <CustomText style={styles.noDataText}>{t("common.noInternet")}</CustomText>
+        <CustomText style={styles.noDataText}>{t("news.noSources")}</CustomText>
       </View>
     );
   },
@@ -83,7 +95,7 @@ function NewsScreen(): React.ReactElement {
   const { t } = useTranslation();
   const layout = useWindowDimensions();
   const [index, setIndex] = useState<number>(0);
-  const { rssFeeds, loading } = useRssFeeds();
+  const { rssFeeds, loading, error, refetch } = useRssFeeds();
 
   const routes = useMemo<RouteShape[]>(
     () => [
@@ -133,9 +145,15 @@ function NewsScreen(): React.ReactElement {
    */
   const renderScene = useCallback(
     ({ route }: { route: RouteShape }) => (
-      <GenericNewsRoute rssFeeds={rssFeeds} categoryKey={route.key} loading={loading} />
+      <GenericNewsRoute
+        rssFeeds={rssFeeds}
+        categoryKey={route.key}
+        loading={loading}
+        error={error}
+        refetch={refetch}
+      />
     ),
-    [rssFeeds, loading],
+    [rssFeeds, loading, error, refetch],
   );
 
   return (

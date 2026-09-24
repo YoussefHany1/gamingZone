@@ -27,7 +27,7 @@ export default function GlobalError({
               A critical error occurred
             </h1>
             <p className="text-gray-400 text-sm">
-              We're sorry, but something went terribly wrong. Please try refreshing the page.
+              We&apos;re sorry, but something went terribly wrong. Please try refreshing the page.
             </p>
           </div>
 

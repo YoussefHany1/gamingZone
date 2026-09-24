@@ -1,9 +1,15 @@
 import { MetadataRoute } from "next";
 import { fetchGamesList } from "@/features/games/services/api";
 import { fetchServerArticles } from "@/features/news/services/api";
+import { getSiteBaseUrl } from "@/lib/metadata";
+
+const NEWS_CATEGORIES = ["news", "reviews", "esports", "hardware"];
+
+// Cache the sitemap at the CDN so crawlers don't re-render this route on every hit
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const baseUrl = getSiteBaseUrl();
   const locales = ["en", "ar"];
 
   // 1. Static Routes
@@ -45,13 +51,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 3. Dynamic News
   try {
-    // Fetch some recent news articles in English and Arabic
-    const [enNews, arNews] = await Promise.all([
-      fetchServerArticles("gaming", "en"),
-      fetchServerArticles("gaming", "ar"),
-    ]);
+    const articlesByCategory = await Promise.all(
+      NEWS_CATEGORIES.map(async (category) => {
+        const [en, ar] = await Promise.all([
+          fetchServerArticles(category, "en"),
+          fetchServerArticles(category, "ar"),
+        ]);
+        return [...en, ...ar];
+      }),
+    );
 
-    const allNews = [...(enNews || []), ...(arNews || [])];
+    const allNews = articlesByCategory.flat();
 
     allNews.forEach((art) => {
       // News articles are available in both locales in the UI, even if content is one language

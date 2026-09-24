@@ -1,9 +1,9 @@
 import Link from "./Link";
 import Image from "next/image";
-import { getTranslations } from "@/i18n/server";
+import { createTranslator } from "@/i18n/translate";
 
 export default function Footer({ locale = "ar" }: { locale?: string }) {
-  const t = getTranslations(locale);
+  const t = createTranslator(locale);
   const currentYear = new Date().getFullYear();
 
   return (

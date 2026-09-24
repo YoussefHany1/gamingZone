@@ -88,10 +88,12 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({
     lastTY.current = 0;
   }, [translateX, translateY]);
 
-  const onPinchEvent: (e: PinchGestureHandlerGestureEvent) => void =
-    Animated.event([{ nativeEvent: { scale: pinchAnim } }], {
+  const onPinchEvent: (e: PinchGestureHandlerGestureEvent) => void = Animated.event(
+    [{ nativeEvent: { scale: pinchAnim } }],
+    {
       useNativeDriver: true,
-    });
+    },
+  );
 
   const onPinchStateChange = useCallback(
     (event: HandlerStateChangeEvent<PinchGestureHandlerEventPayload>): void => {
@@ -137,10 +139,7 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({
           return;
         }
 
-        if (
-          absX > absY &&
-          (absX > SWIPE_HORIZ_DIST || Math.abs(vx) > SWIPE_HORIZ_VEL)
-        ) {
+        if (absX > absY && (absX > SWIPE_HORIZ_DIST || Math.abs(vx) > SWIPE_HORIZ_VEL)) {
           resetPan();
           if (tx < 0) onSwipeLeft?.();
           else onSwipeRight?.();
@@ -159,15 +158,7 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({
       translateY.setOffset(lastTY.current);
       translateY.setValue(0);
     },
-    [
-      translateX,
-      translateY,
-      resetPan,
-      snapBack,
-      onSwipeDown,
-      onSwipeLeft,
-      onSwipeRight,
-    ],
+    [translateX, translateY, resetPan, snapBack, onSwipeDown, onSwipeLeft, onSwipeRight],
   );
 
   const handleDoubleTap = useCallback((): void => {
@@ -237,7 +228,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
   const [fullScreenIndex, setFullScreenIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const { i18n } = useTranslation();
-  const isRtl = i18n.language !== "en";
+  const isRtl = i18n.language === "ar";
 
   // Merge cover and screenshots into a single list — memoised to avoid
   // rebuilding the array on every render.
@@ -265,9 +256,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>): void => {
-      const index = Math.round(
-        event.nativeEvent.contentOffset.x / SCREEN_WIDTH,
-      );
+      const index = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
       setActiveIndex(index);
     },
     [],

@@ -2,6 +2,30 @@ import Link from "@/components/Link";
 import { Metadata } from "next";
 
 import { getArticle, getNewsSource, NewsDetailsLayout } from "@/features/news";
+import { fetchServerArticles } from "@/features/news/services/api";
+import { getTranslations } from "@/i18n/server";
+import { getSiteBaseUrl } from "@/lib/metadata";
+
+const NEWS_CATEGORIES = ["news", "reviews", "esports", "hardware"] as const;
+const LOCALES = ["en", "ar"] as const;
+
+// Prerender the newest articles (from every category) so detail pages are
+// served from the Vercel CDN instead of running a function on every request.
+export const revalidate = 600;
+
+export async function generateStaticParams() {
+  try {
+    const results = await Promise.all(
+      NEWS_CATEGORIES.flatMap((category) =>
+        LOCALES.map((lang) => fetchServerArticles(category, lang)),
+      ),
+    );
+    const ids = [...new Set(results.flat().map((art) => art.$id))].slice(0, 24);
+    return ids.map((id) => ({ id }));
+  } catch {
+    return [];
+  }
+}
 
 // 1. Dynamic OG Metadata Generator
 export async function generateMetadata(props: {
@@ -21,10 +45,10 @@ export async function generateMetadata(props: {
       };
     }
 
-    const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://gamingzone.com"}/${locale}/news/${id}`;
+    const canonicalUrl = `${getSiteBaseUrl()}/${locale}/news/${id}`;
 
     return {
-      title: ` Gaming Zone | ${art.title}`,
+      title: `Gaming Zone | ${art.title}`,
       description:
         art.description ||
         (locale === "en"
@@ -71,8 +95,6 @@ export async function generateMetadata(props: {
   }
 }
 
-import { getTranslations } from "@/i18n/server";
-
 // 2. Server Component Page Render
 export default async function NewsDetailsPage(props: {
   params: Promise<{ id: string; locale: string }>;
@@ -108,7 +130,7 @@ export default async function NewsDetailsPage(props: {
     sourceImage = source?.image;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://gamingzone.com";
+  const baseUrl = getSiteBaseUrl();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -119,7 +141,7 @@ export default async function NewsDetailsPage(props: {
       {
         "@type": "Organization",
         name: art.siteName || "Gaming Zone",
-        url: sourceImage || `${baseUrl}/assets/icon.webp`,
+        url: `${baseUrl}/${locale}/news/${id}`,
       },
     ],
   };

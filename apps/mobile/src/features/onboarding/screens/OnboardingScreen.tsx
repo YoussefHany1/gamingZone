@@ -13,11 +13,13 @@ import {
   TouchableOpacity,
   FlatList,
 } from "react-native";
+import { Image } from "expo-image";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import COLORS from "@/src/constants/colors";
+import { useNetworkStatus } from "@/src/hooks/useNetworkStatus";
 import { cacheVideo, preloadVideos } from "@/src/utils/videoPreloader";
 
 const { width, height } = Dimensions.get("window");
@@ -58,6 +60,7 @@ SlideContent.displayName = "SlideContent";
 
 export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
   const { t } = useTranslation();
+  const isOffline = useNetworkStatus();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<any>(null);
   const prevIndexRef = useRef<number>(0);
@@ -184,12 +187,27 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
     <SafeAreaView style={styles.safeArea} edges={["bottom", "right", "left"]}>
       <View style={styles.slidesWrapper}>
         <View style={styles.sharedVideoContainer} pointerEvents="none">
-          <VideoView
-            player={player}
-            style={styles.video}
-            contentFit="cover"
-            nativeControls={false}
-          />
+          {isOffline ? (
+            <LinearGradient
+              colors={["#1a3560", "#0c1a33"]}
+              style={styles.fallbackContainer}
+            >
+              <Image
+                source={require("@/assets/logo.webp")}
+                style={styles.fallbackLogo}
+                contentFit="contain"
+                transition={300}
+                cachePolicy="memory-disk"
+              />
+            </LinearGradient>
+          ) : (
+            <VideoView
+              player={player}
+              style={styles.video}
+              contentFit="cover"
+              nativeControls={false}
+            />
+          )}
         </View>
 
         <FlatList<{ title: string; description: string }>
@@ -321,6 +339,16 @@ const styles = StyleSheet.create({
   video: {
     width: "100%",
     height: "100%",
+  },
+  fallbackContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.darkBackground,
+  },
+  fallbackLogo: {
+    width: 130,
+    height: 130,
   },
   videoGradient: {
     position: "absolute",

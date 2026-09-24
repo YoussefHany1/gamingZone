@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const { idToken } = await request.json();
 
-    if (!idToken) {
+    if (typeof idToken !== "string" || !idToken) {
       return NextResponse.json({ error: "Missing ID token" }, { status: 400 });
     }
 
@@ -23,9 +23,10 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error creating session cookie:", error);
-    return NextResponse.json({ error: error.message }, { status: 401 });
+    // Do not leak provider error details to the client
+    return NextResponse.json({ error: "Invalid ID token" }, { status: 401 });
   }
 }
 

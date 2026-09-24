@@ -5,25 +5,23 @@ import { useLangStore } from "../../../store/useLangStore";
 import { ChevronLeft, ChevronRight, PlayCircle, X } from "lucide-react";
 import { useSlideshow } from "../hooks/useSlideshow";
 import { getImageSource, getTrailerVideoId, getCoverSource } from "../utils";
+import { SlideshowGame } from "../types";
 
-const Slideshow = memo(function Slideshow() {
+const Slideshow = memo(function Slideshow({
+  initialTrailers,
+}: {
+  initialTrailers?: SlideshowGame[];
+}) {
   const { lang, t } = useLangStore();
   const {
     trailers,
     currentIndex,
     setCurrentIndex,
-    loading,
     playingVideoId,
     setPlayingVideoId,
     nextSlide,
     prevSlide,
-  } = useSlideshow();
-
-  if (loading) {
-    return (
-      <div className="w-full h-72 sm:h-96 md:h-[450px] rounded-3xl glass-panel animate-pulse bg-white/5"></div>
-    );
-  }
+  } = useSlideshow(initialTrailers);
 
   if (trailers.length === 0) return null;
 
@@ -107,6 +105,8 @@ const Slideshow = memo(function Slideshow() {
                 e.stopPropagation();
                 setCurrentIndex(i);
               }}
+              aria-label={`Slide ${i + 1} of ${trailers.length}`}
+              aria-current={i === currentIndex}
               className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                 i === currentIndex ? "w-6 bg-light-blue" : "bg-white/30"
               }`}

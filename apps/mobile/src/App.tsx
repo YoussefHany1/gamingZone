@@ -35,6 +35,7 @@ import useOTAUpdate from "./hooks/useOTAUpdate";
 import { MainAppTabs, AuthStack } from "./navigation/AppNavigator";
 import OnboardingScreen from "./features/onboarding/screens/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import OfflineBanner from "./components/OfflineBanner";
 
 // Types
 export type RootStackParamList = {
@@ -73,7 +74,7 @@ const MyTheme: Theme = {
 
 // Deep Linking Config
 const linking: LinkingOptions<any> = {
-  prefixes: ["gaming-zone://", "https://gz1.vercel.app", "http://gz1.vercel.app"],
+  prefixes: ["gaming-zone://", "https://gz1.games", "http://gz1.games"],
   config: {
     screens: {
       MainApp: {
@@ -99,6 +100,11 @@ const linking: LinkingOptions<any> = {
     // Strip locale prefix (e.g. /en/news/123 or /ar/lists/456)
     if (cleanPath.startsWith("en/")) cleanPath = cleanPath.substring(3);
     else if (cleanPath.startsWith("ar/")) cleanPath = cleanPath.substring(3);
+    else if (cleanPath.startsWith("es/")) cleanPath = cleanPath.substring(3);
+    else if (cleanPath.startsWith("fr/")) cleanPath = cleanPath.substring(3);
+    else if (cleanPath.startsWith("hi/")) cleanPath = cleanPath.substring(3);
+    else if (cleanPath.startsWith("pt-BR/")) cleanPath = cleanPath.substring(6);
+    else if (cleanPath.startsWith("pt-PT/")) cleanPath = cleanPath.substring(6);
 
     // lists/:listId → Settings > UserGamesScreen
     if (cleanPath.startsWith("lists/")) {
@@ -180,9 +186,31 @@ function App(): React.ReactElement | null {
       const langSet = storage.getString("@language_set");
       if (!langSet) {
         const locales = Localization.getLocales();
-        const sysLang = locales[0]?.languageCode === "ar" ? "ar" : "en";
+        const locale = locales[0];
+        const deviceLang = locale?.languageCode?.split("-")[0]?.toLowerCase();
+        const deviceRegion = (
+          locale?.regionCode ??
+          locale?.languageTag?.split("-")[1] ??
+          locale?.languageCode?.split("-")[1] ??
+          ""
+        ).toUpperCase();
+        const sysLang: "ar" | "en" | "es" | "fr" | "hi" | "pt-BR" | "pt-PT" =
+          deviceLang === "ar"
+            ? "ar"
+            : deviceLang === "es"
+              ? "es"
+              : deviceLang === "fr"
+                ? "fr"
+                : deviceLang === "hi"
+                  ? "hi"
+                  : deviceLang === "pt"
+                    ? deviceRegion === "BR"
+                      ? "pt-BR"
+                      : "pt-PT"
+                    : "en";
 
         storage.set("@language_set", "true");
+        storage.set("@language", sysLang);
 
         if (sysLang === "ar" && !I18nManager.isRTL) {
           I18nManager.allowRTL(true);
@@ -198,10 +226,10 @@ function App(): React.ReactElement | null {
             }
           }, 300);
           return;
-        } else if (sysLang === "en" && I18nManager.isRTL) {
+        } else if (sysLang !== "ar" && I18nManager.isRTL) {
           I18nManager.allowRTL(false);
           I18nManager.forceRTL(false);
-          await i18n.changeLanguage("en");
+          await i18n.changeLanguage(sysLang);
           setTimeout(async () => {
             try {
               await Updates.reloadAsync();
@@ -289,6 +317,7 @@ function App(): React.ReactElement | null {
         <SafeAreaProvider>
           <GestureHandlerRootView style={styles.container}>
             <StatusBar style="light" />
+            <OfflineBanner />
             <OnboardingScreen onDone={handleOnboardingDone} />
           </GestureHandlerRootView>
         </SafeAreaProvider>
@@ -302,6 +331,7 @@ function App(): React.ReactElement | null {
         <SafeAreaProvider>
           <GestureHandlerRootView style={styles.container}>
             <StatusBar style="light" />
+            <OfflineBanner />
 
             <NavigationContainer
               ref={navigationRef}

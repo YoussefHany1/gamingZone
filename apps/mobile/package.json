@@ -1,6 +1,6 @@
 {
   "name": "gamingzone",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "main": "index.ts",
   "type": "module",
   "scripts": {
@@ -14,7 +14,7 @@
     "type-check": "tsc --noEmit",
     "eas-build-pre-install": "bash ./scripts/inject-google-services.sh",
     "eas-build-post-install": "bash ./scripts/inject-google-services.sh",
-    "postinstall": "patch-package"
+    "postinstall": "node ./scripts/apply-patches.cjs"
   },
   "dependencies": {
     "@gaming-zone/core": "*",

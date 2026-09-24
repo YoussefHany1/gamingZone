@@ -1,66 +1,21 @@
 import React from "react";
-import { Metadata } from "next";
 import { fetchNewsSources, fetchNews, NewsList } from "@/features/news";
+import { createLocalizedMetadata } from "@/lib/metadata";
 
-export const revalidate = 600;
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
-
-  if (locale === "en") {
-    return {
-      title: "Gaming Zone | Gaming News, Reviews & Esports",
-      description:
-        "Follow instant coverage of the latest gaming news, hardware, reviews, Esports, and more from the best global and regional sources.",
-      icons: {
-        icon: "/assets/icon.webp",
-      },
-      openGraph: {
-        title: "Gaming Zone | Gaming News, Reviews & Esports",
-        description:
-          "Follow instant coverage of the latest gaming news, hardware, reviews, Esports, and more from the best global and regional sources.",
-        images: [
-          {
-            url: "/assets/cover2.png",
-            width: 1024,
-            height: 500,
-            alt: "Gaming Zone Banner",
-          },
-        ],
-        siteName: "Gaming Zone",
-        type: "website",
-      },
-    };
-  }
-
-  return {
+export const generateMetadata = createLocalizedMetadata({
+  en: {
+    title: "Gaming Zone | Gaming News, Reviews & Esports",
+    description:
+      "Follow instant coverage of the latest gaming news, hardware, reviews, Esports, and more from the best global and regional sources.",
+  },
+  ar: {
     title: "Gaming Zone | أخبار الألعاب، المراجعات والرياضات الإلكترونية",
     description:
       "تابع تغطية فورية لأحدث أخبار الألعاب، المراجعات، الهاردوير، بطولات الرياضات الإلكترونية Esports وأكثر من أفضل المصادر العربية والعالمية.",
-    icons: {
-      icon: "/assets/icon.webp",
-    },
-    openGraph: {
-      title: "Gaming Zone | أخبار الألعاب، المراجعات والرياضات الإلكترونية",
-      description:
-        "تابع تغطية فورية لأحدث أخبار الألعاب، المراجعات، الهاردوير، بطولات الرياضات الإلكترونية Esports وأكثر من أفضل المصادر العربية والعالمية.",
-      images: [
-        {
-          url: "/assets/cover2.png",
-          width: 1024,
-          height: 500,
-          alt: "Gaming Zone Banner",
-        },
-      ],
-      siteName: "Gaming Zone",
-      type: "website",
-    },
-  };
-}
+  },
+});
+
+export const revalidate = 600;
 
 export default async function NewsPage(props: {
   params: Promise<{ locale: string }>;

@@ -9,16 +9,30 @@ import {
   EventHero,
   EventDates,
   EventNetworks,
-  fetchEventDetails,
   getEventStatus,
 } from "@/features/events";
+import { getCachedEventDetails } from "@/features/events/services/server";
+import { fetchGamingEvents } from "@/features/events/services/api";
+
+// Prerender all event pages so they are served from the Vercel CDN instead of
+// running a function on every request.
+export const revalidate = 600;
+
+export async function generateStaticParams() {
+  try {
+    const events = await fetchGamingEvents();
+    return events.map((event) => ({ id: event.id.toString() }));
+  } catch {
+    return [];
+  }
+}
 
 export async function generateMetadata(props: {
   params: Promise<{ id: string; locale: string }>;
 }): Promise<Metadata> {
   const params = await props.params;
   const { id, locale } = params;
-  const event = await fetchEventDetails(id);
+  const event = await getCachedEventDetails(id);
 
   if (!event) {
     return {
@@ -33,7 +47,7 @@ export async function generateMetadata(props: {
   }
 
   return {
-    title: ` Gaming Zone | ${event.name}`,
+    title: `Gaming Zone | ${event.name}`,
     description:
       event.description ||
       (locale === "en"
@@ -70,7 +84,7 @@ export default async function EventDetailsPage(props: {
 }) {
   const params = await props.params;
   const { id, locale } = params;
-  const event = await fetchEventDetails(id);
+  const event = await getCachedEventDetails(id);
 
   if (!event) {
     notFound();

@@ -88,10 +88,19 @@ export default function useFeed(
   limit: number = 10,
   language?: string,
 ): UseFeedResult {
+  // Article storage only has "ar"/"en" content — Spanish and French reuse
+  // English data while the UI (direction/labels) stays driven by the app language.
+  const contentLanguage =
+    language === "es" || language === "fr" || language === "hi"
+      ? "en"
+      : language === "pt-BR" || language === "pt-PT"
+        ? "en"
+        : language;
+
   const cacheKey = useMemo(
     () =>
-      `feed_cache_${category ?? "nocat"}_${siteName ?? "all"}_page_${page}_lang_${language ?? "all"}`,
-    [category, siteName, page, language],
+      `feed_cache_${category ?? "nocat"}_${siteName ?? "all"}_page_${page}_lang_${contentLanguage ?? "all"}`,
+    [category, siteName, page, contentLanguage],
   );
 
   const fetchArticles = useCallback(async (): Promise<FetchResponse> => {
@@ -105,7 +114,7 @@ export default function useFeed(
     ];
 
     if (siteName) queries.push(Query.equal("siteName", siteName));
-    if (language) queries.push(Query.equal("language", language));
+    if (contentLanguage) queries.push(Query.equal("language", contentLanguage));
 
     const response = await databases.listDocuments(
       APPWRITE_DATABASE_ID,
@@ -117,7 +126,7 @@ export default function useFeed(
       articles: response.documents as unknown as Article[],
       total: response.total,
     };
-  }, [category, siteName, page, limit, language]);
+  }, [category, siteName, page, limit, contentLanguage]);
 
   // Use the longer TTL only for the primary feed (news, page 1) which has a
   // Realtime subscription keeping it fresh. All other feeds use the shorter one.
@@ -134,7 +143,7 @@ export default function useFeed(
   } = useCachedData<FetchResponse>(
     cacheKey,
     fetchArticles,
-    [category, siteName, page, limit, language],
+    [category, siteName, page, limit, contentLanguage],
     cacheTtl,
   );
 
@@ -173,7 +182,9 @@ export default function useFeed(
         // Filter: only handle documents that match the active filters.
         const matchesCategory = newDoc.category === category;
         const matchesSite = siteName ? newDoc.siteName === siteName : true;
-        const matchesLang = language ? newDoc.language === language : true;
+        const matchesLang = contentLanguage
+          ? newDoc.language === contentLanguage
+          : true;
 
         if (!matchesCategory || !matchesSite || !matchesLang) return;
 
@@ -190,7 +201,7 @@ export default function useFeed(
 
     return () => invokeUnsubscribe(subscription);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, siteName, page, limit, language, setData]);
+  }, [category, siteName, page, limit, contentLanguage, setData]);
 
   return { articles, total, loading, isRefetching, error, refetch };
 }

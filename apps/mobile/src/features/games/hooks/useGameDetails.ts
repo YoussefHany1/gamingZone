@@ -80,6 +80,7 @@ export const useGameDetails = ({
     data: game,
     isLoading: loading,
     error,
+    refetch,
   } = useCachedData<GameData>(cacheKey, fetchGameData, [currentId]);
 
   // Derived values
@@ -194,6 +195,10 @@ export const useGameDetails = ({
         }
       } catch (e) {
         console.error("Error rating game:", e);
+        ToastAndroid.show(
+          t("games.details.ratingFailed") ?? "Couldn't save your rating. Please try again.",
+          ToastAndroid.LONG,
+        );
       }
     },
     [user, currentId, game, gameDataForList, t],
@@ -330,6 +335,7 @@ export const useGameDetails = ({
     game,
     loading,
     error,
+    refetch,
     isReady,
     currentId,
     currentLang,

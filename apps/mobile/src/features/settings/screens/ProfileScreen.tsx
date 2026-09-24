@@ -7,6 +7,7 @@ import {
   ToastAndroid,
 } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
+import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import { Image } from "expo-image";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -29,6 +30,10 @@ import * as Updates from "expo-updates";
 import countries from "i18n-iso-countries";
 import enLang from "i18n-iso-countries/langs/en.json";
 import arLang from "i18n-iso-countries/langs/ar.json";
+import esLang from "i18n-iso-countries/langs/es.json";
+import frLang from "i18n-iso-countries/langs/fr.json";
+import hiLang from "i18n-iso-countries/langs/hi.json";
+import ptLang from "i18n-iso-countries/langs/pt.json";
 import { PickerOption } from "@/src/types/sharedTypes";
 import SteamLinkModal from "../components/SteamLinkModal";
 import { Mars, Monitor, Venus } from "lucide-react-native";
@@ -55,6 +60,10 @@ const CLOUDINARY_UPLOAD_PRESET: string =
 
 countries.registerLocale(enLang);
 countries.registerLocale(arLang);
+countries.registerLocale(esLang);
+countries.registerLocale(frLang);
+countries.registerLocale(hiLang);
+countries.registerLocale(ptLang);
 
 // main
 
@@ -75,6 +84,7 @@ function ProfileScreen(): React.ReactElement {
   const [loading, setLoading] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [showAds, setShowAds] = useState<boolean>(false);
+  const adsEnabled = useAdsEnabled();
   const [isReady, setIsReady] = useState<boolean>(false);
   const [showSteamModal, setShowSteamModal] = useState<boolean>(false);
   const { t, i18n } = useTranslation();
@@ -259,7 +269,17 @@ function ProfileScreen(): React.ReactElement {
 
   // Build localised, sorted country list â€” recomputed only when language changes
   const countriesList: PickerOption[] = useMemo(() => {
-    const langCode = i18n.language.startsWith("ar") ? "ar" : "en";
+    const langCode = i18n.language.startsWith("ar")
+      ? "ar"
+      : i18n.language.startsWith("es")
+        ? "es"
+        : i18n.language.startsWith("fr")
+          ? "fr"
+          : i18n.language.startsWith("hi")
+            ? "hi"
+            : i18n.language.startsWith("pt")
+              ? "pt"
+              : "en";
     const countriesObj = countries.getNames(langCode, { select: "official" });
     const excluded = new Set(["IL"]);
 
@@ -474,7 +494,7 @@ function ProfileScreen(): React.ReactElement {
             ))}
           </View>
 
-          {showAds && (
+          {showAds && adsEnabled && (
             <View style={styles.ad}>
               <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
               <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />

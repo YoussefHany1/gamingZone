@@ -114,7 +114,8 @@ const WeeklySummary = memo(function WeeklySummary() {
   if (!summaryDoc) return null;
 
   const currentLang: "ar" | "en" = i18n.language.startsWith("ar") ? "ar" : "en";
-  const content = currentLang === "ar" ? summaryDoc.summary_ar : summaryDoc.summary_en;
+  const content =
+    currentLang === "ar" ? summaryDoc.summary_ar : summaryDoc.summary_en;
   if (!content) return null;
 
   return (

@@ -10,6 +10,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { Image, ImageBackground } from "expo-image";
 import auth from "@react-native-firebase/auth";
@@ -27,9 +28,17 @@ import { getLocales } from "expo-localization";
 import countries from "i18n-iso-countries";
 import enLang from "i18n-iso-countries/langs/en.json";
 import arLang from "i18n-iso-countries/langs/ar.json";
+import esLang from "i18n-iso-countries/langs/es.json";
+import frLang from "i18n-iso-countries/langs/fr.json";
+import hiLang from "i18n-iso-countries/langs/hi.json";
+import ptLang from "i18n-iso-countries/langs/pt.json";
 
 countries.registerLocale(enLang);
 countries.registerLocale(arLang);
+countries.registerLocale(esLang);
+countries.registerLocale(frLang);
+countries.registerLocale(hiLang);
+countries.registerLocale(ptLang);
 
 type RootStackParamList = {
   Login: undefined;
@@ -71,6 +80,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
   const [name, setName] = useState<string>("");
   const [country, setCountry] = useState<string>("");
   const [gender, setGender] = useState<Gender>("male");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchCountryByIP = async () => {
@@ -97,7 +107,17 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
 
   /** Rebuild the country list only when the app language changes */
   const countriesList = useMemo<PickerOption[]>(() => {
-    const langCode = i18n.language.startsWith("ar") ? "ar" : "en";
+    const langCode = i18n.language.startsWith("ar")
+      ? "ar"
+      : i18n.language.startsWith("es")
+        ? "es"
+        : i18n.language.startsWith("fr")
+          ? "fr"
+          : i18n.language.startsWith("hi")
+            ? "hi"
+            : i18n.language.startsWith("pt")
+              ? "pt"
+              : "en";
     const countriesObj = countries.getNames(langCode, { select: "official" });
 
     return Object.entries(countriesObj)
@@ -144,6 +164,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
       return;
     }
 
+    setIsLoading(true);
     try {
       const { user } = await auth().createUserWithEmailAndPassword(email, password);
 
@@ -184,12 +205,16 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
       }
 
       ToastAndroid.show(msg, ToastAndroid.LONG);
+    } finally {
+      setIsLoading(false);
     }
   }, [email, password, name, country, gender, t, validatePassword, navigation]);
 
   // Google Sign-Up handler
 
   const onGoogleButtonPress = useCallback(async (): Promise<void> => {
+    if (isLoading) return;
+    setIsLoading(true);
     try {
       await GoogleSignin.hasPlayServices();
       const userInfoResponse = await GoogleSignin.signIn();
@@ -210,24 +235,30 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
     } catch (error) {
       console.error("Google sign-up error:", error);
       if ((error as { code?: string }).code === statusCodes.SIGN_IN_CANCELLED) {
-        // User cancelled â€” no action required
+        // User cancelled — no action required
       } else {
         ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
       }
+    } finally {
+      setIsLoading(false);
     }
-  }, [navigation, t]);
+  }, [isLoading, navigation, t]);
 
   // Anonymous / Guest login handler
 
   const handleAnonymousLogin = useCallback(async (): Promise<void> => {
+    if (isLoading) return;
+    setIsLoading(true);
     try {
       await auth().signInAnonymously();
       navigation.replace("MainApp");
     } catch (error) {
       console.error("Anonymous login failed", error);
       ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
+    } finally {
+      setIsLoading(false);
     }
-  }, [navigation, t]);
+  }, [isLoading, navigation, t]);
 
   const handleNavigateToLogin = useCallback(() => {
     navigation.navigate("Login");
@@ -303,16 +334,25 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
             </View>
 
             {/* Email sign-up button */}
-            <TouchableOpacity style={styles.button} onPress={handleSignup}>
-              <CustomText style={styles.buttonText}>
-                {t("auth.register.signUpButton")}
-              </CustomText>
+            <TouchableOpacity
+              style={[styles.button, isLoading && styles.buttonDisabled]}
+              onPress={handleSignup}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <CustomText style={styles.buttonText}>
+                  {t("auth.register.signUpButton")}
+                </CustomText>
+              )}
             </TouchableOpacity>
 
             {/* Google sign-up button */}
             <TouchableOpacity
               onPress={onGoogleButtonPress}
-              style={styles.googleButtonWrapper}
+              style={[styles.googleButtonWrapper, isLoading && styles.buttonDisabled]}
+              disabled={isLoading}
             >
               <LinearGradient
                 colors={["#10574b", "#3174f1", "#e92d18", "#c38d0c"]}
@@ -320,23 +360,37 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <GoogleIcon size={28} fill="#fff" />
-                <CustomText style={styles.buttonText}>
-                  {" "}
-                  {t("auth.register.googleSignUp")}
-                </CustomText>
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <GoogleIcon size={28} fill="#fff" />
+                    <CustomText style={styles.buttonText}>
+                      {" "}
+                      {t("auth.register.googleSignUp")}
+                    </CustomText>
+                  </>
+                )}
               </LinearGradient>
             </TouchableOpacity>
 
             {/* Already have an account button */}
-            <TouchableOpacity style={styles.newAccButton} onPress={handleNavigateToLogin}>
+            <TouchableOpacity
+              style={[styles.newAccButton, isLoading && styles.buttonDisabled]}
+              onPress={handleNavigateToLogin}
+              disabled={isLoading}
+            >
               <CustomText style={styles.buttonText}>
                 {t("auth.register.haveAnAccount")}
               </CustomText>
             </TouchableOpacity>
 
             {/* Continue as guest button */}
-            <TouchableOpacity onPress={handleAnonymousLogin} style={styles.guestButton}>
+            <TouchableOpacity
+              onPress={handleAnonymousLogin}
+              style={[styles.guestButton, isLoading && styles.buttonDisabled]}
+              disabled={isLoading}
+            >
               <CustomText style={styles.guestButtonText}>
                 {t("auth.guest") || "Continue as Guest"}
               </CustomText>
@@ -389,6 +443,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginBottom: 15,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   googleButtonWrapper: { justifyContent: "center" },
   gradient: {

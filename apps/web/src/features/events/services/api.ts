@@ -1,42 +1,34 @@
 import { GamingEvent } from "@/types";
+import { getServerApiUrl } from "@/lib/api-config";
 
-export const fetchGamingEvents = async (): Promise<GamingEvent[]> => {
-  const SERVER_URL =
-    process.env.NEXT_PUBLIC_SERVER_URL || "https://gamingzone-api.onrender.com";
-  const baseUrl = SERVER_URL.endsWith("/")
-    ? SERVER_URL.slice(0, -1)
-    : SERVER_URL;
-
-  const response = await fetch(`${baseUrl}/events`);
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return Array.isArray(data) ? data : [];
-};
-
-export const fetchEventDetails = async (
-  id: string,
-): Promise<GamingEvent | null> => {
-  const SERVER_URL =
-    process.env.NEXT_PUBLIC_SERVER_URL || "https://gamingzone-api.onrender.com";
-  const baseUrl = SERVER_URL.endsWith("/")
-    ? SERVER_URL.slice(0, -1)
-    : SERVER_URL;
-
+export async function fetchGamingEvents(): Promise<GamingEvent[]> {
   try {
-    const response = await fetch(`${baseUrl}/events`);
+    const response = await fetch(`${getServerApiUrl()}/events`, {
+      // Cache in Vercel Data Cache — revalidates at most once every 10 minutes
+      next: { revalidate: 600 },
+    });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+
     const data = await response.json();
-    if (Array.isArray(data)) {
-      return data.find((e: GamingEvent) => e.id.toString() === id) || null;
-    }
-    return null;
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    // Fail open (empty list) so the home page and event pages don't crash when
+    // the backend proxy is unreachable; ISR will recover on the next revalidate.
+    console.error("Error fetching gaming events:", error);
+    return [];
+  }
+}
+
+export async function fetchEventDetails(
+  id: string,
+): Promise<GamingEvent | null> {
+  try {
+    const events = await fetchGamingEvents();
+    return events.find((e) => e.id.toString() === id) || null;
   } catch (error) {
     console.error("Error fetching event details:", error);
     return null;
   }
-};
+}

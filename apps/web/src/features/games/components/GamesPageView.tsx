@@ -1,6 +1,3 @@
-"use client";
-
-import React from "react";
 import Link from "@/components/Link";
 import Image from "next/image";
 import {
@@ -14,20 +11,21 @@ import {
   History,
   TrendingUp,
 } from "lucide-react";
-import { useLangStore } from "@/store/useLangStore";
+import { getTranslations } from "@/i18n/server";
 
 import GameRow from "./GameRow";
-import NewsRow from "./NewsRow";
 import FreeGamesRow from "./FreeGamesRow";
 import GameSearchAutocomplete from "./GameSearchAutocomplete";
 import { Game, FreeGame } from "../types";
+import { gameCoverUrl } from "../utils";
 
-interface GamesClientProps {
+export interface GamesPageViewProps {
+  locale: string;
   query: string;
   genre: string;
   platform: string;
   sort: string;
-  page?: number;
+  page: number;
   isSearching: boolean;
   searchResults: Game[];
   freeGames: FreeGame[];
@@ -41,69 +39,73 @@ interface GamesClientProps {
   trendingMobile: Game[];
 }
 
-export default function GamesClient({
-  query,
-  genre,
-  platform,
-  sort,
-  page = 1,
-  isSearching,
-  searchResults,
-  freeGames,
-  popular,
-  recentlyReleased,
-  comingSoon,
-  mostAnticipated,
-  nostalgia,
-  steamTopSellers,
-  topRated,
-  trendingMobile,
-}: GamesClientProps) {
-  const { t } = useLangStore();
+function buildPageHref(props: GamesPageViewProps, page: number): string {
+  const params = new URLSearchParams();
+  if (props.query) params.set("query", props.query);
+  if (props.genre) params.set("genre", props.genre);
+  if (props.platform) params.set("platform", props.platform);
+  if (props.sort) params.set("sort", props.sort);
+  params.set("page", String(page));
+  return `/games?${params.toString()}`;
+}
 
-  const genres = React.useMemo(
-    () => [
-      {
-        value: "",
-        label: t("games.filter.any") + " " + t("games.filter.genre"),
-      },
-      { value: "rpg", label: t("games.filter.genres.rpg") },
-      { value: "shooter", label: t("games.filter.genres.shooter") },
-      { value: "fighting", label: t("games.filter.genres.fighting") },
-      { value: "racing", label: t("games.filter.genres.racing") },
-      { value: "strategy", label: t("games.filter.genres.strategy") },
-      { value: "adventure", label: t("games.filter.genres.adventure") },
-      { value: "indie", label: t("games.filter.genres.indie") },
-    ],
-    [t],
-  );
+export default function GamesPageView(props: GamesPageViewProps) {
+  const {
+    locale,
+    query,
+    genre,
+    platform,
+    sort,
+    page,
+    isSearching,
+    searchResults,
+    freeGames,
+    popular,
+    recentlyReleased,
+    comingSoon,
+    mostAnticipated,
+    nostalgia,
+    steamTopSellers,
+    topRated,
+    trendingMobile,
+  } = props;
 
-  const platforms = React.useMemo(
-    () => [
-      {
-        value: "",
-        label: t("games.filter.any") + " " + t("games.filter.platform"),
-      },
-      { value: "pc", label: t("games.filter.platforms.pc") },
-      { value: "ps5", label: t("games.filter.platforms.ps5") },
-      { value: "xboxSeries", label: t("games.filter.platforms.xboxSeries") },
-      { value: "switch", label: t("games.filter.platforms.switch") },
-    ],
-    [t],
-  );
+  const t = getTranslations(locale);
 
-  const sortOptions = React.useMemo(
-    () => [
-      { value: "relevance", label: t("games.filter.sortOptions.relevance") },
-      { value: "title", label: t("games.filter.sortOptions.title") },
-      {
-        value: "release_date",
-        label: t("games.filter.sortOptions.release_date"),
-      },
-      { value: "rating", label: t("games.filter.sortOptions.rating") },
-    ],
-    [t],
-  );
+  const genres = [
+    {
+      value: "",
+      label: t("games.filter.any") + " " + t("games.filter.genre"),
+    },
+    { value: "rpg", label: t("games.filter.genres.rpg") },
+    { value: "shooter", label: t("games.filter.genres.shooter") },
+    { value: "fighting", label: t("games.filter.genres.fighting") },
+    { value: "racing", label: t("games.filter.genres.racing") },
+    { value: "strategy", label: t("games.filter.genres.strategy") },
+    { value: "adventure", label: t("games.filter.genres.adventure") },
+    { value: "indie", label: t("games.filter.genres.indie") },
+  ];
+
+  const platforms = [
+    {
+      value: "",
+      label: t("games.filter.any") + " " + t("games.filter.platform"),
+    },
+    { value: "pc", label: t("games.filter.platforms.pc") },
+    { value: "ps5", label: t("games.filter.platforms.ps5") },
+    { value: "xboxSeries", label: t("games.filter.platforms.xboxSeries") },
+    { value: "switch", label: t("games.filter.platforms.switch") },
+  ];
+
+  const sortOptions = [
+    { value: "relevance", label: t("games.filter.sortOptions.relevance") },
+    { value: "title", label: t("games.filter.sortOptions.title") },
+    {
+      value: "release_date",
+      label: t("games.filter.sortOptions.release_date"),
+    },
+    { value: "rating", label: t("games.filter.sortOptions.rating") },
+  ];
 
   return (
     <div className="w-full flex flex-col text-white">
@@ -122,6 +124,7 @@ export default function GamesClient({
           </div>
 
           <GameSearchAutocomplete
+            locale={locale}
             initialQuery={query}
             placeholder={t("games.searchPlaceholder")}
             submitText={t("games.search")}
@@ -131,7 +134,7 @@ export default function GamesClient({
         {/* Filter Toolbar */}
         <form
           method="GET"
-          action="/games"
+          action={`/${locale}/games`}
           className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-white/5 border border-white/5 p-4 rounded-2xl items-center"
         >
           {/* Hidden input to preserve active text query */}
@@ -139,7 +142,10 @@ export default function GamesClient({
 
           {/* Genre select */}
           <div className="space-y-1">
-            <label className="text-[10px] uppercase font-bold text-gray-400">
+            <label
+              htmlFor="game-filter-genre"
+              className="text-[10px] uppercase font-bold text-gray-400"
+            >
               {t("games.filter.genre")}
             </label>
             <select
@@ -158,7 +164,10 @@ export default function GamesClient({
 
           {/* Platform select */}
           <div className="space-y-1">
-            <label className="text-[10px] uppercase font-bold text-gray-400">
+            <label
+              htmlFor="game-filter-platform"
+              className="text-[10px] uppercase font-bold text-gray-400"
+            >
               {t("games.filter.platform")}
             </label>
             <select
@@ -177,7 +186,10 @@ export default function GamesClient({
 
           {/* Sort select */}
           <div className="space-y-1">
-            <label className="text-[10px] uppercase font-bold text-gray-400">
+            <label
+              htmlFor="game-filter-sort"
+              className="text-[10px] uppercase font-bold text-gray-400"
+            >
               {t("games.filter.sort")}
             </label>
             <select
@@ -228,9 +240,6 @@ export default function GamesClient({
                   const rating = game.total_rating
                     ? Math.round(game.total_rating) / 10
                     : 0;
-                  const cover = game.cover
-                    ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.webp`
-                    : "/image-not-found.webp";
                   return (
                     <Link
                       key={game.id}
@@ -239,7 +248,7 @@ export default function GamesClient({
                     >
                       <div className="relative w-full aspect-3/4 rounded-xl overflow-hidden">
                         <Image
-                          src={cover}
+                          src={gameCoverUrl(game)}
                           alt={game.name}
                           fill
                           sizes="(max-width: 640px) 50vw, 150px"
@@ -267,7 +276,7 @@ export default function GamesClient({
               <div className="flex justify-center items-center gap-4 pt-8 pb-4">
                 {page > 1 ? (
                   <Link
-                    href={`/games?query=${encodeURIComponent(query)}&genre=${encodeURIComponent(genre)}&platform=${encodeURIComponent(platform)}&sort=${encodeURIComponent(sort)}&page=${page - 1}`}
+                    href={buildPageHref(props, page - 1)}
                     className="px-6 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-sm font-bold rounded-xl flex items-center gap-2 transition-all"
                   >
                     <span>{t("common.previous") || "Previous"}</span>
@@ -285,7 +294,7 @@ export default function GamesClient({
 
                 {searchResults.length === 50 ? (
                   <Link
-                    href={`/games?query=${encodeURIComponent(query)}&genre=${encodeURIComponent(genre)}&platform=${encodeURIComponent(platform)}&sort=${encodeURIComponent(sort)}&page=${page + 1}`}
+                    href={buildPageHref(props, page + 1)}
                     className="px-6 py-2.5 bg-linear-to-r from-secondary-blue to-light-blue text-white text-sm font-bold rounded-xl flex items-center gap-2 shadow-md shadow-light-blue/15 hover:opacity-95 active:scale-95 transition-all"
                   >
                     <span>{t("common.next") || "Next"}</span>
@@ -305,12 +314,10 @@ export default function GamesClient({
           // 2. Default Browse dashboard
           <div className="space-y-12">
             {/* Free Games Promo */}
-            <FreeGamesRow games={freeGames as any} />
-
-            {/* <NewsRow
-              title={t("games.list.gamesNews.title")}
-              icon={<Newspaper className="w-5 h-5 text-light-blue" />}
-            /> */}
+            <FreeGamesRow
+              games={freeGames}
+              title={t("games.list.freeGames.header")}
+            />
 
             {/* Popular Right Now */}
             <section className="space-y-6">
@@ -320,38 +327,30 @@ export default function GamesClient({
               </h2>
 
               <div className="flex gap-4 overflow-x-auto pb-4 px-1 scrollbar">
-                {popular.map((game, index) => {
-                  const rating = game.total_rating
-                    ? Math.round(game.total_rating) / 10
-                    : 0;
-                  const cover = game.cover
-                    ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.webp`
-                    : "/image-not-found.webp";
-                  return (
-                    <Link
-                      key={game.id}
-                      href={`/games/${game.id}`}
-                      className="group shrink-0 w-44 rounded-2xl overflow-hidden glass-panel glass-panel-hover border border-white/10 p-3 flex flex-col gap-3 shadow-md"
-                    >
-                      <div className="relative w-full aspect-3/4 rounded-xl overflow-hidden">
-                        <Image
-                          src={cover}
-                          alt={game.name}
-                          fill
-                          sizes="150px"
-                          className="object-cover"
-                          unoptimized={!game.cover}
-                        />
-                        <span className="absolute top-2 left-2 bg-dark-bg/85 border border-white/10 px-2 py-0.5 rounded text-[10px] font-bold text-gray-300">
-                          #{index + 1}
-                        </span>
-                      </div>
-                      <h3 className="font-extrabold text-xs text-white group-hover:text-light-blue line-clamp-2 min-h-[32px] transition-colors leading-snug">
-                        {game.name}
-                      </h3>
-                    </Link>
-                  );
-                })}
+                {popular.map((game, index) => (
+                  <Link
+                    key={game.id}
+                    href={`/games/${game.id}`}
+                    className="group shrink-0 w-44 rounded-2xl overflow-hidden glass-panel glass-panel-hover border border-white/10 p-3 flex flex-col gap-3 shadow-md"
+                  >
+                    <div className="relative w-full aspect-3/4 rounded-xl overflow-hidden">
+                      <Image
+                        src={gameCoverUrl(game)}
+                        alt={game.name}
+                        fill
+                        sizes="150px"
+                        className="object-cover"
+                        unoptimized={!game.cover}
+                      />
+                      <span className="absolute top-2 left-2 bg-dark-bg/85 border border-white/10 px-2 py-0.5 rounded text-[10px] font-bold text-gray-300">
+                        #{index + 1}
+                      </span>
+                    </div>
+                    <h3 className="font-extrabold text-xs text-white group-hover:text-light-blue line-clamp-2 min-h-[32px] transition-colors leading-snug">
+                      {game.name}
+                    </h3>
+                  </Link>
+                ))}
               </div>
             </section>
 
@@ -384,34 +383,29 @@ export default function GamesClient({
                 </h2>
 
                 <div className="grid grid-cols-2 gap-4">
-                  {recentlyReleased.slice(0, 4).map((game) => {
-                    const cover = game.cover
-                      ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.webp`
-                      : "/image-not-found.webp";
-                    return (
-                      <Link
-                        key={game.id}
-                        href={`/games/${game.id}`}
-                        className="group flex gap-3 p-3 rounded-2xl glass-panel glass-panel-hover border border-white/10 shadow-sm"
-                      >
-                        <div className="relative w-16 h-20 rounded-lg overflow-hidden shrink-0">
-                          <Image
-                            src={cover}
-                            alt={game.name}
-                            fill
-                            sizes="64px"
-                            className="object-cover"
-                            unoptimized={!game.cover}
-                          />
-                        </div>
-                        <div className="flex flex-col justify-center">
-                          <h3 className="font-bold text-xs text-white group-hover:text-light-blue line-clamp-2 leading-tight transition-colors">
-                            {game.name}
-                          </h3>
-                        </div>
-                      </Link>
-                    );
-                  })}
+                  {recentlyReleased.slice(0, 4).map((game) => (
+                    <Link
+                      key={game.id}
+                      href={`/games/${game.id}`}
+                      className="group flex gap-3 p-3 rounded-2xl glass-panel glass-panel-hover border border-white/10 shadow-sm"
+                    >
+                      <div className="relative w-16 h-20 rounded-lg overflow-hidden shrink-0">
+                        <Image
+                          src={gameCoverUrl(game)}
+                          alt={game.name}
+                          fill
+                          sizes="64px"
+                          className="object-cover"
+                          unoptimized={!game.cover}
+                        />
+                      </div>
+                      <div className="flex flex-col justify-center">
+                        <h3 className="font-bold text-xs text-white group-hover:text-light-blue line-clamp-2 leading-tight transition-colors">
+                          {game.name}
+                        </h3>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               </section>
 
@@ -423,34 +417,29 @@ export default function GamesClient({
                 </h2>
 
                 <div className="grid grid-cols-2 gap-4">
-                  {comingSoon.slice(0, 4).map((game) => {
-                    const cover = game.cover
-                      ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.webp`
-                      : "/image-not-found.webp";
-                    return (
-                      <Link
-                        key={game.id}
-                        href={`/games/${game.id}`}
-                        className="group flex gap-3 p-3 rounded-2xl glass-panel glass-panel-hover border border-white/10 shadow-sm"
-                      >
-                        <div className="relative w-16 h-20 rounded-lg overflow-hidden shrink-0">
-                          <Image
-                            src={cover}
-                            alt={game.name}
-                            fill
-                            sizes="64px"
-                            className="object-cover"
-                            unoptimized={!game.cover}
-                          />
-                        </div>
-                        <div className="flex flex-col justify-center">
-                          <h3 className="font-bold text-xs text-white group-hover:text-light-blue line-clamp-2 leading-tight transition-colors">
-                            {game.name}
-                          </h3>
-                        </div>
-                      </Link>
-                    );
-                  })}
+                  {comingSoon.slice(0, 4).map((game) => (
+                    <Link
+                      key={game.id}
+                      href={`/games/${game.id}`}
+                      className="group flex gap-3 p-3 rounded-2xl glass-panel glass-panel-hover border border-white/10 shadow-sm"
+                    >
+                      <div className="relative w-16 h-20 rounded-lg overflow-hidden shrink-0">
+                        <Image
+                          src={gameCoverUrl(game)}
+                          alt={game.name}
+                          fill
+                          sizes="64px"
+                          className="object-cover"
+                          unoptimized={!game.cover}
+                        />
+                      </div>
+                      <div className="flex flex-col justify-center">
+                        <h3 className="font-bold text-xs text-white group-hover:text-light-blue line-clamp-2 leading-tight transition-colors">
+                          {game.name}
+                        </h3>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               </section>
             </div>

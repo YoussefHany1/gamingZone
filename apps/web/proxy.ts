@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 const locales = ["en", "ar"];
 const defaultLocale = "en";
@@ -43,7 +43,12 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Exclude static files, API routes, and well-known files from locale redirect
-    "/((?!api|_next/static|_next/image|assets|docs|sitemap.xml|robots.txt|favicon.ico|\\.well-known).*)",
+    // Vercel bills every middleware invocation as an Edge Request. Locale-
+    // prefixed URLs (the entire app, all links, prefetches, RSC payloads) don't
+    // need the redirect, so exclude them from the matcher entirely — this keeps
+    // Edge Requests at ~0 for normal traffic. Only legacy non-localized paths
+    // (e.g. /games) reach middleware and get a 301 to /en/... .
+    // Also exclude static files, API routes, Next internals, well-known files.
+    "/((?!api|_next|\\.well-known|.*\\..*|en(?:/.*)?$|ar(?:/.*)?$).*)",
   ],
 };

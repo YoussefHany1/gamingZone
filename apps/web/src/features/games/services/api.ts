@@ -2,12 +2,24 @@ import axios from "axios";
 import { databases } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { Game, FreeGame } from "../types";
+import { getServerApiUrl } from "@/lib/api-config";
 
-const SERVER_URL = "https://gamingzone-api.onrender.com";
+const FREE_GAMES_LIMIT = 20;
+
+interface FreeGameDoc {
+  $id: string;
+  title: string;
+  image?: string;
+  store?: string;
+  url?: string;
+  type?: string;
+  startDate?: string;
+  endDate?: string;
+}
 
 export async function fetchGamesList(endpoint: string): Promise<Game[]> {
   try {
-    const res = await axios.get<Game[]>(`${SERVER_URL}/${endpoint}`, {
+    const res = await axios.get<Game[]>(`${getServerApiUrl()}/${endpoint}`, {
       timeout: 8000,
     });
     return Array.isArray(res.data) ? res.data : [];
@@ -20,21 +32,21 @@ export async function fetchGamesList(endpoint: string): Promise<Game[]> {
 export async function fetchFreeGames(): Promise<FreeGame[]> {
   try {
     const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "";
-    const COLLECTION_ID = "free_games";
     if (!DATABASE_ID) return [];
 
-    const res = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
-      Query.orderAsc("type"),
-      Query.limit(20),
-    ]);
+    const res = await databases.listDocuments(
+      DATABASE_ID,
+      "free_games",
+      [Query.orderAsc("type"), Query.limit(FREE_GAMES_LIMIT)],
+    );
 
-    return res.documents.map((doc: any) => ({
+    return (res.documents as unknown as FreeGameDoc[]).map((doc) => ({
       id: doc.$id,
       title: doc.title,
       image: doc.image,
       store: doc.store,
       url: doc.url,
-      type: doc.type,
+      type: doc.type ?? "",
       startDate: doc.startDate,
       endDate: doc.endDate,
     }));
@@ -78,7 +90,7 @@ export async function searchGames(
     if (platform) params.platform = platformMap[platform] || platform;
     if (sort) params.sort = sort;
 
-    const res = await axios.get<Game[]>(`${SERVER_URL}/search`, {
+    const res = await axios.get<Game[]>(`${getServerApiUrl()}/search`, {
       params,
       timeout: 10000,
     });
@@ -88,3 +100,4 @@ export async function searchGames(
     return [];
   }
 }
+

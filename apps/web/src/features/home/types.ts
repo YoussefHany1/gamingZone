@@ -8,14 +8,14 @@ export interface LatestNewsFeedProps {
 
 export interface SlideshowVideo {
   video_id: string;
-  name: string;
+  name?: string;
 }
 
 export interface SlideshowGame {
   id: number;
   name: string;
-  cover?: { image_id: string };
-  screenshots?: { image_id: string }[];
+  cover?: { image_id?: string };
+  screenshots?: { image_id?: string }[];
   videos?: SlideshowVideo[];
 }
 

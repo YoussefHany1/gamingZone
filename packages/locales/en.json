@@ -6,6 +6,7 @@
     "close": "Close",
     "remove": "Remove",
     "ok": "OK",
+    "continue": "Continue",
     "create": "Create",
     "saveChanges": "Save Changes",
     "noData": "No data to display",
@@ -14,6 +15,8 @@
     "ad": "Advertisement",
     "loginRequired": "You need to be logged in to perform this action",
     "noInternet": "No Internet Connection",
+    "offlineBanner": "You're offline – showing saved content",
+    "dataLoadError": "We couldn't load this content. Please try again.",
     "share": "Share",
     "copied": "Copied!",
     "or": "Or",
@@ -91,7 +94,16 @@
       "emailAlreadyInUse": "This email is already in use",
       "invalidEmail": "The email address is invalid",
       "weakPassword": "The password is too weak",
-      "googleSignIn": "Google Sign-In failed. Please try again"
+      "googleSignIn": "Google Sign-In failed. Please try again",
+      "playServices": "Google Play services are not available on this device.",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address",
+      "passwordShort": "Password is too short",
+      "passwordLetter": "Password must contain at least one letter",
+      "passwordNumber": "Password must contain at least one number",
+      "nameShort": "Name must be at least 2 characters",
+      "genderRequired": "Please select your gender",
+      "countryRequired": "Please select your country"
     },
     "validation": {
       "passwordTitle": "Inadequate Password",
@@ -162,6 +174,7 @@
     "latestHeader": "Latest {{category}}",
     "newsHeader": "Gaming News & Articles",
     "noArticles": "No articles available at the moment.",
+    "noSources": "No news sources are available for this category.",
     "fetchError": "Error while fetching data, please try again later.",
     "contactSupport": "Contact Support",
     "endOfList": "End of Articles",
@@ -209,7 +222,9 @@
         "title": "Game News",
         "subtitle": "Follow the latest news about your favorite games",
         "live": "Live",
-        "source": "Source: The game's official website"
+        "source": "Source: The game's official website",
+        "noNews": "No news found.",
+        "loadError": "We couldn't load the news. Please try again."
       },
       "popular": {
         "title": "Popular Right now",
@@ -341,7 +356,8 @@
         "playing": "Playing",
         "wantToPlay": "Want to Play",
         "rated": "Rated"
-      }
+      },
+      "ratingFailed": "Couldn't save your rating. Please try again."
     },
     "filter": {
       "title": "Filter Games",
@@ -414,11 +430,16 @@
     },
     "errors": {
       "couldNotCreateList": "Could not create list. Please try again later",
-      "listAlreadyExists": "A list with this name already exists"
+      "listAlreadyExists": "A list with this name already exists",
+      "couldNotDeleteList": "Could not delete the list. Please try again later."
     }
   },
   "settings": {
     "language": "language",
+    "languageSelect": {
+      "confirmTitle": "Change Language",
+      "confirmMessage": "The app will restart to apply the new language."
+    },
     "currentLang": "English",
     "menu": {
       "notifications": "Manage Notifications",
@@ -428,6 +449,7 @@
       "contactUs": "Contact Us",
       "changeLanguage": "Change Language",
       "privacyPolicy": "Privacy Policy",
+      "showAds": "Show Ads",
       "signOut": "Log out"
     },
     "signOut": {
@@ -498,12 +520,14 @@
     "notifications": {
       "description": "Choose which news sources you want to receive notifications from\nMake sure to allow notifications for this app",
       "footer": "Notifications will be sent when new articles are published from enabled sources.",
-      "testNotification": "Send Test Notification"
+      "testNotification": "Send Test Notification",
+      "updateFailed": "Failed to update notification settings. Please try again."
     },
     "userGames": {
       "emptyText": "Your list is empty",
       "emptySubText": "Add the games you want.",
       "findButton": "Find Your Game",
+      "viewOnly": "Viewing a read-only list shared with you.",
       "messages": {
         "loadError": "We encountered a problem loading your list. Please try again later",
         "removeError": "An error occurred while trying to remove the game"

@@ -1,17 +1,11 @@
-"use client";
-import React from "react";
 import Image from "next/image";
 import { Gift } from "lucide-react";
 import FreeGameCountdown from "./FreeGameCountdown";
-import { useLangStore } from "@/store/useLangStore";
 
 import { FreeGamesRowProps } from "../types";
 import Link from "next/link";
 
-const FreeGamesRow = React.memo(function FreeGamesRow({
-  games,
-}: FreeGamesRowProps) {
-  const { t } = useLangStore();
+export default function FreeGamesRow({ games, title }: FreeGamesRowProps) {
   if (!games || games.length === 0) return null;
 
   return (
@@ -19,7 +13,7 @@ const FreeGamesRow = React.memo(function FreeGamesRow({
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-black text-white flex items-center gap-2">
           <Gift className="w-6 h-6 text-light-blue" />
-          <span>{t("games.list.freeGames.header")}</span>
+          <span>{title}</span>
         </h2>
       </div>
 
@@ -91,6 +85,4 @@ const FreeGamesRow = React.memo(function FreeGamesRow({
       </div>
     </section>
   );
-});
-
-export default FreeGamesRow;
+}

@@ -155,7 +155,7 @@ export function useListDetails(paramsPromise: Promise<{ listId: string }>) {
             if (exists) {
               try {
                 await updateDoc(gRef, { rating: deleteField() });
-              } catch (updateErr) {
+              } catch {
                 console.log(
                   `[useListDetails] Stale cache update handled for list ${listDoc.id}`,
                 );
@@ -172,7 +172,7 @@ export function useListDetails(paramsPromise: Promise<{ listId: string }>) {
       }
       setDeleteConfirm(null);
     },
-    [targetUid, listId, games, isSharedList],
+    [targetUid, listId, games, isSharedList, t],
   );
 
   // Rate game inside list
@@ -251,7 +251,7 @@ export function useListDetails(paramsPromise: Promise<{ listId: string }>) {
               } else {
                 await updateDoc(gRef, { rating: newRating });
               }
-            } catch (updateErr) {
+            } catch {
               console.log(
                 `[useListDetails] Stale cache update handled for list ${listDoc.id}`,
               );
@@ -264,7 +264,7 @@ export function useListDetails(paramsPromise: Promise<{ listId: string }>) {
         toast.error(t("common.error") || "An error occurred");
       }
     },
-    [targetUid, listId, games, isSharedList],
+    [targetUid, listId, games, isSharedList, t],
   );
 
   const handleShare = useCallback(() => {

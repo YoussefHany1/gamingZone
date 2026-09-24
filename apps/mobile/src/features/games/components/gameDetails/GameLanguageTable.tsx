@@ -3,7 +3,6 @@ import { View, StyleSheet } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { CircleCheck, FileText, Languages, Mic, Monitor } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import * as Localization from "expo-localization";
 import COLORS from "@/src/constants/colors";
 import { sharedStyles } from "./shared";
 import { COLUMN_KEYS, type GameLanguageTableProps, type ColumnKey } from "../../types";
@@ -36,6 +35,19 @@ const LANGUAGE_NAME_FALLBACK: Record<string, string> = {
   zh: "Chinese",
 };
 
+/** English region names used to disambiguate regional language variants. */
+const REGION_NAMES: Record<string, string> = {
+  BR: "Brazil",
+  ES: "Spain",
+  MX: "Mexico",
+  PT: "Portugal",
+  CN: "China",
+  TW: "Taiwan",
+  US: "United States",
+  GB: "United Kingdom",
+  CA: "Canada",
+};
+
 /** Returns the English display name for a BCP-47 language code, or null. */
 function getLanguageDisplayName(code: string): string | null {
   try {
@@ -47,12 +59,20 @@ function getLanguageDisplayName(code: string): string | null {
 }
 
 const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
-  const deviceLanguageName = React.useMemo(() => {
-    const code = Localization.getLocales()[0]?.languageCode;
-    return code ? getLanguageDisplayName(code) : null;
-  }, []);
+  // Build the English display name(s) for the app's current language so we can
+  // bold the matching row. Regional variants (e.g. pt-BR) are matched exactly
+  // against their region-suffixed name to avoid bolding both Portuguese rows.
+  const appLang = i18n.language ?? "en";
+  const appLangParts = appLang.split("-");
+  const appLangBase = appLangParts[0] ?? "en";
+  const appLangRegion = appLangParts[1] ?? undefined;
+  const appLangBaseName = getLanguageDisplayName(appLangBase);
+  const appLangRegionName =
+    appLangRegion && appLangBaseName
+      ? `${appLangBaseName} (${REGION_NAMES[appLangRegion.toUpperCase()] ?? appLangRegion})`
+      : null;
 
   if (languageList.length === 0) return null;
 
@@ -86,8 +106,9 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
 
       {/* Table body */}
       {languageList.map((lang, index) => {
-        const isDeviceLang =
-          !!deviceLanguageName && lang.name.includes(deviceLanguageName);
+        const isAppLanguage = appLangRegionName
+          ? lang.name === appLangRegionName
+          : !!appLangBaseName && lang.name.includes(appLangBaseName);
 
         return (
           <View
@@ -101,7 +122,7 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
             ]}
           >
             <CustomText
-              style={[styles.langCell, isDeviceLang && styles.langCellHighlighted]}
+              style={[styles.langCell, isAppLanguage && styles.langCellHighlighted]}
             >
               {t(`games.details.languages.names.${lang.name}`, lang.name)}
             </CustomText>

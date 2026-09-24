@@ -5,7 +5,6 @@ import Image from "next/image";
 
 import {
   Trash2,
-  Loader2,
   Bookmark,
   ArrowLeft,
   Gamepad2,

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
+import { ToastAndroid } from "react-native";
 import auth from "@react-native-firebase/auth";
 import NotificationService, {
   NotificationPreferences,
@@ -106,6 +107,10 @@ export const useNotificationPreferences =
           };
           globalPreferencesCache = rolledBack;
           setPreferences(rolledBack);
+          ToastAndroid.show(
+            "Failed to update notification settings. Please try again.",
+            ToastAndroid.SHORT,
+          );
         }
       },
       [], // no deps — reads globalPreferencesCache directly via the module ref

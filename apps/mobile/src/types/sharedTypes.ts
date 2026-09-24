@@ -32,4 +32,5 @@ export type Game = {
   genres?: GameGenre[];
   hypes?: number;
   videos?: GamingEventVideo[];
+  similar_games?: { id: number; name: string; cover?: GameCover }[];
 };

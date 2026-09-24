@@ -1,11 +1,12 @@
 import React from "react";
 
-import type { FreeGame, Game, NewsGame } from "@gaming-zone/core";
+import type { FreeGame, Game } from "@gaming-zone/core";
 
-export type { FreeGame, Game, NewsGame } from "@gaming-zone/core";
+export type { FreeGame, Game } from "@gaming-zone/core";
 
 export interface FreeGamesRowProps {
   games: FreeGame[];
+  title: string;
 }
 
 export interface FreeGameCountdownProps {
@@ -21,9 +22,4 @@ export interface GameRowProps {
   icon: React.ReactNode;
   games: Game[];
   showCountdown?: boolean;
-}
-
-export interface NewsRowProps {
-  title: string;
-  icon: React.ReactNode;
 }

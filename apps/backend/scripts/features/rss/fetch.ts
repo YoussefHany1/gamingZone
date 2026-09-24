@@ -8,6 +8,7 @@ import * as he from 'he';
 import { withRetry } from '../../lib/http';
 import { fixArabHardwareEncoding } from './encoding';
 import { isBadImage } from './helpers';
+import { normalizeText } from './normalize';
 
 const parser = new xml2js.Parser({
   explicitArray: false,
@@ -62,7 +63,7 @@ async function extractDescriptionFromDoc(document: any): Promise<string | null> 
     const reader = new Readability(document);
     const article = reader.parse();
     if (article && article.textContent) {
-      return article.textContent.trim().replace(/\s+/g, ' ');
+      return normalizeText(article.textContent);
     }
   } catch (error: any) {
     logger.debug(`Readability extraction failed: ${error.message}`);
@@ -112,7 +113,7 @@ async function fetchArticleDataWithPuppeteer(url: string) {
     const html = await page.content();
     const { JSDOM } = await import('jsdom');
     const dom = new JSDOM(html, { url });
-    
+
     const fullDescription = await extractDescriptionFromDoc(dom.window.document);
 
     const imageCandidates = await page.evaluate(() => {
@@ -236,7 +237,11 @@ async function fetchArticleData(url: string) {
     const images: Record<string, string> = {};
 
     for (const tag of tags) {
-      const key = tag.getAttribute('property') || tag.getAttribute('name') || tag.getAttribute('itemprop') || tag.getAttribute('rel');
+      const key =
+        tag.getAttribute('property') ||
+        tag.getAttribute('name') ||
+        tag.getAttribute('itemprop') ||
+        tag.getAttribute('rel');
       const val = tag.getAttribute('content') || tag.getAttribute('href');
 
       if (key && val) {

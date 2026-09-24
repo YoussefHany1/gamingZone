@@ -9,6 +9,7 @@ import {
 } from "react-native-google-mobile-ads";
 import COLORS from "../constants/colors";
 import { nativeAdUnitId } from "../constants/config";
+import { useAdsEnabled } from "../hooks/useAdsEnabled";
 import { t } from "i18next";
 import CustomText from "./CustomText";
 
@@ -22,11 +23,19 @@ interface NativeAdComponentProps {
 
 export const NativeAdComponent = memo<NativeAdComponentProps>(
   ({ style, variant = "game", language }) => {
+    const adsEnabled = useAdsEnabled();
     const [ad, setAd] = useState<NativeAd | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<boolean>(false);
 
     useEffect(() => {
+      if (!adsEnabled) {
+        setAd(null);
+        setLoading(true);
+        setError(false);
+        return;
+      }
+
       let isMounted = true;
       let loadedAdRef: NativeAd | null = null;
 
@@ -54,7 +63,11 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
           loadedAdRef.destroy();
         }
       };
-    }, []);
+    }, [adsEnabled]);
+
+    if (!adsEnabled) {
+      return null;
+    }
 
     if (loading) {
       return (

@@ -1,21 +1,35 @@
 import React from "react";
 
-import type { GameData, PcRequirements } from "@gaming-zone/core";
+import type {
+  GameData,
+  PcRequirements,
+  Website,
+  CollectionGame,
+  SimilarGame,
+} from "@gaming-zone/core";
+import type { User } from "firebase/auth";
+import type { TranslateFn } from "@/i18n/translate";
 
 export type {
   GameData,
   PcRequirements,
   Website,
-  Company,
-  InvolvedCompany,
   CollectionGame,
   SimilarGame,
-  SpecRow,
 } from "@gaming-zone/core";
 
+export interface AgeRatingInfo {
+  organization: number;
+  rating_category: number;
+}
+
+export interface GameStoreInfo extends Website {
+  name: string;
+  logo: string;
+  bg: string;
+}
+
 export interface GameDetailsClientProps {
-  t?: any;
-  lang?: string;
   game: GameData;
   pcSpecs: PcRequirements | null;
   rating: number;
@@ -30,41 +44,39 @@ export interface GameDetailsClientProps {
     Subtitles: boolean;
     Interface: boolean;
   }[];
-  activeAgeRating:
-    | { organization: number; rating_category: number }
-    | undefined;
-  gameStores: any[];
+  activeAgeRating: AgeRatingInfo | undefined;
+  gameStores: GameStoreInfo[];
   coverUrl: string;
 }
 
 export interface GameHeroProps {
-  t?: any;
-  lang?: string;
+  t: TranslateFn;
+  lang: string;
   game: GameData;
   coverUrl: string;
   rating: number;
-  activeAgeRating: { organization: number; rating_category: number } | undefined;
-  user: any;
+  activeAgeRating: AgeRatingInfo | undefined;
+  user: User | null;
   userRating: number;
   handleRateGame: (rating: number) => void;
   setListModalOpen: (open: boolean) => void;
 }
 
 export interface GameStoresGridProps {
-  t?: any;
-  lang?: string;
-  gameStores: any[];
+  t: TranslateFn;
+  lang: string;
+  gameStores: GameStoreInfo[];
 }
 
 export interface GameAboutProps {
-  t?: any;
-  lang?: string;
+  t: TranslateFn;
+  lang: string;
   summary?: string;
 }
 
 export interface GameScreenshotsProps {
-  t?: any;
-  lang?: string;
+  t: TranslateFn;
+  lang: string;
   screenshots?: { image_id: string }[];
   activeScreenshotIdx: number | null;
   setActiveScreenshotIdx: (idx: number | null) => void;
@@ -75,14 +87,14 @@ export interface GameScreenshotsProps {
 }
 
 export interface GamePcRequirementsProps {
-  t?: any;
-  lang?: string;
+  t: TranslateFn;
+  lang: string;
   pcSpecs: PcRequirements | null;
 }
 
 export interface GameLanguagesProps {
-  t?: any;
-  lang?: string;
+  t: TranslateFn;
+  lang: string;
   languageRows: {
     name: string;
     Audio: boolean;
@@ -92,26 +104,26 @@ export interface GameLanguagesProps {
 }
 
 export interface GameSeriesProps {
-  t?: any;
-  lang?: string;
-  seriesGames: any[];
+  t: TranslateFn;
+  lang: string;
+  seriesGames: CollectionGame[];
 }
 
 export interface GameSimilarProps {
-  t?: any;
-  lang?: string;
-  similarGames: any[];
+  t: TranslateFn;
+  lang: string;
+  similarGames: SimilarGame[];
 }
 
 export interface GameSpecificationsProps {
-  t?: any;
-  lang?: string;
+  t: TranslateFn;
+  lang: string;
   game: GameData;
 }
 
 export interface GamePlayTimeProps {
-  t?: any;
-  lang?: string;
+  t: TranslateFn;
+  lang: string;
   playTime: {
     main: number | null;
     mainExtra: number | null;
@@ -120,8 +132,8 @@ export interface GamePlayTimeProps {
 }
 
 export interface GameVideosProps {
-  t?: any;
-  lang?: string;
+  t: TranslateFn;
+  lang: string;
   videos?: { name?: string; video_id: string }[];
   activeVideoId: string | null;
   setActiveVideoId: (id: string | null) => void;

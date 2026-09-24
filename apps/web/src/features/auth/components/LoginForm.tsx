@@ -9,8 +9,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
 const loginSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().min(1, "emailRequired").email("emailInvalid"),
+  password: z.string().min(6, "passwordShort"),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
@@ -19,6 +19,14 @@ interface LoginFormProps {
   t: (key: string) => string;
   loading: boolean;
   handleLogin: (data: LoginFormValues) => void;
+}
+
+/** Zod messages are translation keys under auth.errors; fall back to the raw message. */
+function renderFieldError(t: LoginFormProps["t"], message?: string): string {
+  if (!message) return "";
+  const key = `auth.errors.${message}`;
+  const translated = t(key);
+  return translated === key ? message : translated;
 }
 
 export default function LoginForm({ t, loading, handleLogin }: LoginFormProps) {
@@ -49,7 +57,7 @@ export default function LoginForm({ t, loading, handleLogin }: LoginFormProps) {
         />
         {errors.email && (
           <p className="mt-1.5 text-xs text-red-400 font-medium">
-            {t(`auth.errors.${errors.email.message}`) || errors.email.message}
+            {renderFieldError(t, errors.email.message)}
           </p>
         )}
       </div>
@@ -80,8 +88,7 @@ export default function LoginForm({ t, loading, handleLogin }: LoginFormProps) {
         </div>
         {errors.password && (
           <p className="mt-1.5 text-xs text-red-400 font-medium">
-            {t(`auth.errors.${errors.password.message}`) ||
-              errors.password.message}
+            {renderFieldError(t, errors.password.message)}
           </p>
         )}
       </div>

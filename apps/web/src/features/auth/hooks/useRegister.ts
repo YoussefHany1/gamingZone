@@ -9,6 +9,7 @@ import {
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import { useLangStore } from "@/store/useLangStore";
+import { createSessionFromUser } from "../services/session";
 
 import countries from "i18n-iso-countries";
 import enLocale from "i18n-iso-countries/langs/en.json";
@@ -58,12 +59,7 @@ export function useRegister() {
           dob: "",
         });
 
-        const idToken = await user.getIdToken();
-        await fetch("/api/auth/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken }),
-        });
+        await createSessionFromUser(user);
 
         router.push("/");
       } catch (err) {
@@ -89,12 +85,7 @@ export function useRegister() {
     setLoading(true);
     try {
       const userCredential = await signInWithPopup(auth, googleProvider);
-      const idToken = await userCredential.user.getIdToken();
-      await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
+      await createSessionFromUser(userCredential.user);
       router.push("/");
     } catch (err) {
       const code = (err as { code?: string }).code;
@@ -111,12 +102,7 @@ export function useRegister() {
     setLoading(true);
     try {
       const userCredential = await signInAnonymously(auth);
-      const idToken = await userCredential.user.getIdToken();
-      await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
+      await createSessionFromUser(userCredential.user);
       router.push("/");
     } catch {
       setError(t("auth.errors.general"));

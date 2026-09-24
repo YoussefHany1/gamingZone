@@ -110,6 +110,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
 
       if (!idToken) {
         // idToken missing — Google sign-in response incomplete
+        ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
         return;
       }
 
@@ -118,13 +119,22 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
       navigation.replace("MainApp");
     } catch (error) {
       // Silently ignore user-cancelled sign-in; log unexpected errors
-      if ((error as { code?: string }).code !== statusCodes.SIGN_IN_CANCELLED) {
+      const err = error as { code?: string };
+      if (err.code !== statusCodes.SIGN_IN_CANCELLED) {
         console.error("Google sign-in error", error);
+        if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+          ToastAndroid.show(
+            t("auth.errors.playServices"),
+            ToastAndroid.LONG,
+          );
+        } else if (err.code !== statusCodes.IN_PROGRESS) {
+          ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
+        }
       }
     } finally {
       setIsLoading(false);
     }
-  }, [navigation]);
+  }, [navigation, t]);
 
   // Anonymous / Guest login handler
 

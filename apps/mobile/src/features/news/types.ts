@@ -36,6 +36,8 @@ export type GenericNewsRouteProps = {
   rssFeeds: RssFeedMap;
   categoryKey: string;
   loading: boolean;
+  error: Error | null;
+  refetch: (forceRefresh?: boolean) => Promise<void>;
 };
 
 export type LatestNewsProps = {

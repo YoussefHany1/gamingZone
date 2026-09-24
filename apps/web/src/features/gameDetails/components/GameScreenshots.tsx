@@ -18,10 +18,7 @@ export default function GameScreenshots({
   zoomScale,
   setZoomScale,
   t,
-  lang,
 }: GameScreenshotsProps) {
-  const isRtl = lang === "ar";
-
   if (!screenshots || screenshots.length === 0) return null;
 
   return (

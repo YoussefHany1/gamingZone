@@ -13,6 +13,7 @@ import type {
 import { CirclePlus } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
+import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import * as Notifications from "expo-notifications";
 import COLORS from "../constants/colors";
 import { adUnitId } from "../constants/config";
@@ -106,11 +107,15 @@ const settingsHeaderOptions = {
 } as const;
 
 // BannerAd wrapper
-const AdBanner = memo(() => (
-  <View style={styles.adContainer}>
-    <BannerAd unitId={adUnitId} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
-  </View>
-));
+const AdBanner = memo(() => {
+  const adsEnabled = useAdsEnabled();
+  if (!adsEnabled) return null;
+  return (
+    <View style={styles.adContainer}>
+      <BannerAd unitId={adUnitId} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
+    </View>
+  );
+});
 AdBanner.displayName = "AdBanner";
 
 // Internal Stack Navigators

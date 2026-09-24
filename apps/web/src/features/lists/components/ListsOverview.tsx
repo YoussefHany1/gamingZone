@@ -8,7 +8,6 @@ import {
   FolderOpen,
   Plus,
   Trash2,
-  Loader2,
   Bookmark,
   X,
   Gamepad2,

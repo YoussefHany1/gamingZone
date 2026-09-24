@@ -6,11 +6,28 @@ import {
   fetchSteamRequirements,
   extractSteamAppId,
 } from "@/features/gameDetails/services/api";
+import { fetchGamesList } from "@/features/games";
 import {
   formatLanguageRows,
   formatPlayTime,
 } from "@/features/gameDetails/utils";
 import { storeMap } from "@/features/gameDetails/constants";
+import { getTranslations } from "@/i18n/server";
+import { getSiteBaseUrl } from "@/lib/metadata";
+
+// Prerender popular game pages so they are served from the Vercel CDN instead
+// of running a function (IGDB proxy + Steam scrape) on every request.
+export const revalidate = 600;
+
+export async function generateStaticParams() {
+  try {
+    const popular = await fetchGamesList("popular");
+    const ids = [...new Set(popular.map((g) => g.id.toString()))].slice(0, 12);
+    return ids.map((id) => ({ id }));
+  } catch {
+    return [];
+  }
+}
 
 export async function generateMetadata(props: {
   params: Promise<{ id: string; locale: string }>;
@@ -35,10 +52,10 @@ export async function generateMetadata(props: {
     ? `https://images.igdb.com/igdb/image/upload/t_screenshot_med/${game.cover.image_id}.webp`
     : "/assets/cover2.png";
 
-  const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://gamingzone.com"}/${locale}/games/${id}`;
+  const canonicalUrl = `${getSiteBaseUrl()}/${locale}/games/${id}`;
 
   return {
-    title: ` Gaming Zone | ${game.name}`,
+    title: `Gaming Zone | ${game.name}`,
     description:
       game.summary ||
       (locale === "en"
@@ -74,8 +91,6 @@ export async function generateMetadata(props: {
   };
 }
 
-import { getTranslations } from "@/i18n/server";
-
 export default async function GameDetailsPage(props: {
   params: Promise<{ id: string; locale: string }>;
 }) {
@@ -105,7 +120,7 @@ export default async function GameDetailsPage(props: {
 
   const coverUrl = game.cover
     ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.webp`
-    : "/placeholder-news.jpg";
+    : "/assets/image-not-found.webp";
 
   const rating = game.total_rating ? Math.round(game.total_rating) / 10 : 0;
   const playTime = formatPlayTime(game.game_time_to_beats);
@@ -127,7 +142,7 @@ export default async function GameDetailsPage(props: {
       return { ...w, ...sm };
     });
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://gz1.vercel.app";
+  const baseUrl = getSiteBaseUrl();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "VideoGame",

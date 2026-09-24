@@ -22,9 +22,18 @@ import {
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { lang, setLang, t } = useLangStore();
+  const { lang, t } = useLangStore();
   const user = useAuthStore((state) => state.user);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Pathnames are locale-prefixed (/en/news); compare against the bare path
+  const pathWithoutLocale = (() => {
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments[0] === "en" || segments[0] === "ar") segments.shift();
+    return `/${segments.join("/")}`;
+  })();
+
+  const isActive = (href: string) => pathWithoutLocale === href;
 
   const toggleLanguage = () => {
     const nextLang = lang === "en" ? "ar" : "en";
@@ -95,14 +104,15 @@ export default function Header() {
           <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => {
               const Icon = link.icon;
-              const isActive = pathname === link.href;
+              const isActiveLink = isActive(link.href);
               return (
                 <Link
                   key={link.href}
                   id={`nav-link-${link.href.replace("/", "") || "home"}`}
                   href={link.href}
+                  aria-current={isActiveLink ? "page" : undefined}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    isActive
+                    isActiveLink
                       ? "text-light-blue bg-white/5 border border-white/10"
                       : "text-gray-300 hover:text-white hover:bg-white/5"
                   }`}
@@ -210,15 +220,16 @@ export default function Header() {
         <div className="md:hidden glass-panel border-b border-white/10 px-4 pt-2 pb-4 space-y-2 animate-in fade-in slide-in-from-top duration-300">
           {navLinks.map((link) => {
             const Icon = link.icon;
-            const isActive = pathname === link.href;
+            const isActiveLink = isActive(link.href);
             return (
               <Link
                 key={link.href}
                 id={`nav-link-mobile-${link.href.replace("/", "") || "home"}`}
                 href={link.href}
+                aria-current={isActiveLink ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-base font-medium transition-all ${
-                  isActive
+                  isActiveLink
                     ? "text-light-blue bg-white/5 border border-white/10"
                     : "text-gray-300 hover:text-white"
                 }`}

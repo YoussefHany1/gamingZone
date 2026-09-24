@@ -10,6 +10,7 @@ import {
   Pressable,
 } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
+import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import { ArrowLeft, ArrowRight, ExternalLink, Share2 } from "lucide-react-native";
 import { Image } from "expo-image";
 import ImageGallerySkeleton from "../../games/skeleton/gameDetails/ImageGallerySkeleton";
@@ -17,7 +18,7 @@ import GameDetailsMetaSkeleton from "../../games/skeleton/gameDetails/GameDetail
 import { useTranslation } from "react-i18next";
 import { intervalToDuration } from "date-fns";
 import { format, type Locale } from "date-fns";
-import { ar } from "date-fns/locale";
+import { ar, es, fr, hi, pt, ptBR } from "date-fns/locale";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import Constants from "expo-constants";
@@ -30,7 +31,7 @@ import type { ArticleParams, RootParamList } from "../types";
 
 // Constants
 
-const SHARE_DOMAIN = "https://gz1.vercel.app" as const;
+const SHARE_DOMAIN = "https://gz1.games" as const;
 const { APPWRITE_DATABASE_ID } = (Constants.expoConfig?.extra ?? {}) as {
   APPWRITE_DATABASE_ID?: string;
 };
@@ -48,6 +49,7 @@ const NewsDetails = memo((): React.ReactElement => {
   const [loadingArticle, setLoadingArticle] = useState<boolean>(false);
   const [fetchedArticle, setFetchedArticle] = useState<ArticleParams | null>(null);
   const [showAds, setShowAds] = useState<boolean>(false);
+  const adsEnabled = useAdsEnabled();
   const [isReady, setIsReady] = useState<boolean>(false);
   const { onScroll } = useScrollDirection();
 
@@ -125,6 +127,11 @@ const NewsDetails = memo((): React.ReactElement => {
     try {
       const options: { locale?: Locale } = {};
       if (currentLang === "ar") options.locale = ar;
+      else if (currentLang === "es") options.locale = es;
+      else if (currentLang === "fr") options.locale = fr;
+      else if (currentLang === "hi") options.locale = hi;
+      else if (currentLang === "pt-BR") options.locale = ptBR;
+      else if (currentLang === "pt-PT") options.locale = pt;
       return format(new Date(pubDate), "dd MMMM yyyy - hh:mm a", options);
     } catch {
       return "";
@@ -161,9 +168,7 @@ const NewsDetails = memo((): React.ReactElement => {
     try {
       // All articles have an Appwrite ID → always generate a clean /news/:id deep link.
       // If somehow no ID exists, fall back to the original article source URL.
-      const shareUrl = articleId
-        ? `${SHARE_DOMAIN}/news/${articleId}`
-        : link;
+      const shareUrl = articleId ? `${SHARE_DOMAIN}/news/${articleId}` : link;
 
       let finalUrl = shareUrl;
       try {
@@ -273,7 +278,7 @@ const NewsDetails = memo((): React.ReactElement => {
             {description || t("news.details.noDescription")}
           </CustomText>
 
-          {showAds && (
+          {showAds && adsEnabled && (
             <View style={styles.ad}>
               <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
               <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
@@ -285,11 +290,7 @@ const NewsDetails = memo((): React.ReactElement => {
             android_ripple={{ color: "#779bdd" }}
             onPress={handleOpenLink}
           >
-            <ExternalLink
-              size={20}
-              color="white"
-              style={{ marginRight: 8 }}
-            />
+            <ExternalLink size={20} color="white" style={{ marginRight: 8 }} />
             <CustomText style={styles.buttonText}>
               {t("news.details.readFullArticle")}
             </CustomText>

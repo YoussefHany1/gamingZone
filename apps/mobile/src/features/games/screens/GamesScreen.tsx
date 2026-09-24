@@ -3,6 +3,7 @@ import CustomText from "@/src/components/CustomText";
 import CustomTextInput from "@/src/components/CustomTextInput";
 import { StyleSheet, View, TouchableOpacity } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
+import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -54,12 +55,13 @@ const STATIC_FEED_ITEMS: FeedItemConfig[] = [
 // Ad Container — owns its own showAds state so it never triggers a list re-render
 const AdContainer = memo(() => {
   const { t } = useTranslation();
+  const adsEnabled = useAdsEnabled();
   const [showAds, setShowAds] = useState(false);
   useEffect(() => {
     const task = runAfterInteractions(() => setShowAds(true));
     return () => task.cancel();
   }, []);
-  if (!showAds) return null;
+  if (!showAds || !adsEnabled) return null;
   return (
     <View style={styles.adContainer}>
       <CustomText style={styles.adLabel}>{t("common.ad")}</CustomText>

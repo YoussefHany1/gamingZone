@@ -65,11 +65,20 @@ function normalizeJsonItems(data: any, sourceUrl: string): NormalizedArticle[] {
 
 function cleanHtmlText(html: any): string {
   if (!html) return '';
-  const spaced = String(html)
-    .replace(/<br\s*\/?>/gi, ' ')
-    .replace(/<\/(p|div|h[1-6]|li|tr|th|td|ul|ol|blockquote)>/gi, ' ')
-    .replace(/<(p|div|h[1-6]|li|tr|th|td|ul|ol|blockquote)[^>]*>/gi, ' ');
-  return he.decode(striptags(spaced)).replace(/\s+/g, ' ').trim();
+  const structured = String(html)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|h[1-6]|li|tr|th|td|ul|ol|blockquote)>/gi, '\n\n')
+    .replace(/<(p|div|h[1-6]|li|tr|th|td|ul|ol|blockquote)[^>]*>/gi, '\n\n');
+  return normalizeText(he.decode(striptags(structured)));
+}
+
+export function normalizeText(text: string): string {
+  return text
+    .replace(/\r\n?/g, '\n')
+    .replace(/ *\n */g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function normalizeXmlItems(parsedData: any, sourceUrl: string): NormalizedArticle[] {

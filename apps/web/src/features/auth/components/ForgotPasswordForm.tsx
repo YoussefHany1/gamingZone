@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  email: z.string().min(1, "emailRequired").email("emailInvalid"),
 });
 
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
@@ -19,6 +19,14 @@ interface ForgotPasswordFormProps {
   success: boolean;
   loading: boolean;
   handleResetPassword: (data: ForgotPasswordFormValues) => void;
+}
+
+/** Zod messages are translation keys under auth.errors; fall back to the raw message. */
+function renderFieldError(t: ForgotPasswordFormProps["t"], message?: string): string {
+  if (!message) return "";
+  const key = `auth.errors.${message}`;
+  const translated = t(key);
+  return translated === key ? message : translated;
 }
 
 export default function ForgotPasswordForm({
@@ -74,7 +82,7 @@ export default function ForgotPasswordForm({
             />
             {errors.email && (
               <p className="mt-1.5 text-xs text-red-400 font-medium">
-                {t(`auth.errors.${errors.email.message}`) || errors.email.message}
+                {renderFieldError(t, errors.email.message)}
               </p>
             )}
           </div>

@@ -23,6 +23,7 @@ import ImageGallery from "../components/gameDetails/ImageGallery";
 import ListSelectionModal from "../components/gameDetails/ListSelectionModal";
 import { adUnitId } from "../../../constants/config";
 import COLORS from "../../../constants/colors";
+import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 // gameDetails sub-components
 import GameDetailsMeta from "../components/gameDetails/GameDetailsMeta";
 import GameStores from "../components/gameDetails/GameStores";
@@ -41,11 +42,13 @@ import { useGameDetails } from "../hooks/useGameDetails";
 
 const GameDetails = ({ route, navigation }: Props) => {
   const { gameID: initialGameID, claimUrl, store = "" } = route.params;
+  const adsEnabled = useAdsEnabled();
 
   const {
     game,
     loading,
     error,
+    refetch,
     isReady,
     currentId,
     currentLang,
@@ -88,9 +91,15 @@ const GameDetails = ({ route, navigation }: Props) => {
       </View>
 
       {/* Error states */}
-      {!loading && error && <ErrorState message={`Error: ${String(error)}`} />}
+      {!loading && error && !game && (
+        <ErrorState
+          message={t("common.dataLoadError")}
+          showContactButton={false}
+          onRetry={() => refetch(true)}
+        />
+      )}
       {!loading && !error && !game && (
-        <ErrorState message="No data to display" showContactButton={false} />
+        <ErrorState message={t("common.noData")} showContactButton={false} />
       )}
 
       {/* Main content — ScrollView always mounted, each section swaps independently */}
@@ -234,13 +243,15 @@ const GameDetails = ({ route, navigation }: Props) => {
                 ) : null}
 
                 {/* Ad — always shown */}
-                <View style={styles.ad}>
-                  <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
-                  <BannerAd
-                    unitId={adUnitId}
-                    size={BannerAdSize.MEDIUM_RECTANGLE}
-                  />
-                </View>
+                {adsEnabled && (
+                  <View style={styles.ad}>
+                    <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
+                    <BannerAd
+                      unitId={adUnitId}
+                      size={BannerAdSize.MEDIUM_RECTANGLE}
+                    />
+                  </View>
+                )}
 
                 {/* Language support table */}
                 {loading ? (
@@ -261,13 +272,15 @@ const GameDetails = ({ route, navigation }: Props) => {
                 ) : null}
 
                 {/* Second ad — always shown */}
-                <View style={styles.ad}>
-                  <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
-                  <BannerAd
-                    unitId={adUnitId}
-                    size={BannerAdSize.MEDIUM_RECTANGLE}
-                  />
-                </View>
+                {adsEnabled && (
+                  <View style={styles.ad}>
+                    <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
+                    <BannerAd
+                      unitId={adUnitId}
+                      size={BannerAdSize.MEDIUM_RECTANGLE}
+                    />
+                  </View>
+                )}
 
                 {/* PC System Requirements — has its own internal skeleton via pcReqLoading */}
                 <GamePcRequirements

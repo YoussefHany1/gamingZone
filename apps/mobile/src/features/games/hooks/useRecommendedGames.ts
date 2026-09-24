@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import { createMMKV } from "react-native-mmkv";
-import { fetchGameById, fetchGamesByIds } from "@/src/services/api/igdbApi";
+import { fetchGamesByIds } from "@/src/services/api/igdbApi";
+import type { GameData } from "../types";
 import type { Game } from "@/src/types/sharedTypes";
 
 // ─── Cache Setup ──────────────────────────────────────────────────────────────
@@ -83,15 +84,23 @@ async function buildRecommendations(
   });
 
   const topGameIds = allUserGames.slice(0, 10).map((g) => g.id);
-  const gamesDetails = await Promise.all(
-    topGameIds.map((id) => fetchGameById(id).catch(() => null)),
-  );
+
+  // Fetch all top games in ONE batched request. The old code fired up to 10
+  // parallel requests to the GamingZone backend, which on low-end hardware
+  // (combined with the rest of the Home-screen burst) starved the main thread
+  // and caused input-dispatch ANRs. Preserve topGameIds order for weighting.
+  const topGames = await fetchGamesByIds(topGameIds);
+  const topGamesById = new Map<number, GameData & { id: number }>();
+  for (const game of topGames) {
+    topGamesById.set(game.id, game as GameData & { id: number });
+  }
 
   const similarGameWeights: Record<number, number> = {};
   const similarGameIds = new Set<number>();
   const genreCounts: Record<string, number> = {};
 
-  gamesDetails.forEach((details, index) => {
+  topGameIds.forEach((id, index) => {
+    const details = topGamesById.get(id);
     if (!details) return;
     const sourceWeight = 10 - index;
     details.similar_games?.forEach((sg) => {

@@ -59,17 +59,19 @@ export default function ListSelectionModal({
     [t],
   );
 
-  useEffect(() => {
-    if (!visible) {
-      setIsCreating(false);
-      setNewListName("");
-      return;
-    }
-
-    if (!user) return;
-
+  // Reset + prime loading state whenever the modal opens or closes
+  // (React-recommended render-time adjustment instead of an effect pass).
+  const [prevVisible, setPrevVisible] = useState(visible);
+  if (prevVisible !== visible) {
+    setPrevVisible(visible);
+    setIsCreating(false);
+    setNewListName("");
     setLists([]);
     setLoading(true);
+  }
+
+  useEffect(() => {
+    if (!visible || !user) return;
 
     const listsRef = collection(db, "users", user.uid, "lists");
 

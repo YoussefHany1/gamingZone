@@ -7,8 +7,10 @@ import {
   Switch,
   TouchableOpacity,
   ImageStyle,
+  ToastAndroid,
 } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
+import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Loading from "../../../Loading";
@@ -32,6 +34,7 @@ const Notification: React.FC = () => {
     Record<string, boolean>
   >({});
   const [showAds, setShowAds] = useState<boolean>(false);
+  const adsEnabled = useAdsEnabled();
   const { t, i18n } = useTranslation();
 
   useEffect(() => {
@@ -64,12 +67,24 @@ const Notification: React.FC = () => {
     setPreferences(newPreferences);
 
     // 2. استدعاء الخدمة لحفظ التغيير في Firestore و FCM
-    await NotificationService.toggleNotificationPreference(
-      userId,
-      FREE_GAMES_CATEGORY,
-      FREE_GAMES_SOURCE,
-      newValue,
-    );
+    try {
+      await NotificationService.toggleNotificationPreference(
+        userId,
+        FREE_GAMES_CATEGORY,
+        FREE_GAMES_SOURCE,
+        newValue,
+      );
+    } catch (error) {
+      console.error("[NotificationScreen] toggleFreeGames error:", error);
+      // Roll back the optimistic toggle on failure.
+      const rolledBack = { ...preferences, [topicId]: !newValue };
+      setPreferences(rolledBack);
+      ToastAndroid.show(
+        t("settings.notifications.updateFailed") ??
+          "Failed to update notification settings. Please try again.",
+        ToastAndroid.LONG,
+      );
+    }
   };
 
   const toggleCategoryExpansion = useCallback((category: string): void => {
@@ -233,7 +248,7 @@ const Notification: React.FC = () => {
         <CustomText style={styles.footerText}>
           {t("settings.notifications.footer")}
         </CustomText>
-        {showAds && (
+        {showAds && adsEnabled && (
           <View style={styles.ad}>
             <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
             <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />

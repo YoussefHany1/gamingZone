@@ -1,9 +1,7 @@
 import { Clock } from "lucide-react";
 import { GamePlayTimeProps } from "../types";
 
-export default function GamePlayTime({ playTime, t, lang }: GamePlayTimeProps) {
-  const isRtl = lang === "ar";
-
+export default function GamePlayTime({ playTime, t }: GamePlayTimeProps) {
   if (
     !playTime ||
     (playTime.main === null &&

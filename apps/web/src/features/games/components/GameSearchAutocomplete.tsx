@@ -7,14 +7,17 @@ import Image from "next/image";
 import { useDebounce } from "@/hooks/useDebounce";
 import { searchGames } from "../services/api";
 import { Game } from "../types";
+import { gameCoverUrl } from "../utils";
 
 interface GameSearchAutocompleteProps {
+  locale: string;
   initialQuery: string;
   placeholder: string;
   submitText: string;
 }
 
 export default function GameSearchAutocomplete({
+  locale,
   initialQuery,
   placeholder,
   submitText,
@@ -77,7 +80,7 @@ export default function GameSearchAutocomplete({
     <div ref={wrapperRef} className="relative w-full md:max-w-xl">
       <form
         method="GET"
-        action="/games"
+        action={`/${locale}/games`}
         className="flex flex-col sm:flex-row gap-3 w-full"
       >
         <div className="relative grow">
@@ -120,47 +123,41 @@ export default function GameSearchAutocomplete({
               </div>
             ) : (
               <ul className="flex flex-col">
-                {suggestions.map((game) => {
-                  const cover = game.cover
-                    ? `https://images.igdb.com/igdb/image/upload/t_cover_small/${game.cover.image_id}.webp`
-                    : "/image-not-found.webp";
-
-                  return (
-                    <li
-                      key={game.id}
-                      className="border-b border-white/5 last:border-0"
+                {suggestions.map((game) => (
+                  <li
+                    key={game.id}
+                    className="border-b border-white/5 last:border-0"
+                  >
+                    <Link
+                      href={`/games/${game.id}`}
+                      className="flex items-center gap-3 p-3 hover:bg-white/10 transition-colors"
+                      onClick={() => setIsFocused(false)}
                     >
-                      <Link
-                        href={`/games/${game.id}`}
-                        className="flex items-center gap-3 p-3 hover:bg-white/10 transition-colors"
-                        onClick={() => setIsFocused(false)}
-                      >
-                        <div className="relative w-10 h-12 rounded overflow-hidden shrink-0">
-                          <Image
-                            src={cover}
-                            alt={game.name}
-                            fill
-                            sizes="40px"
-                            className="object-cover"
-                            unoptimized={!game.cover}
-                          />
-                        </div>
-                        <div className="flex flex-col overflow-hidden">
-                          <span className="text-sm font-bold text-white truncate">
-                            {game.name}
+                      <div className="relative w-10 h-12 rounded overflow-hidden shrink-0">
+                        <Image
+                          src={gameCoverUrl(game, "cover_small")}
+                          alt={game.name}
+                          fill
+                          sizes="40px"
+                          className="object-cover"
+                          unoptimized={!game.cover}
+                        />
+                      </div>
+                      <div className="flex flex-col overflow-hidden">
+                        <span className="text-sm font-bold text-white truncate">
+                          {game.name}
+                        </span>
+                        {game.first_release_date && (
+                          <span className="text-xs text-gray-400">
+                            {new Date(
+                              game.first_release_date * 1000,
+                            ).getFullYear()}
                           </span>
-                          {game.first_release_date && (
-                            <span className="text-xs text-gray-400">
-                              {new Date(
-                                game.first_release_date * 1000,
-                              ).getFullYear()}
-                            </span>
-                          )}
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
+                        )}
+                      </div>
+                    </Link>
+                  </li>
+                ))}
               </ul>
             )}
           </div>

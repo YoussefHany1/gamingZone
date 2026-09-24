@@ -11,6 +11,7 @@ import {
   Platform,
 } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
+import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SkeletonUserLists from "../skeleton/SkeletonUserLists";
@@ -55,6 +56,7 @@ const UserListsScreen = ({ navigation }: Props) => {
   const [isModalVisible, setModalVisible] = useState<boolean>(false);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [showAds, setShowAds] = useState<boolean>(false);
+  const adsEnabled = useAdsEnabled();
   const [isReady, setIsReady] = useState<boolean>(false);
   const { user, isAnonymous } = useAuthUser();
   const { t } = useTranslation();
@@ -224,12 +226,20 @@ const UserListsScreen = ({ navigation }: Props) => {
             text: t("common.remove"),
             style: "destructive",
             onPress: async () => {
-              await firestore()
-                .collection("users")
-                .doc(user.uid)
-                .collection("lists")
-                .doc(listId)
-                .delete();
+              try {
+                await firestore()
+                  .collection("users")
+                  .doc(user.uid)
+                  .collection("lists")
+                  .doc(listId)
+                  .delete();
+              } catch (error) {
+                console.error("[UserListsScreen] Delete list error:", error);
+                ToastAndroid.show(
+                  t("userLists.errors.couldNotDeleteList"),
+                  ToastAndroid.LONG,
+                );
+              }
             },
           },
         ],
@@ -243,6 +253,7 @@ const UserListsScreen = ({ navigation }: Props) => {
     ({ item, index }: { item: GameList; index: number }) => {
       const showAd =
         showAds &&
+        adsEnabled &&
         ((index + 1) % 4 === 0 || (lists.length < 4 && index === lists.length - 1));
       return (
         <>
@@ -274,7 +285,7 @@ const UserListsScreen = ({ navigation }: Props) => {
         </>
       );
     },
-    [showAds, lists.length, getDisplayName, handleDeleteList, navigation, t],
+    [showAds, adsEnabled, lists.length, getDisplayName, handleDeleteList, navigation, t],
   );
 
 

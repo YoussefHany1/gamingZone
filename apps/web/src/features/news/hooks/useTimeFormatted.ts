@@ -1,5 +1,19 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useLangStore } from "@/store/useLangStore";
+
+const noopSubscribe = () => () => {};
+
+/**
+ * Returns true only after hydration on the client, so time-sensitive output
+ * never mismatches the server-rendered HTML.
+ */
+function useMounted(): boolean {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+}
 
 function getTimeAgo(dateStr: string, lang: string): string {
   const date = new Date(dateStr);
@@ -26,29 +40,19 @@ function getTimeAgo(dateStr: string, lang: string): string {
 
 export function useTimeFormatted(dateStr: string, format: "timeAgo" | "date" = "timeAgo") {
   const { lang } = useLangStore();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  let formatted = "";
-  if (mounted) {
-    if (format === "date") {
-      formatted = new Date(dateStr).toLocaleDateString(
-        lang === "ar" ? "ar-EG" : "en-US",
-        {
+  const formatted = mounted
+    ? format === "date"
+      ? new Date(dateStr).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
           year: "numeric",
           month: "long",
           day: "numeric",
           hour: "2-digit",
           minute: "2-digit",
-        },
-      );
-    } else {
-      formatted = getTimeAgo(dateStr, lang);
-    }
-  }
+        })
+      : getTimeAgo(dateStr, lang)
+    : "";
 
   return { formatted, mounted };
 }

@@ -1,12 +1,14 @@
-import React, { useMemo, useEffect, useState, memo } from "react";
+import React, { useMemo, useEffect, useState, useCallback, memo } from "react";
 import CustomText from "@/src/components/CustomText";
 import {
   ScrollView,
   StyleSheet,
   View,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
+import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -30,12 +32,41 @@ import RecommendedGames from "@/src/features/games/components/gamesScreen/Recomm
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import type { SectionItem } from "../types";
 
-// ─── DeferredNewsSection ──────────────────────────────────────────────────────
+// ─── DeferredSection ──────────────────────────────────────────────────────────
 /**
- * Mounts `NewsSection` only after `delay` ms. Each deferred section receives a
- * different delay (1500 / 3000 / 4500 ms) so their `setState` calls never fire
- * at the same time — eliminating the "VirtualizedList slow to update" warning.
+ * Mounts `children` only after `delay` ms. Used to spread out the Home-screen
+ * network fetches so they never all fire at once: a simultaneous burst
+ * (slideshow + news feeds + weekly summary + recommended + events + ads)
+ * starved the main- and render-threads on a low-end MediaTek device and
+ * produced an input-dispatch ANR. Renders a fixed-height placeholder until
+ * mounted so the page layout doesn't shift.
  */
+const DeferredSection = memo(function DeferredSection({
+  delay = 1000,
+  placeholderHeight = 0,
+  children,
+}: {
+  delay?: number | undefined;
+  placeholderHeight?: number | undefined;
+  children: React.ReactElement;
+}) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+
+  if (!mounted) {
+    return <View style={{ height: placeholderHeight }} />;
+  }
+
+  return children;
+});
+DeferredSection.displayName = "DeferredSection";
+
+// Each deferred news section receives a different delay so their setState
+// calls never fire at the same time — no more "VirtualizedList slow to update".
 const DeferredNewsSection = memo(function DeferredNewsSection({
   category,
   language,
@@ -47,19 +78,11 @@ const DeferredNewsSection = memo(function DeferredNewsSection({
   website?: string | undefined;
   delay?: number | undefined;
 }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), delay);
-    return () => clearTimeout(timer);
-  }, [delay]);
-
-  if (!mounted) {
-    // Fixed-height placeholder so the page layout doesn't shift on mount
-    return <View style={{ height: 280 }} />;
-  }
-
-  return <NewsSection category={category} language={language} website={website} />;
+  return (
+    <DeferredSection delay={delay} placeholderHeight={280}>
+      <NewsSection category={category} language={language} website={website} />
+    </DeferredSection>
+  );
 });
 DeferredNewsSection.displayName = "DeferredNewsSection";
 
@@ -71,6 +94,7 @@ const noop = () => {};
 
 const AdBanner = memo(() => {
   const { t } = useTranslation();
+  const adsEnabled = useAdsEnabled();
   const [showAds, setShowAds] = useState(false);
 
   useEffect(() => {
@@ -78,7 +102,7 @@ const AdBanner = memo(() => {
     return () => task.cancel();
   }, []);
 
-  if (!showAds) return null;
+  if (!showAds || !adsEnabled) return null;
   return (
     <View style={homeStyles.ad}>
       <CustomText style={homeStyles.adText}>{t("common.ad")}</CustomText>
@@ -161,11 +185,23 @@ function renderSection(item: SectionItem, lang: string): React.ReactElement | nu
         />
       );
     case "weekly_summary":
-      return <WeeklySummarySection key={item._key} />;
+      return (
+        <DeferredSection key={item._key} delay={1100} placeholderHeight={230}>
+          <WeeklySummarySection />
+        </DeferredSection>
+      );
     case "recommended":
-      return <RecommendedGamesSection key={item._key} />;
+      return (
+        <DeferredSection key={item._key} delay={2200} placeholderHeight={300}>
+          <RecommendedGamesSection />
+        </DeferredSection>
+      );
     case "events":
-      return <GamingEventsSection key={item._key} />;
+      return (
+        <DeferredSection key={item._key} delay={3900} placeholderHeight={220}>
+          <GamingEventsSection />
+        </DeferredSection>
+      );
     case "ad":
       return <AdBanner key={item._key} />;
     default:
@@ -196,41 +232,47 @@ function HomeScreen(): React.ReactElement {
     transform: [{ scale: pulseScale.value }],
   }));
 
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
+
+  const handleRefresh = useCallback((): void => {
+    setRefreshing(true);
+    setRefreshKey((k) => k + 1);
+    // Remounting the sections re-runs their staggered fetches; stop the
+    // indicator after a short delay so it doesn't spin indefinitely.
+    setTimeout(() => setRefreshing(false), 900);
+  }, []);
+
   const sections = useMemo<SectionItem[]>(() => {
-    const website = currentLang === "en" ? "destructoid" : "true gaming";
+    const website = currentLang === "ar" ? "true gaming" : "destructoid";
     return [
-      { type: "slideshow", website, category: "news", _key: "slideshow" },
+      { type: "slideshow", website, category: "news", _key: `slideshow_${refreshKey}` },
       // ── Immediate (above the fold) ──────────────────────────────────────────
-      { type: "news", category: "news", _key: `news_0_${currentLang}` },
-      { type: "weekly_summary", _key: "weekly" },
+      { type: "news", category: "news", _key: `news_0_${currentLang}_${refreshKey}` },
+      { type: "weekly_summary", _key: `weekly_${refreshKey}` },
 
       { type: "ad", _key: "ad_0" },
-      // ── Staggered — fire 1.5 s apart so setState calls never stack up ───────
-      {
-        type: "news",
-        category: "reviews",
-        delay: 1500,
-        _key: `news_1_${currentLang}`,
-      },
-      { type: "recommended", _key: "recommended" },
+      // ── Staggered — spread the network burst so fetches never stack up ─────
+      { type: "news", category: "reviews", delay: 1800, _key: `news_1_${currentLang}_${refreshKey}` },
+      { type: "recommended", _key: `recommended_${refreshKey}` },
 
       { type: "ad", _key: "ad_1" },
       {
         type: "news",
         category: "esports",
-        delay: 3000,
-        _key: `news_2_${currentLang}`,
+        delay: 3200,
+        _key: `news_2_${currentLang}_${refreshKey}`,
       },
-      { type: "events", _key: "events" },
+      { type: "events", _key: `events_${refreshKey}` },
       { type: "ad", _key: "ad_2" },
       {
         type: "news",
         category: "hardware",
-        delay: 4500,
-        _key: `news_3_${currentLang}`,
+        delay: 4600,
+        _key: `news_3_${currentLang}_${refreshKey}`,
       },
     ];
-  }, [currentLang]);
+  }, [currentLang, refreshKey]);
 
   const renderedSections = useMemo(
     () => sections.map((item) => renderSection(item, currentLang)),
@@ -250,6 +292,14 @@ function HomeScreen(): React.ReactElement {
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: 90 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={COLORS.secondary}
+            colors={[COLORS.secondary]}
+          />
+        }
       >
         {renderedSections}
       </ScrollView>

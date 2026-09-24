@@ -1,67 +1,23 @@
-import { GamesClient, fetchFreeGames, fetchGamesList, searchGames, Game, FreeGame } from "@/features/games";
-import { Metadata } from "next";
+import { GamesPageView, fetchFreeGames, fetchGamesList, searchGames, Game, FreeGame } from "@/features/games";
+import { createLocalizedMetadata } from "@/lib/metadata";
 
 export const revalidate = 600;
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
-
-  if (locale === "en") {
-    return {
-      title: "Gaming Zone | Games Directory & Your Library",
-      description:
-        "Search for your favorite games, discover free games of the week from Steam, Epic Games and GOG, rate popular video games, and organize your own game library.",
-      icons: {
-        icon: "/assets/icon.webp",
-      },
-      openGraph: {
-        title: "Gaming Zone | Games Directory & Your Library",
-        description:
-          "Search for your favorite games, discover free games of the week from Steam, Epic Games and GOG, rate popular video games, and organize your own game library.",
-        images: [
-          {
-            url: "/assets/cover2.png",
-            width: 1024,
-            height: 500,
-            alt: "Gaming Zone Banner",
-          },
-        ],
-        siteName: "Gaming Zone",
-        type: "website",
-      },
-    };
-  }
-
-  return {
+export const generateMetadata = createLocalizedMetadata({
+  en: {
+    title: "Gaming Zone | Games Directory & Your Library",
+    description:
+      "Search for your favorite games, discover free games of the week from Steam, Epic Games and GOG, rate popular video games, and organize your own game library.",
+  },
+  ar: {
     title: "Gaming Zone | دليل الألعاب والمنصات ومكتبتك الخاصة",
     description:
       "ابحث عن ألعابك المفضلة، اكتشف الألعاب المجانية للأسبوع من Steam، Epic Games و GOG، قيّم أشهر ألعاب الفيديو، ونظّم قوائم وألعابك الخاصة.",
-    icons: {
-      icon: "/assets/icon.webp",
-    },
-    openGraph: {
-      title: "Gaming Zone | دليل الألعاب والمنصات ومكتبتك الخاصة",
-      description:
-        "ابحث عن ألعابك المفضلة، اكتشف الألعاب المجانية للأسبوع من Steam، Epic Games و GOG، قيّم أشهر ألعاب الفيديو، ونظّم قوائم وألعابك الخاصة.",
-      images: [
-        {
-          url: "/assets/cover2.png",
-          width: 1024,
-          height: 500,
-          alt: "Gaming Zone Banner",
-        },
-      ],
-      siteName: "Gaming Zone",
-      type: "website",
-    },
-  };
-}
+  },
+});
 
 export default async function GamesPage(props: {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{
     query?: string;
     genre?: string;
@@ -70,7 +26,11 @@ export default async function GamesPage(props: {
     page?: string;
   }>;
 }) {
-  const searchParams = await props.searchParams;
+  const [{ locale }, searchParams] = await Promise.all([
+    props.params,
+    props.searchParams,
+  ]);
+
   const query = searchParams.query || "";
   const genre = searchParams.genre || "";
   const platform = searchParams.platform || "";
@@ -129,7 +89,8 @@ export default async function GamesPage(props: {
   }
 
   return (
-    <GamesClient
+    <GamesPageView
+      locale={locale}
       query={query}
       genre={genre}
       platform={platform}

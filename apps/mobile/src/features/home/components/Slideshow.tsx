@@ -14,6 +14,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 import { CirclePlay } from "lucide-react-native";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
+import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import SkeletonSlideshow from "../skeleton/SkeletonSlideshow";
 import ErrorState from "@/src/components/ErrorState";
 import COLORS from "@/src/constants/colors";
@@ -88,11 +89,7 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
             {item.name}
           </CustomText>
           <View style={styles.playRow}>
-            <CirclePlay
-              size={18}
-              color={COLORS.lightGray}
-              style={{ marginRight: 6 }}
-            />
+            <CirclePlay size={18} color={COLORS.lightGray} style={{ marginRight: 6 }} />
             <CustomText style={styles.subtitle} numberOfLines={1}>
               {t("home.slideshow.subtitle")}
             </CustomText>
@@ -127,6 +124,7 @@ Pagination.displayName = "Pagination";
 
 function Slideshow(): React.ReactElement {
   const { t } = useTranslation();
+  const adsEnabled = useAdsEnabled();
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const pagerRef = useRef<PagerView>(null);
@@ -172,7 +170,7 @@ function Slideshow(): React.ReactElement {
   if (error || trailers.length === 0) {
     return (
       <View style={styles.errorWrapper}>
-        <ErrorState message={t("home.slideshow.error")} />
+        {/* <ErrorState message={t("home.slideshow.error")} /> */}
       </View>
     );
   }
@@ -211,7 +209,9 @@ function Slideshow(): React.ReactElement {
                   non-null assertion here is safe and avoids the empty-string fallback. */}
               <YoutubePlayer height={250} play videoId={playingVideoId!} />
             </View>
-            <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
+            {adsEnabled && (
+              <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
+            )}
           </View>
         </View>
       </Modal>
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.4)",
   },
   errorWrapper: {
-    height: 350,
+    height: 70,
   },
   modalOverlay: {
     flex: 1,

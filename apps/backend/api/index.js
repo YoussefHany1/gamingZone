@@ -488,8 +488,10 @@ app.get('/games', cacheMiddleware(3600), async (req, res) => {
       return res.status(400).json({ message: 'Game IDs are required' });
     }
 
-    // Always include genres and platforms in fields so client can display them
-    const fields = `${BASE_QUERY_FIELDS}, genres.name, platforms.name, platforms.abbreviation`;
+    // Always include genres and platforms in fields so client can display them.
+    // similar_games is needed by the mobile "Recommended for You" engine, which
+    // builds its candidate list from the similar_games of the user's top games.
+    const fields = `${BASE_QUERY_FIELDS}, genres.name, platforms.name, platforms.abbreviation, similar_games.name, similar_games.cover.image_id`;
     const whereStr = `cover.image_id != null & game_type = (0,8,9,10) & id = (${ids})`;
 
     const query = `

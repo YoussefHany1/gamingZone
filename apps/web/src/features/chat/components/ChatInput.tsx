@@ -1,11 +1,12 @@
 import { Send } from "lucide-react";
+import type { User } from "firebase/auth";
 
 interface ChatInputProps {
   input: string;
   setInput: (value: string) => void;
   handleSendMessage: (text: string) => void;
   loading: boolean;
-  user: any;
+  user: User | null;
   t: (key: string) => string;
 }
 

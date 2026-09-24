@@ -7,8 +7,10 @@ import {
   Switch,
   LayoutAnimation,
   ScrollView,
+  ToastAndroid,
 } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
+import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
@@ -24,6 +26,7 @@ import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { adUnitId } from "@/src/constants/config";
 import COLORS from "@/src/constants/colors";
 import Loading from "@/src/Loading";
+import ErrorState from "@/src/components/ErrorState";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 // Config
@@ -81,7 +84,7 @@ const NewsItem = memo<NewsItemProps>(({ item, lang }) => {
           </CustomText>
           <CustomText style={styles.desc} numberOfLines={1}>
             {item.pubDate
-              ? new Date(item.pubDate).toLocaleString(lang === "ar" ? "ar-EG" : "en-US", {
+              ? new Date(item.pubDate).toLocaleString(lang === "ar" ? "ar-EG" : lang === "es" ? "es-ES" : lang === "fr" ? "fr-FR" : lang === "hi" ? "hi-IN" : lang === "pt-BR" ? "pt-BR" : lang === "pt-PT" ? "pt-PT" : "en-US", {
                   dateStyle: "medium",
                   timeStyle: "short",
                 })
@@ -125,25 +128,26 @@ const NewsSection = memo<NewsSectionProps>(
     // Data fetch
 
     const fetchNews = useCallback(async (): Promise<NewsArticle[]> => {
-      try {
-        const response = await databases.listDocuments(
-          APPWRITE_DATABASE_ID ?? "",
-          ARTICLES_COLLECTION_ID,
-          [
-            Query.equal("category", categorySafe),
-            Query.equal("language", lang),
-            Query.orderDesc("pubDate"),
-            Query.limit(40),
-          ],
-        );
-        return response.documents as NewsArticle[];
-      } catch (error) {
-        console.error(`[NewsSection] Error fetching news for ${title}:`, error);
-        return [];
-      }
-    }, [categorySafe, lang, title]);
+      const response = await databases.listDocuments(
+        APPWRITE_DATABASE_ID ?? "",
+        ARTICLES_COLLECTION_ID,
+        [
+          Query.equal("category", categorySafe),
+          Query.equal("language", lang),
+          Query.orderDesc("pubDate"),
+          Query.limit(40),
+        ],
+      );
+      return response.documents as NewsArticle[];
+    }, [categorySafe, lang]);
 
-    const { data, isLoading: loading } = useCachedData<NewsArticle[]>(
+    const {
+      data,
+      isLoading: loading,
+      error,
+      isRefetching: refetching,
+      refetch,
+    } = useCachedData<NewsArticle[]>(
       `game_news_${categorySafe}_${lang}`,
       fetchNews,
       [categorySafe, lang],
@@ -182,8 +186,13 @@ const NewsSection = memo<NewsSectionProps>(
             );
           }
         } catch (error) {
-          console.error("[NewsSection] Error adding RSS source:", error);
-        }
+            console.error("[NewsSection] Error adding RSS source:", error);
+            ToastAndroid.showWithGravity(
+              "Could not enable notifications for this source. Please check your connection.",
+              ToastAndroid.SHORT,
+              ToastAndroid.BOTTOM,
+            );
+          }
       }
       toggleSource(categorySafe, nameSafe);
     }, [isEnabled, categorySafe, nameSafe, lang, rssUrl, title, toggleSource]);
@@ -221,6 +230,14 @@ const NewsSection = memo<NewsSectionProps>(
           <View style={styles.listContainer}>
             {loading ? (
               <Loading />
+            ) : error && news.length === 0 ? (
+              <ErrorState
+                message={lang === "ar" ? "تعذر تحميل الأخبار" : "Failed to load game news."}
+                subMessage={lang === "ar" ? "يرجى المحاولة مرة أخرى" : "Please try again."}
+                showContactButton={false}
+                onRetry={() => refetch(true)}
+                retrying={refetching}
+              />
             ) : news.length === 0 ? (
               <CustomText style={{ color: "gray", textAlign: "center", marginTop: 10 }}>
                 {lang === "ar" ? "لا توجد أخبار حاليا" : "No news found."}
@@ -252,6 +269,7 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
   const sourceLink = route.params?.source ?? "";
 
   const [showAds, setShowAds] = useState<boolean>(false);
+  const adsEnabled = useAdsEnabled();
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -275,7 +293,7 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
           rssUrl={legacyApiUrl}
         />
 
-        {showAds && (
+        {showAds && adsEnabled && (
           <View style={styles.ad}>
             <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
             <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />

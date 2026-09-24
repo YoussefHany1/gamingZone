@@ -27,7 +27,7 @@ export default function PrivacyPolicyPage() {
             1. Information We Collect
           </h3>
           <p>
-            Based on the app's functionality, we collect the following types of
+            Based on the app&apos;s functionality, we collect the following types of
             information:
           </p>
 
@@ -151,7 +151,7 @@ export default function PrivacyPolicyPage() {
           </p>
 
           <h3 className="text-xl font-bold text-white mt-8 mb-4">
-            6. Children's Privacy
+            6. Children&apos;s Privacy
           </h3>
           <p>
             Our app is intended for gaming enthusiasts and does not specifically

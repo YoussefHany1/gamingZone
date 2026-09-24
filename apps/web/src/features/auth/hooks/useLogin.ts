@@ -7,6 +7,7 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import { useLangStore } from "@/store/useLangStore";
+import { createSessionFromUser } from "../services/session";
 
 export function useLogin() {
   const router = useRouter();
@@ -40,12 +41,7 @@ export function useLogin() {
       setLoading(true);
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const idToken = await userCredential.user.getIdToken();
-        await fetch("/api/auth/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken }),
-        });
+        await createSessionFromUser(userCredential.user);
         router.push("/");
       } catch (err) {
         handleAuthError(err as { code?: string });
@@ -61,12 +57,7 @@ export function useLogin() {
     setLoading(true);
     try {
       const userCredential = await signInWithPopup(auth, googleProvider);
-      const idToken = await userCredential.user.getIdToken();
-      await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
+      await createSessionFromUser(userCredential.user);
       router.push("/");
     } catch (err) {
       const code = (err as { code?: string }).code;
@@ -83,12 +74,7 @@ export function useLogin() {
     setLoading(true);
     try {
       const userCredential = await signInAnonymously(auth);
-      const idToken = await userCredential.user.getIdToken();
-      await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
+      await createSessionFromUser(userCredential.user);
       router.push("/");
     } catch {
       setError(t("auth.errors.general"));

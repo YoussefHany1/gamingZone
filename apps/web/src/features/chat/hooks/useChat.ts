@@ -32,12 +32,15 @@ export function useChat() {
     setLoading(true);
 
     try {
+      const idToken = await user.getIdToken();
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
           history: updatedHistory,
-          uid: user.uid,
         }),
       });
 
@@ -55,9 +58,13 @@ export function useChat() {
       if (typeof data.remaining === "number") {
         setRemaining(data.remaining);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("AI chat client error:", error);
-      setErrorMsg(error.message || t("aiChat.error"));
+      setErrorMsg(
+        error instanceof Error && error.message
+          ? error.message
+          : t("aiChat.error"),
+      );
     } finally {
       setLoading(false);
     }

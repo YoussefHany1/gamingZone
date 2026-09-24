@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { updateProfile } from "firebase/auth";
 import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useLangStore } from "@/store/useLangStore";
 
@@ -21,7 +20,6 @@ const CLOUDINARY_API_KEY = env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
 const CLOUDINARY_UPLOAD_PRESET = env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
 export function useProfile() {
-  const router = useRouter();
   const { t, lang } = useLangStore();
   const currentUser = useAuthStore((s) => s.user);
   const isLoading = useAuthStore((s) => s.isLoading);
@@ -44,27 +42,42 @@ export function useProfile() {
   useEffect(() => {
     if (!currentUser || currentUser.isAnonymous) return;
 
-    setName(currentUser.displayName ?? "");
-    setImageUri(currentUser.photoURL ?? null);
+    let cancelled = false;
 
     const fetchUserData = async () => {
+      const authDefaults = {
+        name: currentUser.displayName ?? "",
+        imageUri: currentUser.photoURL ?? null,
+      };
       try {
         const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        if (cancelled) return;
         if (userDoc.exists()) {
           const data = userDoc.data();
-          setName(data.displayName ?? "");
-          setImageUri(data.photoURL ?? null);
-          setDob(data.dob ?? "");
-          setGender(data.gender ?? "");
-          setCountry(data.country ?? "");
-          setPlatform(data.platform ?? "");
+          setName((data.displayName as string | undefined) ?? authDefaults.name);
+          setImageUri((data.photoURL as string | null | undefined) ?? authDefaults.imageUri);
+          setDob((data.dob as string | undefined) ?? "");
+          setGender((data.gender as string | undefined) ?? "");
+          setCountry((data.country as string | undefined) ?? "");
+          setPlatform((data.platform as string | undefined) ?? "");
+        } else {
+          setName(authDefaults.name);
+          setImageUri(authDefaults.imageUri);
         }
       } catch (err) {
         console.error("Error fetching user data:", err);
+        if (!cancelled) {
+          setName(authDefaults.name);
+          setImageUri(authDefaults.imageUri);
+        }
       }
     };
 
     fetchUserData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [currentUser]);
 
   const countriesList = useMemo(() => {

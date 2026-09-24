@@ -19,53 +19,95 @@ interface SummaryResponse {
   english: string;
 }
 
-const SUMMARY_PROMPT = (newsText: string) => `You are a professional gaming news editor.
-Analyze the provided list of gaming news HEADLINES and create a Weekly Recap in TWO languages (Arabic and English).
+const SUMMARY_PROMPT = (
+  startDate: string,
+  endDate: string,
+  newsText: string,
+) => `You are a senior gaming news editor writing a weekly recap for a gaming audience.
 
-IMPORTANT: Return the result strictly as a valid JSON object. Do NOT add Markdown formatting like \`\`\`json.
+TASK: Synthesize the gaming news articles below into a cohesive Weekly Recap. Output BOTH Arabic and English versions.
 
-The JSON structure must be:
-{
-  "arabic": "## (عنوان الملخص الأسبوعي)... (Write the summary based on these headlines using Markdown and emojis)",
-  "english": "## (Weekly Recap Title)... (Write the summary based on these headlines using Markdown and emojis)"
-}
+CONTEXT: This recap covers ${startDate} to ${endDate}.
 
-The Headlines List:
+GUIDELINES:
+1. **Tone**: Write like an informed gaming journalist — authoritative but approachable. Assume the reader is a gamer who wants to stay current without reading every article.
+2. **Structure**:
+   - Open with a bold title: "## 🎮 Weekly Gaming Recap (${startDate} – ${endDate})"
+   - Group stories into thematic sections with ### headings. Choose headings that best fit the week's news, for example:
+     - "### 🕹️ Major Releases & Updates" — new games, patches, DLC, season launches
+     - "### 🏆 Esports & Competitive" — tournaments, roster changes, competitive scene news
+     - "### 💰 Business & Industry" — acquisitions, layoffs, financials, studio news
+     - "### 📰 Quick Hits" — smaller stories that don't warrant their own section
+     - "### 🔮 Looking Ahead" — upcoming releases, events, or things to watch
+   - You are not limited to these — invent sections that match the actual content.
+3. **Content**: Synthesize articles into 2-4 sentences per section. Do NOT repeat headlines verbatim — connect related stories, add context, and explain why they matter. Use the article descriptions to add specific details (game names, studio names, numbers).
+4. **Formatting**: Use Markdown bullet points ONLY for lists of 3+ small standalone items (e.g. multiple game releases on the same day). Prefer flowing prose. Separate sections with a blank line.
+5. **Emojis**: Use emojis in section headings only. Keep body text clean.
+6. **Arabic version**: Must follow the EXACT same structure — same section headings (translated), same emoji usage, same number of sections. Write in clear Modern Standard Arabic (فصحى), not dialectal.
+7. **Length**: Each language version must be between ~1,800 and ~2,500 characters. Be dense, not verbose — every sentence should add value. Do NOT exceed ~2,500 characters per language.
+
+OUTPUT: A JSON object with keys "arabic" and "english", each containing the full Markdown-formatted recap in that language.
+
+Headlines & Descriptions:
 ${newsText}`;
 
-const PARTIAL_SUMMARY_PROMPT = (newsText: string) => `You are a professional gaming news editor.
-Analyze the provided batch of gaming news HEADLINES and create a VERY DENSE and CONCISE (مكثف وموجز) Weekly Recap segment in TWO languages (Arabic and English).
-Keep it concise so that multiple segment summaries can be merged later without exceeding model context limits.
+const PARTIAL_SUMMARY_PROMPT = (
+  batchIndex: number,
+  totalBatches: number,
+  newsText: string,
+) => `You are a senior gaming news editor writing a segment of a weekly gaming recap.
 
-IMPORTANT: Return the result strictly as a valid JSON object. Do NOT add Markdown formatting like \`\`\`json.
+TASK: Summarize this batch (batch ${batchIndex} of ${totalBatches}) into a dense, well-structured segment that will later be merged with other segments into one cohesive weekly recap.
 
-The JSON structure must be:
-{
-  "arabic": "## (عنوان الملخص الأسبوعي)... (Write a highly dense and concise summary segment based on these headlines using Markdown and emojis)",
-  "english": "## (Weekly Recap Title)... (Write a highly dense and concise summary segment based on these headlines using Markdown and emojis)"
-}
+GUIDELINES:
+1. **Tone**: Authoritative but approachable — like an informed gaming journalist.
+2. **Structure**: Start each thematic group with a ### heading. Use section names that fit the content (e.g. "### 🕹️ Major Releases", "### 💰 Industry News"). Keep sections tight — 1-2 sentences each.
+3. **Content**: Synthesize articles — do NOT repeat headlines. Connect related stories and use the article descriptions to add specific details. Prioritize major stories; briefly mention smaller ones.
+4. **Formatting**: Markdown bullet points only for 3+ small items. Blank line between sections. Emojis in headings only.
+5. **Arabic version**: Same structure, same sections (translated), same emoji usage. Write in clear Modern Standard Arabic (فصحى).
+6. **Conciseness**: This is a chunk — keep it compact so multiple chunks can be merged cleanly. Aim for ~600–1,200 characters per language version.
 
-The Headlines List:
+OUTPUT: A JSON object with keys "arabic" and "english", each containing the Markdown-formatted segment.
+
+Headlines & Descriptions:
 ${newsText}`;
 
 const MERGE_SUMMARY_PROMPT = (
+  startDate: string,
+  endDate: string,
   arabicSummaries: string,
   englishSummaries: string,
-) => `You are a professional gaming news editor.
-Analyze the following weekly recaps generated from different batches of gaming news articles and merge them into a single consolidated, cohesive Weekly Recap in TWO languages (Arabic and English). Keep the markdown and emojis engaging.
+) => `You are a senior gaming news editor producing the final version of a weekly gaming recap.
 
-IMPORTANT: Return the result strictly as a valid JSON object. Do NOT add Markdown formatting like \`\`\`json.
+TASK: Merge the following segment recaps into ONE consolidated, polished Weekly Recap. Output BOTH Arabic and English.
 
-The JSON structure must be:
-{
-  "arabic": "## (عنوان الملخص الأسبوعي)... (Write the consolidated summary based on the provided Arabic recaps using Markdown and emojis)",
-  "english": "## (Weekly Recap Title)... (Write the consolidated summary based on the provided English recaps using Markdown and emojis)"
-}
+CONTEXT: This recap covers ${startDate} to ${endDate}.
 
-Arabic Recaps to merge:
+SEGMENTS TO MERGE:
+Each segment covers a different batch of articles from the same week. There will be overlap — your job is to deduplicate and unify.
+
+GUIDELINES:
+1. **Tone**: Authoritative, approachable gaming journalism. Write for a gamer who wants the week's highlights.
+2. **Structure**:
+   - Open with a bold title: "## 🎮 Weekly Gaming Recap (${startDate} – ${endDate})"
+   - Consolidate all content into logical thematic sections with ### headings. Merge overlapping topics from different segments into single sections.
+   - Recommended sections (adapt to content):
+     - "### 🕹️ Major Releases & Updates"
+     - "### 🏆 Esports & Competitive"
+     - "### 💰 Business & Industry"
+     - "### 📰 Quick Hits" — for 3+ smaller stories grouped as bullet points
+     - "### 🔮 Looking Ahead"
+3. **Content**: Write 2-4 flowing sentences per section. Do NOT simply concatenate segments — rewrite into a unified narrative. Deduplicate stories that appear in multiple segments. Use specific details (game names, studio names, numbers) from the source material.
+4. **Formatting**: Bullet points only for lists of 3+ small items. Blank line between sections. Emojis in headings only.
+5. **Arabic version**: EXACT same structure — same sections (translated), same emoji usage, same flow. Write in clear Modern Standard Arabic (فصحى).
+6. **Length**: Each language version must be between ~1,800 and ~2,500 characters (hard limit: 5,000 bytes). Be dense and decisive — avoid redundant phrasing.
+
+OUTPUT: A JSON object with keys "arabic" and "english", each containing the full polished Markdown recap.
+
+Arabic Segments:
 ${arabicSummaries}
 
-English Recaps to merge:
+English Segments:
 ${englishSummaries}`;
 
 function parseJsonSummary(rawText: string): SummaryResponse {
@@ -135,17 +177,34 @@ async function callGeminiWithRetry(prompt: string, maxRetries = 3): Promise<Summ
   }
 }
 
-async function summarizeWithGemini(newsText: string, isPartial = false): Promise<SummaryResponse> {
-  const prompt = isPartial ? PARTIAL_SUMMARY_PROMPT(newsText) : SUMMARY_PROMPT(newsText);
+async function summarizeWithGemini(
+  newsText: string,
+  opts: {
+    isPartial: boolean;
+    startDate?: string;
+    endDate?: string;
+    batchIndex?: number;
+    totalBatches?: number;
+  } = {
+    isPartial: false,
+  },
+): Promise<SummaryResponse> {
+  const prompt = opts.isPartial
+    ? PARTIAL_SUMMARY_PROMPT(opts.batchIndex ?? 1, opts.totalBatches ?? 1, newsText)
+    : SUMMARY_PROMPT(opts.startDate ?? '', opts.endDate ?? '', newsText);
   return callGeminiWithRetry(prompt);
 }
 
-async function mergeSummariesWithGemini(
+function mergeSummariesWithGemini(
+  startDate: string,
+  endDate: string,
   arabicSummaries: string,
   englishSummaries: string,
 ): Promise<SummaryResponse> {
   logger.info('🤖 Merging chunk summaries with Gemini...');
-  return callGeminiWithRetry(MERGE_SUMMARY_PROMPT(arabicSummaries, englishSummaries));
+  return callGeminiWithRetry(
+    MERGE_SUMMARY_PROMPT(startDate, endDate, arabicSummaries, englishSummaries),
+  );
 }
 
 function getSevenDaysAgoIso() {
@@ -181,10 +240,48 @@ async function fetchLastWeekNewsTitles() {
   };
 }
 
+const MAX_SUMMARY_BYTES = 5000;
+
+function truncateByBytes(text: string, maxBytes: number): string {
+  const trimmed = text.trim();
+  if (Buffer.byteLength(trimmed, 'utf8') <= maxBytes) {
+    return trimmed;
+  }
+
+  const endIndex = trimmed.lastIndexOf('\n\n', maxBytes);
+  if (endIndex > 0 && Buffer.byteLength(trimmed.slice(0, endIndex), 'utf8') <= maxBytes) {
+    return trimmed.slice(0, endIndex).trim();
+  }
+
+  let result = '';
+  for (const character of Array.from(trimmed)) {
+    if (Buffer.byteLength(result + character, 'utf8') > maxBytes) {
+      break;
+    }
+    result += character;
+  }
+  return result.trim();
+}
+
 async function saveWeeklySummary(summary: SummaryResponse, startDate: string) {
+  let { arabic, english } = summary;
+  for (const [lang, value] of [
+    ['Arabic', arabic],
+    ['English', english],
+  ] as const) {
+    const truncated = truncateByBytes(value, MAX_SUMMARY_BYTES);
+    if (truncated !== value) {
+      logger.warn(
+        `⚠️ ${lang} summary exceeded ${MAX_SUMMARY_BYTES} bytes – truncated to ${truncated.length} characters.`,
+      );
+    }
+    if (lang === 'Arabic') arabic = truncated;
+    else english = truncated;
+  }
+
   await databases.createDocument(DATABASE_ID, SUMMARIES_COLLECTION_ID, sdk.ID.unique(), {
-    summary_ar: summary.arabic,
-    summary_en: summary.english,
+    summary_ar: arabic,
+    summary_en: english,
     startDate,
     endDate: new Date().toISOString(),
   });
@@ -202,6 +299,7 @@ async function runGenerateWeeklySummary() {
 
     logger.info(`Found ${documents.length} articles. Preparing to process...`);
 
+    const endDate = new Date().toISOString();
     const CHUNK_SIZE = 250;
     let jsonSummary = null;
 
@@ -215,7 +313,11 @@ async function runGenerateWeeklySummary() {
     if (documents.length <= CHUNK_SIZE) {
       const newsText = documents.map(formatDoc).join('\n');
       logger.info(`Sending all ${documents.length} articles in a single batch to AI...`);
-      jsonSummary = await summarizeWithGemini(newsText, false);
+      jsonSummary = await summarizeWithGemini(newsText, {
+        isPartial: false,
+        startDate: sevenDaysAgo,
+        endDate,
+      });
       logger.info('✅ Gemini succeeded.');
     } else {
       const chunks = [];
@@ -231,7 +333,11 @@ async function runGenerateWeeklySummary() {
         const chunkText = chunk.map(formatDoc).join('\n');
         logger.info(`Processing chunk ${i + 1}/${chunks.length} (size: ${chunk.length})...`);
 
-        const summary = await summarizeWithGemini(chunkText, true);
+        const summary = await summarizeWithGemini(chunkText, {
+          isPartial: true,
+          batchIndex: i + 1,
+          totalBatches: chunks.length,
+        });
         chunkSummaries.push(summary);
 
         if (i < chunks.length - 1) {
@@ -248,7 +354,12 @@ async function runGenerateWeeklySummary() {
         .map((s, idx) => `[Batch ${idx + 1} English Recap segment]:\n${s.english}`)
         .join('\n\n');
 
-      jsonSummary = await mergeSummariesWithGemini(arabicSummaries, englishSummaries);
+      jsonSummary = await mergeSummariesWithGemini(
+        sevenDaysAgo,
+        endDate,
+        arabicSummaries,
+        englishSummaries,
+      );
       logger.info('✅ Gemini merging succeeded.');
     }
 

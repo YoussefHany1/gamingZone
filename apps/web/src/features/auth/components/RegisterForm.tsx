@@ -8,15 +8,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
 const registerSchema = z.object({
-  name: z.string().min(2, "Name is required (min 2 characters)"),
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  name: z.string().min(2, "nameShort"),
+  email: z.string().min(1, "emailRequired").email("emailInvalid"),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[a-z]/i, "Password must contain at least one letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
-  gender: z.string().min(1, "Gender is required"),
-  country: z.string().min(1, "Country is required"),
+    .min(8, "passwordShort")
+    .regex(/[a-z]/i, "passwordLetter")
+    .regex(/[0-9]/, "passwordNumber"),
+  gender: z.string().min(1, "genderRequired"),
+  country: z.string().min(1, "countryRequired"),
 });
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -28,6 +28,14 @@ interface RegisterFormProps {
   handleSignup: (data: RegisterFormValues) => void;
 }
 
+/** Zod messages are translation keys under auth.errors; fall back to the raw message. */
+function renderFieldError(t: RegisterFormProps["t"], message?: string): string {
+  if (!message) return "";
+  const key = `auth.errors.${message}`;
+  const translated = t(key);
+  return translated === key ? message : translated;
+}
+
 export default function RegisterForm({
   t,
   loading,
@@ -35,11 +43,12 @@ export default function RegisterForm({
   handleSignup,
 }: RegisterFormProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedGender, setSelectedGender] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("");
 
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -51,9 +60,6 @@ export default function RegisterForm({
       country: "",
     },
   });
-
-  const selectedGender = watch("gender");
-  const selectedCountry = watch("country");
   const selectStyles =
     "w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-light-blue/50 focus:ring-1 focus:ring-light-blue/30 transition-all duration-300 appearance-none cursor-pointer";
 
@@ -70,7 +76,7 @@ export default function RegisterForm({
         />
         {errors.name && (
           <p className="mt-1.5 text-xs text-red-400 font-medium">
-            {errors.name.message}
+            {renderFieldError(t, errors.name.message)}
           </p>
         )}
       </div>
@@ -87,7 +93,7 @@ export default function RegisterForm({
         />
         {errors.email && (
           <p className="mt-1.5 text-xs text-red-400 font-medium">
-            {errors.email.message}
+            {renderFieldError(t, errors.email.message)}
           </p>
         )}
       </div>
@@ -100,7 +106,9 @@ export default function RegisterForm({
             id="register-gender"
             className={selectStyles}
             style={!selectedGender ? { color: "rgb(107 114 128)" } : undefined}
-            {...register("gender")}
+            {...register("gender", {
+              onChange: (e) => setSelectedGender(e.target.value),
+            })}
           >
             <option value="" disabled>
               {t("auth.register.genderPlaceholder")}
@@ -111,7 +119,7 @@ export default function RegisterForm({
         </div>
         {errors.gender && (
           <p className="mt-1.5 text-xs text-red-400 font-medium">
-            {errors.gender.message}
+            {renderFieldError(t, errors.gender.message)}
           </p>
         )}
       </div>
@@ -124,7 +132,9 @@ export default function RegisterForm({
             id="register-country"
             className={selectStyles}
             style={!selectedCountry ? { color: "rgb(107 114 128)" } : undefined}
-            {...register("country")}
+            {...register("country", {
+              onChange: (e) => setSelectedCountry(e.target.value),
+            })}
           >
             <option value="" disabled>
               {t("auth.register.countryPlaceholder")}
@@ -138,7 +148,7 @@ export default function RegisterForm({
         </div>
         {errors.country && (
           <p className="mt-1.5 text-xs text-red-400 font-medium">
-            {errors.country.message}
+            {renderFieldError(t, errors.country.message)}
           </p>
         )}
       </div>
@@ -169,7 +179,7 @@ export default function RegisterForm({
         </div>
         {errors.password && (
           <p className="mt-1.5 text-xs text-red-400 font-medium">
-            {errors.password.message}
+            {renderFieldError(t, errors.password.message)}
           </p>
         )}
       </div>

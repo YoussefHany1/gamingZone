@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useLangStore } from "@/store/useLangStore";
 import { db } from "@/lib/firebase";
 import {
   doc,
@@ -16,6 +17,7 @@ import { GameData } from "../types";
 
 export function useGameDetailsLogic(game: GameData, isRtl: boolean) {
   const user = useAuthStore((s) => s.user);
+  const lang = useLangStore((s) => s.lang);
   const [activeScreenshotIdx, setActiveScreenshotIdx] = useState<number | null>(null);
   const [zoomScale, setZoomScale] = useState<number>(1);
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
@@ -32,28 +34,26 @@ export function useGameDetailsLogic(game: GameData, isRtl: boolean) {
     [game],
   );
 
+  const isRatedByUser = !!user && !user.isAnonymous;
+
   useEffect(() => {
-    if (!user || user.isAnonymous) {
-      setUserRating(0);
-      return;
-    }
+    if (!isRatedByUser) return;
 
     const ratingDocRef = doc(db, "users", user.uid, "ratings", String(game.id));
     const unsub = onSnapshot(ratingDocRef, (snap) => {
-      if (snap.exists()) {
-        setUserRating(snap.data()?.rating ?? 0);
-      } else {
-        setUserRating(0);
-      }
+      setUserRating(snap.exists() ? (snap.data()?.rating ?? 0) : 0);
     });
 
     return unsub;
-  }, [user, game.id]);
+  }, [isRatedByUser, user, game.id]);
+
+  // Anonymous/logged-out users never have a stored rating
+  const effectiveUserRating = isRatedByUser ? userRating : 0;
 
   const handleRateGame = useCallback(
     async (newRating: number) => {
       if (!user || user.isAnonymous) {
-        window.location.href = "/auth/login";
+        window.location.href = `/${lang}/auth/login`;
         return;
       }
 
@@ -101,7 +101,8 @@ export function useGameDetailsLogic(game: GameData, isRtl: boolean) {
               } else {
                 await updateDoc(gRef, { rating: newRating });
               }
-            } catch (updateErr) {
+            } catch {
+              // Stale cache: the game is no longer in this list
               console.log(`[GameDetailsClient] Stale cache update handled for list ${listDoc.id}`);
             }
           }
@@ -110,7 +111,7 @@ export function useGameDetailsLogic(game: GameData, isRtl: boolean) {
         console.error("Error rating game:", error);
       }
     },
-    [user, game.id, gameDataForList],
+    [user, lang, game.id, gameDataForList],
   );
 
   const handleNextScreenshot = useCallback(() => {
@@ -154,7 +155,7 @@ export function useGameDetailsLogic(game: GameData, isRtl: boolean) {
     setActiveVideoId,
     listModalOpen,
     setListModalOpen,
-    userRating,
+    userRating: effectiveUserRating,
     gameDataForList,
     handleRateGame,
     handleNextScreenshot,

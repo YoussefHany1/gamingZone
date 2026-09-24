@@ -1,5 +1,7 @@
+import { cache } from "react";
 import axios from "axios";
 import type { GameData } from "@gaming-zone/core";
+import { getServerApiUrl } from "@/lib/api-config";
 
 export {
   extractSteamAppId,
@@ -7,18 +9,18 @@ export {
   fetchSteamRequirements,
 } from "@gaming-zone/utils";
 
-const SERVER_URL = "https://gamingzone-api.onrender.com";
-
-export async function fetchGameDetails(id: string): Promise<GameData | null> {
-  try {
-    const baseUrl = SERVER_URL.endsWith('/') ? SERVER_URL.slice(0, -1) : SERVER_URL;
-    const res = await axios.get<GameData>(`${baseUrl}/game-details`, {
-      params: { id },
-      timeout: 8000,
-    });
-    return res.data;
-  } catch (error) {
-    console.error("Error fetching game details:", error);
-    return null;
-  }
-}
+/** Cached per-request so metadata + page rendering share one call. */
+export const fetchGameDetails = cache(
+  async (id: string): Promise<GameData | null> => {
+    try {
+      const res = await axios.get<GameData>(`${getServerApiUrl()}/game-details`, {
+        params: { id },
+        timeout: 8000,
+      });
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching game details:", error);
+      return null;
+    }
+  },
+);

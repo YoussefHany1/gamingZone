@@ -1,10 +1,15 @@
 export type { GameEntry } from "@gaming-zone/core";
 
+/** Minimal shape of the Firestore Timestamp values used for list ordering. */
+export interface FirestoreTimestamp {
+  toMillis: () => number;
+}
+
 export interface GameList {
   id: string;
   name: string;
   type: "default" | "custom";
-  createdAt?: any;
+  createdAt?: FirestoreTimestamp;
 }
 
 export const DEFAULT_LISTS = [

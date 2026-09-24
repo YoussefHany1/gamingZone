@@ -1,0 +1,44 @@
+diff --git a/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/NativeProxy.kt b/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/NativeProxy.kt
+index 48e3771..df1802e 100644
+--- a/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/NativeProxy.kt
++++ b/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/NativeProxy.kt
+@@ -245,6 +245,20 @@ open class NativeProxy {
+             }.apply { isAccessible = true }
+     }
+ 
++    // RN's vanilla path (FabricUIManager.synchronouslyUpdateViewOnUIThread) checks
++    // MountingManager.getViewExists(reactTag) before updating and defers/ignores stale tags.
++    // The reflective path below skips that guard, so updatePropsSynchronously throws
++    // RetryableMountingLayerException for already-unmounted tags. Constructing that throwable
++    // (InvocationTargetException -> nativeFillInStackTrace) on the UI thread, per stale tag per
++    // frame, stalls the main thread during the draw pass (re-entered by react-native-svg via
++    // VirtualView.setClientRect) and causes ANRs. Guard with getViewExists to drop stale tags
++    // silently, mirroring the vanilla RN behaviour.
++    private val getViewExistsMethod by lazy {
++        mountingManager.javaClass.methods
++            .firstOrNull { it.name == "getViewExists" && it.parameterTypes.size == 1 }
++            ?.apply { isAccessible = true }
++    }
++
+     @DoNotStrip
+     fun synchronouslyUpdateUIProps(
+         intBuffer: IntArray,
+@@ -253,9 +267,16 @@ open class NativeProxy {
+         SynchronousPropsBufferParser.parse(intBuffer, doubleBuffer) { viewTag, props ->
+             if (BuildConfig.IS_REACT_NATIVE_86_OR_NEWER) {
+                 try {
+-                    updatePropsSynchronouslyMethod.invoke(mountingManager, viewTag, props)
++                    // Capture to a local: kotlinc does not smart-cast delegated properties.
++                    val getViewExists = getViewExistsMethod
++                    if (getViewExists == null || getViewExists.invoke(mountingManager, viewTag) == true) {
++                        updatePropsSynchronouslyMethod.invoke(mountingManager, viewTag, props)
++                    }
+                 } catch (e: Exception) {
+-                    Log.w("Reanimated", "synchronouslyUpdateUIProps failed for tag $viewTag", e)
++                    // Do NOT pass the Throwable to Log.w here: printStackTrace() allocates a
++                    // StringBuilder/String on the main thread, which blocks the RenderView draw
++                    // pass (dispatched via SVG VirtualView.setClientRect) and causes ANRs.
++                    Log.w("Reanimated", "synchronouslyUpdateUIProps failed for tag $viewTag")
+                 }
+             } else {
+                 mFabricUIManager.synchronouslyUpdateViewOnUIThread(viewTag, props)

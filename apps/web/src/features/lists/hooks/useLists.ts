@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useLangStore } from "@/store/useLangStore";
@@ -16,7 +15,6 @@ import {
 import { GameList, DEFAULT_LISTS } from "../types";
 
 export function useLists() {
-  const router = useRouter();
   const { t } = useLangStore();
   const user = useAuthStore((s) => s.user);
   const isLoading = useAuthStore((s) => s.isLoading);
@@ -158,7 +156,7 @@ export function useLists() {
     } finally {
       setIsCreating(false);
     }
-  }, [newListName, lists, user]);
+  }, [newListName, lists, user, t]);
 
   // Delete list
   const handleDeleteList = useCallback(
@@ -173,7 +171,7 @@ export function useLists() {
       }
       setDeleteConfirm(null);
     },
-    [user],
+    [user, t],
   );
 
   return {

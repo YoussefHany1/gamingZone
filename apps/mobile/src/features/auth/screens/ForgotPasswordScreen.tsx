@@ -36,16 +36,11 @@ const ForgotPasswordScreen = memo(({ navigation }: Props) => {
 
     setLoading(true);
     try {
-      // Check if the email is registered before sending the reset link
-      const signInMethods = await auth().fetchSignInMethodsForEmail(email);
-      if (signInMethods.length === 0) {
-        ToastAndroid.show(
-          t("auth.forgotPassword.errors.userNotFound"),
-          ToastAndroid.LONG,
-        );
-        return;
-      }
-
+      // Note: we intentionally do NOT pre-check with fetchSignInMethodsForEmail here,
+      // since Firebase's Email Enumeration Protection makes it return an empty array
+      // for every address (existing or not), which would falsely report "no account".
+      // sendPasswordResetEmail itself resolves successfully even for unknown emails
+      // (to prevent account enumeration), so existing accounts always receive the link.
       await auth().sendPasswordResetEmail(email);
       ToastAndroid.show(
         t("auth.forgotPassword.successTitle"),
@@ -56,7 +51,7 @@ const ForgotPasswordScreen = memo(({ navigation }: Props) => {
       console.error("[ForgotPasswordScreen] Reset error:", error);
       const code = (error as { code?: string }).code;
       const key =
-        code === "auth/invalid-email"
+        code === "auth/user-not-found"
           ? "auth.forgotPassword.errors.userNotFound"
           : "auth.forgotPassword.errors.general";
       ToastAndroid.show(t(key), ToastAndroid.LONG);

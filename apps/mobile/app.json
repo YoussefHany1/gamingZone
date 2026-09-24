@@ -4,12 +4,12 @@
     "slug": "gaming-zone",
     "orientation": "default",
     "scheme": "gaming-zone",
-    "version": "1.0.5",
+    "version": "1.0.8",
     "icon": "./assets/logo-background.png",
     "userInterfaceStyle": "light",
     "android": {
-      "versionCode": 44,
-      "runtimeVersion": "1.0.5",
+      "versionCode": 46,
+      "runtimeVersion": "1.0.8",
       "userInterfaceStyle": "light",
       "package": "com.yh.gamingzone",
       "googleServicesFile": "./google-services.json",
@@ -24,12 +24,12 @@
           "data": [
             {
               "scheme": "https",
-              "host": "gz1.vercel.app",
+              "host": "gz1.games",
               "pathPrefix": "/news"
             },
             {
               "scheme": "https",
-              "host": "gz1.vercel.app",
+              "host": "gz1.games",
               "pathPrefix": "/lists"
             }
           ],
@@ -45,7 +45,7 @@
         "expo-build-properties",
         {
           "android": {
-            "useLegacyPackaging": true
+            "useLegacyPackaging": false
           }
         }
       ],
@@ -91,18 +91,7 @@
       "runtimeVersion": {
         "policy": "appVersion"
       },
-      "associatedDomains": ["applinks:gz1.vercel.app"]
-    },
-    "extra": {
-      "APPWRITE_PROJECT": "6930387e0009494a1c2a",
-      "APPWRITE_DATABASE_ID": "6930389a0033ba85bfe1",
-      "GOOGLE_WEB_CLIENT_ID": "1003577837647-jpm4m77muign33bu3inaihqf6p82b50v.apps.googleusercontent.com",
-      "CLOUDINARY_CLOUD_NAME": "dewusw0db",
-      "CLOUDINARY_API_KEY": "848952698676177",
-      "CLOUDINARY_UPLOAD_PRESET": "Gaming Zone",
-      "eas": {
-        "projectId": "25078fb9-8a54-4056-b988-2ac45be30e52"
-      }
+      "associatedDomains": ["applinks:gz1.games"]
     }
   }
 }

@@ -1,0 +1,603 @@
+{
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "cancel": "रद्द करें",
+    "close": "बंद करें",
+    "remove": "हटाएं",
+    "ok": "ठीक है",
+    "create": "बनाएं",
+    "saveChanges": "परिवर्तन सहेजें",
+    "noData": "दिखाने के लिए कोई डेटा नहीं",
+    "retryButton": "फिर से कोशिश करें",
+    "imageNotFound": "छवि नहीं मिली",
+    "ad": "विज्ञापन",
+    "loginRequired": "यह कार्य करने के लिए आपको लॉग इन करना होगा",
+    "noInternet": "इंटरनेट कनेक्शन नहीं है",
+    "offlineBanner": "आप ऑफ़लाइन हैं – सहेजा हुआ कंटेंट दिखाया जा रहा है",
+    "dataLoadError": "यह कंटेंट लोड नहीं किया जा सका। कृपया फिर से कोशिश करें।",
+    "share": "साझा करें",
+    "copied": "कॉपी हो गया!",
+    "or": "या",
+    "next": "अगला",
+    "previous": "पिछला",
+    "continue": "जारी रखें",
+    "updateAlert": {
+      "title": "अपडेट उपलब्ध है",
+      "message": "ऐप का एक नया संस्करण उपलब्ध है। नवीनतम सुविधाओं और सुधारों के लिए अभी अपडेट करें।",
+      "updateNow": "अभी अपडेट करें",
+      "later": "बाद में"
+    },
+    "update": {
+      "tagline": "गेमिंग के लिए आपका अंतिम गंतव्य",
+      "title": "नया अपडेट उपलब्ध है",
+      "subtitle": "हम आपके लिए सुधार डाउनलोड कर रहे हैं...",
+      "footer": "कृपया प्रतीक्षा करें, ऐप अपने आप पुनः शुरू हो जाएगा"
+    },
+    "time": {
+      "d": "दि",
+      "h": "घं",
+      "m": "मि"
+    }
+  },
+  "auth": {
+    "emailPlaceholder": "ईमेल",
+    "passwordPlaceholder": "पासवर्ड",
+    "guest": "बाद में साइन इन करें",
+    "emptyFields": "कृपया अपना ईमेल और पासवर्ड दर्ज करें",
+    "idTokenError": "Google ID टोकन प्राप्त करने में असमर्थ",
+    "login": {
+      "title": "साइन इन करें",
+      "forgotPassword": "पासवर्ड भूल गए?",
+      "signInButton": "साइन इन करें",
+      "googleSignIn": "Google से साइन इन करें",
+      "createAccount": "नया खाता बनाएं",
+      "success": "लॉगिन सफल हुआ",
+      "failed": "लॉगिन विफल हुआ"
+    },
+    "register": {
+      "title": "साइन अप करें",
+      "signUpButton": "साइन अप करें",
+      "namePlaceholder": "पूरा नाम",
+      "countryPlaceholder": "देश चुनें",
+      "genderPlaceholder": "लिंग चुनें",
+      "male": "पुरुष",
+      "female": "महिला",
+      "googleSignUp": "Google से साइन अप करें",
+      "haveAnAccount": "पहले से खाता है?",
+      "success": "साइन अप सफल हुआ",
+      "emptyFields": "कृपया सभी आवश्यक फ़ील्ड भरें"
+    },
+    "verifyEmail": "ईमेल सत्यापित करें",
+    "emailVerified": "ईमेल सत्यापित हो गया",
+    "emailNotVerified": "ईमेल सत्यापित नहीं है",
+    "verificationEmailSent": "आपके इनबॉक्स में एक सत्यापन ईमेल भेजा गया है",
+    "forgotPassword": {
+      "title": "अपना पासवर्ड रीसेट करें",
+      "sendButton": "पासवर्ड रीसेट लिंक भेजें",
+      "sending": "लोड हो रहा है..",
+      "backToLogin": "लॉगिन पर वापस जाएं",
+      "emptyEmail": "कृपया अपना ईमेल पता दर्ज करें",
+      "successTitle": "सफलतापूर्वक भेजा गया",
+      "successMessage": "आपके ईमेल पर एक पासवर्ड रीसेट लिंक भेजा गया है। (कृपया अपना स्पैम फ़ोल्डर भी जांचें)",
+      "userNotFound": "इस ईमेल पते से कोई खाता पंजीकृत नहीं है",
+      "errors": {
+        "userNotFound": "इस ईमेल से कोई खाता पंजीकृत नहीं है",
+        "general": "लिंक भेजते समय एक त्रुटि हुई। कृपया बाद में फिर से कोशिश करें"
+      }
+    },
+    "errors": {
+      "general": "एक अप्रत्याशित त्रुटि हुई। कृपया बाद में फिर से कोशिश करें।",
+      "invalidCredentials": "ईमेल या पासवर्ड गलत है",
+      "userNotFound": "इस ईमेल से जुड़ा कोई खाता नहीं है",
+      "network": "कृपया अपना इंटरनेट कनेक्शन जांचें",
+      "emailAlreadyInUse": "यह ईमेल पहले से ही उपयोग में है",
+      "invalidEmail": "ईमेल पता अमान्य है",
+      "weakPassword": "पासवर्ड बहुत कमज़ोर है",
+      "googleSignIn": "Google साइन-इन विफल हुआ। कृपया फिर से कोशिश करें",
+      "emailRequired": "ईमेल आवश्यक है",
+      "emailInvalid": "कृपया एक मान्य ईमेल पता दर्ज करें",
+      "passwordShort": "पासवर्ड बहुत छोटा है",
+      "passwordLetter": "पासवर्ड में कम से कम एक अक्षर होना चाहिए",
+      "passwordNumber": "पासवर्ड में कम से कम एक अंक होना चाहिए",
+      "nameShort": "नाम कम से कम 2 अक्षरों का होना चाहिए",
+      "genderRequired": "कृपया अपना लिंग चुनें",
+      "countryRequired": "कृपया अपना देश चुनें",
+      "playServices": "Google Play सेवाएँ इस डिवाइस पर उपलब्ध नहीं हैं।"
+    },
+    "validation": {
+      "passwordTitle": "अपर्याप्त पासवर्ड",
+      "passwordRequirements": "पासवर्ड कम से कम 8 अक्षरों का होना चाहिए और उसमें अक्षर तथा अंक दोनों होने चाहिए।"
+    }
+  },
+  "navigation": {
+    "tabs": {
+      "home": "होम",
+      "news": "समाचार",
+      "games": "गेम्स",
+      "settings": "सेटिंग्स"
+    },
+    "titles": {
+      "notificationSettings": "सूचना सेटिंग्स",
+      "accountSettings": "खाता सेटिंग्स",
+      "gamesList": "मेरी गेम्स सूची",
+      "myLists": "मेरी सूचियाँ"
+    }
+  },
+  "home": {
+    "slideshow": {
+      "subtitle": "ट्रेलर देखें",
+      "error": "स्लाइडशो लोड करने में त्रुटि"
+    },
+    "sections": {
+      "news": "समाचार",
+      "reviews": "समीक्षाएं",
+      "esports": "ईस्पोर्ट्स",
+      "hardware": "हार्डवेयर"
+    },
+    "weeklySummary": {
+      "title": "🗞️ साप्ताहिक सारांश",
+      "createdBy": "द्वारा बनाया गया",
+      "readMore": "और पढ़ें..",
+      "readLess": "कम पढ़ें"
+    },
+    "gamingEvents": {
+      "header": "गेमिंग इवेंट्स",
+      "upcoming": "आगामी",
+      "live": "लाइव",
+      "watchNowButton": "अभी देखें",
+      "detailsButton": "लाइव स्ट्रीम देखें",
+      "noEvents": "इस समय कोई गेमिंग इवेंट उपलब्ध नहीं है।",
+      "subtitle": "आगामी और लाइव गेमिंग इवेंट्स देखें"
+    }
+  },
+  "events": {
+    "live": "लाइव",
+    "upcoming": "आगामी",
+    "starts": "शुरू होता है",
+    "ends": "समाप्त होता है",
+    "ended": "समाप्त हो गया",
+    "startsIn": "शुरू होगा",
+    "about": "के बारे में",
+    "links": "लिंक और सोशल",
+    "eventDetails": "इवेंट विवरण",
+    "videos": "वीडियो",
+    "featuredGames": "विशेष गेम्स"
+  },
+  "news": {
+    "tabs": {
+      "news": "समाचार",
+      "reviews": "समीक्षाएं",
+      "esports": "ईस्पोर्ट्स",
+      "hardware": "हार्डवेयर"
+    },
+    "latestHeader": "नवीनतम {{category}}",
+    "newsHeader": "गेमिंग समाचार और लेख",
+    "noArticles": "इस समय कोई लेख उपलब्ध नहीं है।",
+    "fetchError": "डेटा प्राप्त करने में त्रुटि हुई, कृपया बाद में फिर से कोशिश करें।",
+    "contactSupport": "सहायता से संपर्क करें",
+    "endOfList": "लेखों का अंत",
+    "backToNews": "समाचार पर वापस जाएं",
+    "noSources": "इस श्रेणी के लिए कोई समाचार स्रोत उपलब्ध नहीं है।",
+    "details": {
+      "readFullArticle": "पूरा लेख पढ़ें",
+      "noDescription": "यहां कोई विवरण उपलब्ध नहीं है",
+      "shareShortenError": "एक त्रुटि हुई, कृपया बाद में फिर से कोशिश करें।",
+      "shareMessage": "मुझे Gaming Zone App पर एक दिलचस्प लेख मिला\nइसे देखें: "
+    },
+    "dropdown": {
+      "selectSource": "एक स्रोत चुनें",
+      "cancel": "रद्द करें",
+      "englishSources": "अंग्रेजी स्रोत",
+      "arabicSources": "अरबी स्रोत",
+      "visitWebsite": "वेबसाइट पर जाएं"
+    },
+    "duration": {
+      "years": "साल",
+      "months": "महीना",
+      "days": "दिन",
+      "hours": "घं",
+      "minutes": "मि"
+    }
+  },
+  "games": {
+    "searchPlaceholder": "गेम्स खोजें...",
+    "search": "खोजें",
+    "header": "अपना अगला गेमिंग एडवेंचर खोजें",
+    "list": {
+      "freeGames": {
+        "header": "अपने मुफ्त गेम्स प्राप्त करें!",
+        "freeOn": "पर मुफ्त",
+        "days": "दिन",
+        "hours": "घं",
+        "minutes": "मि",
+        "seconds": "से",
+        "claimNow": "अभी प्राप्त करें",
+        "not": "नया मुफ्त गेम!",
+        "subscribed": "आपने मुफ्त गेम्स की सूचनाओं की सदस्यता ले ली है",
+        "unsubscribed": "आपने मुफ्त गेम्स की सूचनाओं की सदस्यता समाप्त कर दी है",
+        "subtitle": "Epic Games, Steam और GOG से"
+      },
+      "gamesNews": {
+        "title": "गेम समाचार",
+        "subtitle": "अपने पसंदीदा गेम्स के नवीनतम समाचार जानें",
+        "live": "लाइव",
+        "source": "स्रोत: गेम की आधिकारिक वेबसाइट",
+        "noNews": "कोई समाचार नहीं मिला।",
+        "loadError": "समाचार लोड नहीं किए जा सके। कृपया फिर से कोशिश करें।"
+      },
+      "popular": {
+        "title": "अभी लोकप्रिय",
+        "subtitle": "अभी सबसे अधिक ट्रेंडिंग गेम्स"
+      },
+      "steamTopSellers": {
+        "title": "Steam पर टॉप सेलर्स",
+        "subtitle": "Steam पर वैश्विक स्तर पर सबसे ज़्यादा बिकने वाले गेम्स"
+      },
+      "trendingMobile": {
+        "title": "लोकप्रिय मोबाइल गेम्स\nअभी",
+        "subtitle": "अभी सबसे अधिक ट्रेंडिंग मोबाइल गेम्स"
+      },
+      "recentlyReleased": {
+        "title": "हाल ही में जारी",
+        "subtitle": "नवीनतम गेम्स खोजें",
+        "new": "नया"
+      },
+      "comingSoon": {
+        "title": "जल्द आ रहा है",
+        "subtitle": "देखने लायक आगामी गेम्स"
+      },
+      "mostAnticipated": {
+        "title": "सबसे प्रतीक्षित",
+        "subtitle": "सबसे अधिक प्रतीक्षित आगामी गेम्स",
+        "countdown": {
+          "days": "दिन",
+          "hours": "घंटे",
+          "minutes": "मिनट",
+          "seconds": "सेकंड"
+        }
+      },
+      "nostalgiaCorner": {
+        "title": "नॉस्टैल्जिया कॉर्नर",
+        "subtitle": "क्लासिक मास्टरपीस को फिर से देखें"
+      },
+      "topRated": {
+        "title": "सबसे अधिक रेटेड",
+        "subtitle": "समुदाय द्वारा सबसे अधिक रेट किए गए"
+      },
+      "searchResults": "खोज परिणाम",
+      "noResults": "कोई गेम नहीं मिला।",
+      "serverError": "सर्वर से कनेक्शन विफल रहा। कृपया सुनिश्चित करें कि आपका इंटरनेट कनेक्शन सक्रिय है और फिर से कोशिश करें।",
+      "gameTypes": {
+        "1": "DLC",
+        "2": "विस्तार",
+        "5": "MOD",
+        "6": "एपिसोड",
+        "7": "सीज़न",
+        "8": "रीमेक",
+        "9": "रीमास्टर",
+        "10": "विस्तारित"
+      },
+      "recommended": {
+        "title": "आपके लिए अनुशंसित",
+        "subtitle": "आपके खेले गए गेम्स के आधार पर"
+      }
+    },
+    "details": {
+      "availableStores": "इन स्टोर्स पर उपलब्ध",
+      "addToList": "मेरी सूची में जोड़ें",
+      "claimNow": "इस गेम को यहां मुफ्त में प्राप्त करें ",
+      "rateThisGame": "इस गेम को रेट करें",
+      "yourRating": "आपकी रेटिंग",
+      "ratingFailed": "आपकी रेटिंग सहेजी नहीं जा सकी। कृपया फिर से कोशिश करें।",
+      "about": "के बारे में",
+      "screenshotsGallery": "स्क्रीनशॉट्स",
+      "genres": "शैलियाँ",
+      "gameModes": "गेम मोड्स",
+      "developer": "डेवलपर",
+      "publisher": "प्रकाशक",
+      "languages": {
+        "title": "भाषा समर्थन",
+        "Language": "भाषा",
+        "audio": "ऑडियो",
+        "subtitles": "उपशीर्षक",
+        "interface": "इंटरफेस",
+        "names": {
+          "Arabic": "अरबी",
+          "English": "अंग्रेज़ी",
+          "French": "फ्रेंच",
+          "German": "जर्मन",
+          "Spanish": "स्पेनिश",
+          "Spanish (Spain)": "स्पेनिश (स्पेन)",
+          "Spanish (Latin America)": "स्पेनिश (लैटिन अमेरिका)",
+          "Portuguese": "पुर्तगाली",
+          "Portuguese (Brazil)": "पुर्तगाली (ब्राज़ील)",
+          "Portuguese (Portugal)": "पुर्तगाली (पुर्तगाल)",
+          "Italian": "इतालवी",
+          "Japanese": "जापानी",
+          "Korean": "कोरियाई",
+          "Russian": "रूसी",
+          "Chinese": "चीनी",
+          "Chinese (Simplified)": "चीनी (सरलीकृत)",
+          "Chinese (Traditional)": "चीनी (पारंपरिक)",
+          "Polish": "पोलिश",
+          "Swedish": "स्वीडिश",
+          "Norwegian": "नॉर्वेजियन",
+          "Danish": "डेनिश",
+          "Finnish": "फिनिश",
+          "Turkish": "तुर्की",
+          "Dutch": "डच",
+          "Thai": "थाई",
+          "Ukrainian": "यूक्रेनी",
+          "Czech": "चेक",
+          "Hungarian": "हंगेरियन",
+          "Romanian": "रोमानियाई",
+          "Vietnamese": "वियतनामी",
+          "Hindi": "हिंदी"
+        }
+      },
+      "engines": "गेम इंजन",
+      "howLongToBeat": {
+        "title": "गेम पूरा करने में समय",
+        "main": "मुख्य कहानी",
+        "mainExtra": "मुख्य + अतिरिक्त",
+        "completionist": "कंप्लीशनिस्ट",
+        "hours": "घंटे"
+      },
+      "userRatings": "उपयोगकर्ता रेटिंग्स",
+      "trailer": "गेम ट्रेलर",
+      "series": "गेम सीरीज़",
+      "similar": "मिलते-जुलते गेम्स",
+      "pcRequirements": "पीसी सिस्टम आवश्यकताएं",
+      "minimum": "न्यूनतम",
+      "recommended": "अनुशंसित",
+      "listStatus": {
+        "add": "जोड़ें...",
+        "played": "खेला गया",
+        "playing": "खेल रहे हैं",
+        "wantToPlay": "खेलना चाहते हैं",
+        "rated": "रेट किया गया"
+      }
+    },
+    "filter": {
+      "title": "गेम्स फ़िल्टर करें",
+      "year": "रिलीज़ वर्ष",
+      "genre": "शैली",
+      "platform": "प्लेटफ़ॉर्म",
+      "sort": "इसके अनुसार क्रमबद्ध करें",
+      "sortOptions": {
+        "relevance": "प्रासंगिकता",
+        "title": "शीर्षक",
+        "release_date": "रिलीज़ की तारीख",
+        "rating": "रेटिंग"
+      },
+      "reset": "रीसेट करें",
+      "apply": "लागू करें",
+      "any": "कोई भी",
+      "genres": {
+        "rpg": "RPG",
+        "shooter": "शूटर",
+        "fighting": "फाइटिंग",
+        "music": "संगीत",
+        "platform": "प्लेटफ़ॉर्म",
+        "puzzle": "पहेली",
+        "racing": "रेसिंग",
+        "rts": "RTS",
+        "simulator": "सिम्युलेटर",
+        "sport": "खेल",
+        "strategy": "रणनीति",
+        "turnBased": "टर्न-आधारित",
+        "tactical": "टैक्टिकल",
+        "hackSlash": "हैक एंड स्लैश",
+        "quiz": "क्विज़ / ट्रिविया",
+        "adventure": "एडवेंचर",
+        "indie": "इंडी",
+        "arcade": "आर्केड",
+        "moba": "MOBA"
+      },
+      "platforms": {
+        "pc": "पीसी",
+        "ps5": "PS5",
+        "ps4": "PS4",
+        "xboxSeries": "Xbox Series X|S",
+        "xboxOne": "Xbox One",
+        "switch": "Switch",
+        "linux": "Linux",
+        "mac": "Mac",
+        "android": "Android",
+        "ios": "iOS"
+      }
+    }
+  },
+  "userLists": {
+    "gamesCount": "{{count}} गेम्स",
+    "empty": {
+      "title": "आपकी सूची खाली है",
+      "playedSub": "यहां वे गेम्स जोड़ें जो आपने खेले हैं।",
+      "wantSub": "वे गेम्स जोड़ें जिन्हें आप खेलना चाहते हैं।",
+      "ratedSub": "यहां अपने खेले गए गेम्स को रेट और रिव्यू करें।",
+      "findButton": "अपना गेम खोजें",
+      "findButtonNew": "अपना नया गेम खोजें"
+    },
+    "actions": {
+      "confirmDeleteTitle": "हटाने की पुष्टि करें",
+      "confirmDeleteMessage": "क्या आप वाकई अपनी सूची से \"{{gameName}}\" हटाना चाहते हैं?",
+      "createNewList": "नई सूची बनाएं",
+      "shareMessage": "Gaming Zone पर मेरी गेम्स सूची \"{{listName}}\" देखें!"
+    },
+    "placeholders": {
+      "newListName": "जैसे RPG पसंदीदा"
+    },
+    "errors": {
+      "couldNotCreateList": "सूची नहीं बनाई जा सकी। कृपया बाद में फिर से कोशिश करें",
+      "listAlreadyExists": "इस नाम से पहले से ही एक सूची मौजूद है",
+      "couldNotDeleteList": "सूची हटाई नहीं जा सकी। कृपया बाद में फिर से कोशिश करें।"
+    }
+  },
+  "settings": {
+    "language": "भाषा",
+    "currentLang": "हिंदी",
+    "languageSelect": {
+      "confirmTitle": "भाषा बदलें",
+      "confirmMessage": "नई भाषा लागू करने के लिए ऐप पुनः प्रारंभ होगा।"
+    },
+    "menu": {
+      "notifications": "सूचनाएं प्रबंधित करें",
+      "myLists": "मेरी सूचियाँ",
+      "rateUs": "हमें रेट करें",
+      "inviteFriends": "दोस्तों को आमंत्रित करें",
+      "contactUs": "हमसे संपर्क करें",
+      "changeLanguage": "भाषा बदलें",
+      "privacyPolicy": "गोपनीयता नीति",
+      "showAds": "विज्ञापन दिखाएं",
+      "signOut": "लॉग आउट करें"
+    },
+    "signOut": {
+      "confirmTitle": "लॉग आउट करें",
+      "confirmMessage": "क्या आप वाकई लॉग आउट करना चाहते हैं?",
+      "errorTitle": "त्रुटि",
+      "errorMessage": "लॉग आउट करते समय एक त्रुटि हुई। कृपया फिर से कोशिश करें।"
+    },
+    "profile": {
+      "changePic": "अपनी प्रोफ़ाइल तस्वीर बदलें",
+      "nameLabel": "आपका नाम:",
+      "dobLabel": "आपकी जन्मतिथि:",
+      "genderLabel": "लिंग:",
+      "countryLabel": "देश:",
+      "platformLabel": "प्लेटफ़ॉर्म:",
+      "platforms": {
+        "pc": "पीसी",
+        "playstation": "प्लेस्टेशन",
+        "xbox": "Xbox",
+        "android": "Android",
+        "ios": "IOS"
+      },
+      "saveSuccessTitle": "हो गया!",
+      "saveSuccessMessage": "आपका डेटा सफलतापूर्वक अपडेट कर दिया गया है",
+      "permissionError": "छवि अनुमतियां आवश्यक हैं",
+      "placeholders": {
+        "name": "अपना नाम दर्ज करें",
+        "dob": "जन्मतिथि (YYYY-MM-DD)",
+        "gender": "अपना लिंग चुनें",
+        "country": "अपना देश चुनें",
+        "platform": "अपना प्लेटफ़ॉर्म चुनें"
+      },
+      "connectedApps": "कनेक्टेड ऐप्स",
+      "steam": {
+        "modal": {
+          "title": "अपनी Steam लाइब्रेरी सिंक करें",
+          "instructions": "अपने गेम्स को अपनी सूचियों (खेल रहे हैं, खेला गया, खेलना चाहते हैं) में आयात करने के लिए अपना Steam Custom URL या Steam ID दर्ज करें।",
+          "placeholder": "https://steamcommunity.com/profiles/76561198818022625",
+          "privacy": "कृपया सुनिश्चित करें कि आपकी गोपनीयता सेटिंग्स में आपकी Steam प्रोफ़ाइल और गेम विवरण 'सार्वजनिक' पर सेट हैं।",
+          "syncing": "सिंक हो रहा है...",
+          "syncBtn": "गेम्स सिंक करें",
+          "cancel": "रद्द करें"
+        },
+        "errors": {
+          "empty": "कृपया एक Steam ID/URL दर्ज करें",
+          "resolveFailed": "Steam उपयोगकर्ता नहीं मिला",
+          "privateProfile": "आपकी प्रोफ़ाइल निजी है या इसमें कोई गेम नहीं है।",
+          "fetchFailed": "गेम्स प्राप्त करने में विफल",
+          "igdbFailed": "गेम्स को मैप करने में विफल"
+        },
+        "success": "{{count}} गेम्स सफलतापूर्वक आयात किए गए!"
+      },
+      "messages": {
+        "permissionTitle": "फ़ोटो एक्सेस अनुमति",
+        "permissionMsg": "आपकी प्रोफ़ाइल तस्वीर अपडेट करने के लिए हमें आपकी फ़ोटो गैलरी तक पहुंच चाहिए",
+        "uploadFailed": "छवि अपलोड करने में विफल। कृपया अपना इंटरनेट जांचें और फिर से कोशिश करें",
+        "saveError": "परिवर्तन सहेजने में असमर्थ",
+        "saveSuccessTitle": "सहेजा गया",
+        "saveSuccessMsg": "आपकी प्रोफ़ाइल जानकारी सफलतापूर्वक अपडेट कर दी गई है",
+        "missingName": "कृपया अपना नाम दर्ज करें।",
+        "missingDob": "कृपया अपनी जन्मतिथि चुनें।",
+        "missingGender": "कृपया अपना लिंग चुनें।",
+        "missingCountry": "कृपया अपना देश चुनें।",
+        "missingPlatform": "कृपया अपना प्लेटफ़ॉर्म चुनें।",
+        "missingImage": "कृपया एक प्रोफ़ाइल तस्वीर जोड़ें।"
+      }
+    },
+    "notifications": {
+      "description": "चुनें कि आप किन समाचार स्रोतों से सूचनाएं प्राप्त करना चाहते हैं\nसुनिश्चित करें कि आप इस ऐप के लिए सूचनाओं की अनुमति दें",
+      "footer": "जब सक्षम स्रोतों से नए लेख प्रकाशित होंगे तो सूचनाएं भेजी जाएंगी।",
+      "testNotification": "परीक्षण सूचना भेजें",
+      "updateFailed": "सूचना सेटिंग्स अपडेट नहीं की जा सकीं। कृपया फिर से कोशिश करें।"
+    },
+    "userGames": {
+      "emptyText": "आपकी सूची खाली है",
+      "emptySubText": "जो गेम्स आप चाहें, वे जोड़ें।",
+      "findButton": "अपना गेम खोजें",
+      "viewOnly": "आपके साथ साझा की गई केवल-पठन सूची देख रहे हैं।",
+      "messages": {
+        "loadError": "आपकी सूची लोड करने में हमें एक समस्या का सामना करना पड़ा। कृपया बाद में फिर से कोशिश करें",
+        "removeError": "गेम को हटाने की कोशिश करते समय एक त्रुटि हुई"
+      }
+    },
+    "contact": {
+      "title": "हमसे संपर्क करें",
+      "typeLabel": "संदेश का प्रकार",
+      "types": {
+        "suggestion": "सुझाव",
+        "problem": "समस्या की रिपोर्ट करें",
+        "other": "सामान्य पूछताछ"
+      },
+      "rateLimitError": "आप संदेश सीमा तक पहुंच गए हैं। बाद में फिर से कोशिश करें।",
+      "messageLabel": "आपका संदेश *",
+      "messagePlaceholder": "यहां अपने सुझाव या समस्या का विवरण लिखें...",
+      "messageError": "अपने सुझाव का विवरण लिखें",
+      "emailLabel": "ईमेल (आपसे संपर्क करने के लिए)",
+      "send": "भेजें",
+      "sending": "भेजा जा रहा है...",
+      "success": "हमसे संपर्क करने के लिए धन्यवाद!",
+      "error": "भेजते समय एक त्रुटि हुई। कृपया फिर से कोशिश करें",
+      "messageTooLong": "संदेश बहुत लंबा है। अधिकतम सीमा 5000 अक्षर है।",
+      "invalidEmail": "ईमेल पता अमान्य है"
+    }
+  },
+  "aiChat": {
+    "title": "गेमिंग सहायक (बीटा)",
+    "placeholder": "गेमिंग के बारे में मुझसे कुछ भी पूछें...",
+    "limitReached": "आप अपनी दैनिक 20 संदेशों की सीमा तक पहुंच गए हैं।",
+    "error": "कुछ गलत हो गया। कृपया फिर से कोशिश करें।",
+    "typing": "टाइप कर रहा है...",
+    "emptyList": "अपने AI सहायक के साथ चैट करना शुरू करें!",
+    "suggestions": {
+      "basedOnList": "मेरी गेम्स सूची के आधार पर एक गेम सुझाएं",
+      "bestAdventure": "सबसे अच्छे एडवेंचर गेम्स कौन से हैं?",
+      "coopGames": "दोस्तों के साथ खेलने के लिए को-ऑप गेम्स सुझाएं",
+      "newReleases": "इस महीने रिलीज़ हुए नवीनतम गेम्स कौन से हैं?"
+    }
+  },
+  "appAdvertisement": {
+    "titlePrefix": "डाउनलोड करें",
+    "titleHighlight": "Gaming Zone",
+    "titleSuffix": "ऐप अभी!",
+    "description": "गेमिंग समुदाय से जुड़ें, नवीनतम समाचार, समीक्षाएं फॉलो करें, और Google Play पर उपलब्ध हमारे ऐप के ज़रिए अपने पसंदीदा गेम्स को आसानी से अपनी लाइब्रेरी में जोड़ें।",
+    "getItOn": "इस पर उपलब्ध है",
+    "googlePlay": "Google Play",
+    "getItOnFooter": "Google Play पर उपलब्ध है"
+  },
+  "onboarding": {
+    "skip": "छोड़ें",
+    "next": "अगला",
+    "getStarted": "शुरू करें",
+    "slides": [
+      {
+        "title": "📰 अपडेट रहें",
+        "description": "अपनी पसंदीदा स्रोतों से गेम्स, समीक्षाएं, ईस्पोर्ट्स और हार्डवेयर की नवीनतम खबरें, सब एक ही जगह पर।"
+      },
+      {
+        "title": "📃 गेम्स लाइब्रेरी",
+        "description": "अपने संग्रह को व्यवस्थित करें, पूर्ण किए गए गेम्स को ट्रैक करें, और आगामी रिलीज़ के लिए विशलिस्ट बनाएं।"
+      },
+      {
+        "title": "🎁 कभी कोई मुफ्त गेम न चूकें",
+        "description": "Epic Games, Steam और GOG पर ऑफर समाप्त होने से पहले इसे एक टैप में प्राप्त करें!"
+      },
+      {
+        "title": "🔔 तुरंत सूचनाएं",
+        "description": "नए मुफ्त गेम्स और समाचारों के लिए तुरंत अलर्ट के साथ अपडेट रहें।"
+      }
+    ]
+  }
+}

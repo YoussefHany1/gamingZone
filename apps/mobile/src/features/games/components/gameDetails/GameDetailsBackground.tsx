@@ -11,16 +11,13 @@ const GameDetailsBackground: React.FC<GameDetailsBackgroundProps> = ({
   coverImageId,
   currentLang,
 }) => {
-  const isRtl = currentLang !== "en";
+  const isRtl = currentLang === "ar";
 
   return (
     <>
       {/* Side-fade gradients that blend the cover art into the page background */}
       <View
-        style={[
-          styles.gradientOverlay,
-          { flexDirection: isRtl ? "row-reverse" : "row" },
-        ]}
+        style={[styles.gradientOverlay, { flexDirection: isRtl ? "row-reverse" : "row" }]}
       >
         <LinearGradient
           colors={["transparent", COLORS.primary]}
