@@ -8,3 +8,4 @@ export { default as GamesPageView } from "./components/GamesPageView";
 export * from "./types";
 export * from "./utils";
 export * from "./services/api";
+export * from "./services/server-cache";

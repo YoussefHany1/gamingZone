@@ -7,22 +7,40 @@ import { getTranslations } from "@/i18n/server";
 import { getSiteBaseUrl } from "@/lib/metadata";
 
 const NEWS_CATEGORIES = ["news", "reviews", "esports", "hardware"] as const;
-const LOCALES = ["en", "ar"] as const;
 
 // Prerender the newest articles (from every category) so detail pages are
 // served from the Vercel CDN instead of running a function on every request.
-export const revalidate = 600;
+//
+// Article bodies are immutable once published, so a long window is free
+// freshness-wise. The long revalidate is a safety net only — .github/workflows/
+// trigger-rss.yml calls /api/revalidate the moment new articles land, so a
+// freshly published article is served immediately. Dropping the prerendered
+// set from 24 to 12 also halves the ISR write surface (24 ids x 2 locales).
+export const revalidate = 21600; // 6h
+
+const PRERENDERED_ARTICLE_LIMIT = 12;
 
 export async function generateStaticParams() {
   try {
+    // Only ids are needed, and ids are locale-independent, so one locale per
+    // category is enough. The previous LOCALES cross-product doubled the
+    // Appwrite queries at build time for identical output.
     const results = await Promise.all(
-      NEWS_CATEGORIES.flatMap((category) =>
-        LOCALES.map((lang) => fetchServerArticles(category, lang)),
-      ),
+      NEWS_CATEGORIES.map((category) => fetchServerArticles(category, "en")),
     );
-    const ids = [...new Set(results.flat().map((art) => art.$id))].slice(0, 24);
+    const ids = [
+      ...new Set(results.flat().map((art) => art.$id)),
+    ].slice(0, PRERENDERED_ARTICLE_LIMIT);
     return ids.map((id) => ({ id }));
-  } catch {
+  } catch (error) {
+    // Never swallow this silently: returning [] degrades every article page to a
+    // cold dynamic render, which is an invocation on every request, not one per
+    // 6h. The 6h revalidate still recovers the page on the next regeneration.
+    console.error(
+      "[news/[id]] generateStaticParams failed — no article pages will be " +
+        "prerendered and every article hit will run a function:",
+      error,
+    );
     return [];
   }
 }

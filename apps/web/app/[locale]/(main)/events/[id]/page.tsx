@@ -14,15 +14,28 @@ import {
 import { getCachedEventDetails } from "@/features/events/services/server";
 import { fetchGamingEvents } from "@/features/events/services/api";
 
-// Prerender all event pages so they are served from the Vercel CDN instead of
-// running a function on every request.
-export const revalidate = 600;
+// Prerender event pages so they are served from the Vercel CDN instead of
+// running a function on every request. 30m: event status (live/upcoming/
+// finished) is derived from dates, so it shifts slowly.
+export const revalidate = 1800;
+
+// Uncapped, this fans out to one ISR path per event the upstream API returns,
+// across every locale. A bad upstream response returning hundreds of events
+// would multiply the write budget with no traffic to justify it.
+const PRERENDERED_EVENT_LIMIT = 10;
 
 export async function generateStaticParams() {
   try {
     const events = await fetchGamingEvents();
-    return events.map((event) => ({ id: event.id.toString() }));
-  } catch {
+    return events
+      .slice(0, PRERENDERED_EVENT_LIMIT)
+      .map((event) => ({ id: event.id.toString() }));
+  } catch (error) {
+    console.error(
+      "[events/[id]] generateStaticParams failed — no event pages will be " +
+        "prerendered and every event hit will run a function:",
+      error,
+    );
     return [];
   }
 }

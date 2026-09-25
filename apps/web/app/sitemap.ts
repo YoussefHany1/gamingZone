@@ -1,24 +1,26 @@
 import { MetadataRoute } from "next";
-import { fetchGamesList } from "@/features/games/services/api";
+import { fetchGamesList } from "@/features/games/services/server-cache";
 import { fetchServerArticles } from "@/features/news/services/api";
 import { getSiteBaseUrl } from "@/lib/metadata";
 
 const NEWS_CATEGORIES = ["news", "reviews", "esports", "hardware"];
 
-// Cache the sitemap at the CDN so crawlers don't re-render this route on every hit
-export const revalidate = 3600;
+// 30m, not 6h. Next derives a route's revalidate from the lowest TTL among the
+// data-cache entries it reads, and this route shares fetchServerArticles with
+// the home page — so 21600 here would be capped at the news TTL regardless.
+// Declaring 1800 keeps the manifest honest instead of implying 6h.
+// This is 1 path, so the cost is 48 writes/day.
+export const revalidate = 1800;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getSiteBaseUrl();
   const locales = ["en", "ar"];
 
   // 1. Static Routes
-  const staticRoutes = [
-    "",
-    "/games",
-    "/news",
-    "/events",
-  ];
+  // No /events entry: only app/[locale]/(main)/events/[id] exists, so /events
+  // 404s. Nothing in the UI links to it either — advertising it in the sitemap
+  // just spent crawl budget on a 404.
+  const staticRoutes = ["", "/games", "/news"];
   const sitemapEntries: MetadataRoute.Sitemap = [];
 
   locales.forEach((locale) => {

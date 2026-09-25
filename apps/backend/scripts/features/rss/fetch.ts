@@ -4,6 +4,7 @@ import * as xml2js from 'xml2js';
 import * as iconv from 'iconv-lite';
 import * as jschardet from 'jschardet';
 import * as he from 'he';
+import type { ChromeReleaseChannel } from 'puppeteer-core';
 
 import { withRetry } from '../../lib/http';
 import { fixArabHardwareEncoding } from './encoding';
@@ -19,27 +20,65 @@ const parser = new xml2js.Parser({
 function cleanXmlBody(body: string | Buffer | undefined | null): string {
   if (!body) return '';
 
-  let strBody = typeof body === 'string' ? body : body.toString('utf8');
+  const strBody = typeof body === 'string' ? body : body.toString('utf8');
   let cleaned = strBody.replace(/&(?!(?:apos|quot|[gl]t|amp|#\d+|#x[a-f\d]+);)/gi, '&amp;');
 
-  cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  const invalidXmlCharacters = new RegExp(
+    `[${String.fromCharCode(0)}-${String.fromCharCode(8)}${String.fromCharCode(11)}${String.fromCharCode(12)}${String.fromCharCode(14)}-${String.fromCharCode(31)}${String.fromCharCode(127)}]`,
+    'g',
+  );
+  cleaned = cleaned.replace(invalidXmlCharacters, '');
   return cleaned;
 }
 
-async function parseResponse(body: string): Promise<{ type: 'json' | 'xml'; data: any }> {
-  let parsedJson = null;
+type ErrorResponse = {
+  status?: number;
+  statusCode?: number;
+};
+
+type ErrorWithResponse = {
+  response?: ErrorResponse;
+};
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function getResponseStatus(error: unknown): number | undefined {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined;
+
+  const response = (error as ErrorWithResponse).response;
+  return response?.status ?? response?.statusCode;
+}
+
+async function parseResponse(
+  body: string,
+  contentType = '',
+): Promise<{ type: 'json' | 'xml'; data: unknown }> {
+  let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(body);
-  } catch (_error: any) {}
+  } catch {
+    parsedJson = undefined;
+  }
 
-  if (parsedJson && !parsedJson.rss && !parsedJson.feed) {
+  const contentTypeSaysJson = /\bjson\b/i.test(contentType);
+  const parsedRecord =
+    parsedJson && typeof parsedJson === 'object' && !Array.isArray(parsedJson)
+      ? (parsedJson as Record<string, unknown>)
+      : null;
+  if (
+    parsedJson !== undefined &&
+    parsedJson !== null &&
+    (contentTypeSaysJson || (!parsedRecord?.rss && !parsedRecord?.feed))
+  ) {
     return { type: 'json', data: parsedJson };
   }
 
   try {
     const parsed = await parser.parseStringPromise(body);
     return { type: 'xml', data: parsed };
-  } catch (_error: any) {
+  } catch {
     const cleanedBody = cleanXmlBody(body);
     const parsedCleaned = await parser.parseStringPromise(cleanedBody);
     return { type: 'xml', data: parsedCleaned };
@@ -57,41 +96,46 @@ const PUPPETEER_LAUNCH_ARGS = [
   '--window-size=1920,1080',
 ];
 
-async function extractDescriptionFromDoc(document: any): Promise<string | null> {
+async function extractDescriptionFromDoc(document: Document): Promise<string | null> {
   try {
     const { Readability } = await import('@mozilla/readability');
     const reader = new Readability(document);
     const article = reader.parse();
-    if (article && article.textContent) {
-      return normalizeText(article.textContent);
-    }
-  } catch (error: any) {
-    logger.debug(`Readability extraction failed: ${error.message}`);
+    if (article?.textContent) return normalizeText(article.textContent);
+  } catch (error: unknown) {
+    logger.debug(`Readability extraction failed: ${getErrorMessage(error)}`);
   }
   return null;
 }
 
-function findImageInJsonLd(obj: any): any {
-  if (!obj) return null;
-  if (Array.isArray(obj)) {
-    for (const item of obj) {
-      const res = findImageInJsonLd(item);
-      if (res) return res;
+function findImageInJsonLd(value: unknown): string | null {
+  if (!value) return null;
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const image = findImageInJsonLd(item);
+      if (image) return image;
     }
   }
-  if (typeof obj === 'object') {
-    if (obj.image) {
-      if (typeof obj.image === 'string') return obj.image;
-      if (Array.isArray(obj.image) && typeof obj.image[0] === 'string') return obj.image[0];
-      if (typeof obj.image === 'object' && obj.image.url) return obj.image.url;
-    }
-    for (const key of Object.keys(obj)) {
-      if (typeof obj[key] === 'object') {
-        const res = findImageInJsonLd(obj[key]);
-        if (res) return res;
-      }
+
+  if (typeof value !== 'object') return null;
+
+  const record = value as Record<string, unknown>;
+  const image = record.image;
+  if (typeof image === 'string') return image;
+  if (Array.isArray(image) && typeof image[0] === 'string') return image[0];
+  if (image && typeof image === 'object' && 'url' in image) {
+    const url = (image as { url?: unknown }).url;
+    if (typeof url === 'string') return url;
+  }
+
+  for (const nestedValue of Object.values(record)) {
+    if (nestedValue && typeof nestedValue === 'object') {
+      const result = findImageInJsonLd(nestedValue);
+      if (result) return result;
     }
   }
+
   return null;
 }
 
@@ -102,7 +146,7 @@ async function fetchArticleDataWithPuppeteer(url: string) {
     browser = await puppeteer.launch({
       headless: true,
       args: PUPPETEER_LAUNCH_ARGS,
-      channel: 'msedge' as any,
+      channel: 'msedge' as unknown as ChromeReleaseChannel,
     });
     const page = await browser.newPage();
     await page.setUserAgent(
@@ -136,25 +180,32 @@ async function fetchArticleDataWithPuppeteer(url: string) {
       for (const script of ldScripts) {
         try {
           const parsed = JSON.parse(script.textContent || '{}');
-          const findImage = (obj: any): any => {
-            if (!obj) return null;
-            if (Array.isArray(obj)) {
-              for (const item of obj) {
-                const res = findImage(item);
-                if (res) return res;
+          const findImage = (value: unknown): string | null => {
+            if (!value) return null;
+            if (Array.isArray(value)) {
+              for (const entry of value) {
+                const image = findImage(entry);
+                if (image) return image;
               }
             }
-            if (typeof obj === 'object') {
-              if (obj.image) {
-                if (typeof obj.image === 'string') return obj.image;
-                if (Array.isArray(obj.image) && typeof obj.image[0] === 'string')
-                  return obj.image[0];
-                if (typeof obj.image === 'object' && obj.image.url) return obj.image.url;
+            if (typeof value === 'object') {
+              const record = value as Record<string, unknown>;
+              if (typeof record.image === 'string') return record.image;
+              if (Array.isArray(record.image) && typeof record.image[0] === 'string') {
+                return record.image[0];
               }
-              for (const key of Object.keys(obj)) {
-                if (typeof obj[key] === 'object') {
-                  const res = findImage(obj[key]);
-                  if (res) return res;
+              if (
+                record.image &&
+                typeof record.image === 'object' &&
+                'url' in record.image &&
+                typeof (record.image as { url?: unknown }).url === 'string'
+              ) {
+                return (record.image as { url: string }).url;
+              }
+              for (const nestedValue of Object.values(record)) {
+                if (nestedValue && typeof nestedValue === 'object') {
+                  const image = findImage(nestedValue);
+                  if (image) return image;
                 }
               }
             }
@@ -162,7 +213,9 @@ async function fetchArticleDataWithPuppeteer(url: string) {
           };
           const image = findImage(parsed);
           if (image) candidates.push(image);
-        } catch (_) {}
+        } catch {
+          continue;
+        }
       }
 
       const articleImg = document.querySelector(
@@ -182,8 +235,8 @@ async function fetchArticleDataWithPuppeteer(url: string) {
     }
 
     return { imageUrl: finalImageUrl, fullDescription };
-  } catch (error: any) {
-    logger.warn(`      ⚠️ Puppeteer OG fetch failed for ${url}: ${error.message}`);
+  } catch (error: unknown) {
+    logger.warn(`      ⚠️ Puppeteer OG fetch failed for ${url}: ${getErrorMessage(error)}`);
     return { imageUrl: null, fullDescription: null };
   } finally {
     if (browser) await browser.close();
@@ -227,8 +280,8 @@ async function fetchArticleData(url: string) {
         if (image && typeof image === 'string' && !isBadImage(image)) {
           return { imageUrl: image, fullDescription };
         }
-      } catch (error: any) {
-        logger.debug(`JSON-LD parse failed: ${error.message}`);
+      } catch (error: unknown) {
+        logger.debug(`JSON-LD parse failed: ${getErrorMessage(error)}`);
       }
     }
 
@@ -271,10 +324,14 @@ async function fetchArticleData(url: string) {
 
     // Fall back to Puppeteer if gotScraping worked but didn't find meta images
     logger.info(`      ⚠️ No OG image found in static body for ${url}. Switching to Puppeteer...`);
-    return fetchArticleDataWithPuppeteer(url);
-  } catch (error: any) {
+    const fallback = await fetchArticleDataWithPuppeteer(url);
+    return {
+      imageUrl: fallback.imageUrl,
+      fullDescription: fallback.fullDescription || fullDescription,
+    };
+  } catch (error: unknown) {
     logger.info(
-      `      ⚠️ Failed to fetch OG image for ${url} with gotScraping: ${error.message}. Switching to Puppeteer...`,
+      `      ⚠️ Failed to fetch OG image for ${url} with gotScraping: ${getErrorMessage(error)}. Switching to Puppeteer...`,
     );
     return fetchArticleDataWithPuppeteer(url);
   }
@@ -315,8 +372,8 @@ async function fetchWithPuppeteer(url: string) {
       : buffer.toString('utf8');
 
     return parseResponse(bodyString);
-  } catch (error: any) {
-    throw new Error(`Puppeteer failed: ${error.message}`);
+  } catch (error: unknown) {
+    throw new Error(`Puppeteer failed: ${getErrorMessage(error)}`, { cause: error });
   } finally {
     if (browser) await browser.close();
   }
@@ -367,7 +424,7 @@ async function fetchFeed(
         if (detected?.encoding && detected.encoding !== 'UTF-8') {
           try {
             bodyString = iconv.decode(buffer, detected.encoding);
-          } catch (_error: any) {
+          } catch {
             logger.warn('Encoding detection failed, using UTF-8');
           }
         }
@@ -375,18 +432,21 @@ async function fetchFeed(
     }
 
     bodyString = cleanXmlBody(bodyString);
-    const parsed = await parseResponse(bodyString);
+    const contentType = Array.isArray(response.headers['content-type'])
+      ? response.headers['content-type'][0]
+      : response.headers['content-type'];
+    const parsed = await parseResponse(bodyString, contentType);
     return { ...parsed, isModified: true, etag: newEtag, lastModified: newLastModified };
-  } catch (error: any) {
-    if (error.response && error.response.statusCode === 304) {
+  } catch (error: unknown) {
+    const status = getResponseStatus(error);
+    if (status === 304) {
       logger.info(`      💤 304 Not Modified for ${url}`);
       return { isModified: false };
     }
 
-    const isRedirectLoop =
-      error.message.includes('Redirected') || error.response?.statusCode === 301;
-    const isBlocked = error.response?.statusCode === 403 || error.response?.statusCode === 503;
-    const isCookieError = error.message.includes("Cookie not in this host's domain");
+    const isRedirectLoop = getErrorMessage(error).includes('Redirected') || status === 301;
+    const isBlocked = status === 403 || status === 503;
+    const isCookieError = getErrorMessage(error).includes("Cookie not in this host's domain");
 
     if (isRedirectLoop || isBlocked || isCookieError) {
       logger.info(`      ⚠️ Switching to Puppeteer for ${url}...`);
@@ -394,7 +454,7 @@ async function fetchFeed(
       return { ...parsed, isModified: true };
     }
 
-    throw new Error(`Fetch failed: ${error.message}`);
+    throw new Error(`Fetch failed: ${getErrorMessage(error)}`, { cause: error });
   }
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { safeId, resolveImageUrl, extractThumbnail, generateDocId } from './helpers';
+import { safeId, resolveImageUrl, extractThumbnail, generateDocId, normalizeUrl } from './helpers';
 
 describe('RSS Helpers', () => {
   describe('safeId', () => {
@@ -25,6 +25,12 @@ describe('RSS Helpers', () => {
       );
     });
 
+    it('should resolve relative paths against the article URL', () => {
+      expect(resolveImageUrl('../images/cover.jpg', 'https://example.com/news/article-1')).toBe(
+        'https://example.com/images/cover.jpg',
+      );
+    });
+
     it('should return null for invalid URLs', () => {
       expect(resolveImageUrl('not a url', 'not a source')).toBeNull();
     });
@@ -46,6 +52,33 @@ describe('RSS Helpers', () => {
         'https://example.com/enclosure.jpg',
       );
     });
+
+    it('should reject non-image enclosures', () => {
+      const item = {
+        enclosure: { $: { url: 'https://example.com/video.mp4', type: 'video/mp4' } },
+      };
+      expect(extractThumbnail(item, 'https://example.com')).toBeNull();
+    });
+
+    it('should extract an image from JSON content HTML', () => {
+      const item = {
+        content_html: '<p>Story</p><img data-src="/images/cover.jpg">',
+      };
+      expect(extractThumbnail(item, 'https://example.com/news/article-1', true)).toBe(
+        'https://example.com/images/cover.jpg',
+      );
+    });
+  });
+
+  describe('normalizeUrl', () => {
+    it('should remove tracking parameters and fragments', () => {
+      expect(
+        normalizeUrl(
+          'https://example.com/article?utm_source=rss&id=7#comments',
+          'https://example.com',
+        ),
+      ).toBe('https://example.com/article?id=7');
+    });
   });
 
   describe('generateDocId', () => {
@@ -54,6 +87,11 @@ describe('RSS Helpers', () => {
       const result = generateDocId(item);
       expect(typeof result).toBe('string');
       expect(result.length).toBeGreaterThan(10);
+    });
+
+    it('should namespace IDs by source', () => {
+      const item = { guid: 'shared-article-id' };
+      expect(generateDocId(item, 'source-a')).not.toBe(generateDocId(item, 'source-b'));
     });
   });
 });

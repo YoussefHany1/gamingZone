@@ -9,7 +9,11 @@ import { getCachedGamingEvents } from "@/features/events/services/server";
 import { fetchLatestTrailers } from "@/features/games/services/server";
 import { createLocalizedMetadata } from "@/lib/metadata";
 
-export const revalidate = 600;
+// Home aggregates news, events and trailers, so it revalidates most often —
+// but at 30m rather than 10m. Only 2 paths (en + ar), so the absolute saving is
+// small; the 3x matters because the RSS workflow revalidates this path on
+// publish, which is what actually keeps it fresh between windows.
+export const revalidate = 1800;
 
 export const generateMetadata = createLocalizedMetadata({
   en: {

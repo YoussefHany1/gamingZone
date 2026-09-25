@@ -35,4 +35,37 @@ jobs:
 
         working-directory: ./apps/backend
         run: |
-          npm run fetch:rss
+          set -o pipefail
+          npm run fetch:rss 2>&1 | tee "$RUNNER_TEMP/rss.log"
+
+      # This job runs every 5 minutes, so the web app is only pinged when the
+      # fetch actually wrote articles — an unconditional ping would cost 288
+      # Vercel function invocations a day, more than the staleness it prevents.
+      # The revalidate segment windows (6h) are the fallback if this never runs.
+      - name: Detect newly written articles
+        id: detect
+        run: |
+          if grep -q "Saved and queued" "$RUNNER_TEMP/rss.log"; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "New articles persisted — web cache will be revalidated."
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No new articles — skipping revalidation."
+          fi
+
+      - name: Revalidate web news cache
+        if: steps.detect.outputs.changed == 'true'
+        env:
+          REVALIDATE_URL: ${{ secrets.REVALIDATE_URL }}
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "$REVALIDATE_URL" ] || [ -z "$REVALIDATE_SECRET" ]; then
+            echo "::error::REVALIDATE_URL / REVALIDATE_SECRET secrets are missing."
+            exit 1
+          fi
+          curl --fail-with-body --silent --show-error --max-time 30 \
+            -X POST "$REVALIDATE_URL" \
+            -H "Authorization: Bearer $REVALIDATE_SECRET" \
+            -H "Content-Type: application/json" \
+            -d '{"target":"news"}'

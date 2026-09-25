@@ -1,5 +1,5 @@
 import { logger } from '../../lib/logger';
-import { Query, Models } from 'node-appwrite';
+import { Query } from 'node-appwrite';
 
 import { loadBackendEnv } from '../../lib/env';
 import { env } from '../../lib/config';
@@ -42,7 +42,24 @@ interface SourceData {
   category: string;
   name: string;
   docId: string;
-  raw: any;
+  raw: Record<string, unknown>;
+}
+
+type SaveResult = 'created' | 'exists' | 'failed';
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function getErrorCode(error: unknown): unknown {
+  if (error && typeof error === 'object' && 'code' in error) {
+    return (error as { code?: unknown }).code;
+  }
+  return undefined;
+}
+
+function getStringValue(value: unknown): string | null {
+  return typeof value === 'string' && value ? value : null;
 }
 
 async function sendNotifications(
@@ -85,37 +102,47 @@ async function sendNotifications(
           await firebaseState.admin.messaging().send(message);
           summary.notificationsSent++;
           logger.info(`   -> Sent: ${article.title.substring(0, 30)}...`);
-        } catch (error: any) {
-          logger.error(`   -> Failed: ${error.message}`);
+        } catch (error: unknown) {
+          logger.error(`   -> Failed: ${getErrorMessage(error)}`);
         }
       }),
     );
   }
 }
 
-async function createArticle(sourceData: SourceData, item: NormalizedArticle): Promise<void> {
+function serializePubDate(value: Date | string | null | undefined): string | null {
+  const date = value instanceof Date ? value : typeof value === 'string' ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return null;
+
+  return date.toISOString();
+}
+
+async function createArticle(sourceData: SourceData, item: NormalizedArticle): Promise<SaveResult> {
   let fullDescription: string | null = null;
 
   logger.info(`      📄 Fetching Article Data for: "${item.title.substring(0, 20)}..."`);
 
-  const articleData = await fetchArticleData(item.link);
-  if (articleData) {
-    if (!item.thumbnail && articleData.imageUrl) {
-      item.thumbnail = resolveImageUrl(articleData.imageUrl, sourceData.rssUrl);
-      logger.info('      ✅ Image found!');
+  try {
+    const articleData = await fetchArticleData(item.link);
+    if (articleData) {
+      if (!item.thumbnail && articleData.imageUrl) {
+        item.thumbnail = resolveImageUrl(articleData.imageUrl, item.link);
+        logger.info('      ✅ Image found!');
+      }
+      if (articleData.fullDescription) fullDescription = articleData.fullDescription;
     }
-    if (articleData.fullDescription) {
-      fullDescription = articleData.fullDescription;
-    }
+  } catch (error: unknown) {
+    logger.warn(`      ⚠️ Article enrichment failed for ${item.link}: ${getErrorMessage(error)}`);
   }
 
-  const finalDescription = fullDescription ? fullDescription : item.description;
+  const pubDate = serializePubDate(item.pubDate);
+  if (!pubDate) logger.warn(`      ⚠️ No valid publication date for ${item.link}`);
 
   const payload = {
     title: item.title,
     link: item.link,
-    description: finalDescription,
-    pubDate: item.pubDate instanceof Date ? item.pubDate.toISOString() : new Date().toISOString(),
+    description: fullDescription || item.description,
+    pubDate,
     thumbnail: item.thumbnail || null,
     guid: String(item.guid || item.link),
     fetchedAt: new Date().toISOString(),
@@ -132,10 +159,24 @@ async function createArticle(sourceData: SourceData, item: NormalizedArticle): P
       item.docId as string,
       payload,
     );
-  } catch (error: any) {
-    if (error.code !== 409) {
-      logger.error(`      ❌ Save failed: ${error.message}`);
+    return 'created';
+  } catch (error: unknown) {
+    if (getErrorCode(error) === 409) {
+      try {
+        const existing = await databases.getDocument(
+          CONFIG.APPWRITE_DATABASE_ID,
+          CONFIG.COLLECTION_ARTICLES,
+          item.docId as string,
+        );
+        if (existing.link === item.link || existing.guid === item.guid) return 'exists';
+      } catch (lookupError: unknown) {
+        logger.warn(`      ⚠️ Could not verify existing article: ${getErrorMessage(lookupError)}`);
+      }
+    } else {
+      logger.error(`      ❌ Save failed: ${getErrorMessage(error)}`);
     }
+
+    return 'failed';
   }
 }
 
@@ -172,8 +213,8 @@ async function cleanupOldArticles(siteName: string, category: string): Promise<v
         ),
       );
     }
-  } catch (error: any) {
-    logger.error(`      ⚠️ Cleanup failed: ${error.message}`);
+  } catch (error: unknown) {
+    logger.error(`      ⚠️ Cleanup failed: ${getErrorMessage(error)}`);
   }
 }
 
@@ -184,39 +225,59 @@ async function processSource(sourceData: SourceData, summary: RssSummary): Promi
   try {
     logger.info(`📥 Processing: ${name}`);
     const cacheHeaders = {
-      etag: raw.lastEtag || null,
-      lastModified: raw.lastModified || null,
+      etag: getStringValue(raw.lastEtag),
+      lastModified: getStringValue(raw.lastModified),
     };
     const fetched: FetchedContent = await fetchFeed(rssUrl, CONFIG.AXIOS_TIMEOUT, cacheHeaders);
+    const fetchedAt = new Date().toISOString();
 
     if (!fetched.isModified) {
+      await databases.updateDocument(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_RSS, docId, {
+        lastFetchedAt: fetchedAt,
+      });
       return;
     }
 
-    let items = normalizeItems(fetched, rssUrl);
-
+    let items = normalizeItems(fetched, rssUrl, docId);
     if (name.toLowerCase().includes('techpowerup') || rssUrl.includes('techpowerup')) {
-      items = items.map((item) => {
-        const stableKey = (item.title || '').trim().toLowerCase();
-        return { ...item, docId: sha1Id(stableKey) };
-      });
+      items = items.map((item) => ({
+        ...item,
+        legacyDocId: sha1Id(item.title.trim().toLowerCase()),
+      }));
     }
 
     if (!items.length) {
-      logger.info('   ⚠️ No items found after normalization.');
+      logger.info('   ⚠️ No valid items found after normalization.');
+      await databases.updateDocument(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_RSS, docId, {
+        lastFetchedAt: fetchedAt,
+        latestTitles: Array.isArray(raw.latestTitles) ? raw.latestTitles : [],
+        recentIds: Array.isArray(raw.recentIds) ? raw.recentIds : [],
+        ...(fetched.etag ? { lastEtag: fetched.etag } : {}),
+        ...(fetched.lastModified ? { lastModified: fetched.lastModified } : {}),
+      });
       return;
     }
 
     const uniqueMap = new Map<string, NormalizedArticle>();
     items.forEach((item) => {
-      if (item.docId) {
-        uniqueMap.set(item.docId, item);
-      }
+      if (item.docId) uniqueMap.set(item.docId, item);
     });
     items = Array.from(uniqueMap.values());
 
-    const existingIds = new Set<string>(raw.recentIds || []);
-    const newItems = items.filter((item) => item.docId && !existingIds.has(item.docId));
+    const existingIds = new Set<string>(
+      Array.isArray(raw.recentIds)
+        ? raw.recentIds.filter((id: unknown): id is string => typeof id === 'string')
+        : [],
+    );
+    const isKnownItem = (item: NormalizedArticle): boolean =>
+      Boolean(item.docId && existingIds.has(item.docId)) ||
+      Boolean(item.legacyDocId && existingIds.has(item.legacyDocId));
+    const confirmedDocIds = new Set(existingIds);
+    const newItems = items.filter((item) => {
+      const known = isKnownItem(item);
+      if (known && item.docId) confirmedDocIds.add(item.docId);
+      return !known;
+    });
 
     logger.info(
       `   🔍 Total items: ${items.length}, Unique docIds: ${new Set(items.map((item) => item.docId)).size}, New: ${newItems.length}`,
@@ -227,45 +288,72 @@ async function processSource(sourceData: SourceData, summary: RssSummary): Promi
         `   ⚠️ WARNING: All items have same docId! Sample: ${JSON.stringify(items[0]).substring(0, 200)}`,
       );
     }
+    const createdItems: NormalizedArticle[] = [];
 
-    const storedTitles: string[] = raw.latestTitles || [];
-    const newTitles = newItems.map((item) => item.title);
-    const finalTitles = [...newTitles, ...storedTitles].slice(0, CONFIG.MAX_STORED_NEWS);
+    if (newItems.length > 0) {
+      const BATCH_SIZE = 10;
+      for (let i = 0; i < newItems.length; i += BATCH_SIZE) {
+        const chunk = newItems.slice(i, i + BATCH_SIZE);
+        const results = await Promise.allSettled(
+          chunk.map((item) => createArticle(sourceData, item)),
+        );
 
-    const allIds = items.map((item) => item.docId).filter(Boolean) as string[];
-    const updatedRecentIds = Array.from(new Set([...allIds, ...Array.from(existingIds)])).slice(
+        results.forEach((result, index) => {
+          const item = chunk[index];
+          if (result.status === 'fulfilled') {
+            if (result.value === 'created' || result.value === 'exists') {
+              confirmedDocIds.add(item.docId as string);
+            }
+            if (result.value === 'created') createdItems.push(item);
+            return;
+          }
+
+          const message =
+            result.reason instanceof Error ? result.reason.message : String(result.reason);
+          logger.error(`      ❌ Save failed for ${item.title}: ${message}`);
+          summary.errors.push({ name, msg: message });
+        });
+      }
+    }
+
+    const confirmedItems = items.filter((item) => item.docId && confirmedDocIds.has(item.docId));
+    const storedTitles = Array.isArray(raw.latestTitles)
+      ? raw.latestTitles.filter((title: unknown): title is string => typeof title === 'string')
+      : [];
+    const finalTitles = [...confirmedItems.map((item) => item.title), ...storedTitles].slice(
+      0,
+      CONFIG.MAX_STORED_NEWS,
+    );
+    const orderedIds = items
+      .map((item) => item.docId)
+      .filter((id): id is string => Boolean(id && confirmedDocIds.has(id)));
+    const updatedRecentIds = Array.from(new Set([...orderedIds, ...existingIds])).slice(
       0,
       CONFIG.RECENT_IDS_LIMIT,
     );
 
     await databases.updateDocument(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_RSS, docId, {
-      lastFetchedAt: new Date().toISOString(),
+      lastFetchedAt: fetchedAt,
       latestTitles: finalTitles,
       recentIds: updatedRecentIds,
       ...(fetched.etag ? { lastEtag: fetched.etag } : {}),
       ...(fetched.lastModified ? { lastModified: fetched.lastModified } : {}),
     });
 
-    if (newItems.length > 0) {
-      const BATCH_SIZE = 10;
-      for (let i = 0; i < newItems.length; i += BATCH_SIZE) {
-        const chunk = newItems.slice(i, i + BATCH_SIZE);
-        await Promise.allSettled(chunk.map((item) => createArticle(sourceData, item)));
-      }
-
-      logger.info(`   🚀 Found ${newItems.length} new articles.`);
+    if (createdItems.length > 0) {
+      logger.info(`   🚀 Saved and queued ${createdItems.length} new articles.`);
       await sendNotifications(
-        newItems.map((item) => ({ ...item, topicName })),
+        createdItems.map((item) => ({ ...item, topicName })),
         summary,
       );
     } else {
-      logger.info('   💤 No new articles.');
+      logger.info('   💤 No new articles persisted.');
     }
 
     await cleanupOldArticles(name, category);
-  } catch (error: any) {
-    logger.error(`❌ Error in ${name}: ${error.message}`);
-    summary.errors.push({ name, msg: error.message });
+  } catch (error: unknown) {
+    logger.error(`❌ Error in ${name}: ${getErrorMessage(error)}`);
+    summary.errors.push({ name, msg: getErrorMessage(error) });
   }
 }
 
@@ -283,7 +371,7 @@ async function runFetchRss(): Promise<void> {
       rssUrl: doc.rssUrl,
       name: doc.name,
       category: doc.category,
-      raw: doc,
+      raw: doc as unknown as Record<string, unknown>,
     }));
 
     logger.info(`Found ${sources.length} sources.`);
@@ -292,7 +380,7 @@ async function runFetchRss(): Promise<void> {
       const chunk = sources.slice(i, i + CONFIG.MAX_CONCURRENCY);
       await Promise.all(chunk.map((source) => processSource(source, summary)));
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error(error, 'Fatal Error');
   }
 

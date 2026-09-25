@@ -36,4 +36,36 @@ jobs:
 
         working-directory: ./apps/backend
         run: |
-          npm run fetch:free-games
+          set -o pipefail
+          npm run fetch:free-games 2>&1 | tee "$RUNNER_TEMP/free-games.log"
+
+      # Deletions during cleanup are logged silently upstream, so this only
+      # detects writes. Removals still self-correct within the 30-minute
+      # revalidate window on the affected surfaces.
+      - name: Detect changed free-game documents
+        id: detect
+        run: |
+          if grep -qE "Created NEW game document|Updated details" "$RUNNER_TEMP/free-games.log"; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Free games changed — web cache will be revalidated."
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No free-game changes — skipping revalidation."
+          fi
+
+      - name: Revalidate web games cache
+        if: steps.detect.outputs.changed == 'true'
+        env:
+          REVALIDATE_URL: ${{ secrets.REVALIDATE_URL }}
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "$REVALIDATE_URL" ] || [ -z "$REVALIDATE_SECRET" ]; then
+            echo "::error::REVALIDATE_URL / REVALIDATE_SECRET secrets are missing."
+            exit 1
+          fi
+          curl --fail-with-body --silent --show-error --max-time 30 \
+            -X POST "$REVALIDATE_URL" \
+            -H "Authorization: Bearer $REVALIDATE_SECRET" \
+            -H "Content-Type: application/json" \
+            -d '{"target":"games"}'

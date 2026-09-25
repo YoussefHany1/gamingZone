@@ -56,10 +56,10 @@ function fixArabHardwareEncoding(buffer: Buffer): string {
   console.log('      🧪 --- Decoding Analysis (Optimized) ---');
 
   strategies.forEach(({ type, fn }) => {
-    let text = '';
+    let text: string;
     try {
       text = fn();
-    } catch (_error) {
+    } catch {
       return;
     }
 

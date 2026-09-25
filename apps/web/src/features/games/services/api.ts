@@ -1,61 +1,15 @@
 import axios from "axios";
-import { databases } from "@/lib/appwrite";
-import { Query } from "appwrite";
-import { Game, FreeGame } from "../types";
+import { Game } from "../types";
 import { getServerApiUrl } from "@/lib/api-config";
 
-const FREE_GAMES_LIMIT = 20;
-
-interface FreeGameDoc {
-  $id: string;
-  title: string;
-  image?: string;
-  store?: string;
-  url?: string;
-  type?: string;
-  startDate?: string;
-  endDate?: string;
-}
-
-export async function fetchGamesList(endpoint: string): Promise<Game[]> {
-  try {
-    const res = await axios.get<Game[]>(`${getServerApiUrl()}/${endpoint}`, {
-      timeout: 8000,
-    });
-    return Array.isArray(res.data) ? res.data : [];
-  } catch (error) {
-    console.error(`Error fetching ${endpoint}:`, error);
-    return [];
-  }
-}
-
-export async function fetchFreeGames(): Promise<FreeGame[]> {
-  try {
-    const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "";
-    if (!DATABASE_ID) return [];
-
-    const res = await databases.listDocuments(
-      DATABASE_ID,
-      "free_games",
-      [Query.orderAsc("type"), Query.limit(FREE_GAMES_LIMIT)],
-    );
-
-    return (res.documents as unknown as FreeGameDoc[]).map((doc) => ({
-      id: doc.$id,
-      title: doc.title,
-      image: doc.image,
-      store: doc.store,
-      url: doc.url,
-      type: doc.type ?? "",
-      startDate: doc.startDate,
-      endDate: doc.endDate,
-    }));
-  } catch (error) {
-    console.error("Error fetching free games from Appwrite:", error);
-    return [];
-  }
-}
-
+/**
+ * Client-callable game search.
+ *
+ * This module is imported by the GameSearchAutocomplete client component, so it
+ * must stay free of `server-only` and of `unstable_cache` — both would pull
+ * server-only code into the browser bundle. The cached, server-side list
+ * accessors live in ./server-cache.
+ */
 export async function searchGames(
   query: string,
   genre: string,
@@ -100,4 +54,3 @@ export async function searchGames(
     return [];
   }
 }
-

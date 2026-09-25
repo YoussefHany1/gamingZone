@@ -4,8 +4,11 @@ import { getServerApiUrl } from "@/lib/api-config";
 export async function fetchGamingEvents(): Promise<GamingEvent[]> {
   try {
     const response = await fetch(`${getServerApiUrl()}/events`, {
-      // Cache in Vercel Data Cache — revalidates at most once every 10 minutes
-      next: { revalidate: 600 },
+      // Cache in Vercel Data Cache. Kept in step with the home and
+      // events/[id] pages' `revalidate` (1800). The "events" tag lets
+      // /api/revalidate drop this ahead of the window when the upstream
+      // payload changes.
+      next: { revalidate: 1800, tags: ["events"] },
     });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

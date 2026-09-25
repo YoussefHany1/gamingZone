@@ -17,14 +17,32 @@ import { getSiteBaseUrl } from "@/lib/metadata";
 
 // Prerender popular game pages so they are served from the Vercel CDN instead
 // of running a function (IGDB proxy + Steam scrape) on every request.
-export const revalidate = 600;
+//
+// Game data does drift (aggregate ratings, release dates, store availability),
+// so these stay on a 1h window rather than the 6h used for news articles. The
+// long windows elsewhere are safety nets; /api/revalidate shortens this on
+// demand. 1h is a 6x cut in writes on the 20 prerendered game paths.
+export const revalidate = 3600;
+
+const PRERENDERED_GAME_LIMIT = 12;
 
 export async function generateStaticParams() {
   try {
     const popular = await fetchGamesList("popular");
-    const ids = [...new Set(popular.map((g) => g.id.toString()))].slice(0, 12);
+    const ids = [...new Set(popular.map((g) => g.id.toString()))].slice(
+      0,
+      PRERENDERED_GAME_LIMIT,
+    );
     return ids.map((id) => ({ id }));
-  } catch {
+  } catch (error) {
+    // Swallowing this degrades every game page to a cold dynamic render, so an
+    // IGDB outage at build time silently converts the ISR budget into a
+    // per-request invocation. Surface it in the build log.
+    console.error(
+      "[games/[id]] generateStaticParams failed — no game pages will be " +
+        "prerendered and every game hit will run a function:",
+      error,
+    );
     return [];
   }
 }

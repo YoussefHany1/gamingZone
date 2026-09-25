@@ -1,4 +1,4 @@
-﻿import 'dotenv/config';
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 const app = express();
@@ -301,19 +301,155 @@ app.get('/popular', cacheMiddleware(3600), async (req, res) => {
   }
 });
 
-// Latest Trailers
+// ── YouTube helper ──────────────────────────────────────────────────────────
+
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+const YT_BATCH_SIZE = 50; // YouTube allows up to 50 IDs per request
+
+/**
+ * Fetch YouTube video statistics for a list of video IDs in batches.
+ * Returns a Map<videoId, { title, publishedAt, viewCount, likeCount }>
+ */
+async function fetchYouTubeStats(videoIds) {
+  const statsMap = new Map();
+
+  if (!YOUTUBE_API_KEY || videoIds.length === 0) return statsMap;
+
+  // Split into batches of YT_BATCH_SIZE
+  for (let i = 0; i < videoIds.length; i += YT_BATCH_SIZE) {
+    const batch = videoIds.slice(i, i + YT_BATCH_SIZE);
+    const idsParam = batch.join(',');
+    const url =
+      `https://www.googleapis.com/youtube/v3/videos` +
+      `?part=snippet,statistics&id=${idsParam}&key=${YOUTUBE_API_KEY}`;
+
+    try {
+      const ytRes = await fetch(url);
+      if (!ytRes.ok) {
+        console.error('YouTube API error:', ytRes.status, ytRes.statusText);
+        continue; // skip this batch, don't crash
+      }
+      const ytData = await ytRes.json();
+      for (const item of ytData.items ?? []) {
+        statsMap.set(item.id, {
+          title: item.snippet?.title ?? null,
+          publishedAt: item.snippet?.publishedAt ?? null,
+          viewCount: item.statistics?.viewCount != null
+            ? Number(item.statistics.viewCount)
+            : null,
+          likeCount: item.statistics?.likeCount != null
+            ? Number(item.statistics.likeCount)
+            : null,
+        });
+      }
+    } catch (err) {
+      console.error('YouTube fetch error (batch):', err);
+      // continue with remaining batches
+    }
+  }
+
+  return statsMap;
+}
+
+// Most Viewed Recent Trailers
+// NOTE: endpoint name kept as /latest-trailers to avoid breaking the frontend.
 app.get('/latest-trailers', cacheMiddleware(3600), async (req, res) => {
   try {
+    // ── 1. Fetch candidate games from IGDB ──────────────────────────────────
+    // We pull more candidates than needed so the YouTube filter+sort has room
+    // to work with. Widening the IGDB window to 6 months gives good coverage.
     const nowTs = Math.floor(Date.now() / 1000);
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const startTs = Math.floor(sixMonthsAgo.getTime() / 1000);
+
     const query = `
       ${BASE_QUERY_FIELDS}, videos.name, videos.video_id, screenshots.image_id;
-      ${BASE_QUERY_WHERE} & videos != null & screenshots != null & first_release_date < ${nowTs};
-      sort first_release_date desc;
-      limit 10;
+      ${BASE_QUERY_WHERE} & videos != null & screenshots != null & first_release_date > ${startTs} & first_release_date < ${nowTs};
+      sort total_rating_count desc;
+      limit 50;
     `;
-    const data = await callIgdb('games', query);
-    res.json(data);
+    const igdbGames = await callIgdb('games', query);
+
+    if (!igdbGames || igdbGames.length === 0) {
+      return res.json([]);
+    }
+
+    // ── 2. Extract unique video IDs ─────────────────────────────────────────
+    const seenVideoIds = new Set();
+    // Map: videoId → game (keep first occurrence only)
+    const videoToGame = new Map();
+
+    for (const game of igdbGames) {
+      if (!Array.isArray(game.videos)) continue;
+      for (const v of game.videos) {
+        if (!v.video_id || seenVideoIds.has(v.video_id)) continue;
+        seenVideoIds.add(v.video_id);
+        videoToGame.set(v.video_id, { game, videoName: v.name ?? null });
+      }
+    }
+
+    const uniqueVideoIds = [...seenVideoIds];
+
+    // ── 3. Fetch YouTube stats (batched) ────────────────────────────────────
+    const statsMap = await fetchYouTubeStats(uniqueVideoIds);
+
+    // ── 4. Filter: published within the last 30 days ────────────────────────
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
+    const candidates = [];
+    for (const [videoId, ytStats] of statsMap) {
+      // Skip if no publishedAt (deleted / private)
+      if (!ytStats.publishedAt) continue;
+      const publishedMs = new Date(ytStats.publishedAt).getTime();
+      if (publishedMs < thirtyDaysAgo) continue;
+      // Skip if viewCount missing
+      if (ytStats.viewCount === null) continue;
+
+      const entry = videoToGame.get(videoId);
+      if (!entry) continue;
+
+      candidates.push({
+        videoId,
+        ytStats,
+        game: entry.game,
+        videoName: entry.videoName,
+      });
+    }
+
+    // ── 5. Sort by viewCount DESC, deduplicate by game, take top 10 ──────────
+    // A game may have multiple trailers that passed the filter (e.g. Wolverine ×3).
+    // After sorting, keep only the highest-viewed trailer per game.
+    candidates.sort((a, b) => b.ytStats.viewCount - a.ytStats.viewCount);
+    const seenGameIds = new Set();
+    const deduped = [];
+    for (const c of candidates) {
+      const gid = c.game.id;
+      if (seenGameIds.has(gid)) continue;
+      seenGameIds.add(gid);
+      deduped.push(c);
+    }
+    const top10 = deduped.slice(0, 10);
+
+    // ── 6. Build response (backward-compatible shape + YouTube fields) ───────
+    // Each item mirrors the IGDB game object but replaces videos[] with a
+    // single "trailer" object so the frontend doesn't need to change.
+    const result = top10.map(({ videoId, ytStats, game, videoName }) => ({
+      ...game,
+      // Flatten to a single trailer so frontend can use it directly
+      trailer: {
+        video_id: videoId,
+        name: videoName ?? ytStats.title,
+        youtube_title: ytStats.title,
+        published_at: ytStats.publishedAt,
+        view_count: ytStats.viewCount,
+        like_count: ytStats.likeCount,
+      },
+    }));
+
+    res.json(result);
   } catch (error) {
+    console.error('Latest Trailers Error:', error);
     res.status(500).json({
       message: 'An error occurred on the server while fetching data. Please try again later.',
     });

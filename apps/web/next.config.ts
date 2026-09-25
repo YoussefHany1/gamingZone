@@ -28,17 +28,14 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
-      // Allow Vercel Edge to cache ISR pages (matches revalidate: 600 on pages)
-      // Excludes auth routes — those must never be cached at the edge
-      {
-        source: "/:locale(ar|en)/:path*",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, s-maxage=600, stale-while-revalidate=1200",
-          },
-        ],
-      },
+      // NOTE: deliberately no Cache-Control override for /:locale(ar|en)/:path*.
+      // Vercel derives s-maxage/stale-while-revalidate from each segment's
+      // `revalidate` export, and invalidates that CDN entry on revalidatePath().
+      // Setting Cache-Control here created a second TTL the ISR store could not
+      // reach, so on-demand revalidation was invisible until it lapsed — and the
+      // matcher also swept /:locale/auth/*, /:locale/profile and /:locale/chat
+      // into a public, s-maxage=600 cache despite the "excludes auth routes"
+      // comment above. Route-level cache config lives in the page segments.
       // Static Next.js assets are content-hashed — safe to cache forever
       {
         source: "/_next/static/(.*)",
