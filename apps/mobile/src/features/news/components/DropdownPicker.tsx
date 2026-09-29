@@ -119,7 +119,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
           {selectedItem?.name || "Select a website..."}
         </CustomText>
 
-        <ChevronDown size={20} color="#fff" />
+        <ChevronDown size={20} color={COLORS.light} />
       </TouchableOpacity>
 
       {/* Site description card */}
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: COLORS.button,
     borderWidth: 1,
-    borderColor: "#779bdd",
+    borderColor: COLORS.lightGray,
     borderRadius: 8,
     paddingHorizontal: 15,
     paddingVertical: 12,
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   pickerButtonText: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 16,
     flex: 1,
     marginHorizontal: 10,
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     borderColor: "#333",
   },
   modalTitle: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 15,
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.secondary,
   },
   modalItemText: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 16,
   },
   closeButton: {
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   closeButtonText: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 22,
     fontWeight: "bold",
   },
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   sectionHeaderText: {
-    color: "#aaa",
+    color: COLORS.gray,
     fontSize: 14,
     fontWeight: "bold",
     textTransform: "uppercase",

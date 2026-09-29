@@ -42,7 +42,7 @@ export default GameHorizontalScrollSkeleton;
 const styles = StyleSheet.create({
   container: { marginTop: 20 },
   header: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 24,
     fontWeight: "600",
     textDecorationLine: "underline",

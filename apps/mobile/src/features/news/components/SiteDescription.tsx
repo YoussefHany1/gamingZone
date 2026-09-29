@@ -46,8 +46,7 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
               style={styles.visitSiteBtn}
             >
               <CustomText style={styles.visitSiteText}>
-                زور الموقع{" "}
-                <SquareArrowOutUpRight size={18} color="white" />
+                زور الموقع <SquareArrowOutUpRight size={18} color={COLORS.light} />
               </CustomText>
             </TouchableOpacity>
           ) : (
@@ -56,8 +55,7 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
               style={styles.visitSiteBtn}
             >
               <CustomText style={styles.visitSiteText}>
-                Visit Website{" "}
-                <SquareArrowOutUpRight size={18} color="white" />
+                Visit Website <SquareArrowOutUpRight size={18} color={COLORS.light} />
               </CustomText>
             </TouchableOpacity>
           )}
@@ -65,7 +63,7 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
           {/* Notification toggle */}
           <TouchableOpacity onPress={onToggleNotification} style={styles.bellButton}>
             {isNotifEnabled ? (
-              <Bell size={24} color="#779bdd" />
+              <Bell size={24} color={COLORS.lightGray} />
             ) : (
               <BellOff size={24} color="#666" />
             )}
@@ -94,12 +92,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   siteName: {
-    color: "white",
+    color: COLORS.light,
     fontWeight: "bold",
     fontSize: 28,
   },
   siteAbout: {
-    color: "white",
+    color: COLORS.light,
     width: 250,
   },
   buttons: {
@@ -115,7 +113,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   visitSiteText: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 14,
     fontWeight: "bold",
   },

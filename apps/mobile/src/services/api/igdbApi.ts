@@ -66,6 +66,22 @@ export async function fetchSteamTopSellerGames(): Promise<Game[]> {
   return response.data;
 }
 
+/**
+ * Fetch every game releasing inside the [from, to] window (Unix **seconds**,
+ * inclusive on both ends) so the release calendar can bucket games per day.
+ *
+ * The server clamps the window to 62 days and caps the result at 500 games.
+ */
+export async function fetchReleaseCalendarGames(
+  from: number,
+  to: number,
+): Promise<Game[]> {
+  const response = await apiClient.get<Game[]>("/release-calendar", {
+    params: { from, to },
+  });
+  return response.data;
+}
+
 /** Fetch most anticipated upcoming games. */
 export async function fetchMostAnticipatedGames(): Promise<Game[]> {
   const response = await apiClient.get<Game[]>("/most-anticipated");

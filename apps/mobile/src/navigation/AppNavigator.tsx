@@ -97,9 +97,9 @@ const HIDDEN_HEADER_OPTIONS = {
 } as const;
 const settingsHeaderOptions = {
   headerStyle: { backgroundColor: COLORS.primary },
-  headerTintColor: "#fff" as const,
+  headerTintcolor: COLORS.light as const,
   headerTitle: ({ children }: any) => (
-    <CustomText style={{ fontSize: 18, fontWeight: "bold", color: "#fff" }}>
+    <CustomText style={{ fontSize: 18, fontWeight: "bold", color: COLORS.light }}>
       {children}
     </CustomText>
   ),
@@ -133,9 +133,9 @@ const HomeStack = memo(() => {
         options={{
           headerShown: true,
           headerStyle: { backgroundColor: COLORS.primary },
-          headerTintColor: "#fff",
+          headerTintcolor: COLORS.light,
           headerTitle: () => (
-            <CustomText style={{ fontSize: 18, fontWeight: "bold", color: "#fff" }}>
+            <CustomText style={{ fontSize: 18, fontWeight: "bold", color: COLORS.light }}>
               {t("aiChat.title")}
             </CustomText>
           ),
@@ -162,9 +162,9 @@ const GamesStack = memo(() => {
       headerShown: true,
       title: t("games.list.gamesNews.title"),
       headerStyle: { backgroundColor: COLORS.primary },
-      headerTintColor: "#fff" as const,
+      headerTintcolor: COLORS.light as const,
       headerTitle: () => (
-        <CustomText style={{ fontSize: 18, fontWeight: "bold", color: "#fff" }}>
+        <CustomText style={{ fontSize: 18, fontWeight: "bold", color: COLORS.light }}>
           {t("games.list.gamesNews.title")}
         </CustomText>
       ),
@@ -231,7 +231,7 @@ const SettingsStack = memo(() => {
               onPress={() => nav.getParent()?.navigate("Games")}
               style={{ marginRight: 4, padding: 6 }}
             >
-              <CirclePlus size={28} color="#fff" />
+              <CirclePlus size={28} color={COLORS.light} />
             </TouchableOpacity>
           ),
         })}

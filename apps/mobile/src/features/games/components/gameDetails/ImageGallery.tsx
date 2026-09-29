@@ -357,7 +357,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
       {/* ── Image counter badge ────────────────────────────────────────── */}
       {imageCount > 1 && (
         <View style={styles.counter}>
-          <Images size={16} color="#fff" />
+          <Images size={16} color={COLORS.light} />
           <View style={styles.counterBadge}>
             <CustomText style={styles.counterText}>
               {activeIndex + 1}/{imageCount}
@@ -384,7 +384,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
                 accessibilityLabel="Close gallery"
                 accessibilityRole="button"
               >
-                <X size={28} color="#fff" />
+                <X size={28} color={COLORS.light} />
               </TouchableOpacity>
               <View style={styles.fullScreenCounter}>
                 <CustomText style={styles.fullScreenCounterText}>
@@ -492,8 +492,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 10,
   },
-  counterText: { color: "#fff", fontSize: 12, fontWeight: "bold" },
-  fullScreenContainer: { flex: 1, backgroundColor: "#000" },
+  counterText: { color: COLORS.light, fontSize: 12, fontWeight: "bold" },
+  fullScreenContainer: { flex: 1, backgroundColor: COLORS.dark },
   topControls: {
     position: "absolute",
     top: 40,
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
   },
-  fullScreenCounterText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  fullScreenCounterText: { color: COLORS.light, fontSize: 16, fontWeight: "bold" },
   imageArea: { flex: 1, justifyContent: "center", alignItems: "center" },
   swipeHints: {
     position: "absolute",

@@ -1,16 +1,12 @@
 import React, { memo, useCallback } from "react";
 import CustomText from "@/src/components/CustomText";
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Dimensions,
-} from "react-native";
+import { View, StyleSheet, TouchableOpacity, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { CirclePlay } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { openLink } from "@/src/lib/browser";
 import type { VideoCardProps } from "../types";
+import COLORS from "@/src/constants/colors";
 
 const { width } = Dimensions.get("window");
 const VideoCard = memo<VideoCardProps>(({ video }) => {
@@ -19,11 +15,7 @@ const VideoCard = memo<VideoCardProps>(({ video }) => {
   }, [video.video_id]);
 
   return (
-    <TouchableOpacity
-      style={styles.videoCard}
-      onPress={handlePress}
-      activeOpacity={0.8}
-    >
+    <TouchableOpacity style={styles.videoCard} onPress={handlePress} activeOpacity={0.8}>
       <Image
         recyclingKey={video.video_id}
         source={`https://img.youtube.com/vi/${video.video_id}/mqdefault.jpg`}
@@ -36,7 +28,7 @@ const VideoCard = memo<VideoCardProps>(({ video }) => {
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.playButton}>
-        <CirclePlay size={44} color="#fff" />
+        <CirclePlay size={44} color={COLORS.light} />
       </View>
       {video.name ? (
         <CustomText style={styles.videoName} numberOfLines={1}>
@@ -67,12 +59,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   videoName: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 11,
     fontWeight: "600",
     paddingHorizontal: 8,
     paddingBottom: 8,
-    textShadowColor: "#000",
+    textShadowColor: COLORS.dark,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },

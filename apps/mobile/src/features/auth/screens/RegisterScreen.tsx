@@ -298,7 +298,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 placeholder={t("auth.register.namePlaceholder")}
                 value={name}
                 onChangeText={setName}
-                placeholderTextColor="#aaa"
+                placeholderTextColor={COLORS.gray}
               />
               <CustomTextInput
                 style={styles.input}
@@ -307,7 +307,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                placeholderTextColor="#aaa"
+                placeholderTextColor={COLORS.gray}
               />
 
               <CustomPicker
@@ -329,7 +329,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-                placeholderTextColor="#aaa"
+                placeholderTextColor={COLORS.gray}
               />
             </View>
 
@@ -340,7 +340,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={COLORS.light} size="small" />
               ) : (
                 <CustomText style={styles.buttonText}>
                   {t("auth.register.signUpButton")}
@@ -361,10 +361,10 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 end={{ x: 1, y: 1 }}
               >
                 {isLoading ? (
-                  <ActivityIndicator color="#fff" size="small" />
+                  <ActivityIndicator color={COLORS.light} size="small" />
                 ) : (
                   <>
-                    <GoogleIcon size={28} fill="#fff" />
+                    <GoogleIcon size={28} fill={COLORS.light} />
                     <CustomText style={styles.buttonText}>
                       {" "}
                       {t("auth.register.googleSignUp")}
@@ -422,14 +422,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: COLORS.textLight,
+    color: COLORS.light,
     textAlign: "center",
     marginBottom: 20,
   },
   inputContainer: { marginBottom: 25 },
   input: {
-    color: COLORS.textLight,
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    color: COLORS.light,
+    backgroundColor: COLORS.button,
     fontSize: 14,
     padding: 15,
     borderRadius: 5,
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   buttonText: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   },
   guestButton: { marginVertical: 15, padding: 10, alignItems: "center" },
   guestButtonText: {
-    color: "#779bdd",
+    color: COLORS.lightGray,
     fontSize: 16,
     textDecorationLine: "underline",
   },

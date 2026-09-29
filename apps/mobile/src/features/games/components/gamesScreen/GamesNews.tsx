@@ -36,9 +36,9 @@ const GAMES_DATA: NewsGame[] = [
   },
   {
     id: "4",
-    name: "EA Sports FC 26",
+    name: "EA Sports FC 27",
     image:
-      "https://file.booster.gearupportal.com/file/689ef73d36a337f883dbcddeI0uOdssK03.png?fop=imageView/2/w/280/f/webp",
+      "https://store-images.s-microsoft.com/image/apps.60756.14238456792576346.0ca86b53-ec26-48f0-a471-217c9d9685e9.0061c69b-9b0f-4f4f-80e3-6e6d19f3c07a",
     apiUrl: "https://games-news-api.vercel.app/eafc/",
     source: "https://www.ea.com/en/games/ea-sports-fc/fc-26/news",
   },
@@ -63,7 +63,7 @@ const NewsGameCard = React.memo<NewsGameCardProps>(({ item, onPress }) => {
       onPress={() => onPress(item.name, item.apiUrl, item.source)}
       activeOpacity={0.9}
     >
-      <LinearGradient colors={["#1a3052", "#0c1a33"]} style={styles.cardGradient} />
+      <LinearGradient colors={["#1a3052", COLORS.primary]} style={styles.cardGradient} />
 
       <View style={styles.imageContainer}>
         <Image
@@ -124,7 +124,8 @@ function GamesNews(): React.ReactElement {
         />
       </View>
 
-      <FlashList renderScrollComponent={GHScrollView as any}
+      <FlashList
+        renderScrollComponent={GHScrollView as any}
         data={GAMES_DATA}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
   },
   infoSection: { flex: 1, padding: 12, justifyContent: "space-between" },
   title: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 15,
     fontWeight: "bold",
     lineHeight: 18,
@@ -188,16 +189,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 5,
     borderWidth: 1,
-    borderColor: "#FF3B30",
+    borderColor: COLORS.danger,
   },
   liveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#FF3B30",
+    backgroundColor: COLORS.danger,
   },
   liveText: {
-    color: "#FF3B30",
+    color: COLORS.danger,
     fontSize: 10,
     fontWeight: "bold",
     letterSpacing: 0.5,

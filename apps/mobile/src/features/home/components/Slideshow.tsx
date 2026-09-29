@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "white",
+    color: COLORS.light,
   },
   playRow: {
     flexDirection: "row",
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   subtitle: {
-    color: "#779bdd",
+    color: COLORS.lightGray,
     fontWeight: "200",
     fontSize: 14,
   },
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   },
   videoContainer: {
     width: "100%",
-    backgroundColor: "black",
+    backgroundColor: COLORS.dark,
     marginBottom: 20,
   },
 });

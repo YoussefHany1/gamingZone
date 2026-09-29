@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 15,
     paddingVertical: 20,
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    backgroundColor: COLORS.button,
     borderRadius: 12,
   },
   avatar: {
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   displayName: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 20,
     fontWeight: "bold",
     marginLeft: 15,
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 16,
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    backgroundColor: COLORS.button,
     borderRadius: 12,
   },
   menuItemLeft: {
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#fff",
+    color: COLORS.light,
   },
   signOutButton: {
     marginVertical: 10,

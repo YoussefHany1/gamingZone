@@ -1,13 +1,7 @@
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import React, { useCallback, useMemo, memo, useEffect, useRef } from "react";
 import CustomText from "@/src/components/CustomText";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Animated,
-} from "react-native";
+import { View, StyleSheet, ScrollView, TouchableOpacity, Animated } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
@@ -82,7 +76,9 @@ const EventDetailsScreen = memo((): React.ReactElement => {
   );
 
   const streamBtnColors: [string, string] =
-    status === "live" ? ["#FF3B30", "#FF6B6B"] : [COLORS.secondary, COLORS.lightGray];
+    status === "live"
+      ? [COLORS.danger, COLORS.danger + "20"]
+      : [COLORS.secondary, COLORS.lightGray];
 
   return (
     <View style={styles.screen}>
@@ -114,13 +110,16 @@ const EventDetailsScreen = memo((): React.ReactElement => {
           onPress={handleGoBack}
           activeOpacity={0.8}
         >
-          <ArrowLeft size={24} color="#fff" />
+          <ArrowLeft size={24} color={COLORS.light} />
         </TouchableOpacity>
 
         {/* Status badge */}
         <View style={styles.heroBadgeRow}>
           {status === "live" && (
-            <LinearGradient colors={["#FF3B30", "#FF6B6B"]} style={styles.liveBadge}>
+            <LinearGradient
+              colors={[COLORS.danger, COLORS.danger]}
+              style={styles.liveBadge}
+            >
               <View style={styles.liveDot} />
               <CustomText style={styles.liveText}>
                 {t("home.gamingEvents.live")}
@@ -203,11 +202,11 @@ const EventDetailsScreen = memo((): React.ReactElement => {
               >
                 {status === "live" ? (
                   <View collapsable={false}>
-                    <Radio size={22} color="#fff" />
+                    <Radio size={22} color={COLORS.light} />
                   </View>
                 ) : (
                   <View collapsable={false}>
-                    <CirclePlay size={22} color="#fff" />
+                    <CirclePlay size={22} color={COLORS.light} />
                   </View>
                 )}
                 <CustomText style={styles.streamBtnText}>
@@ -316,7 +315,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   heroTitle: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 26,
     fontWeight: "bold",
     lineHeight: 34,
@@ -337,10 +336,10 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.light,
   },
   liveText: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 11,
     fontWeight: "bold",
     textTransform: "uppercase",
@@ -353,16 +352,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.lightGray,
   },
-  upcomingText: { color: "#fff", fontSize: 11, fontWeight: "bold" },
+  upcomingText: { color: COLORS.light, fontSize: 11, fontWeight: "bold" },
   endedBadge: {
     backgroundColor: "#44444480",
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#888",
+    borderColor: COLORS.gray,
   },
-  endedText: { color: "#aaa", fontSize: 11, fontWeight: "bold" },
+  endedText: { color: COLORS.gray, fontSize: 11, fontWeight: "bold" },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -394,7 +393,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   dateBlockValue: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 13,
     fontWeight: "500",
     marginTop: 2,
@@ -423,13 +422,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 14,
     elevation: 4,
-    shadowColor: "#FF3B30",
+    shadowColor: COLORS.danger,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.4,
     shadowRadius: 6,
   },
   streamBtnText: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 16,
     fontWeight: "bold",
     letterSpacing: 0.5,

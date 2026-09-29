@@ -66,9 +66,9 @@ const fetchFreeGamesFromAppwrite = async (): Promise<FreeGameItem[]> => {
 };
 
 const renderStoreIcon = (store?: string) => {
-  if (store === "steam") return <SteamIcon size={20} fill="white" />;
-  if (store === "gog") return <GogIcon size={20} fill="white" />;
-  return <EpicGamesIcon size={20} fill="white" />;
+  if (store === "steam") return <SteamIcon size={20} fill={COLORS.light} />;
+  if (store === "gog") return <GogIcon size={20} fill={COLORS.light} />;
+  return <EpicGamesIcon size={20} fill={COLORS.light} />;
 };
 
 // Helpers
@@ -147,7 +147,7 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
       onPress={handleCardPress}
     >
       {/* Background gradient */}
-      <LinearGradient colors={["#1a3052", "#0c1a33"]} style={styles.cardGradient} />
+      <LinearGradient colors={["#1a3052", COLORS.primary]} style={styles.cardGradient} />
 
       {/* Image area with optional countdown overlay */}
       <View style={styles.imageContainer}>
@@ -190,12 +190,12 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
             activeOpacity={0.9}
           >
             <LinearGradient
-              colors={[COLORS.lightGray, "#516996"]}
+              colors={[COLORS.lightGray, COLORS.secondary]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.savingsButton}
             >
-              <Gift size={16} color={COLORS.textLight} />
+              <Gift size={16} color={COLORS.light} />
               <CustomText style={styles.savingsText}>
                 {t("games.list.freeGames.claimNow")}
               </CustomText>
@@ -321,9 +321,9 @@ function FreeGames(): React.ReactElement {
         />
         <TouchableOpacity onPress={toggleNotifications} style={styles.bellButton}>
           {notifEnabled ? (
-            <Bell size={22} color={COLORS.textLight} />
+            <Bell size={22} color={COLORS.light} />
           ) : (
-            <BellOff size={22} color={COLORS.textLight} />
+            <BellOff size={22} color={COLORS.light} />
           )}
         </TouchableOpacity>
       </View>
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     padding: 6,
     borderWidth: 1,
-    borderColor: "#516996",
+    borderColor: COLORS.secondary,
   },
   storeIcon: {
     width: 20,
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   title: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 15,
     fontWeight: "bold",
     lineHeight: 18,
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   savingsText: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 12,
     fontWeight: "bold",
     letterSpacing: 0.5,
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   countdownTitle: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 14,
     fontWeight: "bold",
     marginBottom: 12,
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   timeValueBox: {
-    backgroundColor: "rgba(119, 155, 221, 0.25)",
+    backgroundColor: COLORS.button,
     borderWidth: 1,
     borderColor: COLORS.lightGray,
     borderRadius: 8,
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     minWidth: 32,
   },
   timeValue: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontWeight: "bold",
     textAlign: "center",
   },

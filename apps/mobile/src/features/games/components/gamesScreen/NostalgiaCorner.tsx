@@ -92,7 +92,7 @@ const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
     <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.85}>
       {/* Vintage dark background */}
       <LinearGradient
-        colors={["#0c1a33", "#172a4a", "#1a3052"]}
+        colors={[COLORS.primary, "#172a4a", "#1a3052"]}
         style={styles.paperBackground}
       />
 
@@ -254,30 +254,30 @@ const styles = StyleSheet.create({
     margin: 8,
     padding: 12,
     borderWidth: 3,
-    borderColor: "#779bdd",
+    borderColor: COLORS.lightGray,
     borderRadius: 8,
-    backgroundColor: "#0c1a33",
+    backgroundColor: COLORS.primary,
     position: "relative",
   },
   decadeBadge: {
     position: "absolute",
     top: -12,
     right: 20,
-    backgroundColor: "#516996",
+    backgroundColor: COLORS.secondary,
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: "#779bdd",
+    borderColor: COLORS.lightGray,
     zIndex: 5,
     elevation: 4,
-    shadowColor: "#779bdd",
+    shadowColor: COLORS.lightGray,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
     shadowRadius: 4,
   },
   decadeText: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 13,
     fontWeight: "bold",
     letterSpacing: 1,
@@ -288,9 +288,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.darkBackground,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: "#516996",
+    borderColor: COLORS.secondary,
     elevation: 6,
-    shadowColor: "#779bdd",
+    shadowColor: COLORS.lightGray,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.6,
     shadowRadius: 6,
@@ -329,16 +329,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 12,
     borderBottomColor: "transparent",
     borderRightWidth: 10,
-    borderRightColor: "#516996",
+    borderRightColor: COLORS.secondary,
   },
   ribbonCenter: {
     flex: 1,
-    backgroundColor: "#516996",
+    backgroundColor: COLORS.secondary,
     paddingVertical: 4,
     alignItems: "center",
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "#779bdd",
+    borderColor: COLORS.lightGray,
   },
   ribbonRight: {
     width: 0,
@@ -348,10 +348,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 12,
     borderBottomColor: "transparent",
     borderLeftWidth: 10,
-    borderLeftColor: "#516996",
+    borderLeftColor: COLORS.secondary,
   },
   titleText: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     height: 15,
     borderTopWidth: 3,
     borderLeftWidth: 3,
-    borderColor: "#516996",
+    borderColor: COLORS.secondary,
   },
   cornerTopRight: {
     position: "absolute",
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     height: 15,
     borderTopWidth: 3,
     borderRightWidth: 3,
-    borderColor: "#516996",
+    borderColor: COLORS.secondary,
   },
   cornerBottomLeft: {
     position: "absolute",
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     height: 15,
     borderBottomWidth: 3,
     borderLeftWidth: 3,
-    borderColor: "#516996",
+    borderColor: COLORS.secondary,
   },
   cornerBottomRight: {
     position: "absolute",
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
     height: 15,
     borderBottomWidth: 3,
     borderRightWidth: 3,
-    borderColor: "#516996",
+    borderColor: COLORS.secondary,
   },
   listContent: { paddingHorizontal: 10, paddingVertical: 5 },
 });

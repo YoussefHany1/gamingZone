@@ -61,7 +61,7 @@ const TypeButton = memo<TypeButtonProps>(
       style={[styles.typeButton, active && styles.typeButtonActive]}
       onPress={() => onPress(value)}
     >
-      <Icon size={24} color="#fff" />
+      <Icon size={24} color={COLORS.light} />
       <CustomText style={[styles.typeText, active && styles.typeTextActive]}>
         {label}
       </CustomText>
@@ -217,7 +217,7 @@ const ContactScreen = ({ navigation }: Props) => {
           <CustomTextInput
             style={[styles.input, styles.textArea]}
             placeholder={t("settings.contact.messagePlaceholder")}
-            placeholderTextColor="#999"
+            placeholderTextColor={COLORS.gray}
             multiline
             numberOfLines={6}
             value={message}
@@ -241,7 +241,7 @@ const ContactScreen = ({ navigation }: Props) => {
           <CustomTextInput
             style={[styles.input, styles.emailInput]}
             placeholder="example@email.com"
-            placeholderTextColor="#999"
+            placeholderTextColor={COLORS.gray}
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
@@ -256,7 +256,7 @@ const ContactScreen = ({ navigation }: Props) => {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={COLORS.light} />
           ) : (
             <CustomText style={styles.submitText}>
               {t("settings.contact.send")}
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.primary, paddingBottom: 90 },
   scrollContent: { padding: 20 },
   label: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 16,
     marginBottom: 10,
     fontWeight: "bold",
@@ -297,27 +297,27 @@ const styles = StyleSheet.create({
   },
   typeButtonActive: {
     backgroundColor: COLORS.secondary,
-    borderColor: "#779bdd",
+    borderColor: COLORS.lightGray,
   },
   typeText: {
     marginTop: 5,
     fontSize: 12,
-    color: "#fff",
+    color: COLORS.light,
     fontWeight: "bold",
     textAlign: "center",
   },
-  typeTextActive: { color: "#fff" },
+  typeTextActive: { color: COLORS.light },
   inputContainer: {
     backgroundColor: COLORS.secondary + "33",
     borderRadius: 8,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#779bdd",
+    borderColor: COLORS.lightGray,
   },
-  input: { color: "#fff", padding: 15, fontSize: 16 },
+  input: { color: COLORS.light, padding: 15, fontSize: 16 },
   textArea: { minHeight: 120 },
-  charCount: { color: "#779bdd", fontSize: 12, padding: 10, paddingBottom: 8 },
-  charCountLimit: { color: "red" },
+  charCount: { color: COLORS.lightGray, fontSize: 12, padding: 10, paddingBottom: 8 },
+  charCountLimit: { color: COLORS.danger },
   emailInput: { textAlign: "left" },
   submitButton: {
     backgroundColor: COLORS.secondary,
@@ -326,5 +326,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
   },
-  submitText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  submitText: { color: COLORS.light, fontSize: 18, fontWeight: "bold" },
 });

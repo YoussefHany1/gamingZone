@@ -37,7 +37,7 @@ const RecommendedCard = React.memo<RecommendedCardProps>(({ item }) => {
 
   return (
     <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.9}>
-      <LinearGradient colors={["#172a4a", "#0c1a33"]} style={styles.cardBackground} />
+      {/* <LinearGradient colors={["#172a4a", "#0c1a33"]} style={styles.cardBackground} /> */}
 
       <View style={styles.coverContainer}>
         <Image
@@ -122,7 +122,8 @@ function RecommendedGames(): React.ReactElement | null {
       </View>
 
       {loading && (
-        <FlashList renderScrollComponent={GHScrollView as any}
+        <FlashList
+          renderScrollComponent={GHScrollView as any}
           data={SKELETON_DATA}
           horizontal
           renderItem={renderSkeletonItem}
@@ -132,7 +133,8 @@ function RecommendedGames(): React.ReactElement | null {
       )}
 
       {!loading && recommendedGames && recommendedGames.length > 0 && (
-        <FlashList renderScrollComponent={GHScrollView as any}
+        <FlashList
+          renderScrollComponent={GHScrollView as any}
           data={recommendedGames}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -176,7 +178,7 @@ const styles = StyleSheet.create({
     height: "60%",
   },
   infoContainer: { flex: 1, padding: 12, gap: 8 },
-  title: { color: "#fff", fontSize: 15, fontWeight: "bold", lineHeight: 18 },
+  title: { color: COLORS.light, fontSize: 15, fontWeight: "bold", lineHeight: 18 },
   statsContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -202,7 +204,7 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#516996",
+    borderColor: COLORS.secondary,
   },
   platformText: { color: "#9CB4DD", fontSize: 10, fontWeight: "600" },
   listContent: { paddingHorizontal: 10, paddingVertical: 5 },

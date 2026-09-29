@@ -32,7 +32,7 @@ export async function openLink(url: string): Promise<void> {
       await WebBrowser.openBrowserAsync(targetUrl, {
         toolbarColor: COLORS.darkBackground,
         secondaryToolbarColor: COLORS.darkBackground,
-        controlsColor: "#ffffff",
+        controlsColor: COLORS.light,
         enableBarCollapsing: true,
         showTitle: true,
         enableDefaultShareMenuItem: true,

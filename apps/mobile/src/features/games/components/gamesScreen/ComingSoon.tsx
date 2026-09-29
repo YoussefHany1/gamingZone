@@ -1,12 +1,7 @@
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import React, { useCallback, useMemo } from "react";
 import CustomText from "@/src/components/CustomText";
-import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-} from "react-native";
+import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
@@ -141,7 +136,8 @@ function ComingSoonGames(): React.ReactElement {
           fontSize={24}
         />
       </View>
-      <FlashList renderScrollComponent={GHScrollView as any}
+      <FlashList
+        renderScrollComponent={GHScrollView as any}
         data={gamesToShow}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -207,9 +203,9 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     borderRadius: 12,
   },
-  countdownHeader: { color: "#fff", fontSize: 14 },
+  countdownHeader: { color: COLORS.light, fontSize: 14 },
   countdownText: {
-    color: "#fff",
+    color: COLORS.light,
     fontWeight: "bold",
     fontSize: 32,
     backgroundColor: COLORS.primary + "30",
@@ -218,7 +214,7 @@ const styles = StyleSheet.create({
   },
   textWrapper: { marginBottom: 10, marginHorizontal: 10 },
   title: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 24,
     fontWeight: "bold",
     textShadowColor: "rgba(0, 0, 0, 0.75)",

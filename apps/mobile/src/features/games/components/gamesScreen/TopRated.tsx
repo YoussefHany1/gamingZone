@@ -15,6 +15,7 @@ import useCachedData from "@/src/hooks/useCachedData";
 import type { TopRatedCardProps } from "../../types";
 import type { Game } from "@/src/types/sharedTypes";
 import { fetchTopRatedGames } from "@/src/services/api/igdbApi";
+import { getRatingGradient } from "../gameDetails/utils";
 
 const CARD_WIDTH = 200;
 const CARD_HEIGHT = 320;
@@ -23,13 +24,7 @@ const STORAGE_KEY = "GAMES_CACHE_TOP_RATED";
 
 // Helpers
 
-function getRatingColor(rating: number): [string, string] {
-  if (rating <= 2) return ["#8B0000", "#B22222"];
-  if (rating <= 4) return ["#FF4C4C", "#FF6B6B"];
-  if (rating <= 6) return ["#FF8C00", "#FFA500"];
-  if (rating <= 8) return ["#7CB342", "#8BC34A"];
-  return ["#2E7D32", "#4CAF50"];
-}
+
 
 const getMedalEmoji = (rank: number): string => {
   if (rank === 1) return "🥇";
@@ -44,7 +39,7 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
 
   const rating = item.total_rating ? Math.round(item.total_rating) / 10 : 0;
-  const ratingColors = getRatingColor(rating);
+  const ratingColors = getRatingGradient(rating);
   const rank = index + 1;
 
   const handlePress = useCallback((): void => {
@@ -242,7 +237,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.lightGray + "40",
     elevation: 6,
-    shadowColor: "#000",
+    shadowColor: COLORS.dark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
     shadowRadius: 4,
@@ -263,7 +258,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   title: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 16,
     fontWeight: "bold",
     lineHeight: 20,
@@ -282,14 +277,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 6,
-    shadowColor: "#000",
+    shadowColor: COLORS.dark,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     borderWidth: 3,
     borderColor: "rgba(255, 255, 255, 0.2)",
   },
-  ratingNumber: { color: "white", fontSize: 20, fontWeight: "bold" },
+  ratingNumber: { color: COLORS.light, fontSize: 20, fontWeight: "bold" },
   starContainer: {
     position: "absolute",
     bottom: -3,
@@ -324,7 +319,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   yearText: {
-    color: "#999",
+    color: COLORS.gray,
     fontSize: 11,
     fontWeight: "600",
   },

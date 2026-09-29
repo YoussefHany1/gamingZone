@@ -149,6 +149,17 @@
       "detailsButton": "Voir le direct",
       "noEvents": "Aucun événement gaming disponible pour le moment.",
       "subtitle": "Regardez les événements gaming à venir et en direct"
+    },
+    "releaseCalendar": {
+      "title": "Calendrier des sorties",
+      "subtitle": "Découvrez les sorties, jour après jour",
+      "outNow": "Disponible",
+      "released": "Sorti",
+      "noReleases": "Aucune sortie ce jour-là",
+      "noReleasesInRange": "Aucune sortie sur cette période",
+      "moreCount": "+{{count}} de plus",
+      "previousMonth": "Mois précédent",
+      "nextMonth": "Mois suivant"
     }
   },
   "events": {

@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   tabTextActive: {
-    color: "#fff",
+    color: COLORS.light,
   },
   specContainer: {
     borderRadius: 12,

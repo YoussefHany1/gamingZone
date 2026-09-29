@@ -349,11 +349,11 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
         <View style={styles.overlay}>
           <View style={styles.modalContent}>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <X size={24} color="#fff" />
+              <X size={24} color={COLORS.light} />
             </TouchableOpacity>
 
             <View style={styles.logo}>
-              <SteamIcon size={50} fill="#fff" />
+              <SteamIcon size={50} fill={COLORS.light} />
             </View>
             <CustomText style={styles.title}>
               {t("settings.profile.steam.modal.title") || "Sync Your Steam Library"}
@@ -369,7 +369,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
                 t("settings.profile.steam.modal.placeholder") ||
                 "e.g., https://steamcommunity.com/profiles/76561198818022625"
               }
-              placeholderTextColor="#888"
+              placeholderTextColor={COLORS.gray}
               value={steamInput}
               onChangeText={setSteamInput}
             />
@@ -385,7 +385,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={COLORS.light} />
               ) : (
                 <CustomText style={styles.syncBtnText}>
                   {t("settings.profile.steam.modal.syncBtn") || "Sync Games"}
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   title: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 20,
     fontWeight: "bold",
     textAlign: "center",
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: COLORS.button,
-    color: "#fff",
+    color: COLORS.light,
     padding: 12,
     borderRadius: 8,
     marginBottom: 15,
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   syncBtnText: {
-    color: "#fff",
+    color: COLORS.light,
     fontWeight: "bold",
     fontSize: 16,
   },

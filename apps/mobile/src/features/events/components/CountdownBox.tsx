@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   countdownNum: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 26,
     fontWeight: "bold",
   },

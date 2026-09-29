@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     maxHeight: 340,
     ...Platform.select({
       ios: {
-        shadowColor: "#000",
+        shadowColor: COLORS.dark,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.45,
         shadowRadius: 12,

@@ -1,11 +1,6 @@
 import React from "react";
 import CustomText from "@/src/components/CustomText";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
+import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, ArrowRight, Star } from "lucide-react-native";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
@@ -86,7 +81,11 @@ const GameDetails = ({ route, navigation }: Props) => {
           onPress={handleGoBack}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
-          {currentLang === "ar" ? <ArrowRight size={28} color="#fff" /> : <ArrowLeft size={28} color="#fff" />}
+          {currentLang === "ar" ? (
+            <ArrowRight size={28} color={COLORS.light} />
+          ) : (
+            <ArrowLeft size={28} color={COLORS.light} />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -162,10 +161,10 @@ const GameDetails = ({ route, navigation }: Props) => {
                   <GameStoresSkeleton />
                 ) : game ? (
                   <GameStores
-                  websites={game.websites}
-                  prices={storePrices ?? undefined}
-                  pricesLoading={storePricesLoading}
-                />
+                    websites={game.websites}
+                    prices={storePrices ?? undefined}
+                    pricesLoading={storePricesLoading}
+                  />
                 ) : null}
 
                 {/* Action buttons — static (route params), always shown */}
@@ -185,25 +184,20 @@ const GameDetails = ({ route, navigation }: Props) => {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <TouchableOpacity
                           key={star}
-                          onPress={() =>
-                            handleRateGame(rating === star ? 0 : star)
-                          }
+                          onPress={() => handleRateGame(rating === star ? 0 : star)}
                           activeOpacity={0.7}
                           style={{ paddingHorizontal: 6 }}
                         >
                           <Star
                             size={32}
-                            color={
-                              star <= rating ? "#ffc107" : COLORS.lightGray
-                            }
+                            color={star <= rating ? "#ffc107" : COLORS.lightGray}
                           />
                         </TouchableOpacity>
                       ))}
                     </View>
                     {rating > 0 && (
                       <CustomText style={styles.ratingValueText}>
-                        {t("games.details.yourRating") ?? "Your Rating"}:{" "}
-                        {rating} / 5
+                        {t("games.details.yourRating") ?? "Your Rating"}: {rating} / 5
                       </CustomText>
                     )}
                   </View>
@@ -246,10 +240,7 @@ const GameDetails = ({ route, navigation }: Props) => {
                 {adsEnabled && (
                   <View style={styles.ad}>
                     <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
-                    <BannerAd
-                      unitId={adUnitId}
-                      size={BannerAdSize.MEDIUM_RECTANGLE}
-                    />
+                    <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
                   </View>
                 )}
 
@@ -275,10 +266,7 @@ const GameDetails = ({ route, navigation }: Props) => {
                 {adsEnabled && (
                   <View style={styles.ad}>
                     <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
-                    <BannerAd
-                      unitId={adUnitId}
-                      size={BannerAdSize.MEDIUM_RECTANGLE}
-                    />
+                    <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
                   </View>
                 )}
 
@@ -290,9 +278,7 @@ const GameDetails = ({ route, navigation }: Props) => {
 
                 {/* Game series */}
                 {loading ? (
-                  <GameHorizontalScrollSkeleton
-                    title={t("games.details.series")}
-                  />
+                  <GameHorizontalScrollSkeleton title={t("games.details.series")} />
                 ) : (
                   <GameHorizontalScroll
                     title={t("games.details.series")}
@@ -303,9 +289,7 @@ const GameDetails = ({ route, navigation }: Props) => {
 
                 {/* Similar games */}
                 {loading ? (
-                  <GameHorizontalScrollSkeleton
-                    title={t("games.details.similar")}
-                  />
+                  <GameHorizontalScrollSkeleton title={t("games.details.similar")} />
                 ) : (
                   <GameHorizontalScroll
                     title={t("games.details.similar")}
@@ -355,7 +339,7 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: COLORS.primary,
   },
-  errorText: { color: "red", textAlign: "center" },
+  errorText: { color: COLORS.danger, textAlign: "center" },
   content: {
     padding: 15,
     paddingBottom: 40,
@@ -366,7 +350,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   adText: {
-    color: "#fff",
+    color: COLORS.light,
     marginBottom: 10,
   },
   ratingSection: {
@@ -379,7 +363,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(119, 155, 221, 0.15)",
   },
   ratingTitle: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 12,

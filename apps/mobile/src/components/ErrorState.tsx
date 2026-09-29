@@ -29,7 +29,8 @@ const EmptyState = memo(
     onRetry,
     retrying = false,
   }: EmptyStateProps) => {
-    const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
+    const navigation =
+      useNavigation<NavigationProp<Record<string, object | undefined>>>();
     const { t } = useTranslation();
 
     const handleContactPress = useCallback(() => {
@@ -51,8 +52,12 @@ const EmptyState = memo(
               />
             );
           })()}
-        <CustomText style={styles.noDataText}>{message || t("news.noArticles")}</CustomText>
-        {subMessage && <CustomText style={styles.subMessageText}>{subMessage}</CustomText>}
+        <CustomText style={styles.noDataText}>
+          {message || t("news.noArticles")}
+        </CustomText>
+        {subMessage && (
+          <CustomText style={styles.subMessageText}>{subMessage}</CustomText>
+        )}
 
         {onRetry && (
           <Pressable
@@ -64,7 +69,7 @@ const EmptyState = memo(
             accessibilityRole="button"
           >
             {retrying ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <ActivityIndicator color={COLORS.light} size="small" />
             ) : (
               <CustomText style={styles.contactButtonText}>
                 {t("common.retryButton")}
@@ -102,14 +107,14 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   noDataText: {
-    color: "white",
+    color: COLORS.light,
     textAlign: "center",
     borderRadius: 8,
     marginBottom: 20,
     fontSize: 16,
   },
   subMessageText: {
-    color: "gray",
+    color: COLORS.gray,
     fontSize: 14,
     textAlign: "center",
     marginTop: -10,
@@ -128,10 +133,10 @@ const styles = StyleSheet.create({
   },
   contactButtonSecondary: {
     marginTop: 4,
-    backgroundColor: "rgba(119, 155, 221, 0.25)",
+    backgroundColor: COLORS.button,
   },
   contactButtonText: {
-    color: "white",
+    color: COLORS.light,
     fontWeight: "bold",
     fontSize: 14,
   },

@@ -4,6 +4,7 @@ import SkeletonItem from "@/src/components/SkeletonItem";
 // usePulseAnimation(0.4, 0.8) gives the vintage card a subtler, dimmer pulse
 // that preserves the original intentional aesthetic difference.
 import { usePulseAnimation } from "@/src/components/skeleton/shared";
+import COLORS from "@/src/constants/colors";
 
 const CARD_WIDTH = 165; // Matches width * 0.55 at typical phone width
 const CARD_HEIGHT = 360;
@@ -23,10 +24,7 @@ const SkeletonNostalgiaCard: React.FC = () => {
       {/* Outer decorative frame */}
       <View style={styles.outerFrame}>
         {/* Decade badge */}
-        <SkeletonItem
-          animatedStyle={animatedStyle}
-          style={styles.decadeBadge}
-        />
+        <SkeletonItem animatedStyle={animatedStyle} style={styles.decadeBadge} />
 
         {/* Cover image */}
         <View style={styles.coverFrame}>
@@ -35,18 +33,12 @@ const SkeletonNostalgiaCard: React.FC = () => {
 
         {/* Title ribbon */}
         <View style={styles.ribbonContainer}>
-          <SkeletonItem
-            animatedStyle={animatedStyle}
-            style={styles.ribbonSkeleton}
-          />
+          <SkeletonItem animatedStyle={animatedStyle} style={styles.ribbonSkeleton} />
         </View>
 
         {/* Platform info */}
         <View style={styles.infoContainer}>
-          <SkeletonItem
-            animatedStyle={animatedStyle}
-            style={styles.consoleSkeleton}
-          />
+          <SkeletonItem animatedStyle={animatedStyle} style={styles.consoleSkeleton} />
         </View>
 
         {/* Decorative corner accents */}
@@ -73,7 +65,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     borderRadius: 12,
-    backgroundColor: "#0c1a33",
+    backgroundColor: COLORS.primary,
   },
   outerFrame: {
     flex: 1,

@@ -38,9 +38,7 @@ const LanguageSelect = memo((): React.ReactElement => {
   const adsEnabled = useAdsEnabled();
 
   useEffect(() => {
-    const task = runAfterInteractions(() =>
-      setShowAds(true),
-    );
+    const task = runAfterInteractions(() => setShowAds(true));
     return () => task.cancel();
   }, []);
 
@@ -111,17 +109,11 @@ const LanguageSelect = memo((): React.ReactElement => {
           return (
             <TouchableOpacity
               key={lang}
-              style={[
-                styles.categoryHeader,
-                { direction: isRTL ? "rtl" : "ltr" },
-              ]}
+              style={[styles.categoryHeader, { direction: isRTL ? "rtl" : "ltr" }]}
               onPress={() => toggleLanguage(lang)}
             >
               <View
-                style={[
-                  styles.categoryHeaderLeft,
-                  { direction: isRTL ? "rtl" : "ltr" },
-                ]}
+                style={[styles.categoryHeaderLeft, { direction: isRTL ? "rtl" : "ltr" }]}
               >
                 <CustomText
                   style={[
@@ -134,7 +126,7 @@ const LanguageSelect = memo((): React.ReactElement => {
                 >
                   {LANGUAGE_LABELS[lang]}
                 </CustomText>
-                {currentLang === lang && <Check size={24} color="#779bdd" />}
+                {currentLang === lang && <Check size={24} color={COLORS.lightGray} />}
               </View>
             </TouchableOpacity>
           );
@@ -160,7 +152,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 16,
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    backgroundColor: COLORS.button,
     borderRadius: 12,
   },
   categoryHeaderLeft: {
@@ -175,7 +167,7 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#fff",
+    color: COLORS.light,
     marginHorizontal: 8,
   },
   ad: {
@@ -184,7 +176,7 @@ const styles = StyleSheet.create({
     marginVertical: 55,
   },
   adText: {
-    color: "#fff",
+    color: COLORS.light,
     marginBottom: 10,
   },
 });

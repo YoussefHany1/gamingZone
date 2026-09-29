@@ -131,7 +131,7 @@ function NewsScreen(): React.ReactElement {
           {...props}
           style={styles.tabBar}
           indicatorStyle={styles.tabIndicator}
-          activeColor="#fff"
+          activeColor={COLORS.light}
           inactiveColor={COLORS.lightGray}
           options={options}
         />
@@ -192,5 +192,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "600",
   },
-  noDataText: { color: COLORS.textLight },
+  noDataText: { color: COLORS.light },
 });

@@ -16,10 +16,7 @@ const SkeletonFreeGames: React.FC = () => {
     <View style={styles.cardContainer}>
       {/* Image container */}
       <View style={styles.imageContainer}>
-        <SkeletonItem
-          animatedStyle={animatedStyle}
-          style={styles.coverSkeleton}
-        />
+        <SkeletonItem animatedStyle={animatedStyle} style={styles.coverSkeleton} />
 
         {/* Store icon badge */}
         <SkeletonItem
@@ -72,7 +69,7 @@ const styles = StyleSheet.create({
     backgroundColor: CARD_BG_COLOR,
     overflow: "hidden",
     elevation: 3,
-    shadowColor: "#000",
+    shadowColor: COLORS.dark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,

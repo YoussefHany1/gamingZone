@@ -6,6 +6,7 @@ import type { FirebaseMessagingTypes } from "@react-native-firebase/messaging";
 import * as Notifications from "expo-notifications";
 import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import NotificationService from "@/src/services/notificationService";
+import COLORS from "../constants/colors";
 
 /**
  * Handles all FCM setup for the authenticated user:
@@ -26,7 +27,7 @@ const NEWS_CHANNEL: Notifications.NotificationChannelInput = {
   name: "News Notifications",
   importance: Notifications.AndroidImportance.MAX,
   vibrationPattern: [0, 250, 250, 250],
-  lightColor: "#779bdd",
+  lightColor: COLORS.lightGray,
   lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
   enableVibrate: true,
   enableLights: true,
@@ -61,9 +62,7 @@ function extractImageUrl(
 // Hook
 // ---------------------------------------------------------------------------
 
-const useNotifications = (
-  user: FirebaseAuthTypes.User | null | undefined,
-): void => {
+const useNotifications = (user: FirebaseAuthTypes.User | null | undefined): void => {
   useEffect(() => {
     if (!user) return;
 
@@ -76,9 +75,7 @@ const useNotifications = (
      */
     const isSessionValid = (): boolean => {
       const currentUser = auth().currentUser;
-      return (
-        !!currentUser && !currentUser.isAnonymous && currentUser.uid === user.uid
-      );
+      return !!currentUser && !currentUser.isAnonymous && currentUser.uid === user.uid;
     };
 
     let unsubscribeOnMessage: Unsubscribe | undefined;
@@ -93,10 +90,7 @@ const useNotifications = (
     const setup = async (): Promise<void> => {
       try {
         // Ensure the Android notification channel exists before doing anything else.
-        await Notifications.setNotificationChannelAsync(
-          NEWS_CHANNEL_ID,
-          NEWS_CHANNEL,
-        );
+        await Notifications.setNotificationChannelAsync(NEWS_CHANNEL_ID, NEWS_CHANNEL);
 
         if (!isGuest) {
           const authStatus = await messaging().requestPermission();
@@ -114,9 +108,7 @@ const useNotifications = (
           if (cancelled || !isSessionValid()) return;
           await NotificationService.saveFCMToken(user.uid, token);
 
-          const preferences = await NotificationService.getUserPreferences(
-            user.uid,
-          );
+          const preferences = await NotificationService.getUserPreferences(user.uid);
           if (cancelled || !isSessionValid()) return;
           await NotificationService.syncUserPreferences(user.uid, preferences);
         }
@@ -170,13 +162,11 @@ const useNotifications = (
         );
 
         // Keep the stored token current when FCM rotates it.
-        unsubscribeTokenRefresh = messaging().onTokenRefresh(
-          async (newToken: string) => {
-            // Session may have ended between the rotation and this callback.
-            if (cancelled || !isSessionValid()) return;
-            await NotificationService.saveFCMToken(user.uid, newToken);
-          },
-        );
+        unsubscribeTokenRefresh = messaging().onTokenRefresh(async (newToken: string) => {
+          // Session may have ended between the rotation and this callback.
+          if (cancelled || !isSessionValid()) return;
+          await NotificationService.saveFCMToken(user.uid, newToken);
+        });
       } catch (error) {
         console.error("[useNotifications] FCM setup error:", error);
       }

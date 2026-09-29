@@ -149,6 +149,17 @@
       "detailsButton": "View Live Stream",
       "noEvents": "No gaming events available at the moment.",
       "subtitle": "Watch upcoming and live gaming events"
+    },
+    "releaseCalendar": {
+      "title": "Release Calendar",
+      "subtitle": "See what's launching, day by day",
+      "outNow": "Out now",
+      "released": "Released",
+      "noReleases": "No releases on this day",
+      "noReleasesInRange": "No releases in this date range",
+      "moreCount": "+{{count}} more",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month"
     }
   },
   "events": {

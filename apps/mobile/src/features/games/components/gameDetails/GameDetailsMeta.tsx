@@ -4,7 +4,8 @@ import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import COLORS from "@/src/constants/colors";
 import type { GameDetailsMetaProps } from "../../types";
-import { getRatingColor } from "./utils";
+import { getRatingGradient } from "./utils";
+import { LinearGradient } from "expo-linear-gradient";
 
 // ─── i18n locale mapping ──────────────────────────────────────────────────────
 
@@ -73,19 +74,22 @@ function GameDetailsMeta({
         </View>
 
         <View style={styles.ratingContainer}>
-          <CustomText
-            style={[
-              styles.rating,
-              {
-                backgroundColor:
-                  displayRating != null
-                    ? getRatingColor(displayRating)
-                    : COLORS.secondary,
-              },
-            ]}
-          >
-            {displayRating ?? "N/A"}
-          </CustomText>
+          {displayRating != null ? (
+            <LinearGradient
+              colors={getRatingGradient(displayRating)}
+              style={styles.rating}
+            >
+              <CustomText style={styles.ratingText}>
+                {displayRating}
+              </CustomText>
+            </LinearGradient>
+          ) : (
+            <View style={[styles.rating, { backgroundColor: COLORS.secondary }]}>
+              <CustomText style={styles.ratingText}>
+                N/A
+              </CustomText>
+            </View>
+          )}
 
           {(totalRatingCount ?? 0) > 0 && (
             <CustomText style={styles.ratingCount}>
@@ -112,13 +116,13 @@ const styles = StyleSheet.create({
     direction: "ltr",
   },
   title: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 24,
     fontWeight: "bold",
     direction: "ltr",
   },
   releaseDate: {
-    color: "gray",
+    color: COLORS.gray,
     letterSpacing: 2,
     direction: "ltr",
   },
@@ -134,7 +138,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   platform: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 17,
     fontWeight: "500",
     backgroundColor: "#5169964d",
@@ -148,12 +152,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   rating: {
-    color: COLORS.textLight,
-    textAlign: "center",
     borderRadius: 50,
-    textAlignVertical: "center",
     width: 70,
     height: 70,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  ratingText: {
+    color: COLORS.light,
     fontSize: 34,
     fontWeight: "bold",
   },
@@ -173,7 +179,7 @@ const styles = StyleSheet.create({
     minWidth: 45,
   },
   ageRatingText: {
-    color: "#fff",
+    color: COLORS.light,
     fontWeight: "bold",
     fontSize: 18,
   },

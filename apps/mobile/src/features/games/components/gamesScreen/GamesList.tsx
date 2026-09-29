@@ -128,7 +128,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     if (!onBack) return null;
     return (
       <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.7}>
-        <ArrowLeft size={20} color="#fff" />
+        <ArrowLeft size={20} color={COLORS.light} />
       </TouchableOpacity>
     );
   }, [onBack]);
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   gameType: {
     position: "absolute",
     backgroundColor: "rgba(0, 0, 0, 0.6)",
-    color: "white",
+    color: COLORS.light,
     fontWeight: "600",
     top: 0,
     left: 0,
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   title: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 15,
     fontWeight: "bold",
     marginTop: 10,
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     height: 40,
   },
   rating: {
-    color: "white",
+    color: COLORS.light,
     position: "absolute",
     textAlign: "center",
     borderBottomLeftRadius: 16,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   noResults: {
-    color: "#999",
+    color: COLORS.gray,
     textAlign: "center",
     fontSize: 16,
     marginVertical: 20,

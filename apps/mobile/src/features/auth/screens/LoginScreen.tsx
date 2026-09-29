@@ -13,10 +13,7 @@ import {
 } from "react-native";
 import { Image, ImageBackground } from "expo-image";
 import auth from "@react-native-firebase/auth";
-import {
-  GoogleSignin,
-  statusCodes,
-} from "@react-native-google-signin/google-signin";
+import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 import { LinearGradient } from "expo-linear-gradient";
 import { Eye, EyeOff } from "lucide-react-native";
 import { GoogleIcon } from "@/src/components/icons/BrandIcons";
@@ -33,10 +30,7 @@ type RootStackParamList = {
   MainApp: undefined;
 };
 
-type LoginScreenNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  "Login"
->;
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "Login">;
 
 interface LoginScreenProps {
   navigation: LoginScreenNavigationProp;
@@ -68,8 +62,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
       } else if (error.code === "auth/network-request-failed") {
         errorMessage = t("auth.errors.network");
       } else if (error.code === "auth/too-many-requests") {
-        errorMessage =
-          "Too many failed attempts. Please wait a moment and try again.";
+        errorMessage = "Too many failed attempts. Please wait a moment and try again.";
       }
 
       ToastAndroid.show(errorMessage, ToastAndroid.LONG);
@@ -123,10 +116,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
       if (err.code !== statusCodes.SIGN_IN_CANCELLED) {
         console.error("Google sign-in error", error);
         if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-          ToastAndroid.show(
-            t("auth.errors.playServices"),
-            ToastAndroid.LONG,
-          );
+          ToastAndroid.show(t("auth.errors.playServices"), ToastAndroid.LONG);
         } else if (err.code !== statusCodes.IN_PROGRESS) {
           ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
         }
@@ -189,7 +179,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
               <CustomTextInput
                 style={styles.input}
                 placeholder={t("auth.emailPlaceholder")}
-                placeholderTextColor="#aaa"
+                placeholderTextColor={COLORS.gray}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -200,7 +190,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
                 <CustomTextInput
                   style={styles.passwordInput}
                   placeholder={t("auth.passwordPlaceholder")}
-                  placeholderTextColor="#aaa"
+                  placeholderTextColor={COLORS.gray}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
@@ -211,10 +201,10 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   {showPassword ? (
-                  <EyeOff size={22} color="#aaa" />
-                ) : (
-                  <Eye size={22} color="#aaa" />
-                )}
+                    <EyeOff size={22} color={COLORS.gray} />
+                  ) : (
+                    <Eye size={22} color={COLORS.gray} />
+                  )}
                 </TouchableOpacity>
               </View>
 
@@ -235,7 +225,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={COLORS.light} size="small" />
               ) : (
                 <CustomText style={styles.buttonText}>{t("auth.login.title")}</CustomText>
               )}
@@ -254,10 +244,10 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
                 end={{ x: 1, y: 1 }}
               >
                 {isLoading ? (
-                  <ActivityIndicator color="#fff" size="small" />
+                  <ActivityIndicator color={COLORS.light} size="small" />
                 ) : (
                   <>
-                    <GoogleIcon size={28} fill="#fff" />
+                    <GoogleIcon size={28} fill={COLORS.light} />
                     <CustomText style={styles.buttonText}>
                       {" "}
                       {t("auth.login.googleSignIn")}
@@ -311,14 +301,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#fff",
+    color: COLORS.light,
     textAlign: "center",
     marginBottom: 20,
   },
   inputContainer: { marginBottom: 25 },
   input: {
-    color: "white",
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    color: COLORS.light,
+    backgroundColor: COLORS.button,
     padding: 15,
     borderRadius: 5,
     marginBottom: 10,
@@ -326,21 +316,21 @@ const styles = StyleSheet.create({
   passwordWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    backgroundColor: COLORS.button,
     borderRadius: 5,
     marginBottom: 10,
     paddingRight: 12,
   },
   passwordInput: {
     flex: 1,
-    color: "white",
+    color: COLORS.light,
     padding: 15,
   },
   eyeButton: {
     padding: 4,
   },
   forgotPasswordButton: {},
-  forgotPasswordText: { color: "#779bdd" },
+  forgotPasswordText: { color: COLORS.lightGray },
   button: {
     backgroundColor: COLORS.secondary,
     padding: 15,
@@ -362,7 +352,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   buttonText: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
@@ -378,7 +368,7 @@ const styles = StyleSheet.create({
   },
   guestButton: { marginVertical: 15, padding: 10, alignItems: "center" },
   guestButtonText: {
-    color: "#779bdd",
+    color: COLORS.lightGray,
     fontSize: 16,
     textDecorationLine: "underline",
   },

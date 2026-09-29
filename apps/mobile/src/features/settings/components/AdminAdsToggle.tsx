@@ -15,15 +15,13 @@ const AdminAdsToggle = memo(() => {
     <View style={styles.menuItem}>
       <View style={styles.menuItemLeft}>
         <Megaphone size={20} color={COLORS.lightGray} style={styles.menuIcon} />
-        <CustomText style={styles.menuLabel}>
-          {t("settings.menu.showAds")}
-        </CustomText>
+        <CustomText style={styles.menuLabel}>{t("settings.menu.showAds")}</CustomText>
       </View>
       <Switch
         value={adsEnabled}
         onValueChange={setAdsEnabled}
-        trackColor={{ false: "#3e3e3e", true: "#779bdd" }}
-        thumbColor={adsEnabled ? "#ffffff" : "#f4f3f4"}
+        trackColor={{ false: "#3e3e3e", true: COLORS.lightGray }}
+        thumbColor={adsEnabled ? COLORS.light : "#f4f3f4"}
       />
     </View>
   );
@@ -38,7 +36,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 16,
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    backgroundColor: COLORS.button,
     borderRadius: 12,
   },
   menuItemLeft: {
@@ -52,6 +50,6 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#fff",
+    color: COLORS.light,
   },
 });

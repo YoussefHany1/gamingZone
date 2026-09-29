@@ -80,7 +80,7 @@ const UserListsScreen = ({ navigation }: Props) => {
             onPress={() => setModalVisible(true)}
             style={{ padding: 6, marginRight: 6 }}
           >
-            <CirclePlus size={28} color="#fff" />
+            <CirclePlus size={28} color={COLORS.light} />
           </TouchableOpacity>
         ) : null,
     });
@@ -267,12 +267,16 @@ const UserListsScreen = ({ navigation }: Props) => {
             }
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              {item.type === "default" ? <List size={24} color={COLORS.lightGray} /> : <FolderOpen size={24} color={COLORS.lightGray} />}
+              {item.type === "default" ? (
+                <List size={24} color={COLORS.lightGray} />
+              ) : (
+                <FolderOpen size={24} color={COLORS.lightGray} />
+              )}
               <CustomText style={styles.listName}>{getDisplayName(item.name)}</CustomText>
             </View>
             {item.type === "custom" && (
               <TouchableOpacity onPress={() => handleDeleteList(item.id, item.name)}>
-                <Trash2 size={20} color="red" />
+                <Trash2 size={20} color={COLORS.danger} />
               </TouchableOpacity>
             )}
           </TouchableOpacity>
@@ -287,8 +291,6 @@ const UserListsScreen = ({ navigation }: Props) => {
     },
     [showAds, adsEnabled, lists.length, getDisplayName, handleDeleteList, navigation, t],
   );
-
-
 
   if (isAnonymous || !user) {
     return (
@@ -334,7 +336,7 @@ const UserListsScreen = ({ navigation }: Props) => {
                 value={newListName}
                 onChangeText={setNewListName}
                 placeholder={t("userLists.placeholders.newListName")}
-                placeholderTextColor="#999"
+                placeholderTextColor={COLORS.gray}
               />
               <View style={styles.modalButtons}>
                 <TouchableOpacity
@@ -372,14 +374,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
   },
-  listName: { color: COLORS.textLight, fontSize: 18, marginLeft: 10 },
+  listName: { color: COLORS.light, fontSize: 18, marginLeft: 10 },
   ad: {
     alignItems: "center",
     width: "100%",
     marginVertical: 30,
   },
   adText: {
-    color: "#fff",
+    color: COLORS.light,
     marginBottom: 10,
   },
   emptyContainer: {
@@ -389,7 +391,7 @@ const styles = StyleSheet.create({
     margin: "auto",
   },
   emptyText: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 16,
     textAlign: "center",
     opacity: 0.8,
@@ -411,7 +413,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.secondary + "80",
   },
   modalTitle: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     textAlign: "center",
     fontSize: 20,
     fontWeight: "bold",
@@ -422,7 +424,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     marginBottom: 20,
-    color: COLORS.textLight,
+    color: COLORS.light,
   },
 
   modalButtons: { flexDirection: "row", justifyContent: "space-around" },
@@ -435,7 +437,7 @@ const styles = StyleSheet.create({
     fontWeight: "semibold",
   },
   textBtn: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontWeight: "bold",
     fontSize: 16,
   },

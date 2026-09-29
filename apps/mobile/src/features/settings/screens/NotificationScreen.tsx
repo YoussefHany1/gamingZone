@@ -30,9 +30,9 @@ const FREE_GAMES_SOURCE = "alerts";
 
 const Notification: React.FC = () => {
   const { rssFeeds, loading: loadingRss } = useRssFeeds();
-  const [expandedCategories, setExpandedCategories] = useState<
-    Record<string, boolean>
-  >({});
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(
+    {},
+  );
   const [showAds, setShowAds] = useState<boolean>(false);
   const adsEnabled = useAdsEnabled();
   const { t, i18n } = useTranslation();
@@ -107,7 +107,7 @@ const Notification: React.FC = () => {
       <View style={styles.categorySection}>
         <View style={styles.categoryHeader}>
           <View style={styles.categoryHeaderLeft}>
-            <Gift size={24} color="#779bdd" style={styles.chevronIcon} />
+            <Gift size={24} color={COLORS.lightGray} style={styles.chevronIcon} />
             <CustomText style={styles.categoryTitle}>
               {t("games.list.freeGames.header")}
             </CustomText>
@@ -116,8 +116,8 @@ const Notification: React.FC = () => {
           <Switch
             value={isEnabled}
             onValueChange={toggleFreeGames}
-            trackColor={{ false: "#3e3e3e", true: "#779bdd" }}
-            thumbColor={isEnabled ? "#ffffff" : "#f4f3f4"}
+            trackColor={{ false: "#3e3e3e", true: COLORS.lightGray }}
+            thumbColor={isEnabled ? COLORS.light : "#f4f3f4"}
             style={styles.categorySwitch}
           />
         </View>
@@ -169,9 +169,17 @@ const Notification: React.FC = () => {
         >
           <View style={styles.categoryHeaderLeft}>
             {isExpanded ? (
-              <ChevronDown size={20} color="#779bdd" style={styles.chevronIcon} />
+              <ChevronDown
+                size={20}
+                color={COLORS.lightGray}
+                style={styles.chevronIcon}
+              />
             ) : (
-              <ChevronRight size={20} color="#779bdd" style={styles.chevronIcon} />
+              <ChevronRight
+                size={20}
+                color={COLORS.lightGray}
+                style={styles.chevronIcon}
+              />
             )}
             <CustomText style={styles.categoryTitle}>{title}</CustomText>
             <CustomText style={styles.sourceCount}>({sources.length})</CustomText>
@@ -190,17 +198,11 @@ const Notification: React.FC = () => {
                 )}
 
                 {group.data.map((source, index) => {
-                  const prefId = NotificationService.getTopicName(
-                    category,
-                    source.name,
-                  );
+                  const prefId = NotificationService.getTopicName(category, source.name);
                   const isEnabled: boolean = preferences[prefId] || false;
 
                   return (
-                    <View
-                      key={`${category}-${index}`}
-                      style={styles.sourceItem}
-                    >
+                    <View key={`${category}-${index}`} style={styles.sourceItem}>
                       <View style={styles.sourceInfo}>
                         <Image
                           source={source.image ?? null}
@@ -210,11 +212,9 @@ const Notification: React.FC = () => {
                       </View>
                       <Switch
                         value={isEnabled}
-                        onValueChange={() =>
-                          toggleSource(category, source.name)
-                        }
-                        trackColor={{ false: "#3e3e3e", true: "#779bdd" }}
-                        thumbColor={isEnabled ? "#ffffff" : "#f4f3f4"}
+                        onValueChange={() => toggleSource(category, source.name)}
+                        trackColor={{ false: "#3e3e3e", true: COLORS.lightGray }}
+                        thumbColor={isEnabled ? COLORS.light : "#f4f3f4"}
                       />
                     </View>
                   );
@@ -260,7 +260,7 @@ const Notification: React.FC = () => {
             style={styles.testButton}
             onPress={NotificationService.testLocalNotification}
           >
-            <Bell size={20} color="#ffffff" />
+            <Bell size={20} color={COLORS.light} />
             <CustomText style={styles.testButtonText}>
               {t("settings.notifications.testNotification")}
             </CustomText>
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   title: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 22,
     fontWeight: "bold",
   },
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: "#779bdd",
+    color: COLORS.lightGray,
     lineHeight: 22,
   },
   categorySection: {
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 16,
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    backgroundColor: COLORS.button,
   },
   categoryHeaderLeft: {
     flexDirection: "row",
@@ -318,12 +318,12 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#ffffff",
+    color: COLORS.light,
     marginRight: 8,
   },
   sourceCount: {
     fontSize: 14,
-    color: "#779bdd",
+    color: COLORS.lightGray,
   },
   categorySwitch: {
     transform: [{ scaleX: 1.1 }, { scaleY: 1.1 }],
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   groupHeaderText: {
-    color: "#aaa",
+    color: COLORS.gray,
     fontSize: 13,
     fontWeight: "bold",
     textTransform: "uppercase",
@@ -365,14 +365,14 @@ const styles = StyleSheet.create({
   },
   sourceName: {
     fontSize: 16,
-    color: "#ffffff",
+    color: COLORS.light,
     fontWeight: "500",
   },
   sourceLanguage: {
     fontSize: 12,
-    color: "#779bdd",
+    color: COLORS.lightGray,
     marginLeft: 8,
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    backgroundColor: COLORS.button,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -396,14 +396,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#4CAF50",
   },
   testButtonText: {
-    color: "#ffffff",
+    color: COLORS.light,
     fontSize: 16,
     fontWeight: "600",
     marginLeft: 8,
   },
   footerText: {
     fontSize: 14,
-    color: "#779bdd",
+    color: COLORS.lightGray,
     textAlign: "center",
     lineHeight: 20,
   },
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
     marginVertical: 55,
   },
   adText: {
-    color: "#fff",
+    color: COLORS.light,
     marginBottom: 10,
   },
 });

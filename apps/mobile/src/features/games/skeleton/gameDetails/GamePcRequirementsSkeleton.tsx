@@ -50,7 +50,7 @@ export default GamePcRequirementsSkeleton;
 const styles = StyleSheet.create({
   container: { marginTop: 20, marginBottom: 10, direction: "ltr" },
   header: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 24,
     fontWeight: "600",
     textDecorationLine: "underline",

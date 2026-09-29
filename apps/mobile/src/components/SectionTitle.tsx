@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   sectionTitle: {
-    color: "#fff",
+    color: COLORS.light,
     fontWeight: "bold",
   },
   sectionSubtitle: {

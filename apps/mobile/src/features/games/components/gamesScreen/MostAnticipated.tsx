@@ -122,7 +122,8 @@ function MostAnticipated(): React.ReactElement {
           fontSize={24}
         />
       </View>
-      <FlashList renderScrollComponent={GHScrollView as any}
+      <FlashList
+        renderScrollComponent={GHScrollView as any}
         data={gamesToShow}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
   timelineDate: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 8,
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.light,
   },
   coverImage: {
     width: 140,
@@ -198,7 +199,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.secondary,
   },
   title: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",

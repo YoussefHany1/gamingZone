@@ -4,7 +4,10 @@ const COLORS = {
   button: "rgba(119, 155, 221, 0.2)",
   darkBackground: "#00001c",
   lightGray: "#779bdd",
-  textLight: "#fff",
+  light: "#fff",
+  dark: "#000",
+  gray: "#aaa",
+  danger: "#ff3b30",
 } as const;
 
 export type ColorKey = keyof typeof COLORS;

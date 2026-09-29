@@ -2,8 +2,18 @@ import COLORS from "@/src/constants/colors";
 import type { AgeRating, AgeRatingInfo } from "../../types";
 import { AGE_RATING_MAP } from "@gaming-zone/utils";
 import type { ComponentType } from "react";
-import { SteamIcon, EpicGamesIcon, GogIcon, NintendoSwitchIcon } from "@/src/components/icons/StoreIcons";
-import { AppleIcon, GooglePlayIcon, PlayStationIcon, XboxIcon } from "@/src/components/icons/BrandIcons";
+import {
+  SteamIcon,
+  EpicGamesIcon,
+  GogIcon,
+  NintendoSwitchIcon,
+} from "@/src/components/icons/StoreIcons";
+import {
+  AppleIcon,
+  GooglePlayIcon,
+  PlayStationIcon,
+  XboxIcon,
+} from "@/src/components/icons/BrandIcons";
 
 export {
   AGE_RATING_MAP,
@@ -17,7 +27,10 @@ export {
 /**
  * Maps IGDB website type IDs to locally bundled store icons.
  */
-export const STORE_ICONS: Record<number, ComponentType<{ size?: number; fill?: string }>> = {
+export const STORE_ICONS: Record<
+  number,
+  ComponentType<{ size?: number; fill?: string }>
+> = {
   13: SteamIcon,
   16: EpicGamesIcon,
   17: GogIcon,
@@ -44,15 +57,15 @@ export function getRatingColorCode(ratingCategory: number): string {
 }
 
 /**
- * Returns a badge colour for a game's aggregate rating (0–100 scale).
- * Used for the score circle on the game detail page.
+ * Returns a two-colour gradient tuple for a game's aggregate rating (0–10 scale).
+ * Designed for use with LinearGradient in card badges/circles.
  */
-export function getRatingColor(rating: number): string {
-  if (rating <= 2) return "#8B0000"; // very poor
-  if (rating <= 4) return "#FF4C4C"; // poor
-  if (rating <= 6) return "#FFA500"; // average
-  if (rating <= 8) return "#71e047"; // good
-  return "#006400"; // excellent
+export function getRatingGradient(rating: number): [string, string] {
+  if (rating <= 2) return ["#8B0000", "#B22222"]; // very poor
+  if (rating <= 4) return ["#FF4C4C", "#FF6B6B"]; // poor
+  if (rating <= 6) return ["#FF8C00", "#FFA500"]; // average
+  if (rating <= 8) return ["#7CB342", "#8BC34A"]; // good
+  return ["#2E7D32", "#4CAF50"]; // excellent
 }
 
 /** Selects the most suitable age rating to display (ESRB preferred, PEGI fallback). */

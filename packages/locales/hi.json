@@ -149,6 +149,17 @@
       "detailsButton": "लाइव स्ट्रीम देखें",
       "noEvents": "इस समय कोई गेमिंग इवेंट उपलब्ध नहीं है।",
       "subtitle": "आगामी और लाइव गेमिंग इवेंट्स देखें"
+    },
+    "releaseCalendar": {
+      "title": "रिलीज़ कैलेंडर",
+      "subtitle": "दिन-प्रतिदिन क्या आ रहा है, देखें",
+      "outNow": "अभी उपलब्ध",
+      "released": "रिलीज़ हो चुका",
+      "noReleases": "इस दिन कोई रिलीज़ नहीं",
+      "noReleasesInRange": "इस तारीख़ सीमा में कोई रिलीज़ नहीं",
+      "moreCount": "+{{count}} और",
+      "previousMonth": "पिछला महीना",
+      "nextMonth": "अगला महीना"
     }
   },
   "events": {

@@ -1,12 +1,7 @@
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import React, { useCallback, useRef, memo } from "react";
 import CustomText from "@/src/components/CustomText";
-import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-} from "react-native";
+import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
@@ -35,15 +30,10 @@ const CARD_ITEM_SIZE = CARD_WIDTH + CARD_MARGIN * 2;
 
 const STORAGE_KEY = "GAMES_CACHE_EVENTS";
 
-
-
 //  Pure functions
 
 /** Builds a compact countdown string, e.g. "2d 4h 30m" or "45m". */
-const formatCountdown = (
-  timeUntil: TimeLeft,
-  t: (key: string) => string,
-): string => {
+const formatCountdown = (timeUntil: TimeLeft, t: (key: string) => string): string => {
   const parts: string[] = [];
   if (timeUntil.days > 0) parts.push(`${timeUntil.days}${t("common.time.d")}`);
   if (timeUntil.hours > 0 || timeUntil.days > 0)
@@ -61,13 +51,10 @@ interface EventCardProps {
 
 const EventCard = memo<EventCardProps>(({ item }) => {
   const { t, i18n } = useTranslation();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
 
   const status: EventStatus = getEventStatus(item.start_time, item.end_time);
-  const timeUntil = useCountdown(
-    status === "upcoming" ? item.start_time : null,
-  );
+  const timeUntil = useCountdown(status === "upcoming" ? item.start_time : null);
 
   const itemRef = useRef(item);
   itemRef.current = item;
@@ -84,11 +71,7 @@ const EventCard = memo<EventCardProps>(({ item }) => {
   }, [item.live_stream_url]);
 
   return (
-    <TouchableOpacity
-      style={styles.eventCard}
-      onPress={handlePress}
-      activeOpacity={0.92}
-    >
+    <TouchableOpacity style={styles.eventCard} onPress={handlePress} activeOpacity={0.92}>
       <Image
         recyclingKey={item.event_logo?.image_id ?? ""}
         source={
@@ -112,11 +95,13 @@ const EventCard = memo<EventCardProps>(({ item }) => {
         <View style={styles.topRow}>
           {status === "live" && (
             <LinearGradient
-              colors={["#FF3B30", "#FF6B6B"]}
+              colors={[COLORS.danger, COLORS.danger]}
               style={styles.liveBadge}
             >
               <View style={styles.liveDot} />
-              <CustomText style={styles.liveText}>{t("home.gamingEvents.live")}</CustomText>
+              <CustomText style={styles.liveText}>
+                {t("home.gamingEvents.live")}
+              </CustomText>
             </LinearGradient>
           )}
           {status === "upcoming" && (
@@ -187,15 +172,9 @@ function GamingEvents(): React.ReactElement | null {
 
   const renderSkeletonItem = useCallback(() => <SkeletonGamingevents />, []);
 
-  const keyExtractorEvents = useCallback(
-    (item: GamingEvent) => String(item.id),
-    [],
-  );
+  const keyExtractorEvents = useCallback((item: GamingEvent) => String(item.id), []);
 
-  const keyExtractorSkeleton = useCallback(
-    (item: SkeletonItem) => String(item.id),
-    [],
-  );
+  const keyExtractorSkeleton = useCallback((item: SkeletonItem) => String(item.id), []);
 
   // Hide the entire section when data loaded successfully but array is empty
   if (!isLoading && !error && eventsToShow.length === 0) return null;
@@ -211,7 +190,8 @@ function GamingEvents(): React.ReactElement | null {
       </View>
 
       {isActuallyLoading && (
-        <FlashList renderScrollComponent={GHScrollView as any}
+        <FlashList
+          renderScrollComponent={GHScrollView as any}
           data={SKELETON_DATA}
           horizontal
           keyExtractor={keyExtractorSkeleton}
@@ -228,7 +208,8 @@ function GamingEvents(): React.ReactElement | null {
       )}
 
       {!error && (
-        <FlashList renderScrollComponent={GHScrollView as any}
+        <FlashList
+          renderScrollComponent={GHScrollView as any}
           data={eventsToShow}
           horizontal
           keyExtractor={keyExtractorEvents}
@@ -298,7 +279,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 6,
     elevation: 4,
-    shadowColor: "#FF3B30",
+    shadowColor: COLORS.danger,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.6,
     shadowRadius: 4,
@@ -307,10 +288,10 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: COLORS.textLight,
+    backgroundColor: COLORS.light,
   },
   liveText: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 12,
     fontWeight: "bold",
     textTransform: "uppercase",
@@ -323,7 +304,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.lightGray,
   },
-  upcomingText: { color: COLORS.textLight, fontSize: 11, fontWeight: "bold" },
+  upcomingText: { color: COLORS.light, fontSize: 11, fontWeight: "bold" },
   infoContainer: {
     gap: 8,
     justifyContent: "flex-end",
@@ -331,7 +312,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   eventTitle: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 20,
     fontWeight: "bold",
     textShadowColor: "rgba(0, 0, 0, 0.5)",
@@ -354,7 +335,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.lightGray,
   },
-  dateText: { color: COLORS.textLight, fontSize: 12, fontWeight: "600" },
+  dateText: { color: COLORS.light, fontSize: 12, fontWeight: "600" },
   countdownContainer: {
     backgroundColor: COLORS.secondary + "80",
     paddingHorizontal: 10,
@@ -364,7 +345,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.lightGray,
   },
   countdownText: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 12,
     fontWeight: "bold",
   },
@@ -376,7 +357,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: "#FF3B30",
+    borderColor: COLORS.danger,
     elevation: 10,
   },
 });

@@ -149,6 +149,17 @@
       "detailsButton": "Ver transmissão em direto",
       "noEvents": "De momento, não há eventos de gaming disponíveis.",
       "subtitle": "Veja eventos de gaming futuros e em direto"
+    },
+    "releaseCalendar": {
+      "title": "Calendário de lançamentos",
+      "subtitle": "Veja o que está a sair, dia a dia",
+      "outNow": "Já disponível",
+      "released": "Lançado",
+      "noReleases": "Sem lançamentos neste dia",
+      "noReleasesInRange": "Sem lançamentos neste período",
+      "moreCount": "+{{count}} mais",
+      "previousMonth": "Mês anterior",
+      "nextMonth": "Próximo mês"
     }
   },
   "events": {

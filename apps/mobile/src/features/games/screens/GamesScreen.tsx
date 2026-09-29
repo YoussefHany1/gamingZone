@@ -13,7 +13,7 @@ import SkeletonFreeGames from "../skeleton/gamesScreen/SkeletonFreeGames";
 import SkeletonNewsItem from "@/src/features/news/skeleton/SkeletonNewsItem";
 import FreeGames from "../components/gamesScreen/FreeGames";
 import GamesList from "../components/gamesScreen/GamesList";
-import GamesNews from "../components/gamesScreen/GamesNews";
+// import GamesNews from "../components/gamesScreen/GamesNews";
 import ComingSoon from "../components/gamesScreen/ComingSoon";
 import MostAnticipated from "../components/gamesScreen/MostAnticipated";
 import RecentlyReleased from "../components/gamesScreen/RecentlyReleased";
@@ -109,7 +109,7 @@ DeferredSection.displayName = "DeferredSection";
 // references never change, which lets renderItem remain dep-free.
 const FreeGamesSection = memo(() => <FreeGames />);
 const RecommendedSection = memo(() => <RecommendedGames />);
-const GamesNewsSection = memo(() => <GamesNews />);
+// const GamesNewsSection = memo(() => <GamesNews />);
 const PopularSection = memo(() => <Popular />);
 const SteamSection = memo(() => <SteamTopSellers />);
 const TrendingSection = memo(() => <TrendingMobileGames />);
@@ -120,7 +120,7 @@ const NostalgiaSection = memo(() => <NostalgiaCorner />);
 const TopRatedSection = memo(() => <TopRated />);
 FreeGamesSection.displayName = "FreeGamesSection";
 RecommendedSection.displayName = "RecommendedSection";
-GamesNewsSection.displayName = "GamesNewsSection";
+// GamesNewsSection.displayName = "GamesNewsSection";
 PopularSection.displayName = "PopularSection";
 SteamSection.displayName = "SteamSection";
 TrendingSection.displayName = "TrendingSection";
@@ -173,7 +173,7 @@ function GamesScreen(): React.ReactElement {
         case "header":
           return (
             <LinearGradient
-              colors={["#516996", "#3b4d6e"]}
+              colors={[COLORS.secondary, "#3b4d6e"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.header}
@@ -191,12 +191,12 @@ function GamesScreen(): React.ReactElement {
               <RecommendedSection />
             </DeferredSection>
           );
-        case "news":
-          return (
-            <DeferredSection delay={300}>
-              <GamesNewsSection />
-            </DeferredSection>
-          );
+        // case "news":
+        //   return (
+        //     <DeferredSection delay={300}>
+        //       <GamesNewsSection />
+        //     </DeferredSection>
+        //   );
         case "popular":
           return (
             <DeferredSection delay={900}>
@@ -259,11 +259,11 @@ function GamesScreen(): React.ReactElement {
       <View style={styles.searchSection}>
         <View style={styles.searchRow}>
           <View style={styles.searchBarContainer}>
-            <Search size={18} color="#999" style={styles.searchIcon} />
+            <Search size={18} color={COLORS.gray} style={styles.searchIcon} />
             <CustomTextInput
               style={styles.searchInput}
               placeholder={t("games.searchPlaceholder")}
-              placeholderTextColor="#999"
+              placeholderTextColor={COLORS.gray}
               value={searchQuery}
               onChangeText={handleSearchTextChange}
               onSubmitEditing={handleSubmitSearch}
@@ -289,7 +289,7 @@ function GamesScreen(): React.ReactElement {
           >
             <SlidersHorizontal
               size={20}
-              color={activeFilterCount > 0 ? "#fff" : COLORS.lightGray}
+              color={activeFilterCount > 0 ? COLORS.light : COLORS.lightGray}
             />
             {activeFilterCount > 0 && (
               <View style={styles.filterBadge}>
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: "white",
+    color: COLORS.light,
     fontSize: 16,
   },
   filterBtn: {
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   filterBadgeText: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 10,
     fontWeight: "700",
   },
@@ -430,14 +430,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     elevation: 5,
-    shadowColor: "#516996",
+    shadowColor: COLORS.secondary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
     marginHorizontal: 50,
   },
   headerText: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   adLabel: {
-    color: "#fff",
+    color: COLORS.light,
     marginBottom: 10,
   },
 });

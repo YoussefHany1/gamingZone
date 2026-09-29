@@ -149,6 +149,17 @@
       "detailsButton": "Ver transmisión en vivo",
       "noEvents": "No hay eventos de videojuegos disponibles en este momento.",
       "subtitle": "Mira los próximos eventos de videojuegos y los que están en vivo"
+    },
+    "releaseCalendar": {
+      "title": "Calendario de lanzamientos",
+      "subtitle": "Descubre qué sale, día a día",
+      "outNow": "Ya disponible",
+      "released": "Lanzado",
+      "noReleases": "No hay lanzamientos este día",
+      "noReleasesInRange": "No hay lanzamientos en este rango de fechas",
+      "moreCount": "+{{count}} más",
+      "previousMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente"
     }
   },
   "events": {

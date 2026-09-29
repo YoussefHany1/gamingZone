@@ -9,7 +9,7 @@ const Loading: React.FC = memo(() => {
 
   return (
     <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color="#779bdd" />
+      <ActivityIndicator size="large" color={COLORS.lightGray} />
       <CustomText style={styles.loadingText}>{t("common.loading")}</CustomText>
     </View>
   );

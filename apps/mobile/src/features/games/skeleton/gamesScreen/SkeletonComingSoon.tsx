@@ -2,6 +2,7 @@ import React from "react";
 import { View, StyleSheet } from "react-native";
 import SkeletonItem from "@/src/components/SkeletonItem";
 import { usePulseAnimation } from "@/src/components/skeleton/shared";
+import COLORS from "@/src/constants/colors";
 
 const CARD_WIDTH = 300;
 const CARD_HEIGHT = 350;
@@ -43,18 +44,9 @@ const SkeletonComingSoonCard: React.FC = () => {
 
           {/* Platform badges */}
           <View style={styles.platformsContainer}>
-            <SkeletonItem
-              animatedStyle={animatedStyle}
-              style={styles.platformBadge}
-            />
-            <SkeletonItem
-              animatedStyle={animatedStyle}
-              style={styles.platformBadge}
-            />
-            <SkeletonItem
-              animatedStyle={animatedStyle}
-              style={styles.platformBadge}
-            />
+            <SkeletonItem animatedStyle={animatedStyle} style={styles.platformBadge} />
+            <SkeletonItem animatedStyle={animatedStyle} style={styles.platformBadge} />
+            <SkeletonItem animatedStyle={animatedStyle} style={styles.platformBadge} />
           </View>
         </View>
       </View>
@@ -84,7 +76,7 @@ const styles = StyleSheet.create({
   coverContainer: {
     marginBottom: 20,
     elevation: 4,
-    shadowColor: "#000",
+    shadowColor: COLORS.dark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,

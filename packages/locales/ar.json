@@ -151,6 +151,17 @@
       "detailsButton": "عرض البث المباشر",
       "noEvents": "لا توجد فعاليات ألعاب متاحة في الوقت الحالي.",
       "subtitle": "شاهد فعاليات الألعاب القادمة والمباشرة"
+    },
+    "releaseCalendar": {
+      "title": "تقويم الإصدارات",
+      "subtitle": "تابع الإصدارات يومًا بيوم",
+      "outNow": "متوفر الآن",
+      "released": "صدر",
+      "noReleases": "لا إصدارات في هذا اليوم",
+      "noReleasesInRange": "لا إصدارات في هذه الفترة",
+      "moreCount": "+{{count}} إضافية",
+      "previousMonth": "الشهر السابق",
+      "nextMonth": "الشهر التالي"
     }
   },
   "events": {

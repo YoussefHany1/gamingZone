@@ -8,7 +8,7 @@ import COLORS from "@/src/constants/colors";
 export const sharedStyles = StyleSheet.create({
   /** Section heading: white, underlined, 24 sp semi-bold */
   sectionHeader: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 24,
     fontWeight: "600",
     textDecorationLine: "underline",

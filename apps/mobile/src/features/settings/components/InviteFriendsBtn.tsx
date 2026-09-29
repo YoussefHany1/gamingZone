@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Share, StyleSheet } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { Share2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
+import COLORS from "@/src/constants/colors";
 
 const STORE_URL = "https://play.google.com/store/apps/details?id=com.yh.gamingzone";
 
@@ -35,7 +36,7 @@ const InviteFriendsBtn: React.FC = memo(() => {
   return (
     <TouchableOpacity style={styles.categoryHeader} onPress={onShare}>
       <View style={styles.categoryHeaderLeft}>
-        <Share2 size={20} color="#779bdd" style={styles.chevronIcon} />
+        <Share2 size={20} color={COLORS.lightGray} style={styles.chevronIcon} />
         <CustomText style={styles.categoryTitle}>
           {t("settings.menu.inviteFriends")}
         </CustomText>
@@ -54,7 +55,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 16,
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    backgroundColor: COLORS.button,
     borderRadius: 12,
   },
   categoryHeaderLeft: {
@@ -68,7 +69,7 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#fff",
+    color: COLORS.light,
     marginRight: 8,
     textAlign: "left",
   },

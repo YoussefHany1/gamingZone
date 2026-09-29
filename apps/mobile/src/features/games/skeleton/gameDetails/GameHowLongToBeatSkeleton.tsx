@@ -43,7 +43,7 @@ export default GameHowLongToBeatSkeleton;
 const styles = StyleSheet.create({
   container: { marginTop: 30 },
   header: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 24,
     fontWeight: "600",
     textDecorationLine: "underline",
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   },
   block: { alignItems: "center", marginHorizontal: 14 },
   label: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 18,
     fontWeight: "600",
     textAlign: "center",

@@ -515,6 +515,51 @@ app.get('/nostalgia-corner', cacheMiddleware(3600), async (req, res) => {
   }
 });
 
+// Release Calendar
+// Returns every game releasing inside an arbitrary [from, to] window so the
+// mobile release calendar can render real per-day buckets.
+//
+// `from` / `to` are Unix seconds, inclusive on both ends. Both are optional:
+// they default to "now" and "now + 30 days".
+app.get('/release-calendar', cacheMiddleware(1800), async (req, res) => {
+  try {
+    const nowTs = Math.floor(Date.now() / 1000);
+    const DAY_SECONDS = 86400;
+
+    // parseInt on unvalidated input would happily yield NaN, which would be
+    // interpolated straight into the IGDB query body and produce a 500 from
+    // IGDB instead of a useful 400 for the caller.
+    const parsedFrom = Number.parseInt(req.query.from, 10);
+    const parsedTo = Number.parseInt(req.query.to, 10);
+
+    const fromTs = Number.isFinite(parsedFrom) ? parsedFrom : nowTs;
+    const toTs = Number.isFinite(parsedTo) ? parsedTo : nowTs + 30 * DAY_SECONDS;
+
+    if (fromTs > toTs) {
+      return res.status(400).json({ message: '`from` must be less than or equal to `to`' });
+    }
+
+    // Hard clamp: the mobile calendar only ever asks for ~37 days. Capping the
+    // window protects IGDB quota and keeps the response size bounded even if a
+    // client asks for an absurd range.
+    const MAX_WINDOW_SECONDS = 62 * DAY_SECONDS;
+    const effectiveTo = Math.min(toTs, fromTs + MAX_WINDOW_SECONDS);
+
+    const query = `
+      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
+      ${BASE_QUERY_WHERE} & first_release_date >= ${fromTs} & first_release_date <= ${effectiveTo};
+      sort first_release_date asc;
+      limit 500;
+    `;
+    const data = await callIgdb('games', query);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: 'An error occurred on the server while fetching data. Please try again later.',
+    });
+  }
+});
+
 app.get('/search', cacheMiddleware(300), async (req, res) => {
   try {
     const { q, year, genre, platform, sort, page } = req.query;

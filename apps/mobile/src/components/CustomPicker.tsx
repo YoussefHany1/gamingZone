@@ -41,7 +41,8 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
     );
 
     const selectedLabel: string = useMemo(
-      () => filteredOptions.find((opt) => opt.value === selectedValue)?.label ?? placeholder,
+      () =>
+        filteredOptions.find((opt) => opt.value === selectedValue)?.label ?? placeholder,
       [filteredOptions, selectedValue, placeholder],
     );
 
@@ -63,7 +64,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
           <CustomText style={[styles.pickerText, !selectedValue && { color: "#ccc" }]}>
             {selectedLabel}
           </CustomText>
-          <ChevronDown size={20} color="white" />
+          <ChevronDown size={20} color={COLORS.light} />
         </TouchableOpacity>
 
         {/* Options modal */}
@@ -136,7 +137,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   pickerButton: {
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    backgroundColor: COLORS.button,
     padding: 15,
     borderRadius: 5,
     flexDirection: "row",
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
   },
   pickerText: {
     fontSize: 14,
-    color: "white",
+    color: COLORS.light,
   },
   modalOverlay: {
     flex: 1,
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#fff",
+    color: COLORS.light,
   },
   optionItem: {
     padding: 15,
@@ -184,14 +185,14 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 16,
-    color: "#fff",
+    color: COLORS.light,
   },
   selectedOption: {
     backgroundColor: COLORS.secondary + "33",
     borderRadius: 12,
   },
   selectedOptionText: {
-    color: "#fff",
+    color: COLORS.light,
     fontWeight: "bold",
   },
 });

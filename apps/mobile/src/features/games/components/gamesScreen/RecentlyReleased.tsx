@@ -13,6 +13,7 @@ import SectionTitle from "@/src/components/SectionTitle";
 import useCachedData from "@/src/hooks/useCachedData";
 import type { RecentGameCardProps } from "../../types";
 import type { Game } from "@/src/types/sharedTypes";
+import { getRatingGradient } from "../gameDetails/utils";
 import { fetchRecentlyReleasedGames } from "@/src/services/api/igdbApi";
 
 const CARD_HEIGHT = 200;
@@ -32,14 +33,7 @@ const formatReleaseDate = (
   });
 };
 
-// Rating color gradient based on score (0-10)
-function getRatingColor(rating: number): [string, string] {
-  if (rating <= 2) return ["#8B0000", "#B22222"];
-  if (rating <= 4) return ["#FF4C4C", "#FF6B6B"];
-  if (rating <= 6) return ["#FF8C00", "#FFA500"];
-  if (rating <= 8) return ["#7CB342", "#8BC34A"];
-  return ["#2E7D32", "#4CAF50"];
-}
+
 
 // Card
 
@@ -86,7 +80,7 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
 
           {item.total_rating != null && (
             <LinearGradient
-              colors={getRatingColor(item.total_rating / 10)}
+              colors={getRatingGradient(item.total_rating / 10)}
               style={styles.ratingBadge}
             >
               <CustomText style={styles.ratingText}>
@@ -221,7 +215,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     elevation: 6,
-    shadowColor: "#000",
+    shadowColor: COLORS.dark,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
@@ -234,7 +228,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     borderRadius: 12,
-    backgroundColor: "#00001c",
+    backgroundColor: COLORS.darkBackground,
   },
   ratingBadge: {
     position: "absolute",
@@ -247,14 +241,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 3,
     elevation: 4,
-    shadowColor: "#000",
+    shadowColor: COLORS.dark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
   },
-  ratingText: { color: "#fff", fontSize: 13, fontWeight: "bold" },
+  ratingText: { color: COLORS.light, fontSize: 13, fontWeight: "bold" },
   ratingIcon: { fontSize: 11 },
   infoContainer: {
     flex: 1,
@@ -263,7 +257,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   title: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 17,
     fontWeight: "bold",
     lineHeight: 21,

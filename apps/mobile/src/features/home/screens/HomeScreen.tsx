@@ -26,6 +26,7 @@ import COLORS from "@/src/constants/colors";
 import { adUnitId } from "@/src/constants/config";
 import Slideshow from "../components/Slideshow";
 import WeeklySummary from "../components/WeeklySummary";
+import ReleaseCalendar from "../components/ReleaseCalendar";
 import LatestNews from "@/src/features/news/components/LatestNews";
 import GamingEvents from "@/src/features/events/components/Gamingevents";
 import RecommendedGames from "@/src/features/games/components/gamesScreen/RecommendedGames";
@@ -149,6 +150,19 @@ const WeeklySummarySection = memo(function WeeklySummarySection() {
 });
 WeeklySummarySection.displayName = "WeeklySummarySection";
 
+/**
+ * Keyed by a constant, NOT by `refreshKey`: the calendar re-fetches via
+ * `refreshToken` rather than remounting, so it actually honours pull-to-refresh.
+ */
+const ReleaseCalendarSection = memo(function ReleaseCalendarSection({
+  refreshToken,
+}: {
+  refreshToken: number | undefined;
+}) {
+  return <ReleaseCalendar refreshToken={refreshToken} />;
+});
+ReleaseCalendarSection.displayName = "ReleaseCalendarSection";
+
 const RecommendedGamesSection = memo(function RecommendedGamesSection() {
   return <RecommendedGames />;
 });
@@ -188,6 +202,12 @@ function renderSection(item: SectionItem, lang: string): React.ReactElement | nu
       return (
         <DeferredSection key={item._key} delay={1100} placeholderHeight={230}>
           <WeeklySummarySection />
+        </DeferredSection>
+      );
+    case "release_calendar":
+      return (
+        <DeferredSection key={item._key} delay={1500} placeholderHeight={470}>
+          <ReleaseCalendarSection refreshToken={item.refreshToken} />
         </DeferredSection>
       );
     case "recommended":
@@ -250,10 +270,16 @@ function HomeScreen(): React.ReactElement {
       // ── Immediate (above the fold) ──────────────────────────────────────────
       { type: "news", category: "news", _key: `news_0_${currentLang}_${refreshKey}` },
       { type: "weekly_summary", _key: `weekly_${refreshKey}` },
+      { type: "release_calendar", refreshToken: refreshKey, _key: "release_calendar" },
 
       { type: "ad", _key: "ad_0" },
       // ── Staggered — spread the network burst so fetches never stack up ─────
-      { type: "news", category: "reviews", delay: 1800, _key: `news_1_${currentLang}_${refreshKey}` },
+      {
+        type: "news",
+        category: "reviews",
+        delay: 1800,
+        _key: `news_1_${currentLang}_${refreshKey}`,
+      },
       { type: "recommended", _key: `recommended_${refreshKey}` },
 
       { type: "ad", _key: "ad_1" },
@@ -319,7 +345,7 @@ function HomeScreen(): React.ReactElement {
           />
           <View style={[StyleSheet.absoluteFill, homeStyles.fabBorder]} />
           <View collapsable={false}>
-            <MessagesSquare size={28} color="#fff" style={{ zIndex: 1 }} />
+            <MessagesSquare size={28} color={COLORS.light} style={{ zIndex: 1 }} />
           </View>
         </TouchableOpacity>
       </Animated.View>
@@ -340,7 +366,7 @@ const homeStyles = StyleSheet.create({
     marginVertical: 55,
   },
   adText: {
-    color: "#fff",
+    color: COLORS.light,
     marginBottom: 10,
   },
   fabWrapper: {
@@ -350,7 +376,7 @@ const homeStyles = StyleSheet.create({
     width: 60,
     height: 60,
     elevation: 8,
-    shadowColor: "#779bdd",
+    shadowColor: COLORS.lightGray,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -369,6 +395,6 @@ const homeStyles = StyleSheet.create({
   fabBorder: {
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: "rgba(119, 155, 221, 0.28)",
+    borderColor: COLORS.button,
   },
 });

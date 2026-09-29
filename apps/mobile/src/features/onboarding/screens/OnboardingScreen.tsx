@@ -1,18 +1,6 @@
-import React, {
-  useState,
-  useCallback,
-  useRef,
-  useEffect,
-  useMemo,
-} from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import CustomText from "@/src/components/CustomText";
-import {
-  View,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  FlatList,
-} from "react-native";
+import { View, StyleSheet, Dimensions, TouchableOpacity, FlatList } from "react-native";
 import { Image } from "expo-image";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -42,20 +30,15 @@ interface SlideContentProps {
   description: string;
 }
 
-const SlideContent = React.memo(
-  ({ index, title, description }: SlideContentProps) => (
-    <View style={styles.slide}>
-      <View style={styles.videoPlaceholder} />
-      <LinearGradient
-        colors={["#1a3560", "#0c1a33"]}
-        style={styles.contentPanel}
-      >
-        <CustomText style={styles.slideTitle}>{title}</CustomText>
-        <CustomText style={styles.slideDescription}>{description}</CustomText>
-      </LinearGradient>
-    </View>
-  ),
-);
+const SlideContent = React.memo(({ index, title, description }: SlideContentProps) => (
+  <View style={styles.slide}>
+    <View style={styles.videoPlaceholder} />
+    <LinearGradient colors={["#1a3560", "#0c1a33"]} style={styles.contentPanel}>
+      <CustomText style={styles.slideTitle}>{title}</CustomText>
+      <CustomText style={styles.slideDescription}>{description}</CustomText>
+    </LinearGradient>
+  </View>
+));
 SlideContent.displayName = "SlideContent";
 
 export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
@@ -161,11 +144,7 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
       item: { title: string; description: string };
       index: number;
     }) => (
-      <SlideContent
-        index={index}
-        title={item.title}
-        description={item.description}
-      />
+      <SlideContent index={index} title={item.title} description={item.description} />
     ),
     [],
   );
@@ -252,13 +231,9 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
             <CustomText style={styles.skipText}>{t("onboarding.skip")}</CustomText>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={goNext}
-            style={styles.nextBtn}
-            activeOpacity={0.85}
-          >
+          <TouchableOpacity onPress={goNext} style={styles.nextBtn} activeOpacity={0.85}>
             <LinearGradient
-              colors={["#779bdd", "#516996"]}
+              colors={[COLORS.lightGray, COLORS.secondary]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.nextGradient}
@@ -315,7 +290,7 @@ const styles = StyleSheet.create({
   slideTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#ffffff",
+    color: COLORS.light,
     textAlign: "center",
     marginBottom: 10,
     letterSpacing: 0.3,
@@ -416,7 +391,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
   },
   nextText: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 16,
     fontWeight: "700",
     letterSpacing: 0.3,

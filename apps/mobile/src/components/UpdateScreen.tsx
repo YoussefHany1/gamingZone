@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 26,
     fontWeight: "800",
-    color: COLORS.textLight,
+    color: COLORS.light,
     marginBottom: 4,
   },
   tagline: {
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   updateTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: COLORS.textLight,
+    color: COLORS.light,
     marginBottom: 3,
   },
   updateSubtitle: {

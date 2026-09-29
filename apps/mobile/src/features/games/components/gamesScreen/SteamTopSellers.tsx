@@ -24,7 +24,7 @@ const CARD_MARGIN = 6;
 const STORAGE_KEY = "GAMES_CACHE_STEAM_TOP_SELLERS";
 
 const STEAM_BLUE = "#9CB4DD";
-const STEAM_BLUE_DIM = "#516996";
+const STEAM_BLUE_DIM = COLORS.secondary;
 const STEAM_DARK = COLORS.primary;
 const STEAM_CARD_BG = "#172a4a";
 
@@ -166,7 +166,8 @@ function SteamTopSellers(): React.ReactElement {
 
       {/* Games list */}
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
-        <FlashList renderScrollComponent={GHScrollView as any}
+        <FlashList
+          renderScrollComponent={GHScrollView as any}
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -270,7 +271,7 @@ const styles = StyleSheet.create({
     marginRight: 1,
   },
   rankNumber: {
-    color: "#ffffff",
+    color: COLORS.light,
     fontSize: 18,
     fontWeight: "800",
     lineHeight: 20,

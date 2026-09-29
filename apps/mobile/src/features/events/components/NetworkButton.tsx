@@ -17,15 +17,16 @@ import type { ComponentType } from "react";
 type NetworkIcon = ComponentType<{ fill?: string; size?: number }>;
 
 // Maps IGDB event_network enum to icon names
-const NETWORK_ICONS: Record<number, { icon: NetworkIcon; color: string; label: string }> = {
-  1: { icon: XIcon, color: "#fff", label: "X" },
-  2: { icon: InstagramIcon, color: "#E1306C", label: "Instagram" },
-  3: { icon: YouTubeIcon, color: "#FF0000", label: "YouTube" },
-  4: { icon: TwitchIcon, color: "#9146FF", label: "Twitch" },
-  5: { icon: DiscordIcon, color: "#5865F2", label: "Discord" },
-  6: { icon: FacebookIcon, color: "#1877F2", label: "Facebook" },
-  7: { icon: Globe, color: "#779bdd", label: "Website" },
-};
+const NETWORK_ICONS: Record<number, { icon: NetworkIcon; color: string; label: string }> =
+  {
+    1: { icon: XIcon, color: COLORS.light, label: "X" },
+    2: { icon: InstagramIcon, color: "#E1306C", label: "Instagram" },
+    3: { icon: YouTubeIcon, color: "#FF0000", label: "YouTube" },
+    4: { icon: TwitchIcon, color: "#9146FF", label: "Twitch" },
+    5: { icon: DiscordIcon, color: "#5865F2", label: "Discord" },
+    6: { icon: FacebookIcon, color: "#1877F2", label: "Facebook" },
+    7: { icon: Globe, color: "#779bdd", label: "Website" },
+  };
 
 const NetworkButton = memo<NetworkButtonProps>(({ network }) => {
   const info = NETWORK_ICONS[network.network_type] ?? {

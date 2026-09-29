@@ -13,7 +13,7 @@ function capitalise(str: string): string {
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 }
 
-const GRADIENT_COLORS: [string, string] = ["#516996", "#3b4d6e"];
+const GRADIENT_COLORS: [string, string] = [COLORS.secondary, "#3b4d6e"];
 const GRADIENT_START = { x: 0, y: 0 };
 const GRADIENT_END = { x: 1, y: 0 };
 
@@ -44,7 +44,7 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
             end={GRADIENT_END}
             style={styles.button}
           >
-            <Gift size={24} color="#fff" style={styles.claimIcon} />
+            <Gift size={24} color={COLORS.light} style={styles.claimIcon} />
             <CustomText style={styles.buttonText}>
               {t("games.details.claimNow")}
               {capitalise(store)}
@@ -65,7 +65,7 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
           end={GRADIENT_END}
           style={styles.button}
         >
-          <CirclePlus size={24} color={COLORS.textLight} />
+          <CirclePlus size={24} color={COLORS.light} />
           <CustomText style={[styles.buttonText, styles.addToListText]}>
             {t("games.details.addToList")}
           </CustomText>
@@ -93,14 +93,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     elevation: 5,
-    shadowColor: "#516996",
+    shadowColor: COLORS.secondary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
     width: "100%",
   },
   buttonText: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 18,
     fontWeight: "bold",
     letterSpacing: 0.5,

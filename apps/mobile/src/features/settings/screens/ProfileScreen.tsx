@@ -37,7 +37,12 @@ import ptLang from "i18n-iso-countries/langs/pt.json";
 import { PickerOption } from "@/src/types/sharedTypes";
 import SteamLinkModal from "../components/SteamLinkModal";
 import { Mars, Monitor, Venus } from "lucide-react-native";
-import { AndroidIcon, AppleIcon, PlayStationIcon, XboxIcon } from "@/src/components/icons/BrandIcons";
+import {
+  AndroidIcon,
+  AppleIcon,
+  PlayStationIcon,
+  XboxIcon,
+} from "@/src/components/icons/BrandIcons";
 import { SteamIcon } from "@/src/components/icons/StoreIcons";
 import SectionTitle from "@/src/components/SectionTitle";
 import { FirestoreUser, CloudinaryResponse } from "../types";
@@ -322,10 +327,7 @@ function ProfileScreen(): React.ReactElement {
                 onPress={async () => {
                   try {
                     await currentUser.sendEmailVerification();
-                    ToastAndroid.show(
-                      t("auth.verificationEmailSent"),
-                      ToastAndroid.LONG,
-                    );
+                    ToastAndroid.show(t("auth.verificationEmailSent"), ToastAndroid.LONG);
                   } catch (e) {
                     console.error("Failed to send verification email:", e);
                     ToastAndroid.show(
@@ -346,9 +348,7 @@ function ProfileScreen(): React.ReactElement {
           )}
           {currentUser.emailVerified && (
             <View style={[styles.verifyContainer, styles.verifyBoxVerified]}>
-              <CustomText style={styles.verifyText}>
-                {t("auth.emailVerified")}
-              </CustomText>
+              <CustomText style={styles.verifyText}>{t("auth.emailVerified")}</CustomText>
             </View>
           )}
 
@@ -357,7 +357,7 @@ function ProfileScreen(): React.ReactElement {
           <CustomTextInput
             style={styles.input}
             placeholder={t("settings.profile.placeholders.name")}
-            placeholderTextColor="#888"
+            placeholderTextColor={COLORS.gray}
             value={name}
             onChangeText={setName}
           />
@@ -368,7 +368,7 @@ function ProfileScreen(): React.ReactElement {
             <CustomTextInput
               style={styles.input}
               placeholder={t("settings.profile.placeholders.dob")}
-              placeholderTextColor="#888"
+              placeholderTextColor={COLORS.gray}
               value={dob}
               editable={false}
             />
@@ -409,7 +409,7 @@ function ProfileScreen(): React.ReactElement {
               >
                 <g.icon
                   size={32}
-                  color={gender === g.id ? "#fff" : COLORS.lightGray}
+                  color={gender === g.id ? COLORS.light : COLORS.lightGray}
                 />
                 <CustomText
                   style={[
@@ -474,12 +474,12 @@ function ProfileScreen(): React.ReactElement {
                 {p.icon === Monitor ? (
                   <p.icon
                     size={32}
-                    color={platform === p.id ? "#fff" : COLORS.lightGray}
+                    color={platform === p.id ? COLORS.light : COLORS.lightGray}
                   />
                 ) : (
                   <p.icon
                     size={32}
-                    fill={platform === p.id ? "#fff" : COLORS.lightGray}
+                    fill={platform === p.id ? COLORS.light : COLORS.lightGray}
                   />
                 )}
                 <CustomText
@@ -518,7 +518,7 @@ function ProfileScreen(): React.ReactElement {
             onPress={() => setShowSteamModal(true)}
           >
             <View style={{ marginRight: 10 }}>
-              <SteamIcon size={24} fill="#fff" />
+              <SteamIcon size={24} fill={COLORS.light} />
             </View>
             <CustomText style={styles.saveText}>
               {t("settings.profile.steam.modal.title") || "Sync Steam Library"}
@@ -566,9 +566,9 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     backgroundColor: "#333",
     borderWidth: 2,
-    borderColor: "#779bdd",
+    borderColor: COLORS.lightGray,
   },
-  changePicText: { color: "#779bdd", marginTop: 10, fontSize: 16 },
+  changePicText: { color: COLORS.lightGray, marginTop: 10, fontSize: 16 },
   verifyContainer: { marginBottom: 20 },
   verifyBox: {
     backgroundColor: "rgba(255, 193, 7, 0.15)",
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: "center",
   },
-  verifyText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  verifyText: { color: COLORS.light, fontSize: 16, fontWeight: "600" },
   verifyAction: {
     color: "#ffc107",
     fontSize: 14,
@@ -597,13 +597,13 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     backgroundColor: COLORS.button,
-    color: "#fff",
+    color: COLORS.light,
     padding: 15,
     borderRadius: 5,
     marginBottom: 20,
     fontSize: 16,
   },
-  label: { fontSize: 18, fontWeight: "600", marginBottom: 10, color: "white" },
+  label: { fontSize: 18, fontWeight: "600", marginBottom: 10, color: COLORS.light },
   saveBtn: {
     backgroundColor: COLORS.secondary,
     borderRadius: 12,
@@ -612,13 +612,13 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   saveText: {
-    color: "#fff",
+    color: COLORS.light,
     textAlign: "center",
     fontSize: 18,
     fontWeight: "600",
   },
   ad: { alignItems: "center", width: "100%", marginVertical: 30 },
-  adText: { color: "#fff", marginBottom: 10 },
+  adText: { color: COLORS.light, marginBottom: 10 },
   platformContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -648,6 +648,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   platformTextSelected: {
-    color: "#fff",
+    color: COLORS.light,
   },
 });

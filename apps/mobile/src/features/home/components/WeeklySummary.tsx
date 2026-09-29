@@ -1,11 +1,6 @@
 import React, { useCallback, useEffect, useState, memo } from "react";
 import CustomText from "@/src/components/CustomText";
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  LayoutChangeEvent,
-} from "react-native";
+import { View, StyleSheet, TouchableOpacity, LayoutChangeEvent } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -41,13 +36,13 @@ const SUMMARY_TTL_MS = 43_200_000;
 const markdownStyles = {
   body: { color: "#E0E0E0", fontSize: 14, lineHeight: 24 },
   heading1: {
-    color: "#FFFFFF",
+    color: COLORS.light,
     fontSize: 20,
     fontWeight: "bold" as const,
     marginBottom: 10,
   },
   heading2: {
-    color: "#FFFFFF",
+    color: COLORS.light,
     fontSize: 18,
     fontWeight: "bold" as const,
     marginTop: 10,
@@ -114,15 +109,16 @@ const WeeklySummary = memo(function WeeklySummary() {
   if (!summaryDoc) return null;
 
   const currentLang: "ar" | "en" = i18n.language.startsWith("ar") ? "ar" : "en";
-  const content =
-    currentLang === "ar" ? summaryDoc.summary_ar : summaryDoc.summary_en;
+  const content = currentLang === "ar" ? summaryDoc.summary_ar : summaryDoc.summary_en;
   if (!content) return null;
 
   return (
     <View style={styles.card}>
       <View style={styles.headerContainer}>
         <View style={styles.headerLeft}>
-          <CustomText style={styles.headerTitle}>{t("home.weeklySummary.title")}</CustomText>
+          <CustomText style={styles.headerTitle}>
+            {t("home.weeklySummary.title")}
+          </CustomText>
           <CustomText style={styles.date}>
             {t("home.weeklySummary.createdBy")} Gemini 2.5 Flash
           </CustomText>
@@ -180,12 +176,12 @@ const styles = StyleSheet.create({
     flexDirection: "column",
   },
   headerTitle: {
-    color: "#779bdd",
+    color: COLORS.lightGray,
     fontSize: 20,
     fontWeight: "bold",
   },
   date: {
-    color: "#888",
+    color: COLORS.gray,
     fontSize: 12,
   },
   animatedContainer: {
@@ -202,7 +198,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#333",
   },
   readMoreText: {
-    color: "#779bdd",
+    color: COLORS.lightGray,
     fontSize: 14,
     fontWeight: "bold",
   },

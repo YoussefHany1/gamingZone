@@ -37,7 +37,7 @@ const TrendingMobileCard = React.memo<TrendingMobileCardProps>(({ item, index })
 
   return (
     <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.9}>
-      <LinearGradient colors={["#172a4a", "#0c1a33"]} style={styles.cardBackground} />
+      {/* <LinearGradient colors={["#172a4a", "#0c1a33"]} style={styles.cardBackground} /> */}
 
       <View style={styles.coverContainer}>
         <Image
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   },
   trendRank: { color: COLORS.lightGray, fontSize: 13, fontWeight: "bold" },
   infoContainer: { flex: 1, padding: 12, gap: 8 },
-  title: { color: "#fff", fontSize: 15, fontWeight: "bold", lineHeight: 18 },
+  title: { color: COLORS.light, fontSize: 15, fontWeight: "bold", lineHeight: 18 },
   statsContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#516996",
+    borderColor: COLORS.secondary,
   },
   platformText: { color: "#9CB4DD", fontSize: 10, fontWeight: "600" },
   listContent: { paddingHorizontal: 10, paddingVertical: 5 },

@@ -15,7 +15,9 @@ const StorePriceInfo: React.FC<{
   loading?: boolean | undefined;
 }> = ({ price, loading }) => {
   if (loading) {
-    return <ActivityIndicator size="small" color="#fff" style={styles.priceLoading} />;
+    return (
+      <ActivityIndicator size="small" color={COLORS.light} style={styles.priceLoading} />
+    );
   }
   if (!price) return null;
 
@@ -61,7 +63,7 @@ const GameStores: React.FC<GameStoresProps> = ({ websites, prices, pricesLoading
               accessibilityRole="link"
               accessibilityHint={t("games.details.openStoreHint")}
             >
-              <Icon size={34} fill="white" />
+              <Icon size={34} fill={COLORS.light} />
               <StorePriceInfo price={price} loading={pricesLoading} />
             </TouchableOpacity>
           );
@@ -82,7 +84,7 @@ const styles = StyleSheet.create({
   storeButton: {
     backgroundColor: COLORS.secondary,
     borderWidth: 1,
-    borderColor: "#779bdd",
+    borderColor: COLORS.lightGray,
     borderRadius: 12,
     marginRight: 10,
     marginBottom: 10,

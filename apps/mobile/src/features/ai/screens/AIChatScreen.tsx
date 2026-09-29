@@ -173,7 +173,7 @@ const AIChatScreen: React.FC = memo(() => {
                 ? `${t("aiChat.placeholder")} (${remaining}/${MAX_MESSAGES_PER_DAY})`
                 : t("aiChat.placeholder")
             }
-            placeholderTextColor="gray"
+            placeholderTextColor={COLORS.gray}
             multiline
             maxLength={500}
           />
@@ -182,7 +182,7 @@ const AIChatScreen: React.FC = memo(() => {
             onPress={handleSend}
             disabled={!input.trim() || isLoading}
           >
-            <Send size={24} color="#fff" />
+            <Send size={24} color={COLORS.light} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   userText: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 16,
   },
   suggestionsContainer: {
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.secondary,
   },
   suggestionText: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 14,
   },
   modelTag: {
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   typingText: {
-    color: "gray",
+    color: COLORS.gray,
     marginLeft: 8,
     fontSize: 14,
     fontStyle: "italic",
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    color: "#fff",
+    color: COLORS.light,
     backgroundColor: "#2a3b5c",
     borderRadius: 20,
     paddingHorizontal: 16,
@@ -289,13 +289,13 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   sendButtonDisabled: {
-    backgroundColor: "gray",
+    backgroundColor: COLORS.gray,
   },
 });
 
 const markdownStyles = {
   body: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 16,
   },
   link: {

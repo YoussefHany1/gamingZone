@@ -3,6 +3,7 @@ import { View, StyleSheet } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import type { GameCardProps } from "../types";
+import COLORS from "@/src/constants/colors";
 
 const GameCard = memo<GameCardProps>(({ game }) => (
   <View style={styles.gameCard}>
@@ -38,7 +39,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   gameName: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 11,
     textAlign: "center",
     lineHeight: 16,

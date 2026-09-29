@@ -134,8 +134,10 @@ const ListHeader = memo(function ListHeader({
 }) {
   const safeCategory = category ? String(category).toLowerCase() : "";
   const translatedCategory = safeCategory ? t(`news.tabs.${safeCategory}`) : "";
-  const headerTitle = translatedCategory ? t("news.latestHeader", { category: translatedCategory }) : "";
-  
+  const headerTitle = translatedCategory
+    ? t("news.latestHeader", { category: translatedCategory })
+    : "";
+
   return (
     <>
       {showHeaderTitle && headerTitle ? (
@@ -300,9 +302,9 @@ function LatestNews({
             onPress={() => handlePageChange(currentPage - 1)}
           >
             {isRtl ? (
-              <ChevronRight size={18} color="white" />
+              <ChevronRight size={18} color={COLORS.light} />
             ) : (
-              <ChevronLeft size={18} color="white" />
+              <ChevronLeft size={18} color={COLORS.light} />
             )}
           </Pressable>
 
@@ -381,9 +383,9 @@ function LatestNews({
             onPress={() => handlePageChange(currentPage + 1)}
           >
             {isRtl ? (
-              <ChevronLeft size={18} color="white" />
+              <ChevronLeft size={18} color={COLORS.light} />
             ) : (
-              <ChevronRight size={18} color="white" />
+              <ChevronRight size={18} color={COLORS.light} />
             )}
           </Pressable>
         </View>
@@ -510,7 +512,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: 15,
     borderRadius: 16,
-    color: "white",
+    color: COLORS.light,
   },
   NewsContainer: {
     alignItems: "center",
@@ -529,11 +531,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     lineHeight: 18,
     marginBottom: 8,
-    color: "white",
+    color: COLORS.light,
   },
   par: {
     fontSize: 12,
-    color: "#779bdd",
+    color: COLORS.lightGray,
     lineHeight: 18,
   },
   thumbnail: {
@@ -548,7 +550,7 @@ const styles = StyleSheet.create({
     left: 15,
     fontSize: 10,
     marginTop: 8,
-    color: "white",
+    color: COLORS.light,
     backgroundColor: "rgba(0,0,0,0.5)",
     paddingHorizontal: 7,
     borderRadius: 6,
@@ -559,7 +561,7 @@ const styles = StyleSheet.create({
     marginVertical: 55,
   },
   adText: {
-    color: "#fff",
+    color: COLORS.light,
     marginBottom: 10,
   },
   nativeAd: {
@@ -571,7 +573,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   noDataText: {
-    color: "white",
+    color: COLORS.light,
     textAlign: "center",
     borderRadius: 8,
     marginBottom: 20,
@@ -589,7 +591,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   errorText: {
-    color: "white",
+    color: COLORS.light,
     textAlign: "center",
     marginBottom: 15,
     fontSize: 16,
@@ -601,7 +603,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   contactButtonText: {
-    color: "white",
+    color: COLORS.light,
     fontWeight: "bold",
     fontSize: 14,
   },
@@ -612,7 +614,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   footerText: {
-    color: "#779bdd",
+    color: COLORS.lightGray,
     fontSize: 14,
     fontStyle: "italic",
   },
@@ -654,7 +656,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   activePageNumberText: {
-    color: "#ffffff",
+    color: COLORS.light,
     fontWeight: "bold",
   },
   ellipsis: {

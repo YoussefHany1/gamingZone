@@ -168,7 +168,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
               onPress={handleShare}
               style={{ marginRight: 12, padding: 6 }}
             >
-              <Share2 size={24} color="#fff" />
+              <Share2 size={24} color={COLORS.light} />
             </TouchableOpacity>
           ) : null}
           {!isSharedList && (
@@ -176,7 +176,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
               onPress={() => navigation.getParent()?.navigate("Games")}
               style={{ padding: 6 }}
             >
-              <CirclePlus size={28} color="#fff" />
+              <CirclePlus size={28} color={COLORS.light} />
             </TouchableOpacity>
           )}
         </View>
@@ -539,13 +539,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   emptyText: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 24,
     fontWeight: "bold",
     marginTop: 16,
   },
   emptySubText: {
-    color: "gray",
+    color: COLORS.gray,
     fontSize: 16,
     textAlign: "center",
     marginTop: 8,
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   findGameText: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 18,
     fontWeight: "600",
     textAlign: "center",
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   gameName: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 18,
     fontWeight: "600",
   },
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   gameReleaseDate: {
-    color: "gray",
+    color: COLORS.gray,
     fontSize: 14,
     marginTop: 4,
   },
@@ -604,7 +604,7 @@ const styles = StyleSheet.create({
     marginVertical: 55,
   },
   adText: {
-    color: "#fff",
+    color: COLORS.light,
     marginBottom: 10,
   },
 });

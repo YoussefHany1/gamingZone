@@ -12,7 +12,7 @@ import type { GameHowLongToBeatProps, HoursCircleProps } from "../../types";
 // SVG text styling kept at module level to avoid per-render allocation
 const SVG_FONT_SIZE = 34;
 const SVG_FONT_WEIGHT = "bold";
-const SVG_FILL = "#fff";
+const SVG_FILL = COLORS.light;
 // Vertical nudge so the text sits visually centred inside the circle
 const SVG_DY = 38 * 0.1;
 
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   cardHeader: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 10,

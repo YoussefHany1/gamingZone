@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   blockHeader: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 24,
     fontWeight: "600",
     textDecorationLine: "underline",

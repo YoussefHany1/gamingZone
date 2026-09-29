@@ -42,10 +42,7 @@ const ForgotPasswordScreen = memo(({ navigation }: Props) => {
       // sendPasswordResetEmail itself resolves successfully even for unknown emails
       // (to prevent account enumeration), so existing accounts always receive the link.
       await auth().sendPasswordResetEmail(email);
-      ToastAndroid.show(
-        t("auth.forgotPassword.successTitle"),
-        ToastAndroid.LONG,
-      );
+      ToastAndroid.show(t("auth.forgotPassword.successTitle"), ToastAndroid.LONG);
       navigation.goBack();
     } catch (error: unknown) {
       console.error("[ForgotPasswordScreen] Reset error:", error);
@@ -92,7 +89,7 @@ const ForgotPasswordScreen = memo(({ navigation }: Props) => {
           <CustomTextInput
             style={styles.input}
             placeholder={t("auth.emailPlaceholder")}
-            placeholderTextColor="#aaa"
+            placeholderTextColor={COLORS.gray}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -135,13 +132,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#fff",
+    color: COLORS.light,
     textAlign: "center",
     marginBottom: 20,
   },
   input: {
-    color: "white",
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    color: COLORS.light,
+    backgroundColor: COLORS.button,
     padding: 15,
     borderRadius: 5,
     marginBottom: 25,
@@ -157,7 +154,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   buttonText: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",

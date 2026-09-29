@@ -213,13 +213,13 @@ const NewsDetails = memo((): React.ReactElement => {
       <View style={styles.header}>
         <TouchableOpacity style={styles.iconButton} onPress={handleGoBack}>
           {currentLang === "ar" ? (
-            <ArrowRight size={28} color="#fff" />
+            <ArrowRight size={28} color={COLORS.light} />
           ) : (
-            <ArrowLeft size={28} color="#fff" />
+            <ArrowLeft size={28} color={COLORS.light} />
           )}
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} onPress={onShare}>
-          <Share2 size={28} color="#fff" />
+          <Share2 size={28} color={COLORS.light} />
         </TouchableOpacity>
       </View>
 
@@ -287,10 +287,10 @@ const NewsDetails = memo((): React.ReactElement => {
 
           <Pressable
             style={styles.button}
-            android_ripple={{ color: "#779bdd" }}
+            android_ripple={{ color: COLORS.lightGray }}
             onPress={handleOpenLink}
           >
-            <ExternalLink size={20} color="white" style={{ marginRight: 8 }} />
+            <ExternalLink size={20} color={COLORS.light} style={{ marginRight: 8 }} />
             <CustomText style={styles.buttonText}>
               {t("news.details.readFullArticle")}
             </CustomText>
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "white",
+    color: COLORS.light,
   },
   site: {
     flexDirection: "row",
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   siteName: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 16,
   },
   backButton: {
@@ -373,12 +373,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "white",
+    color: COLORS.light,
     lineHeight: 32,
     textAlign: "center",
   },
   date: {
-    color: "white",
+    color: COLORS.light,
     marginVertical: 20,
   },
   timeAgoText: {
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
     marginVertical: 55,
   },
   adText: {
-    color: "#fff",
+    color: COLORS.light,
     marginBottom: 10,
   },
   button: {
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   buttonText: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 16,
     fontWeight: "bold",
   },

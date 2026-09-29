@@ -16,10 +16,7 @@ const SkeletonTopRatedCard: React.FC = () => {
     <View style={styles.cardContainer}>
       {/* Cover image */}
       <View style={styles.coverContainer}>
-        <SkeletonItem
-          animatedStyle={animatedStyle}
-          style={styles.coverSkeleton}
-        />
+        <SkeletonItem animatedStyle={animatedStyle} style={styles.coverSkeleton} />
       </View>
 
       {/* Info container */}
@@ -49,10 +46,7 @@ const SkeletonTopRatedCard: React.FC = () => {
 
         {/* Rating area */}
         <View style={styles.ratingContainer}>
-          <SkeletonItem
-            animatedStyle={animatedStyle}
-            style={styles.ratingCircle}
-          />
+          <SkeletonItem animatedStyle={animatedStyle} style={styles.ratingCircle} />
           <View style={styles.genresContainer}>
             <SkeletonItem
               animatedStyle={animatedStyle}
@@ -85,7 +79,7 @@ const styles = StyleSheet.create({
     backgroundColor: CARD_BG_COLOR,
     overflow: "hidden",
     elevation: 4,
-    shadowColor: "#000",
+    shadowColor: COLORS.dark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,

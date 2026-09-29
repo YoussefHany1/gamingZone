@@ -31,7 +31,7 @@ export default GameStoresSkeleton;
 const styles = StyleSheet.create({
   container: { marginTop: 16 },
   header: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontWeight: "600",
     fontSize: 24,
     marginBottom: 10,

@@ -71,10 +71,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
         fetchedGameIdRef.current === String(gameId) &&
         cachedListsRef.current.length > 0
       ) {
-        console.log(
-          "[ListSelectionModal] Restoring from ref cache for gameId:",
-          gameId,
-        );
+        console.log("[ListSelectionModal] Restoring from ref cache for gameId:", gameId);
         const restored = cachedListsRef.current.map((l) => ({
           ...l,
           isChecked: checkedStateRef.current.get(l.id) ?? false,
@@ -164,9 +161,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
           // Store in refs so subsequent opens don't need Firestore
           cachedListsRef.current = checkedLists;
           fetchedGameIdRef.current = String(gameId);
-          checkedStateRef.current = new Map(
-            checkedLists.map((l) => [l.id, l.isChecked]),
-          );
+          checkedStateRef.current = new Map(checkedLists.map((l) => [l.id, l.isChecked]));
 
           setLists(checkedLists);
           setLoading(false);
@@ -288,10 +283,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
         setIsCreating(false);
       } catch (error) {
         console.error("Error creating list:", error);
-        ToastAndroid.show(
-          t("userLists.errors.couldNotCreateList"),
-          ToastAndroid.LONG,
-        );
+        ToastAndroid.show(t("userLists.errors.couldNotCreateList"), ToastAndroid.LONG);
       } finally {
         setCreatingLoading(false);
       }
@@ -305,19 +297,11 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
           onPress={() => toggleList(item.id)}
         >
           {item.isChecked ? (
-            <SquareCheckBig
-              size={24}
-              color={COLORS.secondary}
-            />
+            <SquareCheckBig size={24} color={COLORS.secondary} />
           ) : (
-            <Square
-              size={24}
-              color={COLORS.secondary}
-            />
+            <Square size={24} color={COLORS.secondary} />
           )}
-          <CustomText
-            style={[styles.listName, item.isChecked && { fontWeight: "bold" }]}
-          >
+          <CustomText style={[styles.listName, item.isChecked && { fontWeight: "bold" }]}>
             {getDisplayName(item.name)}
           </CustomText>
         </TouchableOpacity>
@@ -341,10 +325,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
             activeOpacity={1}
             onPress={onClose}
           >
-            <View
-              style={styles.modalContent}
-              onStartShouldSetResponder={() => true}
-            >
+            <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
               <CustomText style={styles.modalTitle}>
                 {t("games.details.listStatus.add") || "Add to..."}
               </CustomText>
@@ -379,7 +360,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                         <CustomTextInput
                           style={styles.input}
                           placeholder={t("userLists.placeholders.newListName")}
-                          placeholderTextColor="#aaa"
+                          placeholderTextColor={COLORS.gray}
                           value={newListName}
                           onChangeText={setNewListName}
                           autoFocus={true}
@@ -406,7 +387,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                             disabled={creatingLoading}
                           >
                             {creatingLoading ? (
-                              <ActivityIndicator size="small" color="white" />
+                              <ActivityIndicator size="small" color={COLORS.light} />
                             ) : (
                               <CustomText style={styles.smallBtnText}>
                                 {t("common.create")}
@@ -429,10 +410,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                           }
                         }}
                       >
-                        <CirclePlus
-                          size={24}
-                          color={COLORS.lightGray}
-                        />
+                        <CirclePlus size={24} color={COLORS.lightGray} />
                         <CustomText style={styles.addButtonText}>
                           {t("userLists.actions.createNewList")}
                         </CustomText>
@@ -465,7 +443,7 @@ const styles = StyleSheet.create({
     maxHeight: "80%",
   },
   modalTitle: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 15,
@@ -481,7 +459,7 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.secondary + "40",
   },
   listName: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 16,
     marginLeft: 12,
   },
@@ -510,7 +488,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: COLORS.secondary + "40",
     borderRadius: 8,
-    color: "white",
+    color: COLORS.light,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 10,
@@ -529,7 +507,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   smallBtnText: {
-    color: "white",
+    color: COLORS.light,
     fontWeight: "bold",
     fontSize: 14,
   },

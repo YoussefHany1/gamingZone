@@ -89,10 +89,7 @@ const FilterSection = memo<SectionProps>(
               onPress={() => onSelect(null)}
             >
               <CustomText
-                style={[
-                  styles.chipText,
-                  selected === null && styles.chipTextActive,
-                ]}
+                style={[styles.chipText, selected === null && styles.chipTextActive]}
               >
                 {t("games.filter.any")}
               </CustomText>
@@ -115,9 +112,7 @@ const FilterSection = memo<SectionProps>(
                   }
                 }}
               >
-                <CustomText
-                  style={[styles.chipText, isActive && styles.chipTextActive]}
-                >
+                <CustomText style={[styles.chipText, isActive && styles.chipTextActive]}>
                   {t(item.label)}
                 </CustomText>
               </TouchableOpacity>
@@ -175,11 +170,7 @@ function FilterModal({ visible, filters, onApply, onClose }: FilterModalProps) {
       onRequestClose={onClose}
     >
       {/* Backdrop */}
-      <TouchableOpacity
-        style={styles.backdrop}
-        activeOpacity={1}
-        onPress={onClose}
-      />
+      <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
 
       {/* Sheet */}
       <View style={styles.sheet}>
@@ -275,7 +266,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerTitle: {
-    color: "#fff",
+    color: COLORS.light,
     fontSize: 18,
     fontWeight: "700",
   },
@@ -308,7 +299,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   applyText: {
-    color: "#fff",
+    color: COLORS.light,
     fontWeight: "700",
     fontSize: 15,
   },
@@ -336,6 +327,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.secondary,
     borderColor: COLORS.lightGray,
   },
-  chipText: { color: "#aaa", fontSize: 13, fontWeight: "500" },
-  chipTextActive: { color: "#fff", fontWeight: "700" },
+  chipText: { color: COLORS.gray, fontSize: 13, fontWeight: "500" },
+  chipTextActive: { color: COLORS.light, fontWeight: "700" },
 });

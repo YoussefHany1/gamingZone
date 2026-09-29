@@ -33,7 +33,7 @@ export default GameAboutSkeleton;
 const styles = StyleSheet.create({
   container: { marginTop: 10 },
   header: {
-    color: COLORS.textLight,
+    color: COLORS.light,
     fontSize: 24,
     fontWeight: "600",
     textDecorationLine: "underline",

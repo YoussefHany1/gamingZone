@@ -84,10 +84,25 @@ const NewsItem = memo<NewsItemProps>(({ item, lang }) => {
           </CustomText>
           <CustomText style={styles.desc} numberOfLines={1}>
             {item.pubDate
-              ? new Date(item.pubDate).toLocaleString(lang === "ar" ? "ar-EG" : lang === "es" ? "es-ES" : lang === "fr" ? "fr-FR" : lang === "hi" ? "hi-IN" : lang === "pt-BR" ? "pt-BR" : lang === "pt-PT" ? "pt-PT" : "en-US", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })
+              ? new Date(item.pubDate).toLocaleString(
+                  lang === "ar"
+                    ? "ar-EG"
+                    : lang === "es"
+                      ? "es-ES"
+                      : lang === "fr"
+                        ? "fr-FR"
+                        : lang === "hi"
+                          ? "hi-IN"
+                          : lang === "pt-BR"
+                            ? "pt-BR"
+                            : lang === "pt-PT"
+                              ? "pt-PT"
+                              : "en-US",
+                  {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  },
+                )
               : ""}
           </CustomText>
         </View>
@@ -186,13 +201,13 @@ const NewsSection = memo<NewsSectionProps>(
             );
           }
         } catch (error) {
-            console.error("[NewsSection] Error adding RSS source:", error);
-            ToastAndroid.showWithGravity(
-              "Could not enable notifications for this source. Please check your connection.",
-              ToastAndroid.SHORT,
-              ToastAndroid.BOTTOM,
-            );
-          }
+          console.error("[NewsSection] Error adding RSS source:", error);
+          ToastAndroid.showWithGravity(
+            "Could not enable notifications for this source. Please check your connection.",
+            ToastAndroid.SHORT,
+            ToastAndroid.BOTTOM,
+          );
+        }
       }
       toggleSource(categorySafe, nameSafe);
     }, [isEnabled, categorySafe, nameSafe, lang, rssUrl, title, toggleSource]);
@@ -211,15 +226,19 @@ const NewsSection = memo<NewsSectionProps>(
         >
           <View style={styles.categoryHeaderLeft}>
             {expanded ? (
-              <ChevronUp size={20} color="#779bdd" style={styles.chevronIcon} />
+              <ChevronUp size={20} color={COLORS.lightGray} style={styles.chevronIcon} />
             ) : (
-              <ChevronDown size={20} color="#779bdd" style={styles.chevronIcon} />
+              <ChevronDown
+                size={20}
+                color={COLORS.lightGray}
+                style={styles.chevronIcon}
+              />
             )}
             <CustomText style={styles.categoryTitle}>{title}</CustomText>
           </View>
           <Switch
-            trackColor={{ false: "#3e3e3e", true: "#779bdd" }}
-            thumbColor="#ffffff"
+            trackColor={{ false: "#3e3e3e", true: COLORS.lightGray }}
+            thumbColor={COLORS.light}
             onValueChange={handleToggleSwitch}
             value={isEnabled}
             disabled={loadingPreferences}
@@ -232,14 +251,20 @@ const NewsSection = memo<NewsSectionProps>(
               <Loading />
             ) : error && news.length === 0 ? (
               <ErrorState
-                message={lang === "ar" ? "تعذر تحميل الأخبار" : "Failed to load game news."}
-                subMessage={lang === "ar" ? "يرجى المحاولة مرة أخرى" : "Please try again."}
+                message={
+                  lang === "ar" ? "تعذر تحميل الأخبار" : "Failed to load game news."
+                }
+                subMessage={
+                  lang === "ar" ? "يرجى المحاولة مرة أخرى" : "Please try again."
+                }
                 showContactButton={false}
                 onRetry={() => refetch(true)}
                 retrying={refetching}
               />
             ) : news.length === 0 ? (
-              <CustomText style={{ color: "gray", textAlign: "center", marginTop: 10 }}>
+              <CustomText
+                style={{ color: COLORS.gray, textAlign: "center", marginTop: 10 }}
+              >
                 {lang === "ar" ? "لا توجد أخبار حاليا" : "No news found."}
               </CustomText>
             ) : (
@@ -336,7 +361,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 16,
-    backgroundColor: "rgba(119, 155, 221, 0.2)",
+    backgroundColor: COLORS.button,
     borderRadius: 8,
   },
   categoryHeaderLeft: {
@@ -347,7 +372,7 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#fff",
+    color: COLORS.light,
     marginRight: 8,
   },
   chevronIcon: {
@@ -379,7 +404,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2a4d7d",
   },
   title: {
-    color: "white",
+    color: COLORS.light,
     fontSize: 15,
     fontWeight: "bold",
     marginBottom: 5,
@@ -387,12 +412,12 @@ const styles = StyleSheet.create({
   },
   desc: {
     fontSize: 12,
-    color: "gray",
+    color: COLORS.gray,
     marginTop: 4,
     textAlign: "left",
   },
   sourceText: {
-    color: "#779bdd",
+    color: COLORS.lightGray,
     textAlign: "center",
     textDecorationLine: "underline",
   },
@@ -402,7 +427,7 @@ const styles = StyleSheet.create({
     marginBottom: 38,
   },
   adText: {
-    color: "#fff",
+    color: COLORS.light,
     marginBottom: 10,
   },
 });
