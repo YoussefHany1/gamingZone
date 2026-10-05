@@ -1,8 +1,9 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
@@ -10,6 +11,17 @@ type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
 
 // Static header + shimmer store icons
 const GameStoresSkeleton: React.FC = () => {
+  const styles = useThemeStyles((c) => ({
+    container: { marginTop: 16 },
+    header: {
+      color: c.text,
+      fontWeight: "600",
+      fontSize: 24,
+      marginBottom: 10,
+    },
+    row: { flexDirection: "row" },
+  }));
+
   const { t } = useTranslation();
   const shimmer = useShimmer();
   const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
@@ -27,14 +39,3 @@ const GameStoresSkeleton: React.FC = () => {
 };
 
 export default GameStoresSkeleton;
-
-const styles = StyleSheet.create({
-  container: { marginTop: 16 },
-  header: {
-    color: COLORS.light,
-    fontWeight: "600",
-    fontSize: 24,
-    marginBottom: 10,
-  },
-  row: { flexDirection: "row" },
-});

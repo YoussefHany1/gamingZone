@@ -1,9 +1,10 @@
 import React, { memo } from "react";
 import CustomText from "@/src/components/CustomText";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
-import { sharedStyles } from "./shared";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useSharedStyles } from "./shared";
 import type { GameHorizontalScrollProps } from "../../types";
 
 const IMAGE_NOT_FOUND = require("@/assets/image-not-found.webp");
@@ -17,6 +18,34 @@ const GameHorizontalScroll: React.FC<GameHorizontalScrollProps> = ({
   games,
   onGamePress,
 }) => {
+  const sharedStyles = useSharedStyles();
+  const styles = useThemeStyles((c) => ({
+    container: {
+      marginTop: 20,
+    },
+    listContainer: {
+      marginTop: 10,
+      minHeight: 220,
+      width: "100%",
+    },
+    card: {
+      width: 120,
+      marginRight: 12,
+      alignItems: "center",
+    },
+    coverImage: {
+      width: 120,
+      height: 160,
+      borderRadius: 8,
+      marginBottom: 6,
+    },
+    gameName: {
+      color: c.textMuted,
+      fontSize: 14,
+      textAlign: "center",
+    },
+  }));
+
   const renderItem = React.useCallback(
     ({ item: game }: { item: (typeof games)[0] }) => (
       <TouchableOpacity style={styles.card} onPress={() => onGamePress(game.id)}>
@@ -34,7 +63,7 @@ const GameHorizontalScroll: React.FC<GameHorizontalScrollProps> = ({
         </CustomText>
       </TouchableOpacity>
     ),
-    [onGamePress],
+    [onGamePress, styles],
   );
 
   if (games.length === 0) return null;
@@ -56,30 +85,3 @@ const GameHorizontalScroll: React.FC<GameHorizontalScrollProps> = ({
 };
 
 export default memo(GameHorizontalScroll);
-
-const styles = StyleSheet.create({
-  container: {
-    marginTop: 20,
-  },
-  listContainer: {
-    marginTop: 10,
-    minHeight: 220,
-    width: "100%",
-  },
-  card: {
-    width: 120,
-    marginRight: 12,
-    alignItems: "center",
-  },
-  coverImage: {
-    width: 120,
-    height: 160,
-    borderRadius: 8,
-    marginBottom: 6,
-  },
-  gameName: {
-    color: "#cfcfcf",
-    fontSize: 14,
-    textAlign: "center",
-  },
-});

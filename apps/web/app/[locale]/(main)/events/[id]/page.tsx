@@ -15,9 +15,19 @@ import { getCachedEventDetails } from "@/features/events/services/server";
 import { fetchGamingEvents } from "@/features/events/services/api";
 
 // Prerender event pages so they are served from the Vercel CDN instead of
-// running a function on every request. 30m: event status (live/upcoming/
-// finished) is derived from dates, so it shifts slowly.
-export const revalidate = 1800;
+// running a function on every request.
+//
+// 24h is a backstop, not the freshness mechanism: free-games.yml pings
+// /api/revalidate with target "events" every hour, which revalidates the home
+// pages where the event carousel lives. Event *detail* pages are not in that
+// payload — their content (schedule, network links, featured games) shifts far
+// more slowly than the carousel does, so they rely on this window.
+//
+// Note this export is inert on its own. Next derives a route's revalidate from
+// the lowest TTL among the data-cache entries its render touches, so the matching
+// `next: { revalidate }` in @/features/events/services/api.ts must move in step
+// or this stays at 1800.
+export const revalidate = 86400;
 
 // Uncapped, this fans out to one ISR path per event the upstream API returns,
 // across every locale. A bad upstream response returning hundreds of events

@@ -17,7 +17,9 @@ const ImageGallerySkeleton: React.FC = () => {
       {/* Main image */}
       <S width={width} height={350} radius={0} />
       {/* Thumbnail dots */}
-      <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 8, gap: 6 }}>
+      <View
+        style={{ flexDirection: "row", justifyContent: "center", marginTop: 8, gap: 6 }}
+      >
         {[1, 2, 3, 4].map((i) => (
           <S key={i} width={8} height={8} radius={4} />
         ))}

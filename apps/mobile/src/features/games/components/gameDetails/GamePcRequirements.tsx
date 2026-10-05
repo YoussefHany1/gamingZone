@@ -1,9 +1,10 @@
 import React, { memo, useState } from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
-import { sharedStyles } from "./shared";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useSharedStyles } from "./shared";
 import GamePcRequirementsSkeleton from "../../skeleton/gameDetails/GamePcRequirementsSkeleton";
 import type { GamePcRequirementsProps, PcRequirementsTab as Tab } from "../../types";
 
@@ -11,6 +12,67 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps> = ({
   pcRequirements,
   pcReqLoading,
 }) => {
+  const sharedStyles = useSharedStyles();
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    wrapper: {
+      marginTop: 20,
+      marginBottom: 10,
+    },
+    tabRow: {
+      flexDirection: "row",
+      marginTop: 12,
+      marginBottom: 10,
+      borderRadius: 10,
+      overflow: "hidden",
+      borderWidth: 1,
+      borderColor: c.accentText,
+      alignSelf: "flex-start",
+    },
+    tab: {
+      paddingVertical: 7,
+      paddingHorizontal: 20,
+    },
+    tabActive: {
+      backgroundColor: c.accent,
+    },
+    tabText: {
+      color: "#9f9f9f",
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    tabTextActive: {
+      color: c.text,
+    },
+    specContainer: {
+      borderRadius: 12,
+      overflow: "hidden",
+      borderWidth: 1,
+      borderColor: "rgba(81,105,150,0.4)",
+      direction: "ltr",
+    },
+    specRow: {
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderBottomWidth: 0.5,
+      borderBottomColor: "rgba(81,105,150,0.25)",
+    },
+    specLabel: {
+      color: c.accentText,
+      fontSize: 12,
+      fontWeight: "700",
+      letterSpacing: 0.5,
+      textTransform: "uppercase",
+      marginBottom: 2,
+    },
+    specValue: {
+      color: "#cfcfcf",
+      fontSize: 14,
+      fontWeight: "500",
+      flexWrap: "wrap",
+    },
+  }));
+
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>("min");
 
@@ -68,8 +130,7 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps> = ({
                 style={[
                   styles.specRow,
                   {
-                    backgroundColor:
-                      i % 2 === 0 ? "rgba(81,105,150,0.12)" : "transparent",
+                    backgroundColor: i % 2 === 0 ? colors.stripe : "transparent",
                   },
                 ]}
               >
@@ -85,62 +146,3 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps> = ({
 };
 
 export default memo(GamePcRequirements);
-
-const styles = StyleSheet.create({
-  wrapper: {
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  tabRow: {
-    flexDirection: "row",
-    marginTop: 12,
-    marginBottom: 10,
-    borderRadius: 10,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-    alignSelf: "flex-start",
-  },
-  tab: {
-    paddingVertical: 7,
-    paddingHorizontal: 20,
-  },
-  tabActive: {
-    backgroundColor: COLORS.secondary,
-  },
-  tabText: {
-    color: "#9f9f9f",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  tabTextActive: {
-    color: COLORS.light,
-  },
-  specContainer: {
-    borderRadius: 12,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(81,105,150,0.4)",
-    direction: "ltr",
-  },
-  specRow: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "rgba(81,105,150,0.25)",
-  },
-  specLabel: {
-    color: COLORS.secondary,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-    marginBottom: 2,
-  },
-  specValue: {
-    color: "#cfcfcf",
-    fontSize: 14,
-    fontWeight: "500",
-    flexWrap: "wrap",
-  },
-});

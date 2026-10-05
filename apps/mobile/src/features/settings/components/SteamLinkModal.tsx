@@ -4,7 +4,6 @@ import {
   Modal,
   View,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
   ToastAndroid,
   KeyboardAvoidingView,
@@ -15,7 +14,8 @@ import { X } from "lucide-react-native";
 import { SteamIcon } from "@/src/components/icons/StoreIcons";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import axios from "axios";
 import { Props, SteamGame, IgdbGame, SteamWishlistResponse } from "../types";
 import CustomTextInput from "@/src/components/CustomTextInput";
@@ -27,6 +27,61 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
   const { t } = useTranslation();
   const [steamInput, setSteamInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    overlay: {
+      flex: 1,
+      backgroundColor: c.overlay,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalContent: {
+      width: "90%",
+      backgroundColor: c.background,
+      padding: 24,
+      borderRadius: 16,
+      elevation: 5,
+    },
+    closeBtn: {
+      alignSelf: "flex-end",
+    },
+    logo: {
+      alignSelf: "center",
+      marginBottom: 10,
+    },
+    title: {
+      color: c.text,
+      fontSize: 20,
+      fontWeight: "bold",
+      textAlign: "center",
+      marginBottom: 10,
+    },
+    description: {
+      color: c.textSubtle,
+      fontSize: 14,
+      textAlign: "center",
+      marginBottom: 20,
+    },
+    input: {
+      backgroundColor: c.surface,
+      color: c.text,
+      padding: 12,
+      borderRadius: 8,
+      marginBottom: 15,
+    },
+    syncBtn: {
+      backgroundColor: c.accent,
+      padding: 14,
+      borderRadius: 8,
+      alignItems: "center",
+    },
+    syncBtnText: {
+      color: c.onAccent,
+      fontWeight: "bold",
+      fontSize: 16,
+    },
+  }));
 
   const resolveSteamId = async (input: string): Promise<string | null> => {
     const trimmed = input.trim();
@@ -349,11 +404,11 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
         <View style={styles.overlay}>
           <View style={styles.modalContent}>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <X size={24} color={COLORS.light} />
+              <X size={24} color={colors.text} />
             </TouchableOpacity>
 
             <View style={styles.logo}>
-              <SteamIcon size={50} fill={COLORS.light} />
+              <SteamIcon size={50} fill={colors.text} />
             </View>
             <CustomText style={styles.title}>
               {t("settings.profile.steam.modal.title") || "Sync Your Steam Library"}
@@ -369,7 +424,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
                 t("settings.profile.steam.modal.placeholder") ||
                 "e.g., https://steamcommunity.com/profiles/76561198818022625"
               }
-              placeholderTextColor={COLORS.gray}
+              placeholderTextColor={colors.textSubtle}
               value={steamInput}
               onChangeText={setSteamInput}
             />
@@ -385,7 +440,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color={COLORS.light} />
+                <ActivityIndicator color={colors.text} />
               ) : (
                 <CustomText style={styles.syncBtnText}>
                   {t("settings.profile.steam.modal.syncBtn") || "Sync Games"}
@@ -398,57 +453,3 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    width: "90%",
-    backgroundColor: COLORS.primary,
-    padding: 24,
-    borderRadius: 16,
-    elevation: 5,
-  },
-  closeBtn: {
-    alignSelf: "flex-end",
-  },
-  logo: {
-    alignSelf: "center",
-    marginBottom: 10,
-  },
-  title: {
-    color: COLORS.light,
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  description: {
-    color: "#ccc",
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  input: {
-    backgroundColor: COLORS.button,
-    color: COLORS.light,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
-  },
-  syncBtn: {
-    backgroundColor: COLORS.secondary,
-    padding: 14,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  syncBtnText: {
-    color: COLORS.light,
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-});

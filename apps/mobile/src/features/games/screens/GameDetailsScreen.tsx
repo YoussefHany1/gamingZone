@@ -1,6 +1,6 @@
 import React from "react";
 import CustomText from "@/src/components/CustomText";
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, ArrowRight, Star } from "lucide-react-native";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
@@ -17,7 +17,8 @@ import ErrorState from "../../../components/ErrorState";
 import ImageGallery from "../components/gameDetails/ImageGallery";
 import ListSelectionModal from "../components/gameDetails/ListSelectionModal";
 import { adUnitId } from "../../../constants/config";
-import COLORS from "../../../constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 // gameDetails sub-components
 import GameDetailsMeta from "../components/gameDetails/GameDetailsMeta";
@@ -36,6 +37,80 @@ export type { GamesStackParamList };
 import { useGameDetails } from "../hooks/useGameDetails";
 
 const GameDetails = ({ route, navigation }: Props) => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 100,
+    },
+    header: {
+      position: "absolute",
+      width: 40,
+      height: 40,
+      top: 50,
+      left: 10,
+      zIndex: 1000,
+    },
+    backButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.accentSurface,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    errorContainer: {
+      padding: 20,
+      backgroundColor: c.background,
+    },
+    errorText: { color: c.danger, textAlign: "center" },
+    content: {
+      padding: 15,
+      paddingBottom: 40,
+    },
+    ad: {
+      alignItems: "center",
+      width: "100%",
+      marginVertical: 20,
+    },
+    adText: {
+      color: c.text,
+      marginBottom: 10,
+    },
+    ratingSection: {
+      backgroundColor: "rgba(119, 155, 221, 0.08)",
+      borderRadius: 16,
+      padding: 20,
+      marginVertical: 15,
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: "rgba(119, 155, 221, 0.15)",
+    },
+    ratingTitle: {
+      color: c.text,
+      fontSize: 18,
+      fontWeight: "bold",
+      marginBottom: 12,
+    },
+    starsRow: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 10,
+    },
+    ratingValueText: {
+      color: c.textMuted,
+      fontSize: 14,
+      fontWeight: "600",
+    },
+  }));
+
   const { gameID: initialGameID, claimUrl, store = "" } = route.params;
   const adsEnabled = useAdsEnabled();
 
@@ -82,9 +157,9 @@ const GameDetails = ({ route, navigation }: Props) => {
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
           {currentLang === "ar" ? (
-            <ArrowRight size={28} color={COLORS.light} />
+            <ArrowRight size={28} color={colors.text} />
           ) : (
-            <ArrowLeft size={28} color={COLORS.light} />
+            <ArrowLeft size={28} color={colors.text} />
           )}
         </TouchableOpacity>
       </View>
@@ -190,7 +265,7 @@ const GameDetails = ({ route, navigation }: Props) => {
                         >
                           <Star
                             size={32}
-                            color={star <= rating ? "#ffc107" : COLORS.lightGray}
+                            color={star <= rating ? "#ffc107" : colors.textMuted}
                           />
                         </TouchableOpacity>
                       ))}
@@ -307,76 +382,3 @@ const GameDetails = ({ route, navigation }: Props) => {
 };
 
 export default GameDetails;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 100,
-  },
-  header: {
-    position: "absolute",
-    width: 40,
-    height: 40,
-    top: 50,
-    left: 10,
-    zIndex: 1000,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.secondary + "90",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  errorContainer: {
-    padding: 20,
-    backgroundColor: COLORS.primary,
-  },
-  errorText: { color: COLORS.danger, textAlign: "center" },
-  content: {
-    padding: 15,
-    paddingBottom: 40,
-  },
-  ad: {
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 20,
-  },
-  adText: {
-    color: COLORS.light,
-    marginBottom: 10,
-  },
-  ratingSection: {
-    backgroundColor: "rgba(119, 155, 221, 0.08)",
-    borderRadius: 16,
-    padding: 20,
-    marginVertical: 15,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(119, 155, 221, 0.15)",
-  },
-  ratingTitle: {
-    color: COLORS.light,
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 12,
-  },
-  starsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  ratingValueText: {
-    color: COLORS.lightGray,
-    fontSize: 14,
-    fontWeight: "600",
-  },
-});

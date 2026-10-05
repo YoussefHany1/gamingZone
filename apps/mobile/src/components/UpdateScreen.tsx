@@ -1,10 +1,18 @@
 import React, { useEffect, useRef, memo } from "react";
 import { Image } from "expo-image";
-import { View, StyleSheet, Animated, Easing, Dimensions } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Animated,
+  Easing,
+  Dimensions,
+  type ViewStyle,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 import CustomText from "./CustomText";
-import COLORS from "../constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { ArrowDownToLine } from "lucide-react-native";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -18,8 +26,11 @@ const BAR_WIDTH = SCREEN_W * 0.72;
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Animated shimmer that sweeps across the progress fill. */
-const Shimmer = memo(() => {
+/**
+ * Animated shimmer that sweeps across the progress fill.
+ * Takes its base style as a prop because the palette is owned by the parent.
+ */
+const Shimmer = memo(({ style }: { style: ViewStyle }) => {
   const shimmerX = useRef(new Animated.Value(-BAR_WIDTH * 0.4)).current;
 
   useEffect(() => {
@@ -33,14 +44,12 @@ const Shimmer = memo(() => {
     ).start();
   }, [shimmerX]);
 
-  return (
-    <Animated.View style={[styles.shimmer, { transform: [{ translateX: shimmerX }] }]} />
-  );
+  return <Animated.View style={[style, { transform: [{ translateX: shimmerX }] }]} />;
 });
 Shimmer.displayName = "Shimmer";
 
-/** Pulsing glow behind the logo text. */
-const PulseGlow = memo(() => {
+/** Pulsing glow behind the logo text. Base style comes from the parent. */
+const PulseGlow = memo(({ style }: { style: ViewStyle }) => {
   const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
@@ -62,7 +71,7 @@ const PulseGlow = memo(() => {
     ).start();
   }, [opacity]);
 
-  return <Animated.View style={[styles.glow, { opacity }]} />;
+  return <Animated.View style={[style, { opacity }]} />;
 });
 PulseGlow.displayName = "PulseGlow";
 
@@ -81,6 +90,155 @@ interface UpdateScreenProps {
 
 const UpdateScreen: React.FC<UpdateScreenProps> = memo(({ progress }) => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    root: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 24,
+      backgroundColor: c.background,
+    },
+
+    // ── Decorative ──
+    circleTopRight: {
+      position: "absolute",
+      width: 280,
+      height: 280,
+      borderRadius: 140,
+      backgroundColor: c.accentSurface,
+      top: -80,
+      right: -80,
+    },
+    circleBottomLeft: {
+      position: "absolute",
+      width: 200,
+      height: 200,
+      borderRadius: 100,
+      backgroundColor: c.accentSurface,
+      bottom: -60,
+      left: -60,
+    },
+
+    // ── Logo ──
+    logoArea: {
+      alignItems: "center",
+      marginBottom: 52,
+    },
+    glow: {
+      position: "absolute",
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      backgroundColor: c.accentSurface,
+      top: -8,
+    },
+    logoBox: {
+      width: 120,
+      height: 120,
+      borderRadius: 22,
+    },
+    appName: {
+      fontSize: 26,
+      fontWeight: "800",
+      color: c.text,
+      marginBottom: 4,
+    },
+    tagline: {
+      fontSize: 13,
+      color: c.textMuted,
+    },
+
+    // ── Card ──
+    card: {
+      width: "100%",
+      borderRadius: 20,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      overflow: "hidden",
+      marginBottom: 24,
+    },
+    cardInner: {
+      padding: 24,
+      alignItems: "center",
+    },
+    iconRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      alignSelf: "stretch",
+      marginBottom: 20,
+      gap: 14,
+    },
+    iconCircle: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: c.accentSurface,
+      borderWidth: 1,
+      borderColor: c.accentBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    iconText: {
+      fontSize: 20,
+      color: c.textMuted,
+      fontWeight: "700",
+    },
+    textGroup: {
+      flex: 1,
+    },
+    updateTitle: {
+      fontSize: 15,
+      fontWeight: "700",
+      color: c.text,
+      marginBottom: 3,
+    },
+    updateSubtitle: {
+      fontSize: 12,
+      color: c.textMuted,
+      lineHeight: 17,
+    },
+
+    // ── Bar ──
+    barTrack: {
+      width: BAR_WIDTH,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: c.accentSurface,
+      overflow: "hidden",
+      marginBottom: 10,
+    },
+    barFill: {
+      height: "100%",
+      borderRadius: 4,
+      overflow: "hidden",
+    },
+    shimmer: {
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      width: BAR_WIDTH * 0.4,
+      backgroundColor: c.skeletonHighlight,
+      transform: [{ skewX: "-15deg" }],
+    },
+    percent: {
+      fontSize: 13,
+      color: c.textMuted,
+      fontWeight: "600",
+      letterSpacing: 0.5,
+    },
+
+    // ── Footer ──
+    footer: {
+      fontSize: 12,
+      color: c.textSubtle,
+      textAlign: "center",
+      lineHeight: 18,
+      paddingHorizontal: 16,
+    },
+  }));
 
   // Animated width of the fill bar
   const fillWidth = useRef(new Animated.Value(0)).current;
@@ -119,7 +277,7 @@ const UpdateScreen: React.FC<UpdateScreenProps> = memo(({ progress }) => {
           {/* Icon row */}
           <View style={styles.iconRow}>
             <View style={styles.iconCircle}>
-              <ArrowDownToLine color={COLORS.lightGray} size={20} />
+              <ArrowDownToLine color={colors.textMuted} size={20} />
             </View>
             <View style={styles.textGroup}>
               <CustomText style={styles.updateTitle}>
@@ -140,7 +298,7 @@ const UpdateScreen: React.FC<UpdateScreenProps> = memo(({ progress }) => {
                 end={{ x: 1, y: 0 }}
                 style={StyleSheet.absoluteFill}
               />
-              <Shimmer />
+              <Shimmer style={styles.shimmer} />
             </Animated.View>
           </View>
 
@@ -163,151 +321,3 @@ export default UpdateScreen;
 // ─────────────────────────────────────────────────────────────────────────────
 // Styles
 // ─────────────────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
-    backgroundColor: COLORS.primary,
-  },
-
-  // ── Decorative ──
-  circleTopRight: {
-    position: "absolute",
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: "rgba(119,155,221,0.06)",
-    top: -80,
-    right: -80,
-  },
-  circleBottomLeft: {
-    position: "absolute",
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: "rgba(58,107,196,0.07)",
-    bottom: -60,
-    left: -60,
-  },
-
-  // ── Logo ──
-  logoArea: {
-    alignItems: "center",
-    marginBottom: 52,
-  },
-  glow: {
-    position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "rgba(119,155,221,0.18)",
-    top: -8,
-  },
-  logoBox: {
-    width: 120,
-    height: 120,
-    borderRadius: 22,
-  },
-  appName: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: COLORS.light,
-    marginBottom: 4,
-  },
-  tagline: {
-    fontSize: 13,
-    color: COLORS.secondary,
-  },
-
-  // ── Card ──
-  card: {
-    width: "100%",
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderWidth: 1,
-    borderColor: "rgba(119,155,221,0.15)",
-    overflow: "hidden",
-    marginBottom: 24,
-  },
-  cardInner: {
-    padding: 24,
-    alignItems: "center",
-  },
-  iconRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "stretch",
-    marginBottom: 20,
-    gap: 14,
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(119,155,221,0.15)",
-    borderWidth: 1,
-    borderColor: "rgba(119,155,221,0.3)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconText: {
-    fontSize: 20,
-    color: COLORS.lightGray,
-    fontWeight: "700",
-  },
-  textGroup: {
-    flex: 1,
-  },
-  updateTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: COLORS.light,
-    marginBottom: 3,
-  },
-  updateSubtitle: {
-    fontSize: 12,
-    color: COLORS.secondary,
-    lineHeight: 17,
-  },
-
-  // ── Bar ──
-  barTrack: {
-    width: BAR_WIDTH,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "rgba(119,155,221,0.12)",
-    overflow: "hidden",
-    marginBottom: 10,
-  },
-  barFill: {
-    height: "100%",
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  shimmer: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    width: BAR_WIDTH * 0.4,
-    backgroundColor: "rgba(255,255,255,0.25)",
-    transform: [{ skewX: "-15deg" }],
-  },
-  percent: {
-    fontSize: 13,
-    color: COLORS.lightGray,
-    fontWeight: "600",
-    letterSpacing: 0.5,
-  },
-
-  // ── Footer ──
-  footer: {
-    fontSize: 12,
-    color: "rgba(81,105,150,0.8)",
-    textAlign: "center",
-    lineHeight: 18,
-    paddingHorizontal: 16,
-  },
-});

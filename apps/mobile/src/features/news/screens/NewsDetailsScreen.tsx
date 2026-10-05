@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
 import CustomText from "@/src/components/CustomText";
 import {
   View,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Share,
@@ -23,7 +22,8 @@ import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import Constants from "expo-constants";
 import { databases } from "@/src/lib/appwrite";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { adUnitId } from "@/src/constants/config";
 import { openLink } from "@/src/lib/browser";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
@@ -39,6 +39,121 @@ const ARTICLES_COLLECTION_ID = "articles" as const;
 
 // main
 const NewsDetails = memo((): React.ReactElement => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    modalContainer: {
+      flex: 1,
+      //   backgroundColor: c.background
+    },
+    header: {
+      position: "absolute",
+      width: "90%",
+      height: 40,
+      top: 40,
+      left: 15,
+      right: 15,
+      zIndex: 1000,
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    iconButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.accentSurface,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: c.text,
+    },
+    site: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginHorizontal: 15,
+    },
+    siteImage: {
+      width: 40,
+      height: 40,
+      borderRadius: 50,
+      marginRight: 10,
+    },
+    siteName: {
+      color: c.text,
+      fontSize: 16,
+    },
+    backButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: "rgba(81, 105, 150, 0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    container: {
+      flex: 1,
+    },
+    image: {
+      width: "100%",
+      height: 300,
+      resizeMode: "cover",
+    },
+    content: {
+      padding: 15,
+      paddingBottom: 90,
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: "bold",
+      color: c.text,
+      lineHeight: 32,
+      textAlign: "center",
+    },
+    date: {
+      color: c.text,
+      marginVertical: 20,
+    },
+    timeAgoText: {
+      fontSize: 12,
+      color: c.accentText,
+      marginTop: 5,
+      marginRight: 12,
+    },
+    description: {
+      fontSize: 16,
+      color: "#b7becb",
+      lineHeight: 26,
+    },
+    ad: {
+      alignItems: "center",
+      width: "100%",
+      marginVertical: 55,
+    },
+    adText: {
+      color: c.text,
+      marginBottom: 10,
+    },
+    button: {
+      backgroundColor: c.accent,
+      padding: 15,
+      borderRadius: 12,
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "center",
+      marginVertical: 20,
+    },
+    buttonText: {
+      color: c.text,
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+  }));
+
   const { i18n, t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<RootParamList, "NewsDetails">>();
@@ -213,13 +328,13 @@ const NewsDetails = memo((): React.ReactElement => {
       <View style={styles.header}>
         <TouchableOpacity style={styles.iconButton} onPress={handleGoBack}>
           {currentLang === "ar" ? (
-            <ArrowRight size={28} color={COLORS.light} />
+            <ArrowRight size={28} color={colors.text} />
           ) : (
-            <ArrowLeft size={28} color={COLORS.light} />
+            <ArrowLeft size={28} color={colors.text} />
           )}
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} onPress={onShare}>
-          <Share2 size={28} color={COLORS.light} />
+          <Share2 size={28} color={colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -287,10 +402,10 @@ const NewsDetails = memo((): React.ReactElement => {
 
           <Pressable
             style={styles.button}
-            android_ripple={{ color: COLORS.lightGray }}
+            android_ripple={{ color: colors.textMuted }}
             onPress={handleOpenLink}
           >
-            <ExternalLink size={20} color={COLORS.light} style={{ marginRight: 8 }} />
+            <ExternalLink size={20} color={colors.text} style={{ marginRight: 8 }} />
             <CustomText style={styles.buttonText}>
               {t("news.details.readFullArticle")}
             </CustomText>
@@ -302,117 +417,3 @@ const NewsDetails = memo((): React.ReactElement => {
 });
 NewsDetails.displayName = "NewsDetails";
 export default NewsDetails;
-
-const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    //   backgroundColor: COLORS.primary
-  },
-  header: {
-    position: "absolute",
-    width: "90%",
-    height: 40,
-    top: 40,
-    left: 15,
-    right: 15,
-    zIndex: 1000,
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.secondary + "90",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: COLORS.light,
-  },
-  site: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginHorizontal: 15,
-  },
-  siteImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 50,
-    marginRight: 10,
-  },
-  siteName: {
-    color: COLORS.light,
-    fontSize: 16,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(81, 105, 150, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  container: {
-    flex: 1,
-  },
-  image: {
-    width: "100%",
-    height: 300,
-    resizeMode: "cover",
-  },
-  content: {
-    padding: 15,
-    paddingBottom: 90,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: COLORS.light,
-    lineHeight: 32,
-    textAlign: "center",
-  },
-  date: {
-    color: COLORS.light,
-    marginVertical: 20,
-  },
-  timeAgoText: {
-    fontSize: 12,
-    color: COLORS.secondary,
-    marginTop: 5,
-    marginRight: 12,
-  },
-  description: {
-    fontSize: 16,
-    color: "#b7becb",
-    lineHeight: 26,
-  },
-  ad: {
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 55,
-  },
-  adText: {
-    color: COLORS.light,
-    marginBottom: 10,
-  },
-  button: {
-    backgroundColor: COLORS.secondary,
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    marginVertical: 20,
-  },
-  buttonText: {
-    color: COLORS.light,
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-});

@@ -80,7 +80,7 @@ export default function GameSearchAutocomplete({
     <div ref={wrapperRef} className="relative w-full md:max-w-xl">
       <form
         method="GET"
-        action={`/${locale}/games`}
+        action={`/${locale}/games/search`}
         className="flex flex-col sm:flex-row gap-3 w-full"
       >
         <div className="relative grow">

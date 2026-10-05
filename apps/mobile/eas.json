@@ -21,9 +21,6 @@
     },
     "production": {
       "autoIncrement": true,
-      "android": {
-        "gradleCommand": ":app:bundleRelease -PreactNativeArchitectures=armeabi-v7a,arm64-v8a,x86_64"
-      },
       "channel": "production",
       "env": {
         "APP_VARIANT": "production",

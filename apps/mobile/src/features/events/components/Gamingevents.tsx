@@ -9,7 +9,8 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonGamingevents from "../skeleton/SkeletonGamingevents";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SectionTitle from "@/src/components/SectionTitle";
 import { useCountdown } from "@/src/hooks/useCountdown";
 import type { TimeLeft } from "@/src/hooks/useCountdown";
@@ -70,6 +71,126 @@ const EventCard = memo<EventCardProps>(({ item }) => {
     }
   }, [item.live_stream_url]);
 
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    eventCard: {
+      width: CARD_WIDTH,
+      height: CARD_HEIGHT,
+      marginHorizontal: CARD_MARGIN,
+      borderRadius: 20,
+      overflow: "hidden",
+      position: "relative",
+    },
+    backgroundImage: {
+      position: "absolute",
+      width: "100%",
+      height: "100%",
+    },
+    gradientOverlay: {
+      position: "absolute",
+      width: "100%",
+      height: "100%",
+    },
+    contentContainer: { flex: 1, padding: 16 },
+    topRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      flexWrap: "wrap",
+    },
+    liveBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 12,
+      gap: 6,
+      elevation: 4,
+      shadowColor: c.danger,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.6,
+      shadowRadius: 4,
+    },
+    // The badge sits on the card art, so its text follows the scrim, not the theme.
+    liveDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: "#ffffff",
+    },
+    liveText: {
+      color: "#ffffff",
+      fontSize: 12,
+      fontWeight: "bold",
+      textTransform: "uppercase",
+    },
+    upcomingBadge: {
+      backgroundColor: c.scrim,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.textMuted,
+    },
+    upcomingText: { color: c.text, fontSize: 11, fontWeight: "bold" },
+    infoContainer: {
+      gap: 8,
+      justifyContent: "flex-end",
+      flexGrow: 1,
+      marginLeft: 4,
+    },
+    eventTitle: {
+      color: c.text,
+      fontSize: 20,
+      fontWeight: "bold",
+      textShadowColor: "rgba(0, 0, 0, 0.5)",
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 3,
+    },
+    dateTimeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    dateContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: c.scrim,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.textMuted,
+    },
+    dateText: { color: c.text, fontSize: 12, fontWeight: "600" },
+    countdownContainer: {
+      backgroundColor: c.scrim,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.textMuted,
+    },
+    countdownText: {
+      color: c.text,
+      fontSize: 12,
+      fontWeight: "bold",
+    },
+    liveGlow: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      borderRadius: 20,
+      borderWidth: 2,
+      borderColor: c.danger,
+      elevation: 10,
+    },
+  }));
+
   return (
     <TouchableOpacity style={styles.eventCard} onPress={handlePress} activeOpacity={0.92}>
       <Image
@@ -86,7 +207,7 @@ const EventCard = memo<EventCardProps>(({ item }) => {
       />
 
       <LinearGradient
-        colors={["rgba(12, 26, 51, 0.4)", "rgba(12, 26, 51, 0.95)"]}
+        colors={[colors.scrimSoft, colors.scrimSolid]}
         style={styles.gradientOverlay}
       />
 
@@ -95,7 +216,7 @@ const EventCard = memo<EventCardProps>(({ item }) => {
         <View style={styles.topRow}>
           {status === "live" && (
             <LinearGradient
-              colors={[COLORS.danger, COLORS.danger]}
+              colors={[colors.danger, colors.danger]}
               style={styles.liveBadge}
             >
               <View style={styles.liveDot} />
@@ -180,8 +301,8 @@ function GamingEvents(): React.ReactElement | null {
   if (!isLoading && !error && eventsToShow.length === 0) return null;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
+    <View style={staticStyles.container}>
+      <View style={staticStyles.headerContainer}>
         <SectionTitle
           title={t("home.gamingEvents.header")}
           subtitle={t("home.gamingEvents.subtitle")}
@@ -197,12 +318,12 @@ function GamingEvents(): React.ReactElement | null {
           keyExtractor={keyExtractorSkeleton}
           renderItem={renderSkeletonItem}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={staticStyles.listContent}
         />
       )}
 
       {error && (
-        <View style={styles.errorWrapper}>
+        <View style={staticStyles.errorWrapper}>
           <ErrorState message={t("games.list.serverError")} />
         </View>
       )}
@@ -217,10 +338,10 @@ function GamingEvents(): React.ReactElement | null {
           showsHorizontalScrollIndicator={false}
           snapToInterval={CARD_ITEM_SIZE}
           decelerationRate="fast"
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={staticStyles.listContent}
           ListEmptyComponent={
             !isActuallyLoading ? (
-              <View style={styles.errorWrapper}>
+              <View style={staticStyles.errorWrapper}>
                 <ErrorState message={t("home.gamingEvents.noEvents")} />
               </View>
             ) : null
@@ -235,7 +356,9 @@ export default memo(GamingEvents);
 
 // Styles
 
-const styles = StyleSheet.create({
+// List-level layout for the section as a whole — geometry only, so it needs
+// no palette. Per-card colors live in EventCard's themed sheet.
+const staticStyles = StyleSheet.create({
   container: { marginTop: 20 },
   headerContainer: {
     flexDirection: "row",
@@ -246,118 +369,4 @@ const styles = StyleSheet.create({
   },
   listContent: { padding: 10 },
   errorWrapper: { width: "100%", height: CARD_HEIGHT },
-  eventCard: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginHorizontal: CARD_MARGIN,
-    borderRadius: 20,
-    overflow: "hidden",
-    position: "relative",
-  },
-  backgroundImage: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-  },
-  gradientOverlay: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-  },
-  contentContainer: { flex: 1, padding: 16 },
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  liveBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    gap: 6,
-    elevation: 4,
-    shadowColor: COLORS.danger,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.6,
-    shadowRadius: 4,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.light,
-  },
-  liveText: {
-    color: COLORS.light,
-    fontSize: 12,
-    fontWeight: "bold",
-    textTransform: "uppercase",
-  },
-  upcomingBadge: {
-    backgroundColor: COLORS.primary + "80",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-  },
-  upcomingText: { color: COLORS.light, fontSize: 11, fontWeight: "bold" },
-  infoContainer: {
-    gap: 8,
-    justifyContent: "flex-end",
-    flexGrow: 1,
-    marginLeft: 4,
-  },
-  eventTitle: {
-    color: COLORS.light,
-    fontSize: 20,
-    fontWeight: "bold",
-    textShadowColor: "rgba(0, 0, 0, 0.5)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  dateTimeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  dateContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: COLORS.secondary + "80",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-  },
-  dateText: { color: COLORS.light, fontSize: 12, fontWeight: "600" },
-  countdownContainer: {
-    backgroundColor: COLORS.secondary + "80",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-  },
-  countdownText: {
-    color: COLORS.light,
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  liveGlow: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: COLORS.danger,
-    elevation: 10,
-  },
 });

@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
@@ -9,7 +9,8 @@ import { useTranslation } from "react-i18next";
 import ErrorState from "@/src/components/ErrorState";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonTopRated from "@/src/features/games/skeleton/gamesScreen/SkeletonTopRated";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SectionTitle from "@/src/components/SectionTitle";
 import useCachedData from "@/src/hooks/useCachedData";
 import type { TopRatedCardProps } from "../../types";
@@ -24,8 +25,6 @@ const STORAGE_KEY = "GAMES_CACHE_TOP_RATED";
 
 // Helpers
 
-
-
 const getMedalEmoji = (rank: number): string => {
   if (rank === 1) return "🥇";
   if (rank === 2) return "🥈";
@@ -37,6 +36,129 @@ const getMedalEmoji = (rank: number): string => {
 
 const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    cardBackground: { position: "absolute", width: "100%", height: "100%" },
+    gameCard: {
+      width: CARD_WIDTH,
+      height: CARD_HEIGHT,
+      marginHorizontal: CARD_MARGIN,
+      borderRadius: 20,
+      overflow: "hidden",
+    },
+    rankBadge: {
+      position: "absolute",
+      top: -5,
+      left: -5,
+      zIndex: 10,
+      backgroundColor: c.scrimSolid,
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: c.accentBorder,
+      elevation: 6,
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.5,
+      shadowRadius: 4,
+    },
+    rankText: { fontSize: 24 },
+    coverContainer: { width: "100%", height: 160, position: "relative" },
+    cover: { width: "100%", height: "100%" },
+    coverGradient: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: "50%",
+    },
+    infoContainer: {
+      flex: 1,
+      padding: 12,
+      justifyContent: "space-between",
+    },
+    title: {
+      color: c.text,
+      fontSize: 16,
+      fontWeight: "bold",
+      lineHeight: 20,
+      alignItems: "center",
+    },
+    ratingMainContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      marginBottom: 12,
+    },
+    ratingCircle: {
+      width: 55,
+      height: 55,
+      borderRadius: 33,
+      justifyContent: "center",
+      alignItems: "center",
+      elevation: 6,
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.3,
+      shadowRadius: 6,
+      borderWidth: 3,
+      borderColor: "rgba(255, 255, 255, 0.2)",
+    },
+    ratingNumber: { color: c.text, fontSize: 20, fontWeight: "bold" },
+    starContainer: {
+      position: "absolute",
+      bottom: -3,
+      right: -3,
+      backgroundColor: "rgba(0, 0, 0, 0.8)",
+      borderRadius: 10,
+      width: 18,
+      height: 18,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    starIcon: { fontSize: 10 },
+    genresContainer: {
+      flexDirection: "column",
+      alignItems: "flex-start",
+      flexWrap: "wrap",
+      gap: 6,
+    },
+    genreBadge: {
+      backgroundColor: c.accentSurface,
+      paddingHorizontal: 5,
+      paddingVertical: 3,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.accentBorder,
+    },
+    genreText: { color: c.accentText, fontSize: 11, fontWeight: "600" },
+    yearContainer: {
+      backgroundColor: c.accentSurface,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 8,
+    },
+    yearText: {
+      color: c.textSubtle,
+      fontSize: 11,
+      fontWeight: "600",
+    },
+    glowBorder: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      borderRadius: 20,
+      borderWidth: 2,
+      borderColor: "transparent",
+      zIndex: -1,
+    },
+  }));
 
   const rating = item.total_rating ? Math.round(item.total_rating) / 10 : 0;
   const ratingColors = getRatingGradient(rating);
@@ -57,7 +179,7 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
   return (
     <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.9}>
       <LinearGradient
-        colors={["transparent", COLORS.darkBackground + "AA"]}
+        colors={["transparent", colors.scrimSolid]}
         style={styles.cardBackground}
       />
 
@@ -83,7 +205,7 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
           cachePolicy="memory-disk"
         />
         <LinearGradient
-          colors={["transparent", COLORS.darkBackground]}
+          colors={["transparent", colors.scrim]}
           style={styles.coverGradient}
         />
       </View>
@@ -136,6 +258,22 @@ TopRatedCard.displayName = "TopRatedCard";
 
 export default function TopRatedGames(): React.ReactElement {
   const { t } = useTranslation();
+
+  const styles = useThemeStyles((c) => ({
+    container: {},
+    headerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      margin: 18,
+    },
+    errorContainer: {
+      width: "100%",
+      height: CARD_HEIGHT,
+    },
+    listContent: { paddingHorizontal: 10, paddingVertical: 5 },
+  }));
 
   const {
     data: games,
@@ -202,137 +340,3 @@ export default function TopRatedGames(): React.ReactElement {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {},
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    margin: 18,
-  },
-  errorContainer: {
-    width: "100%",
-    height: CARD_HEIGHT,
-  },
-  cardBackground: { position: "absolute", width: "100%", height: "100%" },
-  gameCard: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginHorizontal: CARD_MARGIN,
-    borderRadius: 20,
-    overflow: "hidden",
-  },
-  rankBadge: {
-    position: "absolute",
-    top: -5,
-    left: -5,
-    zIndex: 10,
-    backgroundColor: COLORS.darkBackground + "AA",
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: COLORS.lightGray + "40",
-    elevation: 6,
-    shadowColor: COLORS.dark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-  },
-  rankText: { fontSize: 24 },
-  coverContainer: { width: "100%", height: 160, position: "relative" },
-  cover: { width: "100%", height: "100%" },
-  coverGradient: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "50%",
-  },
-  infoContainer: {
-    flex: 1,
-    padding: 12,
-    justifyContent: "space-between",
-  },
-  title: {
-    color: COLORS.light,
-    fontSize: 16,
-    fontWeight: "bold",
-    lineHeight: 20,
-    alignItems: "center",
-  },
-  ratingMainContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 12,
-  },
-  ratingCircle: {
-    width: 55,
-    height: 55,
-    borderRadius: 33,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 6,
-    shadowColor: COLORS.dark,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    borderWidth: 3,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-  },
-  ratingNumber: { color: COLORS.light, fontSize: 20, fontWeight: "bold" },
-  starContainer: {
-    position: "absolute",
-    bottom: -3,
-    right: -3,
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
-    borderRadius: 10,
-    width: 18,
-    height: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  starIcon: { fontSize: 10 },
-  genresContainer: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-  genreBadge: {
-    backgroundColor: "rgba(100, 100, 255, 0.2)",
-    paddingHorizontal: 5,
-    paddingVertical: 3,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(100, 100, 255, 0.3)",
-  },
-  genreText: { color: "#A0B0FF", fontSize: 11, fontWeight: "600" },
-  yearContainer: {
-    backgroundColor: "rgba(100, 100, 255, 0.2)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  yearText: {
-    color: COLORS.gray,
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  glowBorder: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: "transparent",
-    zIndex: -1,
-  },
-  listContent: { paddingHorizontal: 10, paddingVertical: 5 },
-});

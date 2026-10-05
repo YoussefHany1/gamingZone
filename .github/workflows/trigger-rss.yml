@@ -41,16 +41,29 @@ jobs:
       # This job runs every 5 minutes, so the web app is only pinged when the
       # fetch actually wrote articles — an unconditional ping would cost 288
       # Vercel function invocations a day, more than the staleness it prevents.
-      # The revalidate segment windows (6h) are the fallback if this never runs.
-      - name: Detect newly written articles
+      #
+      # The ids written by rss.service.ts are the whole point: they let the
+      # revalidate step below regenerate exactly the article pages that just
+      # appeared, instead of dropping every news:* tag and both home paths. Both
+      # home pages do render the news feed, so those stay in the payload.
+      #
+      # No anchor on the grep pattern: pino-pretty emits a timestamp prefix and
+      # ANSI colour codes, and the marker appears once per source that wrote.
+      - name: Collect newly written article ids
         id: detect
         run: |
-          if grep -q "Saved and queued" "$RUNNER_TEMP/rss.log"; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "New articles persisted — web cache will be revalidated."
-          else
+          set -euo pipefail
+          IDS=$(grep -oE 'NEW_ARTICLE_IDS=[0-9a-f]{36}(,[0-9a-f]{36})*' "$RUNNER_TEMP/rss.log" \
+            | sed 's/^NEW_ARTICLE_IDS=//' \
+            | paste -sd, - || true)
+
+          if [ -z "$IDS" ]; then
+            echo "No new articles persisted — skipping web revalidation."
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No new articles — skipping revalidation."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "article_ids=${IDS}" >> "$GITHUB_OUTPUT"
+            echo "New articles persisted — web cache will be revalidated."
           fi
 
       - name: Revalidate web news cache
@@ -58,14 +71,33 @@ jobs:
         env:
           REVALIDATE_URL: ${{ secrets.REVALIDATE_URL }}
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          ARTICLE_IDS: ${{ steps.detect.outputs.article_ids }}
         run: |
           set -euo pipefail
           if [ -z "$REVALIDATE_URL" ] || [ -z "$REVALIDATE_SECRET" ]; then
             echo "::error::REVALIDATE_URL / REVALIDATE_SECRET secrets are missing."
             exit 1
           fi
+
+          # Expand the id list into paths and tags:
+          #   tags:  news:article:<id>   (the per-article data-cache entry)
+          #   paths: /en/news/<id>, /ar/news/<id>  (generate the new pages eagerly,
+          #          so the first visitor gets a CDN hit rather than a cold render)
+          #          /en, /ar             (home aggregates the news feed)
+          PAYLOAD=$(jq -n \
+            --arg ids "$ARTICLE_IDS" \
+            '($ids | split(",")) as $ids
+             | {
+                 tags: ($ids | map("news:article:" + .)),
+                 paths: (
+                   ["/en", "/ar"]
+                   + (($ids | map(["/en/news/" + ., "/ar/news/" + .]) | add) // [])
+                 )
+               }')
+
+          echo "Revalidating $(jq -r '.tags | length' <<< "$PAYLOAD") new article(s)."
           curl --fail-with-body --silent --show-error --max-time 30 \
             -X POST "$REVALIDATE_URL" \
             -H "Authorization: Bearer $REVALIDATE_SECRET" \
             -H "Content-Type: application/json" \
-            -d '{"target":"news"}'
+            -d "$PAYLOAD"

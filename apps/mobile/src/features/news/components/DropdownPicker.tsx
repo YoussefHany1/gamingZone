@@ -2,7 +2,6 @@ import CustomText from "@/src/components/CustomText";
 import {
   View,
   TouchableOpacity,
-  StyleSheet,
   Modal,
   SectionList,
   ToastAndroid,
@@ -10,7 +9,8 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { Check, ChevronDown } from "lucide-react-native";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { openLink } from "@/src/lib/browser";
 import { useNotificationPreferences } from "@/src/hooks/useNotificationPreferences";
 import NotificationService from "@/src/services/notificationService";
@@ -22,6 +22,112 @@ import SiteDescription from "./SiteDescription";
 import type { DropdownPickerProps, SectionData, RssFeedSource } from "../types";
 
 const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    wrapper: {
+      width: "100%",
+      alignItems: "center",
+      paddingBottom: 20,
+      marginTop: 20,
+    },
+    pickerButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.textMuted,
+      borderRadius: 8,
+      paddingHorizontal: 15,
+      paddingVertical: 12,
+      width: "60%",
+      justifyContent: "space-between",
+    },
+    pickerButtonText: {
+      color: c.text,
+      fontSize: 16,
+      flex: 1,
+      marginHorizontal: 10,
+      textAlign: "center",
+    },
+    avatar: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: c.accent,
+    },
+
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.7)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalContent: {
+      width: "80%",
+      maxHeight: "60%",
+      backgroundColor: c.backgroundDeep,
+      borderRadius: 16,
+      padding: 20,
+      borderWidth: 1,
+      borderColor: "#333",
+    },
+    modalTitle: {
+      color: c.text,
+      fontSize: 22,
+      fontWeight: "bold",
+      marginBottom: 15,
+      textAlign: "center",
+    },
+    modalItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 15,
+      borderBottomWidth: 1,
+      padding: 10,
+      borderBottomColor: "#333",
+    },
+    modalItemSelected: {
+      backgroundColor: c.accentBorder,
+      borderBottomColor: "transparent",
+      borderRadius: 8,
+    },
+    modalItemLogo: {
+      width: 25,
+      height: 25,
+      borderRadius: 50,
+      marginRight: 10,
+      backgroundColor: c.accent,
+    },
+    modalItemText: {
+      color: c.text,
+      fontSize: 16,
+    },
+    closeButton: {
+      marginTop: 15,
+      alignItems: "center",
+      padding: 10,
+      backgroundColor: c.accent,
+      borderRadius: 8,
+    },
+    closeButtonText: {
+      color: c.text,
+      fontSize: 22,
+      fontWeight: "bold",
+    },
+    sectionHeader: {
+      backgroundColor: c.backgroundDeep,
+      paddingVertical: 12,
+      paddingHorizontal: 5,
+    },
+    sectionHeaderText: {
+      color: c.textSubtle,
+      fontSize: 14,
+      fontWeight: "bold",
+      textTransform: "uppercase",
+    },
+  }));
+
   const { t, i18n } = useTranslation();
   const { preferences, toggleSource } = useNotificationPreferences();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -119,7 +225,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
           {selectedItem?.name || "Select a website..."}
         </CustomText>
 
-        <ChevronDown size={20} color={COLORS.light} />
+        <ChevronDown size={20} color={colors.text} />
       </TouchableOpacity>
 
       {/* Site description card */}
@@ -188,7 +294,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                     </CustomText>
                   </View>
                   {selectedItem?.name === item.name && (
-                    <Check size={24} color={COLORS.secondary} />
+                    <Check size={24} color={colors.accent} />
                   )}
                 </TouchableOpacity>
               )}
@@ -208,108 +314,3 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
   );
 };
 export default memo(DropdownPicker);
-
-const styles = StyleSheet.create({
-  wrapper: {
-    width: "100%",
-    alignItems: "center",
-    paddingBottom: 20,
-    marginTop: 20,
-  },
-  pickerButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.button,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    width: "60%",
-    justifyContent: "space-between",
-  },
-  pickerButtonText: {
-    color: COLORS.light,
-    fontSize: 16,
-    flex: 1,
-    marginHorizontal: 10,
-    textAlign: "center",
-  },
-  avatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: COLORS.secondary,
-  },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    width: "80%",
-    maxHeight: "60%",
-    backgroundColor: COLORS.darkBackground,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#333",
-  },
-  modalTitle: {
-    color: COLORS.light,
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  modalItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    padding: 10,
-    borderBottomColor: "#333",
-  },
-  modalItemSelected: {
-    backgroundColor: COLORS.secondary + "50",
-    borderBottomColor: "transparent",
-    borderRadius: 8,
-  },
-  modalItemLogo: {
-    width: 25,
-    height: 25,
-    borderRadius: 50,
-    marginRight: 10,
-    backgroundColor: COLORS.secondary,
-  },
-  modalItemText: {
-    color: COLORS.light,
-    fontSize: 16,
-  },
-  closeButton: {
-    marginTop: 15,
-    alignItems: "center",
-    padding: 10,
-    backgroundColor: COLORS.secondary,
-    borderRadius: 8,
-  },
-  closeButtonText: {
-    color: COLORS.light,
-    fontSize: 22,
-    fontWeight: "bold",
-  },
-  sectionHeader: {
-    backgroundColor: COLORS.darkBackground,
-    paddingVertical: 12,
-    paddingHorizontal: 5,
-  },
-  sectionHeaderText: {
-    color: COLORS.gray,
-    fontSize: 14,
-    fontWeight: "bold",
-    textTransform: "uppercase",
-  },
-});

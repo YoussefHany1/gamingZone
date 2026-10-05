@@ -9,7 +9,8 @@ import { ArrowLeft, Calendar, CirclePlay, Flag, Radio } from "lucide-react-nativ
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useCountdown } from "@/src/hooks/useCountdown";
 import { formatEventDate, getEventStatus } from "@gaming-zone/utils";
 import type { EventStatus } from "@gaming-zone/utils";
@@ -27,6 +28,172 @@ import CountdownBox from "../components/CountdownBox";
 
 //  Main Screen
 const EventDetailsScreen = memo((): React.ReactElement => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    screen: {
+      flex: 1,
+      backgroundColor: c.background,
+      marginBottom: 52,
+    },
+    // Hero
+    hero: {
+      width: "100%",
+      height: HERO_HEIGHT,
+      justifyContent: "flex-end",
+      padding: 20,
+    },
+    backBtn: {
+      position: "absolute",
+      top: 44,
+      left: 16,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.scrim,
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 10,
+    },
+    heroBadgeRow: {
+      flexDirection: "row",
+      marginBottom: 8,
+      gap: 8,
+    },
+    heroTitle: {
+      color: c.text,
+      fontSize: 26,
+      fontWeight: "bold",
+      lineHeight: 34,
+      textShadowColor: "rgba(0,0,0,0.6)",
+      textShadowOffset: { width: 0, height: 2 },
+      textShadowRadius: 6,
+    },
+    // Badges
+    liveBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      borderRadius: 10,
+      gap: 5,
+    },
+    liveDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: c.text,
+    },
+    liveText: {
+      color: c.text,
+      fontSize: 11,
+      fontWeight: "bold",
+      textTransform: "uppercase",
+    },
+    upcomingBadge: {
+      backgroundColor: c.accentSurface,
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: c.textMuted,
+    },
+    upcomingText: { color: c.text, fontSize: 11, fontWeight: "bold" },
+    endedBadge: {
+      backgroundColor: "#44444480",
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: c.textSubtle,
+    },
+    endedText: { color: c.textSubtle, fontSize: 11, fontWeight: "bold" },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    // Scroll
+    scroll: { flex: 1 },
+    scrollContent: { paddingTop: 16, paddingHorizontal: 18 },
+    // Dates row
+    datesRow: {
+      gap: 10,
+      marginBottom: 8,
+    },
+    dateBlock: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      backgroundColor: c.accentSurface,
+      borderRadius: 12,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: c.accentBorder,
+    },
+    dateBlockLabel: {
+      color: c.textMuted,
+      fontSize: 11,
+      fontWeight: "600",
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+    },
+    dateBlockValue: {
+      color: c.text,
+      fontSize: 13,
+      fontWeight: "500",
+      marginTop: 2,
+    },
+    // Section
+    section: { marginTop: 24 },
+    countdownRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "center",
+      gap: 6,
+    },
+    countdownSep: {
+      color: c.textMuted,
+      fontSize: 26,
+      fontWeight: "bold",
+      marginTop: 14,
+    },
+    // Stream button
+    streamBtnWrap: { marginTop: 20 },
+    streamBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 10,
+      paddingVertical: 14,
+      borderRadius: 14,
+      elevation: 4,
+      shadowColor: c.danger,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.4,
+      shadowRadius: 6,
+    },
+    streamBtnText: {
+      color: c.text,
+      fontSize: 16,
+      fontWeight: "bold",
+      letterSpacing: 0.5,
+    },
+    // Description
+    description: {
+      color: "#b7becb",
+      fontSize: 15,
+      lineHeight: 24,
+      textAlign: "left",
+      direction: "ltr",
+    },
+    // Networks
+    networksWrap: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 10,
+    },
+  }));
+
   const navigation = useNavigation();
   const route = useRoute<RouteProp<EventDetailsParamList, "EventDetailsScreen">>();
   const { t, i18n } = useTranslation();
@@ -77,8 +244,8 @@ const EventDetailsScreen = memo((): React.ReactElement => {
 
   const streamBtnColors: [string, string] =
     status === "live"
-      ? [COLORS.danger, COLORS.danger + "20"]
-      : [COLORS.secondary, COLORS.lightGray];
+      ? [colors.danger, colors.danger + "20"]
+      : [colors.accent, colors.textMuted];
 
   return (
     <View style={styles.screen}>
@@ -100,7 +267,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
           />
         )}
         <LinearGradient
-          colors={["rgba(12,26,51,0.2)", "rgba(12,26,51,1)"]}
+          colors={[colors.scrimSoft, colors.scrimSolid]}
           style={StyleSheet.absoluteFill}
         />
 
@@ -110,14 +277,14 @@ const EventDetailsScreen = memo((): React.ReactElement => {
           onPress={handleGoBack}
           activeOpacity={0.8}
         >
-          <ArrowLeft size={24} color={COLORS.light} />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
 
         {/* Status badge */}
         <View style={styles.heroBadgeRow}>
           {status === "live" && (
             <LinearGradient
-              colors={[COLORS.danger, COLORS.danger]}
+              colors={[colors.danger, colors.danger]}
               style={styles.liveBadge}
             >
               <View style={styles.liveDot} />
@@ -153,7 +320,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
           <View style={styles.datesRow}>
             <View style={styles.dateBlock}>
               <View collapsable={false}>
-                <Calendar size={18} color={COLORS.lightGray} />
+                <Calendar size={18} color={colors.textMuted} />
               </View>
               <View>
                 <CustomText style={styles.dateBlockLabel}>Starts</CustomText>
@@ -162,7 +329,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
             </View>
             <View style={styles.dateBlock}>
               <View collapsable={false}>
-                <Flag size={18} color={COLORS.lightGray} />
+                <Flag size={18} color={colors.textMuted} />
               </View>
               <View>
                 <CustomText style={styles.dateBlockLabel}>Ends</CustomText>
@@ -202,11 +369,11 @@ const EventDetailsScreen = memo((): React.ReactElement => {
               >
                 {status === "live" ? (
                   <View collapsable={false}>
-                    <Radio size={22} color={COLORS.light} />
+                    <Radio size={22} color={colors.text} />
                   </View>
                 ) : (
                   <View collapsable={false}>
-                    <CirclePlay size={22} color={COLORS.light} />
+                    <CirclePlay size={22} color={colors.text} />
                   </View>
                 )}
                 <CustomText style={styles.streamBtnText}>
@@ -283,168 +450,3 @@ export default EventDetailsScreen;
 
 //  Styles
 const HERO_HEIGHT = 280;
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-    marginBottom: 52,
-  },
-  // Hero
-  hero: {
-    width: "100%",
-    height: HERO_HEIGHT,
-    justifyContent: "flex-end",
-    padding: 20,
-  },
-  backBtn: {
-    position: "absolute",
-    top: 44,
-    left: 16,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(12,26,51,0.65)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 10,
-  },
-  heroBadgeRow: {
-    flexDirection: "row",
-    marginBottom: 8,
-    gap: 8,
-  },
-  heroTitle: {
-    color: COLORS.light,
-    fontSize: 26,
-    fontWeight: "bold",
-    lineHeight: 34,
-    textShadowColor: "rgba(0,0,0,0.6)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
-  },
-  // Badges
-  liveBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 10,
-    gap: 5,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.light,
-  },
-  liveText: {
-    color: COLORS.light,
-    fontSize: 11,
-    fontWeight: "bold",
-    textTransform: "uppercase",
-  },
-  upcomingBadge: {
-    backgroundColor: COLORS.secondary + "80",
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-  },
-  upcomingText: { color: COLORS.light, fontSize: 11, fontWeight: "bold" },
-  endedBadge: {
-    backgroundColor: "#44444480",
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.gray,
-  },
-  endedText: { color: COLORS.gray, fontSize: 11, fontWeight: "bold" },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  // Scroll
-  scroll: { flex: 1 },
-  scrollContent: { paddingTop: 16, paddingHorizontal: 18 },
-  // Dates row
-  datesRow: {
-    gap: 10,
-    marginBottom: 8,
-  },
-  dateBlock: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: COLORS.secondary + "25",
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: COLORS.secondary + "50",
-  },
-  dateBlockLabel: {
-    color: COLORS.lightGray,
-    fontSize: 11,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  dateBlockValue: {
-    color: COLORS.light,
-    fontSize: 13,
-    fontWeight: "500",
-    marginTop: 2,
-  },
-  // Section
-  section: { marginTop: 24 },
-  countdownRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "center",
-    gap: 6,
-  },
-  countdownSep: {
-    color: COLORS.lightGray,
-    fontSize: 26,
-    fontWeight: "bold",
-    marginTop: 14,
-  },
-  // Stream button
-  streamBtnWrap: { marginTop: 20 },
-  streamBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    paddingVertical: 14,
-    borderRadius: 14,
-    elevation: 4,
-    shadowColor: COLORS.danger,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-  },
-  streamBtnText: {
-    color: COLORS.light,
-    fontSize: 16,
-    fontWeight: "bold",
-    letterSpacing: 0.5,
-  },
-  // Description
-  description: {
-    color: "#b7becb",
-    fontSize: 15,
-    lineHeight: 24,
-    textAlign: "left",
-    direction: "ltr",
-  },
-  // Networks
-  networksWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-});

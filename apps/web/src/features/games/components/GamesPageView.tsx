@@ -21,6 +21,16 @@ import { gameCoverUrl } from "../utils";
 
 export interface GamesPageViewProps {
   locale: string;
+  /**
+   * Locale-prefixed path the search box and filter form submit to, e.g.
+   * "/en/games/search".
+   *
+   * A prop rather than a constant because the browse route (/[locale]/games) and
+   * the search route (/[locale]/games/search) render this same component, and
+   * submitting a query to /games would land on the static browse page that no
+   * longer reads searchParams — the filters would silently do nothing.
+   */
+  searchPath: string;
   query: string;
   genre: string;
   platform: string;
@@ -39,6 +49,12 @@ export interface GamesPageViewProps {
   trendingMobile: Game[];
 }
 
+/**
+ * Pagination links must stay on the search route and be locale-prefixed: they
+ * are locale-less raw hrefs, so `buildPageHref` composes them from searchPath
+ * rather than hardcoding `/games`, which would bounce an Arabic visitor to the
+ * English route and drop the filters.
+ */
 function buildPageHref(props: GamesPageViewProps, page: number): string {
   const params = new URLSearchParams();
   if (props.query) params.set("query", props.query);
@@ -46,12 +62,13 @@ function buildPageHref(props: GamesPageViewProps, page: number): string {
   if (props.platform) params.set("platform", props.platform);
   if (props.sort) params.set("sort", props.sort);
   params.set("page", String(page));
-  return `/games?${params.toString()}`;
+  return `${props.searchPath}?${params.toString()}`;
 }
 
 export default function GamesPageView(props: GamesPageViewProps) {
   const {
     locale,
+    searchPath,
     query,
     genre,
     platform,
@@ -134,7 +151,7 @@ export default function GamesPageView(props: GamesPageViewProps) {
         {/* Filter Toolbar */}
         <form
           method="GET"
-          action={`/${locale}/games`}
+          action={searchPath}
           className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-white/5 border border-white/5 p-4 rounded-2xl items-center"
         >
           {/* Hidden input to preserve active text query */}

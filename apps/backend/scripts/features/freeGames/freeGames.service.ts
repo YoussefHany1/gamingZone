@@ -219,7 +219,8 @@ async function cleanupOldGames(activeIds: Set<string>): Promise<void> {
   );
 
   const docsToDelete = existingDocs.filter((doc) => !activeIds.has(doc.$id));
-  
+
+  let deleted = 0;
   for (const doc of docsToDelete) {
     await withRetry(
       () =>
@@ -230,6 +231,16 @@ async function cleanupOldGames(activeIds: Set<string>): Promise<void> {
         ),
       { label: `deleteDocument ${doc.$id}` },
     );
+    deleted += 1;
+  }
+
+  // Machine-readable handoff for .github/workflows/free-games.yml. The
+  // "Cleaning up old games..." line above prints on every run whether or not
+  // anything was removed, and deletions used to be silent — so the workflow had
+  // no way to tell a real membership change from a routine no-op, and fell back
+  // to matching "Updated details", which fires on every field refresh.
+  if (deleted > 0) {
+    logger.info(`FREE_GAMES_REMOVED=${deleted}`);
   }
 }
 

@@ -1,10 +1,44 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import COLORS from "@/src/constants/colors";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import Shimmer from "@/src/components/skeleton/Shimmer";
 import { useShimmerSweep } from "@/src/components/skeleton/shared";
 
 const DropdownSkeleton: React.FC = () => {
+  const styles = useThemeStyles((c) => ({
+    wrapper: {
+      alignItems: "center",
+      paddingBottom: 20,
+      marginTop: 20,
+    },
+    headerSkeleton: {
+      width: 250,
+      height: 50,
+      borderRadius: 16,
+      backgroundColor: c.accentSurface,
+      marginBottom: 30,
+      overflow: "hidden",
+    },
+    pickerContainer: {
+      borderWidth: 1,
+      borderRadius: 8,
+      overflow: "hidden",
+      backgroundColor: c.accentBorder,
+      width: "90%",
+      height: 50,
+      justifyContent: "center",
+      paddingHorizontal: 15,
+      borderColor: "transparent",
+    },
+    pickerTextLine: {
+      width: "40%",
+      height: 15,
+      backgroundColor: c.accentBorder,
+      borderRadius: 4,
+      overflow: "hidden",
+    },
+  }));
+
   const animatedStyle = useShimmerSweep();
 
   return (
@@ -25,37 +59,3 @@ const DropdownSkeleton: React.FC = () => {
 };
 
 export default React.memo(DropdownSkeleton);
-
-const styles = StyleSheet.create({
-  wrapper: {
-    alignItems: "center",
-    paddingBottom: 20,
-    marginTop: 20,
-  },
-  headerSkeleton: {
-    width: 250,
-    height: 50,
-    borderRadius: 16,
-    backgroundColor: COLORS.secondary + "80",
-    marginBottom: 30,
-    overflow: "hidden",
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderRadius: 8,
-    overflow: "hidden",
-    backgroundColor: COLORS.secondary + "50",
-    width: "90%",
-    height: 50,
-    justifyContent: "center",
-    paddingHorizontal: 15,
-    borderColor: "transparent",
-  },
-  pickerTextLine: {
-    width: "40%",
-    height: 15,
-    backgroundColor: COLORS.secondary + "40",
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-});

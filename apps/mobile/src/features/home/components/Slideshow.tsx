@@ -17,7 +17,8 @@ import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import SkeletonSlideshow from "../skeleton/SkeletonSlideshow";
 import ErrorState from "@/src/components/ErrorState";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { adUnitId } from "@/src/constants/config";
 import useCachedData from "@/src/hooks/useCachedData";
 import { Game } from "@/src/types/sharedTypes";
@@ -62,6 +63,63 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
     ? igdbImageUrl(item.cover.image_id, "cover_big")
     : null;
 
+  // The slide sits over cover art, so its text follows the scrim gradient.
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    slide: {
+      position: "relative",
+      width: SCREEN_WIDTH,
+    },
+    thumbnail: {
+      height: SLIDESHOW_HEIGHT,
+      width: "100%",
+    },
+    gradient: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: "120%",
+    },
+    headline: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      padding: 16,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    coverImage: {
+      width: 75,
+      height: 110,
+      borderRadius: 8,
+      borderWidth: 1.5,
+      borderColor: "rgba(255, 255, 255, 0.3)",
+      backgroundColor: "rgba(255, 255, 255, 0.05)",
+    },
+    textContainer: {
+      flex: 1,
+      justifyContent: "center",
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: c.text,
+    },
+    playRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 4,
+    },
+    subtitle: {
+      color: c.textMuted,
+      fontWeight: "200",
+      fontSize: 14,
+    },
+  }));
+
   return (
     <TouchableOpacity style={styles.slide} onPress={handlePress} activeOpacity={0.8}>
       <Image
@@ -73,7 +131,10 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
         cachePolicy="memory-disk"
         allowDownscaling
       />
-      <LinearGradient colors={["transparent", COLORS.primary]} style={styles.gradient} />
+      <LinearGradient
+        colors={["transparent", colors.background]}
+        style={styles.gradient}
+      />
       <View style={styles.headline}>
         {coverUrl && (
           <Image
@@ -89,7 +150,7 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
             {item.name}
           </CustomText>
           <View style={styles.playRow}>
-            <CirclePlay size={18} color={COLORS.lightGray} style={{ marginRight: 6 }} />
+            <CirclePlay size={18} color={colors.textMuted} style={{ marginRight: 6 }} />
             <CustomText style={styles.subtitle} numberOfLines={1}>
               {t("home.slideshow.subtitle")}
             </CustomText>
@@ -108,27 +169,83 @@ interface PaginationProps {
   activeIndex: number;
 }
 
-const Pagination = memo<PaginationProps>(({ count, activeIndex }) => (
-  <View style={styles.paginationContainer}>
-    {Array.from({ length: count }, (_, i) => (
-      <View
-        key={i}
-        style={[styles.dot, i === activeIndex ? styles.dotActive : styles.dotInactive]}
-      />
-    ))}
-  </View>
-));
+const Pagination = memo<PaginationProps>(({ count, activeIndex }) => {
+  const styles = useThemeStyles((c) => ({
+    paginationContainer: {
+      position: "absolute",
+      bottom: 8,
+      left: 0,
+      right: 0,
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 6,
+    },
+    dot: {
+      borderRadius: 4,
+      height: 6,
+      backgroundColor: c.accent,
+    },
+    dotActive: {
+      width: 18,
+      backgroundColor: c.text,
+    },
+    dotInactive: {
+      width: 6,
+      backgroundColor: c.textMuted,
+    },
+  }));
+
+  return (
+    <View style={styles.paginationContainer}>
+      {Array.from({ length: count }, (_, i) => (
+        <View
+          key={i}
+          style={[styles.dot, i === activeIndex ? styles.dotActive : styles.dotInactive]}
+        />
+      ))}
+    </View>
+  );
+});
 Pagination.displayName = "Pagination";
 
 // Slideshow
 
 function Slideshow(): React.ReactElement {
-  const { t } = useTranslation();
   const adsEnabled = useAdsEnabled();
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const pagerRef = useRef<PagerView>(null);
   const activeIndexRef = useRef(0);
+
+  const styles = useThemeStyles((c) => ({
+    swiperContainer: {
+      height: SLIDESHOW_HEIGHT,
+      backgroundColor: c.accent,
+      position: "relative",
+    },
+    pager: {
+      flex: 1,
+    },
+    errorWrapper: {
+      height: 70,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: c.overlay,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalContent: {
+      width: "100%",
+      alignItems: "center",
+    },
+    videoContainer: {
+      width: "100%",
+      backgroundColor: "#000000",
+      marginBottom: 20,
+    },
+  }));
 
   const { data, isLoading, error } = useCachedData<Game[]>(
     STORAGE_KEY,
@@ -224,107 +341,3 @@ SlideshowMemo.displayName = "Slideshow";
 export default SlideshowMemo;
 
 // Styles
-
-const styles = StyleSheet.create({
-  swiperContainer: {
-    height: SLIDESHOW_HEIGHT,
-    backgroundColor: COLORS.secondary,
-    position: "relative",
-  },
-  pager: {
-    flex: 1,
-  },
-  slide: {
-    position: "relative",
-    width: SCREEN_WIDTH,
-  },
-  thumbnail: {
-    height: SLIDESHOW_HEIGHT,
-    width: "100%",
-  },
-  gradient: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: "120%",
-  },
-  headline: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  coverImage: {
-    width: 75,
-    height: 110,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.3)",
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-  },
-  textContainer: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.light,
-  },
-  playRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  subtitle: {
-    color: COLORS.lightGray,
-    fontWeight: "200",
-    fontSize: 14,
-  },
-  paginationContainer: {
-    position: "absolute",
-    bottom: 8,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 6,
-  },
-  dot: {
-    borderRadius: 4,
-    height: 6,
-    backgroundColor: COLORS.secondary,
-  },
-  dotActive: {
-    width: 18,
-    backgroundColor: COLORS.lightGray,
-  },
-  dotInactive: {
-    width: 6,
-    backgroundColor: "rgba(255, 255, 255, 0.4)",
-  },
-  errorWrapper: {
-    height: 70,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    width: "100%",
-    alignItems: "center",
-  },
-  videoContainer: {
-    width: "100%",
-    backgroundColor: COLORS.dark,
-    marginBottom: 20,
-  },
-});

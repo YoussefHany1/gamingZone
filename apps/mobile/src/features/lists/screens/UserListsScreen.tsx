@@ -18,7 +18,8 @@ import SkeletonUserLists from "../skeleton/SkeletonUserLists";
 import { CirclePlus, FolderOpen, List, Trash2, TriangleAlert } from "lucide-react-native";
 import auth from "@react-native-firebase/auth";
 import firestore, { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { adUnitId } from "@/src/constants/config";
@@ -58,6 +59,88 @@ const UserListsScreen = ({ navigation }: Props) => {
   const [showAds, setShowAds] = useState<boolean>(false);
   const adsEnabled = useAdsEnabled();
   const [isReady, setIsReady] = useState<boolean>(false);
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    container: { flex: 1, backgroundColor: c.background },
+    listItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      padding: 20,
+      backgroundColor: c.surface,
+      marginHorizontal: 16,
+      marginBottom: 10,
+      borderRadius: 12,
+      alignItems: "center",
+    },
+    listName: { color: c.text, fontSize: 18, marginLeft: 10 },
+    ad: {
+      alignItems: "center",
+      width: "100%",
+      marginVertical: 30,
+    },
+    adText: {
+      color: c.text,
+      marginBottom: 10,
+    },
+    emptyContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      alignSelf: "center",
+      margin: "auto",
+    },
+    emptyText: {
+      color: c.text,
+      fontSize: 16,
+      textAlign: "center",
+      opacity: 0.8,
+      flexDirection: "column",
+      alignItems: "center",
+    },
+    // Modal styles
+    modalContainer: {
+      flex: 1,
+      justifyContent: "center",
+      backgroundColor: c.overlay,
+    },
+    modalContent: {
+      backgroundColor: c.background,
+      margin: 20,
+      padding: 20,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.accentBorder,
+    },
+    modalTitle: {
+      color: c.text,
+      textAlign: "center",
+      fontSize: 20,
+      fontWeight: "bold",
+      marginBottom: 15,
+    },
+    input: {
+      backgroundColor: c.surface,
+      padding: 10,
+      borderRadius: 8,
+      marginBottom: 20,
+      color: c.text,
+    },
+
+    modalButtons: { flexDirection: "row", justifyContent: "space-around" },
+    cancelBtn: { padding: 10, fontWeight: "bold" },
+    createBtn: {
+      backgroundColor: c.accent,
+      padding: 10,
+      borderRadius: 8,
+      paddingHorizontal: 20,
+      fontWeight: "semibold",
+    },
+    textBtn: {
+      color: c.onAccent,
+      fontWeight: "bold",
+      fontSize: 16,
+    },
+  }));
+
   const { user, isAnonymous } = useAuthUser();
   const { t } = useTranslation();
   const { onScroll } = useScrollDirection();
@@ -80,7 +163,7 @@ const UserListsScreen = ({ navigation }: Props) => {
             onPress={() => setModalVisible(true)}
             style={{ padding: 6, marginRight: 6 }}
           >
-            <CirclePlus size={28} color={COLORS.light} />
+            <CirclePlus size={28} color={colors.text} />
           </TouchableOpacity>
         ) : null,
     });
@@ -268,15 +351,15 @@ const UserListsScreen = ({ navigation }: Props) => {
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               {item.type === "default" ? (
-                <List size={24} color={COLORS.lightGray} />
+                <List size={24} color={colors.textMuted} />
               ) : (
-                <FolderOpen size={24} color={COLORS.lightGray} />
+                <FolderOpen size={24} color={colors.textMuted} />
               )}
               <CustomText style={styles.listName}>{getDisplayName(item.name)}</CustomText>
             </View>
             {item.type === "custom" && (
               <TouchableOpacity onPress={() => handleDeleteList(item.id, item.name)}>
-                <Trash2 size={20} color={COLORS.danger} />
+                <Trash2 size={20} color={colors.danger} />
               </TouchableOpacity>
             )}
           </TouchableOpacity>
@@ -289,7 +372,18 @@ const UserListsScreen = ({ navigation }: Props) => {
         </>
       );
     },
-    [showAds, adsEnabled, lists.length, getDisplayName, handleDeleteList, navigation, t],
+    [
+      showAds,
+      adsEnabled,
+      lists.length,
+      getDisplayName,
+      handleDeleteList,
+      navigation,
+      t,
+      colors.danger,
+      colors.textMuted,
+      styles,
+    ],
   );
 
   if (isAnonymous || !user) {
@@ -297,7 +391,7 @@ const UserListsScreen = ({ navigation }: Props) => {
       <SafeAreaView style={styles.container} edges={["right", "left"]}>
         <View style={styles.emptyContainer}>
           <CustomText style={styles.emptyText}>
-            <TriangleAlert size={182} color={COLORS.lightGray} />
+            <TriangleAlert size={182} color={colors.textMuted} />
             {"\n"}
             {t("common.loginRequired")}
           </CustomText>
@@ -336,7 +430,7 @@ const UserListsScreen = ({ navigation }: Props) => {
                 value={newListName}
                 onChangeText={setNewListName}
                 placeholder={t("userLists.placeholders.newListName")}
-                placeholderTextColor={COLORS.gray}
+                placeholderTextColor={colors.textSubtle}
               />
               <View style={styles.modalButtons}>
                 <TouchableOpacity
@@ -361,84 +455,3 @@ const UserListsScreen = ({ navigation }: Props) => {
   );
 };
 export default UserListsScreen;
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.primary },
-  listItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 20,
-    backgroundColor: "rgba(119, 155, 221, 0.1)",
-    marginHorizontal: 16,
-    marginBottom: 10,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  listName: { color: COLORS.light, fontSize: 18, marginLeft: 10 },
-  ad: {
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 30,
-  },
-  adText: {
-    color: COLORS.light,
-    marginBottom: 10,
-  },
-  emptyContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
-    margin: "auto",
-  },
-  emptyText: {
-    color: COLORS.light,
-    fontSize: 16,
-    textAlign: "center",
-    opacity: 0.8,
-    flexDirection: "column",
-    alignItems: "center",
-  },
-  // Modal styles
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.7)",
-  },
-  modalContent: {
-    backgroundColor: COLORS.primary,
-    margin: 20,
-    padding: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.secondary + "80",
-  },
-  modalTitle: {
-    color: COLORS.light,
-    textAlign: "center",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-  },
-  input: {
-    backgroundColor: COLORS.button,
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 20,
-    color: COLORS.light,
-  },
-
-  modalButtons: { flexDirection: "row", justifyContent: "space-around" },
-  cancelBtn: { padding: 10, fontWeight: "bold" },
-  createBtn: {
-    backgroundColor: COLORS.secondary,
-    padding: 10,
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    fontWeight: "semibold",
-  },
-  textBtn: {
-    color: COLORS.light,
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-});

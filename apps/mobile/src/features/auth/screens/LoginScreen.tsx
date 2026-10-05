@@ -20,7 +20,8 @@ import { GoogleIcon } from "@/src/components/icons/BrandIcons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import Constants from "expo-constants";
 
 type RootStackParamList = {
@@ -47,6 +48,101 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
   const [password, setPassword] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    background: {
+      flex: 1,
+      width: "100%",
+      height: "100%",
+      backgroundColor: c.background,
+    },
+    container: { flex: 1, justifyContent: "center", paddingHorizontal: 20 },
+    keyboardView: { flex: 1 },
+    logo: { width: 220, height: 220, alignSelf: "center" },
+    title: {
+      fontSize: 28,
+      fontWeight: "bold",
+      color: c.text,
+      textAlign: "center",
+      marginBottom: 20,
+    },
+    inputContainer: { marginBottom: 25 },
+    input: {
+      color: c.text,
+      backgroundColor: c.surface,
+      padding: 15,
+      borderRadius: 5,
+      marginBottom: 10,
+    },
+    passwordWrapper: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: c.surface,
+      borderRadius: 5,
+      marginBottom: 10,
+      paddingRight: 12,
+    },
+    passwordInput: {
+      flex: 1,
+      color: c.text,
+      padding: 15,
+    },
+    eyeButton: {
+      padding: 4,
+    },
+    forgotPasswordButton: {},
+    forgotPasswordText: { color: c.accentText },
+    button: {
+      backgroundColor: c.accent,
+      padding: 15,
+      borderRadius: 12,
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "center",
+      marginBottom: 15,
+    },
+    buttonDisabled: {
+      opacity: 0.6,
+    },
+    googleButtonWrapper: { justifyContent: "center" },
+    gradient: {
+      padding: 15,
+      borderRadius: 12,
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "center",
+    },
+    buttonText: {
+      color: c.onAccent,
+      fontSize: 18,
+      fontWeight: "bold",
+      textAlign: "center",
+    },
+    // Sits on the fixed Google brand gradient, which is identical in both
+    // themes — so it must not follow the palette.
+    brandButtonText: {
+      color: "#ffffff",
+      fontSize: 18,
+      fontWeight: "bold",
+      textAlign: "center",
+    },
+    newAccButton: {
+      borderWidth: 2,
+      borderColor: c.accent,
+      padding: 15,
+      borderRadius: 12,
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 35,
+    },
+    guestButton: { marginVertical: 15, padding: 10, alignItems: "center" },
+    guestButtonText: {
+      color: c.textMuted,
+      fontSize: 16,
+      textDecorationLine: "underline",
+    },
+  }));
 
   // Centralised Firebase auth error handler — avoids duplicating toast logic
   const handleAuthError = useCallback(
@@ -179,7 +275,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
               <CustomTextInput
                 style={styles.input}
                 placeholder={t("auth.emailPlaceholder")}
-                placeholderTextColor={COLORS.gray}
+                placeholderTextColor={colors.textSubtle}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -190,7 +286,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
                 <CustomTextInput
                   style={styles.passwordInput}
                   placeholder={t("auth.passwordPlaceholder")}
-                  placeholderTextColor={COLORS.gray}
+                  placeholderTextColor={colors.textSubtle}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
@@ -201,9 +297,9 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   {showPassword ? (
-                    <EyeOff size={22} color={COLORS.gray} />
+                    <EyeOff size={22} color={colors.textSubtle} />
                   ) : (
-                    <Eye size={22} color={COLORS.gray} />
+                    <Eye size={22} color={colors.textSubtle} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -225,7 +321,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color={COLORS.light} size="small" />
+                <ActivityIndicator color={colors.onAccent} size="small" />
               ) : (
                 <CustomText style={styles.buttonText}>{t("auth.login.title")}</CustomText>
               )}
@@ -244,11 +340,11 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
                 end={{ x: 1, y: 1 }}
               >
                 {isLoading ? (
-                  <ActivityIndicator color={COLORS.light} size="small" />
+                  <ActivityIndicator color="#ffffff" size="small" />
                 ) : (
                   <>
-                    <GoogleIcon size={28} fill={COLORS.light} />
-                    <CustomText style={styles.buttonText}>
+                    <GoogleIcon size={28} />
+                    <CustomText style={styles.brandButtonText}>
                       {" "}
                       {t("auth.login.googleSignIn")}
                     </CustomText>
@@ -287,89 +383,3 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
 
 LoginScreen.displayName = "LoginScreen";
 export default LoginScreen;
-
-const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-    backgroundColor: COLORS.primary,
-  },
-  container: { flex: 1, justifyContent: "center", paddingHorizontal: 20 },
-  keyboardView: { flex: 1 },
-  logo: { width: 220, height: 220, alignSelf: "center" },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: COLORS.light,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  inputContainer: { marginBottom: 25 },
-  input: {
-    color: COLORS.light,
-    backgroundColor: COLORS.button,
-    padding: 15,
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  passwordWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.button,
-    borderRadius: 5,
-    marginBottom: 10,
-    paddingRight: 12,
-  },
-  passwordInput: {
-    flex: 1,
-    color: COLORS.light,
-    padding: 15,
-  },
-  eyeButton: {
-    padding: 4,
-  },
-  forgotPasswordButton: {},
-  forgotPasswordText: { color: COLORS.lightGray },
-  button: {
-    backgroundColor: COLORS.secondary,
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 15,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  googleButtonWrapper: { justifyContent: "center" },
-  gradient: {
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  buttonText: {
-    color: COLORS.light,
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  newAccButton: {
-    borderWidth: 2,
-    borderColor: COLORS.secondary,
-    padding: 15,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 35,
-  },
-  guestButton: { marginVertical: 15, padding: 10, alignItems: "center" },
-  guestButtonText: {
-    color: COLORS.lightGray,
-    fontSize: 16,
-    textDecorationLine: "underline",
-  },
-});

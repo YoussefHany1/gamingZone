@@ -10,7 +10,7 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
-import COLORS from "@/src/constants/colors";
+import { useIsDark, useThemeColors } from "@/src/hooks/useTheme";
 import type { ShimmerPlaceholderProps } from "../types";
 
 const { width } = Dimensions.get("window");
@@ -22,6 +22,7 @@ const { width } = Dimensions.get("window");
 
 const ShimmerPlaceholder = React.memo<ShimmerPlaceholderProps>(({ style }) => {
   const translateX = useSharedValue(-width);
+  const fills = usePlaceholderColors();
 
   useEffect(() => {
     // react-native-reanimated always runs on the UI thread (native driver active)
@@ -37,10 +38,17 @@ const ShimmerPlaceholder = React.memo<ShimmerPlaceholderProps>(({ style }) => {
   }));
 
   return (
-    <View style={[styles.placeholderBase, style, { overflow: "hidden" }]}>
+    <View
+      style={[
+        staticStyles.placeholderBase,
+        { backgroundColor: fills.placeholderBase },
+        style,
+        { overflow: "hidden" },
+      ]}
+    >
       <Animated.View style={[StyleSheet.absoluteFill, animatedStyle]}>
         <LinearGradient
-          colors={["transparent", "rgba(255,255,255,0.5)", "transparent"]}
+          colors={[...fills.shimmer]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={StyleSheet.absoluteFill}
@@ -56,21 +64,30 @@ ShimmerPlaceholder.displayName = "ShimmerPlaceholder";
 // SkeletonItem — a single list row placeholder
 // ---------------------------------------------------------------------------
 
-const SkeletonItem = React.memo(() => (
-  <View style={styles.skeletonContainer}>
-    {/* Game cover image placeholder */}
-    <ShimmerPlaceholder style={styles.skeletonImage} />
+const SkeletonItem = React.memo(() => {
+  const fills = usePlaceholderColors();
 
-    {/* Text info placeholders */}
-    <View style={styles.skeletonInfo}>
-      <ShimmerPlaceholder style={styles.skeletonTitle} />
-      <ShimmerPlaceholder style={styles.skeletonDate} />
+  return (
+    <View
+      style={[
+        staticStyles.skeletonContainer,
+        { backgroundColor: fills.skeletonContainer },
+      ]}
+    >
+      {/* Game cover image placeholder */}
+      <ShimmerPlaceholder style={staticStyles.skeletonImage} />
+
+      {/* Text info placeholders */}
+      <View style={staticStyles.skeletonInfo}>
+        <ShimmerPlaceholder style={staticStyles.skeletonTitle} />
+        <ShimmerPlaceholder style={staticStyles.skeletonDate} />
+      </View>
+
+      {/* Delete icon placeholder */}
+      <ShimmerPlaceholder style={staticStyles.skeletonIcon} />
     </View>
-
-    {/* Delete icon placeholder */}
-    <ShimmerPlaceholder style={styles.skeletonIcon} />
-  </View>
-));
+  );
+});
 
 SkeletonItem.displayName = "SkeletonItem";
 
@@ -95,13 +112,26 @@ const UserGamesSkeleton: React.FC = () => (
 
 export default React.memo(UserGamesSkeleton);
 
-const styles = StyleSheet.create({
-  placeholderBase: {
-    backgroundColor: COLORS.secondary + "40",
-  },
+// Placeholder fills follow the active theme, so they are applied as values on
+// top of the static geometry sheet.
+const usePlaceholderColors = () => {
+  const colors = useThemeColors();
+  const isDark = useIsDark();
+  return {
+    placeholderBase: colors.accentSurface,
+    skeletonContainer: colors.surface,
+    shimmer: [
+      "transparent",
+      isDark ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.85)",
+      "transparent",
+    ] as const,
+  };
+};
+
+const staticStyles = StyleSheet.create({
+  placeholderBase: {},
   skeletonContainer: {
     flexDirection: "row",
-    backgroundColor: "rgba(119, 155, 221, 0.1)",
     borderRadius: 12,
     marginTop: 24,
     padding: 10,

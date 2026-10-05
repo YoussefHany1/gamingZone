@@ -1,16 +1,10 @@
 import React, { memo, useCallback, useState } from "react";
 import CustomText from "@/src/components/CustomText";
-import {
-  Modal,
-  View,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  Platform,
-} from "react-native";
+import { Modal, View, TouchableOpacity, ScrollView, Platform } from "react-native";
 import { X } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type {
   GameFilters,
   FilterModalProps,
@@ -74,6 +68,34 @@ const FilterSection = memo<SectionProps>(
         ? (items as string[]).map((s) => ({ id: s, label: s }))
         : (items as FilterOption[]);
 
+    const styles = useThemeStyles((c) => ({
+      wrapper: { marginBottom: 20 },
+      title: {
+        color: c.textMuted,
+        fontSize: 13,
+        fontWeight: "700",
+        letterSpacing: 1,
+        textTransform: "uppercase",
+        marginBottom: 10,
+      },
+      row: { flexDirection: "row", paddingBottom: 4 },
+      chip: {
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: c.accent,
+        paddingHorizontal: 14,
+        paddingVertical: 7,
+        marginRight: 8,
+        backgroundColor: "transparent",
+      },
+      chipActive: {
+        backgroundColor: c.accent,
+        borderColor: c.accent,
+      },
+      chipText: { color: c.textSubtle, fontSize: 13, fontWeight: "500" },
+      chipTextActive: { color: c.onAccent, fontWeight: "700" },
+    }));
+
     return (
       <View style={styles.wrapper}>
         <CustomText style={styles.title}>{title}</CustomText>
@@ -129,6 +151,74 @@ FilterSection.displayName = "FilterSection";
 
 function FilterModal({ visible, filters, onApply, onClose }: FilterModalProps) {
   const { t } = useTranslation();
+
+  const styles = useThemeStyles((c) => ({
+    backdrop: {
+      flex: 1,
+      backgroundColor: c.overlay,
+    },
+    sheet: {
+      backgroundColor: c.backgroundDeep,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      paddingTop: 12,
+      paddingHorizontal: 20,
+      paddingBottom: Platform.OS === "ios" ? 34 : 20,
+      maxHeight: "75%",
+    },
+    handle: {
+      alignSelf: "center",
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: c.accent,
+      marginBottom: 16,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 20,
+    },
+    headerTitle: {
+      color: c.text,
+      fontSize: 18,
+      fontWeight: "700",
+    },
+    body: {
+      paddingBottom: 12,
+    },
+    footer: {
+      flexDirection: "row",
+      gap: 12,
+      marginTop: 8,
+    },
+    resetBtn: {
+      flex: 1,
+      paddingVertical: 13,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: c.accent,
+      alignItems: "center",
+    },
+    resetText: {
+      color: c.accentText,
+      fontWeight: "600",
+      fontSize: 15,
+    },
+    applyBtn: {
+      flex: 2,
+      paddingVertical: 13,
+      borderRadius: 14,
+      backgroundColor: c.accent,
+      alignItems: "center",
+    },
+    applyText: {
+      color: c.onAccent,
+      fontWeight: "700",
+      fontSize: 15,
+    },
+  }));
 
   // Local draft state – changes are only applied when user taps "Apply"
   const [draft, setDraft] = useState<GameFilters>(filters);
@@ -236,97 +326,3 @@ function FilterModal({ visible, filters, onApply, onClose }: FilterModalProps) {
   );
 }
 export default memo(FilterModal);
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.55)",
-  },
-  sheet: {
-    backgroundColor: "#111c30",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 12,
-    paddingHorizontal: 20,
-    paddingBottom: Platform.OS === "ios" ? 34 : 20,
-    maxHeight: "75%",
-  },
-  handle: {
-    alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: COLORS.secondary,
-    marginBottom: 16,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  headerTitle: {
-    color: COLORS.light,
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  body: {
-    paddingBottom: 12,
-  },
-  footer: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 8,
-  },
-  resetBtn: {
-    flex: 1,
-    paddingVertical: 13,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-    alignItems: "center",
-  },
-  resetText: {
-    color: COLORS.lightGray,
-    fontWeight: "600",
-    fontSize: 15,
-  },
-  applyBtn: {
-    flex: 2,
-    paddingVertical: 13,
-    borderRadius: 14,
-    backgroundColor: COLORS.secondary,
-    alignItems: "center",
-  },
-  applyText: {
-    color: COLORS.light,
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  // Section Style
-  wrapper: { marginBottom: 20 },
-  title: {
-    color: COLORS.lightGray,
-    fontSize: 13,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    marginBottom: 10,
-  },
-  row: { flexDirection: "row", paddingBottom: 4 },
-  chip: {
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    marginRight: 8,
-    backgroundColor: "transparent",
-  },
-  chipActive: {
-    backgroundColor: COLORS.secondary,
-    borderColor: COLORS.lightGray,
-  },
-  chipText: { color: COLORS.gray, fontSize: 13, fontWeight: "500" },
-  chipTextActive: { color: COLORS.light, fontWeight: "700" },
-});

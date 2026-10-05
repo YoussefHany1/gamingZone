@@ -3,7 +3,7 @@ import { View, StyleSheet } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import YoutubePlayer from "react-native-youtube-iframe";
 import { useTranslation } from "react-i18next";
-import { sharedStyles } from "./shared";
+import { useSharedStyles } from "./shared";
 import type { Video, GameTrailerProps } from "../../types";
 
 /**
@@ -29,6 +29,7 @@ function findTrailer(videos: Video[]): Video | undefined {
 
 const GameTrailer: React.FC<GameTrailerProps> = ({ videos }) => {
   const { t } = useTranslation();
+  const sharedStyles = useSharedStyles();
 
   if (!videos?.length) return null;
 

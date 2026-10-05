@@ -18,11 +18,18 @@ import { getSiteBaseUrl } from "@/lib/metadata";
 // Prerender popular game pages so they are served from the Vercel CDN instead
 // of running a function (IGDB proxy + Steam scrape) on every request.
 //
-// Game data does drift (aggregate ratings, release dates, store availability),
-// so these stay on a 1h window rather than the 6h used for news articles. The
-// long windows elsewhere are safety nets; /api/revalidate shortens this on
-// demand. 1h is a 6x cut in writes on the 20 prerendered game paths.
-export const revalidate = 3600;
+// 24h is a backstop, not the freshness mechanism: free-games.yml calls
+// /api/revalidate with target "games" when it writes, dropping the "games" tag
+// this render depends on. Game data does drift (aggregate ratings, release
+// dates, store availability), but not enough to justify an hourly re-render of
+// every prerendered path — the IGDB proxy and Steam scrape are the expensive
+// part, and both upstream caches are long-lived.
+//
+// Note this export is inert on its own. Next derives a route's revalidate from
+// the lowest TTL among the data-cache entries its render touches, so the
+// matching `revalidate` in @/features/gameDetails/services/api.ts must move in
+// step or this stays at 3600.
+export const revalidate = 86400;
 
 const PRERENDERED_GAME_LIMIT = 12;
 

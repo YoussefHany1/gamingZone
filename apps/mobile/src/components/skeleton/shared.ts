@@ -10,14 +10,12 @@ import {
 } from "react-native-reanimated";
 
 // ---------------------------------------------------------------------------
-// Palette
-// ---------------------------------------------------------------------------
-
-export const SKELETON_BASE_COLOR = "#1f3a60";
-export const SKELETON_HIGHLIGHT_COLOR = "#2a4a75";
-
-// ---------------------------------------------------------------------------
 // Hooks
+//
+// Skeleton colors live on the theme palette (`colors.skeletonBase` /
+// `colors.skeletonHighlight`) so placeholders follow the active theme. Reach
+// them through `useThemeColors()`; they are not exported from here because
+// module-level constants cannot react to a theme change.
 // ---------------------------------------------------------------------------
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");

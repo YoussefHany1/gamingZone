@@ -342,6 +342,24 @@ async function processSource(sourceData: SourceData, summary: RssSummary): Promi
 
     if (createdItems.length > 0) {
       logger.info(`   🚀 Saved and queued ${createdItems.length} new articles.`);
+
+      // Machine-readable handoff for .github/workflows/trigger-rss.yml, which
+      // uses these ids to revalidate only the article pages that just appeared
+      // instead of the whole news surface.
+      //
+      // Two constraints shape this line. pino-pretty prefixes a timestamp and
+      // injects ANSI colour codes, so the marker cannot be anchored to the start
+      // of the line — it is matched with grep -oE on the id charset. And this
+      // block runs once per source, so the workflow aggregates across lines
+      // rather than taking the last one.
+      const createdDocIds = createdItems
+        .map((item) => item.docId)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0);
+
+      if (createdDocIds.length > 0) {
+        logger.info(`NEW_ARTICLE_IDS=${createdDocIds.join(',')}`);
+      }
+
       await sendNotifications(
         createdItems.map((item) => ({ ...item, topicName })),
         summary,

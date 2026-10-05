@@ -18,7 +18,14 @@ const GameDetailsMetaSkeleton: React.FC = () => {
       <S width="38%" height={14} radius={5} style={{ marginTop: 8, direction: "ltr" }} />
 
       {/* Platforms + rating row */}
-      <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12, direction: "ltr" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginTop: 12,
+          direction: "ltr",
+        }}
+      >
         <View style={{ flexDirection: "row", flex: 1, gap: 8 }}>
           {[70, 70, 70].map((w, i) => (
             <S key={i} width={w} height={28} radius={14} />
@@ -29,7 +36,12 @@ const GameDetailsMetaSkeleton: React.FC = () => {
       </View>
 
       {/* Age badge */}
-      <S width={48} height={30} radius={8} style={{ alignSelf: "flex-end", marginTop: 8 }} />
+      <S
+        width={48}
+        height={30}
+        radius={8}
+        style={{ alignSelf: "flex-end", marginTop: 8 }}
+      />
     </View>
   );
 };

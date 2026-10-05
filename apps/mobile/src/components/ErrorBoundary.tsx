@@ -1,7 +1,8 @@
 import React, { Component, ReactNode } from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import crashlytics from "@react-native-firebase/crashlytics";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import CustomText from "./CustomText";
 import Svg, { Path } from "react-native-svg";
 import ContactScreen from "../features/settings/screens/ContactScreen";
@@ -27,6 +28,103 @@ interface State {
   hasError: boolean;
   errorMessage: string;
   showContactScreen: boolean;
+}
+
+// ─── Fallback UI ─────────────────────────────────────────────────────────────
+
+/**
+ * The default crash UI. Extracted from the boundary itself so it can use hooks
+ * — a class component cannot.
+ */
+function ErrorFallback({
+  onRetry,
+  onContact,
+}: {
+  onRetry: () => void;
+  onContact: () => void;
+}): ReactNode {
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: "700",
+      color: c.text,
+      marginBottom: 8,
+      marginTop: 18,
+      textAlign: "center",
+    },
+    buttonsContainer: {
+      flexDirection: "row",
+      gap: 12,
+      marginTop: 10,
+    },
+    button: {
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.accentBorder,
+      borderRadius: 12,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+    },
+    contactButton: {
+      backgroundColor: c.accent,
+    },
+    buttonText: {
+      color: c.text,
+      fontWeight: "600",
+      fontSize: 15,
+    },
+    contactButtonText: {
+      color: c.onAccent,
+    },
+  }));
+
+  return (
+    <View style={styles.container}>
+      <View collapsable={false}>
+        <Svg
+          fill={colors.textMuted}
+          width="50px"
+          height="50px"
+          viewBox="0 0 256 256"
+          id="Flat"
+        >
+          <Path d="M116,136V104a12,12,0,0,1,24,0v32a12,12,0,0,1-24,0Zm124.23242,77.979a27.71154,27.71154,0,0,1-24.25586,14.01319H40.02344A28.00034,28.00034,0,0,1,15.79,185.96582L103.7666,33.97314v.00049a27.99988,27.99988,0,0,1,48.4668,0L240.21,185.96533A27.71359,27.71359,0,0,1,240.23242,213.979Zm-20.79394-15.99072L131.46191,45.99609a4.00012,4.00012,0,0,0-6.92382,0h0L36.56152,197.98828a4.0004,4.0004,0,0,0,3.46192,6.00391H215.97656a4.0004,4.0004,0,0,0,3.46192-6.00391ZM128,160a16,16,0,1,0,16,16A16.00016,16.00016,0,0,0,128,160Z" />
+        </Svg>
+      </View>
+      <CustomText style={styles.title}>Something went wrong</CustomText>
+
+      <View style={styles.buttonsContainer}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={onRetry}
+          activeOpacity={0.8}
+          accessibilityLabel="Retry"
+          accessibilityRole="button"
+        >
+          <CustomText style={styles.buttonText}>Try again</CustomText>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, styles.contactButton]}
+          onPress={onContact}
+          activeOpacity={0.8}
+        >
+          <CustomText style={[styles.buttonText, styles.contactButtonText]}>
+            Contact Support
+          </CustomText>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -86,90 +184,10 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.props.fallback) return this.props.fallback;
 
     return (
-      <View style={styles.container}>
-        <View collapsable={false}>
-          <Svg
-            fill={COLORS.lightGray}
-            width="50px"
-            height="50px"
-            viewBox="0 0 256 256"
-            id="Flat"
-          >
-            <Path d="M116,136V104a12,12,0,0,1,24,0v32a12,12,0,0,1-24,0Zm124.23242,77.979a27.71154,27.71154,0,0,1-24.25586,14.01319H40.02344A28.00034,28.00034,0,0,1,15.79,185.96582L103.7666,33.97314v.00049a27.99988,27.99988,0,0,1,48.4668,0L240.21,185.96533A27.71359,27.71359,0,0,1,240.23242,213.979Zm-20.79394-15.99072L131.46191,45.99609a4.00012,4.00012,0,0,0-6.92382,0h0L36.56152,197.98828a4.0004,4.0004,0,0,0,3.46192,6.00391H215.97656a4.0004,4.0004,0,0,0,3.46192-6.00391ZM128,160a16,16,0,1,0,16,16A16.00016,16.00016,0,0,0,128,160Z" />
-          </Svg>
-        </View>
-        <CustomText style={styles.title}>Something went wrong</CustomText>
-
-        <View style={styles.buttonsContainer}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={this.handleRetry}
-            activeOpacity={0.8}
-            accessibilityLabel="Retry"
-            accessibilityRole="button"
-          >
-            <CustomText style={styles.buttonText}>Try again</CustomText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, styles.contactButton]}
-            onPress={() => this.setState({ showContactScreen: true })}
-            activeOpacity={0.8}
-          >
-            <CustomText style={styles.buttonText}>Contact Support</CustomText>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ErrorFallback
+        onRetry={this.handleRetry}
+        onContact={() => this.setState({ showContactScreen: true })}
+      />
     );
   }
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-  },
-  emoji: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: COLORS.light,
-    marginBottom: 8,
-    marginTop: 18,
-    textAlign: "center",
-  },
-  section: {
-    fontSize: 13,
-    color: COLORS.secondary,
-    marginBottom: 12,
-  },
-  buttonsContainer: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 10,
-  },
-  button: {
-    backgroundColor: COLORS.button,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  contactButton: {
-    backgroundColor: COLORS.secondary,
-  },
-  buttonText: {
-    color: COLORS.light,
-    fontWeight: "600",
-    fontSize: 15,
-  },
-});

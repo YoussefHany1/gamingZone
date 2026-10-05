@@ -42,7 +42,9 @@ function readCache(): CachedRecommendations | null {
 function writeCache(data: CachedRecommendations): void {
   try {
     storage.set(CACHE_KEY, JSON.stringify(data));
-  } catch { /* ignore write errors */ }
+  } catch {
+    /* ignore write errors */
+  }
 }
 
 function clearCache(): void {
@@ -130,7 +132,8 @@ async function buildRecommendations(
 
   // Filter DLCs and by user platform
   results = results.filter((game) => {
-    if ((game as any).category !== undefined && (game as any).category !== 0) return false;
+    if ((game as any).category !== undefined && (game as any).category !== 0)
+      return false;
     if (!userPlatform) return true;
     if (!game.platforms) return false;
     if (userPlatform === "playstation")
@@ -185,10 +188,10 @@ export function useRecommendedGames() {
   const [basedOnGenre, setBasedOnGenre] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
-  const fetchingRef = useRef(false);       // prevent concurrent fetches
-  const initializedRef = useRef(false);    // all 3 initial snapshots received?
-  const snapshotCountRef = useRef(0);      // how many initial snapshots fired
-  const lastHashRef = useRef<string>("");  // last committed hash
+  const fetchingRef = useRef(false); // prevent concurrent fetches
+  const initializedRef = useRef(false); // all 3 initial snapshots received?
+  const snapshotCountRef = useRef(0); // how many initial snapshots fired
+  const lastHashRef = useRef<string>(""); // last committed hash
 
   // Live list data coming from snapshots
   const idsRef = useRef<ListIds>({ playing: [], played: [], wantToPlay: [] });
@@ -256,7 +259,12 @@ export function useRecommendedGames() {
         );
 
         // Persist to cache with the current hash
-        writeCache({ games, basedOnGenre: genre, fetchedAt: Date.now(), listsHash: newHash });
+        writeCache({
+          games,
+          basedOnGenre: genre,
+          fetchedAt: Date.now(),
+          listsHash: newHash,
+        });
 
         if (mountedRef.current) {
           setRecommendedGames(games);
@@ -282,7 +290,7 @@ export function useRecommendedGames() {
       if (!initializedRef.current) return;
       const newHash = computeListsHash(idsRef.current);
       if (newHash === lastHashRef.current) return; // no actual change
-      clearCache();                                 // invalidate immediately
+      clearCache(); // invalidate immediately
       handleHashReady(newHash);
     }
 

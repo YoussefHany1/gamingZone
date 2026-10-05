@@ -37,6 +37,10 @@ jobs:
       # The summary renders in the home page recap. This job runs once a week,
       # so an unconditional ping costs one invocation a week — not worth
       # gating on log output the way the 5-minute RSS job does.
+      #
+      # `target: "home"` no longer exists: the endpoint no longer infers paths
+      # from the target, so the home paths this change actually affects are named
+      # explicitly.
       - name: Revalidate web home cache
         env:
           REVALIDATE_URL: ${{ secrets.REVALIDATE_URL }}
@@ -51,4 +55,4 @@ jobs:
             -X POST "$REVALIDATE_URL" \
             -H "Authorization: Bearer $REVALIDATE_SECRET" \
             -H "Content-Type: application/json" \
-            -d '{"target":"home","tags":["news:weekly-summary"]}'
+            -d '{"tags":["news:weekly-summary"],"paths":["/en","/ar"]}'

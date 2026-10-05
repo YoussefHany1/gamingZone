@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
-import { sharedStyles } from "./shared";
+import { useSharedStyles } from "./shared";
 import type { GameAboutProps } from "../../types";
 
 const SUMMARY_STYLE = {
@@ -14,6 +14,7 @@ const SUMMARY_STYLE = {
 
 const GameAbout: React.FC<GameAboutProps> = ({ summary }) => {
   const { t } = useTranslation();
+  const sharedStyles = useSharedStyles();
 
   if (!summary) return null;
 

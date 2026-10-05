@@ -1,11 +1,5 @@
 import CustomText from "@/src/components/CustomText";
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  ToastAndroid,
-} from "react-native";
+import { View, ScrollView, TouchableOpacity, ToastAndroid } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import { Image } from "expo-image";
@@ -19,7 +13,8 @@ import DateTimePicker, {
 import SkeletonProfile from "../skeleton/SkeletonProfile";
 import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { adUnitId } from "@/src/constants/config";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { useShallow } from "zustand/react/shallow";
@@ -88,6 +83,104 @@ function ProfileScreen(): React.ReactElement {
   const [showPicker, setShowPicker] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    container: { flex: 1, backgroundColor: c.background, paddingBottom: 90 },
+    subContainer: { padding: 20 },
+    avatarContainer: { alignItems: "center", marginBottom: 20 },
+    avatar: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      backgroundColor: c.skeletonBase,
+      borderWidth: 2,
+      borderColor: c.textMuted,
+    },
+    changePicText: { color: c.textMuted, marginTop: 10, fontSize: 16 },
+    verifyContainer: { marginBottom: 20 },
+    verifyBox: {
+      backgroundColor: c.accentSurface,
+      borderColor: c.border,
+      borderWidth: 1,
+      borderRadius: 10,
+      padding: 15,
+      alignItems: "center",
+    },
+    verifyBoxVerified: {
+      backgroundColor: c.accentSurface,
+      borderColor: c.border,
+      borderWidth: 1,
+      borderRadius: 10,
+      padding: 15,
+      alignItems: "center",
+    },
+    verifyText: { color: c.text, fontSize: 16, fontWeight: "600" },
+    verifyAction: {
+      color: c.accentText,
+      fontSize: 14,
+      fontWeight: "700",
+      marginTop: 6,
+      textDecorationLine: "underline",
+    },
+    input: {
+      width: "100%",
+      backgroundColor: c.surface,
+      color: c.text,
+      padding: 15,
+      borderRadius: 5,
+      marginBottom: 20,
+      fontSize: 16,
+    },
+    label: { fontSize: 18, fontWeight: "600", marginBottom: 10, color: c.text },
+    saveBtn: {
+      backgroundColor: c.accent,
+      borderRadius: 12,
+      alignSelf: "center",
+      padding: 15,
+      marginVertical: 20,
+    },
+    saveText: {
+      color: c.onAccent,
+      textAlign: "center",
+      fontSize: 18,
+      fontWeight: "600",
+    },
+    ad: { alignItems: "center", width: "100%", marginVertical: 30 },
+    adText: { color: c.text, marginBottom: 10 },
+    platformContainer: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "flex-start",
+      marginBottom: 20,
+      gap: 10,
+    },
+    platformButton: {
+      width: "30%",
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      padding: 15,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: "transparent",
+    },
+    platformButtonSelected: {
+      backgroundColor: c.accentSurface,
+      borderColor: c.accent,
+    },
+    platformText: {
+      color: c.textMuted,
+      marginTop: 8,
+      fontSize: 12,
+      fontWeight: "600",
+      textAlign: "center",
+    },
+    platformTextSelected: {
+      color: c.accentText,
+    },
+  }));
+
   const [showAds, setShowAds] = useState<boolean>(false);
   const adsEnabled = useAdsEnabled();
   const [isReady, setIsReady] = useState<boolean>(false);
@@ -357,7 +450,7 @@ function ProfileScreen(): React.ReactElement {
           <CustomTextInput
             style={styles.input}
             placeholder={t("settings.profile.placeholders.name")}
-            placeholderTextColor={COLORS.gray}
+            placeholderTextColor={colors.textSubtle}
             value={name}
             onChangeText={setName}
           />
@@ -368,7 +461,7 @@ function ProfileScreen(): React.ReactElement {
             <CustomTextInput
               style={styles.input}
               placeholder={t("settings.profile.placeholders.dob")}
-              placeholderTextColor={COLORS.gray}
+              placeholderTextColor={colors.textSubtle}
               value={dob}
               editable={false}
             />
@@ -409,7 +502,7 @@ function ProfileScreen(): React.ReactElement {
               >
                 <g.icon
                   size={32}
-                  color={gender === g.id ? COLORS.light : COLORS.lightGray}
+                  color={gender === g.id ? colors.text : colors.textMuted}
                 />
                 <CustomText
                   style={[
@@ -474,12 +567,12 @@ function ProfileScreen(): React.ReactElement {
                 {p.icon === Monitor ? (
                   <p.icon
                     size={32}
-                    color={platform === p.id ? COLORS.light : COLORS.lightGray}
+                    color={platform === p.id ? colors.text : colors.textMuted}
                   />
                 ) : (
                   <p.icon
                     size={32}
-                    fill={platform === p.id ? COLORS.light : COLORS.lightGray}
+                    fill={platform === p.id ? colors.text : colors.textMuted}
                   />
                 )}
                 <CustomText
@@ -507,7 +600,6 @@ function ProfileScreen(): React.ReactElement {
             style={[
               styles.saveBtn,
               {
-                backgroundColor: "#171a21",
                 marginTop: 10,
                 width: "100%",
                 flexDirection: "row",
@@ -518,7 +610,7 @@ function ProfileScreen(): React.ReactElement {
             onPress={() => setShowSteamModal(true)}
           >
             <View style={{ marginRight: 10 }}>
-              <SteamIcon size={24} fill={COLORS.light} />
+              <SteamIcon size={24} fill={colors.onAccent} />
             </View>
             <CustomText style={styles.saveText}>
               {t("settings.profile.steam.modal.title") || "Sync Steam Library"}
@@ -531,10 +623,18 @@ function ProfileScreen(): React.ReactElement {
 
           {/* Admin dashboard â€” only visible to admin users */}
           {isAdmin && (
-            <View style={{ backgroundColor: "gold", padding: 15, margin: 20 }}>
-              <CustomText>Admin Dashboard</CustomText>
-              <CustomText>Channel: {Updates.channel ?? "Not Defined"}</CustomText>
-              <CustomText>
+            <View
+              style={{
+                backgroundColor: "gold",
+                padding: 15,
+                margin: 20,
+              }}
+            >
+              <CustomText style={{ color: "#3a2c00" }}>Admin Dashboard</CustomText>
+              <CustomText style={{ color: "#3a2c00" }}>
+                Channel: {Updates.channel ?? "Not Defined"}
+              </CustomText>
+              <CustomText style={{ color: "#3a2c00" }}>
                 Runtime Version: {Updates.runtimeVersion ?? "Not Defined"}
               </CustomText>
               <CustomText>
@@ -555,99 +655,3 @@ function ProfileScreen(): React.ReactElement {
 }
 
 export default ProfileScreen;
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.primary, paddingBottom: 90 },
-  subContainer: { padding: 20 },
-  avatarContainer: { alignItems: "center", marginBottom: 20 },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#333",
-    borderWidth: 2,
-    borderColor: COLORS.lightGray,
-  },
-  changePicText: { color: COLORS.lightGray, marginTop: 10, fontSize: 16 },
-  verifyContainer: { marginBottom: 20 },
-  verifyBox: {
-    backgroundColor: "rgba(255, 193, 7, 0.15)",
-    borderColor: "#ffc107",
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-  },
-  verifyBoxVerified: {
-    backgroundColor: "rgba(76, 175, 80, 0.15)",
-    borderColor: "#4caf50",
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-  },
-  verifyText: { color: COLORS.light, fontSize: 16, fontWeight: "600" },
-  verifyAction: {
-    color: "#ffc107",
-    fontSize: 14,
-    fontWeight: "700",
-    marginTop: 6,
-    textDecorationLine: "underline",
-  },
-  input: {
-    width: "100%",
-    backgroundColor: COLORS.button,
-    color: COLORS.light,
-    padding: 15,
-    borderRadius: 5,
-    marginBottom: 20,
-    fontSize: 16,
-  },
-  label: { fontSize: 18, fontWeight: "600", marginBottom: 10, color: COLORS.light },
-  saveBtn: {
-    backgroundColor: COLORS.secondary,
-    borderRadius: 12,
-    alignSelf: "center",
-    padding: 15,
-    marginVertical: 20,
-  },
-  saveText: {
-    color: COLORS.light,
-    textAlign: "center",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  ad: { alignItems: "center", width: "100%", marginVertical: 30 },
-  adText: { color: COLORS.light, marginBottom: 10 },
-  platformContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "flex-start",
-    marginBottom: 20,
-    gap: 10,
-  },
-  platformButton: {
-    width: "30%",
-    backgroundColor: "rgba(119, 155, 221, 0.1)",
-    borderRadius: 12,
-    padding: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  platformButtonSelected: {
-    backgroundColor: "rgba(119, 155, 221, 0.3)",
-    borderColor: COLORS.secondary,
-  },
-  platformText: {
-    color: COLORS.lightGray,
-    marginTop: 8,
-    fontSize: 12,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  platformTextSelected: {
-    color: COLORS.light,
-  },
-});

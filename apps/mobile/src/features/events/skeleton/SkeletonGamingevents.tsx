@@ -1,7 +1,8 @@
 import React from "react";
 import { View, StyleSheet, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import Shimmer from "@/src/components/skeleton/Shimmer";
 import { useShimmerSweep } from "@/src/components/skeleton/shared";
 
@@ -11,13 +12,82 @@ const CARD_HEIGHT = 220;
 const CARD_MARGIN = 10;
 
 const SkeletonGamingEvents: React.FC = () => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    eventCard: {
+      width: CARD_WIDTH,
+      height: CARD_HEIGHT,
+      marginHorizontal: CARD_MARGIN,
+      borderRadius: 20,
+      overflow: "hidden",
+      backgroundColor: c.accent,
+    },
+    shimmer: {
+      zIndex: 1,
+    },
+    contentContainer: {
+      flex: 1,
+      padding: 16,
+      zIndex: 2,
+    },
+    topRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 8,
+    },
+    badgeSkeleton: {
+      width: 80,
+      height: 28,
+      backgroundColor: "rgba(255, 255, 255, 0.15)",
+      borderRadius: 12,
+    },
+    infoContainer: {
+      gap: 8,
+      justifyContent: "flex-end",
+      flexGrow: 1,
+      marginBottom: 14,
+      marginLeft: 4,
+    },
+    titleSkeletonContainer: {
+      gap: 6,
+    },
+    titleSkeleton: {
+      width: "100%",
+      height: 20,
+      backgroundColor: "rgba(255, 255, 255, 0.2)",
+      borderRadius: 6,
+    },
+    dateTimeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+    },
+    dateSkeleton: {
+      width: 120,
+      height: 32,
+      backgroundColor: c.accentSurface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.accentBorder,
+    },
+    countdownSkeleton: {
+      width: 90,
+      height: 32,
+      backgroundColor: c.accentSurface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.accentBorder,
+    },
+  }));
+
   const animatedStyle = useShimmerSweep();
 
   return (
     <View style={styles.eventCard}>
       {/* Dark gradient overlay */}
       <LinearGradient
-        colors={["rgba(12, 26, 51, 0.4)", "rgba(12, 26, 51, 0.95)"]}
+        colors={[colors.scrimSoft, colors.scrimSolid]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -50,71 +120,3 @@ const SkeletonGamingEvents: React.FC = () => {
 };
 
 export default React.memo(SkeletonGamingEvents);
-
-const styles = StyleSheet.create({
-  eventCard: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginHorizontal: CARD_MARGIN,
-    borderRadius: 20,
-    overflow: "hidden",
-    backgroundColor: COLORS.secondary,
-  },
-  shimmer: {
-    zIndex: 1,
-  },
-  contentContainer: {
-    flex: 1,
-    padding: 16,
-    zIndex: 2,
-  },
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  badgeSkeleton: {
-    width: 80,
-    height: 28,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: 12,
-  },
-  infoContainer: {
-    gap: 8,
-    justifyContent: "flex-end",
-    flexGrow: 1,
-    marginBottom: 14,
-    marginLeft: 4,
-  },
-  titleSkeletonContainer: {
-    gap: 6,
-  },
-  titleSkeleton: {
-    width: "100%",
-    height: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: 6,
-  },
-  dateTimeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  dateSkeleton: {
-    width: 120,
-    height: 32,
-    backgroundColor: COLORS.secondary + "CC",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray + "40",
-  },
-  countdownSkeleton: {
-    width: 90,
-    height: 32,
-    backgroundColor: COLORS.secondary + "CC",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray + "40",
-  },
-});

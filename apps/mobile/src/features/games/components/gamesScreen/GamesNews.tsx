@@ -7,7 +7,8 @@ import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SectionTitle from "@/src/components/SectionTitle";
 import type { NewsGame, NewsGameCardProps } from "../../types";
 
@@ -56,6 +57,62 @@ const GAMES_DATA: NewsGame[] = [
 
 const NewsGameCard = React.memo<NewsGameCardProps>(({ item, onPress }) => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    gameCard: {
+      width: 165,
+      height: 250,
+      marginHorizontal: 5,
+      borderRadius: 16,
+      overflow: "hidden",
+      position: "relative",
+    },
+    cardGradient: { position: "absolute", width: "100%", height: "100%" },
+    imageContainer: { width: "100%", height: 200, position: "relative" },
+    cover: { width: "100%", height: "100%" },
+    coverGradient: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: "50%",
+    },
+    infoSection: { flex: 1, padding: 12, justifyContent: "space-between" },
+    title: {
+      color: c.text,
+      fontSize: 15,
+      fontWeight: "bold",
+      lineHeight: 18,
+      textAlign: "center",
+    },
+    liveIndicator: {
+      position: "absolute",
+      top: 8,
+      left: 8,
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: c.scrim,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+      gap: 5,
+      borderWidth: 1,
+      borderColor: c.danger,
+    },
+    liveDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: c.danger,
+    },
+    liveText: {
+      color: c.danger,
+      fontSize: 10,
+      fontWeight: "bold",
+      letterSpacing: 0.5,
+    },
+  }));
 
   return (
     <TouchableOpacity
@@ -63,7 +120,10 @@ const NewsGameCard = React.memo<NewsGameCardProps>(({ item, onPress }) => {
       onPress={() => onPress(item.name, item.apiUrl, item.source)}
       activeOpacity={0.9}
     >
-      <LinearGradient colors={["#1a3052", COLORS.primary]} style={styles.cardGradient} />
+      <LinearGradient
+        colors={[colors.skeletonBase, colors.accent]}
+        style={styles.cardGradient}
+      />
 
       <View style={styles.imageContainer}>
         <Image
@@ -73,7 +133,7 @@ const NewsGameCard = React.memo<NewsGameCardProps>(({ item, onPress }) => {
           cachePolicy="memory-disk"
         />
         <LinearGradient
-          colors={["transparent", COLORS.darkBackground + "99"]}
+          colors={["transparent", colors.scrim]}
           style={styles.coverGradient}
         />
       </View>
@@ -98,6 +158,18 @@ NewsGameCard.displayName = "NewsGameCard";
 
 function GamesNews(): React.ReactElement {
   const navigation = useNavigation<any>();
+
+  const styles = useThemeStyles((c) => ({
+    container: {},
+    headerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      margin: 18,
+    },
+    listContent: { paddingHorizontal: 10, paddingVertical: 5 },
+  }));
   const { t } = useTranslation();
 
   const handleGamePress = useCallback(
@@ -140,67 +212,3 @@ function GamesNews(): React.ReactElement {
 }
 
 export default GamesNews;
-
-const styles = StyleSheet.create({
-  container: {},
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    margin: 18,
-  },
-  listContent: { paddingHorizontal: 10, paddingVertical: 5 },
-  gameCard: {
-    width: 165,
-    height: 250,
-    marginHorizontal: 5,
-    borderRadius: 16,
-    overflow: "hidden",
-    position: "relative",
-  },
-  cardGradient: { position: "absolute", width: "100%", height: "100%" },
-  imageContainer: { width: "100%", height: 200, position: "relative" },
-  cover: { width: "100%", height: "100%" },
-  coverGradient: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "50%",
-  },
-  infoSection: { flex: 1, padding: 12, justifyContent: "space-between" },
-  title: {
-    color: COLORS.light,
-    fontSize: 15,
-    fontWeight: "bold",
-    lineHeight: 18,
-    textAlign: "center",
-  },
-  liveIndicator: {
-    position: "absolute",
-    top: 8,
-    left: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(12, 26, 51, 0.9)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 5,
-    borderWidth: 1,
-    borderColor: COLORS.danger,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.danger,
-  },
-  liveText: {
-    color: COLORS.danger,
-    fontSize: 10,
-    fontWeight: "bold",
-    letterSpacing: 0.5,
-  },
-});

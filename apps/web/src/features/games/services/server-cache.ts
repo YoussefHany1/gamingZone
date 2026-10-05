@@ -14,22 +14,35 @@ import { getServerApiUrl } from "@/lib/api-config";
  * searchGames from there — `unstable_cache` and `server-only` cannot live in a
  * module that reaches the browser bundle.
  *
- * Why this matters: axios bypasses Next's fetch cache, and /[locale]/games
- * awaits searchParams, so that route is always a dynamic render. It was firing
- * nine of these calls on every visit. These wrappers collapse them to one
- * upstream request per TTL.
+ * Why this matters: axios bypasses Next's fetch cache, and both callers render
+ * data that outlives a single request. /[locale]/games was previously forced
+ * dynamic by an `await searchParams`, so it fired nine of these calls on every
+ * visit. These wrappers collapse them to one upstream request per TTL.
  *
- * TTLs are a fallback, not the freshness mechanism — /api/revalidate drops the
- * matching tags when content actually changes.
+ * Now that search has moved to /[locale]/games/search, the browse page is a real
+ * ISR route and the search route renders per request — but search goes through
+ * searchGames in ./api, which is intentionally uncached, so the unbounded key
+ * space of user-typed queries never reaches these accessors.
  */
 
 const FREE_GAMES_LIMIT = 20;
 
-/** Kept in step with games/[id]'s `revalidate` (3600). */
-const GAMES_LIST_TTL_SECONDS = 3600;
-
-/** Kept in step with the home page's `revalidate` (1800). */
-const FREE_GAMES_TTL_SECONDS = 1800;
+/**
+ * Both TTLs are 86400 because both feed the static /[locale]/games browse page,
+ * whose own `revalidate` is also 86400.
+ *
+ * They must stay equal. Next derives a route's revalidate window from the
+ * *lowest* TTL among the data-cache entries its render touches, so the browse
+ * page is capped by whichever of these two is shorter — raising only one would
+ * silently leave the page regenerating hourly while the comment above claims
+ * it is a daily ISR route.
+ *
+ * free-games.yml calls /api/revalidate with target "games" whenever free-game
+ * membership changes, dropping these tags and the browse paths ahead of the
+ * window. The long TTL is a backstop; that trigger is the freshness mechanism.
+ */
+const GAMES_LIST_TTL_SECONDS = 86400;
+const FREE_GAMES_TTL_SECONDS = 86400;
 
 interface FreeGameDoc {
   $id: string;

@@ -3,11 +3,40 @@ import { View, TouchableOpacity, Share, StyleSheet } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { Share2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 const STORE_URL = "https://play.google.com/store/apps/details?id=com.yh.gamingzone";
 
 const InviteFriendsBtn: React.FC = memo(() => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    categoryHeader: {
+      marginVertical: 10,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: 16,
+      backgroundColor: c.surface,
+      borderRadius: 12,
+    },
+    categoryHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+    },
+    chevronIcon: {
+      marginRight: 8,
+    },
+    categoryTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: c.text,
+      marginRight: 8,
+      textAlign: "left",
+    },
+  }));
+
   const { t } = useTranslation();
 
   // Memoized share handler to avoid re-creation on re-renders
@@ -36,7 +65,7 @@ const InviteFriendsBtn: React.FC = memo(() => {
   return (
     <TouchableOpacity style={styles.categoryHeader} onPress={onShare}>
       <View style={styles.categoryHeaderLeft}>
-        <Share2 size={20} color={COLORS.lightGray} style={styles.chevronIcon} />
+        <Share2 size={20} color={colors.textMuted} style={styles.chevronIcon} />
         <CustomText style={styles.categoryTitle}>
           {t("settings.menu.inviteFriends")}
         </CustomText>
@@ -47,30 +76,3 @@ const InviteFriendsBtn: React.FC = memo(() => {
 
 InviteFriendsBtn.displayName = "InviteFriendsBtn";
 export default InviteFriendsBtn;
-
-const styles = StyleSheet.create({
-  categoryHeader: {
-    marginVertical: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    backgroundColor: COLORS.button,
-    borderRadius: 12,
-  },
-  categoryHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  chevronIcon: {
-    marginRight: 8,
-  },
-  categoryTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.light,
-    marginRight: 8,
-    textAlign: "left",
-  },
-});

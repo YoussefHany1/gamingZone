@@ -153,6 +153,7 @@
     "releaseCalendar": {
       "title": "रिलीज़ कैलेंडर",
       "subtitle": "दिन-प्रतिदिन क्या आ रहा है, देखें",
+      "today": "आज",
       "outNow": "अभी उपलब्ध",
       "released": "रिलीज़ हो चुका",
       "noReleases": "इस दिन कोई रिलीज़ नहीं",
@@ -447,6 +448,12 @@
   },
   "settings": {
     "language": "भाषा",
+    "theme": {
+      "title": "रूप",
+      "system": "सिस्टम",
+      "light": "हल्का",
+      "dark": "गहरा"
+    },
     "currentLang": "हिंदी",
     "languageSelect": {
       "confirmTitle": "भाषा बदलें",

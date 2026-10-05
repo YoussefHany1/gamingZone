@@ -153,6 +153,7 @@
     "releaseCalendar": {
       "title": "Calendario de lanzamientos",
       "subtitle": "Descubre qué sale, día a día",
+      "today": "Hoy",
       "outNow": "Ya disponible",
       "released": "Lanzado",
       "noReleases": "No hay lanzamientos este día",
@@ -450,6 +451,12 @@
     "languageSelect": {
       "confirmTitle": "Cambiar idioma",
       "confirmMessage": "La aplicación se reiniciará para aplicar el nuevo idioma."
+    },
+    "theme": {
+      "title": "Apariencia",
+      "system": "Sistema",
+      "light": "Claro",
+      "dark": "Oscuro"
     },
     "currentLang": "Español",
     "menu": {

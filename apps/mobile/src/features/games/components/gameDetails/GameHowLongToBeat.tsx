@@ -1,64 +1,99 @@
 import React, { memo } from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import Svg, { Circle, Text as SvgText, Path } from "react-native-svg";
 // collapsable={false} on the wrapper View prevents Reanimated 4 from
 // intercepting SVG clientRect events synchronously on the main thread (ANR fix)
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
-import { sharedStyles } from "./shared";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useSharedStyles } from "./shared";
 import type { GameHowLongToBeatProps, HoursCircleProps } from "../../types";
 
 // SVG text styling kept at module level to avoid per-render allocation
 const SVG_FONT_SIZE = 34;
 const SVG_FONT_WEIGHT = "bold";
-const SVG_FILL = COLORS.light;
 // Vertical nudge so the text sits visually centred inside the circle
 const SVG_DY = 38 * 0.1;
 
 /** Renders a number of hours inside a decorative SVG arc or circle. */
-const HoursCircle: React.FC<HoursCircleProps> = ({ hours, pathD }) => (
-  <View collapsable={false}>
-    <Svg width={85} height={85} viewBox="0 0 85 85" accessible={false}>
-      {pathD ? (
-        <Path
-          d={pathD}
-          stroke={COLORS.secondary}
-          strokeWidth={5}
-          fill="none"
-          strokeLinecap="round"
-        />
-      ) : (
-        <Circle
-          cx={42}
-          cy={42}
-          r={38}
-          stroke={COLORS.secondary}
-          strokeWidth={5}
-          fill="none"
-        />
-      )}
-      <SvgText
-        x={42}
-        y={42}
-        textAnchor="middle"
-        alignmentBaseline="middle"
-        fontSize={SVG_FONT_SIZE}
-        dy={SVG_DY}
-        fontWeight={SVG_FONT_WEIGHT}
-        fill={SVG_FILL}
-      >
-        {hours}
-      </SvgText>
-    </Svg>
-  </View>
-);
+const HoursCircle: React.FC<HoursCircleProps> = ({ hours, pathD }) => {
+  const colors = useThemeColors();
+
+  return (
+    <View collapsable={false}>
+      <Svg width={85} height={85} viewBox="0 0 85 85" accessible={false}>
+        {pathD ? (
+          <Path
+            d={pathD}
+            stroke={colors.accentText}
+            strokeWidth={5}
+            fill="none"
+            strokeLinecap="round"
+          />
+        ) : (
+          <Circle
+            cx={42}
+            cy={42}
+            r={38}
+            stroke={colors.accentText}
+            strokeWidth={5}
+            fill="none"
+          />
+        )}
+        <SvgText
+          x={42}
+          y={42}
+          textAnchor="middle"
+          alignmentBaseline="middle"
+          fontSize={SVG_FONT_SIZE}
+          dy={SVG_DY}
+          fontWeight={SVG_FONT_WEIGHT}
+          fill={colors.text}
+        >
+          {hours}
+        </SvgText>
+      </Svg>
+    </View>
+  );
+};
 
 const GameHowLongToBeat: React.FC<GameHowLongToBeatProps> = ({
   main,
   mainExtra,
   completionist,
 }) => {
+  const sharedStyles = useSharedStyles();
+  const styles = useThemeStyles((c) => ({
+    titleRow: {
+      marginTop: 30,
+    },
+    cardsContainer: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 40,
+      width: "100%",
+      padding: 10,
+    },
+    card: {
+      marginHorizontal: 10,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    cardHeader: {
+      color: c.text,
+      fontSize: 18,
+      fontWeight: "600",
+      marginBottom: 10,
+      textAlign: "center",
+    },
+    hoursLabel: {
+      color: "#9f9f9f",
+    },
+  }));
+
   const { t } = useTranslation();
 
   if (main == null && mainExtra == null && completionist == null) return null;
@@ -116,33 +151,3 @@ const GameHowLongToBeat: React.FC<GameHowLongToBeatProps> = ({
 };
 
 export default memo(GameHowLongToBeat);
-
-const styles = StyleSheet.create({
-  titleRow: {
-    marginTop: 30,
-  },
-  cardsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 40,
-    width: "100%",
-    padding: 10,
-  },
-  card: {
-    marginHorizontal: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardHeader: {
-    color: COLORS.light,
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  hoursLabel: {
-    color: "#9f9f9f",
-  },
-});

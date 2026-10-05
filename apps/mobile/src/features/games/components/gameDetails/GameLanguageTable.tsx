@@ -1,10 +1,11 @@
 import React, { memo } from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { CircleCheck, FileText, Languages, Mic, Monitor } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
-import { sharedStyles } from "./shared";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useSharedStyles } from "./shared";
 import { COLUMN_KEYS, type GameLanguageTableProps, type ColumnKey } from "../../types";
 import type { LucideIcon } from "lucide-react-native";
 
@@ -59,6 +60,59 @@ function getLanguageDisplayName(code: string): string | null {
 }
 
 const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) => {
+  const colors = useThemeColors();
+  const sharedStyles = useSharedStyles();
+  const styles = useThemeStyles((c) => ({
+    container: {
+      width: "100%",
+      marginTop: 20,
+    },
+    tableHeader: {
+      flexDirection: "row",
+      borderBottomWidth: 1,
+      borderBottomColor: c.accentText,
+      paddingVertical: 10,
+      marginTop: 10,
+      alignItems: "flex-end",
+    },
+    langHeaderCell: {
+      flex: 2,
+      marginLeft: 8,
+    },
+    iconHeaderCell: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerCellLabel: {
+      color: "#9f9f9f",
+      marginTop: 2,
+    },
+    tableRow: {
+      flexDirection: "row",
+      paddingVertical: 12,
+      alignItems: "center",
+      borderBottomWidth: 0.5,
+      borderBottomColor: "rgba(81, 105, 150, 0.3)",
+    },
+    langCell: {
+      flex: 2,
+      color: "#cfcfcf",
+      fontSize: 15,
+      fontWeight: "500",
+      marginLeft: 8,
+    },
+    langCellHighlighted: {
+      fontWeight: "bold",
+      color: c.text,
+    },
+    checkCell: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+  }));
+
   const { t, i18n } = useTranslation();
 
   // Build the English display name(s) for the app's current language so we can
@@ -85,7 +139,7 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
       {/* Table header */}
       <View style={styles.tableHeader}>
         <View style={styles.langHeaderCell}>
-          <Languages size={18} color={COLORS.secondary} />
+          <Languages size={18} color={colors.accent} />
           <CustomText style={styles.headerCellLabel}>
             {t("games.details.languages.Language")}
           </CustomText>
@@ -95,7 +149,7 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
           const Icon = COLUMN_ICONS[key];
           return (
             <View key={key} style={styles.iconHeaderCell}>
-              <Icon size={18} color={COLORS.secondary} />
+              <Icon size={18} color={colors.accent} />
               <CustomText style={styles.headerCellLabel}>
                 {t(COLUMN_I18N_KEYS[key])}
               </CustomText>
@@ -116,8 +170,7 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
             style={[
               styles.tableRow,
               {
-                backgroundColor:
-                  index % 2 === 0 ? "rgba(81, 105, 150, 0.1)" : "transparent",
+                backgroundColor: index % 2 === 0 ? colors.stripe : "transparent",
               },
             ]}
           >
@@ -129,7 +182,7 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
 
             {COLUMN_KEYS.map((key) => (
               <View key={key} style={styles.checkCell}>
-                {lang[key] && <CircleCheck size={20} color={COLORS.lightGray} />}
+                {lang[key] && <CircleCheck size={20} color={colors.textMuted} />}
               </View>
             ))}
           </View>
@@ -140,54 +193,3 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
 };
 
 export default memo(GameLanguageTable);
-
-const styles = StyleSheet.create({
-  container: {
-    width: "100%",
-    marginTop: 20,
-  },
-  tableHeader: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.secondary,
-    paddingVertical: 10,
-    marginTop: 10,
-    alignItems: "flex-end",
-  },
-  langHeaderCell: {
-    flex: 2,
-    marginLeft: 8,
-  },
-  iconHeaderCell: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerCellLabel: {
-    color: "#9f9f9f",
-    marginTop: 2,
-  },
-  tableRow: {
-    flexDirection: "row",
-    paddingVertical: 12,
-    alignItems: "center",
-    borderBottomWidth: 0.5,
-    borderBottomColor: "rgba(81, 105, 150, 0.3)",
-  },
-  langCell: {
-    flex: 2,
-    color: "#cfcfcf",
-    fontSize: 15,
-    fontWeight: "500",
-    marginLeft: 8,
-  },
-  langCellHighlighted: {
-    fontWeight: "bold",
-    color: COLORS.light,
-  },
-  checkCell: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

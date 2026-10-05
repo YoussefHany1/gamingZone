@@ -1,8 +1,9 @@
 import React, { memo } from "react";
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { igdbImageUrl } from "@gaming-zone/utils";
 
 import type { GameDetailsBackgroundProps } from "../../types";
@@ -11,6 +12,33 @@ const GameDetailsBackground: React.FC<GameDetailsBackgroundProps> = ({
   coverImageId,
   currentLang,
 }) => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    gradientOverlay: {
+      justifyContent: "space-between",
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+    },
+    gradient: {
+      height: "100%",
+      width: "50%",
+    },
+    bgImage: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: -100,
+      marginTop: 350,
+      backgroundColor: c.background,
+      opacity: 0.4,
+    },
+  }));
+
   const isRtl = currentLang === "ar";
 
   return (
@@ -20,13 +48,13 @@ const GameDetailsBackground: React.FC<GameDetailsBackgroundProps> = ({
         style={[styles.gradientOverlay, { flexDirection: isRtl ? "row-reverse" : "row" }]}
       >
         <LinearGradient
-          colors={["transparent", COLORS.primary]}
+          colors={["transparent", colors.background]}
           style={styles.gradient}
           start={{ x: 1, y: 0.5 }}
           end={{ x: 0, y: 0.5 }}
         />
         <LinearGradient
-          colors={[COLORS.primary, "transparent"]}
+          colors={[colors.background, "transparent"]}
           style={styles.gradient}
           start={{ x: 1, y: 0.5 }}
           end={{ x: 0, y: 0.5 }}
@@ -47,29 +75,3 @@ const GameDetailsBackground: React.FC<GameDetailsBackgroundProps> = ({
 };
 
 export default memo(GameDetailsBackground);
-
-const styles = StyleSheet.create({
-  gradientOverlay: {
-    justifyContent: "space-between",
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  gradient: {
-    height: "100%",
-    width: "50%",
-  },
-  bgImage: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: -100,
-    marginTop: 350,
-    backgroundColor: COLORS.primary,
-    opacity: 0.4,
-  },
-});

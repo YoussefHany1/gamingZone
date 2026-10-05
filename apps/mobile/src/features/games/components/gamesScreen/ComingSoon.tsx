@@ -6,7 +6,7 @@ import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SectionTitle from "@/src/components/SectionTitle";
 import SkeletonComingSoon from "../../skeleton/gamesScreen/SkeletonComingSoon";
 import { useCountdown } from "@/src/hooks/useCountdown";
@@ -24,6 +24,58 @@ const STORAGE_KEY = "GAMES_CACHE_COMING_SOON";
 // Card
 
 const ComingSoonCard = React.memo<ComingSoonCardProps>(({ item }) => {
+  const styles = useThemeStyles((c) => ({
+    cardContainer: {
+      width: CARD_WIDTH,
+      height: CARD_HEIGHT,
+      marginHorizontal: 10,
+      borderRadius: 20,
+      overflow: "hidden",
+      backgroundColor: c.accent,
+      elevation: 5,
+    },
+    backgroundImage: {
+      width: "100%",
+      height: "100%",
+      position: "absolute",
+    },
+    overlay: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "rgba(0,0,0,0.4)",
+    },
+    content: {
+      flex: 1,
+      justifyContent: "center",
+      padding: 20,
+      flexDirection: "row",
+      gap: 15,
+    },
+    dateContainer: {
+      flexDirection: "column",
+      alignItems: "center",
+      alignSelf: "center",
+      borderRadius: 12,
+    },
+    countdownHeader: { color: c.text, fontSize: 14 },
+    countdownText: {
+      color: c.text,
+      fontWeight: "bold",
+      fontSize: 32,
+      backgroundColor: c.accentSurface,
+      paddingHorizontal: 12,
+      borderRadius: 50,
+    },
+    textWrapper: { marginBottom: 10, marginHorizontal: 10 },
+    title: {
+      color: c.text,
+      fontSize: 24,
+      fontWeight: "bold",
+      textShadowColor: "rgba(0, 0, 0, 0.75)",
+      textShadowOffset: { width: -1, height: 1 },
+      textShadowRadius: 10,
+    },
+  }));
+
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
 
@@ -100,6 +152,22 @@ ComingSoonCard.displayName = "ComingSoonCard";
 // Main
 
 function ComingSoonGames(): React.ReactElement {
+  const styles = useThemeStyles((c) => ({
+    container: { marginVertical: 10 },
+    listContent: { paddingHorizontal: 10 },
+    headerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      margin: 18,
+    },
+    errorContainer: {
+      width: "100%",
+      height: CARD_HEIGHT,
+    },
+  }));
+
   const { t } = useTranslation();
 
   const {
@@ -157,68 +225,3 @@ function ComingSoonGames(): React.ReactElement {
 }
 
 export default ComingSoonGames;
-
-const styles = StyleSheet.create({
-  container: { marginVertical: 10 },
-  listContent: { paddingHorizontal: 10 },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    margin: 18,
-  },
-  errorContainer: {
-    width: "100%",
-    height: CARD_HEIGHT,
-  },
-  cardContainer: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginHorizontal: 10,
-    borderRadius: 20,
-    overflow: "hidden",
-    backgroundColor: COLORS.secondary,
-    elevation: 5,
-  },
-  backgroundImage: {
-    width: "100%",
-    height: "100%",
-    position: "absolute",
-  },
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 20,
-    flexDirection: "row",
-    gap: 15,
-  },
-  dateContainer: {
-    flexDirection: "column",
-    alignItems: "center",
-    alignSelf: "center",
-    borderRadius: 12,
-  },
-  countdownHeader: { color: COLORS.light, fontSize: 14 },
-  countdownText: {
-    color: COLORS.light,
-    fontWeight: "bold",
-    fontSize: 32,
-    backgroundColor: COLORS.primary + "30",
-    paddingHorizontal: 12,
-    borderRadius: 50,
-  },
-  textWrapper: { marginBottom: 10, marginHorizontal: 10 },
-  title: {
-    color: COLORS.light,
-    fontSize: 24,
-    fontWeight: "bold",
-    textShadowColor: "rgba(0, 0, 0, 0.75)",
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
-  },
-});

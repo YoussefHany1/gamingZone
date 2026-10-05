@@ -1,8 +1,9 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
@@ -10,6 +11,32 @@ type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
 
 // Static title + static labels + shimmer SVG circles
 const GameHowLongToBeatSkeleton: React.FC = () => {
+  const styles = useThemeStyles((c) => ({
+    container: { marginTop: 30 },
+    header: {
+      color: c.text,
+      fontSize: 24,
+      fontWeight: "600",
+      textDecorationLine: "underline",
+      marginTop: 10,
+    },
+    row: {
+      flexDirection: "row",
+      justifyContent: "center",
+      flexWrap: "wrap",
+      marginTop: 16,
+      marginBottom: 40,
+    },
+    block: { alignItems: "center", marginHorizontal: 14 },
+    label: {
+      color: c.text,
+      fontSize: 18,
+      fontWeight: "600",
+      textAlign: "center",
+      marginBottom: 10,
+    },
+  }));
+
   const { t } = useTranslation();
   const shimmer = useShimmer();
   const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
@@ -39,29 +66,3 @@ const GameHowLongToBeatSkeleton: React.FC = () => {
 };
 
 export default GameHowLongToBeatSkeleton;
-
-const styles = StyleSheet.create({
-  container: { marginTop: 30 },
-  header: {
-    color: COLORS.light,
-    fontSize: 24,
-    fontWeight: "600",
-    textDecorationLine: "underline",
-    marginTop: 10,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "center",
-    flexWrap: "wrap",
-    marginTop: 16,
-    marginBottom: 40,
-  },
-  block: { alignItems: "center", marginHorizontal: 14 },
-  label: {
-    color: COLORS.light,
-    fontSize: 18,
-    fontWeight: "600",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-});

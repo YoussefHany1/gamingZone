@@ -153,6 +153,7 @@
     "releaseCalendar": {
       "title": "Calendário de lançamentos",
       "subtitle": "Veja o que está saindo, dia a dia",
+      "today": "Hoje",
       "outNow": "Já disponível",
       "released": "Lançado",
       "noReleases": "Nenhum lançamento neste dia",
@@ -447,6 +448,12 @@
   },
   "settings": {
     "language": "Idioma",
+    "theme": {
+      "title": "Aparência",
+      "system": "Sistema",
+      "light": "Claro",
+      "dark": "Escuro"
+    },
     "currentLang": "Português",
     "languageSelect": {
       "confirmTitle": "Alterar idioma",

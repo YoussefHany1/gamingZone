@@ -27,7 +27,8 @@ import {
   PanGestureHandlerEventPayload,
 } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -64,6 +65,24 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const pinchAnim = useRef(new Animated.Value(1)).current;
+
+  const styles = useThemeStyles(() => ({
+    zoomContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+    imageWrapper: {
+      flex: 1,
+      width: SCREEN_WIDTH,
+      height: SCREEN_HEIGHT,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    animatedImageContainer: {
+      width: SCREEN_WIDTH,
+      height: SCREEN_HEIGHT,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    fullScreenImage: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
+  }));
   const lastScale = useRef(1);
   const lastTX = useRef(0);
   const lastTY = useRef(0);
@@ -226,6 +245,82 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [fullScreenVisible, setFullScreenVisible] = useState(false);
   const [fullScreenIndex, setFullScreenIndex] = useState(0);
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    container: { width: "100%", height: 350, position: "relative" },
+    scrollView: { width: "100%", height: "100%" },
+    placeholder: {
+      width: "100%",
+      height: 350,
+      backgroundColor: c.skeletonBase,
+    },
+    thumbnailContainer: {
+      width: SCREEN_WIDTH,
+      height: 350,
+      position: "relative",
+    },
+    thumbnail: {
+      width: "100%",
+      height: "100%",
+      backgroundColor: c.skeletonBase,
+    },
+    gradientOverlay: {
+      justifyContent: "space-between",
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+    },
+    gradient: { height: "100%", width: "50%" },
+    pagination: {
+      flexDirection: "row",
+      position: "absolute",
+      bottom: 7,
+      alignSelf: "center",
+      backgroundColor: c.overlay,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 50,
+      zIndex: 10,
+    },
+    paginationDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: "rgba(255, 255, 255, 0.4)",
+      marginHorizontal: 4,
+    },
+    paginationDotActive: { backgroundColor: "#ffffff", width: 20 },
+    counter: {
+      position: "absolute",
+      top: 50,
+      right: 20,
+      backgroundColor: c.overlay,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 20,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      zIndex: 10,
+    },
+    counterBadge: {
+      backgroundColor: c.accent,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 10,
+    },
+    counterText: { color: "#ffffff", fontSize: 12, fontWeight: "bold" },
+    fullScreenCounter: {
+      backgroundColor: c.overlay,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+    },
+    fullScreenCounterText: { color: "#ffffff", fontSize: 16, fontWeight: "bold" },
+  }));
   const scrollViewRef = useRef<ScrollView>(null);
   const { i18n } = useTranslation();
   const isRtl = i18n.language === "ar";
@@ -323,13 +418,13 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
               ]}
             >
               <LinearGradient
-                colors={["transparent", COLORS.primary]}
+                colors={["transparent", colors.background]}
                 style={styles.gradient}
                 start={{ x: 1, y: 0.5 }}
                 end={{ x: 0, y: 0.5 }}
               />
               <LinearGradient
-                colors={[COLORS.primary, "transparent"]}
+                colors={[colors.background, "transparent"]}
                 style={styles.gradient}
                 start={{ x: 1, y: 0.5 }}
                 end={{ x: 0, y: 0.5 }}
@@ -357,7 +452,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
       {/* ── Image counter badge ────────────────────────────────────────── */}
       {imageCount > 1 && (
         <View style={styles.counter}>
-          <Images size={16} color={COLORS.light} />
+          <Images size={16} color={colors.text} />
           <View style={styles.counterBadge}>
             <CustomText style={styles.counterText}>
               {activeIndex + 1}/{imageCount}
@@ -375,16 +470,16 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
       >
         <StatusBar hidden />
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <View style={styles.fullScreenContainer}>
+          <View style={fullScreenStyles.fullScreenContainer}>
             {/* Top controls */}
-            <View style={styles.topControls}>
+            <View style={fullScreenStyles.topControls}>
               <TouchableOpacity
-                style={styles.closeButton}
+                style={fullScreenStyles.closeButton}
                 onPress={closeFullScreen}
                 accessibilityLabel="Close gallery"
                 accessibilityRole="button"
               >
-                <X size={28} color={COLORS.light} />
+                <X size={28} color={colors.text} />
               </TouchableOpacity>
               <View style={styles.fullScreenCounter}>
                 <CustomText style={styles.fullScreenCounterText}>
@@ -395,7 +490,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
 
             {/* Swipe-hint chevrons (non-interactive — hint only) */}
             {imageCount > 1 && (
-              <View style={styles.swipeHints} pointerEvents="none">
+              <View style={fullScreenStyles.swipeHints} pointerEvents="none">
                 <ChevronLeft
                   size={28}
                   color={isFirst ? "transparent" : "rgba(255,255,255,0.25)"}
@@ -407,7 +502,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
               </View>
             )}
 
-            <View style={styles.imageArea}>
+            <View style={fullScreenStyles.imageArea}>
               <ZoomableImage
                 key={fullScreenIndex}
                 imageUrl={allImages[fullScreenIndex]?.url ?? ""}
@@ -426,74 +521,9 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
 export default ImageGalleryAdvanced;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  container: { width: "100%", height: 350, position: "relative" },
-  scrollView: { width: "100%", height: "100%" },
-  placeholder: {
-    width: "100%",
-    height: 350,
-    backgroundColor: COLORS.secondary,
-  },
-  thumbnailContainer: {
-    width: SCREEN_WIDTH,
-    height: 350,
-    position: "relative",
-  },
-  thumbnail: {
-    width: "100%",
-    height: "100%",
-    backgroundColor: COLORS.secondary,
-  },
-  gradientOverlay: {
-    justifyContent: "space-between",
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  gradient: { height: "100%", width: "50%" },
-  pagination: {
-    flexDirection: "row",
-    position: "absolute",
-    bottom: 7,
-    alignSelf: "center",
-    backgroundColor: "rgba(0, 0, 28, 0.5)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 50,
-    zIndex: 10,
-  },
-  paginationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "rgba(255, 255, 255, 0.4)",
-    marginHorizontal: 4,
-  },
-  paginationDotActive: { backgroundColor: COLORS.lightGray, width: 20 },
-  counter: {
-    position: "absolute",
-    top: 50,
-    right: 20,
-    backgroundColor: "rgba(0, 0, 28, 0.6)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    zIndex: 10,
-  },
-  counterBadge: {
-    backgroundColor: COLORS.secondary,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  counterText: { color: COLORS.light, fontSize: 12, fontWeight: "bold" },
-  fullScreenContainer: { flex: 1, backgroundColor: COLORS.dark },
+// Fullscreen/zoom geometry: no palette dependency, so it stays static.
+const fullScreenStyles = StyleSheet.create({
+  fullScreenContainer: { flex: 1, backgroundColor: "#000000" },
   topControls: {
     position: "absolute",
     top: 40,
@@ -510,13 +540,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     padding: 10,
   },
-  fullScreenCounter: {
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  fullScreenCounterText: { color: COLORS.light, fontSize: 16, fontWeight: "bold" },
   imageArea: { flex: 1, justifyContent: "center", alignItems: "center" },
   swipeHints: {
     position: "absolute",
@@ -530,19 +553,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     zIndex: 999,
   },
-  zoomContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  imageWrapper: {
-    flex: 1,
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  animatedImageContainer: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  fullScreenImage: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
 });

@@ -5,7 +5,6 @@ import {
   View,
   Modal,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -14,7 +13,8 @@ import {
 import { ScrollView } from "react-native";
 import { CirclePlus, Square, SquareCheckBig } from "lucide-react-native";
 import firestore from "@react-native-firebase/firestore";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useTranslation } from "react-i18next";
 import { UserList } from "@/src/types/sharedTypes";
 import { useAuthUser } from "@/src/hooks/useAuthUser";
@@ -33,6 +33,90 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
     const checkedStateRef = useRef<Map<string, boolean>>(new Map());
     const fetchedGameIdRef = useRef<string | number | null>(null);
     const cachedListsRef = useRef<UserList[]>([]);
+    const colors = useThemeColors();
+    const styles = useThemeStyles((c) => ({
+      modalOverlay: {
+        flex: 1,
+        backgroundColor: c.overlay,
+        justifyContent: "center",
+        alignItems: "center",
+      },
+      modalContent: {
+        backgroundColor: colors.background,
+        width: "85%",
+        borderRadius: 12,
+        maxHeight: "80%",
+      },
+      modalTitle: {
+        color: colors.text,
+        fontSize: 20,
+        fontWeight: "bold",
+        marginBottom: 15,
+        textAlign: "center",
+        paddingTop: 20,
+      },
+      listItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.accent + "40",
+      },
+      listName: {
+        color: colors.text,
+        fontSize: 16,
+        marginLeft: 12,
+      },
+      selectedOption: {
+        backgroundColor: colors.accent + "22",
+      },
+      createSection: {
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+      },
+      addButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 8,
+      },
+      addButtonText: {
+        color: colors.textMuted,
+        marginLeft: 8,
+        fontWeight: "bold",
+        fontSize: 16,
+      },
+      creationForm: {
+        width: "100%",
+      },
+      input: {
+        backgroundColor: colors.accent + "40",
+        borderRadius: 8,
+        color: colors.text,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: colors.textMuted,
+      },
+      creationButtons: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+      },
+      smallBtn: {
+        flex: 0.48,
+        paddingVertical: 8,
+        borderRadius: 6,
+        alignItems: "center",
+        justifyContent: "center",
+      },
+      smallBtnText: {
+        color: colors.text,
+        fontWeight: "bold",
+        fontSize: 14,
+      },
+    }));
 
     const { t } = useTranslation();
     const { user, isAnonymous } = useAuthUser();
@@ -297,16 +381,16 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
           onPress={() => toggleList(item.id)}
         >
           {item.isChecked ? (
-            <SquareCheckBig size={24} color={COLORS.secondary} />
+            <SquareCheckBig size={24} color={colors.accent} />
           ) : (
-            <Square size={24} color={COLORS.secondary} />
+            <Square size={24} color={colors.accent} />
           )}
           <CustomText style={[styles.listName, item.isChecked && { fontWeight: "bold" }]}>
             {getDisplayName(item.name)}
           </CustomText>
         </TouchableOpacity>
       ),
-      [toggleList, getDisplayName],
+      [colors.accent, styles, toggleList, getDisplayName],
     );
 
     return (
@@ -331,7 +415,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
               </CustomText>
 
               {loading ? (
-                <ActivityIndicator size="large" color={COLORS.secondary} />
+                <ActivityIndicator size="large" color={colors.accent} />
               ) : (
                 <>
                   <ScrollView
@@ -341,7 +425,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                     {lists.length === 0 ? (
                       <CustomText
                         style={{
-                          color: "#ccc",
+                          color: colors.textMuted,
                           textAlign: "center",
                           marginVertical: 10,
                         }}
@@ -360,7 +444,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                         <CustomTextInput
                           style={styles.input}
                           placeholder={t("userLists.placeholders.newListName")}
-                          placeholderTextColor={COLORS.gray}
+                          placeholderTextColor={colors.textSubtle}
                           value={newListName}
                           onChangeText={setNewListName}
                           autoFocus={true}
@@ -369,7 +453,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                           <TouchableOpacity
                             style={[
                               styles.smallBtn,
-                              { backgroundColor: COLORS.darkBackground },
+                              { backgroundColor: colors.backgroundDeep },
                             ]}
                             onPress={() => setIsCreating(false)}
                           >
@@ -379,15 +463,12 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                           </TouchableOpacity>
 
                           <TouchableOpacity
-                            style={[
-                              styles.smallBtn,
-                              { backgroundColor: COLORS.secondary },
-                            ]}
+                            style={[styles.smallBtn, { backgroundColor: colors.accent }]}
                             onPress={handleCreateList}
                             disabled={creatingLoading}
                           >
                             {creatingLoading ? (
-                              <ActivityIndicator size="small" color={COLORS.light} />
+                              <ActivityIndicator size="small" color={colors.text} />
                             ) : (
                               <CustomText style={styles.smallBtnText}>
                                 {t("common.create")}
@@ -410,7 +491,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                           }
                         }}
                       >
-                        <CirclePlus size={24} color={COLORS.lightGray} />
+                        <CirclePlus size={24} color={colors.textMuted} />
                         <CustomText style={styles.addButtonText}>
                           {t("userLists.actions.createNewList")}
                         </CustomText>
@@ -428,87 +509,3 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
 );
 ListSelectionModal.displayName = "ListSelectionModal";
 export default ListSelectionModal;
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: COLORS.primary,
-    width: "85%",
-    borderRadius: 12,
-    maxHeight: "80%",
-  },
-  modalTitle: {
-    color: COLORS.light,
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
-    paddingTop: 20,
-  },
-  listItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.secondary + "40",
-  },
-  listName: {
-    color: COLORS.light,
-    fontSize: 16,
-    marginLeft: 12,
-  },
-  selectedOption: {
-    backgroundColor: COLORS.secondary + "22",
-  },
-  createSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  addButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 8,
-  },
-  addButtonText: {
-    color: COLORS.lightGray,
-    marginLeft: 8,
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  creationForm: {
-    width: "100%",
-  },
-  input: {
-    backgroundColor: COLORS.secondary + "40",
-    borderRadius: 8,
-    color: COLORS.light,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-  },
-  creationButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  smallBtn: {
-    flex: 0.48,
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  smallBtnText: {
-    color: COLORS.light,
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-});

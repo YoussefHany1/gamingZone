@@ -1,15 +1,47 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
-import COLORS from "@/src/constants/colors";
+import { View } from "react-native";
+import { DARK_COLORS } from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SkeletonItem from "@/src/components/SkeletonItem";
 import { usePulseAnimation } from "@/src/components/skeleton/shared";
 
 const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
 const CARD_MARGIN = 5;
-const CARD_BG_COLOR = COLORS.primary;
+const CARD_BG_COLOR = DARK_COLORS.background;
 
 const SkeletonFreeGames: React.FC = () => {
+  const styles = useThemeStyles((c) => ({
+    cardContainer: {
+      width: CARD_WIDTH,
+      height: CARD_HEIGHT,
+      marginHorizontal: CARD_MARGIN,
+      borderRadius: 16,
+      backgroundColor: CARD_BG_COLOR,
+      overflow: "hidden",
+      elevation: 3,
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 3,
+    },
+    imageContainer: {
+      width: "100%",
+      height: 200,
+      position: "relative",
+    },
+    coverSkeleton: {
+      width: "100%",
+      height: "100%",
+    },
+    infoSection: {
+      flex: 1,
+      padding: 12,
+      justifyContent: "space-between",
+    },
+  }));
+
   const animatedStyle = usePulseAnimation();
 
   return (
@@ -59,33 +91,3 @@ const SkeletonFreeGames: React.FC = () => {
 };
 
 export default React.memo(SkeletonFreeGames);
-
-const styles = StyleSheet.create({
-  cardContainer: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginHorizontal: CARD_MARGIN,
-    borderRadius: 16,
-    backgroundColor: CARD_BG_COLOR,
-    overflow: "hidden",
-    elevation: 3,
-    shadowColor: COLORS.dark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-  },
-  imageContainer: {
-    width: "100%",
-    height: 200,
-    position: "relative",
-  },
-  coverSkeleton: {
-    width: "100%",
-    height: "100%",
-  },
-  infoSection: {
-    flex: 1,
-    padding: 12,
-    justifyContent: "space-between",
-  },
-});

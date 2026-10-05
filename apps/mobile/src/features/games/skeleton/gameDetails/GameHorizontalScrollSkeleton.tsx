@@ -1,8 +1,10 @@
 import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, ScrollView } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
 
@@ -13,6 +15,22 @@ interface Props {
 
 // Static title + shimmer game cards in a horizontal row
 const GameHorizontalScrollSkeleton: React.FC<Props> = ({ title }) => {
+  const styles = useThemeStyles((c) => ({
+    container: { marginTop: 20 },
+    header: {
+      color: c.text,
+      fontSize: 24,
+      fontWeight: "600",
+      textDecorationLine: "underline",
+      marginTop: 10,
+    },
+    card: {
+      width: 120,
+      marginRight: 12,
+      alignItems: "center",
+    },
+  }));
+
   const shimmer = useShimmer();
   const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
 
@@ -38,19 +56,3 @@ const GameHorizontalScrollSkeleton: React.FC<Props> = ({ title }) => {
 };
 
 export default GameHorizontalScrollSkeleton;
-
-const styles = StyleSheet.create({
-  container: { marginTop: 20 },
-  header: {
-    color: COLORS.light,
-    fontSize: 24,
-    fontWeight: "600",
-    textDecorationLine: "underline",
-    marginTop: 10,
-  },
-  card: {
-    width: 120,
-    marginRight: 12,
-    alignItems: "center",
-  },
-});

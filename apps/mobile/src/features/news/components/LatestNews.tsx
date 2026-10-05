@@ -20,7 +20,8 @@ import DropdownPicker from "./DropdownPicker";
 import SkeletonNewsItem from "../skeleton/SkeletonNewsItem";
 import ErrorState from "@/src/components/ErrorState";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useNavigation } from "@react-navigation/native";
 import type { Article, NewsItemProps, LatestNewsProps, RssFeedSource } from "../types";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
@@ -35,6 +36,58 @@ const NewsItem = memo(function NewsItem({
   showAds = false,
 }: NewsItemProps) {
   const shouldShowAd = showAds && (index + 1) % adInterval === 0;
+
+  const styles = useThemeStyles((c) => ({
+    container: {},
+    NewsContainer: {
+      alignItems: "center",
+      alignSelf: "center",
+      flexDirection: "row",
+      borderRadius: 16,
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    textContainer: {
+      width: "65%",
+    },
+    headline: {
+      fontSize: 14,
+      fontWeight: "bold",
+      lineHeight: 18,
+      marginBottom: 8,
+      color: c.text,
+    },
+    par: {
+      fontSize: 12,
+      color: c.textMuted,
+      lineHeight: 18,
+    },
+    thumbnail: {
+      width: 135,
+      height: 100,
+      borderRadius: 16,
+      backgroundColor: c.accent,
+    },
+    // Overlays the article image, so its text tracks the scrim.
+    website: {
+      position: "absolute",
+      bottom: 5,
+      left: 15,
+      fontSize: 10,
+      marginTop: 8,
+      color: c.text,
+      backgroundColor: c.overlay,
+      paddingHorizontal: 7,
+      borderRadius: 6,
+    },
+    timeAgoText: {
+      fontSize: 12,
+      color: c.accentText,
+      marginTop: 5,
+      marginRight: 12,
+    },
+  }));
 
   const timeAgo = useMemo(() => {
     const dateString = item?.pubDate;
@@ -66,7 +119,7 @@ const NewsItem = memo(function NewsItem({
     >
       <TouchableOpacity
         style={styles.NewsContainer}
-        // android_ripple={{ color: COLORS.secondary }}
+        // android_ripple={{ color: colors.accent }}
         onPress={handlePress}
       >
         <View style={styles.textContainer}>
@@ -138,6 +191,21 @@ const ListHeader = memo(function ListHeader({
     ? t("news.latestHeader", { category: translatedCategory })
     : "";
 
+  const styles = useThemeStyles((c) => ({
+    header: {
+      textAlign: "center",
+      alignSelf: "center",
+      fontSize: 24,
+      fontWeight: "bold",
+      backgroundColor: c.accent,
+      paddingHorizontal: 60,
+      paddingVertical: 10,
+      marginTop: 15,
+      borderRadius: 16,
+      color: c.onAccent,
+    },
+  }));
+
   return (
     <>
       {showHeaderTitle && headerTitle ? (
@@ -177,6 +245,114 @@ function LatestNews({
   const { t } = useTranslation();
   const listRef = useRef<any>(null);
   const { onScroll } = useScrollDirection();
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    container: {},
+    ad: {
+      alignItems: "center",
+      width: "100%",
+      marginVertical: 55,
+    },
+    adText: {
+      color: c.text,
+      marginBottom: 10,
+    },
+    nativeAd: {
+      marginVertical: 24,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    noDataText: {
+      color: c.text,
+      textAlign: "center",
+      borderRadius: 8,
+      marginBottom: 20,
+    },
+    errorContainer: {
+      padding: 20,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 20,
+    },
+    errorText: {
+      color: c.text,
+      textAlign: "center",
+      marginBottom: 15,
+      fontSize: 16,
+    },
+    contactButton: {
+      backgroundColor: c.accent,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 8,
+    },
+    contactButtonText: {
+      color: c.onAccent,
+      fontWeight: "bold",
+      fontSize: 14,
+    },
+    footerContainer: {
+      paddingVertical: 20,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 10,
+    },
+    footerText: {
+      color: c.textMuted,
+      fontSize: 14,
+      fontStyle: "italic",
+    },
+    paginationContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: 20,
+      marginTop: 10,
+      marginBottom: 20,
+    },
+    pageButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.surface,
+      justifyContent: "center",
+      alignItems: "center",
+      marginHorizontal: 8,
+    },
+    disabledPageButton: {
+      opacity: 0.3,
+    },
+    pageNumberButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: "transparent",
+      justifyContent: "center",
+      alignItems: "center",
+      marginHorizontal: 4,
+    },
+    activePageNumberButton: {
+      backgroundColor: c.accent,
+    },
+    pageNumberText: {
+      color: c.textMuted,
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    activePageNumberText: {
+      color: c.onAccent,
+      fontWeight: "bold",
+    },
+    ellipsis: {
+      color: c.textMuted,
+      fontSize: 16,
+      marginHorizontal: 4,
+    },
+  }));
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [showAds, setShowAds] = useState<boolean>(false);
@@ -302,9 +478,9 @@ function LatestNews({
             onPress={() => handlePageChange(currentPage - 1)}
           >
             {isRtl ? (
-              <ChevronRight size={18} color={COLORS.light} />
+              <ChevronRight size={18} color={colors.text} />
             ) : (
-              <ChevronLeft size={18} color={COLORS.light} />
+              <ChevronLeft size={18} color={colors.text} />
             )}
           </Pressable>
 
@@ -383,9 +559,9 @@ function LatestNews({
             onPress={() => handlePageChange(currentPage + 1)}
           >
             {isRtl ? (
-              <ChevronLeft size={18} color={COLORS.light} />
+              <ChevronLeft size={18} color={colors.text} />
             ) : (
-              <ChevronRight size={18} color={COLORS.light} />
+              <ChevronRight size={18} color={colors.text} />
             )}
           </Pressable>
         </View>
@@ -484,7 +660,7 @@ function LatestNews({
           <RefreshControl
             refreshing={loading}
             onRefresh={onRefresh}
-            tintColor={COLORS.secondary}
+            tintColor={colors.accent}
           />
         }
         contentContainerStyle={
@@ -499,169 +675,3 @@ function LatestNews({
 }
 
 export default memo(LatestNews);
-
-const styles = StyleSheet.create({
-  container: {},
-  header: {
-    textAlign: "center",
-    alignSelf: "center",
-    fontSize: 24,
-    fontWeight: "bold",
-    backgroundColor: COLORS.secondary,
-    paddingHorizontal: 60,
-    paddingVertical: 10,
-    marginTop: 15,
-    borderRadius: 16,
-    color: COLORS.light,
-  },
-  NewsContainer: {
-    alignItems: "center",
-    alignSelf: "center",
-    flexDirection: "row",
-    borderRadius: 16,
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#4a5565",
-  },
-  textContainer: {
-    width: "65%",
-  },
-  headline: {
-    fontSize: 14,
-    fontWeight: "bold",
-    lineHeight: 18,
-    marginBottom: 8,
-    color: COLORS.light,
-  },
-  par: {
-    fontSize: 12,
-    color: COLORS.lightGray,
-    lineHeight: 18,
-  },
-  thumbnail: {
-    width: 135,
-    height: 100,
-    borderRadius: 16,
-    backgroundColor: COLORS.secondary,
-  },
-  website: {
-    position: "absolute",
-    bottom: 5,
-    left: 15,
-    fontSize: 10,
-    marginTop: 8,
-    color: COLORS.light,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    paddingHorizontal: 7,
-    borderRadius: 6,
-  },
-  ad: {
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 55,
-  },
-  adText: {
-    color: COLORS.light,
-    marginBottom: 10,
-  },
-  nativeAd: {
-    marginVertical: 24,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  noDataText: {
-    color: COLORS.light,
-    textAlign: "center",
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  timeAgoText: {
-    fontSize: 12,
-    color: COLORS.secondary,
-    marginTop: 5,
-    marginRight: 12,
-  },
-  errorContainer: {
-    padding: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 20,
-  },
-  errorText: {
-    color: COLORS.light,
-    textAlign: "center",
-    marginBottom: 15,
-    fontSize: 16,
-  },
-  contactButton: {
-    backgroundColor: COLORS.secondary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  contactButtonText: {
-    color: COLORS.light,
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-  footerContainer: {
-    paddingVertical: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-  },
-  footerText: {
-    color: COLORS.lightGray,
-    fontSize: 14,
-    fontStyle: "italic",
-  },
-  paginationContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 20,
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  pageButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.button,
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 8,
-  },
-  disabledPageButton: {
-    opacity: 0.3,
-  },
-  pageNumberButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "transparent",
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 4,
-  },
-  activePageNumberButton: {
-    backgroundColor: COLORS.secondary,
-  },
-  pageNumberText: {
-    color: COLORS.lightGray,
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  activePageNumberText: {
-    color: COLORS.light,
-    fontWeight: "bold",
-  },
-  ellipsis: {
-    color: COLORS.lightGray,
-    fontSize: 16,
-    marginHorizontal: 4,
-  },
-});

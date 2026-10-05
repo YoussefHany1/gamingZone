@@ -1,8 +1,9 @@
 import React, { memo, useMemo } from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
-import { sharedStyles } from "./shared";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useSharedStyles } from "./shared";
 import type { GameDetailsGridProps } from "../../types";
 
 const GameDetailsGrid: React.FC<GameDetailsGridProps> = ({
@@ -12,6 +13,24 @@ const GameDetailsGrid: React.FC<GameDetailsGridProps> = ({
   gameEngines,
 }) => {
   const { t } = useTranslation();
+  const sharedStyles = useSharedStyles();
+  const styles = useThemeStyles((c) => ({
+    grid: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+    },
+    cell: {
+      width: "50%",
+    },
+    cellText: {
+      color: c.textMuted,
+      fontSize: 20,
+      fontWeight: "600",
+      marginLeft: 3,
+      flexWrap: "wrap",
+    },
+  }));
 
   // Split companies once instead of calling .some() + .filter() per render
   const { developers, publishers } = useMemo(() => {
@@ -93,21 +112,3 @@ const GameDetailsGrid: React.FC<GameDetailsGridProps> = ({
 };
 
 export default memo(GameDetailsGrid);
-
-const styles = StyleSheet.create({
-  grid: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    flexWrap: "wrap",
-  },
-  cell: {
-    width: "50%",
-  },
-  cellText: {
-    color: "#9f9f9f",
-    fontSize: 20,
-    fontWeight: "600",
-    marginLeft: 3,
-    flexWrap: "wrap",
-  },
-});

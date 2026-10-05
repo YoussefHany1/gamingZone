@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo } from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SectionTitle from "@/src/components/SectionTitle";
 import SkeletonMostAnticipated from "../../skeleton/gamesScreen/SkeletonMostAnticipated";
 import useCachedData from "@/src/hooks/useCachedData";
@@ -37,6 +37,56 @@ const formatDate = (timestamp: number | undefined, lang: string) => {
 // Card
 
 const AnticipatedCard = React.memo<AnticipatedCardProps>(({ item }) => {
+  const styles = useThemeStyles((c) => ({
+    cardContainer: {
+      width: CARD_WIDTH,
+      alignItems: "center",
+    },
+    timelineContainer: {
+      width: "100%",
+      alignItems: "center",
+      justifyContent: "flex-end",
+      marginBottom: 15,
+      height: 45,
+    },
+    timelineLine: {
+      position: "absolute",
+      bottom: 5, // Aligns perfectly with the center of a 12px dot
+      left: 0,
+      right: 0,
+      height: 2,
+      backgroundColor: "#7f8c8d",
+      zIndex: -1,
+    },
+    timelineDate: {
+      color: c.text,
+      fontSize: 16,
+      fontWeight: "bold",
+      marginBottom: 8,
+    },
+    timelineDot: {
+      width: 12,
+      height: 12,
+      borderRadius: 6,
+      backgroundColor: c.text,
+    },
+    coverImage: {
+      width: 140,
+      height: 200,
+      borderRadius: 12,
+      marginBottom: 12,
+      backgroundColor: c.accent,
+    },
+    title: {
+      color: c.text,
+      fontSize: 16,
+      fontWeight: "bold",
+      textAlign: "center",
+      paddingHorizontal: 8,
+      textTransform: "uppercase",
+    },
+  }));
+
   const { i18n } = useTranslation();
   const navigation = useNavigation<any>();
 
@@ -86,6 +136,23 @@ AnticipatedCard.displayName = "AnticipatedCard";
 // Main
 
 function MostAnticipated(): React.ReactElement {
+  const styles = useThemeStyles((c) => ({
+    container: { marginVertical: 10 },
+    listContent: { paddingHorizontal: 10, paddingVertical: 10 },
+    headerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      marginHorizontal: 18,
+      marginBottom: 20,
+    },
+    errorContainer: {
+      width: "100%",
+      height: 300,
+    },
+  }));
+
   const { t } = useTranslation();
 
   const {
@@ -143,67 +210,3 @@ function MostAnticipated(): React.ReactElement {
 }
 
 export default MostAnticipated;
-
-const styles = StyleSheet.create({
-  container: { marginVertical: 10 },
-  listContent: { paddingHorizontal: 10, paddingVertical: 10 },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginHorizontal: 18,
-    marginBottom: 20,
-  },
-  errorContainer: {
-    width: "100%",
-    height: 300,
-  },
-  cardContainer: {
-    width: CARD_WIDTH,
-    alignItems: "center",
-  },
-  timelineContainer: {
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    marginBottom: 15,
-    height: 45,
-  },
-  timelineLine: {
-    position: "absolute",
-    bottom: 5, // Aligns perfectly with the center of a 12px dot
-    left: 0,
-    right: 0,
-    height: 2,
-    backgroundColor: "#7f8c8d",
-    zIndex: -1,
-  },
-  timelineDate: {
-    color: COLORS.light,
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  timelineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: COLORS.light,
-  },
-  coverImage: {
-    width: 140,
-    height: 200,
-    borderRadius: 12,
-    marginBottom: 12,
-    backgroundColor: COLORS.secondary,
-  },
-  title: {
-    color: COLORS.light,
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-    paddingHorizontal: 8,
-    textTransform: "uppercase",
-  },
-});

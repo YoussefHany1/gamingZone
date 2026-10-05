@@ -12,7 +12,8 @@ import LatestNews from "../components/LatestNews";
 import Loading from "@/src/Loading";
 import ErrorState from "@/src/components/ErrorState";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import useRssFeeds, { type RssSource } from "@/src/hooks/useRssFeeds";
 import type { RouteShape, GenericNewsRouteProps } from "../types";
 
@@ -34,6 +35,30 @@ const GenericNewsRoute = memo<GenericNewsRouteProps>(
     }, [rssFeeds, categoryKey, i18n.language]);
 
     const [selected, setSelected] = useState<RssSource | undefined>(feedList[0]);
+
+    const styles = useThemeStyles((c) => ({
+      container: {
+        flex: 1,
+        backgroundColor: c.backgroundDeep,
+      },
+      scene: {
+        flex: 1,
+        backgroundColor: c.background,
+        alignItems: "center",
+        justifyContent: "center",
+      },
+      tabBar: {
+        backgroundColor: c.backgroundDeep,
+      },
+      tabIndicator: {
+        backgroundColor: c.accent,
+      },
+      tabLabel: {
+        textAlign: "center",
+        fontWeight: "600",
+      },
+      noDataText: { color: c.text },
+    }));
 
     useEffect(() => {
       if (
@@ -96,6 +121,24 @@ function NewsScreen(): React.ReactElement {
   const layout = useWindowDimensions();
   const [index, setIndex] = useState<number>(0);
   const { rssFeeds, loading, error, refetch } = useRssFeeds();
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    container: {
+      flex: 1,
+      backgroundColor: c.backgroundDeep,
+    },
+    tabBar: {
+      backgroundColor: c.backgroundDeep,
+    },
+    tabIndicator: {
+      backgroundColor: c.accent,
+    },
+    tabLabel: {
+      textAlign: "center",
+      fontWeight: "600",
+    },
+  }));
 
   const routes = useMemo<RouteShape[]>(
     () => [
@@ -131,8 +174,8 @@ function NewsScreen(): React.ReactElement {
           {...props}
           style={styles.tabBar}
           indicatorStyle={styles.tabIndicator}
-          activeColor={COLORS.light}
-          inactiveColor={COLORS.lightGray}
+          activeColor={colors.text}
+          inactiveColor={colors.textMuted}
           options={options}
         />
       );
@@ -170,27 +213,3 @@ function NewsScreen(): React.ReactElement {
   );
 }
 export default NewsScreen;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.darkBackground,
-  },
-  scene: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tabBar: {
-    backgroundColor: COLORS.darkBackground,
-  },
-  tabIndicator: {
-    backgroundColor: COLORS.secondary,
-  },
-  tabLabel: {
-    textAlign: "center",
-    fontWeight: "600",
-  },
-  noDataText: { color: COLORS.light },
-});

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { View, TouchableOpacity, StyleSheet, ToastAndroid } from "react-native";
+import { View, TouchableOpacity, ToastAndroid } from "react-native";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
@@ -14,7 +14,10 @@ import { databases } from "@/src/lib/appwrite";
 import { openLink } from "@/src/lib/browser";
 import NotificationService from "@/src/services/notificationService";
 import SkeletonFreeGames from "@/src/features/games/skeleton/gamesScreen/SkeletonFreeGames";
-import COLORS from "@/src/constants/colors";
+import { DARK_COLORS, LIGHT_COLORS } from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useThemeStore } from "@/src/store/useThemeStore";
 import useCachedData from "@/src/hooks/useCachedData";
 import { useCountdown } from "@/src/hooks/useCountdown";
 import {
@@ -66,25 +69,91 @@ const fetchFreeGamesFromAppwrite = async (): Promise<FreeGameItem[]> => {
 };
 
 const renderStoreIcon = (store?: string) => {
-  if (store === "steam") return <SteamIcon size={20} fill={COLORS.light} />;
-  if (store === "gog") return <GogIcon size={20} fill={COLORS.light} />;
-  return <EpicGamesIcon size={20} fill={COLORS.light} />;
+  const { isDark } = useThemeStore.getState();
+  const iconColor = isDark ? DARK_COLORS.text : LIGHT_COLORS.text;
+  if (store === "steam") return <SteamIcon size={20} fill={iconColor} />;
+  if (store === "gog") return <GogIcon size={20} fill={iconColor} />;
+  return <EpicGamesIcon size={20} fill={iconColor} />;
 };
 
 // Helpers
 
-const TimeUnit = React.memo<TimeUnitProps>(({ value, label }) => (
-  <View style={styles.timeUnit}>
-    <View style={styles.timeValueBox}>
-      <CustomText style={styles.timeValue}>{value}</CustomText>
+const TimeUnit = React.memo<TimeUnitProps>(({ value, label }) => {
+  const styles = useThemeStyles((c) => ({
+    timeUnit: {
+      alignItems: "center",
+    },
+    timeValueBox: {
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      paddingHorizontal: 8,
+      paddingVertical: 6,
+      minWidth: 32,
+    },
+    timeValue: {
+      color: c.text,
+      fontWeight: "bold",
+      textAlign: "center",
+    },
+    timeLabel: {
+      color: c.textMuted,
+      fontSize: 8,
+      marginTop: 3,
+      textAlign: "center",
+      textTransform: "uppercase",
+    },
+  }));
+
+  return (
+    <View style={styles.timeUnit}>
+      <View style={styles.timeValueBox}>
+        <CustomText style={styles.timeValue}>{value}</CustomText>
+      </View>
+      <CustomText style={styles.timeLabel}>{label}</CustomText>
     </View>
-    <CustomText style={styles.timeLabel}>{label}</CustomText>
-  </View>
-));
+  );
+});
 TimeUnit.displayName = "TimeUnit";
 
 const CountdownTimer = React.memo<CountdownTimerProps>(({ t, startDate }) => {
   const timeLeft = useCountdown(startDate, 1000) as CountdownResult | null;
+
+  const styles = useThemeStyles((c) => ({
+    countdownOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 100,
+    },
+    countdownGradient: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    countdownTitle: {
+      color: "#ffffff",
+      fontSize: 14,
+      fontWeight: "bold",
+      marginBottom: 12,
+      textAlign: "center",
+    },
+    timerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    separator: {
+      color: "#ffffff",
+      fontSize: 16,
+      fontWeight: "bold",
+      marginHorizontal: 2,
+    },
+  }));
+
   if (!timeLeft) return null;
 
   return (
@@ -117,7 +186,85 @@ CountdownTimer.displayName = "CountdownTimer";
 
 const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
   const navigation = useNavigation<any>();
+  const colors = useThemeColors();
   const storeIcon = useMemo(() => renderStoreIcon(item.store), [item.store]);
+
+  const styles = useThemeStyles((c) => ({
+    gameCard: {
+      width: 165,
+      height: CARD_HEIGHT,
+      marginHorizontal: 5,
+      borderRadius: 16,
+      overflow: "hidden",
+      position: "relative",
+    },
+    cardGradient: {
+      position: "absolute",
+      width: "100%",
+      height: "100%",
+    },
+    imageContainer: {
+      width: "100%",
+      height: 200,
+      position: "relative",
+    },
+    cover: {
+      width: "100%",
+      height: "100%",
+    },
+    imageGradient: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: "40%",
+    },
+    storeIconBadge: {
+      position: "absolute",
+      bottom: 8,
+      left: 8,
+      backgroundColor: c.scrim,
+      borderRadius: 50,
+      padding: 6,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    infoSection: {
+      flex: 1,
+      padding: 12,
+      justifyContent: "space-between",
+    },
+    title: {
+      color: c.text,
+      fontSize: 15,
+      fontWeight: "bold",
+      lineHeight: 18,
+      textAlign: "center",
+    },
+    savingsContainer: {
+      marginTop: 8,
+    },
+    savingsButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 10,
+      gap: 6,
+      elevation: 3,
+      shadowColor: c.textMuted,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.4,
+      shadowRadius: 3,
+    },
+    savingsText: {
+      color: c.accentText,
+      fontSize: 12,
+      fontWeight: "bold",
+      letterSpacing: 0.5,
+    },
+  }));
 
   // Use refs so callbacks are stable â€” no item object in deps
   const itemRef = React.useRef(item);
@@ -147,7 +294,10 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
       onPress={handleCardPress}
     >
       {/* Background gradient */}
-      <LinearGradient colors={["#1a3052", COLORS.primary]} style={styles.cardGradient} />
+      <LinearGradient
+        colors={[colors.skeletonBase, colors.accent]}
+        style={styles.cardGradient}
+      />
 
       {/* Image area with optional countdown overlay */}
       <View style={styles.imageContainer}>
@@ -169,7 +319,7 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
         />
 
         <LinearGradient
-          colors={["transparent", COLORS.darkBackground + "99"]}
+          colors={["transparent", colors.scrim]}
           style={styles.imageGradient}
         />
 
@@ -190,12 +340,12 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
             activeOpacity={0.9}
           >
             <LinearGradient
-              colors={[COLORS.lightGray, COLORS.secondary]}
+              colors={[colors.textMuted, colors.accent]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.savingsButton}
             >
-              <Gift size={16} color={COLORS.light} />
+              <Gift size={16} color={colors.accentText} />
               <CustomText style={styles.savingsText}>
                 {t("games.list.freeGames.claimNow")}
               </CustomText>
@@ -212,8 +362,32 @@ FreeGameCard.displayName = "FreeGameCard";
 
 function FreeGames(): React.ReactElement {
   const { t } = useTranslation();
+  const colors = useThemeColors();
   const [notifEnabled, setNotifEnabled] = useState(false);
   const userId = auth().currentUser?.uid;
+
+  const styles = useThemeStyles((c) => ({
+    headerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      margin: 18,
+    },
+    bellButton: {
+      padding: 10,
+      backgroundColor: c.accentSurface,
+      borderRadius: 12,
+      marginLeft: "auto",
+    },
+    listContent: {
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+    },
+    errorContainer: {
+      height: CARD_HEIGHT,
+    },
+  }));
 
   const {
     data: gamesList,
@@ -321,9 +495,9 @@ function FreeGames(): React.ReactElement {
         />
         <TouchableOpacity onPress={toggleNotifications} style={styles.bellButton}>
           {notifEnabled ? (
-            <Bell size={22} color={COLORS.light} />
+            <Bell size={22} color={colors.text} />
           ) : (
-            <BellOff size={22} color={COLORS.light} />
+            <BellOff size={22} color={colors.textSubtle} />
           )}
         </TouchableOpacity>
       </View>
@@ -369,159 +543,3 @@ function FreeGames(): React.ReactElement {
 }
 
 export default FreeGames;
-
-const styles = StyleSheet.create({
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    margin: 18,
-  },
-  bellButton: {
-    padding: 10,
-    backgroundColor: COLORS.secondary + "80",
-    borderRadius: 12,
-    marginLeft: "auto",
-  },
-  listContent: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  errorContainer: {
-    height: CARD_HEIGHT,
-  },
-  gameCard: {
-    width: 165,
-    height: CARD_HEIGHT,
-    marginHorizontal: 5,
-    borderRadius: 16,
-    overflow: "hidden",
-    position: "relative",
-  },
-  cardGradient: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-  },
-  imageContainer: {
-    width: "100%",
-    height: 200,
-    position: "relative",
-  },
-  cover: {
-    width: "100%",
-    height: "100%",
-  },
-  imageGradient: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "40%",
-  },
-  storeIconBadge: {
-    position: "absolute",
-    bottom: 8,
-    left: 8,
-    backgroundColor: "rgba(12, 26, 51, 0.9)",
-    borderRadius: 50,
-    padding: 6,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-  },
-  storeIcon: {
-    width: 20,
-    height: 20,
-  },
-  infoSection: {
-    flex: 1,
-    padding: 12,
-    justifyContent: "space-between",
-  },
-  title: {
-    color: COLORS.light,
-    fontSize: 15,
-    fontWeight: "bold",
-    lineHeight: 18,
-    textAlign: "center",
-  },
-  savingsContainer: {
-    marginTop: 8,
-  },
-  savingsButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    gap: 6,
-    elevation: 3,
-    shadowColor: COLORS.lightGray,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 3,
-  },
-  savingsText: {
-    color: COLORS.light,
-    fontSize: 12,
-    fontWeight: "bold",
-    letterSpacing: 0.5,
-  },
-  countdownOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 100,
-  },
-  countdownGradient: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  countdownTitle: {
-    color: COLORS.light,
-    fontSize: 14,
-    fontWeight: "bold",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  timerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  timeUnit: {
-    alignItems: "center",
-  },
-  timeValueBox: {
-    backgroundColor: COLORS.button,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    minWidth: 32,
-  },
-  timeValue: {
-    color: COLORS.light,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  timeLabel: {
-    color: "#9CB4DD",
-    fontSize: 8,
-    marginTop: 3,
-    textAlign: "center",
-    textTransform: "uppercase",
-  },
-  separator: {
-    color: COLORS.lightGray,
-    fontSize: 16,
-    fontWeight: "bold",
-    marginHorizontal: 2,
-  },
-});

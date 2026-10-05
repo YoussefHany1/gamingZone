@@ -27,7 +27,8 @@ import FilterModal from "../components/gamesScreen/FilterModal";
 import SearchAutocomplete from "../components/gamesScreen/SearchAutocomplete";
 import type { FeedItemConfig } from "../types";
 import { adUnitId } from "@/src/constants/config";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { LinearGradient } from "expo-linear-gradient";
 import { useGames } from "../hooks/useGames";
 
@@ -54,6 +55,18 @@ const STATIC_FEED_ITEMS: FeedItemConfig[] = [
 
 // Ad Container — owns its own showAds state so it never triggers a list re-render
 const AdContainer = memo(() => {
+  const styles = useThemeStyles((c) => ({
+    adContainer: {
+      alignItems: "center",
+      width: "100%",
+      marginVertical: 20,
+    },
+    adLabel: {
+      color: c.text,
+      marginBottom: 10,
+    },
+  }));
+
   const { t } = useTranslation();
   const adsEnabled = useAdsEnabled();
   const [showAds, setShowAds] = useState(false);
@@ -132,6 +145,97 @@ TopRatedSection.displayName = "TopRatedSection";
 
 // main
 function GamesScreen(): React.ReactElement {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    searchSection: {
+      zIndex: 100,
+      marginHorizontal: 16,
+      marginTop: 10,
+      marginBottom: 20,
+    },
+    searchRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
+    autocompleteWrapper: {
+      position: "relative",
+      marginTop: 6,
+    },
+    searchBarContainer: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: c.surface,
+      paddingHorizontal: 15,
+      paddingBottom: 2,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    searchIcon: {
+      marginRight: 8,
+    },
+    searchInput: {
+      flex: 1,
+      color: c.text,
+      fontSize: 16,
+    },
+    filterBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    filterBtnActive: {
+      backgroundColor: c.accent,
+      borderColor: c.accent,
+    },
+    filterBadge: {
+      position: "absolute",
+      top: -4,
+      right: -4,
+      backgroundColor: c.danger,
+      borderRadius: 8,
+      minWidth: 16,
+      height: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 3,
+    },
+    filterBadgeText: {
+      color: "#ffffff",
+      fontSize: 10,
+      fontWeight: "700",
+    },
+    header: {
+      padding: 8,
+      borderRadius: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      elevation: 5,
+      shadowColor: c.textMuted,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 5,
+      marginHorizontal: 50,
+    },
+    headerText: {
+      color: c.text,
+      fontSize: 24,
+      fontWeight: "bold",
+      textAlign: "center",
+    },
+  }));
   const {
     t,
     searchQuery,
@@ -173,7 +277,7 @@ function GamesScreen(): React.ReactElement {
         case "header":
           return (
             <LinearGradient
-              colors={[COLORS.secondary, "#3b4d6e"]}
+              colors={[colors.textMuted, colors.accent]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.header}
@@ -259,11 +363,11 @@ function GamesScreen(): React.ReactElement {
       <View style={styles.searchSection}>
         <View style={styles.searchRow}>
           <View style={styles.searchBarContainer}>
-            <Search size={18} color={COLORS.gray} style={styles.searchIcon} />
+            <Search size={18} color={colors.textSubtle} style={styles.searchIcon} />
             <CustomTextInput
               style={styles.searchInput}
               placeholder={t("games.searchPlaceholder")}
-              placeholderTextColor={COLORS.gray}
+              placeholderTextColor={colors.textSubtle}
               value={searchQuery}
               onChangeText={handleSearchTextChange}
               onSubmitEditing={handleSubmitSearch}
@@ -289,7 +393,7 @@ function GamesScreen(): React.ReactElement {
           >
             <SlidersHorizontal
               size={20}
-              color={activeFilterCount > 0 ? COLORS.light : COLORS.lightGray}
+              color={activeFilterCount > 0 ? colors.text : colors.textMuted}
             />
             {activeFilterCount > 0 && (
               <View style={styles.filterBadge}>
@@ -352,103 +456,3 @@ function GamesScreen(): React.ReactElement {
 }
 
 export default GamesScreen;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-  },
-  searchSection: {
-    zIndex: 100,
-    marginHorizontal: 16,
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  autocompleteWrapper: {
-    position: "relative",
-    marginTop: 6,
-  },
-  searchBarContainer: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1e2a45",
-    paddingHorizontal: 15,
-    paddingBottom: 2,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    color: COLORS.light,
-    fontSize: 16,
-  },
-  filterBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-    backgroundColor: "#1e2a45",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  filterBtnActive: {
-    backgroundColor: COLORS.secondary,
-    borderColor: COLORS.lightGray,
-  },
-  filterBadge: {
-    position: "absolute",
-    top: -4,
-    right: -4,
-    backgroundColor: "#e74c3c",
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 3,
-  },
-  filterBadgeText: {
-    color: COLORS.light,
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  header: {
-    padding: 8,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 5,
-    shadowColor: COLORS.secondary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    marginHorizontal: 50,
-  },
-  headerText: {
-    color: COLORS.light,
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  adContainer: {
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 20,
-  },
-  adLabel: {
-    color: COLORS.light,
-    marginBottom: 10,
-  },
-});

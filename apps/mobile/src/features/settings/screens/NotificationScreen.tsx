@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import CustomText from "@/src/components/CustomText";
 import {
   View,
-  StyleSheet,
   ScrollView,
   Switch,
   TouchableOpacity,
@@ -22,13 +21,169 @@ import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { adUnitId } from "@/src/constants/config";
 import { useNotificationPreferences } from "@/src/hooks/useNotificationPreferences";
 import useRssFeeds from "@/src/hooks/useRssFeeds";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 // تعريف ثوابت الفئة والمصدر لتطابق ما تم وضعه في FreeGames.js
 const FREE_GAMES_CATEGORY = "free_games";
 const FREE_GAMES_SOURCE = "alerts";
 
 const Notification: React.FC = () => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    title: {
+      color: c.text,
+      fontSize: 22,
+      fontWeight: "bold",
+    },
+    scrollView: {
+      paddingHorizontal: 20,
+    },
+    Textheader: {
+      paddingTop: 20,
+      marginBottom: 30,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: c.textMuted,
+      lineHeight: 22,
+    },
+    categorySection: {
+      marginBottom: 20,
+      backgroundColor: "rgba(119, 155, 221, 0.1)",
+      borderRadius: 12,
+      overflow: "hidden",
+    },
+    categoryHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: 16,
+      backgroundColor: c.surface,
+    },
+    categoryHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+    },
+    chevronIcon: {
+      marginRight: 8,
+    },
+    categoryTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: c.text,
+      marginRight: 8,
+    },
+    sourceCount: {
+      fontSize: 14,
+      color: c.textMuted,
+    },
+    categorySwitch: {
+      transform: [{ scaleX: 1.1 }, { scaleY: 1.1 }],
+      marginLeft: 10,
+    },
+    sourcesList: {
+      paddingVertical: 8,
+    },
+    groupHeaderContainer: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: c.background,
+    },
+    groupHeaderText: {
+      color: c.textSubtle,
+      fontSize: 13,
+      fontWeight: "bold",
+      textTransform: "uppercase",
+    },
+    sourceItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: "rgba(119, 155, 221, 0.1)",
+    },
+    sourceInfo: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    sourceIcon: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      marginRight: 12,
+    },
+    sourceName: {
+      fontSize: 16,
+      color: c.text,
+      fontWeight: "500",
+    },
+    sourceLanguage: {
+      fontSize: 12,
+      color: c.textMuted,
+      marginLeft: 8,
+      backgroundColor: c.surface,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    footer: {
+      paddingTop: 15,
+      paddingBottom: 90,
+      paddingHorizontal: 16,
+    },
+    testButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: c.accent,
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+      marginBottom: 12,
+    },
+    testButtonSecondary: {
+      backgroundColor: "#4CAF50",
+    },
+    testButtonText: {
+      color: c.text,
+      fontSize: 16,
+      fontWeight: "600",
+      marginLeft: 8,
+    },
+    footerText: {
+      fontSize: 14,
+      color: c.textMuted,
+      textAlign: "center",
+      lineHeight: 20,
+    },
+    headerPrev: {
+      position: "absolute",
+      width: 40,
+      height: 40,
+      top: 50,
+      left: 10,
+      zIndex: 1000,
+    },
+    ad: {
+      alignItems: "center",
+      width: "100%",
+      marginVertical: 55,
+    },
+    adText: {
+      color: c.text,
+      marginBottom: 10,
+    },
+  }));
+
   const { rssFeeds, loading: loadingRss } = useRssFeeds();
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(
     {},
@@ -107,7 +262,7 @@ const Notification: React.FC = () => {
       <View style={styles.categorySection}>
         <View style={styles.categoryHeader}>
           <View style={styles.categoryHeaderLeft}>
-            <Gift size={24} color={COLORS.lightGray} style={styles.chevronIcon} />
+            <Gift size={24} color={colors.textMuted} style={styles.chevronIcon} />
             <CustomText style={styles.categoryTitle}>
               {t("games.list.freeGames.header")}
             </CustomText>
@@ -116,8 +271,8 @@ const Notification: React.FC = () => {
           <Switch
             value={isEnabled}
             onValueChange={toggleFreeGames}
-            trackColor={{ false: "#3e3e3e", true: COLORS.lightGray }}
-            thumbColor={isEnabled ? COLORS.light : "#f4f3f4"}
+            trackColor={{ false: "#3e3e3e", true: colors.textMuted }}
+            thumbColor={isEnabled ? colors.text : "#f4f3f4"}
             style={styles.categorySwitch}
           />
         </View>
@@ -171,13 +326,13 @@ const Notification: React.FC = () => {
             {isExpanded ? (
               <ChevronDown
                 size={20}
-                color={COLORS.lightGray}
+                color={colors.textMuted}
                 style={styles.chevronIcon}
               />
             ) : (
               <ChevronRight
                 size={20}
-                color={COLORS.lightGray}
+                color={colors.textMuted}
                 style={styles.chevronIcon}
               />
             )}
@@ -213,8 +368,8 @@ const Notification: React.FC = () => {
                       <Switch
                         value={isEnabled}
                         onValueChange={() => toggleSource(category, source.name)}
-                        trackColor={{ false: "#3e3e3e", true: COLORS.lightGray }}
-                        thumbColor={isEnabled ? COLORS.light : "#f4f3f4"}
+                        trackColor={{ false: "#3e3e3e", true: colors.textMuted }}
+                        thumbColor={isEnabled ? colors.text : "#f4f3f4"}
                       />
                     </View>
                   );
@@ -260,7 +415,7 @@ const Notification: React.FC = () => {
             style={styles.testButton}
             onPress={NotificationService.testLocalNotification}
           >
-            <Bell size={20} color={COLORS.light} />
+            <Bell size={20} color={colors.text} />
             <CustomText style={styles.testButtonText}>
               {t("settings.notifications.testNotification")}
             </CustomText>
@@ -271,157 +426,3 @@ const Notification: React.FC = () => {
   );
 };
 export default Notification;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-  },
-  title: {
-    color: COLORS.light,
-    fontSize: 22,
-    fontWeight: "bold",
-  },
-  scrollView: {
-    paddingHorizontal: 20,
-  },
-  Textheader: {
-    paddingTop: 20,
-    marginBottom: 30,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: COLORS.lightGray,
-    lineHeight: 22,
-  },
-  categorySection: {
-    marginBottom: 20,
-    backgroundColor: "rgba(119, 155, 221, 0.1)",
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  categoryHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    backgroundColor: COLORS.button,
-  },
-  categoryHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  chevronIcon: {
-    marginRight: 8,
-  },
-  categoryTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.light,
-    marginRight: 8,
-  },
-  sourceCount: {
-    fontSize: 14,
-    color: COLORS.lightGray,
-  },
-  categorySwitch: {
-    transform: [{ scaleX: 1.1 }, { scaleY: 1.1 }],
-    marginLeft: 10,
-  },
-  sourcesList: {
-    paddingVertical: 8,
-  },
-  groupHeaderContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: COLORS.primary,
-  },
-  groupHeaderText: {
-    color: COLORS.gray,
-    fontSize: 13,
-    fontWeight: "bold",
-    textTransform: "uppercase",
-  },
-  sourceItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(119, 155, 221, 0.1)",
-  },
-  sourceInfo: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  sourceIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginRight: 12,
-  },
-  sourceName: {
-    fontSize: 16,
-    color: COLORS.light,
-    fontWeight: "500",
-  },
-  sourceLanguage: {
-    fontSize: 12,
-    color: COLORS.lightGray,
-    marginLeft: 8,
-    backgroundColor: COLORS.button,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  footer: {
-    paddingTop: 15,
-    paddingBottom: 90,
-    paddingHorizontal: 16,
-  },
-  testButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.secondary,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  testButtonSecondary: {
-    backgroundColor: "#4CAF50",
-  },
-  testButtonText: {
-    color: COLORS.light,
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 8,
-  },
-  footerText: {
-    fontSize: 14,
-    color: COLORS.lightGray,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  headerPrev: {
-    position: "absolute",
-    width: 40,
-    height: 40,
-    top: 50,
-    left: 10,
-    zIndex: 1000,
-  },
-  ad: {
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 55,
-  },
-  adText: {
-    color: COLORS.light,
-    marginBottom: 10,
-  },
-});

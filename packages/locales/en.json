@@ -153,6 +153,7 @@
     "releaseCalendar": {
       "title": "Release Calendar",
       "subtitle": "See what's launching, day by day",
+      "today": "Today",
       "outNow": "Out now",
       "released": "Released",
       "noReleases": "No releases on this day",
@@ -450,6 +451,12 @@
     "languageSelect": {
       "confirmTitle": "Change Language",
       "confirmMessage": "The app will restart to apply the new language."
+    },
+    "theme": {
+      "title": "Appearance",
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
     },
     "currentLang": "English",
     "menu": {

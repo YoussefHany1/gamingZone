@@ -6,7 +6,7 @@ import type { FirebaseMessagingTypes } from "@react-native-firebase/messaging";
 import * as Notifications from "expo-notifications";
 import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import NotificationService from "@/src/services/notificationService";
-import COLORS from "../constants/colors";
+import { DARK_COLORS } from "../constants/colors";
 
 /**
  * Handles all FCM setup for the authenticated user:
@@ -27,7 +27,9 @@ const NEWS_CHANNEL: Notifications.NotificationChannelInput = {
   name: "News Notifications",
   importance: Notifications.AndroidImportance.MAX,
   vibrationPattern: [0, 250, 250, 250],
-  lightColor: COLORS.lightGray,
+  // Brand color for the LED — intentionally not themed, since the channel is
+  // created once at the OS level and reused regardless of the app's palette.
+  lightColor: DARK_COLORS.textMuted,
   lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
   enableVibrate: true,
   enableLights: true,

@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState, memo } from "react";
+import React, { useCallback, useEffect, useMemo, useState, memo } from "react";
 import CustomText from "@/src/components/CustomText";
-import { View, StyleSheet, TouchableOpacity, LayoutChangeEvent } from "react-native";
+import { View, TouchableOpacity, LayoutChangeEvent } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -11,7 +11,9 @@ import Loading from "@/src/Loading";
 import { databases } from "@/src/lib/appwrite";
 import { Query } from "react-native-appwrite";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import type { ThemeColors } from "@/src/constants/colors";
 import Constants from "expo-constants";
 import useCachedData from "@/src/hooks/useCachedData";
 import { WeeklySummaryDoc } from "../types";
@@ -30,28 +32,33 @@ const SUMMARY_TTL_MS = 43_200_000;
 // ─── Markdown Styles ──────────────────────────────────────────────────────────
 
 /**
- * Defined at module scope to prevent a new object being allocated on every
- * render, which would force react-native-markdown-display to re-process styles.
+ * `react-native-markdown-display` takes a plain style object, not a registered
+ * stylesheet, so it is derived per theme and memoized on the palette to avoid
+ * re-allocating on every render.
  */
-const markdownStyles = {
-  body: { color: "#E0E0E0", fontSize: 14, lineHeight: 24 },
-  heading1: {
-    color: COLORS.light,
-    fontSize: 20,
-    fontWeight: "bold" as const,
-    marginBottom: 10,
-  },
-  heading2: {
-    color: COLORS.light,
-    fontSize: 18,
-    fontWeight: "bold" as const,
-    marginTop: 10,
-    marginBottom: 5,
-  },
-  strong: { color: "#8eb0eeff", fontWeight: "bold" as const },
-  link: { color: "#4da6ff" },
-  bullet_list: { marginBottom: 10 },
-};
+const useMarkdownStyles = (colors: ThemeColors) =>
+  useMemo(
+    () => ({
+      body: { color: colors.text, fontSize: 14, lineHeight: 24 },
+      heading1: {
+        color: colors.text,
+        fontSize: 20,
+        fontWeight: "bold" as const,
+        marginBottom: 10,
+      },
+      heading2: {
+        color: colors.text,
+        fontSize: 18,
+        fontWeight: "bold" as const,
+        marginTop: 10,
+        marginBottom: 5,
+      },
+      strong: { color: colors.accentText, fontWeight: "bold" as const },
+      link: { color: colors.accentText },
+      bullet_list: { marginBottom: 10 },
+    }),
+    [colors],
+  );
 
 // ─── Data Fetching ────────────────────────────────────────────────────────────
 
@@ -73,6 +80,59 @@ const WeeklySummary = memo(function WeeklySummary() {
   const { t, i18n } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
+  const colors = useThemeColors();
+  const markdownStyles = useMarkdownStyles(colors);
+
+  const styles = useThemeStyles((c) => ({
+    card: {
+      backgroundColor: c.backgroundDeep,
+      borderRadius: 12,
+      marginHorizontal: 16,
+      marginVertical: 30,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    headerContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      paddingBottom: 8,
+    },
+    headerLeft: {
+      flexDirection: "column",
+    },
+    headerTitle: {
+      color: c.text,
+      fontSize: 20,
+      fontWeight: "bold",
+    },
+    date: {
+      color: c.textSubtle,
+      fontSize: 12,
+    },
+    animatedContainer: {
+      overflow: "hidden",
+    },
+    innerContent: {
+      position: "absolute",
+    },
+    readMoreButton: {
+      marginTop: 10,
+      alignItems: "center",
+      paddingVertical: 8,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+    },
+    readMoreText: {
+      color: c.accentText,
+      fontSize: 14,
+      fontWeight: "bold",
+    },
+  }));
 
   const animatedHeight = useSharedValue(COLLAPSED_HEIGHT);
 
@@ -152,54 +212,3 @@ const WeeklySummary = memo(function WeeklySummary() {
 export default WeeklySummary;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.darkBackground,
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginVertical: 30,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-  },
-  headerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.secondary,
-    paddingBottom: 8,
-  },
-  headerLeft: {
-    flexDirection: "column",
-  },
-  headerTitle: {
-    color: COLORS.lightGray,
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  date: {
-    color: COLORS.gray,
-    fontSize: 12,
-  },
-  animatedContainer: {
-    overflow: "hidden",
-  },
-  innerContent: {
-    position: "absolute",
-  },
-  readMoreButton: {
-    marginTop: 10,
-    alignItems: "center",
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#333",
-  },
-  readMoreText: {
-    color: COLORS.lightGray,
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-});

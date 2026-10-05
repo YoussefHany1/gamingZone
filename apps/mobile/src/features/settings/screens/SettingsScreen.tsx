@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, memo } from "react";
 import CustomText from "@/src/components/CustomText";
-import { View, StyleSheet, TouchableOpacity, ScrollView, Alert } from "react-native";
+import { View, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -11,6 +11,7 @@ import {
   List,
   LogOut,
   MessageSquare,
+  Palette,
   ShieldCheck,
   Star,
   SquareArrowOutUpLeft,
@@ -19,7 +20,8 @@ import {
 import auth from "@react-native-firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import InviteFriendsBtn from "../components/InviteFriendsBtn";
 import { openLink } from "@/src/lib/browser";
@@ -36,6 +38,75 @@ const PRIVACY_POLICY_URL = "https://gz1.games/privacy-policy" as const;
 // main
 
 const SettingsScreen = memo((): React.ReactElement => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+      paddingHorizontal: 16,
+    },
+    scrollContent: {
+      paddingBottom: 90,
+    },
+    userContainer: {
+      marginVertical: 15,
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 15,
+      paddingVertical: 20,
+      backgroundColor: c.surface,
+      borderRadius: 12,
+    },
+    avatar: {
+      height: 50,
+      width: 50,
+      borderRadius: 25,
+    },
+    displayName: {
+      color: c.text,
+      fontSize: 20,
+      fontWeight: "bold",
+      marginLeft: 15,
+      flex: 1,
+    },
+    menuItem: {
+      marginVertical: 8,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: 16,
+      backgroundColor: c.surface,
+      borderRadius: 12,
+    },
+    menuItemLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+    },
+    menuIcon: {
+      marginRight: 8,
+    },
+    menuLabel: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: c.text,
+    },
+    signOutButton: {
+      marginVertical: 10,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: 16,
+      backgroundColor: "rgba(221, 119, 119, 0.2)",
+      borderRadius: 12,
+    },
+    signOutText: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: "red",
+    },
+  }));
+
   const navigation = useNavigation<SettingsNavProp>();
   const { t, i18n } = useTranslation();
 
@@ -133,6 +204,12 @@ const SettingsScreen = memo((): React.ReactElement => {
         onPress: () => navigation.navigate("LanguageScreen"),
       },
       {
+        id: "theme",
+        icon: Palette,
+        label: t("settings.theme.title"),
+        onPress: () => navigation.navigate("ThemeScreen"),
+      },
+      {
         id: "privacy",
         icon: ShieldCheck,
         label: t("settings.menu.privacyPolicy"),
@@ -166,15 +243,15 @@ const SettingsScreen = memo((): React.ReactElement => {
         >
           <View style={styles.menuItemLeft}>
             {item.icon && (
-              <item.icon size={20} color={COLORS.lightGray} style={styles.menuIcon} />
+              <item.icon size={20} color={colors.textMuted} style={styles.menuIcon} />
             )}
             <CustomText style={styles.menuLabel}>{item.label}</CustomText>
           </View>
-          <TrailingIcon size={18} color={COLORS.lightGray} />
+          <TrailingIcon size={18} color={colors.textMuted} />
         </TouchableOpacity>
       );
     },
-    [i18n.language],
+    [i18n.language, colors.textMuted, styles],
   );
 
   return (
@@ -201,9 +278,9 @@ const SettingsScreen = memo((): React.ReactElement => {
           <CustomText style={styles.displayName}>{displayName}</CustomText>
           {!isGuest &&
             (i18n.language === "ar" ? (
-              <ChevronLeft size={24} color={COLORS.lightGray} />
+              <ChevronLeft size={24} color={colors.textMuted} />
             ) : (
-              <ChevronRight size={24} color={COLORS.lightGray} />
+              <ChevronRight size={24} color={colors.textMuted} />
             ))}
         </TouchableOpacity>
 
@@ -229,71 +306,3 @@ const SettingsScreen = memo((): React.ReactElement => {
 });
 SettingsScreen.displayName = "SettingsScreen";
 export default SettingsScreen;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 16,
-  },
-  scrollContent: {
-    paddingBottom: 90,
-  },
-  userContainer: {
-    marginVertical: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
-    paddingVertical: 20,
-    backgroundColor: COLORS.button,
-    borderRadius: 12,
-  },
-  avatar: {
-    height: 50,
-    width: 50,
-    borderRadius: 25,
-  },
-  displayName: {
-    color: COLORS.light,
-    fontSize: 20,
-    fontWeight: "bold",
-    marginLeft: 15,
-    flex: 1,
-  },
-  menuItem: {
-    marginVertical: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    backgroundColor: COLORS.button,
-    borderRadius: 12,
-  },
-  menuItemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  menuIcon: {
-    marginRight: 8,
-  },
-  menuLabel: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.light,
-  },
-  signOutButton: {
-    marginVertical: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    backgroundColor: "rgba(221, 119, 119, 0.2)",
-    borderRadius: 12,
-  },
-  signOutText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "red",
-  },
-});

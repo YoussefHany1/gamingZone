@@ -13,13 +13,15 @@ import {
 import { openLink } from "@/src/lib/browser";
 import type { NetworkButtonProps } from "../types";
 import type { ComponentType } from "react";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 type NetworkIcon = ComponentType<{ fill?: string; size?: number }>;
 
 // Maps IGDB event_network enum to icon names
 const NETWORK_ICONS: Record<number, { icon: NetworkIcon; color: string; label: string }> =
   {
-    1: { icon: XIcon, color: COLORS.light, label: "X" },
+    1: { icon: XIcon, color: "#ffffff", label: "X" },
     2: { icon: InstagramIcon, color: "#E1306C", label: "Instagram" },
     3: { icon: YouTubeIcon, color: "#FF0000", label: "YouTube" },
     4: { icon: TwitchIcon, color: "#9146FF", label: "Twitch" },
@@ -29,24 +31,46 @@ const NETWORK_ICONS: Record<number, { icon: NetworkIcon; color: string; label: s
   };
 
 const NetworkButton = memo<NetworkButtonProps>(({ network }) => {
+  const colors = useThemeColors();
+
+  // The X entry is the only one that is not a fixed brand color, so it is
+  // resolved from the theme at render time rather than baked into the map.
   const info = NETWORK_ICONS[network.network_type] ?? {
     icon: Globe,
     color: "#779bdd",
     label: "Link",
   };
+  const iconColor = network.network_type === 1 ? colors.text : info.color;
 
   const handlePress = useCallback(() => {
     openLink(network.url);
   }, [network.url]);
 
+  const styles = useThemeStyles((c) => ({
+    networkBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+    },
+    networkLabel: {
+      fontSize: 13,
+      fontWeight: "600",
+    },
+  }));
+
   return (
     <TouchableOpacity
-      style={[styles.networkBtn, { borderColor: info.color + "60" }]}
+      style={[styles.networkBtn, { borderColor: iconColor + "60" }]}
       onPress={handlePress}
       activeOpacity={0.8}
     >
-      <info.icon size={22} fill={info.color} />
-      <CustomText style={[styles.networkLabel, { color: info.color }]}>
+      <info.icon size={22} fill={iconColor} />
+      <CustomText style={[styles.networkLabel, { color: iconColor }]}>
         {info.label}
       </CustomText>
     </TouchableOpacity>
@@ -54,20 +78,3 @@ const NetworkButton = memo<NetworkButtonProps>(({ network }) => {
 });
 NetworkButton.displayName = "NetworkButton";
 export default NetworkButton;
-
-const styles = StyleSheet.create({
-  networkBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgba(81, 105, 150, 0.2)",
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  networkLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-});

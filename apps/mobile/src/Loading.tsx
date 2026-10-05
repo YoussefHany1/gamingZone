@@ -1,15 +1,32 @@
 import React, { memo } from "react";
-import { View, StyleSheet, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator } from "react-native";
 import CustomText from "./components/CustomText";
 import { useTranslation } from "react-i18next";
-import COLORS from "./constants/colors";
+import { useThemeColors } from "./hooks/useTheme";
+import { useThemeStyles } from "./hooks/useThemeStyles";
 
 const Loading: React.FC = memo(() => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    loadingContainer: {
+      flex: 1,
+      zIndex: 100,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: c.background,
+    },
+    loadingText: {
+      color: c.accentText,
+      marginTop: 10,
+      fontSize: 16,
+    },
+  }));
 
   return (
     <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color={COLORS.lightGray} />
+      <ActivityIndicator size="large" color={colors.textMuted} />
       <CustomText style={styles.loadingText}>{t("common.loading")}</CustomText>
     </View>
   );
@@ -18,18 +35,3 @@ const Loading: React.FC = memo(() => {
 Loading.displayName = "Loading";
 
 export default Loading;
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    zIndex: 100,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: COLORS.primary,
-  },
-  loadingText: {
-    color: COLORS.secondary,
-    marginTop: 10,
-    fontSize: 16,
-  },
-});

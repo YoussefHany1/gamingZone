@@ -1,10 +1,11 @@
 import React, { memo, useCallback } from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { CirclePlus, Gift } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { openLink } from "@/src/lib/browser";
 import type { GameActionButtonsProps } from "../../types";
 
@@ -13,7 +14,6 @@ function capitalise(str: string): string {
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 }
 
-const GRADIENT_COLORS: [string, string] = [COLORS.secondary, "#3b4d6e"];
 const GRADIENT_START = { x: 0, y: 0 };
 const GRADIENT_END = { x: 1, y: 0 };
 
@@ -22,6 +22,46 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
   store = "",
   onAddToList,
 }) => {
+  const colors = useThemeColors();
+  const gradientColors: [string, string] = [colors.accent, "#3b4d6e"];
+  const styles = useThemeStyles((c) => ({
+    container: {
+      marginVertical: 20,
+    },
+    buttonWrapper: {
+      alignItems: "center",
+      marginVertical: 10,
+      width: "100%",
+    },
+    button: {
+      padding: 15,
+      borderRadius: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      elevation: 5,
+      shadowColor: c.accentText,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 5,
+      width: "100%",
+    },
+    buttonText: {
+      color: c.text,
+      fontSize: 18,
+      fontWeight: "bold",
+      letterSpacing: 0.5,
+    },
+    claimIcon: {
+      marginRight: 10,
+    },
+    addToListText: {
+      fontWeight: "600",
+      letterSpacing: 0,
+      marginLeft: 8,
+    },
+  }));
+
   const { t } = useTranslation();
 
   const handleClaimPress = useCallback(() => {
@@ -39,12 +79,12 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
           accessibilityRole="button"
         >
           <LinearGradient
-            colors={GRADIENT_COLORS}
+            colors={gradientColors}
             start={GRADIENT_START}
             end={GRADIENT_END}
             style={styles.button}
           >
-            <Gift size={24} color={COLORS.light} style={styles.claimIcon} />
+            <Gift size={24} color={colors.text} style={styles.claimIcon} />
             <CustomText style={styles.buttonText}>
               {t("games.details.claimNow")}
               {capitalise(store)}
@@ -60,12 +100,12 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
         accessibilityRole="button"
       >
         <LinearGradient
-          colors={GRADIENT_COLORS}
+          colors={gradientColors}
           start={GRADIENT_START}
           end={GRADIENT_END}
           style={styles.button}
         >
-          <CirclePlus size={24} color={COLORS.light} />
+          <CirclePlus size={24} color={colors.text} />
           <CustomText style={[styles.buttonText, styles.addToListText]}>
             {t("games.details.addToList")}
           </CustomText>
@@ -76,41 +116,3 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
 };
 
 export default memo(GameActionButtons);
-
-const styles = StyleSheet.create({
-  container: {
-    marginVertical: 20,
-  },
-  buttonWrapper: {
-    alignItems: "center",
-    marginVertical: 10,
-    width: "100%",
-  },
-  button: {
-    padding: 15,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 5,
-    shadowColor: COLORS.secondary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    width: "100%",
-  },
-  buttonText: {
-    color: COLORS.light,
-    fontSize: 18,
-    fontWeight: "bold",
-    letterSpacing: 0.5,
-  },
-  claimIcon: {
-    marginRight: 10,
-  },
-  addToListText: {
-    fontWeight: "600",
-    letterSpacing: 0,
-    marginLeft: 8,
-  },
-});

@@ -1,6 +1,7 @@
 import React from "react";
 import { View, StyleSheet, Dimensions } from "react-native";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import Shimmer from "@/src/components/skeleton/Shimmer";
 import { useShimmerSweep } from "@/src/components/skeleton/shared";
 
@@ -11,6 +12,59 @@ const CARD_HEIGHT = 220;
 // Internal card — uses its own hook instance so each card animates independently
 const SkeletonCard: React.FC = () => {
   const animatedStyle = useShimmerSweep();
+
+  const styles = useThemeStyles((c) => ({
+    cardContainer: {
+      width: CARD_WIDTH,
+      height: CARD_HEIGHT,
+      marginHorizontal: 10,
+      borderRadius: 20,
+      overflow: "hidden",
+      backgroundColor: c.skeletonBase,
+      elevation: 5,
+    },
+    backgroundSkeleton: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: c.skeletonHighlight,
+    },
+    content: {
+      flex: 1,
+      justifyContent: "center",
+      padding: 20,
+    },
+    countdownRow: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 15,
+    },
+    countdownBox: {
+      alignItems: "center",
+    },
+    countdownHeaderSkeleton: {
+      width: 60,
+      height: 14,
+      backgroundColor: c.skeletonHighlight,
+      borderRadius: 4,
+      marginBottom: 8,
+    },
+    countdownNumberSkeleton: {
+      width: 50,
+      height: 40,
+      backgroundColor: c.skeletonHighlight,
+      borderRadius: 50,
+    },
+    textWrapper: {
+      marginBottom: 10,
+      marginHorizontal: 10,
+    },
+    titleSkeleton: {
+      width: "90%",
+      height: 24,
+      backgroundColor: c.skeletonHighlight,
+      borderRadius: 6,
+      marginBottom: 8,
+    },
+  }));
 
   return (
     <View style={styles.cardContainer}>
@@ -40,85 +94,37 @@ const SkeletonCard: React.FC = () => {
   );
 };
 
-const SkeletonMostAnticipated: React.FC = () => (
-  <View style={styles.container}>
-    {/* Section header skeleton */}
-    <View style={styles.headerSkeleton} />
+const SkeletonMostAnticipated: React.FC = () => {
+  const styles = useThemeStyles((c) => ({
+    container: {
+      marginVertical: 10,
+    },
+    headerSkeleton: {
+      width: 250,
+      height: 32,
+      backgroundColor: c.skeletonHighlight,
+      marginLeft: 20,
+      marginBottom: 15,
+      borderRadius: 8,
+    },
+    listContent: {
+      paddingHorizontal: 10,
+      flexDirection: "row",
+    },
+  }));
 
-    {/* Card skeletons */}
-    <View style={styles.listContent}>
-      <SkeletonCard />
-      <SkeletonCard />
+  return (
+    <View style={styles.container}>
+      {/* Section header skeleton */}
+      <View style={styles.headerSkeleton} />
+
+      {/* Card skeletons */}
+      <View style={styles.listContent}>
+        <SkeletonCard />
+        <SkeletonCard />
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 export default React.memo(SkeletonMostAnticipated);
-
-const styles = StyleSheet.create({
-  container: {
-    marginVertical: 10,
-  },
-  headerSkeleton: {
-    width: 250,
-    height: 32,
-    backgroundColor: COLORS.secondary,
-    marginLeft: 20,
-    marginBottom: 15,
-    borderRadius: 8,
-  },
-  listContent: {
-    paddingHorizontal: 10,
-    flexDirection: "row",
-  },
-  cardContainer: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginHorizontal: 10,
-    borderRadius: 20,
-    overflow: "hidden",
-    backgroundColor: COLORS.secondary + "50",
-    elevation: 5,
-  },
-  backgroundSkeleton: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: COLORS.secondary + "50",
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 20,
-  },
-  countdownRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 15,
-  },
-  countdownBox: {
-    alignItems: "center",
-  },
-  countdownHeaderSkeleton: {
-    width: 60,
-    height: 14,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 4,
-    marginBottom: 8,
-  },
-  countdownNumberSkeleton: {
-    width: 50,
-    height: 40,
-    backgroundColor: COLORS.primary + "30",
-    borderRadius: 50,
-  },
-  textWrapper: {
-    marginBottom: 10,
-    marginHorizontal: 10,
-  },
-  titleSkeleton: {
-    width: "90%",
-    height: 24,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: 6,
-    marginBottom: 8,
-  },
-});

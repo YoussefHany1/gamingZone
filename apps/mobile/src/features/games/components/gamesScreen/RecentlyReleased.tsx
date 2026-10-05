@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
@@ -8,7 +8,8 @@ import { useTranslation } from "react-i18next";
 import ErrorState from "../../../../components/ErrorState";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonRecentlyReleased from "../../skeleton/gamesScreen/SkeletonRecentlyReleased";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SectionTitle from "@/src/components/SectionTitle";
 import useCachedData from "@/src/hooks/useCachedData";
 import type { RecentGameCardProps } from "../../types";
@@ -33,13 +34,83 @@ const formatReleaseDate = (
   });
 };
 
-
-
 // Card
 
 const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const { t, i18n } = useTranslation();
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    gameCard: {
+      marginHorizontal: 15,
+      marginVertical: 8,
+      borderRadius: 16,
+      overflow: "hidden",
+      elevation: 6,
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.3,
+      shadowRadius: 6,
+      position: "relative",
+    },
+    cardGradient: { position: "absolute", width: "100%", height: "100%" },
+    cardContent: { flexDirection: "row", padding: 12 },
+    coverContainer: { width: 110, height: 150, position: "relative" },
+    cover: {
+      width: "100%",
+      height: "100%",
+      borderRadius: 12,
+      backgroundColor: c.skeletonBase,
+    },
+    ratingBadge: {
+      position: "absolute",
+      bottom: 8,
+      right: 8,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      elevation: 4,
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 3,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    ratingText: { color: c.text, fontSize: 13, fontWeight: "bold" },
+    ratingIcon: { fontSize: 11 },
+    infoContainer: {
+      flex: 1,
+      marginLeft: 12,
+      justifyContent: "space-between",
+      paddingVertical: 12,
+    },
+    title: {
+      color: c.text,
+      fontSize: 17,
+      fontWeight: "bold",
+      lineHeight: 21,
+      marginBottom: 8,
+    },
+    releaseDateContainer: {},
+    releaseDate: { color: c.textMuted, fontSize: 13, fontWeight: "bold" },
+    genreText: { color: c.textMuted, fontSize: 13 },
+    newBadgeText: {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      color: c.accentText,
+      fontSize: 18,
+      fontWeight: "bold",
+      letterSpacing: 0.5,
+    },
+    platformsContainer: { flexDirection: "row", alignItems: "center", gap: 6 },
+    platformsText: { color: c.textMuted, fontSize: 13, flex: 1 },
+  }));
 
   // Derive how many days ago the game was released
   const daysSince: number | null = item.first_release_date
@@ -57,7 +128,7 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
   return (
     <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.9}>
       <LinearGradient
-        colors={["#1a3052", COLORS.darkBackground]}
+        colors={[colors.skeletonBase, colors.backgroundDeep]}
         style={styles.cardGradient}
       />
 
@@ -137,6 +208,20 @@ RecentGameCard.displayName = "RecentGameCard";
 function RecentlyReleasedGames(): React.ReactElement {
   const { t } = useTranslation();
 
+  const styles = useThemeStyles((c) => ({
+    headerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      margin: 18,
+    },
+    errorContainer: {
+      width: "100%",
+      height: CARD_HEIGHT,
+    },
+    listContent: { paddingBottom: 20 },
+  }));
+
   const {
     data: games,
     isLoading,
@@ -197,85 +282,3 @@ function RecentlyReleasedGames(): React.ReactElement {
 }
 
 export default RecentlyReleasedGames;
-
-const styles = StyleSheet.create({
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    margin: 18,
-  },
-  errorContainer: {
-    width: "100%",
-    height: CARD_HEIGHT,
-  },
-  gameCard: {
-    marginHorizontal: 15,
-    marginVertical: 8,
-    borderRadius: 16,
-    overflow: "hidden",
-    elevation: 6,
-    shadowColor: COLORS.dark,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    position: "relative",
-  },
-  cardGradient: { position: "absolute", width: "100%", height: "100%" },
-  cardContent: { flexDirection: "row", padding: 12 },
-  coverContainer: { width: 110, height: 150, position: "relative" },
-  cover: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 12,
-    backgroundColor: COLORS.darkBackground,
-  },
-  ratingBadge: {
-    position: "absolute",
-    bottom: 8,
-    right: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    elevation: 4,
-    shadowColor: COLORS.dark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-  },
-  ratingText: { color: COLORS.light, fontSize: 13, fontWeight: "bold" },
-  ratingIcon: { fontSize: 11 },
-  infoContainer: {
-    flex: 1,
-    marginLeft: 12,
-    justifyContent: "space-between",
-    paddingVertical: 12,
-  },
-  title: {
-    color: COLORS.light,
-    fontSize: 17,
-    fontWeight: "bold",
-    lineHeight: 21,
-    marginBottom: 8,
-  },
-  releaseDateContainer: {},
-  releaseDate: { color: COLORS.lightGray, fontSize: 13, fontWeight: "bold" },
-  genreText: { color: COLORS.lightGray, fontSize: 13 },
-  newBadgeText: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    color: "#90b7ff",
-    fontSize: 18,
-    fontWeight: "bold",
-    letterSpacing: 0.5,
-  },
-  platformsContainer: { flexDirection: "row", alignItems: "center", gap: 6 },
-  platformsText: { color: COLORS.lightGray, fontSize: 13, flex: 1 },
-  listContent: { paddingBottom: 20 },
-});

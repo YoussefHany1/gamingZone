@@ -155,6 +155,7 @@
     "releaseCalendar": {
       "title": "تقويم الإصدارات",
       "subtitle": "تابع الإصدارات يومًا بيوم",
+      "today": "اليوم",
       "outNow": "متوفر الآن",
       "released": "صدر",
       "noReleases": "لا إصدارات في هذا اليوم",
@@ -363,7 +364,7 @@
       "pcRequirements": "متطلبات تشغيل اللعبة على الكمبيوتر",
       "minimum": "الحد الأدنى",
       "recommended": "الموصى بها",
-"listStatus": {
+      "listStatus": {
         "add": "أضف إلى...",
         "played": "تم لعبها",
         "playing": "ألعبها الآن",
@@ -452,6 +453,12 @@
     "languageSelect": {
       "confirmTitle": "تغيير اللغة",
       "confirmMessage": "سيُعاد تشغيل التطبيق لتطبيق اللغة الجديدة."
+    },
+    "theme": {
+      "title": "المظهر",
+      "system": "النظام",
+      "light": "فاتح",
+      "dark": "داكن"
     },
     "currentLang": "العربية",
     "menu": {

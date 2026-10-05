@@ -1,7 +1,7 @@
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import React, { useCallback } from "react";
 import CustomText from "@/src/components/CustomText";
-import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
+import { View, TouchableOpacity, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -9,7 +9,8 @@ import { useTranslation } from "react-i18next";
 import ErrorState from "@/src/components/ErrorState";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonNostalgiaCorner from "../../skeleton/gamesScreen/SkeletonNostalgiaCorner";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SectionTitle from "@/src/components/SectionTitle";
 import useCachedData from "@/src/hooks/useCachedData";
 import type { GamePlatform, NostalgiaCardProps } from "../../types";
@@ -78,6 +79,187 @@ const getRetroConsole = (platforms: GamePlatform[] | null | undefined): string |
 // Card
 
 const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    gameCard: {
+      width: CARD_WIDTH,
+      height: CARD_HEIGHT,
+      marginHorizontal: CARD_MARGIN,
+      position: "relative",
+    },
+    paperBackground: {
+      position: "absolute",
+      width: "100%",
+      height: "100%",
+      borderRadius: 12,
+    },
+    outerFrame: {
+      flex: 1,
+      margin: 8,
+      padding: 12,
+      borderWidth: 3,
+      borderColor: c.textMuted,
+      borderRadius: 8,
+      backgroundColor: c.background,
+      position: "relative",
+    },
+    decadeBadge: {
+      position: "absolute",
+      top: -12,
+      right: 20,
+      backgroundColor: c.accent,
+      paddingHorizontal: 16,
+      paddingVertical: 6,
+      borderRadius: 4,
+      borderWidth: 2,
+      borderColor: c.textMuted,
+      zIndex: 5,
+      elevation: 4,
+      shadowColor: c.textMuted,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.5,
+      shadowRadius: 4,
+    },
+    decadeText: {
+      color: c.text,
+      fontSize: 13,
+      fontWeight: "bold",
+      letterSpacing: 1,
+    },
+    coverFrame: { alignSelf: "center", marginTop: 10 },
+    coverInnerFrame: {
+      padding: 4,
+      backgroundColor: c.backgroundDeep,
+      borderRadius: 8,
+      borderWidth: 2,
+      borderColor: c.accentText,
+      elevation: 6,
+      shadowColor: c.textMuted,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.6,
+      shadowRadius: 6,
+    },
+    cover: { width: 120, height: 160, borderRadius: 4 },
+    sepiaOverlay: {
+      position: "absolute",
+      top: 4,
+      left: 4,
+      right: 4,
+      bottom: 4,
+      backgroundColor: "rgba(81, 105, 150, 0.15)",
+      borderRadius: 4,
+    },
+    frameShadow: {
+      position: "absolute",
+      top: 8,
+      left: 8,
+      right: -8,
+      bottom: -8,
+      backgroundColor: "rgba(0, 0, 28, 0.6)",
+      borderRadius: 8,
+      zIndex: -1,
+    },
+    titleRibbon: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 12,
+      marginBottom: 8,
+    },
+    ribbonLeft: {
+      width: 0,
+      height: 0,
+      borderTopWidth: 12,
+      borderTopColor: "transparent",
+      borderBottomWidth: 12,
+      borderBottomColor: "transparent",
+      borderRightWidth: 10,
+      borderRightColor: c.accent,
+    },
+    ribbonCenter: {
+      flex: 1,
+      backgroundColor: c.accent,
+      paddingVertical: 4,
+      alignItems: "center",
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: c.textMuted,
+    },
+    ribbonRight: {
+      width: 0,
+      height: 0,
+      borderTopWidth: 12,
+      borderTopColor: "transparent",
+      borderBottomWidth: 12,
+      borderBottomColor: "transparent",
+      borderLeftWidth: 10,
+      borderLeftColor: c.accent,
+    },
+    titleText: {
+      color: c.text,
+      fontSize: 16,
+      fontWeight: "bold",
+      textAlign: "center",
+      letterSpacing: 3,
+      textShadowColor: "rgba(0, 0, 0, 0.5)",
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+    infoContainer: { flex: 1 },
+    consoleBadge: {
+      // flexDirection: "row",
+      alignSelf: "center",
+      alignItems: "center",
+      backgroundColor: c.accentSurface,
+      borderWidth: 1,
+      borderColor: c.textMuted,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 4,
+      gap: 6,
+    },
+    consoleText: { color: c.textMuted, fontSize: 12, fontWeight: "bold" },
+    cornerTopLeft: {
+      position: "absolute",
+      top: 5,
+      left: 5,
+      width: 15,
+      height: 15,
+      borderTopWidth: 3,
+      borderLeftWidth: 3,
+      borderColor: c.accentText,
+    },
+    cornerTopRight: {
+      position: "absolute",
+      top: 5,
+      right: 5,
+      width: 15,
+      height: 15,
+      borderTopWidth: 3,
+      borderRightWidth: 3,
+      borderColor: c.accentText,
+    },
+    cornerBottomLeft: {
+      position: "absolute",
+      bottom: 5,
+      left: 5,
+      width: 15,
+      height: 15,
+      borderBottomWidth: 3,
+      borderLeftWidth: 3,
+      borderColor: c.accentText,
+    },
+    cornerBottomRight: {
+      position: "absolute",
+      bottom: 5,
+      right: 5,
+      width: 15,
+      height: 15,
+      borderBottomWidth: 3,
+      borderRightWidth: 3,
+      borderColor: c.accentText,
+    },
+  }));
+
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
 
   const year = getYear(item.first_release_date);
@@ -92,7 +274,7 @@ const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
     <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.85}>
       {/* Vintage dark background */}
       <LinearGradient
-        colors={[COLORS.primary, "#172a4a", "#1a3052"]}
+        colors={[colors.background, "#172a4a", "#1a3052"]}
         style={styles.paperBackground}
       />
 
@@ -156,6 +338,21 @@ NostalgiaCard.displayName = "NostalgiaCard";
 // Main
 
 export default function NostalgiaCorner(): React.ReactElement {
+  const styles = useThemeStyles((c) => ({
+    headerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      margin: 18,
+    },
+    errorContainer: {
+      width: "100%",
+      height: CARD_HEIGHT,
+    },
+    listContent: { paddingHorizontal: 10, paddingVertical: 5 },
+  }));
+
   const { t } = useTranslation();
 
   const {
@@ -224,196 +421,3 @@ export default function NostalgiaCorner(): React.ReactElement {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    margin: 18,
-  },
-  errorContainer: {
-    width: "100%",
-    height: CARD_HEIGHT,
-  },
-  gameCard: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginHorizontal: CARD_MARGIN,
-    position: "relative",
-  },
-  paperBackground: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    borderRadius: 12,
-  },
-  outerFrame: {
-    flex: 1,
-    margin: 8,
-    padding: 12,
-    borderWidth: 3,
-    borderColor: COLORS.lightGray,
-    borderRadius: 8,
-    backgroundColor: COLORS.primary,
-    position: "relative",
-  },
-  decadeBadge: {
-    position: "absolute",
-    top: -12,
-    right: 20,
-    backgroundColor: COLORS.secondary,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: COLORS.lightGray,
-    zIndex: 5,
-    elevation: 4,
-    shadowColor: COLORS.lightGray,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-  },
-  decadeText: {
-    color: COLORS.light,
-    fontSize: 13,
-    fontWeight: "bold",
-    letterSpacing: 1,
-  },
-  coverFrame: { alignSelf: "center", marginTop: 10 },
-  coverInnerFrame: {
-    padding: 4,
-    backgroundColor: COLORS.darkBackground,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: COLORS.secondary,
-    elevation: 6,
-    shadowColor: COLORS.lightGray,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-  },
-  cover: { width: 120, height: 160, borderRadius: 4 },
-  sepiaOverlay: {
-    position: "absolute",
-    top: 4,
-    left: 4,
-    right: 4,
-    bottom: 4,
-    backgroundColor: "rgba(81, 105, 150, 0.15)",
-    borderRadius: 4,
-  },
-  frameShadow: {
-    position: "absolute",
-    top: 8,
-    left: 8,
-    right: -8,
-    bottom: -8,
-    backgroundColor: "rgba(0, 0, 28, 0.6)",
-    borderRadius: 8,
-    zIndex: -1,
-  },
-  titleRibbon: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  ribbonLeft: {
-    width: 0,
-    height: 0,
-    borderTopWidth: 12,
-    borderTopColor: "transparent",
-    borderBottomWidth: 12,
-    borderBottomColor: "transparent",
-    borderRightWidth: 10,
-    borderRightColor: COLORS.secondary,
-  },
-  ribbonCenter: {
-    flex: 1,
-    backgroundColor: COLORS.secondary,
-    paddingVertical: 4,
-    alignItems: "center",
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: COLORS.lightGray,
-  },
-  ribbonRight: {
-    width: 0,
-    height: 0,
-    borderTopWidth: 12,
-    borderTopColor: "transparent",
-    borderBottomWidth: 12,
-    borderBottomColor: "transparent",
-    borderLeftWidth: 10,
-    borderLeftColor: COLORS.secondary,
-  },
-  titleText: {
-    color: COLORS.light,
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-    letterSpacing: 3,
-    textShadowColor: "rgba(0, 0, 0, 0.5)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  infoContainer: { flex: 1 },
-  consoleBadge: {
-    // flexDirection: "row",
-    alignSelf: "center",
-    alignItems: "center",
-    backgroundColor: COLORS.secondary + "20",
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 4,
-    gap: 6,
-  },
-  consoleIcon: { fontSize: 12 },
-  consoleText: { color: COLORS.lightGray, fontSize: 12, fontWeight: "bold" },
-  cornerTopLeft: {
-    position: "absolute",
-    top: 5,
-    left: 5,
-    width: 15,
-    height: 15,
-    borderTopWidth: 3,
-    borderLeftWidth: 3,
-    borderColor: COLORS.secondary,
-  },
-  cornerTopRight: {
-    position: "absolute",
-    top: 5,
-    right: 5,
-    width: 15,
-    height: 15,
-    borderTopWidth: 3,
-    borderRightWidth: 3,
-    borderColor: COLORS.secondary,
-  },
-  cornerBottomLeft: {
-    position: "absolute",
-    bottom: 5,
-    left: 5,
-    width: 15,
-    height: 15,
-    borderBottomWidth: 3,
-    borderLeftWidth: 3,
-    borderColor: COLORS.secondary,
-  },
-  cornerBottomRight: {
-    position: "absolute",
-    bottom: 5,
-    right: 5,
-    width: 15,
-    height: 15,
-    borderBottomWidth: 3,
-    borderRightWidth: 3,
-    borderColor: COLORS.secondary,
-  },
-  listContent: { paddingHorizontal: 10, paddingVertical: 5 },
-});

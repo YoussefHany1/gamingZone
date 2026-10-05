@@ -1,4 +1,4 @@
-import { useEffect, memo } from "react";
+import { useEffect, memo, useMemo } from "react";
 import {
   View,
   TouchableOpacity,
@@ -15,7 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Gamepad2, House, Newspaper, Settings } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
 import { useTabBarStore } from "../store/useTabBarStore";
-import COLORS from "../constants/colors";
+import { useIsDark, useThemeColors } from "@/src/hooks/useTheme";
 
 export const TAB_ROUTES = ["Home", "News", "Games", "Settings"] as const;
 export type TabRoute = (typeof TAB_ROUTES)[number];
@@ -28,12 +28,28 @@ const TAB_ICON_MAP: Record<TabRoute, LucideIcon> = {
 };
 
 // ── Palette ───────────────────────────────────────────────────────────────────
-const GLASS_BORDER = "rgba(119, 155, 221, 0.25)";
-const PILL_START = "rgba(119, 155, 221, 0.35)";
-const PILL_END = "rgba(119, 155, 221, 0.05)";
-const PILL_BORDER = "rgba(119, 155, 221, 0.4)";
-const ICON_ACTIVE = "#ffffff";
-const ICON_INACTIVE = "rgba(119, 155, 221, 0.7)";
+// Derived from the active theme so the glass effect reads correctly on a light
+// background. "active" is the color of the focused icon, used both for the
+// active dot and as the unfocused-icon tint.
+type TabPalette = ReturnType<typeof useTabPalette>;
+
+const useTabPalette = () => {
+  const colors = useThemeColors();
+  const isDark = useIsDark();
+  return useMemo(
+    () => ({
+      glassBorder: colors.border,
+      pillStart: isDark ? "rgba(119, 155, 221, 0.35)" : "rgba(12, 26, 51, 0.1)",
+      pillEnd: isDark ? "rgba(119, 155, 221, 0.05)" : "rgba(12, 26, 51, 0.02)",
+      pillBorder: isDark ? "rgba(119, 155, 221, 0.4)" : "rgba(12, 26, 51, 0.14)",
+      iconActive: isDark ? "#ffffff" : colors.text,
+      iconInactive: isDark ? "rgba(119, 155, 221, 0.7)" : colors.textMuted,
+      barTop: isDark ? "rgba(40, 54, 78, 1)" : "rgba(233, 238, 247, 1)",
+      barBottom: isDark ? colors.backgroundDeep : colors.background,
+    }),
+    [colors, isDark],
+  );
+};
 
 const TAB_SPRING_CONFIG = { stiffness: 140, damping: 15, mass: 0.8 };
 
@@ -46,14 +62,16 @@ const TabIcon = memo(function TabIcon({
   isFocused,
   tabWidth,
   onPress,
+  palette,
 }: {
   route: TabRoute;
   isFocused: boolean;
   tabWidth: number;
   onPress: () => void;
+  palette: TabPalette;
 }) {
   const Icon = TAB_ICON_MAP[route];
-  const iconColor = isFocused ? ICON_ACTIVE : ICON_INACTIVE;
+  const iconColor = isFocused ? palette.iconActive : palette.iconInactive;
   const iconScale = isFocused ? 1.18 : 1;
 
   return (
@@ -67,7 +85,14 @@ const TabIcon = memo(function TabIcon({
       <View collapsable={false} style={{ transform: [{ scale: iconScale }] }}>
         <Icon size={23} color={iconColor} accessible={false} />
       </View>
-      {isFocused && <View style={[styles.activeDot, { left: (tabWidth - 4) / 2 }]} />}
+      {isFocused && (
+        <View
+          style={[
+            styles.activeDot,
+            { left: (tabWidth - 4) / 2, backgroundColor: palette.iconActive },
+          ]}
+        />
+      )}
     </TouchableOpacity>
   );
 });
@@ -81,6 +106,7 @@ const LiquidGlassTabBar = memo(
     const { width: screenWidth } = useWindowDimensions();
     const tabWidth = screenWidth / TAB_ROUTES.length;
     const isVisible = useTabBarStore((s) => s.isVisible);
+    const palette = useTabPalette();
 
     const indicatorX = useSharedValue(state.index * tabWidth * rtlMultiplier);
     const translateY = useSharedValue(0);
@@ -115,25 +141,32 @@ const LiquidGlassTabBar = memo(
       >
         <View style={styles.bar}>
           <LinearGradient
-            colors={["rgba(40, 54, 78, 1)", COLORS.darkBackground, COLORS.darkBackground]}
+            colors={[palette.barTop, palette.barBottom, palette.barBottom]}
             locations={[0, 0.3, 1]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
 
-          <View style={[StyleSheet.absoluteFill, styles.barBorder]} />
+          <View
+            style={[StyleSheet.absoluteFill, { borderColor: palette.glassBorder }]}
+          />
 
           <Animated.View
             style={[styles.pill, { width: tabWidth - 14, left: 7 }, pillStyle]}
           >
             <LinearGradient
-              colors={[PILL_START, PILL_END]}
+              colors={[palette.pillStart, palette.pillEnd]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={[StyleSheet.absoluteFill, styles.pillRadius]}
             />
-            <View style={[StyleSheet.absoluteFill, styles.pillBorder]} />
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                { borderRadius: 23, borderWidth: 1, borderColor: palette.pillBorder },
+              ]}
+            />
           </Animated.View>
 
           {state.routes.map((route: { key: string; name: string }, index: number) => {
@@ -156,6 +189,7 @@ const LiquidGlassTabBar = memo(
                 isFocused={isFocused}
                 tabWidth={tabWidth}
                 onPress={onPress}
+                palette={palette}
               />
             );
           })}
@@ -189,7 +223,6 @@ const styles = StyleSheet.create({
     borderTopEndRadius: 34,
     borderTopStartRadius: 34,
     borderWidth: 1,
-    borderColor: GLASS_BORDER,
   },
   pill: {
     position: "absolute",
@@ -199,11 +232,6 @@ const styles = StyleSheet.create({
   },
   pillRadius: {
     borderRadius: 23,
-  },
-  pillBorder: {
-    borderRadius: 23,
-    borderWidth: 1,
-    borderColor: PILL_BORDER,
   },
   tabItem: {
     flex: 1,
@@ -218,6 +246,5 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: ICON_ACTIVE,
   },
 });

@@ -6,13 +6,45 @@ import { CirclePlay } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { openLink } from "@/src/lib/browser";
 import type { VideoCardProps } from "../types";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 const { width } = Dimensions.get("window");
 const VideoCard = memo<VideoCardProps>(({ video }) => {
   const handlePress = useCallback(() => {
     openLink(`https://www.youtube.com/watch?v=${video.video_id}`);
   }, [video.video_id]);
+
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    videoCard: {
+      width: width * 0.6,
+      height: 120,
+      borderRadius: 12,
+      overflow: "hidden",
+      marginRight: 12,
+      justifyContent: "flex-end",
+    },
+    videoThumb: {
+      ...StyleSheet.absoluteFill,
+    },
+    playButton: {
+      ...StyleSheet.absoluteFill,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    videoName: {
+      color: c.text,
+      fontSize: 11,
+      fontWeight: "600",
+      paddingHorizontal: 8,
+      paddingBottom: 8,
+      textShadowColor: "#000000",
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 4,
+    },
+  }));
 
   return (
     <TouchableOpacity style={styles.videoCard} onPress={handlePress} activeOpacity={0.8}>
@@ -24,11 +56,11 @@ const VideoCard = memo<VideoCardProps>(({ video }) => {
         cachePolicy="memory-disk"
       />
       <LinearGradient
-        colors={["transparent", "rgba(12,26,51,0.85)"]}
+        colors={["transparent", colors.scrim]}
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.playButton}>
-        <CirclePlay size={44} color={COLORS.light} />
+        <CirclePlay size={44} color={colors.text} />
       </View>
       {video.name ? (
         <CustomText style={styles.videoName} numberOfLines={1}>
@@ -40,32 +72,3 @@ const VideoCard = memo<VideoCardProps>(({ video }) => {
 });
 VideoCard.displayName = "VideoCard";
 export default VideoCard;
-
-const styles = StyleSheet.create({
-  videoCard: {
-    width: width * 0.6,
-    height: 120,
-    borderRadius: 12,
-    overflow: "hidden",
-    marginRight: 12,
-    justifyContent: "flex-end",
-  },
-  videoThumb: {
-    ...StyleSheet.absoluteFill,
-  },
-  playButton: {
-    ...StyleSheet.absoluteFill,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  videoName: {
-    color: COLORS.light,
-    fontSize: 11,
-    fontWeight: "600",
-    paddingHorizontal: 8,
-    paddingBottom: 8,
-    textShadowColor: COLORS.dark,
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-});

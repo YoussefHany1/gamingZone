@@ -1,8 +1,9 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
@@ -10,6 +11,26 @@ type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
 
 // 4 blocks (2×2): each with a static translated header + shimmer value lines
 const GameDetailsGridSkeleton: React.FC = () => {
+  const styles = useThemeStyles((c) => ({
+    grid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      marginTop: 16,
+    },
+    block: {
+      width: "50%",
+      paddingRight: 10,
+      marginTop: 14,
+    },
+    blockHeader: {
+      color: c.text,
+      fontSize: 24,
+      fontWeight: "600",
+      textDecorationLine: "underline",
+      marginTop: 10,
+    },
+  }));
+
   const { t } = useTranslation();
   const shimmer = useShimmer();
   const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
@@ -35,23 +56,3 @@ const GameDetailsGridSkeleton: React.FC = () => {
 };
 
 export default GameDetailsGridSkeleton;
-
-const styles = StyleSheet.create({
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginTop: 16,
-  },
-  block: {
-    width: "50%",
-    paddingRight: 10,
-    marginTop: 14,
-  },
-  blockHeader: {
-    color: COLORS.light,
-    fontSize: 24,
-    fontWeight: "600",
-    textDecorationLine: "underline",
-    marginTop: 10,
-  },
-});

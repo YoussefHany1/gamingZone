@@ -1,8 +1,5 @@
 import React from "react";
-import Animated, {
-  useAnimatedStyle,
-  interpolateColor,
-} from "react-native-reanimated";
+import Animated, { useAnimatedStyle, interpolateColor } from "react-native-reanimated";
 import type { SkeletonBarProps } from "../../types";
 /**
  * A single animated bar whose background colour pulses between two shades.

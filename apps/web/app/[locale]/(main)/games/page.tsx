@@ -1,9 +1,24 @@
-import { GamesPageView, fetchFreeGames, fetchGamesList, searchGames, Game, FreeGame } from "@/features/games";
+import { GamesPageView, fetchFreeGames, fetchGamesList } from "@/features/games";
 import { createLocalizedMetadata } from "@/lib/metadata";
 
-export const revalidate = 600;
+/**
+ * 24h ISR window. This was previously `600`, which was inert — the route awaited
+ * `searchParams`, so Next always rendered it dynamically and the export had no
+ * effect. Search now lives at /[locale]/games/search, which is the dynamic
+ * route; this one is a pure browse page and is actually static.
+ *
+ * Freshness comes from free-games.yml, which calls /api/revalidate with
+ * target "games" on a free-game membership change and revalidates this path
+ * explicitly. The window is a backstop.
+ *
+ * Both TTLs in @/features/games/services/server-cache are also 86400 and must
+ * stay in step: Next takes the lowest TTL among the data-cache entries a render
+ * touches, so a lower one here would silently keep this page dynamic-ish.
+ */
+export const revalidate = 86400;
 
 export const generateMetadata = createLocalizedMetadata({
+  path: "/games",
   en: {
     title: "Gaming Zone | Games Directory & Your Library",
     description:
@@ -16,88 +31,55 @@ export const generateMetadata = createLocalizedMetadata({
   },
 });
 
+/**
+ * Browse only. Deliberately does NOT read `searchParams` — awaiting it is what
+ * forced this route to be a dynamic render. Search, filtering and pagination
+ * live at /[locale]/games/search.
+ *
+ * Trade-off: an old bookmark like /en/games?query=zelda no longer filters, it
+ * just lands here on the browse page. That was accepted rather than adding a
+ * redirect, since the search results page is `noindex` anyway and these query
+ * URLs were never canonical.
+ */
 export default async function GamesPage(props: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{
-    query?: string;
-    genre?: string;
-    platform?: string;
-    sort?: string;
-    page?: string;
-  }>;
 }) {
-  const [{ locale }, searchParams] = await Promise.all([
-    props.params,
-    props.searchParams,
+  const { locale } = await props.params;
+
+  // Nine cached accessors; each collapses to one upstream request per TTL.
+  const [
+    freeGames,
+    popular,
+    recentlyReleased,
+    comingSoon,
+    mostAnticipated,
+    nostalgia,
+    steamTopSellers,
+    topRated,
+    trendingMobile,
+  ] = await Promise.all([
+    fetchFreeGames(),
+    fetchGamesList("popular"),
+    fetchGamesList("recently-released"),
+    fetchGamesList("coming-soon"),
+    fetchGamesList("most-anticipated"),
+    fetchGamesList("nostalgia-corner"),
+    fetchGamesList("steam-top-sellers"),
+    fetchGamesList("top-rated"),
+    fetchGamesList("trending-mobile"),
   ]);
-
-  const query = searchParams.query || "";
-  const genre = searchParams.genre || "";
-  const platform = searchParams.platform || "";
-  const sort = searchParams.sort || "relevance";
-  const page = parseInt(searchParams.page || "1", 10) || 1;
-
-  const isSearching = query !== "" || genre !== "" || platform !== "";
-
-  // Data fetching based on search mode
-  let searchResults: Game[] = [];
-  let freeGames: FreeGame[] = [];
-  let popular: Game[] = [];
-  let recentlyReleased: Game[] = [];
-  let comingSoon: Game[] = [];
-
-  let mostAnticipated: Game[] = [];
-  let nostalgia: Game[] = [];
-  let steamTopSellers: Game[] = [];
-  let topRated: Game[] = [];
-  let trendingMobile: Game[] = [];
-
-  if (isSearching) {
-    searchResults = await searchGames(query, genre, platform, sort, page);
-  } else {
-    // parallel fetch in Server Component
-    const [
-      freeRes,
-      popRes,
-      recentRes,
-      upcomingRes,
-      anticipatedRes,
-      nostalgiaRes,
-      steamRes,
-      topRatedRes,
-      trendingMobileRes,
-    ] = await Promise.all([
-      fetchFreeGames(),
-      fetchGamesList("popular"),
-      fetchGamesList("recently-released"),
-      fetchGamesList("coming-soon"),
-      fetchGamesList("most-anticipated"),
-      fetchGamesList("nostalgia-corner"),
-      fetchGamesList("steam-top-sellers"),
-      fetchGamesList("top-rated"),
-      fetchGamesList("trending-mobile"),
-    ]);
-    freeGames = freeRes;
-    popular = popRes;
-    recentlyReleased = recentRes;
-    comingSoon = upcomingRes;
-    mostAnticipated = anticipatedRes;
-    nostalgia = nostalgiaRes;
-    steamTopSellers = steamRes;
-    topRated = topRatedRes;
-    trendingMobile = trendingMobileRes;
-  }
 
   return (
     <GamesPageView
       locale={locale}
-      query={query}
-      genre={genre}
-      platform={platform}
-      sort={sort}
-      page={page}
-      isSearching={isSearching}
-      searchResults={searchResults}
+      searchPath={`/${locale}/games/search`}
+      query=""
+      genre=""
+      platform=""
+      sort="relevance"
+      page={1}
+      isSearching={false}
+      searchResults={[]}
       freeGames={freeGames}
       popular={popular}
       recentlyReleased={recentlyReleased}

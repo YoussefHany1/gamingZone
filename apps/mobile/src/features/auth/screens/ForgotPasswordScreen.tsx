@@ -3,7 +3,6 @@ import CustomText from "@/src/components/CustomText";
 import CustomTextInput from "@/src/components/CustomTextInput";
 import {
   TouchableOpacity,
-  StyleSheet,
   ToastAndroid,
   KeyboardAvoidingView,
   Platform,
@@ -13,7 +12,8 @@ import auth from "@react-native-firebase/auth";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 // Types
 type AuthStackParamList = {
@@ -27,6 +27,56 @@ const ForgotPasswordScreen = memo(({ navigation }: Props) => {
   const { t } = useTranslation();
   const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    background: {
+      flex: 1,
+      width: "100%",
+      height: "100%",
+      backgroundColor: c.background,
+    },
+    container: { flex: 1, justifyContent: "center", padding: 20 },
+    logo: { width: 250, height: 250, alignSelf: "center" },
+    title: {
+      fontSize: 22,
+      fontWeight: "bold",
+      color: c.text,
+      textAlign: "center",
+      marginBottom: 20,
+    },
+    input: {
+      color: c.text,
+      backgroundColor: c.surface,
+      padding: 15,
+      borderRadius: 5,
+      marginBottom: 25,
+    },
+    button: {
+      backgroundColor: c.accent,
+      padding: 15,
+      borderRadius: 12,
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "center",
+      marginBottom: 20,
+      marginHorizontal: 10,
+    },
+    buttonText: {
+      color: c.onAccent,
+      fontSize: 18,
+      fontWeight: "bold",
+      textAlign: "center",
+    },
+    backButton: {
+      borderWidth: 2,
+      borderColor: c.accent,
+      padding: 15,
+      borderRadius: 12,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+  }));
 
   const handleResetPassword = useCallback(async (): Promise<void> => {
     if (!email) {
@@ -89,7 +139,7 @@ const ForgotPasswordScreen = memo(({ navigation }: Props) => {
           <CustomTextInput
             style={styles.input}
             placeholder={t("auth.emailPlaceholder")}
-            placeholderTextColor={COLORS.gray}
+            placeholderTextColor={colors.textSubtle}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -119,52 +169,3 @@ const ForgotPasswordScreen = memo(({ navigation }: Props) => {
 
 ForgotPasswordScreen.displayName = "ForgotPasswordScreen";
 export default ForgotPasswordScreen;
-
-const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-    backgroundColor: COLORS.primary,
-  },
-  container: { flex: 1, justifyContent: "center", padding: 20 },
-  logo: { width: 250, height: 250, alignSelf: "center" },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: COLORS.light,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  input: {
-    color: COLORS.light,
-    backgroundColor: COLORS.button,
-    padding: 15,
-    borderRadius: 5,
-    marginBottom: 25,
-  },
-  button: {
-    backgroundColor: COLORS.secondary,
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 20,
-    marginHorizontal: 10,
-  },
-  buttonText: {
-    color: COLORS.light,
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  backButton: {
-    borderWidth: 2,
-    borderColor: COLORS.secondary,
-    padding: 15,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});

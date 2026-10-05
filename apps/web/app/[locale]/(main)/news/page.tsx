@@ -1,8 +1,15 @@
 import React from "react";
-import { fetchNewsSources, fetchNews, NewsList } from "@/features/news";
+import {
+  fetchNewsSources,
+  fetchNews,
+  clampCategory,
+  clampSourceName,
+  NewsList,
+} from "@/features/news";
 import { createLocalizedMetadata } from "@/lib/metadata";
 
 export const generateMetadata = createLocalizedMetadata({
+  path: "/news",
   en: {
     title: "Gaming Zone | Gaming News, Reviews & Esports",
     description:
@@ -15,7 +22,12 @@ export const generateMetadata = createLocalizedMetadata({
   },
 });
 
-export const revalidate = 600;
+// No `revalidate` export: this route reads `searchParams` below, so Next renders
+// it dynamically and any segment-level TTL would be inert. The previous
+// `revalidate = 600` looked like ISR protection but never applied — the cross
+// request caching here comes from the unstable_cache wrappers in
+// @/features/news, not from this route. /api/revalidate drops those tags when
+// articles are written.
 
 export default async function NewsPage(props: {
   params: Promise<{ locale: string }>;
@@ -23,7 +35,11 @@ export default async function NewsPage(props: {
 }) {
   const searchParams = await props.searchParams;
   const { locale } = await props.params;
-  const currentCategory = searchParams.category || "news";
+// Clamp the untrusted query value before it reaches any fetcher, so the
+  // sources cache key and `news:sources:*` tag stay within the known set. An
+  // unknown category falls back to the default feed rather than erroring: this
+  // route is dynamic, and throwing here would turn a bad query string into a 500.
+  const currentCategory = clampCategory(searchParams.category);
 
   // 1. Fetch available sources dynamically
   const sources = await fetchNewsSources(currentCategory);
@@ -42,7 +58,15 @@ export default async function NewsPage(props: {
     }
   }
 
-  const currentSource = searchParams.source || defaultSource;
+  // `?source=` is unvalidated, and it becomes both a cache key segment and a
+  // `news:source:<name>` tag. Check it against the registry we just fetched, so
+  // a junk value degrades to the locale default instead of minting a
+  // permanent, never-invalidated cache entry and an empty feed.
+  const requestedSource = clampSourceName(searchParams.source);
+  const currentSource =
+    requestedSource && sources.some((s) => s.name === requestedSource)
+      ? requestedSource
+      : defaultSource;
   const articles = await fetchNews(currentCategory, currentSource);
 
   return (

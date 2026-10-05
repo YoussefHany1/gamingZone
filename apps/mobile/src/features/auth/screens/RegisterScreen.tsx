@@ -22,7 +22,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Constants from "expo-constants";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import CustomPicker from "@/src/components/CustomPicker";
 import { getLocales } from "expo-localization";
 import countries from "i18n-iso-countries";
@@ -81,6 +82,84 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
   const [country, setCountry] = useState<string>("");
   const [gender, setGender] = useState<Gender>("male");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    background: {
+      flex: 1,
+      width: "100%",
+      height: "100%",
+      backgroundColor: c.background,
+    },
+    container: { flex: 1, justifyContent: "center", paddingHorizontal: 20 },
+    keyboardView: { flex: 1 },
+    scrollContent: { flexGrow: 1, justifyContent: "center" },
+    logo: { width: 220, height: 220, alignSelf: "center" },
+    title: {
+      fontSize: 28,
+      fontWeight: "bold",
+      color: c.text,
+      textAlign: "center",
+      marginBottom: 20,
+    },
+    inputContainer: { marginBottom: 25 },
+    input: {
+      color: c.text,
+      backgroundColor: c.surface,
+      fontSize: 14,
+      padding: 15,
+      borderRadius: 5,
+      marginBottom: 10,
+    },
+    button: {
+      backgroundColor: c.accent,
+      padding: 15,
+      borderRadius: 12,
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "center",
+      marginBottom: 15,
+    },
+    buttonDisabled: {
+      opacity: 0.6,
+    },
+    googleButtonWrapper: { justifyContent: "center" },
+    gradient: {
+      padding: 15,
+      borderRadius: 12,
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "center",
+    },
+    buttonText: {
+      color: c.onAccent,
+      fontSize: 18,
+      fontWeight: "bold",
+      textAlign: "center",
+    },
+    // Sits on the fixed Google brand gradient, identical in both themes.
+    brandButtonText: {
+      color: "#ffffff",
+      fontSize: 18,
+      fontWeight: "bold",
+      textAlign: "center",
+    },
+    newAccButton: {
+      borderWidth: 2,
+      borderColor: c.accent,
+      padding: 15,
+      borderRadius: 12,
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 35,
+    },
+    guestButton: { marginVertical: 15, padding: 10, alignItems: "center" },
+    guestButtonText: {
+      color: c.textMuted,
+      fontSize: 16,
+      textDecorationLine: "underline",
+    },
+  }));
 
   useEffect(() => {
     const fetchCountryByIP = async () => {
@@ -298,7 +377,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 placeholder={t("auth.register.namePlaceholder")}
                 value={name}
                 onChangeText={setName}
-                placeholderTextColor={COLORS.gray}
+                placeholderTextColor={colors.textSubtle}
               />
               <CustomTextInput
                 style={styles.input}
@@ -307,7 +386,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                placeholderTextColor={COLORS.gray}
+                placeholderTextColor={colors.textSubtle}
               />
 
               <CustomPicker
@@ -329,7 +408,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-                placeholderTextColor={COLORS.gray}
+                placeholderTextColor={colors.textSubtle}
               />
             </View>
 
@@ -340,7 +419,7 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color={COLORS.light} size="small" />
+                <ActivityIndicator color={colors.onAccent} size="small" />
               ) : (
                 <CustomText style={styles.buttonText}>
                   {t("auth.register.signUpButton")}
@@ -361,11 +440,11 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
                 end={{ x: 1, y: 1 }}
               >
                 {isLoading ? (
-                  <ActivityIndicator color={COLORS.light} size="small" />
+                  <ActivityIndicator color="#ffffff" size="small" />
                 ) : (
                   <>
-                    <GoogleIcon size={28} fill={COLORS.light} />
-                    <CustomText style={styles.buttonText}>
+                    <GoogleIcon size={28} />
+                    <CustomText style={styles.brandButtonText}>
                       {" "}
                       {t("auth.register.googleSignUp")}
                     </CustomText>
@@ -407,73 +486,3 @@ SignupScreen.displayName = "SignupScreen";
 export default SignupScreen;
 
 // Styles
-
-const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-    backgroundColor: COLORS.primary,
-  },
-  container: { flex: 1, justifyContent: "center", paddingHorizontal: 20 },
-  keyboardView: { flex: 1 },
-  scrollContent: { flexGrow: 1, justifyContent: "center" },
-  logo: { width: 220, height: 220, alignSelf: "center" },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: COLORS.light,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  inputContainer: { marginBottom: 25 },
-  input: {
-    color: COLORS.light,
-    backgroundColor: COLORS.button,
-    fontSize: 14,
-    padding: 15,
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  button: {
-    backgroundColor: COLORS.secondary,
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 15,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  googleButtonWrapper: { justifyContent: "center" },
-  gradient: {
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  buttonText: {
-    color: COLORS.light,
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  newAccButton: {
-    borderWidth: 2,
-    borderColor: COLORS.secondary,
-    padding: 15,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 35,
-  },
-  guestButton: { marginVertical: 15, padding: 10, alignItems: "center" },
-  guestButtonText: {
-    color: COLORS.lightGray,
-    fontSize: 16,
-    textDecorationLine: "underline",
-  },
-});

@@ -4,7 +4,6 @@ import CustomText from "@/src/components/CustomText";
 import {
   View,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
   ToastAndroid,
   ScrollView,
@@ -13,7 +12,8 @@ import {
 } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import auth from "@react-native-firebase/auth";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useTranslation } from "react-i18next";
 import { Lightbulb, MessageSquare, TriangleAlert } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
@@ -56,17 +56,46 @@ interface TypeButtonProps {
 }
 
 const TypeButton = memo<TypeButtonProps>(
-  ({ value, icon: Icon, label, active, onPress }) => (
-    <TouchableOpacity
-      style={[styles.typeButton, active && styles.typeButtonActive]}
-      onPress={() => onPress(value)}
-    >
-      <Icon size={24} color={COLORS.light} />
-      <CustomText style={[styles.typeText, active && styles.typeTextActive]}>
-        {label}
-      </CustomText>
-    </TouchableOpacity>
-  ),
+  ({ value, icon: Icon, label, active, onPress }) => {
+    const colors = useThemeColors();
+
+    const styles = useThemeStyles((c) => ({
+      typeButton: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 10,
+        borderRadius: 8,
+        marginHorizontal: 4,
+        borderWidth: 1,
+        borderColor: c.accent,
+      },
+      typeButtonActive: {
+        backgroundColor: c.accent,
+        borderColor: c.accent,
+      },
+      typeText: {
+        marginTop: 5,
+        fontSize: 12,
+        color: c.text,
+        fontWeight: "bold",
+        textAlign: "center",
+      },
+      typeTextActive: { color: c.onAccent },
+    }));
+
+    return (
+      <TouchableOpacity
+        style={[styles.typeButton, active && styles.typeButtonActive]}
+        onPress={() => onPress(value)}
+      >
+        <Icon size={24} color={active ? colors.onAccent : colors.text} />
+        <CustomText style={[styles.typeText, active && styles.typeTextActive]}>
+          {label}
+        </CustomText>
+      </TouchableOpacity>
+    );
+  },
 );
 TypeButton.displayName = "TypeButton";
 
@@ -79,6 +108,44 @@ const ContactScreen = ({ navigation }: Props) => {
   const [message, setMessage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [email, setEmail] = useState<string>(currentUser?.email ?? "");
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    container: { flex: 1, backgroundColor: c.background, paddingBottom: 90 },
+    scrollContent: { padding: 20 },
+    label: {
+      color: c.text,
+      fontSize: 16,
+      marginBottom: 10,
+      fontWeight: "bold",
+      textAlign: "left",
+    },
+    typesContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 20,
+    },
+    inputContainer: {
+      backgroundColor: c.accentSurface,
+      borderRadius: 8,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    input: { color: c.text, padding: 15, fontSize: 16 },
+    textArea: { minHeight: 120 },
+    charCount: { color: c.textMuted, fontSize: 12, padding: 10, paddingBottom: 8 },
+    charCountLimit: { color: c.danger },
+    emailInput: { textAlign: "left" },
+    submitButton: {
+      backgroundColor: c.accent,
+      padding: 15,
+      borderRadius: 8,
+      alignItems: "center",
+      marginTop: 10,
+    },
+    submitText: { color: c.onAccent, fontSize: 18, fontWeight: "bold" },
+  }));
 
   // Validation
   const isValidEmail = useCallback((addr: string): boolean => EMAIL_REGEX.test(addr), []);
@@ -217,7 +284,7 @@ const ContactScreen = ({ navigation }: Props) => {
           <CustomTextInput
             style={[styles.input, styles.textArea]}
             placeholder={t("settings.contact.messagePlaceholder")}
-            placeholderTextColor={COLORS.gray}
+            placeholderTextColor={colors.textSubtle}
             multiline
             numberOfLines={6}
             value={message}
@@ -241,7 +308,7 @@ const ContactScreen = ({ navigation }: Props) => {
           <CustomTextInput
             style={[styles.input, styles.emailInput]}
             placeholder="example@email.com"
-            placeholderTextColor={COLORS.gray}
+            placeholderTextColor={colors.textSubtle}
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
@@ -256,7 +323,7 @@ const ContactScreen = ({ navigation }: Props) => {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color={COLORS.light} />
+            <ActivityIndicator color={colors.text} />
           ) : (
             <CustomText style={styles.submitText}>
               {t("settings.contact.send")}
@@ -269,62 +336,3 @@ const ContactScreen = ({ navigation }: Props) => {
 };
 
 export default ContactScreen;
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.primary, paddingBottom: 90 },
-  scrollContent: { padding: 20 },
-  label: {
-    color: COLORS.light,
-    fontSize: 16,
-    marginBottom: 10,
-    fontWeight: "bold",
-    textAlign: "left",
-  },
-  typesContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  typeButton: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 10,
-    borderRadius: 8,
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-  },
-  typeButtonActive: {
-    backgroundColor: COLORS.secondary,
-    borderColor: COLORS.lightGray,
-  },
-  typeText: {
-    marginTop: 5,
-    fontSize: 12,
-    color: COLORS.light,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  typeTextActive: { color: COLORS.light },
-  inputContainer: {
-    backgroundColor: COLORS.secondary + "33",
-    borderRadius: 8,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-  },
-  input: { color: COLORS.light, padding: 15, fontSize: 16 },
-  textArea: { minHeight: 120 },
-  charCount: { color: COLORS.lightGray, fontSize: 12, padding: 10, paddingBottom: 8 },
-  charCountLimit: { color: COLORS.danger },
-  emailInput: { textAlign: "left" },
-  submitButton: {
-    backgroundColor: COLORS.secondary,
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  submitText: { color: COLORS.light, fontSize: 18, fontWeight: "bold" },
-});

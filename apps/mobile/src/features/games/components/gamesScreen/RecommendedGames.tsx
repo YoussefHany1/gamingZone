@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
@@ -10,7 +10,8 @@ import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonPopular from "../../skeleton/gamesScreen/SkeletonPopular";
 import ErrorState from "@/src/components/ErrorState";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type { Game } from "@/src/types/sharedTypes";
 import SectionTitle from "@/src/components/SectionTitle";
 import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
@@ -27,6 +28,58 @@ type RecommendedCardProps = {
 
 // Card
 const RecommendedCard = React.memo<RecommendedCardProps>(({ item }) => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    gameCard: {
+      width: CARD_WIDTH,
+      height: CARD_HEIGHT,
+      marginHorizontal: CARD_MARGIN,
+      borderRadius: 16,
+      overflow: "hidden",
+      position: "relative",
+    },
+    cardBackground: { position: "absolute", width: "100%", height: "100%" },
+    coverContainer: { width: "100%", height: 190, position: "relative" },
+    cover: { width: "100%", height: "100%" },
+    coverGradient: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: "60%",
+    },
+    infoContainer: { flex: 1, padding: 12, gap: 8 },
+    title: { color: c.text, fontSize: 15, fontWeight: "bold", lineHeight: 18 },
+    statsContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      flexWrap: "wrap",
+    },
+    statItem: {
+      flexDirection: "row",
+      backgroundColor: "rgba(119, 155, 221, 0.15)",
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+      gap: 4,
+      borderWidth: 1,
+      borderColor: c.accentSurface,
+    },
+    statIcon: { fontSize: 12 },
+    statValue: { color: c.textMuted, fontSize: 12, fontWeight: "bold" },
+    platformsContainer: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
+    platformChip: {
+      backgroundColor: "rgba(81, 105, 150, 0.3)",
+      paddingHorizontal: 5,
+      paddingVertical: 1,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: c.accentText,
+    },
+    platformText: { color: "#9CB4DD", fontSize: 10, fontWeight: "600" },
+  }));
+
   const navigation = useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
 
   const rating = item.total_rating ? Math.round(item.total_rating) / 10 : 0;
@@ -53,7 +106,7 @@ const RecommendedCard = React.memo<RecommendedCardProps>(({ item }) => {
           cachePolicy="memory-disk"
         />
         <LinearGradient
-          colors={["transparent", COLORS.darkBackground]}
+          colors={["transparent", colors.backgroundDeep]}
           style={styles.coverGradient}
         />
       </View>
@@ -91,6 +144,17 @@ RecommendedCard.displayName = "RecommendedCard";
 // Main
 
 function RecommendedGames(): React.ReactElement | null {
+  const styles = useThemeStyles((c) => ({
+    headerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      margin: 18,
+    },
+    listContent: { paddingHorizontal: 10, paddingVertical: 5 },
+  }));
+
   const { t } = useTranslation();
   const { recommendedGames, loading, basedOnGenre } = useRecommendedGames();
 
@@ -150,62 +214,3 @@ function RecommendedGames(): React.ReactElement | null {
 }
 
 export default RecommendedGames;
-
-const styles = StyleSheet.create({
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    margin: 18,
-  },
-  gameCard: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginHorizontal: CARD_MARGIN,
-    borderRadius: 16,
-    overflow: "hidden",
-    position: "relative",
-  },
-  cardBackground: { position: "absolute", width: "100%", height: "100%" },
-  coverContainer: { width: "100%", height: 190, position: "relative" },
-  cover: { width: "100%", height: "100%" },
-  coverGradient: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "60%",
-  },
-  infoContainer: { flex: 1, padding: 12, gap: 8 },
-  title: { color: COLORS.light, fontSize: 15, fontWeight: "bold", lineHeight: 18 },
-  statsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  statItem: {
-    flexDirection: "row",
-    backgroundColor: "rgba(119, 155, 221, 0.15)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray + "99",
-  },
-  statIcon: { fontSize: 12 },
-  statValue: { color: COLORS.lightGray, fontSize: 12, fontWeight: "bold" },
-  platformsContainer: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
-  platformChip: {
-    backgroundColor: "rgba(81, 105, 150, 0.3)",
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-  },
-  platformText: { color: "#9CB4DD", fontSize: 10, fontWeight: "600" },
-  listContent: { paddingHorizontal: 10, paddingVertical: 5 },
-});

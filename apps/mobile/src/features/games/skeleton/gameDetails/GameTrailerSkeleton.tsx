@@ -1,8 +1,9 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
@@ -10,6 +11,17 @@ type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
 
 // Static "Trailer" header + shimmer video block
 const GameTrailerSkeleton: React.FC = () => {
+  const styles = useThemeStyles((c) => ({
+    container: { marginTop: 20 },
+    header: {
+      color: c.text,
+      fontSize: 24,
+      fontWeight: "600",
+      textDecorationLine: "underline",
+      marginTop: 10,
+    },
+  }));
+
   const { t } = useTranslation();
   const shimmer = useShimmer();
   const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
@@ -23,14 +35,3 @@ const GameTrailerSkeleton: React.FC = () => {
 };
 
 export default GameTrailerSkeleton;
-
-const styles = StyleSheet.create({
-  container: { marginTop: 20 },
-  header: {
-    color: COLORS.light,
-    fontSize: 24,
-    fontWeight: "600",
-    textDecorationLine: "underline",
-    marginTop: 10,
-  },
-});

@@ -1,8 +1,9 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import SkeletonItem from "@/src/components/SkeletonItem";
 import { usePulseAnimation } from "@/src/components/skeleton/shared";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 const CARD_WIDTH = 300;
 const CARD_HEIGHT = 350;
@@ -10,6 +11,52 @@ const CARD_MARGIN = 10;
 const CARD_BG_COLOR = "#1a3052";
 
 const SkeletonComingSoonCard: React.FC = () => {
+  const styles = useThemeStyles((c) => ({
+    cardContainer: {
+      width: CARD_WIDTH,
+      height: CARD_HEIGHT,
+      marginHorizontal: CARD_MARGIN,
+      borderRadius: 20,
+      borderWidth: 2,
+      borderColor: CARD_BG_COLOR,
+      overflow: "hidden",
+      position: "relative",
+    },
+    contentContainer: {
+      flex: 1,
+      padding: 16,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    coverContainer: {
+      marginBottom: 20,
+      elevation: 4,
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+    },
+    cover: {
+      width: 140,
+      height: 200,
+      borderRadius: 16,
+    },
+    infoContainer: {
+      alignItems: "center",
+      width: "100%",
+    },
+    platformsContainer: {
+      flexDirection: "row",
+      gap: 8,
+      marginTop: 4,
+    },
+    platformBadge: {
+      width: 50,
+      height: 24,
+      borderRadius: 12,
+    },
+  }));
+
   const animatedStyle = usePulseAnimation();
 
   return (
@@ -55,49 +102,3 @@ const SkeletonComingSoonCard: React.FC = () => {
 };
 
 export default React.memo(SkeletonComingSoonCard);
-
-const styles = StyleSheet.create({
-  cardContainer: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    marginHorizontal: CARD_MARGIN,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: CARD_BG_COLOR,
-    overflow: "hidden",
-    position: "relative",
-  },
-  contentContainer: {
-    flex: 1,
-    padding: 16,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  coverContainer: {
-    marginBottom: 20,
-    elevation: 4,
-    shadowColor: COLORS.dark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  cover: {
-    width: 140,
-    height: 200,
-    borderRadius: 16,
-  },
-  infoContainer: {
-    alignItems: "center",
-    width: "100%",
-  },
-  platformsContainer: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 4,
-  },
-  platformBadge: {
-    width: 50,
-    height: 24,
-    borderRadius: 12,
-  },
-});

@@ -19,10 +19,7 @@ const useShimmer = (): SharedValue<number> => {
 
   useEffect(() => {
     shimmer.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 900 }),
-        withTiming(0, { duration: 900 }),
-      ),
+      withSequence(withTiming(1, { duration: 900 }), withTiming(0, { duration: 900 })),
       -1, // repeat forever
       false,
     );

@@ -1,10 +1,11 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { FileText, Languages, Mic, Monitor } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
@@ -18,6 +19,37 @@ const COLUMN_HEADERS: { icon: LucideIcon; key: string }[] = [
 
 // Static title + static column headers + shimmer rows
 const GameLanguageTableSkeleton: React.FC = () => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    container: { width: "100%", marginTop: 20 },
+    header: {
+      color: c.text,
+      fontSize: 24,
+      fontWeight: "600",
+      textDecorationLine: "underline",
+      marginTop: 10,
+    },
+    tableHeader: {
+      flexDirection: "row",
+      borderBottomWidth: 1,
+      borderBottomColor: c.accentText,
+      paddingVertical: 10,
+      marginTop: 10,
+      alignItems: "flex-end",
+    },
+    langHeaderCell: { flex: 2, marginLeft: 8 },
+    iconHeaderCell: { flex: 1, alignItems: "center", justifyContent: "center" },
+    headerLabel: { color: "#9f9f9f", marginTop: 2 },
+    tableRow: {
+      flexDirection: "row",
+      paddingVertical: 12,
+      alignItems: "center",
+      borderBottomWidth: 0.5,
+      borderBottomColor: "rgba(81,105,150,0.3)",
+    },
+    checkCell: { flex: 1, alignItems: "center", justifyContent: "center" },
+  }));
+
   const { t } = useTranslation();
   const shimmer = useShimmer();
   const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
@@ -29,14 +61,14 @@ const GameLanguageTableSkeleton: React.FC = () => {
       {/* Column headers — fully static */}
       <View style={styles.tableHeader}>
         <View style={styles.langHeaderCell}>
-          <Languages size={18} color={COLORS.secondary} />
+          <Languages size={18} color={colors.accent} />
           <CustomText style={styles.headerLabel}>
             {t("games.details.languages.Language")}
           </CustomText>
         </View>
         {COLUMN_HEADERS.map(({ icon: Icon, key }) => (
           <View key={key} style={styles.iconHeaderCell}>
-            <Icon size={18} color={COLORS.secondary} />
+            <Icon size={18} color={colors.accent} />
             <CustomText style={styles.headerLabel}>
               {t(`games.details.languages.${key}`)}
             </CustomText>
@@ -51,7 +83,7 @@ const GameLanguageTableSkeleton: React.FC = () => {
           style={[
             styles.tableRow,
             {
-              backgroundColor: i % 2 !== 0 ? "rgba(81,105,150,0.1)" : "transparent",
+              backgroundColor: i % 2 !== 0 ? colors.stripe : "transparent",
             },
           ]}
         >
@@ -70,33 +102,3 @@ const GameLanguageTableSkeleton: React.FC = () => {
 };
 
 export default GameLanguageTableSkeleton;
-
-const styles = StyleSheet.create({
-  container: { width: "100%", marginTop: 20 },
-  header: {
-    color: COLORS.light,
-    fontSize: 24,
-    fontWeight: "600",
-    textDecorationLine: "underline",
-    marginTop: 10,
-  },
-  tableHeader: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.secondary,
-    paddingVertical: 10,
-    marginTop: 10,
-    alignItems: "flex-end",
-  },
-  langHeaderCell: { flex: 2, marginLeft: 8 },
-  iconHeaderCell: { flex: 1, alignItems: "center", justifyContent: "center" },
-  headerLabel: { color: "#9f9f9f", marginTop: 2 },
-  tableRow: {
-    flexDirection: "row",
-    paddingVertical: 12,
-    alignItems: "center",
-    borderBottomWidth: 0.5,
-    borderBottomColor: "rgba(81,105,150,0.3)",
-  },
-  checkCell: { flex: 1, alignItems: "center", justifyContent: "center" },
-});

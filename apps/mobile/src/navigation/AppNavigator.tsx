@@ -4,6 +4,7 @@ import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import CustomText from "@/src/components/CustomText";
 import LiquidGlassTabBar from "./LiquidGlassTabBar";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import type {
@@ -15,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import * as Notifications from "expo-notifications";
-import COLORS from "../constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
 import { adUnitId } from "../constants/config";
 import HomeScreen from "../features/home/screens/HomeScreen";
 import NewsScreen from "../features/news/screens/NewsScreen";
@@ -32,6 +33,7 @@ import type { GamingEvent } from "@/src/types/sharedTypes";
 import UserListsScreen from "../features/lists/screens/UserListsScreen";
 import NewsDetails from "../features/news/screens/NewsDetailsScreen";
 import LanguageScreen from "../features/settings/screens/LanguageSelectScreen";
+import ThemeScreen from "../features/settings/screens/ThemeScreen";
 import ContactScreen from "../features/settings/screens/ContactScreen";
 import LoginScreen from "../features/auth/screens/LoginScreen";
 import RegisterScreen from "../features/auth/screens/RegisterScreen";
@@ -64,6 +66,7 @@ export type SettingsStackParamList = {
   Profile: undefined;
   UserGamesScreen: { listId: string; listName: string; ownerId?: string } | undefined;
   LanguageScreen: undefined;
+  ThemeScreen: undefined;
   GameDetails: { gameID: number | string; claimUrl?: string; store?: string } | undefined;
   ContactScreen: undefined;
   UserListsScreen: undefined;
@@ -95,16 +98,23 @@ const HIDDEN_HEADER_OPTIONS = {
   headerShown: false,
   animation: "slide_from_right",
 } as const;
-const settingsHeaderOptions = {
-  headerStyle: { backgroundColor: COLORS.primary },
-  headerTintcolor: COLORS.light as const,
-  headerTitle: ({ children }: any) => (
-    <CustomText style={{ fontSize: 18, fontWeight: "bold", color: COLORS.light }}>
-      {children}
-    </CustomText>
-  ),
-  animation: "slide_from_right",
-} as const;
+
+function useSettingsHeaderOptions(): NativeStackNavigationOptions {
+  const colors = useThemeColors();
+  return useMemo(
+    () => ({
+      headerStyle: { backgroundColor: colors.background },
+      headerTintColor: colors.text,
+      headerTitle: ({ children }: any) => (
+        <CustomText style={{ fontSize: 18, fontWeight: "bold", color: colors.text }}>
+          {children}
+        </CustomText>
+      ),
+      animation: "slide_from_right",
+    }),
+    [colors],
+  );
+}
 
 // BannerAd wrapper
 const AdBanner = memo(() => {
@@ -122,6 +132,20 @@ AdBanner.displayName = "AdBanner";
 
 const HomeStack = memo(() => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const aiChatOptions = useMemo(
+    () => ({
+      headerShown: true,
+      headerStyle: { backgroundColor: colors.background },
+      headerTintColor: colors.text,
+      headerTitle: () => (
+        <CustomText style={{ fontSize: 18, fontWeight: "bold", color: colors.text }}>
+          {t("aiChat.title")}
+        </CustomText>
+      ),
+    }),
+    [t, colors],
+  );
   return (
     <HomeStackNav.Navigator id="HomeStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
       <HomeStackNav.Screen name="HomeScreen" component={HomeScreen} />
@@ -130,16 +154,7 @@ const HomeStack = memo(() => {
       <HomeStackNav.Screen
         name="AIChatScreen"
         component={AIChatScreen}
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: COLORS.primary },
-          headerTintcolor: COLORS.light,
-          headerTitle: () => (
-            <CustomText style={{ fontSize: 18, fontWeight: "bold", color: COLORS.light }}>
-              {t("aiChat.title")}
-            </CustomText>
-          ),
-        }}
+        options={aiChatOptions}
       />
       <HomeStackNav.Screen name="EventDetailsScreen" component={EventDetailsScreen} />
     </HomeStackNav.Navigator>
@@ -157,19 +172,20 @@ NewsStack.displayName = "NewsStack";
 
 const GamesStack = memo(() => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
   const gameNewsOptions = useMemo(
     () => ({
       headerShown: true,
       title: t("games.list.gamesNews.title"),
-      headerStyle: { backgroundColor: COLORS.primary },
-      headerTintcolor: COLORS.light as const,
+      headerStyle: { backgroundColor: colors.background },
+      headerTintColor: colors.text,
       headerTitle: () => (
-        <CustomText style={{ fontSize: 18, fontWeight: "bold", color: COLORS.light }}>
+        <CustomText style={{ fontSize: 18, fontWeight: "bold", color: colors.text }}>
           {t("games.list.gamesNews.title")}
         </CustomText>
       ),
     }),
-    [t],
+    [t, colors],
   );
 
   return (
@@ -188,6 +204,8 @@ GamesStack.displayName = "GamesStack";
 
 const SettingsStack = memo(() => {
   const { t } = useTranslation();
+  const settingsHeaderOptions = useSettingsHeaderOptions();
+  const colors = useThemeColors();
   const screenTitles = useMemo(
     () => ({
       notificationSettings: {
@@ -196,6 +214,7 @@ const SettingsStack = memo(() => {
       profile: { title: t("navigation.titles.accountSettings") },
       userGames: { title: t("navigation.titles.gamesList") },
       language: { title: t("settings.menu.changeLanguage") },
+      theme: { title: t("settings.theme.title") },
       contact: { title: t("settings.contact.title") },
       userLists: { title: t("navigation.titles.myLists") },
     }),
@@ -231,7 +250,7 @@ const SettingsStack = memo(() => {
               onPress={() => nav.getParent()?.navigate("Games")}
               style={{ marginRight: 4, padding: 6 }}
             >
-              <CirclePlus size={28} color={COLORS.light} />
+              <CirclePlus size={28} color={colors.text} />
             </TouchableOpacity>
           ),
         })}
@@ -240,6 +259,11 @@ const SettingsStack = memo(() => {
         name="LanguageScreen"
         component={LanguageScreen}
         options={screenTitles.language}
+      />
+      <SettingsStackNav.Screen
+        name="ThemeScreen"
+        component={ThemeScreen}
+        options={screenTitles.theme}
       />
       <SettingsStackNav.Screen
         name="GameDetails"

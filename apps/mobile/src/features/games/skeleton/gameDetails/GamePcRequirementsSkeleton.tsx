@@ -1,8 +1,9 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import useShimmer from "./useShimmer";
 import SkeletonBar from "./SkeletonBar";
 
@@ -10,6 +11,32 @@ type SProps = Omit<Parameters<typeof SkeletonBar>[0], "shimmer">;
 
 // Static title + shimmer tab buttons + shimmer rows
 const GamePcRequirementsSkeleton: React.FC = () => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    container: { marginTop: 20, marginBottom: 10, direction: "ltr" },
+    header: {
+      color: c.text,
+      fontSize: 24,
+      fontWeight: "600",
+      textDecorationLine: "underline",
+      marginTop: 10,
+      marginBottom: 12,
+    },
+    tabRow: { flexDirection: "row", marginBottom: 10 },
+    table: {
+      borderRadius: 12,
+      overflow: "hidden",
+      borderWidth: 1,
+      borderColor: "rgba(81,105,150,0.4)",
+    },
+    row: {
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderBottomWidth: 0.5,
+      borderBottomColor: "rgba(81,105,150,0.25)",
+    },
+  }));
+
   const { t } = useTranslation();
   const shimmer = useShimmer();
   const S = (p: SProps) => <SkeletonBar shimmer={shimmer} {...p} />;
@@ -32,7 +59,7 @@ const GamePcRequirementsSkeleton: React.FC = () => {
             style={[
               styles.row,
               {
-                backgroundColor: i % 2 !== 0 ? "rgba(81,105,150,0.12)" : "transparent",
+                backgroundColor: i % 2 !== 0 ? colors.stripe : "transparent",
               },
             ]}
           >
@@ -46,28 +73,3 @@ const GamePcRequirementsSkeleton: React.FC = () => {
 };
 
 export default GamePcRequirementsSkeleton;
-
-const styles = StyleSheet.create({
-  container: { marginTop: 20, marginBottom: 10, direction: "ltr" },
-  header: {
-    color: COLORS.light,
-    fontSize: 24,
-    fontWeight: "600",
-    textDecorationLine: "underline",
-    marginTop: 10,
-    marginBottom: 12,
-  },
-  tabRow: { flexDirection: "row", marginBottom: 10 },
-  table: {
-    borderRadius: 12,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(81,105,150,0.4)",
-  },
-  row: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "rgba(81,105,150,0.25)",
-  },
-});

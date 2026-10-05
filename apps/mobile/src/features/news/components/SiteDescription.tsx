@@ -3,7 +3,8 @@ import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { Bell, BellOff, SquareArrowOutUpRight } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type { RssFeedSource } from "../../news/types";
 
 interface SiteDescriptionProps {
@@ -20,6 +21,55 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
   onToggleNotification,
 }) => {
   const isLangArbic = selectedItem?.language === "ar";
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    siteDesc: {
+      flexDirection: "row-reverse",
+      marginTop: 20,
+      alignItems: "center",
+    },
+    siteImg: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      backgroundColor: c.accent,
+    },
+    siteText: {
+      marginHorizontal: 10,
+    },
+    siteName: {
+      color: c.text,
+      fontWeight: "bold",
+      fontSize: 28,
+    },
+    siteAbout: {
+      color: c.textMuted,
+      width: 250,
+    },
+    buttons: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 12,
+      gap: 12,
+    },
+    visitSiteBtn: {
+      backgroundColor: c.accentSurface,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 12,
+    },
+    visitSiteText: {
+      color: c.accentText,
+      fontSize: 14,
+      fontWeight: "bold",
+    },
+    bellButton: {
+      padding: 10,
+      backgroundColor: c.accentSurface,
+      borderRadius: 12,
+    },
+  }));
 
   return (
     <View style={[styles.siteDesc, { direction: isLangArbic ? "rtl" : "ltr" }]}>
@@ -33,7 +83,7 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
           allowDownscaling={true}
         />
       ) : (
-        <View style={[styles.siteImg, { backgroundColor: COLORS.secondary }]} />
+        <View style={[styles.siteImg, { backgroundColor: colors.accent }]} />
       )}
       <View style={styles.siteText}>
         <CustomText style={styles.siteName}>{selectedItem?.name ?? ""}</CustomText>
@@ -46,7 +96,7 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
               style={styles.visitSiteBtn}
             >
               <CustomText style={styles.visitSiteText}>
-                زور الموقع <SquareArrowOutUpRight size={18} color={COLORS.light} />
+                زور الموقع <SquareArrowOutUpRight size={18} color={colors.text} />
               </CustomText>
             </TouchableOpacity>
           ) : (
@@ -55,7 +105,7 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
               style={styles.visitSiteBtn}
             >
               <CustomText style={styles.visitSiteText}>
-                Visit Website <SquareArrowOutUpRight size={18} color={COLORS.light} />
+                Visit Website <SquareArrowOutUpRight size={18} color={colors.text} />
               </CustomText>
             </TouchableOpacity>
           )}
@@ -63,9 +113,9 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
           {/* Notification toggle */}
           <TouchableOpacity onPress={onToggleNotification} style={styles.bellButton}>
             {isNotifEnabled ? (
-              <Bell size={24} color={COLORS.lightGray} />
+              <Bell size={24} color={colors.textMuted} />
             ) : (
-              <BellOff size={24} color="#666" />
+              <BellOff size={24} color={colors.textSubtle} />
             )}
           </TouchableOpacity>
         </View>
@@ -75,51 +125,3 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
 };
 
 export default SiteDescription;
-
-const styles = StyleSheet.create({
-  siteDesc: {
-    flexDirection: "row-reverse",
-    marginTop: 20,
-    alignItems: "center",
-  },
-  siteImg: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: COLORS.secondary,
-  },
-  siteText: {
-    marginHorizontal: 10,
-  },
-  siteName: {
-    color: COLORS.light,
-    fontWeight: "bold",
-    fontSize: 28,
-  },
-  siteAbout: {
-    color: COLORS.light,
-    width: 250,
-  },
-  buttons: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 12,
-    gap: 12,
-  },
-  visitSiteBtn: {
-    backgroundColor: COLORS.secondary + "80",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  visitSiteText: {
-    color: COLORS.light,
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  bellButton: {
-    padding: 10,
-    backgroundColor: COLORS.secondary + "80",
-    borderRadius: 12,
-  },
-});

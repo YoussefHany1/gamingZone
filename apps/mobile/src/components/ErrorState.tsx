@@ -1,11 +1,12 @@
 import React, { memo, useCallback } from "react";
-import { View, StyleSheet, Pressable, ActivityIndicator } from "react-native";
+import { View, Pressable, ActivityIndicator } from "react-native";
 import CustomText from "./CustomText";
 import { useNavigation } from "@react-navigation/native";
 import type { NavigationProp } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react-native";
-import COLORS from "../constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 interface EmptyStateProps {
   message?: string;
@@ -32,6 +33,58 @@ const EmptyState = memo(
     const navigation =
       useNavigation<NavigationProp<Record<string, object | undefined>>>();
     const { t } = useTranslation();
+    const colors = useThemeColors();
+
+    const styles = useThemeStyles((c) => ({
+      emptyContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+      },
+      noDataText: {
+        color: c.text,
+        textAlign: "center",
+        borderRadius: 8,
+        marginBottom: 20,
+        fontSize: 16,
+      },
+      subMessageText: {
+        color: c.textSubtle,
+        fontSize: 14,
+        textAlign: "center",
+        marginTop: -10,
+        marginBottom: 20,
+        paddingHorizontal: 20,
+      },
+      iconStyles: {
+        marginBottom: 15,
+      },
+      contactButton: {
+        backgroundColor: c.accent,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 8,
+        marginTop: 12,
+      },
+      contactButtonSecondary: {
+        marginTop: 4,
+        backgroundColor: c.surface,
+      },
+      contactButtonText: {
+        color: c.onAccent,
+        fontWeight: "bold",
+        fontSize: 14,
+      },
+      // The secondary variant sits on `surface`, not on the accent fill, so
+      // it needs the regular text color instead of `onAccent`.
+      contactButtonTextSecondary: {
+        color: c.text,
+      },
+      disabled: {
+        opacity: 0.6,
+      },
+    }));
 
     const handleContactPress = useCallback(() => {
       const parent = navigation.getParent();
@@ -47,7 +100,7 @@ const EmptyState = memo(
             return (
               <Icon
                 size={iconSize}
-                color={iconColor || COLORS.primary}
+                color={iconColor || colors.textMuted}
                 style={styles.iconStyles}
               />
             );
@@ -69,7 +122,7 @@ const EmptyState = memo(
             accessibilityRole="button"
           >
             {retrying ? (
-              <ActivityIndicator color={COLORS.light} size="small" />
+              <ActivityIndicator color={colors.onAccent} size="small" />
             ) : (
               <CustomText style={styles.contactButtonText}>
                 {t("common.retryButton")}
@@ -86,7 +139,12 @@ const EmptyState = memo(
             accessibilityLabel={t("news.contactSupport")}
             accessibilityRole="button"
           >
-            <CustomText style={styles.contactButtonText}>
+            <CustomText
+              style={[
+                styles.contactButtonText,
+                onRetry && styles.contactButtonTextSecondary,
+              ]}
+            >
               {t("news.contactSupport")}
             </CustomText>
           </Pressable>
@@ -98,49 +156,3 @@ const EmptyState = memo(
 
 EmptyState.displayName = "EmptyState";
 export default EmptyState;
-
-const styles = StyleSheet.create({
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  noDataText: {
-    color: COLORS.light,
-    textAlign: "center",
-    borderRadius: 8,
-    marginBottom: 20,
-    fontSize: 16,
-  },
-  subMessageText: {
-    color: COLORS.gray,
-    fontSize: 14,
-    textAlign: "center",
-    marginTop: -10,
-    marginBottom: 20,
-    paddingHorizontal: 20,
-  },
-  iconStyles: {
-    marginBottom: 15,
-  },
-  contactButton: {
-    backgroundColor: COLORS.secondary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginTop: 12,
-  },
-  contactButtonSecondary: {
-    marginTop: 4,
-    backgroundColor: COLORS.button,
-  },
-  contactButtonText: {
-    color: COLORS.light,
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-  disabled: {
-    opacity: 0.6,
-  },
-});

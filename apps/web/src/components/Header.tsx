@@ -33,7 +33,11 @@ export default function Header() {
     return `/${segments.join("/")}`;
   })();
 
-  const isActive = (href: string) => pathWithoutLocale === href;
+  // Exact match, except that a nested route counts as its section: /games/search
+  // belongs to the Games nav item. Without this the Games link goes inactive the
+  // moment a search runs, since only /games exactly matched before.
+  const isActive = (href: string) =>
+    pathWithoutLocale === href || pathWithoutLocale.startsWith(`${href}/`);
 
   const toggleLanguage = () => {
     const nextLang = lang === "en" ? "ar" : "en";

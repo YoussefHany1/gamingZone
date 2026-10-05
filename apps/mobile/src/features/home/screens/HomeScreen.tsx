@@ -22,7 +22,8 @@ import { MessagesSquare } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { adUnitId } from "@/src/constants/config";
 import Slideshow from "../components/Slideshow";
 import WeeklySummary from "../components/WeeklySummary";
@@ -97,6 +98,18 @@ const AdBanner = memo(() => {
   const { t } = useTranslation();
   const adsEnabled = useAdsEnabled();
   const [showAds, setShowAds] = useState(false);
+
+  const homeStyles = useThemeStyles((c) => ({
+    ad: {
+      alignItems: "center",
+      width: "100%",
+      marginVertical: 55,
+    },
+    adText: {
+      color: c.text,
+      marginBottom: 10,
+    },
+  }));
 
   useEffect(() => {
     const task = runAfterInteractions(() => setShowAds(true));
@@ -206,7 +219,7 @@ function renderSection(item: SectionItem, lang: string): React.ReactElement | nu
       );
     case "release_calendar":
       return (
-        <DeferredSection key={item._key} delay={1500} placeholderHeight={470}>
+        <DeferredSection key={item._key} delay={1500} placeholderHeight={840}>
           <ReleaseCalendarSection refreshToken={item.refreshToken} />
         </DeferredSection>
       );
@@ -235,6 +248,42 @@ function HomeScreen(): React.ReactElement {
   const navigation = useNavigation<any>();
   const currentLang = i18n.language;
   const { onScroll } = useScrollDirection();
+  const colors = useThemeColors();
+
+  const homeStyles = useThemeStyles((c) => ({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    fabWrapper: {
+      position: "absolute",
+      bottom: 100,
+      right: 20,
+      width: 60,
+      height: 60,
+      elevation: 8,
+      shadowColor: c.textMuted,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+    },
+    fabGlass: {
+      flex: 1,
+      borderRadius: 30,
+      overflow: "hidden",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    fabBaseFill: {
+      backgroundColor: c.scrim,
+      borderRadius: 30,
+    },
+    fabBorder: {
+      borderRadius: 30,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+  }));
 
   const pulseScale = useSharedValue(1);
   useEffect(() => {
@@ -322,8 +371,8 @@ function HomeScreen(): React.ReactElement {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={COLORS.secondary}
-            colors={[COLORS.secondary]}
+            tintColor={colors.accent}
+            colors={[colors.accent]}
           />
         }
       >
@@ -345,7 +394,7 @@ function HomeScreen(): React.ReactElement {
           />
           <View style={[StyleSheet.absoluteFill, homeStyles.fabBorder]} />
           <View collapsable={false}>
-            <MessagesSquare size={28} color={COLORS.light} style={{ zIndex: 1 }} />
+            <MessagesSquare size={28} color={colors.text} style={{ zIndex: 1 }} />
           </View>
         </TouchableOpacity>
       </Animated.View>
@@ -354,47 +403,3 @@ function HomeScreen(): React.ReactElement {
 }
 
 export default HomeScreen;
-
-const homeStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-  },
-  ad: {
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 55,
-  },
-  adText: {
-    color: COLORS.light,
-    marginBottom: 10,
-  },
-  fabWrapper: {
-    position: "absolute",
-    bottom: 100,
-    right: 20,
-    width: 60,
-    height: 60,
-    elevation: 8,
-    shadowColor: COLORS.lightGray,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  fabGlass: {
-    flex: 1,
-    borderRadius: 30,
-    overflow: "hidden",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fabBaseFill: {
-    backgroundColor: "rgba(4, 8, 30, 0.4)",
-    borderRadius: 30,
-  },
-  fabBorder: {
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: COLORS.button,
-  },
-});

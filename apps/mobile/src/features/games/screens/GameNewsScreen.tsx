@@ -3,7 +3,6 @@ import CustomText from "@/src/components/CustomText";
 import {
   View,
   TouchableOpacity,
-  StyleSheet,
   Switch,
   LayoutAnimation,
   ScrollView,
@@ -24,7 +23,8 @@ import { useNotificationPreferences } from "@/src/hooks/useNotificationPreferenc
 import useCachedData from "@/src/hooks/useCachedData";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
 import { adUnitId } from "@/src/constants/config";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import Loading from "@/src/Loading";
 import ErrorState from "@/src/components/ErrorState";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -63,6 +63,43 @@ const safeId = (input: string): string => {
 import type { NewsItemProps } from "../types";
 
 const NewsItem = memo<NewsItemProps>(({ item, lang }) => {
+  const styles = useThemeStyles((c) => ({
+    card: {
+      backgroundColor: c.surface,
+      padding: 15,
+      marginBottom: 10,
+      borderRadius: 8,
+      elevation: 2,
+      flexDirection: "row",
+      flex: 1,
+      alignItems: "center",
+    },
+    cardContent: {
+      flexDirection: "row",
+      flex: 1,
+      alignItems: "center",
+    },
+    cover: {
+      width: 100,
+      height: 100,
+      borderRadius: 8,
+      marginLeft: 10,
+      backgroundColor: c.skeletonBase,
+    },
+    title: {
+      color: c.text,
+      fontSize: 15,
+      fontWeight: "bold",
+      marginBottom: 5,
+      textAlign: "left",
+    },
+    desc: {
+      fontSize: 12,
+      color: c.textSubtle,
+      marginTop: 4,
+      textAlign: "left",
+    },
+  }));
   let imageUrl: string | null = item.thumbnail ?? null;
   if (imageUrl?.startsWith("https://lh3.googleusercontent.com")) {
     imageUrl = null;
@@ -127,6 +164,38 @@ NewsItem.displayName = "NewsItem";
 
 const NewsSection = memo<NewsSectionProps>(
   ({ gameName, title, sourceId, lang, defaultExpanded = true, rssUrl }) => {
+    const colors = useThemeColors();
+    const styles = useThemeStyles((c) => ({
+      sectionContainer: {
+        marginVertical: 20,
+      },
+      categoryHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: 16,
+        backgroundColor: c.surface,
+        borderRadius: 8,
+      },
+      categoryHeaderLeft: {
+        flexDirection: "row",
+        alignItems: "center",
+        flex: 1,
+      },
+      categoryTitle: {
+        fontSize: 18,
+        fontWeight: "600",
+        color: c.text,
+        marginRight: 8,
+      },
+      chevronIcon: {
+        marginRight: 8,
+      },
+      listContainer: {
+        marginTop: 5,
+      },
+    }));
+
     const [expanded, setExpanded] = useState<boolean>(defaultExpanded);
 
     const { preferences, toggleSource, loadingPreferences } =
@@ -226,19 +295,19 @@ const NewsSection = memo<NewsSectionProps>(
         >
           <View style={styles.categoryHeaderLeft}>
             {expanded ? (
-              <ChevronUp size={20} color={COLORS.lightGray} style={styles.chevronIcon} />
+              <ChevronUp size={20} color={colors.textMuted} style={styles.chevronIcon} />
             ) : (
               <ChevronDown
                 size={20}
-                color={COLORS.lightGray}
+                color={colors.textMuted}
                 style={styles.chevronIcon}
               />
             )}
             <CustomText style={styles.categoryTitle}>{title}</CustomText>
           </View>
           <Switch
-            trackColor={{ false: "#3e3e3e", true: COLORS.lightGray }}
-            thumbColor={COLORS.light}
+            trackColor={{ false: "#3e3e3e", true: colors.textMuted }}
+            thumbColor={colors.text}
             onValueChange={handleToggleSwitch}
             value={isEnabled}
             disabled={loadingPreferences}
@@ -263,7 +332,7 @@ const NewsSection = memo<NewsSectionProps>(
               />
             ) : news.length === 0 ? (
               <CustomText
-                style={{ color: COLORS.gray, textAlign: "center", marginTop: 10 }}
+                style={{ color: colors.textSubtle, textAlign: "center", marginTop: 10 }}
               >
                 {lang === "ar" ? "لا توجد أخبار حاليا" : "No news found."}
               </CustomText>
@@ -289,6 +358,26 @@ NewsSection.displayName = "NewsSection";
 // main
 
 const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
+  const styles = useThemeStyles((c) => ({
+    screen: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    sourceText: {
+      color: c.textMuted,
+      textAlign: "center",
+      textDecorationLine: "underline",
+    },
+    ad: {
+      alignItems: "center",
+      width: "100%",
+      marginBottom: 38,
+    },
+    adText: {
+      color: c.text,
+      marginBottom: 10,
+    },
+  }));
   const currentGame = route.params?.gameName ?? "";
   const legacyApiUrl = route.params?.apiUrl ?? "";
   const sourceLink = route.params?.source ?? "";
@@ -347,87 +436,3 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
 });
 
 export default GameNewsScreen;
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-  },
-  sectionContainer: {
-    marginVertical: 20,
-  },
-  categoryHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    backgroundColor: COLORS.button,
-    borderRadius: 8,
-  },
-  categoryHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  categoryTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.light,
-    marginRight: 8,
-  },
-  chevronIcon: {
-    marginRight: 8,
-  },
-  listContainer: {
-    marginTop: 5,
-  },
-  card: {
-    backgroundColor: "#142744",
-    padding: 15,
-    marginBottom: 10,
-    borderRadius: 8,
-    elevation: 2,
-    flexDirection: "row",
-    flex: 1,
-    alignItems: "center",
-  },
-  cardContent: {
-    flexDirection: "row",
-    flex: 1,
-    alignItems: "center",
-  },
-  cover: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-    marginLeft: 10,
-    backgroundColor: "#2a4d7d",
-  },
-  title: {
-    color: COLORS.light,
-    fontSize: 15,
-    fontWeight: "bold",
-    marginBottom: 5,
-    textAlign: "left",
-  },
-  desc: {
-    fontSize: 12,
-    color: COLORS.gray,
-    marginTop: 4,
-    textAlign: "left",
-  },
-  sourceText: {
-    color: COLORS.lightGray,
-    textAlign: "center",
-    textDecorationLine: "underline",
-  },
-  ad: {
-    alignItems: "center",
-    width: "100%",
-    marginBottom: 38,
-  },
-  adText: {
-    color: COLORS.light,
-    marginBottom: 10,
-  },
-});

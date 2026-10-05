@@ -153,6 +153,7 @@
     "releaseCalendar": {
       "title": "Calendrier des sorties",
       "subtitle": "Découvrez les sorties, jour après jour",
+      "today": "Aujourd'hui",
       "outNow": "Disponible",
       "released": "Sorti",
       "noReleases": "Aucune sortie ce jour-là",
@@ -447,6 +448,12 @@
   },
   "settings": {
     "language": "Langue",
+    "theme": {
+      "title": "Apparence",
+      "system": "Système",
+      "light": "Clair",
+      "dark": "Sombre"
+    },
     "currentLang": "Français",
     "languageSelect": {
       "confirmTitle": "Changer de langue",

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback, memo } from "react";
 import CustomText from "@/src/components/CustomText";
 import {
   View,
-  StyleSheet,
   TouchableOpacity,
   Alert,
   ToastAndroid,
@@ -23,11 +22,51 @@ import { storageGet, storageSet } from "@/src/lib/storage";
 import NetInfo from "@react-native-community/netinfo";
 import { useTranslation } from "react-i18next";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type { GameItemProps, StackParamList, GameEntry, Props } from "../types";
 
 const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
   const navigation = useNavigation<NativeStackNavigationProp<StackParamList>>();
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    gameItemContainer: {
+      flexDirection: "row",
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      marginTop: 24,
+      padding: 10,
+      alignItems: "center",
+    },
+    gameImage: {
+      width: 80,
+      height: 105,
+      borderRadius: 8,
+    },
+    gameInfo: {
+      flex: 1,
+      marginLeft: 12,
+    },
+    gameName: {
+      color: c.text,
+      fontSize: 18,
+      fontWeight: "600",
+    },
+    gameReleaseDate: {
+      color: c.textSubtle,
+      fontSize: 14,
+      marginTop: 4,
+    },
+    ratingRow: {
+      flexDirection: "row",
+      marginTop: 4,
+    },
+    removeButton: {
+      padding: 8,
+      marginLeft: 8,
+    },
+  }));
 
   const coverUrl = game.cover_image_id
     ? {
@@ -74,7 +113,7 @@ const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
             >
               <Star
                 size={18}
-                color={star <= (game.rating ?? 0) ? "#ffc107" : COLORS.lightGray}
+                color={star <= (game.rating ?? 0) ? "#ffc107" : colors.textMuted}
               />
             </TouchableOpacity>
           ))}
@@ -97,6 +136,105 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [showAds, setShowAds] = useState<boolean>(false);
   const [isReady, setIsReady] = useState<boolean>(false);
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+      direction: "ltr",
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingTop: 100,
+    },
+    viewOnlyBanner: {
+      marginTop: 16,
+      backgroundColor: "rgba(255, 196, 87, 0.15)",
+      borderColor: "rgba(255, 196, 87, 0.45)",
+      borderWidth: 1,
+      borderRadius: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+    },
+    viewOnlyText: {
+      color: "#ffc457",
+      fontSize: 13,
+      textAlign: "center",
+      fontWeight: "600",
+    },
+    emptyText: {
+      color: c.text,
+      fontSize: 24,
+      fontWeight: "bold",
+      marginTop: 16,
+    },
+    emptySubText: {
+      color: c.textSubtle,
+      fontSize: 16,
+      textAlign: "center",
+      marginTop: 8,
+      paddingHorizontal: 20,
+    },
+    findGameButton: {
+      backgroundColor: c.accent,
+      padding: 10,
+      borderRadius: 16,
+      marginTop: 28,
+    },
+    findGameText: {
+      color: c.onAccent,
+      fontSize: 18,
+      fontWeight: "600",
+      textAlign: "center",
+    },
+    gameItemContainer: {
+      flexDirection: "row",
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      marginTop: 24,
+      padding: 10,
+      alignItems: "center",
+    },
+    gameImage: {
+      width: 80,
+      height: 105,
+      borderRadius: 8,
+    },
+    gameInfo: {
+      flex: 1,
+      marginLeft: 12,
+    },
+    gameName: {
+      color: c.text,
+      fontSize: 18,
+      fontWeight: "600",
+    },
+    ratingRow: {
+      flexDirection: "row",
+      marginTop: 4,
+    },
+    gameReleaseDate: {
+      color: c.textSubtle,
+      fontSize: 14,
+      marginTop: 4,
+    },
+    removeButton: {
+      padding: 8,
+      marginLeft: 8,
+    },
+    ad: {
+      alignItems: "center",
+      width: "100%",
+      marginVertical: 55,
+    },
+    adText: {
+      color: c.text,
+      marginBottom: 10,
+    },
+  }));
+
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const mountedRef = useRef<boolean>(true);
@@ -168,7 +306,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
               onPress={handleShare}
               style={{ marginRight: 12, padding: 6 }}
             >
-              <Share2 size={24} color={COLORS.light} />
+              <Share2 size={24} color={colors.text} />
             </TouchableOpacity>
           ) : null}
           {!isSharedList && (
@@ -176,7 +314,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
               onPress={() => navigation.getParent()?.navigate("Games")}
               style={{ padding: 6 }}
             >
-              <CirclePlus size={28} color={COLORS.light} />
+              <CirclePlus size={28} color={colors.text} />
             </TouchableOpacity>
           )}
         </View>
@@ -433,7 +571,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
         : t("settings.userGames.emptySubText");
     return (
       <View style={styles.emptyContainer}>
-        <Bookmark size={80} color={COLORS.primary} />
+        <Bookmark size={80} color={colors.textMuted} />
         <CustomText style={styles.emptyText}>
           {t("settings.userGames.emptyText")}
         </CustomText>
@@ -450,7 +588,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
         )}
       </View>
     );
-  }, [t, navigation, isSharedList, listId]);
+  }, [t, navigation, isSharedList, listId, colors.textMuted, styles]);
 
   // Render item
   const renderItem = useCallback(
@@ -499,8 +637,8 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={COLORS.secondary}
-              colors={[COLORS.secondary]}
+              tintColor={colors.accentText}
+              colors={[colors.accentText]}
             />
           }
         />
@@ -510,101 +648,3 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
 };
 
 export default UserGamesScreen;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-    direction: "ltr",
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingTop: 100,
-  },
-  viewOnlyBanner: {
-    marginTop: 16,
-    backgroundColor: "rgba(255, 196, 87, 0.15)",
-    borderColor: "rgba(255, 196, 87, 0.45)",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  viewOnlyText: {
-    color: "#ffc457",
-    fontSize: 13,
-    textAlign: "center",
-    fontWeight: "600",
-  },
-  emptyText: {
-    color: COLORS.light,
-    fontSize: 24,
-    fontWeight: "bold",
-    marginTop: 16,
-  },
-  emptySubText: {
-    color: COLORS.gray,
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 8,
-    paddingHorizontal: 20,
-  },
-  findGameButton: {
-    backgroundColor: COLORS.secondary,
-    padding: 10,
-    borderRadius: 16,
-    marginTop: 28,
-  },
-  findGameText: {
-    color: COLORS.light,
-    fontSize: 18,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  gameItemContainer: {
-    flexDirection: "row",
-    backgroundColor: "rgba(119, 155, 221, 0.1)",
-    borderRadius: 12,
-    marginTop: 24,
-    padding: 10,
-    alignItems: "center",
-  },
-  gameImage: {
-    width: 80,
-    height: 105,
-    borderRadius: 8,
-  },
-  gameInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  gameName: {
-    color: COLORS.light,
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  ratingRow: {
-    flexDirection: "row",
-    marginTop: 4,
-  },
-  gameReleaseDate: {
-    color: COLORS.gray,
-    fontSize: 14,
-    marginTop: 4,
-  },
-  removeButton: {
-    padding: 8,
-    marginLeft: 8,
-  },
-  ad: {
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 55,
-  },
-  adText: {
-    color: COLORS.light,
-    marginBottom: 10,
-  },
-});

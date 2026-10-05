@@ -9,9 +9,10 @@ import {
   ViewStyle,
 } from "react-native";
 import { Check, ChevronDown, X } from "lucide-react-native";
-import COLORS from "../constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomText from "./CustomText";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 type PickerOption = {
   label: string;
@@ -34,6 +35,75 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
     containerStyle,
   }) => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
+    const colors = useThemeColors();
+
+    const styles = useThemeStyles((c) => ({
+      container: {
+        marginBottom: 10,
+      },
+      pickerButton: {
+        backgroundColor: c.surface,
+        padding: 15,
+        borderRadius: 5,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+      },
+      pickerText: {
+        fontSize: 14,
+        color: c.text,
+      },
+      placeholderText: {
+        color: c.textSubtle,
+      },
+      modalOverlay: {
+        flex: 1,
+        backgroundColor: c.overlay,
+        justifyContent: "flex-end",
+      },
+      modalContent: {
+        backgroundColor: c.background,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        maxHeight: "50%",
+      },
+      modalHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: c.border,
+        paddingBottom: 10,
+      },
+      modalTitle: {
+        fontSize: 18,
+        fontWeight: "bold",
+        color: c.text,
+      },
+      optionItem: {
+        padding: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: c.border,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+      },
+      optionText: {
+        fontSize: 16,
+        color: c.text,
+      },
+      selectedOption: {
+        backgroundColor: c.accentSurface,
+        borderRadius: 12,
+      },
+      selectedOptionText: {
+        color: c.accentText,
+        fontWeight: "bold",
+      },
+    }));
 
     const filteredOptions = useMemo(
       () => options.filter((opt) => opt.value !== "" && opt.label !== ""),
@@ -61,10 +131,12 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
           style={styles.pickerButton}
           onPress={() => setModalVisible(true)}
         >
-          <CustomText style={[styles.pickerText, !selectedValue && { color: "#ccc" }]}>
+          <CustomText
+            style={[styles.pickerText, !selectedValue && styles.placeholderText]}
+          >
             {selectedLabel}
           </CustomText>
-          <ChevronDown size={20} color={COLORS.light} />
+          <ChevronDown size={20} color={colors.text} />
         </TouchableOpacity>
 
         {/* Options modal */}
@@ -87,7 +159,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
               <View style={styles.modalHeader}>
                 <CustomText style={styles.modalTitle}>{placeholder}</CustomText>
                 <TouchableOpacity onPress={() => setModalVisible(false)}>
-                  <X size={24} color="#7eaafcff" />
+                  <X size={24} color={colors.textMuted} />
                 </TouchableOpacity>
               </View>
 
@@ -116,7 +188,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
                       {item.label}
                     </CustomText>
                     {item.value === selectedValue && (
-                      <Check size={24} color="#7eaafcff" />
+                      <Check size={24} color={colors.accentText} />
                     )}
                   </TouchableOpacity>
                 ))}
@@ -131,68 +203,3 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
 
 CustomPicker.displayName = "CustomPicker";
 export default CustomPicker;
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 10,
-  },
-  pickerButton: {
-    backgroundColor: COLORS.button,
-    padding: 15,
-    borderRadius: 5,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  pickerText: {
-    fontSize: 14,
-    color: COLORS.light,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: COLORS.primary,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    maxHeight: "50%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.secondary,
-    paddingBottom: 10,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: COLORS.light,
-  },
-  optionItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.secondary,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  optionText: {
-    fontSize: 16,
-    color: COLORS.light,
-  },
-  selectedOption: {
-    backgroundColor: COLORS.secondary + "33",
-    borderRadius: 12,
-  },
-  selectedOptionText: {
-    color: COLORS.light,
-    fontWeight: "bold",
-  },
-});

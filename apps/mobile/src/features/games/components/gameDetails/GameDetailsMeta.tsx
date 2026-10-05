@@ -1,8 +1,9 @@
 import { memo } from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type { GameDetailsMetaProps } from "../../types";
 import { getRatingGradient } from "./utils";
 import { LinearGradient } from "expo-linear-gradient";
@@ -47,6 +48,82 @@ function GameDetailsMeta({
   ageRating,
 }: GameDetailsMetaProps) {
   const { i18n, t } = useTranslation();
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    container: {
+      // Force LTR layout so game metadata always reads left-to-right
+      direction: "ltr",
+    },
+    title: {
+      color: c.text,
+      fontSize: 24,
+      fontWeight: "bold",
+      direction: "ltr",
+    },
+    releaseDate: {
+      color: c.textSubtle,
+      letterSpacing: 2,
+      direction: "ltr",
+    },
+    metaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      direction: "ltr",
+    },
+    platformContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      flex: 1,
+    },
+    platform: {
+      color: c.text,
+      fontSize: 17,
+      fontWeight: "500",
+      backgroundColor: c.accentSurface,
+      paddingVertical: 3,
+      paddingHorizontal: 10,
+      marginRight: 10,
+      marginBottom: 10,
+      borderRadius: 14,
+    },
+    ratingContainer: {
+      alignItems: "center",
+    },
+    rating: {
+      borderRadius: 50,
+      width: 70,
+      height: 70,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    ratingText: {
+      color: c.text,
+      fontSize: 34,
+      fontWeight: "bold",
+    },
+    ratingCount: {
+      color: c.textSubtle,
+      marginTop: 4,
+    },
+    ageRatingBadge: {
+      paddingVertical: 3,
+      paddingHorizontal: 8,
+      borderRadius: 8,
+      marginRight: 22,
+      marginTop: 5,
+      justifyContent: "center",
+      alignItems: "center",
+      alignSelf: "flex-end",
+      minWidth: 45,
+    },
+    ageRatingText: {
+      color: c.text,
+      fontWeight: "bold",
+      fontSize: 18,
+    },
+  }));
 
   const formattedDate =
     typeof releaseDate === "number"
@@ -79,15 +156,11 @@ function GameDetailsMeta({
               colors={getRatingGradient(displayRating)}
               style={styles.rating}
             >
-              <CustomText style={styles.ratingText}>
-                {displayRating}
-              </CustomText>
+              <CustomText style={styles.ratingText}>{displayRating}</CustomText>
             </LinearGradient>
           ) : (
-            <View style={[styles.rating, { backgroundColor: COLORS.secondary }]}>
-              <CustomText style={styles.ratingText}>
-                N/A
-              </CustomText>
+            <View style={[styles.rating, { backgroundColor: colors.accent }]}>
+              <CustomText style={styles.ratingText}>N/A</CustomText>
             </View>
           )}
 
@@ -109,78 +182,3 @@ function GameDetailsMeta({
 }
 
 export default memo(GameDetailsMeta);
-
-const styles = StyleSheet.create({
-  container: {
-    // Force LTR layout so game metadata always reads left-to-right
-    direction: "ltr",
-  },
-  title: {
-    color: COLORS.light,
-    fontSize: 24,
-    fontWeight: "bold",
-    direction: "ltr",
-  },
-  releaseDate: {
-    color: COLORS.gray,
-    letterSpacing: 2,
-    direction: "ltr",
-  },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    direction: "ltr",
-  },
-  platformContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    flex: 1,
-  },
-  platform: {
-    color: COLORS.light,
-    fontSize: 17,
-    fontWeight: "500",
-    backgroundColor: "#5169964d",
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-    marginRight: 10,
-    marginBottom: 10,
-    borderRadius: 14,
-  },
-  ratingContainer: {
-    alignItems: "center",
-  },
-  rating: {
-    borderRadius: 50,
-    width: 70,
-    height: 70,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  ratingText: {
-    color: COLORS.light,
-    fontSize: 34,
-    fontWeight: "bold",
-  },
-  ratingCount: {
-    color: "#9f9f9f",
-    marginTop: 4,
-  },
-  ageRatingBadge: {
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    marginRight: 22,
-    marginTop: 5,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "flex-end",
-    minWidth: 45,
-  },
-  ageRatingText: {
-    color: COLORS.light,
-    fontWeight: "bold",
-    fontSize: 18,
-  },
-});

@@ -1,13 +1,6 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
 import CustomText from "@/src/components/CustomText";
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-  I18nManager,
-} from "react-native";
+import { View, TouchableOpacity, ScrollView, Alert, I18nManager } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
@@ -15,7 +8,8 @@ import { useTranslation } from "react-i18next";
 import * as Updates from "expo-updates";
 import { Check } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { adUnitId } from "@/src/constants/config";
 import { storage } from "@/src/lib/storage";
 
@@ -33,6 +27,44 @@ const LANGUAGE_CODES = Object.keys(LANGUAGE_LABELS) as Array<
 >;
 
 const LanguageSelect = memo((): React.ReactElement => {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    container: { padding: 40, paddingBottom: 90 },
+    categoryHeader: {
+      marginVertical: 15,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: 16,
+      backgroundColor: c.surface,
+      borderRadius: 12,
+    },
+    categoryHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flex: 1,
+    },
+    chevronIcon: {
+      marginRight: 8,
+    },
+    categoryTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: c.text,
+      marginHorizontal: 8,
+    },
+    ad: {
+      alignItems: "center",
+      width: "100%",
+      marginVertical: 55,
+    },
+    adText: {
+      color: c.text,
+      marginBottom: 10,
+    },
+  }));
+
   const { i18n, t } = useTranslation();
   const [showAds, setShowAds] = useState<boolean>(false);
   const adsEnabled = useAdsEnabled();
@@ -102,7 +134,7 @@ const LanguageSelect = memo((): React.ReactElement => {
               : "en";
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.primary }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {LANGUAGE_CODES.map((lang) => {
           const isRTL = lang === "ar";
@@ -126,7 +158,7 @@ const LanguageSelect = memo((): React.ReactElement => {
                 >
                   {LANGUAGE_LABELS[lang]}
                 </CustomText>
-                {currentLang === lang && <Check size={24} color={COLORS.lightGray} />}
+                {currentLang === lang && <Check size={24} color={colors.textMuted} />}
               </View>
             </TouchableOpacity>
           );
@@ -143,40 +175,3 @@ const LanguageSelect = memo((): React.ReactElement => {
 });
 LanguageSelect.displayName = "LanguageSelect";
 export default LanguageSelect;
-
-const styles = StyleSheet.create({
-  container: { padding: 40, paddingBottom: 90 },
-  categoryHeader: {
-    marginVertical: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    backgroundColor: COLORS.button,
-    borderRadius: 12,
-  },
-  categoryHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    flex: 1,
-  },
-  chevronIcon: {
-    marginRight: 8,
-  },
-  categoryTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.light,
-    marginHorizontal: 8,
-  },
-  ad: {
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 55,
-  },
-  adText: {
-    color: COLORS.light,
-    marginBottom: 10,
-  },
-});

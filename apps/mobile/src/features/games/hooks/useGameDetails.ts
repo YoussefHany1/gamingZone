@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Alert,
-  ScrollView,
-  ToastAndroid,
-} from "react-native";
+import { Alert, ScrollView, ToastAndroid } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import firestore from "@react-native-firebase/firestore";
 import { useTranslation } from "react-i18next";
@@ -20,19 +16,13 @@ import {
 } from "../components/gameDetails/utils";
 import { formatLanguageRows, formatPlayTime } from "@gaming-zone/utils";
 import { fetchGameById } from "@/src/services/api/igdbApi";
-import {
-  fetchCheapSharkDeals,
-  buildStorePrices,
-} from "@/src/services/api/cheapSharkApi";
+import { fetchCheapSharkDeals, buildStorePrices } from "@/src/services/api/cheapSharkApi";
 import { fetchPsnPrice } from "@/src/services/api/psnApi";
 import { withTrace } from "@/src/services/performanceService";
 
 import type { UseGameDetailsProps } from "../types";
 
-export const useGameDetails = ({
-  initialGameID,
-  navigation,
-}: UseGameDetailsProps) => {
+export const useGameDetails = ({ initialGameID, navigation }: UseGameDetailsProps) => {
   const [currentId, setCurrentId] = useState<number | string>(initialGameID);
   const scrollRef = useRef<ScrollView>(null);
   const mountedRef = useRef<boolean>(true);
@@ -46,9 +36,7 @@ export const useGameDetails = ({
   });
   const [showListModal, setShowListModal] = useState<boolean>(false);
   const [rating, setRating] = useState<number>(0);
-  const [pcRequirements, setPcRequirements] = useState<PcRequirements | null>(
-    null,
-  );
+  const [pcRequirements, setPcRequirements] = useState<PcRequirements | null>(null);
   const [pcReqLoading, setPcReqLoading] = useState<boolean>(false);
   const [storePrices, setStorePrices] = useState<StorePrice[] | null>(null);
   const [storePricesLoading, setStorePricesLoading] = useState<boolean>(false);
@@ -196,7 +184,8 @@ export const useGameDetails = ({
       } catch (e) {
         console.error("Error rating game:", e);
         ToastAndroid.show(
-          t("games.details.ratingFailed") ?? "Couldn't save your rating. Please try again.",
+          t("games.details.ratingFailed") ??
+            "Couldn't save your rating. Please try again.",
           ToastAndroid.LONG,
         );
       }
@@ -209,10 +198,7 @@ export const useGameDetails = ({
     [game?.collections],
   );
 
-  const similarGames = useMemo(
-    () => game?.similar_games ?? [],
-    [game?.similar_games],
-  );
+  const similarGames = useMemo(() => game?.similar_games ?? [], [game?.similar_games]);
 
   // Effects
   useEffect(() => {
@@ -287,9 +273,7 @@ export const useGameDetails = ({
     ]).then(([deals, psnPrice]) => {
       if (!cancelled) {
         const pcPrices = buildStorePrices(game.name, game.websites, deals);
-        const allPrices = psnPrice
-          ? [...pcPrices, psnPrice]
-          : pcPrices;
+        const allPrices = psnPrice ? [...pcPrices, psnPrice] : pcPrices;
         setStorePrices(allPrices);
         setStorePricesLoading(false);
       }
@@ -326,10 +310,7 @@ export const useGameDetails = ({
   }, [user, t]);
 
   const handleCloseModal = useCallback(() => setShowListModal(false), []);
-  const handleNavigateToGame = useCallback(
-    (id: number) => setCurrentId(id),
-    [],
-  );
+  const handleNavigateToGame = useCallback((id: number) => setCurrentId(id), []);
 
   return {
     game,

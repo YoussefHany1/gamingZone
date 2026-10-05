@@ -3,7 +3,6 @@ import CustomText from "@/src/components/CustomText";
 import {
   View,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
   Animated,
   Platform,
@@ -15,7 +14,8 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { Game } from "@/src/types/sharedTypes";
 import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
 import { searchGamesAutocomplete } from "@/src/services/api/igdbApi";
-import COLORS from "@/src/constants/colors";
+import { useThemeColors } from "@/src/hooks/useTheme";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -41,6 +41,28 @@ export type SearchAutocompleteProps = {
 type RowProps = { item: Game; onPress: (game: Game) => void };
 
 const SuggestionRow = React.memo<RowProps>(({ item, onPress }) => {
+  const styles = useThemeStyles((c) => ({
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      gap: 12,
+    },
+    cover: {
+      width: 38,
+      height: 50,
+      borderRadius: 6,
+      backgroundColor: c.skeletonBase,
+    },
+    name: {
+      flex: 1,
+      color: c.text,
+      fontSize: 15,
+      fontWeight: "500",
+    },
+  }));
+
   const coverUri = getCoverUri(item.cover?.image_id);
   const handlePress = useCallback(() => onPress(item), [onPress, item]);
 
@@ -77,6 +99,28 @@ export default function SearchAutocomplete({
   onSelect,
 }: SearchAutocompleteProps) {
   const navigation = useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
+  const colors = useThemeColors();
+
+  const styles = useThemeStyles((c) => ({
+    container: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 100,
+      backgroundColor: c.background,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    loaderWrap: {
+      paddingVertical: 20,
+      alignItems: "center",
+    },
+    separator: {
+      height: 1,
+      backgroundColor: c.border,
+    },
+  }));
 
   const [suggestions, setSuggestions] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
@@ -142,7 +186,7 @@ export default function SearchAutocomplete({
     <Animated.View style={[styles.container, { opacity }]}>
       {loading && suggestions.length === 0 ? (
         <View style={styles.loaderWrap}>
-          <ActivityIndicator size="small" color={COLORS.secondary} />
+          <ActivityIndicator size="small" color={colors.accent} />
         </View>
       ) : (
         <FlashList
@@ -159,55 +203,3 @@ export default function SearchAutocomplete({
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  container: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: COLORS.darkBackground,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-    overflow: "hidden",
-    maxHeight: 340,
-    ...Platform.select({
-      ios: {
-        shadowColor: COLORS.dark,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.45,
-        shadowRadius: 12,
-      },
-      android: { elevation: 12 },
-    }),
-  },
-  loaderWrap: {
-    padding: 18,
-    alignItems: "center",
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 12,
-  },
-  cover: {
-    width: 38,
-    height: 50,
-    borderRadius: 6,
-    backgroundColor: "#1e2a45",
-  },
-  name: {
-    flex: 1,
-    color: "#e8edf5",
-    fontSize: 15,
-    fontWeight: "500",
-  },
-  separator: {
-    height: 1,
-    backgroundColor: "rgba(81,105,150,0.25)",
-    marginHorizontal: 14,
-  },
-});

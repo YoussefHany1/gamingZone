@@ -1,14 +1,14 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useAuthStore } from "./store/useAuthStore";
 import { useShallow } from "zustand/react/shallow";
 import { storage } from "./lib/storage";
-import { StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import {
   NavigationContainer,
   DefaultTheme,
+  DarkTheme,
   NavigationContainerRef,
   Theme,
   getStateFromPath,
@@ -25,7 +25,9 @@ import { useFonts } from "expo-font";
 import { APP_FONTS } from "./utils/fontUtils";
 import { I18nManager } from "react-native";
 import i18n from "./i18n";
-import COLORS from "./constants/colors";
+import { useIsDark, useThemeColors } from "./hooks/useTheme";
+import { useThemeStyles } from "./hooks/useThemeStyles";
+import type { ThemeColors } from "./constants/colors";
 import Loading from "./Loading";
 import UpdateScreen from "./components/UpdateScreen";
 import useNotifications from "./hooks/useNotifications";
@@ -64,13 +66,26 @@ const queryClient = new QueryClient({
 });
 
 // Theme
-const MyTheme: Theme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: COLORS.primary,
-  },
-};
+// Built per-scheme (not at module scope) so a preference change re-renders
+// the container. Every color React Navigation actually uses is overridden —
+// previously only `background` was, leaving `card`/`text`/`border` on the
+// light DefaultTheme values while the app rendered dark.
+function buildNavTheme(isDark: boolean, colors: ThemeColors): Theme {
+  const base = isDark ? DarkTheme : DefaultTheme;
+  return {
+    ...base,
+    dark: isDark,
+    colors: {
+      ...base.colors,
+      primary: colors.accentText,
+      background: colors.background,
+      card: colors.background,
+      text: colors.text,
+      border: colors.border,
+      notification: colors.danger,
+    },
+  };
+}
 
 // Deep Linking Config
 const linking: LinkingOptions<any> = {
@@ -160,6 +175,16 @@ SplashScreen.preventAutoHideAsync();
 
 function App(): React.ReactElement | null {
   const [fontsLoaded, fontError] = useFonts(APP_FONTS);
+
+  const isDark = useIsDark();
+  const colors = useThemeColors();
+  const navTheme = useMemo(() => buildNavTheme(isDark, colors), [isDark, colors]);
+  const styles = useThemeStyles((c) => ({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+  }));
 
   const { user, loading, initAuth } = useAuthStore(
     useShallow((state) => ({
@@ -316,7 +341,7 @@ function App(): React.ReactElement | null {
       <ErrorBoundary sectionLabel="Onboarding">
         <SafeAreaProvider>
           <GestureHandlerRootView style={styles.container}>
-            <StatusBar style="light" />
+            <StatusBar style={isDark ? "light" : "dark"} />
             <OfflineBanner />
             <OnboardingScreen onDone={handleOnboardingDone} />
           </GestureHandlerRootView>
@@ -330,12 +355,12 @@ function App(): React.ReactElement | null {
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
           <GestureHandlerRootView style={styles.container}>
-            <StatusBar style="light" />
+            <StatusBar style={isDark ? "light" : "dark"} />
             <OfflineBanner />
 
             <NavigationContainer
               ref={navigationRef}
-              theme={MyTheme}
+              theme={navTheme}
               linking={linking}
               onReady={handleNavigationReady}
               onStateChange={handleStateChange}
@@ -355,12 +380,5 @@ function App(): React.ReactElement | null {
     </ErrorBoundary>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-  },
-});
 
 export default App;
