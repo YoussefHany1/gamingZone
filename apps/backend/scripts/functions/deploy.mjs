@@ -183,5 +183,4 @@ for (const fn of FUNCTIONS) {
 }
 
 console.log('✔ All functions configured and variables synced.');
-console.log(`  Appwrite-only : rss-fetch (${'*/5 * * * *'}) · free-games-fetch (${'0 * * * *'})`);
-console.log('  GitHub Actions: weekly-summary.yml triggers /functions/weekly-summary/executions');
+console.log('  cron schedules internally: rss (every tick) · free-games (hourly) · weekly-summary (Fri 12:00 UTC)');

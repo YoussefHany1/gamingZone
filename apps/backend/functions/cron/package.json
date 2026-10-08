@@ -1,8 +1,8 @@
 {
-  "name": "gamingzone-rss-fetch",
+  "name": "gamingzone-cron",
   "version": "1.0.0",
   "private": true,
-  "description": "Appwrite function that fetches RSS feeds and writes articles (Appwrite-native scheduled every 5 minutes).",
+  "description": "Single Appwrite function that runs all jobs on one native */5 cron: RSS every tick, free-games at the top of every hour, weekly summary Fridays 12:00 UTC.",
   "main": "dist/main.js",
   "scripts": {
     "build": "node ../../scripts/functions/build-function.mjs",

@@ -1,64 +1,65 @@
 # Appwrite Functions
 
-Three single-purpose Appwrite functions replace the runners that used to execute the scraping jobs. **RSS and free-games run entirely inside Appwrite** on native schedules; only the weekly summary is still scheduled from GitHub Actions.
+A **single** Appwrite function (`cron`) runs all three jobs inside Appwrite on one native schedule — keeping usage inside Appwrite's free tier (Appwrite allows one cron per function, so everything shares one `*/5 * * * *` tick).
 
-## Functions
+## How the dispatcher schedules jobs
 
-| function            | job / service                             | schedule                                                   |
-| ------------------- | ----------------------------------------- | ---------------------------------------------------------- |
-| `rss-fetch`         | `rss/rss.service.ts` (`runFetchRss`)      | Appwrite-native CRON `*/5 * * * *` (every 5 min, UTC)      |
-| `free-games-fetch`  | `freeGames/freeGames.service.ts`          | Appwrite-native CRON `0 * * * *` (every hour, UTC)         |
-| `weekly-summary`    | `summary/summary.service.ts`              | none — triggered by `.github/workflows/weekly-summary.yml` |
+Appwrite functions support exactly **one** cron schedule, so the function runs every 5 minutes and a time-based dispatcher (`src/main.ts`) fans out based on the UTC server clock:
 
-GitHub Actions only remains for `weekly-summary.yml` (Fridays 12:00 UTC). `trigger-rss.yml`, `free-games.yml`, and `deploy-functions.yml` were removed — code deploys now come from Appwrite's Git integration.
+| job             | service                                   | when it runs                      |
+| --------------- | ----------------------------------------- | --------------------------------- |
+| `rss`           | `rss/rss.service.ts` (`runFetchRss`)      | every `*/5 * * * *` tick          |
+| `free-games`    | `freeGames/freeGames.service.ts`          | top of every hour (UTC minute 0)  |
+| `weekly-summary`| `summary/summary.service.ts`              | Fridays 12:00 UTC (minute 0 tick) |
+
+Notes:
+- `weekly-summary` is **not** idempotent (it creates a new document each run), so it only fires on the single 12:00 Friday tick.
+- All GitHub Actions workflows were removed (`trigger-rss.yml`, `free-games.yml`, `weekly-summary.yml`, `deploy-functions.yml`) — scheduling and code deployment are entirely inside Appwrite now.
+- Manual triggers (below) can still run one specific job by passing a JSON body.
 
 ## Layout
 
 ```
 apps/backend/
   functions/
-    _shared/runner.ts                  # tiny Appwrite handler wrapper (types + job runner)
-    rss-fetch/         package.json · src/main.ts · dist/main.js (generated at build)
-    free-games-fetch/  package.json · src/main.ts · dist/main.js (generated at build)
-    weekly-summary/    package.json · src/main.ts · dist/main.js (generated at build)
+    _shared/runner.ts                  # Appwrite handler context types
+    cron/            package.json · src/main.ts · dist/main.js (generated at build)
   scripts/functions/
-    config.mjs         # function list: ids, dirs, names, schedules; required variables
+    config.mjs         # single function entry: id, dir, name, schedule; required variables
     esbuild.config.mjs # shared bundle options (externals, target, banner)
-    build.mjs          # esbuild-bundles every function into its dist/main.js (local repro)
-    build-function.mjs # build script each function's package.json runs (Appwrite Git build)
+    build.mjs          # esbuild-bundles the function into its dist/main.js (local repro)
+    build-function.mjs # build script the function's package.json runs (Appwrite Git build)
     deploy.mjs         # create/update function config + sync variables (one-time setup)
-appwrite.json                        # optional Appwrite CLI spec (uses $APPWRITE_PROJECT_ID / $APPWRITE_ENDPOINT)
-.github/workflows/
-  weekly-summary.yml   # POST /functions/weekly-summary/executions (async)
+appwrite.json                        # Appwrite CLI spec (uses $APPWRITE_PROJECT_ID / $APPWRITE_ENDPOINT)
 ```
 
 ## How deployment works
 
-Appwrite only copies the function **root directory** (`apps/backend/functions/<id>`) into the deployment package, while the job code lives outside it under `scripts/`. To work around that, every function carries a **self-contained `build` script** that Appwrite runs inside the function folder via the function's `commands` (`npm install && npm run build`):
+Appwrite only copies the function **root directory** (`apps/backend/functions/cron`) into the deployment package, while the job code lives outside it under `scripts/`. The function carries a **self-contained `build` script** that Appwrite runs inside the function folder via the function's `commands` (`npm install && npm run build`):
 
-1. Appwrite clones the **whole repo**, so each `src/main.ts` can still import `../../../scripts/features/*`, `../../../scripts/lib/*`, and `../../_shared/runner.ts`.
-2. Each function's `build` script (`node ../../scripts/functions/build-function.mjs`) runs with cwd = the function root, resolves `esbuild` from that root's `node_modules` (npm just installed it), and bundles the shared source into that function's `dist/main.js`, externalizing the runtime-only packages (`firebase-admin`, `node-appwrite`, `pino` family, `puppeteer`) that Appwrite `npm install`s from the function's own `package.json`.
+1. Appwrite clones the **whole repo**, so `src/main.ts` can import `../../../scripts/features/*`, `../../../scripts/lib/*`, and `../../_shared/runner.ts`.
+2. The `build` script (`node ../../scripts/functions/build-function.mjs`) runs with cwd = the function root, resolves `esbuild` from that root's `node_modules` (npm just installed it), and bundles the shared source into `dist/main.js`, externalizing the runtime-only packages (`firebase-admin`, `node-appwrite`, `pino` family, `puppeteer`) that Appwrite `npm install`s from the function's own `package.json`.
 3. The deployment packages only the root directory (`dist/` + installed `node_modules/`) — exactly what the executor needs.
 
-Because the functions' `package.json` build scripts mirror `scripts/functions/build.mjs`, `npm run functions:build` is a faithful local reproduction of what Appwrite's Git build does.
+Because the function's `package.json` build script mirrors `scripts/functions/build.mjs`, `npm run functions:build` is a faithful local reproduction of what Appwrite's Git build does.
 
 ## Deployment via Git integration (connected to the repo)
 
-`deploy-functions.yml` was removed. Code is now deployed by Appwrite's GitHub integration:
+Code is deployed by Appwrite's GitHub integration — no CI workflow:
 
-1. For each function (Console → Functions → `<id>` → Settings → Git): connect your GitHub account/repo, set **Branch** to `main` and **Root directory** to `apps/backend/functions/<id>`. Enable auto-deploy.
+1. Console → Functions → `cron` → Settings → Git: connect your GitHub account/repo, set **Branch** to `main`, **Root directory** to `apps/backend/functions/cron`, and enable auto-deploy.
 2. On **Create/Deploy from Git**, Appwrite runs `npm install && npm run build` (command + entrypoint come from the function config) and activates `dist/main.js`.
-3. Thereafter, every push to `main` that changes a function's files under its root directory rebuilds and redeploys that function automatically. Nothing to do manually.
+3. Thereafter, every push to `main` that changes files under that root directory rebuilds and redeploys the function automatically.
 
-One-time setup: after the functions exist, `npm run functions:deploy` (below) only creates/updates the function config and syncs variables — it does **not** upload code. If you ever need to push a bundle from your machine instead (e.g. before Git is connected), run `APPWRITE_PUSH_CODE=1 npm run functions:deploy`.
+One-time setup: after the function exists, `npm run functions:deploy` (below) only creates/updates the function config and syncs variables — it does **not** upload code. If you ever need to push a bundle from your machine instead (e.g. before Git is connected), run `APPWRITE_PUSH_CODE=1 npm run functions:deploy`.
 
 ## One-time setup
 
 1. `cd apps/backend` and make sure `.env` has the values below (or provide them as environment variables).
 2. `npm install --legacy-peer-deps` (installs `esbuild`; approve its install script if npm blocks postinstall scripts).
-3. Run `npm run functions:deploy` to create the functions and set their 10 variables.
-4. Connect each function to Git as described above, and create the initial deployment from Git.
-5. Confirm in your Appwrite console: Functions → each function → Settings shows its schedule; Deployments/Executions shows runs. If you already deployed the old `cron-job` function, delete it in the console (it is replaced by `weekly-summary`).
+3. Run `npm run functions:deploy` to create the function and sync its 10 variables.
+4. Connect the function to Git as described above, and create the initial deployment from Git.
+5. Confirm in your Appwrite console: Functions → `cron` → Settings shows the `*/5 * * * *` schedule; Deployments/Executions shows runs. If you already deployed the old `rss-fetch`, `free-games-fetch`, `weekly-summary`, or `cron-job` functions, delete them in the console (they are replaced by this single `cron` function).
 
 Required function variables mirror `scripts/lib/config.ts`:
 
@@ -79,17 +80,17 @@ Collection IDs fall back to the defaults above if omitted — only the first six
 
 ## Manual trigger
 
-`rss-fetch` / `free-games-fetch` already run on their Appwrite schedules; you can still fire them on demand:
+The function runs all due jobs on its schedule; to run one specific job on demand:
 
 ```sh
-curl -X POST "https://<region>.cloud.appwrite.io/v1/functions/rss-fetch/executions" \
+curl -X POST "https://<region>.cloud.appwrite.io/v1/functions/cron/executions" \
   -H "X-Appwrite-Project: <project>" \
   -H "X-Appwrite-Key: <api key>" \
   -H "Content-Type: application/json" \
-  -d '{"async":true,"method":"POST","path":"/"}'
+  -d '{"async":true,"method":"POST","path":"/","body":"{\"job\":\"free-games\"}"}'
 ```
 
-The same works for `/functions/free-games-fetch/executions` and `/functions/weekly-summary/executions`. Drop `"async":true` to wait for the result synchronously (only for short runs / debugging).
+Valid job names: `rss`, `free-games`, `weekly-summary`. Drop `"async":true` to wait for the result synchronously (only for short runs / debugging).
 
 ## Known constraint: Puppeteer
 
@@ -97,4 +98,4 @@ The same works for `/functions/free-games-fetch/executions` and `/functions/week
 
 ## Updating a job
 
-Because each bundle pulls in `scripts/features` as source, editing a service and pushing to `main` is all that's needed — Appwrite's Git integration rebuilds and redeploys any function whose root directory changed. To reproduce the exact build locally first, run `npm run functions:build`.
+Because the bundle pulls in `scripts/features` as source, editing a service and pushing to `main` is all that's needed — Appwrite's Git integration rebuilds and redeploys the function. To reproduce the exact build locally first, run `npm run functions:build`.

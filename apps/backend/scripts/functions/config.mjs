@@ -8,28 +8,18 @@ export const COMMANDS = 'npm install && npm run build';
 export const TIMEOUT = 900;
 
 /**
- * Functions deployed to Appwrite. `schedule` uses Appwrite-native CRON —
- * rss-fetch and free-games-fetch run entirely inside Appwrite; weekly-summary
- * has no schedule and is triggered by .github/workflows/weekly-summary.yml.
+ * Single Appwrite function on one native cron. A time-based dispatcher inside
+ * (see functions/cron/src/main.ts) fans out to the three job cadences:
+ * rss every tick, free-games at the top of every hour, weekly-summary on
+ * Fridays 12:00 UTC. Staying at one function keeps usage inside Appwrite's
+ * free tier (one function = one schedule).
  */
 export const FUNCTIONS = [
   {
-    id: 'rss-fetch',
-    dir: 'rss-fetch',
-    name: 'RSS Feed Fetcher',
+    id: 'cron',
+    dir: 'cron',
+    name: 'Game Jobs Cron',
     schedule: '*/5 * * * *',
-  },
-  {
-    id: 'free-games-fetch',
-    dir: 'free-games-fetch',
-    name: 'Free Games Fetcher',
-    schedule: '0 * * * *',
-  },
-  {
-    id: 'weekly-summary',
-    dir: 'weekly-summary',
-    name: 'Weekly Summary Generator',
-    schedule: '',
   },
 ];
 
