@@ -101251,7 +101251,7 @@ var require_common = __commonJS({
 // ../../node_modules/debug/src/browser.js
 var require_browser = __commonJS({
   "../../node_modules/debug/src/browser.js"(exports2, module2) {
-    exports2.formatArgs = formatArgs;
+    exports2.formatArgs = formatArgs2;
     exports2.save = save;
     exports2.load = load;
     exports2.useColors = useColors;
@@ -101357,7 +101357,7 @@ var require_browser = __commonJS({
       typeof navigator !== "undefined" && navigator.userAgent && (m2 = navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/)) && parseInt(m2[1], 10) >= 31 || // Double check webkit in userAgent just in case we are in a worker
       typeof navigator !== "undefined" && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/);
     }
-    function formatArgs(args) {
+    function formatArgs2(args) {
       args[0] = (this.useColors ? "%c" : "") + this.namespace + (this.useColors ? " %c" : " ") + args[0] + (this.useColors ? "%c " : " ") + "+" + module2.exports.humanize(this.diff);
       if (!this.useColors) {
         return;
@@ -101540,7 +101540,7 @@ var require_node = __commonJS({
     var util5 = require("util");
     exports2.init = init3;
     exports2.log = log2;
-    exports2.formatArgs = formatArgs;
+    exports2.formatArgs = formatArgs2;
     exports2.save = save;
     exports2.load = load;
     exports2.useColors = useColors;
@@ -101656,7 +101656,7 @@ var require_node = __commonJS({
     function useColors() {
       return "colors" in exports2.inspectOpts ? Boolean(exports2.inspectOpts.colors) : tty.isatty(process.stderr.fd);
     }
-    function formatArgs(args) {
+    function formatArgs2(args) {
       const { namespace: name50, useColors: useColors2 } = this;
       if (useColors2) {
         const c5 = this.color;
@@ -447743,7 +447743,7 @@ module.exports = __toCommonJS(main_exports);
 
 // scripts/lib/logger.ts
 var import_pino = __toESM(require("pino"));
-var logger = (0, import_pino.default)({
+var pinoInstance = (0, import_pino.default)({
   level: process.env.LOG_LEVEL || "info",
   transport: {
     target: "pino-pretty",
@@ -447754,6 +447754,48 @@ var logger = (0, import_pino.default)({
     }
   }
 });
+var appwriteLog = null;
+var appwriteError = null;
+function setAppwriteLogger(log2, error) {
+  appwriteLog = log2;
+  appwriteError = error;
+}
+function formatArg(arg) {
+  if (arg instanceof Error) {
+    return `${arg.name}: ${arg.message}${arg.stack ? `
+${arg.stack}` : ""}`;
+  }
+  if (typeof arg === "object" && arg !== null) {
+    try {
+      return JSON.stringify(arg);
+    } catch {
+      return String(arg);
+    }
+  }
+  return String(arg);
+}
+function formatArgs(args) {
+  return args.map(formatArg).join(" ");
+}
+var logger = {
+  info(...args) {
+    pinoInstance.info(...args);
+    if (appwriteLog) appwriteLog(formatArgs(args));
+  },
+  warn(...args) {
+    pinoInstance.warn(...args);
+    if (appwriteLog) appwriteLog(`[WARN] ${formatArgs(args)}`);
+  },
+  error(...args) {
+    pinoInstance.error(...args);
+    const msg = formatArgs(args);
+    if (appwriteError) appwriteError(msg);
+    else if (appwriteLog) appwriteLog(`[ERROR] ${msg}`);
+  },
+  debug(...args) {
+    pinoInstance.debug(...args);
+  }
+};
 
 // scripts/features/rss/rss.service.ts
 var import_node_appwrite2 = require("node-appwrite");
@@ -458171,11 +458213,13 @@ async function runFetchRss() {
     }
   } catch (error) {
     logger.error(error, "Fatal Error");
+    throw error;
   }
   logger.info(
     `
 --- Done. Sent: ${summary.notificationsSent}, Errors: ${summary.errors.length} ---`
   );
+  return summary;
 }
 
 // scripts/features/freeGames/freeGames.service.ts
@@ -458508,6 +458552,7 @@ async function runFetchFreeGames() {
     await cleanupOldGames(activeIds);
   } catch (error) {
     logger.error(error, "Fatal Error");
+    throw error;
   }
   logger.info("--- Done. ---");
 }
@@ -458847,42 +458892,49 @@ function jobsFromBody(body) {
   return [...new Set(jobs)];
 }
 var main_default = async ({ req, res, log: log2, error }) => {
+  setAppwriteLogger(log2, error);
   const startedAt = Date.now();
   const now = /* @__PURE__ */ new Date();
   const hasBody = typeof req.body === "string" && req.body.trim().length > 0;
-  let jobs;
-  if (hasBody) {
-    const requested = jobsFromBody(req.body);
-    if (requested === null) {
-      return res.json({ ok: false, function: "cron", error: "Invalid JSON body." }, 400);
+  try {
+    let jobs;
+    if (hasBody) {
+      const requested = jobsFromBody(req.body);
+      if (requested === null) {
+        return res.json({ ok: false, function: "cron", error: "Invalid JSON body." }, 400);
+      }
+      if (requested.length === 0) {
+        return res.json(
+          { ok: false, function: "cron", error: `No known job. Known jobs: ${Object.keys(JOBS).join(", ")}` },
+          400
+        );
+      }
+      jobs = requested;
+    } else {
+      jobs = jobsFromScheduledTick(now);
     }
-    if (requested.length === 0) {
-      return res.json(
-        { ok: false, function: "cron", error: `No known job. Known jobs: ${Object.keys(JOBS).join(", ")}` },
-        400
-      );
+    log2(`cron: running [${jobs.join(", ")}] at ${now.toISOString()}`);
+    const results = [];
+    let allOk = true;
+    for (const job of jobs) {
+      const jobStartedAt = Date.now();
+      try {
+        const result = await JOBS[job]();
+        const ms = Date.now() - jobStartedAt;
+        log2(`cron: job '${job}' finished in ${ms}ms`);
+        results.push({ job, ok: true, ms, result: result ?? null });
+      } catch (cause) {
+        allOk = false;
+        const message = cause instanceof Error ? cause.message : String(cause);
+        error(`cron: job '${job}' failed: ${message}`);
+        results.push({ job, ok: false, ms: Date.now() - jobStartedAt, error: message });
+      }
     }
-    jobs = requested;
-  } else {
-    jobs = jobsFromScheduledTick(now);
+    log2(`cron: finished in ${Date.now() - startedAt}ms`);
+    return res.json({ ok: allOk, function: "cron", jobs: results }, allOk ? 200 : 500);
+  } finally {
+    setAppwriteLogger(null, null);
   }
-  log2(`cron: running [${jobs.join(", ")}] at ${now.toISOString()}`);
-  const results = [];
-  let allOk = true;
-  for (const job of jobs) {
-    const jobStartedAt = Date.now();
-    try {
-      const result = await JOBS[job]();
-      results.push({ job, ok: true, ms: Date.now() - jobStartedAt, result: result ?? null });
-    } catch (cause) {
-      allOk = false;
-      const message = cause instanceof Error ? cause.message : String(cause);
-      error(`cron: job '${job}' failed: ${message}`);
-      results.push({ job, ok: false, ms: Date.now() - jobStartedAt, error: message });
-    }
-  }
-  log2(`cron: finished in ${Date.now() - startedAt}ms`);
-  return res.json({ ok: allOk, function: "cron", jobs: results }, allOk ? 200 : 500);
 };
 /*! Bundled license information:
 

@@ -267,6 +267,7 @@ async function runFetchFreeGames(): Promise<void> {
     await cleanupOldGames(activeIds);
   } catch (error) {
     logger.error(error, 'Fatal Error');
+    throw error;
   }
 
   logger.info('--- Done. ---');

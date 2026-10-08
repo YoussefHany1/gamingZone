@@ -6,6 +6,7 @@ import {
   teardownFreeGamesService,
 } from '../../../scripts/features/freeGames/freeGames.service';
 import { runGenerateWeeklySummary } from '../../../scripts/features/summary/summary.service';
+import { setAppwriteLogger } from '../../../scripts/lib/logger';
 
 // One Appwrite function, one native schedule ("*/5 * * * *" in UTC). Every tick
 // runs against the server clock; free-games and weekly-summary fire only when
@@ -57,45 +58,52 @@ function jobsFromBody(body: string): string[] | null {
 }
 
 export default async ({ req, res, log, error }: AppwriteContext) => {
+  setAppwriteLogger(log, error);
   const startedAt = Date.now();
   const now = new Date();
   const hasBody = typeof req.body === 'string' && req.body.trim().length > 0;
 
-  let jobs: string[];
-  if (hasBody) {
-    const requested = jobsFromBody(req.body as string);
-    if (requested === null) {
-      return res.json({ ok: false, function: 'cron', error: 'Invalid JSON body.' }, 400);
+  try {
+    let jobs: string[];
+    if (hasBody) {
+      const requested = jobsFromBody(req.body as string);
+      if (requested === null) {
+        return res.json({ ok: false, function: 'cron', error: 'Invalid JSON body.' }, 400);
+      }
+      if (requested.length === 0) {
+        return res.json(
+          { ok: false, function: 'cron', error: `No known job. Known jobs: ${Object.keys(JOBS).join(', ')}` },
+          400,
+        );
+      }
+      jobs = requested;
+    } else {
+      jobs = jobsFromScheduledTick(now);
     }
-    if (requested.length === 0) {
-      return res.json(
-        { ok: false, function: 'cron', error: `No known job. Known jobs: ${Object.keys(JOBS).join(', ')}` },
-        400,
-      );
+
+    log(`cron: running [${jobs.join(', ')}] at ${now.toISOString()}`);
+
+    const results: { job: string; ok: boolean; ms: number; result?: unknown; error?: string }[] = [];
+    let allOk = true;
+
+    for (const job of jobs) {
+      const jobStartedAt = Date.now();
+      try {
+        const result = await JOBS[job]();
+        const ms = Date.now() - jobStartedAt;
+        log(`cron: job '${job}' finished in ${ms}ms`);
+        results.push({ job, ok: true, ms, result: result ?? null });
+      } catch (cause) {
+        allOk = false;
+        const message = cause instanceof Error ? cause.message : String(cause);
+        error(`cron: job '${job}' failed: ${message}`);
+        results.push({ job, ok: false, ms: Date.now() - jobStartedAt, error: message });
+      }
     }
-    jobs = requested;
-  } else {
-    jobs = jobsFromScheduledTick(now);
+
+    log(`cron: finished in ${Date.now() - startedAt}ms`);
+    return res.json({ ok: allOk, function: 'cron', jobs: results }, allOk ? 200 : 500);
+  } finally {
+    setAppwriteLogger(null, null);
   }
-
-  log(`cron: running [${jobs.join(', ')}] at ${now.toISOString()}`);
-
-  const results: { job: string; ok: boolean; ms: number; result?: unknown; error?: string }[] = [];
-  let allOk = true;
-
-  for (const job of jobs) {
-    const jobStartedAt = Date.now();
-    try {
-      const result = await JOBS[job]();
-      results.push({ job, ok: true, ms: Date.now() - jobStartedAt, result: result ?? null });
-    } catch (cause) {
-      allOk = false;
-      const message = cause instanceof Error ? cause.message : String(cause);
-      error(`cron: job '${job}' failed: ${message}`);
-      results.push({ job, ok: false, ms: Date.now() - jobStartedAt, error: message });
-    }
-  }
-
-  log(`cron: finished in ${Date.now() - startedAt}ms`);
-  return res.json({ ok: allOk, function: 'cron', jobs: results }, allOk ? 200 : 500);
 };

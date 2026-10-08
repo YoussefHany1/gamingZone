@@ -382,11 +382,13 @@ async function runFetchRss(): Promise<void> {
     }
   } catch (error: unknown) {
     logger.error(error, 'Fatal Error');
+    throw error;
   }
 
   logger.info(
     `\n--- Done. Sent: ${summary.notificationsSent}, Errors: ${summary.errors.length} ---`,
   );
+  return summary;
 }
 
 export { runFetchRss };
