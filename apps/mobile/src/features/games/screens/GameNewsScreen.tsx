@@ -295,13 +295,9 @@ const NewsSection = memo<NewsSectionProps>(
         >
           <View style={styles.categoryHeaderLeft}>
             {expanded ? (
-              <ChevronUp size={20} color={colors.textMuted} style={styles.chevronIcon} />
+              <ChevronUp size={20} color={colors.accent} style={styles.chevronIcon} />
             ) : (
-              <ChevronDown
-                size={20}
-                color={colors.textMuted}
-                style={styles.chevronIcon}
-              />
+              <ChevronDown size={20} color={colors.accent} style={styles.chevronIcon} />
             )}
             <CustomText style={styles.categoryTitle}>{title}</CustomText>
           </View>

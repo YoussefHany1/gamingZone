@@ -158,7 +158,7 @@ const LanguageSelect = memo((): React.ReactElement => {
                 >
                   {LANGUAGE_LABELS[lang]}
                 </CustomText>
-                {currentLang === lang && <Check size={24} color={colors.textMuted} />}
+                {currentLang === lang && <Check size={24} color={colors.accent} />}
               </View>
             </TouchableOpacity>
           );

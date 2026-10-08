@@ -20,23 +20,6 @@ import type { ThemeColors } from "@/src/constants/colors";
 import LatestNews from "@/src/features/news/components/LatestNews";
 import type { Article } from "@/src/features/news/types";
 
-/**
- * ThemeScreen — redesigned to look like Discord's Appearance screen.
- *
- * Layout (top → bottom):
- *   ┌─ preview card ──────────────────────────────┐
- *   │  Two mock news rows painted with the ACTIVE  │
- *   │  palette — repaints instantly on selection.  │
- *   └──────────────────────────────────────────────┘
- *
- *   [■ sys][■ lt][■ dk][■ amoled]…   horizontal tile strip
- *                 Dark                selected appearance name (bold)
- *         This will change…           sync note
- *   ─────────────────────────────────
- *   ACCENT COLOR
- *   [● auto][● rnd][● blue]…
- */
-
 const ACCENT_OPTIONS: AccentId[] = ["auto", "random", ...ACCENT_IDS];
 
 // ─── Layout constants ─────────────────────────────────────────────────────────
@@ -242,7 +225,7 @@ const ThemeScreen = memo((): React.ReactElement => {
       backgroundColor: c.background,
     },
     content: {
-      paddingBottom: 100,
+      paddingBottom: 70,
     },
     previewFrame: {
       backgroundColor: c.background,
@@ -316,25 +299,31 @@ const ThemeScreen = memo((): React.ReactElement => {
     return map;
   }, [systemScheme, resolvedAccent]);
 
-  const mockArticles = useMemo<Article[]>(
-    () =>
-      ["mock-1", "mock-2", "mock-3"].map(($id, index) => ({
-        $id,
-        category: "",
-        title: t("settings.theme.previewHeadline").substring(0, 100),
-        description: `${t("settings.theme.previewSummary")}..`,
-        pubDate: new Date(
-          Date.now() - (index === 0 ? 2 : 5) * 60 * 60 * 1000,
-        ).toISOString(),
-        siteName: t("settings.theme.previewSite"),
-        thumbnail: "",
-      })),
-    [t],
-  );
+  const mockArticles = useMemo<Article[]>(() => {
+    const thumbnails = [
+      "https://platform.theverge.com/wp-content/uploads/sites/2/2026/10/gta6.jpg?quality=90&strip=all&crop=0%2C0%2C100%2C100&w=750",
+      "https://www.reuters.com/resizer/v2/F4VN364ZPZINBOP2IY5H6GFNJA.jpg?auth=825ae9f636bb0b385f79ca589d5b9da16f83c3cecd9fb8e2caed75f127ff901f&width=640&quality=80",
+      "https://www.club386.com/wp-content/uploads/2026/10/AMD-Ryzen-Z1-gaming-handheld-696x696.jpg",
+    ];
+    return ["mock-1", "mock-2", "mock-3"].map(($id, index) => ({
+      $id,
+      category: "",
+      title: t("settings.theme.previewHeadline").substring(0, 100),
+      description: `${t("settings.theme.previewSummary")}..`,
+      pubDate: new Date(
+        Date.now() - (index === 0 ? 2 : 5) * 60 * 60 * 1000,
+      ).toISOString(),
+      siteName: t("settings.theme.previewSite"),
+      thumbnail: thumbnails[index] || "",
+    }));
+  }, [t]);
 
   return (
-    <SafeAreaView style={styles.container} edges={["right", "left"]}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView style={styles.container} edges={["bottom", "right", "left"]}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* ── Live preview painted with the ACTIVE palette ─────────── */}
         <View style={[g.previewWrapper, styles.previewFrame]}>
           <View pointerEvents="none">

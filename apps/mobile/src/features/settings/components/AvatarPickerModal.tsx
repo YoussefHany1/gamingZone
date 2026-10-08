@@ -165,7 +165,7 @@ function AvatarPickerModal({
             accessibilityRole="button"
             accessibilityLabel={t("settings.profile.avatar.upload")}
           >
-            <Camera size={20} color={colors.textMuted} />
+            <Camera size={20} color={colors.accent} />
             <CustomText style={styles.uploadText}>
               {t("settings.profile.avatar.upload")}
             </CustomText>

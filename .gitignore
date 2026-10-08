@@ -38,6 +38,9 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# Appwrite CLI caches inside function packages
+apps/backend/functions/**/.appwrite/
+
 # firebase
 *serviceAccountKey.json
 google-services.json

@@ -351,9 +351,9 @@ const UserListsScreen = ({ navigation }: Props) => {
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               {item.type === "default" ? (
-                <List size={24} color={colors.textMuted} />
+                <List size={24} color={colors.accent} />
               ) : (
-                <FolderOpen size={24} color={colors.textMuted} />
+                <FolderOpen size={24} color={colors.accent} />
               )}
               <CustomText style={styles.listName}>{getDisplayName(item.name)}</CustomText>
             </View>
@@ -391,7 +391,7 @@ const UserListsScreen = ({ navigation }: Props) => {
       <SafeAreaView style={styles.container} edges={["right", "left"]}>
         <View style={styles.emptyContainer}>
           <CustomText style={styles.emptyText}>
-            <TriangleAlert size={182} color={colors.textMuted} />
+            <TriangleAlert size={182} color={colors.accent} />
             {"\n"}
             {t("common.loginRequired")}
           </CustomText>

@@ -243,11 +243,11 @@ const SettingsScreen = memo((): React.ReactElement => {
         >
           <View style={styles.menuItemLeft}>
             {item.icon && (
-              <item.icon size={20} color={colors.textMuted} style={styles.menuIcon} />
+              <item.icon size={20} color={colors.accent} style={styles.menuIcon} />
             )}
             <CustomText style={styles.menuLabel}>{item.label}</CustomText>
           </View>
-          <TrailingIcon size={18} color={colors.textMuted} />
+          <TrailingIcon size={18} color={colors.accent} />
         </TouchableOpacity>
       );
     },
@@ -278,9 +278,9 @@ const SettingsScreen = memo((): React.ReactElement => {
           <CustomText style={styles.displayName}>{displayName}</CustomText>
           {!isGuest &&
             (i18n.language === "ar" ? (
-              <ChevronLeft size={24} color={colors.textMuted} />
+              <ChevronLeft size={24} color={colors.accent} />
             ) : (
-              <ChevronRight size={24} color={colors.textMuted} />
+              <ChevronRight size={24} color={colors.accent} />
             ))}
         </TouchableOpacity>
 

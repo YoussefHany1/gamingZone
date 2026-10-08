@@ -18,7 +18,6 @@ import { formatEventDateShort, getEventStatus } from "@gaming-zone/utils";
 import type { EventStatus } from "@gaming-zone/utils";
 import ErrorState from "@/src/components/ErrorState";
 import useCachedData from "@/src/hooks/useCachedData";
-import { openLink } from "@/src/lib/browser";
 import type { GamingEvent } from "@/src/types/sharedTypes";
 import type { HomeStackParamList } from "@/src/navigation/AppNavigator";
 import { fetchGamingEvents } from "@/src/services/api/igdbApi";
@@ -62,14 +61,6 @@ const EventCard = memo<EventCardProps>(({ item }) => {
   const handlePress = useCallback((): void => {
     navigation.navigate("EventDetailsScreen", { event: itemRef.current });
   }, [navigation]);
-
-  const handleStreamPress = useCallback((): void => {
-    if (item.live_stream_url) {
-      openLink(item.live_stream_url).catch(() =>
-        console.error("[GamingEvents] Failed to open stream URL"),
-      );
-    }
-  }, [item.live_stream_url]);
 
   const colors = useThemeColors();
 
@@ -144,9 +135,6 @@ const EventCard = memo<EventCardProps>(({ item }) => {
       color: c.text,
       fontSize: 20,
       fontWeight: "bold",
-      textShadowColor: "rgba(0, 0, 0, 0.5)",
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 3,
     },
     dateTimeRow: {
       flexDirection: "row",

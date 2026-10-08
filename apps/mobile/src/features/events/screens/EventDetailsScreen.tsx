@@ -320,7 +320,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
           <View style={styles.datesRow}>
             <View style={styles.dateBlock}>
               <View collapsable={false}>
-                <Calendar size={18} color={colors.textMuted} />
+                <Calendar size={18} color={colors.accent} />
               </View>
               <View>
                 <CustomText style={styles.dateBlockLabel}>Starts</CustomText>
@@ -329,7 +329,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
             </View>
             <View style={styles.dateBlock}>
               <View collapsable={false}>
-                <Flag size={18} color={colors.textMuted} />
+                <Flag size={18} color={colors.accent} />
               </View>
               <View>
                 <CustomText style={styles.dateBlockLabel}>Ends</CustomText>

@@ -42,9 +42,8 @@ export type ThemeStyle =
   | "sepia"
   | "contrast"
   | "steam"
-  | "verdant"
   | "blurple"
-  | "ember"
+  | "nintendo"
   | "playstation"
   | "xbox";
 
@@ -117,8 +116,11 @@ const EMPTY_OVERRIDE: StyleOverride = Object.freeze({});
  * Per-style palette overrides. Only the tokens that differ from the base
  * palette are declared; anything omitted inherits from `BASE_PALETTES`.
  *
- * Both schemes are defined for every style so that no fallback logic is
- * needed: AMOLED-light is pure white and Sepia-dark is a warm near-black.
+ * Every style is keyed under both schemes, but each only overrides the
+ * brightness it pins in `STYLE_SCHEME`; the other scheme stays `EMPTY_OVERRIDE`
+ * and inherits the untouched base palette. So AMOLED pins dark (pure black),
+ * Sepia/Contrast/Nintendo/PlayStation pin light, and Steam/Blurple/Xbox pin
+ * dark — no fallback logic is needed.
  */
 export const STYLES: Record<
   ThemeStyle,
@@ -127,13 +129,7 @@ export const STYLES: Record<
   default: { light: EMPTY_OVERRIDE, dark: EMPTY_OVERRIDE },
 
   amoled: {
-    light: {
-      background: "#ffffff",
-      backgroundDeep: "#f2f2f2",
-      surface: "rgba(0, 0, 0, 0.05)",
-      skeletonBase: "#e6e6e6",
-      skeletonHighlight: "#f4f4f4",
-    },
+    light: EMPTY_OVERRIDE,
     dark: {
       background: "#000000",
       backgroundDeep: "#000000",
@@ -166,28 +162,7 @@ export const STYLES: Record<
       skeletonHighlight: "#f1e9da",
       tintTextMuted: false,
     },
-    dark: {
-      background: "#171310",
-      backgroundDeep: "#0e0b09",
-      surface: "rgba(214, 190, 150, 0.09)",
-      accentSurface: "rgba(150, 110, 60, 0.28)",
-      scrim: "rgba(23, 19, 16, 0.65)",
-      scrimSoft: "rgba(23, 19, 16, 0.4)",
-      scrimSolid: "rgba(23, 19, 16, 0.95)",
-      text: "#f3e9d9",
-      textMuted: "#c6ab7b",
-      textSubtle: "#8f7f68",
-      accent: "#6b4f2a",
-      accentText: "#d6b785",
-      accentBorder: "rgba(214, 183, 133, 0.35)",
-      border: "rgba(214, 183, 133, 0.18)",
-      stripe: "rgba(214, 183, 133, 0.07)",
-      overlay: "rgba(0, 0, 0, 0.6)",
-      danger: "#e5534b",
-      skeletonBase: "#2c241c",
-      skeletonHighlight: "#3b3127",
-      tintTextMuted: false,
-    },
+    dark: EMPTY_OVERRIDE,
   },
 
   // Accessibility-oriented: neutral surfaces, near-maximal text contrast, and
@@ -237,25 +212,7 @@ export const STYLES: Record<
   },
 
   steam: {
-    light: {
-      background: "#f1f5f9",
-      backgroundDeep: "#dbe4ec",
-      surface: "rgba(28, 56, 88, 0.05)",
-      accentSurface: "rgba(28, 56, 88, 0.1)",
-      text: "#0c1a28",
-      textMuted: "#415a72",
-      textSubtle: "#7b8fa3",
-      accent: "#1b4b6b",
-      accentText: "#14405e",
-      accentBorder: "rgba(20, 64, 94, 0.28)",
-      border: "rgba(12, 26, 40, 0.14)",
-      stripe: "rgba(27, 75, 107, 0.07)",
-      overlay: "rgba(12, 26, 40, 0.45)",
-      danger: "#c0261f",
-      skeletonBase: "#dde6ee",
-      skeletonHighlight: "#eef3f8",
-      tintTextMuted: false,
-    },
+    light: EMPTY_OVERRIDE,
     dark: {
       background: "#1f2a35",
       backgroundDeep: "#171d25",
@@ -280,70 +237,8 @@ export const STYLES: Record<
     },
   },
 
-  verdant: {
-    light: {
-      background: "#f1f7f3",
-      backgroundDeep: "#dcebe2",
-      surface: "rgba(20, 60, 40, 0.05)",
-      accentSurface: "rgba(47, 125, 90, 0.1)",
-      text: "#0d1f16",
-      textMuted: "#3f6353",
-      textSubtle: "#7a9187",
-      accent: "#1d6349",
-      accentText: "#144730",
-      accentBorder: "rgba(47, 125, 90, 0.28)",
-      border: "rgba(13, 31, 22, 0.14)",
-      stripe: "rgba(47, 125, 90, 0.07)",
-      overlay: "rgba(13, 31, 22, 0.45)",
-      danger: "#c0261f",
-      skeletonBase: "#dcebe2",
-      skeletonHighlight: "#edf5f0",
-      tintTextMuted: false,
-    },
-    dark: {
-      background: "#0c1410",
-      backgroundDeep: "#060b08",
-      surface: "rgba(87, 217, 163, 0.1)",
-      accentSurface: "rgba(45, 125, 90, 0.3)",
-      scrim: "rgba(12, 20, 16, 0.65)",
-      scrimSoft: "rgba(12, 20, 16, 0.4)",
-      scrimSolid: "rgba(12, 20, 16, 0.95)",
-      text: "#ffffff",
-      textMuted: "#8ec7ac",
-      textSubtle: "#a6b3ac",
-      accent: "#2f7d5a",
-      accentText: "#57d9a3",
-      accentBorder: "rgba(87, 217, 163, 0.35)",
-      border: "rgba(87, 217, 163, 0.2)",
-      stripe: "rgba(87, 217, 163, 0.08)",
-      overlay: "rgba(0, 0, 0, 0.6)",
-      danger: "#ff3b30",
-      skeletonBase: "#17321f",
-      skeletonHighlight: "#23472f",
-      tintTextMuted: false,
-    },
-  },
-
   blurple: {
-    light: {
-      background: "#f4f5fb",
-      backgroundDeep: "#e2e5f4",
-      surface: "rgba(88, 101, 242, 0.05)",
-      accentSurface: "rgba(88, 101, 242, 0.1)",
-      text: "#14162a",
-      textMuted: "#4a4f74",
-      textSubtle: "#858aa8",
-      accent: "#3d47b8",
-      accentText: "#2c348c",
-      accentBorder: "rgba(61, 71, 184, 0.28)",
-      border: "rgba(20, 22, 42, 0.14)",
-      stripe: "rgba(61, 71, 184, 0.07)",
-      overlay: "rgba(20, 22, 42, 0.45)",
-      danger: "#d92d20",
-      skeletonBase: "#e0e2f2",
-      skeletonHighlight: "#f0f1f9",
-      tintTextMuted: false,
-    },
+    light: EMPTY_OVERRIDE,
     dark: {
       background: "#12141f",
       backgroundDeep: "#0a0b13",
@@ -368,18 +263,21 @@ export const STYLES: Record<
     },
   },
 
-  ember: {
+  nintendo: {
     light: {
-      background: "#fdf8f6",
+      background: "#f9f2f2",
       backgroundDeep: "#f6ebec",
       surface: "rgba(230, 0, 18, 0.06)",
       accentSurface: "rgba(230, 0, 18, 0.1)",
-      text: "#1f0c10",
+      text: "#484848",
       textMuted: "#6e4048",
       textSubtle: "#a3838a",
       accent: "#e60012",
       accentText: "#8d0f1c",
       accentBorder: "rgba(141, 15, 28, 0.28)",
+      scrim: "rgba(31, 12, 16, 0.65)",
+      scrimSoft: "rgba(31, 12, 16, 0.4)",
+      scrimSolid: "rgba(31, 12, 16, 0.95)",
       border: "rgba(31, 12, 16, 0.14)",
       stripe: "rgba(230, 0, 18, 0.07)",
       overlay: "rgba(31, 12, 16, 0.45)",
@@ -388,28 +286,7 @@ export const STYLES: Record<
       skeletonHighlight: "#fcf1f2",
       tintTextMuted: false,
     },
-    dark: {
-      background: "#170b0e",
-      backgroundDeep: "#0e0608",
-      surface: "rgba(255, 137, 160, 0.1)",
-      accentSurface: "rgba(230, 0, 18, 0.28)",
-      scrim: "rgba(23, 11, 14, 0.65)",
-      scrimSoft: "rgba(23, 11, 14, 0.4)",
-      scrimSolid: "rgba(23, 11, 14, 0.95)",
-      text: "#ffffff",
-      textMuted: "#e8a4b2",
-      textSubtle: "#ad7c88",
-      accent: "#e60012",
-      accentText: "#ff89a0",
-      accentBorder: "rgba(255, 137, 160, 0.4)",
-      border: "rgba(255, 137, 160, 0.22)",
-      stripe: "rgba(255, 137, 160, 0.08)",
-      overlay: "rgba(0, 0, 0, 0.6)",
-      danger: "#ff3b30",
-      skeletonBase: "#2e1419",
-      skeletonHighlight: "#422029",
-      tintTextMuted: false,
-    },
+    dark: EMPTY_OVERRIDE,
   },
 
   playstation: {
@@ -432,50 +309,11 @@ export const STYLES: Record<
       skeletonHighlight: "#eef5fe",
       tintTextMuted: false,
     },
-    dark: {
-      background: "#0d1424",
-      backgroundDeep: "#070b16",
-      surface: "rgba(122, 184, 255, 0.1)",
-      accentSurface: "rgba(0, 112, 209, 0.32)",
-      scrim: "rgba(8, 12, 24, 0.65)",
-      scrimSoft: "rgba(8, 12, 24, 0.4)",
-      scrimSolid: "rgba(8, 12, 24, 0.95)",
-      text: "#eef4ff",
-      textMuted: "#a3bcd1",
-      textSubtle: "#8b99b2",
-      accent: "#0070d1",
-      accentText: "#7ab8ff",
-      accentBorder: "rgba(122, 184, 255, 0.4)",
-      border: "rgba(122, 184, 255, 0.22)",
-      stripe: "rgba(122, 184, 255, 0.08)",
-      overlay: "rgba(0, 0, 0, 0.6)",
-      danger: "#ff3b30",
-      skeletonBase: "#1c2a4a",
-      skeletonHighlight: "#263a63",
-      tintTextMuted: false,
-    },
+    dark: EMPTY_OVERRIDE,
   },
 
   xbox: {
-    light: {
-      background: "#f3f8f1",
-      backgroundDeep: "#e0eadd",
-      surface: "rgba(16, 124, 16, 0.08)",
-      accentSurface: "rgba(16, 124, 16, 0.12)",
-      text: "#0f1f0e",
-      textMuted: "#35632f",
-      textSubtle: "#62805c",
-      accent: "#107c10",
-      accentText: "#0f6a0f",
-      accentBorder: "rgba(15, 106, 15, 0.25)",
-      border: "rgba(15, 31, 14, 0.14)",
-      stripe: "rgba(15, 106, 15, 0.07)",
-      overlay: "rgba(15, 31, 14, 0.45)",
-      danger: "#d92d20",
-      skeletonBase: "#e0eadd",
-      skeletonHighlight: "#eef5eb",
-      tintTextMuted: false,
-    },
+    light: EMPTY_OVERRIDE,
     dark: {
       background: "#0b0f0b",
       backgroundDeep: "#050705",
@@ -524,9 +362,8 @@ export const APPEARANCE_IDS = [
   "sepia",
   "contrast",
   "steam",
-  "verdant",
   "blurple",
-  "ember",
+  "nintendo",
   "playstation",
   "xbox",
 ] as const;
@@ -548,10 +385,9 @@ export const STYLE_SCHEME: Record<StyleAppearance, ColorScheme> = Object.freeze(
   sepia: "light",
   contrast: "light",
   steam: "dark",
-  verdant: "dark",
   blurple: "dark",
-  ember: "dark",
-  playstation: "dark",
+  nintendo: "light",
+  playstation: "light",
   xbox: "dark",
 });
 

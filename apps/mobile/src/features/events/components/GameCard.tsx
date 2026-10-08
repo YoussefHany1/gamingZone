@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import { memo } from "react";
 import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";

@@ -571,7 +571,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
         : t("settings.userGames.emptySubText");
     return (
       <View style={styles.emptyContainer}>
-        <Bookmark size={80} color={colors.textMuted} />
+        <Bookmark size={80} color={colors.accent} />
         <CustomText style={styles.emptyText}>
           {t("settings.userGames.emptyText")}
         </CustomText>

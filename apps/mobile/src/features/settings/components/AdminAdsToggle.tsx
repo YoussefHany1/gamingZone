@@ -41,7 +41,7 @@ const AdminAdsToggle = memo(() => {
   return (
     <View style={styles.menuItem}>
       <View style={styles.menuItemLeft}>
-        <Megaphone size={20} color={colors.textMuted} style={styles.menuIcon} />
+        <Megaphone size={20} color={colors.accent} style={styles.menuIcon} />
         <CustomText style={styles.menuLabel}>{t("settings.menu.showAds")}</CustomText>
       </View>
       <Switch

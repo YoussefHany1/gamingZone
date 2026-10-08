@@ -9,7 +9,9 @@
     "check:scripts": "tsc --noEmit",
     "lint": "eslint \"scripts/**/*.ts\"",
     "format": "prettier --write \"scripts/**/*.ts\"",
-    "test": "vitest run"
+    "test": "vitest run",
+    "functions:build": "node scripts/functions/build.mjs",
+    "functions:deploy": "node scripts/functions/deploy.mjs"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
@@ -38,6 +40,7 @@
     "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^8.63.0",
     "@typescript-eslint/parser": "^8.63.0",
+    "esbuild": "^0.25.0",
     "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",

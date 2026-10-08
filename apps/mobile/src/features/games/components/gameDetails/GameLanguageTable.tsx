@@ -182,7 +182,7 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
 
             {COLUMN_KEYS.map((key) => (
               <View key={key} style={styles.checkCell}>
-                {lang[key] && <CircleCheck size={20} color={colors.textMuted} />}
+                {lang[key] && <CircleCheck size={20} color={colors.accent} />}
               </View>
             ))}
           </View>

@@ -113,7 +113,7 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
           {/* Notification toggle */}
           <TouchableOpacity onPress={onToggleNotification} style={styles.bellButton}>
             {isNotifEnabled ? (
-              <Bell size={24} color={colors.textMuted} />
+              <Bell size={24} color={colors.accent} />
             ) : (
               <BellOff size={24} color={colors.textSubtle} />
             )}

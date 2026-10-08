@@ -262,7 +262,7 @@ const Notification: React.FC = () => {
       <View style={styles.categorySection}>
         <View style={styles.categoryHeader}>
           <View style={styles.categoryHeaderLeft}>
-            <Gift size={24} color={colors.textMuted} style={styles.chevronIcon} />
+            <Gift size={24} color={colors.accent} style={styles.chevronIcon} />
             <CustomText style={styles.categoryTitle}>
               {t("games.list.freeGames.header")}
             </CustomText>
@@ -324,17 +324,9 @@ const Notification: React.FC = () => {
         >
           <View style={styles.categoryHeaderLeft}>
             {isExpanded ? (
-              <ChevronDown
-                size={20}
-                color={colors.textMuted}
-                style={styles.chevronIcon}
-              />
+              <ChevronDown size={20} color={colors.accent} style={styles.chevronIcon} />
             ) : (
-              <ChevronRight
-                size={20}
-                color={colors.textMuted}
-                style={styles.chevronIcon}
-              />
+              <ChevronRight size={20} color={colors.accent} style={styles.chevronIcon} />
             )}
             <CustomText style={styles.categoryTitle}>{title}</CustomText>
             <CustomText style={styles.sourceCount}>({sources.length})</CustomText>

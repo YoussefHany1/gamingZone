@@ -604,15 +604,15 @@
       "sepia": "Sepia",
       "contrast": "High contrast",
       "steam": "Steam Blue",
-      "verdant": "Gaming Green",
-      "blurple": "Blurple",
-      "ember": "Switch Red",
+
+      "blurple": "Discord",
+      "nintendo": "Nintendo Switch",
       "playstation": "PlayStation",
       "xbox": "Xbox",
       "syncNote": "This will change the theme across all your devices.",
       "previewHeadline": "The big update adds new themes, a redesigned feed and performance improvements",
       "previewSummary": "This is how your news feed will read with this theme, from the headline to the time",
-      "previewSite": "gamingzone.app"
+      "previewSite": "Preview"
     },
     "signOut": {
       "confirmTitle": "Log Out",

@@ -150,7 +150,7 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
             {item.name}
           </CustomText>
           <View style={styles.playRow}>
-            <CirclePlay size={18} color={colors.textMuted} style={{ marginRight: 6 }} />
+            <CirclePlay size={18} color={colors.accent} style={{ marginRight: 6 }} />
             <CustomText style={styles.subtitle} numberOfLines={1}>
               {t("home.slideshow.subtitle")}
             </CustomText>

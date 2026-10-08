@@ -65,7 +65,7 @@ const InviteFriendsBtn: React.FC = memo(() => {
   return (
     <TouchableOpacity style={styles.categoryHeader} onPress={onShare}>
       <View style={styles.categoryHeaderLeft}>
-        <Share2 size={20} color={colors.textMuted} style={styles.chevronIcon} />
+        <Share2 size={20} color={colors.accent} style={styles.chevronIcon} />
         <CustomText style={styles.categoryTitle}>
           {t("settings.menu.inviteFriends")}
         </CustomText>

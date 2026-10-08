@@ -140,7 +140,7 @@ const PopularCard = React.memo<PopularCardProps>(({ item, index }) => {
         <View style={styles.statsContainer}>
           {rating > 0 && (
             <View style={styles.statItem}>
-              <Star size={12} color={colors.textMuted} />
+              <Star size={12} color={colors.accent} />
               <CustomText style={styles.statValue}>{rating.toFixed(1)}</CustomText>
             </View>
           )}

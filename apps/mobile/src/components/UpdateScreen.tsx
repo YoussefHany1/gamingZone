@@ -277,7 +277,7 @@ const UpdateScreen: React.FC<UpdateScreenProps> = memo(({ progress }) => {
           {/* Icon row */}
           <View style={styles.iconRow}>
             <View style={styles.iconCircle}>
-              <ArrowDownToLine color={colors.textMuted} size={20} />
+              <ArrowDownToLine color={colors.accent} size={20} />
             </View>
             <View style={styles.textGroup}>
               <CustomText style={styles.updateTitle}>

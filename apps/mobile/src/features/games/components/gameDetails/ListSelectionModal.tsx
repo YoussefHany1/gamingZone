@@ -491,7 +491,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                           }
                         }}
                       >
-                        <CirclePlus size={24} color={colors.textMuted} />
+                        <CirclePlus size={24} color={colors.accent} />
                         <CustomText style={styles.addButtonText}>
                           {t("userLists.actions.createNewList")}
                         </CustomText>

@@ -423,7 +423,7 @@ function checkTokens(): void {
   if (a !== b)
     fail("cache", "resolvePalette returned a new object for a repeated combination");
 
-  if (resolvePalette("dark", "steam") === resolvePalette("dark", "verdant")) {
+  if (resolvePalette("dark", "steam") === resolvePalette("dark", "blurple")) {
     fail("cache", "different styles resolved to the same object");
   }
 

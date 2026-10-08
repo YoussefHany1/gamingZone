@@ -1,0 +1,48 @@
+{
+  "projectId": "$APPWRITE_PROJECT_ID",
+  "endpoint": "$APPWRITE_ENDPOINT",
+  "functions": [
+    {
+      "$id": "rss-fetch",
+      "name": "RSS Feed Fetcher",
+      "runtime": "node-20.0",
+      "path": "apps/backend/functions/rss-fetch",
+      "entrypoint": "dist/main.js",
+      "commands": "npm install && npm run build",
+      "timeout": 900,
+      "logging": true,
+      "enabled": true,
+      "execute": [],
+      "schedule": "*/5 * * * *",
+      "events": []
+    },
+    {
+      "$id": "free-games-fetch",
+      "name": "Free Games Fetcher",
+      "runtime": "node-20.0",
+      "path": "apps/backend/functions/free-games-fetch",
+      "entrypoint": "dist/main.js",
+      "commands": "npm install && npm run build",
+      "timeout": 900,
+      "logging": true,
+      "enabled": true,
+      "execute": [],
+      "schedule": "0 * * * *",
+      "events": []
+    },
+    {
+      "$id": "weekly-summary",
+      "name": "Weekly Summary Generator",
+      "runtime": "node-20.0",
+      "path": "apps/backend/functions/weekly-summary",
+      "entrypoint": "dist/main.js",
+      "commands": "npm install && npm run build",
+      "timeout": 900,
+      "logging": true,
+      "enabled": true,
+      "execute": [],
+      "schedule": "",
+      "events": []
+    }
+  ]
+}

@@ -606,15 +606,15 @@
       "sepia": "سيبيا",
       "contrast": "تباين عالٍ",
       "steam": "أزرق ستيم",
-      "verdant": "أخضر الألعاب",
-      "blurple": "أزرق بنفسجي",
-      "ember": "أحمر سويتش",
+
+      "blurple": "ديسكورد",
+      "nintendo": "نينتندو سويتش",
       "playstation": "بلاي ستيشن",
       "xbox": "إكس بوكس",
       "syncNote": "سيؤدي هذا إلى تغيير المظهر في جميع أجهزتك.",
       "previewHeadline": "يضيف التحديث الكبير مظاهر جديدة وتغذية مُعاد تصميمها وتحسينات في الأداء",
       "previewSummary": "هكذا ستظهر تغذية الأخبار لديك مع هذا المظهر، من العنوان حتى الوقت",
-      "previewSite": "gamingzone.app"
+      "previewSite": "Preview"
     },
     "signOut": {
       "confirmTitle": "تسجيل الخروج",

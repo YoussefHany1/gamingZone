@@ -126,7 +126,7 @@ const NewsDetails = memo((): React.ReactElement => {
     },
     description: {
       fontSize: 16,
-      color: "#b7becb",
+      color: c.text,
       lineHeight: 26,
     },
     ad: {

@@ -933,7 +933,7 @@ function ReleaseCalendar({
           </View>
         ) : (
           <View style={styles.emptyDay}>
-            <CalendarX size={26} color={colors.textMuted} />
+            <CalendarX size={26} color={colors.accent} />
             <CustomText style={styles.emptyDayText}>
               {selectedInWindow && (data?.length ?? 0) > 0
                 ? t("home.releaseCalendar.noReleases")
