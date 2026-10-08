@@ -31,90 +31,84 @@ export interface UseNotificationPreferencesResult {
 // Hook
 // ---------------------------------------------------------------------------
 
-export const useNotificationPreferences =
-  (): UseNotificationPreferencesResult => {
-    const [preferences, setPreferences] = useState<NotificationPreferences>(
-      () => globalPreferencesCache ?? {},
-    );
-    const [loadingPreferences, setLoadingPreferences] = useState(
-      !globalPreferencesCache,
-    );
+export const useNotificationPreferences = (): UseNotificationPreferencesResult => {
+  const [preferences, setPreferences] = useState<NotificationPreferences>(
+    () => globalPreferencesCache ?? {},
+  );
+  const [loadingPreferences, setLoadingPreferences] = useState(!globalPreferencesCache);
 
-    // Load preferences on mount (skips the spinner if the cache is warm).
-    useEffect(() => {
-      const uid = auth().currentUser?.uid;
-      if (!uid) {
-        setLoadingPreferences(false);
-        return;
+  // Load preferences on mount (skips the spinner if the cache is warm).
+  useEffect(() => {
+    const uid = auth().currentUser?.uid;
+    if (!uid) {
+      setLoadingPreferences(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const load = async (): Promise<void> => {
+      if (!globalPreferencesCache) setLoadingPreferences(true);
+
+      try {
+        const prefs = await NotificationService.getUserPreferences(uid);
+        if (cancelled) return;
+        globalPreferencesCache = prefs ?? {};
+        setPreferences(globalPreferencesCache);
+      } catch (error) {
+        console.error("[useNotificationPreferences] Load error:", error);
+      } finally {
+        if (!cancelled) setLoadingPreferences(false);
       }
+    };
 
-      let cancelled = false;
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-      const load = async (): Promise<void> => {
-        if (!globalPreferencesCache) setLoadingPreferences(true);
+  // Optimistic toggle: update state immediately, roll back on failure.
+  const toggleSource = useCallback(
+    async (category: string, sourceName: string): Promise<void> => {
+      const uid = auth().currentUser?.uid;
+      if (!uid) return;
 
-        try {
-          const prefs = await NotificationService.getUserPreferences(uid);
-          if (cancelled) return;
-          globalPreferencesCache = prefs ?? {};
-          setPreferences(globalPreferencesCache);
-        } catch (error) {
-          console.error("[useNotificationPreferences] Load error:", error);
-        } finally {
-          if (!cancelled) setLoadingPreferences(false);
-        }
+      const prefId = NotificationService.getTopicName(category, sourceName);
+      const previousValue = globalPreferencesCache?.[prefId] ?? false;
+      const nextValue = !previousValue;
+
+      const optimistic: NotificationPreferences = {
+        ...(globalPreferencesCache ?? {}),
+        [prefId]: nextValue,
       };
+      globalPreferencesCache = optimistic;
+      setPreferences(optimistic);
 
-      load();
-      return () => {
-        cancelled = true;
-      };
-    }, []);
-
-    // Optimistic toggle: update state immediately, roll back on failure.
-    const toggleSource = useCallback(
-      async (category: string, sourceName: string): Promise<void> => {
-        const uid = auth().currentUser?.uid;
-        if (!uid) return;
-
-        const prefId = NotificationService.getTopicName(category, sourceName);
-        const previousValue = globalPreferencesCache?.[prefId] ?? false;
-        const nextValue = !previousValue;
-
-        const optimistic: NotificationPreferences = {
+      try {
+        await NotificationService.toggleNotificationPreference(
+          uid,
+          category,
+          sourceName,
+          nextValue,
+        );
+      } catch (error) {
+        console.error("[useNotificationPreferences] Failed to save preference:", error);
+        // Roll back both the cache and local state.
+        const rolledBack: NotificationPreferences = {
           ...(globalPreferencesCache ?? {}),
-          [prefId]: nextValue,
+          [prefId]: previousValue,
         };
-        globalPreferencesCache = optimistic;
-        setPreferences(optimistic);
+        globalPreferencesCache = rolledBack;
+        setPreferences(rolledBack);
+        ToastAndroid.show(
+          "Failed to update notification settings. Please try again.",
+          ToastAndroid.SHORT,
+        );
+      }
+    },
+    [], // no deps — reads globalPreferencesCache directly via the module ref
+  );
 
-        try {
-          await NotificationService.toggleNotificationPreference(
-            uid,
-            category,
-            sourceName,
-            nextValue,
-          );
-        } catch (error) {
-          console.error(
-            "[useNotificationPreferences] Failed to save preference:",
-            error,
-          );
-          // Roll back both the cache and local state.
-          const rolledBack: NotificationPreferences = {
-            ...(globalPreferencesCache ?? {}),
-            [prefId]: previousValue,
-          };
-          globalPreferencesCache = rolledBack;
-          setPreferences(rolledBack);
-          ToastAndroid.show(
-            "Failed to update notification settings. Please try again.",
-            ToastAndroid.SHORT,
-          );
-        }
-      },
-      [], // no deps — reads globalPreferencesCache directly via the module ref
-    );
-
-    return { preferences, loadingPreferences, toggleSource, setPreferences };
-  };
+  return { preferences, loadingPreferences, toggleSource, setPreferences };
+};

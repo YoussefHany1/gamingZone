@@ -3,14 +3,8 @@ import auth from "@react-native-firebase/auth";
 import { ChatMessage } from "../types";
 
 // Ensure EXPO_PUBLIC keys are defined in your .env
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.replace(
-  /^"|"$/g,
-  "",
-);
-const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY?.replace(
-  /^"|"$/g,
-  "",
-);
+const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.replace(/^"|"$/g, "");
+const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY?.replace(/^"|"$/g, "");
 
 /**
  * Fetches user games and profile from Firestore to provide rich context to the AI
@@ -27,8 +21,7 @@ async function getUserGamesContext(): Promise<string> {
     let context = `User Profile Information:\n`;
     context += `- Name: ${currentUser.displayName || userData.displayName || "Gamer"}\n`;
     if (userData.country) context += `- Country: ${userData.country}\n`;
-    if (userData.platform)
-      context += `- Preferred Platform: ${userData.platform}\n`;
+    if (userData.platform) context += `- Preferred Platform: ${userData.platform}\n`;
     if (userData.gender) context += `- Gender: ${userData.gender}\n`;
     if (userData.dob) context += `- Date of Birth: ${userData.dob}\n`;
 
@@ -98,20 +91,17 @@ async function callGemini(messages: ChatMessage[]): Promise<string> {
 async function callGroq(messages: ChatMessage[]): Promise<string> {
   if (!GROQ_API_KEY) throw new Error("Missing Groq API Key");
 
-  const response = await fetch(
-    "https://api.groq.com/openai/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        messages: messages,
-      }),
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${GROQ_API_KEY}`,
     },
-  );
+    body: JSON.stringify({
+      model: "llama-3.1-8b-instant",
+      messages: messages,
+    }),
+  });
 
   if (!response.ok) {
     const errText = await response.text();

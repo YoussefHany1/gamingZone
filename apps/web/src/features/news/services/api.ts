@@ -8,9 +8,8 @@ import { Article, WeeklySummaryDoc } from "@/types";
 import type { Source } from "../types";
 
 // Cross-request TTLs. Every call here previously hit Appwrite on every request.
-// These are a fallback only: .github/workflows/trigger-rss.yml calls
-// /api/revalidate when articles are actually written, which invalidates the
-// matching tags immediately rather than waiting out a window.
+// These are the sole freshness mechanism: new articles age into the caches as
+// these windows lapse and the next regeneration picks them up.
 //
 // The per-request `cache()` below stays OUTSIDE `unstable_cache` so a single
 // render pass dedupes before touching the data cache at all.

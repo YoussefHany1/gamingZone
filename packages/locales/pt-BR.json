@@ -121,7 +121,8 @@
       "notificationSettings": "Configurações de notificações",
       "accountSettings": "Configurações da conta",
       "gamesList": "Minha lista de jogos",
-      "myLists": "Minhas listas"
+      "myLists": "Minhas listas",
+      "profile": "Meu perfil"
     }
   },
   "home": {
@@ -449,10 +450,33 @@
   "settings": {
     "language": "Idioma",
     "theme": {
+      "blue": "Azul",
+      "green": "Verde",
+      "purple": "Roxo",
+      "orange": "Laranja",
+      "pink": "Rosa",
+      "gold": "Dourado",
+      "slate": "Ardosia",
       "title": "Aparência",
       "system": "Sistema",
       "light": "Claro",
-      "dark": "Escuro"
+      "dark": "Escuro",
+      "accentTitle": "Cor de destaque",
+      "auto": "Automático",
+      "random": "Aleatório",
+      "amoled": "Preto AMOLED",
+      "sepia": "Sépia",
+      "contrast": "Alto contraste",
+      "steam": "Azul Steam",
+      "verdant": "Verde",
+      "blurple": "Azul-arroxeado",
+      "ember": "Vermelho Switch",
+      "playstation": "PlayStation",
+      "xbox": "Xbox",
+      "syncNote": "Isso mudará o tema em todos os seus dispositivos.",
+      "previewHeadline": "Grande atualização traz novos temas, um feed redesenhado e melhorias de desempenho",
+      "previewSummary": "Como seu feed de notícias fica neste tema, do título ao horário",
+      "previewSite": "gamingzone.app"
     },
     "currentLang": "Português",
     "languageSelect": {
@@ -533,6 +557,11 @@
         "missingCountry": "Selecione seu país.",
         "missingPlatform": "Selecione sua plataforma.",
         "missingImage": "Adicione uma foto de perfil."
+      },
+      "avatar": {
+        "title": "Escolha seu avatar",
+        "suggested": "Você pode gostar de um destes",
+        "upload": "Enviar da galeria"
       }
     },
     "notifications": {
@@ -570,6 +599,26 @@
       "error": "Ocorreu um erro ao enviar. Tente novamente.",
       "messageTooLong": "A mensagem é muito longa. O limite máximo é de 5.000 caracteres.",
       "invalidEmail": "O endereço de e-mail não é válido"
+    },
+    "profileShowcase": {
+      "memberSince": "Membro desde",
+      "dash": "—",
+      "statsSection": "Suas estatísticas",
+      "stats": {
+        "playing": "Jogando",
+        "played": "Jogados",
+        "wantToPlay": "Quero jogar",
+        "rated": "Avaliados",
+        "total": "Jogos únicos",
+        "avgRating": "Nota média",
+        "playtime": "Tempo de jogo"
+      },
+      "playtimeValue": "{{count}} hrs",
+      "highestRated": "Melhor avaliados",
+      "emptyLibrary": "Sua biblioteca está vazia — adicione jogos para criar suas estatísticas.",
+      "browseGames": "Explorar jogos",
+      "editProfile": "Editar perfil",
+      "myLists": "Minhas listas"
     }
   },
   "aiChat": {

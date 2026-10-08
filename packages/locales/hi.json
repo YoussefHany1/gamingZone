@@ -121,7 +121,8 @@
       "notificationSettings": "सूचना सेटिंग्स",
       "accountSettings": "खाता सेटिंग्स",
       "gamesList": "मेरी गेम्स सूची",
-      "myLists": "मेरी सूचियाँ"
+      "myLists": "मेरी सूचियाँ",
+      "profile": "मेरी प्रोफ़ाइल"
     }
   },
   "home": {
@@ -449,10 +450,33 @@
   "settings": {
     "language": "भाषा",
     "theme": {
+      "blue": "नीला",
+      "green": "हरा",
+      "purple": "बैंगनी",
+      "orange": "नारंगी",
+      "pink": "साजी",
+      "gold": "सोना",
+      "slate": "स्लेट",
       "title": "रूप",
       "system": "सिस्टम",
       "light": "हल्का",
-      "dark": "गहरा"
+      "dark": "गहरा",
+      "accentTitle": "एक्सेंट रंग",
+      "auto": "स्वतः",
+      "random": "यादृच्छिक",
+      "amoled": "AMOLED काला",
+      "sepia": "सीपिया",
+      "contrast": "उच्च कंट्रास्ट",
+      "steam": "स्टीम नीला",
+      "verdant": "हरा",
+      "blurple": "नीला-बैंगनी",
+      "ember": "स्विच रेड",
+      "playstation": "प्लेस्टेशन",
+      "xbox": "एक्सबॉक्स",
+      "syncNote": "यह आपके सभी डिवाइस पर थीम बदल देगा।",
+      "previewHeadline": "बड़े अपडेट में नए थीम, नया डिज़ाइन किया गया फ़ीड और बेहतर परफ़ॉर्मेंस शामिल हैं",
+      "previewSummary": "इस थीम में आपका न्यूज़ फ़ीड कैसा दिखेगा, शीर्षक से लेकर समय तक",
+      "previewSite": "gamingzone.app"
     },
     "currentLang": "हिंदी",
     "languageSelect": {
@@ -533,6 +557,11 @@
         "missingCountry": "कृपया अपना देश चुनें।",
         "missingPlatform": "कृपया अपना प्लेटफ़ॉर्म चुनें।",
         "missingImage": "कृपया एक प्रोफ़ाइल तस्वीर जोड़ें।"
+      },
+      "avatar": {
+        "title": "अपना अवतार चुनें",
+        "suggested": "आपको इनमें से एक पसंद आ सकता है",
+        "upload": "गैलरी से अपलोड करें"
       }
     },
     "notifications": {
@@ -570,6 +599,26 @@
       "error": "भेजते समय एक त्रुटि हुई। कृपया फिर से कोशिश करें",
       "messageTooLong": "संदेश बहुत लंबा है। अधिकतम सीमा 5000 अक्षर है।",
       "invalidEmail": "ईमेल पता अमान्य है"
+    },
+    "profileShowcase": {
+      "memberSince": "सदस्य तिथि",
+      "dash": "—",
+      "statsSection": "आपके आँकड़े",
+      "stats": {
+        "playing": "खेल रहे हैं",
+        "played": "खेल चुके",
+        "wantToPlay": "खेलना चाहते हैं",
+        "rated": "रेट किए गए",
+        "total": "कुल अनोखे खेल",
+        "avgRating": "औसत रेटिंग",
+        "playtime": "प्लेटाइम"
+      },
+      "playtimeValue": "{{count}} घंटे",
+      "highestRated": "सबसे अधिक रेटेड",
+      "emptyLibrary": "आपकी लाइब्रेरी खाली है — आँकड़े बनाने के लिए खेल जोड़ें।",
+      "browseGames": "खेल ब्राउज़ करें",
+      "editProfile": "प्रोफ़ाइल संपादित करें",
+      "myLists": "मेरी सूचियाँ"
     }
   },
   "aiChat": {

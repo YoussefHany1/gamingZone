@@ -185,6 +185,12 @@ const SettingsScreen = memo((): React.ReactElement => {
       },
       ...(isAdmin ? [{ id: "adminAds", component: AdminAdsToggle }] : []),
       {
+        id: "theme",
+        icon: Palette,
+        label: t("settings.theme.title"),
+        onPress: () => navigation.navigate("ThemeScreen"),
+      },
+      {
         id: "rate",
         icon: Star,
         label: t("settings.menu.rateUs"),
@@ -202,12 +208,6 @@ const SettingsScreen = memo((): React.ReactElement => {
         icon: Languages,
         label: t("settings.menu.changeLanguage"),
         onPress: () => navigation.navigate("LanguageScreen"),
-      },
-      {
-        id: "theme",
-        icon: Palette,
-        label: t("settings.theme.title"),
-        onPress: () => navigation.navigate("ThemeScreen"),
       },
       {
         id: "privacy",

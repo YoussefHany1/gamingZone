@@ -1,5 +1,4 @@
 import { Alert, Linking } from "react-native";
-import { THEME_COLORS } from "../constants/colors";
 import { useThemeStore } from "../store/useThemeStore";
 
 /**
@@ -31,9 +30,8 @@ export async function openLink(url: string): Promise<void> {
     const WebBrowser = require("expo-web-browser");
     if (WebBrowser && typeof WebBrowser.openBrowserAsync === "function") {
       // This is an imperative call outside the React tree, so read the
-      // resolved scheme from the store rather than a hook.
-      const { isDark } = useThemeStore.getState();
-      const palette = isDark ? THEME_COLORS.dark : THEME_COLORS.light;
+      // composed palette from the store rather than a hook.
+      const { colors: palette } = useThemeStore.getState();
 
       await WebBrowser.openBrowserAsync(targetUrl, {
         toolbarColor: palette.backgroundDeep,

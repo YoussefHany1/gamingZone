@@ -121,7 +121,8 @@
       "notificationSettings": "Paramètres de notification",
       "accountSettings": "Paramètres du compte",
       "gamesList": "Ma liste de jeux",
-      "myLists": "Mes listes"
+      "myLists": "Mes listes",
+      "profile": "Mon profil"
     }
   },
   "home": {
@@ -449,10 +450,33 @@
   "settings": {
     "language": "Langue",
     "theme": {
+      "blue": "Bleu",
+      "green": "Vert",
+      "purple": "Violet",
+      "orange": "Orange",
+      "pink": "Rose",
+      "gold": "Or",
+      "slate": "Ardoise",
       "title": "Apparence",
       "system": "Système",
       "light": "Clair",
-      "dark": "Sombre"
+      "dark": "Sombre",
+      "accentTitle": "Couleur d'accent",
+      "auto": "Auto",
+      "random": "Aléatoire",
+      "amoled": "Noir AMOLED",
+      "sepia": "Sépia",
+      "contrast": "Contraste élevé",
+      "steam": "Bleu Steam",
+      "verdant": "Vert",
+      "blurple": "Bleu-violet",
+      "ember": "Rouge Switch",
+      "playstation": "PlayStation",
+      "xbox": "Xbox",
+      "syncNote": "Cela changera le thème sur tous vos appareils.",
+      "previewHeadline": "Une grosse mise à jour ajoute de nouveaux thèmes, un fil repensé et des performances améliorées",
+      "previewSummary": "Voici comment votre fil d'actualités se lit avec ce thème, du titre à l'horodatage",
+      "previewSite": "gamingzone.app"
     },
     "currentLang": "Français",
     "languageSelect": {
@@ -533,6 +557,11 @@
         "missingCountry": "Veuillez sélectionner votre pays.",
         "missingPlatform": "Veuillez sélectionner votre plateforme.",
         "missingImage": "Veuillez ajouter une photo de profil."
+      },
+      "avatar": {
+        "title": "Choisissez votre avatar",
+        "suggested": "Vous aimerez peut-être l'un de ceux-ci",
+        "upload": "Importer depuis la galerie"
       }
     },
     "notifications": {
@@ -570,6 +599,26 @@
       "error": "Une erreur s'est produite lors de l'envoi. Veuillez réessayer",
       "messageTooLong": "Le message est trop long. La limite maximale est de 5000 caractères.",
       "invalidEmail": "L'adresse e-mail n'est pas valide"
+    },
+    "profileShowcase": {
+      "memberSince": "Membre depuis",
+      "dash": "—",
+      "statsSection": "Vos statistiques",
+      "stats": {
+        "playing": "En cours",
+        "played": "Terminés",
+        "wantToPlay": "À jouer",
+        "rated": "Notés",
+        "total": "Jeux uniques",
+        "avgRating": "Note moyenne",
+        "playtime": "Temps de jeu"
+      },
+      "playtimeValue": "{{count}} h",
+      "highestRated": "Les mieux notés",
+      "emptyLibrary": "Votre bibliothèque est vide — ajoutez des jeux pour construire vos statistiques.",
+      "browseGames": "Parcourir les jeux",
+      "editProfile": "Modifier le profil",
+      "myLists": "Mes listes"
     }
   },
   "aiChat": {

@@ -59,7 +59,11 @@ const CHEAPSHARK_STORE_TO_IGDB_TYPE: Record<string, number> = {
 
 /** Normalises a game title so CheapShark results can be compared reliably. */
 function normalizeTitle(title: string): string {
-  return title.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim().replace(/\s+/g, " ");
+  return title
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
 /** Picks the cheapest live deal among one or more matching deals. */

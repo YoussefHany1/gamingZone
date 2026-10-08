@@ -1,5 +1,5 @@
-import { DARK_COLORS } from "@/src/constants/colors";
 import type { AgeRating, AgeRatingInfo } from "../../types";
+import { useThemeStore } from "@/src/store/useThemeStore";
 import { AGE_RATING_MAP } from "@gaming-zone/utils";
 import type { ComponentType } from "react";
 import {
@@ -53,10 +53,10 @@ export function getRatingColorCode(ratingCategory: number): string {
   if ([1, 2, 6, 7, 8].includes(ratingCategory)) return "#a5c400"; // green
   if ([3, 4, 9, 10].includes(ratingCategory)) return "#f4a200"; // amber
   if ([5, 11, 12].includes(ratingCategory)) return "#e3001b"; // red
-  // Unknown category: the rating colours are semantic, so fall back to the
-  // dark palette's accent rather than the theme's (this helper is not a
-  // component and cannot read the current palette reactively).
-  return DARK_COLORS.accent;
+  // Unknown category: the rating colours above are semantic, so fall back to
+  // the active palette's accent. Read imperatively because this helper is not
+  // a component and cannot subscribe to the store.
+  return useThemeStore.getState().colors.accent;
 }
 
 /**

@@ -55,6 +55,7 @@ export type LatestNewsProps = {
   enablePagination?: boolean;
   itemsPerPage?: number;
   adInterval?: number;
+  mockData?: Article[]; // For preview screens like ThemeScreen
 };
 
 // Memoized row component

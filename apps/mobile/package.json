@@ -14,7 +14,8 @@
     "type-check": "tsc --noEmit",
     "eas-build-pre-install": "bash ./scripts/inject-google-services.sh",
     "eas-build-post-install": "bash ./scripts/inject-google-services.sh",
-    "postinstall": "node ./scripts/apply-patches.cjs"
+    "postinstall": "node ./scripts/apply-patches.cjs",
+    "check:theme": "tsx scripts/check-theme.ts"
   },
   "dependencies": {
     "@gaming-zone/core": "*",
@@ -95,6 +96,7 @@
     "patch-package": "^8.0.1",
     "prettier": "^3.0.0",
     "react-refresh": "^0.18.0",
+    "tsx": "^4.19.2",
     "typescript": "~6.0.3"
   },
   "private": true

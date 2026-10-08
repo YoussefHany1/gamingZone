@@ -5,7 +5,11 @@
  * Steam feature) can import clean, typed functions instead of raw axios calls.
  */
 import apiClient from "./client";
-import type { SteamGame, IgdbGame, SteamWishlistResponse } from "@/src/features/settings/types";
+import type {
+  SteamGame,
+  IgdbGame,
+  SteamWishlistResponse,
+} from "@/src/features/settings/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

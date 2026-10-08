@@ -7,9 +7,8 @@ import { createLocalizedMetadata } from "@/lib/metadata";
  * effect. Search now lives at /[locale]/games/search, which is the dynamic
  * route; this one is a pure browse page and is actually static.
  *
- * Freshness comes from free-games.yml, which calls /api/revalidate with
- * target "games" on a free-game membership change and revalidates this path
- * explicitly. The window is a backstop.
+ * Freshness is pure ISR: free-game membership changes age into the page as the
+ * window lapses. The window is the freshness mechanism.
  *
  * Both TTLs in @/features/games/services/server-cache are also 86400 and must
  * stay in step: Next takes the lowest TTL among the data-cache entries a render

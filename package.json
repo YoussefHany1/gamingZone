@@ -1,20 +1,21 @@
 {
   "name": "gaming-zone",
   "private": true,
+  "main": "./apps/mobile/index.ts",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
-  "overrides": {
-    "react-native": "0.86.3",
-    "expo-file-system": "~57.0.6"
-  },
   "scripts": {
-    "postinstall": "node -e \"try { require('child_process').execSync('npx patch-package', {stdio:'inherit'}) } catch(e) { console.log('patch-package skipped or failed') }\""
+    "start": "npm --prefix apps/mobile start",
+    "android": "npm --prefix apps/mobile run android",
+    "ios": "npm --prefix apps/mobile run ios",
+    "web": "npm --prefix apps/mobile run web"
+  },
+  "overrides": {
+    "react-native": "0.81.5"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0",
-    "patch-package": "^8.0.1",
-    "typescript": "^5.9.3"
+    "@babel/core": "^7.20.0"
   }
 }

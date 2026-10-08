@@ -16,6 +16,7 @@ import { Gamepad2, House, Newspaper, Settings } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
 import { useTabBarStore } from "../store/useTabBarStore";
 import { useIsDark, useThemeColors } from "@/src/hooks/useTheme";
+import { mix, withAlpha } from "@/src/constants/colorUtils";
 
 export const TAB_ROUTES = ["Home", "News", "Games", "Settings"] as const;
 export type TabRoute = (typeof TAB_ROUTES)[number];
@@ -36,19 +37,27 @@ type TabPalette = ReturnType<typeof useTabPalette>;
 const useTabPalette = () => {
   const colors = useThemeColors();
   const isDark = useIsDark();
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    // The glass tints are alpha variants of the palette's own accent colors,
+    // so they follow style and accent changes instead of being frozen to the
+    // original light/dark pair.
+    const glow = colors.accentText;
+    const solid = colors.accent;
+    const tint = isDark ? glow : solid;
+
+    return {
       glassBorder: colors.border,
-      pillStart: isDark ? "rgba(119, 155, 221, 0.35)" : "rgba(12, 26, 51, 0.1)",
-      pillEnd: isDark ? "rgba(119, 155, 221, 0.05)" : "rgba(12, 26, 51, 0.02)",
-      pillBorder: isDark ? "rgba(119, 155, 221, 0.4)" : "rgba(12, 26, 51, 0.14)",
-      iconActive: isDark ? "#ffffff" : colors.text,
-      iconInactive: isDark ? "rgba(119, 155, 221, 0.7)" : colors.textMuted,
-      barTop: isDark ? "rgba(40, 54, 78, 1)" : "rgba(233, 238, 247, 1)",
+      pillStart: withAlpha(tint, isDark ? 0.35 : 0.1),
+      pillEnd: withAlpha(tint, isDark ? 0.05 : 0.02),
+      pillBorder: withAlpha(tint, isDark ? 0.4 : 0.14),
+      iconActive: colors.text,
+      iconInactive: isDark ? withAlpha(glow, 0.7) : colors.textMuted,
+      // A slightly lifted version of the bar's own background, so the top of
+      // the bar reads as a highlight across every style.
+      barTop: mix(colors.background, colors.text, isDark ? 0.14 : 0.05),
       barBottom: isDark ? colors.backgroundDeep : colors.background,
-    }),
-    [colors, isDark],
-  );
+    };
+  }, [colors, isDark]);
 };
 
 const TAB_SPRING_CONFIG = { stiffness: 140, damping: 15, mass: 0.8 };
@@ -148,9 +157,7 @@ const LiquidGlassTabBar = memo(
             style={StyleSheet.absoluteFill}
           />
 
-          <View
-            style={[StyleSheet.absoluteFill, { borderColor: palette.glassBorder }]}
-          />
+          <View style={[StyleSheet.absoluteFill, { borderColor: palette.glassBorder }]} />
 
           <Animated.View
             style={[styles.pill, { width: tabWidth - 14, left: 7 }, pillStyle]}

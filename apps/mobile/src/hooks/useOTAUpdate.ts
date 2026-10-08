@@ -49,10 +49,7 @@ const useOTAUpdate = (): OTAUpdateState => {
       const TICK_MS = 150;
       const TARGET = 0.88; // don't go past 88% until download finishes
       const interval = setInterval(() => {
-        progressValue = Math.min(
-          TARGET,
-          progressValue + (TARGET - progressValue) * 0.07,
-        );
+        progressValue = Math.min(TARGET, progressValue + (TARGET - progressValue) * 0.07);
         setUpdateState({ status: "downloading", progress: progressValue });
       }, TICK_MS);
 
@@ -71,8 +68,7 @@ const useOTAUpdate = (): OTAUpdateState => {
       setUpdateState({ status: "ready" });
       await Updates.reloadAsync();
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unknown update error";
+      const message = err instanceof Error ? err.message : "Unknown update error";
       if (__DEV__) console.warn("[useOTAUpdate] error:", message);
       setUpdateState({ status: "error", message });
     }

@@ -66,8 +66,7 @@ function invokeUnsubscribe(subscription: unknown): void {
       (subscription as Unsubscribe)();
     } else if (
       subscription &&
-      typeof (subscription as { unsubscribe?: () => void }).unsubscribe ===
-        "function"
+      typeof (subscription as { unsubscribe?: () => void }).unsubscribe === "function"
     ) {
       (subscription as { unsubscribe: () => void }).unsubscribe();
     }
@@ -87,6 +86,7 @@ export default function useFeed(
   page: number = 1,
   limit: number = 10,
   language?: string,
+  enabled: boolean = true,
 ): UseFeedResult {
   // Article storage only has "ar"/"en" content — Spanish and French reuse
   // English data while the UI (direction/labels) stays driven by the app language.
@@ -145,6 +145,7 @@ export default function useFeed(
     fetchArticles,
     [category, siteName, page, limit, contentLanguage],
     cacheTtl,
+    enabled,
   );
 
   const articles = data?.articles ?? [];
@@ -182,9 +183,7 @@ export default function useFeed(
         // Filter: only handle documents that match the active filters.
         const matchesCategory = newDoc.category === category;
         const matchesSite = siteName ? newDoc.siteName === siteName : true;
-        const matchesLang = contentLanguage
-          ? newDoc.language === contentLanguage
-          : true;
+        const matchesLang = contentLanguage ? newDoc.language === contentLanguage : true;
 
         if (!matchesCategory || !matchesSite || !matchesLang) return;
 

@@ -1,10 +1,12 @@
 /**
- * colors.ts — the single source of truth for the app's color palettes.
+ * colors.ts — the base color palettes for the app's brightness axis.
  *
- * Two palettes are defined here (dark and light) behind one shared
- * `ThemeColors` shape. Components never import a palette directly; they read
- * the active one through `useThemeColors()` / `useThemeStyles()` so that a
- * theme change re-renders them.
+ * This module owns the `ThemeColors` shape and the two palettes that back
+ * "dark" and "light". It deliberately does *not* know about styles or accents:
+ * the active palette is composed by `resolvePalette()` in `theme.ts` from
+ * (scheme × style × accent). Components never import a palette directly; they
+ * read the composed one through `useThemeColors()` / `useThemeStyles()` so
+ * that a theme change re-renders them.
  *
  * Conventions:
  *  - Tokens are named by *role*, not by appearance. The previous
@@ -16,6 +18,9 @@
  *    (`accentSurface`, `accentBorder`, `overlay`) where one of them fits —
  *    an alpha of a *light* value on a light background is invisible, so
  *    deriving translucency from a theme-swapped base color is unsafe.
+ *  - `accent`, `text` and `danger` are consumed by alpha concatenation, so
+ *    `scripts/check-theme.ts` asserts they stay 6-digit hex in every composed
+ *    palette, not just here.
  *  - Objects are frozen and module-level so their identity is stable, which
  *    lets `useThemeColors()` results be used directly as memo dependencies.
  */
@@ -90,12 +95,12 @@ export const DARK_COLORS: ThemeColors = Object.freeze({
   accentSurface: "rgba(81, 105, 150, 0.3)",
 
   text: "#ffffff",
-  textMuted: "#779bdd",
+  textMuted: "#7aa0e2",
   textSubtle: "#aaaaaa",
   onAccent: "#ffffff",
 
   accent: "#516996",
-  accentText: "#779bdd",
+  accentText: "#7aa0e2",
   accentBorder: "rgba(119, 155, 221, 0.4)",
 
   border: "rgba(119, 155, 221, 0.25)",
@@ -119,7 +124,7 @@ export const LIGHT_COLORS: ThemeColors = Object.freeze({
 
   text: "#0c1a33",
   textMuted: "#4a5b7a",
-  textSubtle: "#8a94a6",
+  textSubtle: "#7c8698",
   onAccent: "#ffffff",
 
   // A dark navy keeps accent fills legible and — critically — keeps any
@@ -139,13 +144,15 @@ export const LIGHT_COLORS: ThemeColors = Object.freeze({
   skeletonHighlight: "#eef2f9",
 });
 
-export const THEME_COLORS: Record<ColorScheme, ThemeColors> = Object.freeze({
+/**
+ * The two base palettes, keyed by resolved scheme. A style override is layered
+ * on top of these (see `theme.ts`), so a style that wants a token to differ
+ * from the app's existing look only has to declare that token.
+ */
+export const BASE_PALETTES: Record<ColorScheme, ThemeColors> = Object.freeze({
   dark: DARK_COLORS,
   light: LIGHT_COLORS,
 });
-
-/** The palette used before a preference is set and while fonts load. */
-export const DEFAULT_COLORS = DARK_COLORS;
 
 export type ColorKey = keyof ThemeColors;
 export type ColorValue = ThemeColors[ColorKey];

@@ -129,10 +129,7 @@ export async function searchGames({ query, filters }: SearchParams): Promise<Gam
  * Lightweight autocomplete search – returns up to `limit` results (default 6)
  * for fast live-dropdown suggestions.
  */
-export async function searchGamesAutocomplete(
-  query: string,
-  limit = 6,
-): Promise<Game[]> {
+export async function searchGamesAutocomplete(query: string, limit = 6): Promise<Game[]> {
   const response = await apiClient.get<Game[]>("/search", {
     params: { q: query, limit: String(limit) },
   });

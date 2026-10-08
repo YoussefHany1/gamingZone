@@ -37,9 +37,8 @@ const FREE_GAMES_LIMIT = 20;
  * silently leave the page regenerating hourly while the comment above claims
  * it is a daily ISR route.
  *
- * free-games.yml calls /api/revalidate with target "games" whenever free-game
- * membership changes, dropping these tags and the browse paths ahead of the
- * window. The long TTL is a backstop; that trigger is the freshness mechanism.
+ * The long TTL is the freshness mechanism: free-game membership changes age
+ * into these entries as the window lapses. There is no on-demand trigger.
  */
 const GAMES_LIST_TTL_SECONDS = 86400;
 const FREE_GAMES_TTL_SECONDS = 86400;

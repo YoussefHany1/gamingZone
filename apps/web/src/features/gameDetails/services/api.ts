@@ -31,9 +31,8 @@ const GAME_ID_PATTERN = /^\d{1,10}$/;
  *
  * TTL is 86400 to match the games/[id] segment `revalidate`. Next derives a
  * route's window from the lowest TTL among the data-cache entries its render
- * touches, so these two must move together. free-games.yml calls /api/revalidate
- * with target "games" when it writes, which drops the "games" tag ahead of the
- * window; the long TTL is a backstop, not the freshness mechanism.
+ * touches, so these two must move together. The long TTL is the freshness
+ * mechanism; there is no on-demand invalidation of the "games" tag.
  */
 export const fetchGameDetails = cache(
   async (rawId: string): Promise<GameData | null> => {

@@ -6,7 +6,6 @@
     "close": "Close",
     "remove": "Remove",
     "ok": "OK",
-    "continue": "Continue",
     "create": "Create",
     "saveChanges": "Save Changes",
     "noData": "No data to display",
@@ -15,8 +14,6 @@
     "ad": "Advertisement",
     "loginRequired": "You need to be logged in to perform this action",
     "noInternet": "No Internet Connection",
-    "offlineBanner": "You're offline – showing saved content",
-    "dataLoadError": "We couldn't load this content. Please try again.",
     "share": "Share",
     "copied": "Copied!",
     "or": "Or",
@@ -28,16 +25,19 @@
       "updateNow": "Update Now",
       "later": "Later"
     },
+    "time": {
+      "d": "d",
+      "h": "h",
+      "m": "m"
+    },
+    "continue": "Continue",
+    "offlineBanner": "You're offline – showing saved content",
+    "dataLoadError": "We couldn't load this content. Please try again.",
     "update": {
       "tagline": "Your ultimate destination for gaming",
       "title": "New Update Available",
       "subtitle": "We're downloading improvements for you...",
       "footer": "Please wait, the app will restart automatically"
-    },
-    "time": {
-      "d": "d",
-      "h": "h",
-      "m": "m"
     }
   },
   "auth": {
@@ -68,10 +68,6 @@
       "success": "Sign up successful",
       "emptyFields": "Please fill in all required fields"
     },
-    "verifyEmail": "Verify Email",
-    "emailVerified": "Email Verified",
-    "emailNotVerified": "Email Not Verified",
-    "verificationEmailSent": "A verification email has been sent to your inbox",
     "forgotPassword": {
       "title": "Reset your Password",
       "sendButton": "Send a reset password link",
@@ -108,7 +104,11 @@
     "validation": {
       "passwordTitle": "Inadequate Password",
       "passwordRequirements": "Password must be at least 8 characters long and contain both letters and numbers."
-    }
+    },
+    "verifyEmail": "Verify Email",
+    "emailVerified": "Email Verified",
+    "emailNotVerified": "Email Not Verified",
+    "verificationEmailSent": "A verification email has been sent to your inbox"
   },
   "navigation": {
     "tabs": {
@@ -121,7 +121,8 @@
       "notificationSettings": "Notification Settings",
       "accountSettings": "Account Settings",
       "gamesList": "My Games List",
-      "myLists": "My Lists"
+      "myLists": "My Lists",
+      "profile": "My Profile"
     }
   },
   "home": {
@@ -186,7 +187,6 @@
     "latestHeader": "Latest {{category}}",
     "newsHeader": "Gaming News & Articles",
     "noArticles": "No articles available at the moment.",
-    "noSources": "No news sources are available for this category.",
     "fetchError": "Error while fetching data, please try again later.",
     "contactSupport": "Contact Support",
     "endOfList": "End of Articles",
@@ -210,7 +210,8 @@
       "days": "days",
       "hours": "h",
       "minutes": "m"
-    }
+    },
+    "noSources": "No news sources are available for this category."
   },
   "games": {
     "searchPlaceholder": "Search for Games...",
@@ -448,33 +449,17 @@
   },
   "settings": {
     "language": "language",
-    "languageSelect": {
-      "confirmTitle": "Change Language",
-      "confirmMessage": "The app will restart to apply the new language."
-    },
-    "theme": {
-      "title": "Appearance",
-      "system": "System",
-      "light": "Light",
-      "dark": "Dark"
-    },
     "currentLang": "English",
     "menu": {
-      "notifications": "Manage Notifications",
+      "notifications": "Notification Settings",
       "myLists": "My Lists",
       "rateUs": "Rate Us",
       "inviteFriends": "Invite Friends",
       "contactUs": "Contact Us",
       "changeLanguage": "Change Language",
       "privacyPolicy": "Privacy Policy",
-      "showAds": "Show Ads",
-      "signOut": "Log out"
-    },
-    "signOut": {
-      "confirmTitle": "Log Out",
-      "confirmMessage": "Are you sure you want to log out?",
-      "errorTitle": "Error",
-      "errorMessage": "An error occurred while logging out. Please try again."
+      "signOut": "Sign Out",
+      "showAds": "Show Ads"
     },
     "profile": {
       "changePic": "Change your profile picture",
@@ -533,6 +518,11 @@
         "missingCountry": "Please select your country.",
         "missingPlatform": "Please select your platform.",
         "missingImage": "Please add a profile picture."
+      },
+      "avatar": {
+        "title": "Choose your avatar",
+        "suggested": "You might like one of these",
+        "upload": "Upload from gallery"
       }
     },
     "notifications": {
@@ -545,11 +535,11 @@
       "emptyText": "Your list is empty",
       "emptySubText": "Add the games you want.",
       "findButton": "Find Your Game",
-      "viewOnly": "Viewing a read-only list shared with you.",
       "messages": {
         "loadError": "We encountered a problem loading your list. Please try again later",
         "removeError": "An error occurred while trying to remove the game"
-      }
+      },
+      "viewOnly": "Viewing a read-only list shared with you."
     },
     "contact": {
       "title": "Contact Us",
@@ -570,6 +560,65 @@
       "error": "An error occurred while sending. Please try again",
       "messageTooLong": "Message is too long. Maximum limit is 5000 characters.",
       "invalidEmail": "The email address is invalid"
+    },
+    "profileShowcase": {
+      "memberSince": "Member since",
+      "dash": "—",
+      "statsSection": "Your statistics",
+      "stats": {
+        "playing": "Playing",
+        "played": "Played",
+        "wantToPlay": "Want to play",
+        "rated": "Rated",
+        "total": "Total unique games",
+        "avgRating": "Average rating",
+        "playtime": "Playtime"
+      },
+      "playtimeValue": "{{count}} hrs",
+      "highestRated": "Highest rated",
+      "emptyLibrary": "Your library is empty — add games to build your stats.",
+      "browseGames": "Browse games",
+      "editProfile": "Edit profile",
+      "myLists": "My lists"
+    },
+    "languageSelect": {
+      "confirmTitle": "Change Language",
+      "confirmMessage": "The app will restart to apply the new language."
+    },
+    "theme": {
+      "blue": "Blue",
+      "green": "Green",
+      "purple": "Purple",
+      "orange": "Orange",
+      "pink": "Pink",
+      "gold": "Gold",
+      "slate": "Slate",
+      "title": "Appearance",
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark",
+      "accentTitle": "Accent color",
+      "auto": "Automatic",
+      "random": "Random",
+      "amoled": "AMOLED Black",
+      "sepia": "Sepia",
+      "contrast": "High contrast",
+      "steam": "Steam Blue",
+      "verdant": "Gaming Green",
+      "blurple": "Blurple",
+      "ember": "Switch Red",
+      "playstation": "PlayStation",
+      "xbox": "Xbox",
+      "syncNote": "This will change the theme across all your devices.",
+      "previewHeadline": "The big update adds new themes, a redesigned feed and performance improvements",
+      "previewSummary": "This is how your news feed will read with this theme, from the headline to the time",
+      "previewSite": "gamingzone.app"
+    },
+    "signOut": {
+      "confirmTitle": "Log Out",
+      "confirmMessage": "Are you sure you want to log out?",
+      "errorTitle": "Error",
+      "errorMessage": "An error occurred while logging out. Please try again."
     }
   },
   "aiChat": {

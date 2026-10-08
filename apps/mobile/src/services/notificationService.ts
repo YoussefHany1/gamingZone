@@ -14,7 +14,6 @@ import * as Notifications from "expo-notifications";
 declare const globalThis: { RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS: boolean };
 globalThis.RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS = true;
 
-
 // Types
 export type NotificationPreferences = Record<string, boolean>;
 
@@ -41,7 +40,6 @@ export interface NotificationSourceStatsData {
   updatedAt: ReturnType<typeof serverTimestamp>;
 }
 
-
 const COLLECTIONS = {
   USERS: "users",
   PREFERENCES: "notificationPreferences",
@@ -59,11 +57,8 @@ const ANALYTICS_EVENTS = {
   SOURCE_DISABLED: "notification_source_disabled",
 } as const;
 
-const normalizeAnalyticsParam = (
-  value: string,
-  maxLength: number = 100
-): string => value.toLowerCase().trim().replace(/\s+/g, "_").slice(0, maxLength);
-
+const normalizeAnalyticsParam = (value: string, maxLength: number = 100): string =>
+  value.toLowerCase().trim().replace(/\s+/g, "_").slice(0, maxLength);
 
 class NotificationService {
   // generate a consistent topic name based on category and source
@@ -82,7 +77,7 @@ class NotificationService {
   // subscribe/unsubscribe helper to avoid code duplication
   private static async _handleTopicSubscription(
     topicName: string,
-    subscribe: boolean
+    subscribe: boolean,
   ): Promise<boolean> {
     if (!topicName) return false;
 
@@ -116,7 +111,7 @@ class NotificationService {
     userId: string,
     category: string,
     sourceName: string,
-    enabled: boolean
+    enabled: boolean,
   ): Promise<void> {
     if (!userId) {
       console.warn(ERRORS.MISSING_PARAMS);
@@ -174,13 +169,17 @@ class NotificationService {
 
         // All writes happen after all reads.
         transaction.set(prefRef, data, { merge: true });
-        transaction.set(statsRef, {
-          category,
-          sourceName,
-          topicId,
-          enabledCount: nextCount,
-          updatedAt: serverTimestamp(),
-        } satisfies NotificationSourceStatsData, { merge: true });
+        transaction.set(
+          statsRef,
+          {
+            category,
+            sourceName,
+            topicId,
+            enabledCount: nextCount,
+            updatedAt: serverTimestamp(),
+          } satisfies NotificationSourceStatsData,
+          { merge: true },
+        );
       });
 
       const normalizedCategory = normalizeAnalyticsParam(category);
@@ -195,14 +194,12 @@ class NotificationService {
       });
 
       await analytics().logEvent(
-        enabled
-          ? ANALYTICS_EVENTS.SOURCE_ENABLED
-          : ANALYTICS_EVENTS.SOURCE_DISABLED,
+        enabled ? ANALYTICS_EVENTS.SOURCE_ENABLED : ANALYTICS_EVENTS.SOURCE_DISABLED,
         {
           topic_id: topicId,
           category: normalizedCategory,
           source_name: normalizedSource,
-        }
+        },
       );
     } catch (error) {
       console.error("❌ Failed to toggle preference:", error);
@@ -212,7 +209,7 @@ class NotificationService {
   // Get exact current enabled users count for a single source/topic
   static async getSourceEnabledCount(
     category: string,
-    sourceName: string
+    sourceName: string,
   ): Promise<number> {
     const topicId = this.getTopicName(category, sourceName);
     if (!topicId) return 0;
@@ -233,15 +230,13 @@ class NotificationService {
   }
 
   // Bring all notification preferences to the user
-  static async getUserPreferences(
-    userId: string
-  ): Promise<NotificationPreferences> {
+  static async getUserPreferences(userId: string): Promise<NotificationPreferences> {
     if (!userId) return {};
 
     try {
       const preferencesRef = collection(
         doc(firestore(), COLLECTIONS.USERS, userId),
-        COLLECTIONS.PREFERENCES
+        COLLECTIONS.PREFERENCES,
       );
       const snapshot = await getDocs(preferencesRef);
 
@@ -264,15 +259,13 @@ class NotificationService {
   // Bulk synchronization of preferences (on app startup or restore)
   static async syncUserPreferences(
     userId: string,
-    preferences: NotificationPreferences
+    preferences: NotificationPreferences,
   ): Promise<void> {
     console.log("🔄 Starting Bulk Sync...");
 
     const operations: Promise<boolean>[] = Object.entries(preferences).map(
       ([topic, enabled]) =>
-        enabled
-          ? this.subscribeToTopic(topic)
-          : this.unsubscribeFromTopic(topic)
+        enabled ? this.subscribeToTopic(topic) : this.unsubscribeFromTopic(topic),
     );
 
     const results = await Promise.allSettled(operations);
@@ -325,7 +318,7 @@ class NotificationService {
               url: imageUrl,
               identifier: "test-image",
               typeHint: "image",
-              type: ""
+              type: "",
             },
           ],
         },

@@ -15,7 +15,10 @@ const CustomText = React.memo<TextProps>(({ style, children, ...props }) => {
   const { resolvedFontFamily, flatStyle } = useMemo(() => {
     const text = getTextContent(children);
     const isArabic = containsArabic(text);
-    return resolveFontStyle(style as TextStyle | TextStyle[] | null | undefined, isArabic);
+    return resolveFontStyle(
+      style as TextStyle | TextStyle[] | null | undefined,
+      isArabic,
+    );
   }, [children, style]);
 
   return (

@@ -14,7 +14,10 @@ const CustomTextInput = React.forwardRef<TextInput, TextInputProps>(
     const { resolvedFontFamily, flatStyle } = useMemo(() => {
       const textToAnalyze = value ?? defaultValue ?? placeholder ?? "";
       const isArabic = containsArabic(textToAnalyze);
-      return resolveFontStyle(style as TextStyle | TextStyle[] | null | undefined, isArabic);
+      return resolveFontStyle(
+        style as TextStyle | TextStyle[] | null | undefined,
+        isArabic,
+      );
     }, [value, defaultValue, placeholder, style]);
 
     return (

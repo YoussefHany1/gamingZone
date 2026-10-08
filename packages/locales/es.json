@@ -121,7 +121,8 @@
       "notificationSettings": "Configuración de notificaciones",
       "accountSettings": "Configuración de la cuenta",
       "gamesList": "Mi lista de juegos",
-      "myLists": "Mis listas"
+      "myLists": "Mis listas",
+      "profile": "Mi perfil"
     }
   },
   "home": {
@@ -453,10 +454,33 @@
       "confirmMessage": "La aplicación se reiniciará para aplicar el nuevo idioma."
     },
     "theme": {
+      "blue": "Azul",
+      "green": "Verde",
+      "purple": "Morado",
+      "orange": "Naranja",
+      "pink": "Rosa",
+      "gold": "Dorado",
+      "slate": "Pizarra",
       "title": "Apariencia",
       "system": "Sistema",
       "light": "Claro",
-      "dark": "Oscuro"
+      "dark": "Oscuro",
+      "accentTitle": "Color de acento",
+      "auto": "Automático",
+      "random": "Aleatorio",
+      "amoled": "Negro AMOLED",
+      "sepia": "Sepia",
+      "contrast": "Alto contraste",
+      "steam": "Azul Steam",
+      "verdant": "Verde",
+      "blurple": "Azul-violeta",
+      "ember": "Rojo Switch",
+      "playstation": "PlayStation",
+      "xbox": "Xbox",
+      "syncNote": "Esto cambiará el tema en todos tus dispositivos.",
+      "previewHeadline": "La gran actualización añade nuevos temas, un feed rediseñado y mejoras de rendimiento",
+      "previewSummary": "Así se leerá tu feed de noticias con este tema, desde el titular hasta la hora",
+      "previewSite": "gamingzone.app"
     },
     "currentLang": "Español",
     "menu": {
@@ -533,6 +557,11 @@
         "missingCountry": "Por favor selecciona tu país.",
         "missingPlatform": "Por favor selecciona tu plataforma.",
         "missingImage": "Por favor añade una foto de perfil."
+      },
+      "avatar": {
+        "title": "Elige tu avatar",
+        "suggested": "Quizás te guste uno de estos",
+        "upload": "Subir desde la galería"
       }
     },
     "notifications": {
@@ -570,6 +599,26 @@
       "error": "Se produjo un error al enviar. Por favor, inténtalo de nuevo",
       "messageTooLong": "El mensaje es demasiado largo. El límite máximo es de 5000 caracteres.",
       "invalidEmail": "La dirección de correo electrónico no es válida"
+    },
+    "profileShowcase": {
+      "memberSince": "Miembro desde",
+      "dash": "—",
+      "statsSection": "Tus estadísticas",
+      "stats": {
+        "playing": "Jugando",
+        "played": "Jugados",
+        "wantToPlay": "Quiero jugar",
+        "rated": "Calificados",
+        "total": "Juegos únicos",
+        "avgRating": "Calificación media",
+        "playtime": "Tiempo de juego"
+      },
+      "playtimeValue": "{{count}} hrs",
+      "highestRated": "Mejor valorados",
+      "emptyLibrary": "Tu biblioteca está vacía — añade juegos para crear tus estadísticas.",
+      "browseGames": "Explorar juegos",
+      "editProfile": "Editar perfil",
+      "myLists": "Mis listas"
     }
   },
   "aiChat": {

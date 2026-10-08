@@ -22,8 +22,7 @@ export function useIsAdmin(): boolean {
       .then((doc) => {
         if (!isMounted) return;
         setIsAdmin(
-          doc.exists() &&
-            (doc.data() as FirestoreUser | undefined)?.isAdmin === true,
+          doc.exists() && (doc.data() as FirestoreUser | undefined)?.isAdmin === true,
         );
       })
       .catch((err) => {

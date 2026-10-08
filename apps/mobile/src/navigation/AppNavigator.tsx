@@ -5,7 +5,11 @@ import CustomText from "@/src/components/CustomText";
 import LiquidGlassTabBar from "./LiquidGlassTabBar";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
-import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
+import {
+  getFocusedRouteNameFromRoute,
+  useNavigationState,
+} from "@react-navigation/native";
+import { Freeze } from "react-freeze";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import type {
   MaterialTopTabNavigationOptions,
@@ -26,6 +30,7 @@ import GameDetails from "../features/games/screens/GameDetailsScreen";
 import UserGamesScreen from "../features/lists/screens/UserGamesScreen";
 import NotificationSettings from "../features/settings/screens/NotificationScreen";
 import Profile from "../features/settings/screens/ProfileScreen";
+import EditProfileScreen from "../features/settings/screens/EditProfileScreen";
 import AIChatScreen from "../features/ai/screens/AIChatScreen";
 import GameNewsScreen from "../features/games/screens/GameNewsScreen";
 import EventDetailsScreen from "../features/events/screens/EventDetailsScreen";
@@ -64,6 +69,7 @@ export type SettingsStackParamList = {
   SettingsScreen: undefined;
   NotificationSettings: undefined;
   Profile: undefined;
+  EditProfile: undefined;
   UserGamesScreen: { listId: string; listName: string; ownerId?: string } | undefined;
   LanguageScreen: undefined;
   ThemeScreen: undefined;
@@ -97,6 +103,9 @@ const Tab = createMaterialTopTabNavigator<MainTabParamList>();
 const HIDDEN_HEADER_OPTIONS = {
   headerShown: false,
   animation: "slide_from_right",
+  // Screens covered by the one on top stop re-rendering (react-freeze), so a
+  // theme change repaints only what the user can actually see.
+  freezeOnBlur: true,
 } as const;
 
 function useSettingsHeaderOptions(): NativeStackNavigationOptions {
@@ -111,6 +120,7 @@ function useSettingsHeaderOptions(): NativeStackNavigationOptions {
         </CustomText>
       ),
       animation: "slide_from_right",
+      freezeOnBlur: true,
     }),
     [colors],
   );
@@ -211,7 +221,8 @@ const SettingsStack = memo(() => {
       notificationSettings: {
         title: t("navigation.titles.notificationSettings"),
       },
-      profile: { title: t("navigation.titles.accountSettings") },
+      profile: { title: t("navigation.titles.profile") },
+      editProfile: { title: t("navigation.titles.accountSettings") },
       userGames: { title: t("navigation.titles.gamesList") },
       language: { title: t("settings.menu.changeLanguage") },
       theme: { title: t("settings.theme.title") },
@@ -237,6 +248,11 @@ const SettingsStack = memo(() => {
         name="Profile"
         component={Profile}
         options={screenTitles.profile}
+      />
+      <SettingsStackNav.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={screenTitles.editProfile}
       />
       <SettingsStackNav.Screen
         name="UserGamesScreen"
@@ -286,6 +302,45 @@ const SettingsStack = memo(() => {
 SettingsStack.displayName = "SettingsStack";
 
 // Main Tab Navigator with Swipe (MaterialTopTabs)
+
+/**
+ * How many tabs away a scene must be before it is frozen.
+ *
+ * Frozen scenes skip React entirely when the theme changes, so only the tab
+ * you are on (and its neighbours) repaint. The threshold is 2, not 1, because
+ * a scene at distance 1 is the page you swipe to: freezing it would blank it
+ * out for the whole gesture. Setting this to 1 skips one more stack per theme
+ * change at the cost of showing the incoming page's background until the
+ * swipe settles.
+ */
+const TAB_FREEZE_DISTANCE = 2;
+
+/**
+ * Freezes a tab's whole stack while it is more than `TAB_FREEZE_DISTANCE`
+ * tabs away from the focused one. `react-freeze` keeps the subtree mounted
+ * (scroll positions and component state survive) but stops it from
+ * re-rendering, and catches up with the current store state the moment it
+ * comes back into range.
+ */
+function FreezeScene({
+  routeKey,
+  children,
+}: {
+  routeKey: string;
+  children: React.ReactNode;
+}) {
+  const distance = useNavigationState((state) => {
+    const myIndex = state.routes.findIndex((route) => route.key === routeKey);
+    return myIndex === -1 ? 0 : Math.abs(myIndex - state.index);
+  });
+
+  return <Freeze freeze={distance >= TAB_FREEZE_DISTANCE}>{children}</Freeze>;
+}
+
+// Stable render function for the tab bar so navigator re-renders don't create a
+// new element identity for it on every pass.
+const renderTabBar = (props: MaterialTopTabBarProps) => <LiquidGlassTabBar {...props} />;
+
 export const MainAppTabs = memo(() => {
   const { t } = useTranslation();
   const [showAds, setShowAds] = useState<boolean>(false);
@@ -337,12 +392,36 @@ export const MainAppTabs = memo(() => {
         id="MainTabs"
         tabBarPosition="bottom"
         screenOptions={screenOptions}
-        tabBar={(props: MaterialTopTabBarProps) => <LiquidGlassTabBar {...props} />}
+        tabBar={renderTabBar}
       >
-        <Tab.Screen name="Home" component={HomeStack} />
-        <Tab.Screen name="News" component={NewsStack} />
-        <Tab.Screen name="Games" component={GamesStack} />
-        <Tab.Screen name="Settings" component={SettingsStack} />
+        <Tab.Screen name="Home">
+          {({ route }) => (
+            <FreezeScene routeKey={route.key}>
+              <HomeStack />
+            </FreezeScene>
+          )}
+        </Tab.Screen>
+        <Tab.Screen name="News">
+          {({ route }) => (
+            <FreezeScene routeKey={route.key}>
+              <NewsStack />
+            </FreezeScene>
+          )}
+        </Tab.Screen>
+        <Tab.Screen name="Games">
+          {({ route }) => (
+            <FreezeScene routeKey={route.key}>
+              <GamesStack />
+            </FreezeScene>
+          )}
+        </Tab.Screen>
+        <Tab.Screen name="Settings">
+          {({ route }) => (
+            <FreezeScene routeKey={route.key}>
+              <SettingsStack />
+            </FreezeScene>
+          )}
+        </Tab.Screen>
       </Tab.Navigator>
 
       {showAds && <AdBanner />}

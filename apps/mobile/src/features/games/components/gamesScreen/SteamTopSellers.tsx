@@ -10,7 +10,6 @@ import { useTranslation } from "react-i18next";
 import ErrorState from "@/src/components/ErrorState";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonPopular from "@/src/features/games/skeleton/gamesScreen/SkeletonPopular";
-import { DARK_COLORS, LIGHT_COLORS } from "@/src/constants/colors";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useThemeStore } from "@/src/store/useThemeStore";
@@ -30,9 +29,10 @@ const STEAM_BLUE = "#9CB4DD";
 const STEAM_CARD_BG = "#172a4a";
 
 const getReviewLabel = (rating: number): { label: string; color: string } => {
-  const { isDark } = useThemeStore.getState();
-  const STEAM_BLUE_DIM = isDark ? DARK_COLORS.accentText : LIGHT_COLORS.accentText;
-  const STEAM_DARK = isDark ? DARK_COLORS.backgroundDeep : LIGHT_COLORS.background;
+  // Read imperatively: this helper is module-level, but it is called during
+  // render so it always observes the palette active for that render.
+  const { colors } = useThemeStore.getState();
+  const STEAM_BLUE_DIM = colors.accentText;
   if (rating >= 9) return { label: "Overwhelmingly +", color: STEAM_BLUE };
   if (rating >= 8) return { label: "Very Positive", color: STEAM_BLUE };
   if (rating >= 7) return { label: "Mostly Positive", color: STEAM_BLUE };

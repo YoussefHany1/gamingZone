@@ -47,7 +47,10 @@ export function todayUtcMidnight(nowMs: number = Date.now()): number {
 }
 
 /** Current UTC year and 0-based month. */
-export function currentUtcMonth(nowMs: number = Date.now()): { year: number; month: number } {
+export function currentUtcMonth(nowMs: number = Date.now()): {
+  year: number;
+  month: number;
+} {
   const d = new Date(nowMs);
   return { year: d.getUTCFullYear(), month: d.getUTCMonth() };
 }

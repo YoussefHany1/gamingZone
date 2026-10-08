@@ -1,7 +1,5 @@
 import React from "react";
 import { View } from "react-native";
-import { DARK_COLORS } from "@/src/constants/colors";
-import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SkeletonItem from "@/src/components/SkeletonItem";
 import { usePulseAnimation } from "@/src/components/skeleton/shared";
@@ -9,8 +7,6 @@ import { usePulseAnimation } from "@/src/components/skeleton/shared";
 const CARD_WIDTH = 200;
 const CARD_HEIGHT = 320;
 const CARD_MARGIN = 5;
-const CARD_BG_COLOR = DARK_COLORS.background;
-
 const SkeletonTopRatedCard: React.FC = () => {
   const styles = useThemeStyles((c) => ({
     cardContainer: {
@@ -18,7 +14,7 @@ const SkeletonTopRatedCard: React.FC = () => {
       height: CARD_HEIGHT,
       marginHorizontal: CARD_MARGIN,
       borderRadius: 20,
-      backgroundColor: CARD_BG_COLOR,
+      backgroundColor: c.background,
       overflow: "hidden",
       elevation: 4,
       shadowColor: "#000000",

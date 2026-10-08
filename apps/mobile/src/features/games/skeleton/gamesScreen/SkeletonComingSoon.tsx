@@ -2,14 +2,11 @@ import React from "react";
 import { View } from "react-native";
 import SkeletonItem from "@/src/components/SkeletonItem";
 import { usePulseAnimation } from "@/src/components/skeleton/shared";
-import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 const CARD_WIDTH = 300;
 const CARD_HEIGHT = 350;
 const CARD_MARGIN = 10;
-const CARD_BG_COLOR = "#1a3052";
-
 const SkeletonComingSoonCard: React.FC = () => {
   const styles = useThemeStyles((c) => ({
     cardContainer: {
@@ -18,7 +15,7 @@ const SkeletonComingSoonCard: React.FC = () => {
       marginHorizontal: CARD_MARGIN,
       borderRadius: 20,
       borderWidth: 2,
-      borderColor: CARD_BG_COLOR,
+      borderColor: c.border,
       overflow: "hidden",
       position: "relative",
     },

@@ -73,9 +73,7 @@ function pickBestResult(
   const normalized = normalizeTitle(gameName);
 
   // 1. Exact normalised match
-  const exact = results.find(
-    (r) => r.name && normalizeTitle(r.name) === normalized,
-  );
+  const exact = results.find((r) => r.name && normalizeTitle(r.name) === normalized);
   if (exact) return exact;
 
   // 2. Starts-with match (handles subtitles)

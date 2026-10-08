@@ -1,6 +1,5 @@
 import React from "react";
 import { View } from "react-native";
-import { DARK_COLORS } from "@/src/constants/colors";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SkeletonItem from "@/src/components/SkeletonItem";
@@ -9,16 +8,15 @@ import { usePulseAnimation } from "@/src/components/skeleton/shared";
 const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
 const CARD_MARGIN = 5;
-const CARD_BG_COLOR = DARK_COLORS.background;
-
 const SkeletonFreeGames: React.FC = () => {
+  const colors = useThemeColors();
   const styles = useThemeStyles((c) => ({
     cardContainer: {
       width: CARD_WIDTH,
       height: CARD_HEIGHT,
       marginHorizontal: CARD_MARGIN,
       borderRadius: 16,
-      backgroundColor: CARD_BG_COLOR,
+      backgroundColor: c.background,
       overflow: "hidden",
       elevation: 3,
       shadowColor: "#000000",
@@ -61,7 +59,7 @@ const SkeletonFreeGames: React.FC = () => {
             height: 34,
             borderRadius: 17,
             borderWidth: 2,
-            borderColor: CARD_BG_COLOR,
+            borderColor: colors.background,
           }}
         />
       </View>

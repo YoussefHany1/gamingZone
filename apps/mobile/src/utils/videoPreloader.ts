@@ -4,9 +4,7 @@ const CACHE_DIR_NAME = "video-cache";
 
 function stableName(url: string): string {
   try {
-    return (
-      new URL(url).pathname.replace(/^\/+/, "").replace(/[^\w.-]+/g, "_") + ".mp4"
-    );
+    return new URL(url).pathname.replace(/^\/+/, "").replace(/[^\w.-]+/g, "_") + ".mp4";
   } catch {
     return url.replace(/[^\w.-]+/g, "_") + ".mp4";
   }

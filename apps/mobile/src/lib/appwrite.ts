@@ -43,9 +43,7 @@ if (!APPWRITE_PROJECT) {
 }
 
 // Client
-const client = new Client()
-  .setEndpoint(APPWRITE_ENDPOINT)
-  .setProject(APPWRITE_PROJECT);
+const client = new Client().setEndpoint(APPWRITE_ENDPOINT).setProject(APPWRITE_PROJECT);
 
 const databases = new Databases(client);
 

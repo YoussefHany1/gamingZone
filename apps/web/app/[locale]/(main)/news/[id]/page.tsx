@@ -12,10 +12,9 @@ const NEWS_CATEGORIES = ["news", "reviews", "esports", "hardware"] as const;
 // served from the Vercel CDN instead of running a function on every request.
 //
 // Article bodies are immutable once published, so a long window is free
-// freshness-wise. The long revalidate is a safety net only — .github/workflows/
-// trigger-rss.yml calls /api/revalidate the moment new articles land, so a
-// freshly published article is served immediately. Dropping the prerendered
-// set from 24 to 12 also halves the ISR write surface (24 ids x 2 locales).
+// freshness-wise: new articles age into this set as the window lapses and the
+// next regeneration picks them up. Dropping the prerendered set from 24 to 12
+// also halves the ISR write surface (24 ids x 2 locales).
 export const revalidate = 21600; // 6h
 
 const PRERENDERED_ARTICLE_LIMIT = 12;

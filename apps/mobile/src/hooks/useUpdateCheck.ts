@@ -12,8 +12,7 @@ import { useTranslation } from "react-i18next";
 // Constants
 // ---------------------------------------------------------------------------
 
-const PLAY_STORE_URL =
-  "https://play.google.com/store/apps/details?id=com.yh.gamingzone";
+const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.yh.gamingzone";
 
 const PLAY_STORE_API_URL =
   "https://play.google.com/store/apps/details?id=com.yh.gamingzone&hl=en&gl=US";

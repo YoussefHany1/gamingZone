@@ -26,8 +26,7 @@ export const generateMetadata = createLocalizedMetadata({
 // it dynamically and any segment-level TTL would be inert. The previous
 // `revalidate = 600` looked like ISR protection but never applied — the cross
 // request caching here comes from the unstable_cache wrappers in
-// @/features/news, not from this route. /api/revalidate drops those tags when
-// articles are written.
+// @/features/news, not from this route.
 
 export default async function NewsPage(props: {
   params: Promise<{ locale: string }>;

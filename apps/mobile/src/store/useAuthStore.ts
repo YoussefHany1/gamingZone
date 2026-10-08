@@ -82,8 +82,7 @@ export const useAuthStore = create<AuthStore>()(
         currentAppState = nextState;
 
         const comingToForeground =
-          (prev === "background" || prev === "inactive") &&
-          nextState === "active";
+          (prev === "background" || prev === "inactive") && nextState === "active";
 
         if (!comingToForeground) return;
 
@@ -96,10 +95,7 @@ export const useAuthStore = create<AuthStore>()(
         }, 2000);
       };
 
-      const appStateSub = AppState.addEventListener(
-        "change",
-        handleAppStateChange,
-      );
+      const appStateSub = AppState.addEventListener("change", handleAppStateChange);
 
       // ── Cleanup (returned to useEffect's return slot in App.tsx) ────────────
       return () => {
@@ -108,5 +104,5 @@ export const useAuthStore = create<AuthStore>()(
         if (resumeTimer) clearTimeout(resumeTimer);
       };
     },
-  }))
+  })),
 );

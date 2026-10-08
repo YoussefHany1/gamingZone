@@ -193,20 +193,7 @@ export function formatEventDate(
 ): string {
   if (!timestamp) return "";
   const date = new Date(timestamp * 1000);
-  const localeString =
-    locale === "ar"
-      ? "ar-EG"
-      : locale === "es"
-        ? "es-ES"
-        : locale === "fr"
-          ? "fr-FR"
-          : locale === "hi"
-            ? "hi-IN"
-            : locale === "pt-BR"
-              ? "pt-BR"
-              : locale === "pt-PT"
-                ? "pt-PT"
-                : "en-US";
+  const localeString = locale === "ar" ? "ar-EG" : "en-US";
   return date.toLocaleDateString(localeString, {
     weekday: "long",
     year: "numeric",
@@ -224,20 +211,7 @@ export function formatEventDateShort(
 ): string {
   if (!timestamp) return "";
   const date = new Date(timestamp * 1000);
-  const localeString =
-    locale === "ar"
-      ? "ar-EG"
-      : locale === "es"
-        ? "es-ES"
-        : locale === "fr"
-          ? "fr-FR"
-          : locale === "hi"
-            ? "hi-IN"
-            : locale === "pt-BR"
-              ? "pt-BR"
-              : locale === "pt-PT"
-                ? "pt-PT"
-                : "en-US";
+  const localeString = locale === "ar" ? "ar-EG" : "en-US";
   return date.toLocaleDateString(localeString, {
     month: "short",
     day: "numeric",

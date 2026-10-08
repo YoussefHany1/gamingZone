@@ -92,7 +92,7 @@ export function resolveFontStyle(
   const { fontFamily: explicitFont, fontWeight, ...rest } = flat as TextStyle;
 
   const weightKey = fontWeight ? String(fontWeight) : "default";
-  
+
   let baseFamily = explicitFont;
   if (!baseFamily) {
     baseFamily = isArabic ? "Cairo" : "Roboto";
@@ -103,7 +103,7 @@ export function resolveFontStyle(
     const resolvedFontFamily = CAIRO_FONT_MAP[weightKey] ?? DEFAULT_CAIRO_FONT;
     return { resolvedFontFamily, flatStyle: rest };
   }
-  
+
   // Handle static Inter font mapping
   if (baseFamily === "Inter" || baseFamily?.startsWith("Inter-")) {
     const resolvedFontFamily = INTER_FONT_MAP[weightKey] ?? DEFAULT_INTER_FONT;

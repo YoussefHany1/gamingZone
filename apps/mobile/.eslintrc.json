@@ -47,5 +47,14 @@
     "ios/",
     "*.config.cjs",
     "*.config.js"
+  ],
+  "overrides": [
+    {
+      // Build tooling runs in Node and reports to stdout; printing is its job.
+      "files": ["scripts/**/*.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
   ]
 }

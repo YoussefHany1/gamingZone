@@ -121,7 +121,8 @@
       "notificationSettings": "Definições de notificações",
       "accountSettings": "Definições da conta",
       "gamesList": "A minha lista de jogos",
-      "myLists": "As minhas listas"
+      "myLists": "As minhas listas",
+      "profile": "O meu perfil"
     }
   },
   "home": {
@@ -453,10 +454,33 @@
       "confirmMessage": "A aplicação irá reiniciar para aplicar o novo idioma."
     },
     "theme": {
+      "blue": "Azul",
+      "green": "Verde",
+      "purple": "Roxo",
+      "orange": "Laranja",
+      "pink": "Rosa",
+      "gold": "Dourado",
+      "slate": "Ardosia",
       "title": "Aparência",
       "system": "Sistema",
       "light": "Claro",
-      "dark": "Escuro"
+      "dark": "Escuro",
+      "accentTitle": "Cor de destaque",
+      "auto": "Automático",
+      "random": "Aleatório",
+      "amoled": "Preto AMOLED",
+      "sepia": "Sépia",
+      "contrast": "Alto contraste",
+      "steam": "Azul Steam",
+      "verdant": "Verde",
+      "blurple": "Azul-arroxeado",
+      "ember": "Vermelho Switch",
+      "playstation": "PlayStation",
+      "xbox": "Xbox",
+      "syncNote": "Isto mudará o tema em todos os seus dispositivos.",
+      "previewHeadline": "Grande atualização traz novos temas, um feed redesenhado e melhorias de desempenho",
+      "previewSummary": "Como o seu feed de notícias fica neste tema, do título à hora",
+      "previewSite": "gamingzone.app"
     },
     "currentLang": "Português",
     "menu": {
@@ -533,6 +557,11 @@
         "missingCountry": "Selecione o seu país.",
         "missingPlatform": "Selecione a sua plataforma.",
         "missingImage": "Adicione uma fotografia de perfil."
+      },
+      "avatar": {
+        "title": "Escolha o seu avatar",
+        "suggested": "Talvez goste de um destes",
+        "upload": "Enviar da galeria"
       }
     },
     "notifications": {
@@ -570,6 +599,26 @@
       "error": "Ocorreu um erro ao enviar. Tente novamente",
       "messageTooLong": "A mensagem é demasiado longa. O limite máximo é de 5000 caracteres.",
       "invalidEmail": "O endereço de e-mail é inválido"
+    },
+    "profileShowcase": {
+      "memberSince": "Membro desde",
+      "dash": "—",
+      "statsSection": "As suas estatísticas",
+      "stats": {
+        "playing": "A jogar",
+        "played": "Jogados",
+        "wantToPlay": "Quero jogar",
+        "rated": "Avaliados",
+        "total": "Jogos únicos",
+        "avgRating": "Nota média",
+        "playtime": "Tempo de jogo"
+      },
+      "playtimeValue": "{{count}} hrs",
+      "highestRated": "Melhores avaliações",
+      "emptyLibrary": "A sua biblioteca está vazia — adicione jogos para criar as suas estatísticas.",
+      "browseGames": "Explorar jogos",
+      "editProfile": "Editar perfil",
+      "myLists": "As minhas listas"
     }
   },
   "aiChat": {

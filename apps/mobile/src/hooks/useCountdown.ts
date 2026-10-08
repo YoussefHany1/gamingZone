@@ -15,7 +15,12 @@ const LAST_MINUTE_MS = 60 * 1000;
 
 /** Total milliseconds remaining, computed from a TimeLeft object. */
 function totalMs(time: TimeLeft): number {
-  return time.days * DAY_MS + time.hours * HOUR_MS + time.minutes * MINUTE_MS + time.seconds * 1000;
+  return (
+    time.days * DAY_MS +
+    time.hours * HOUR_MS +
+    time.minutes * MINUTE_MS +
+    time.seconds * 1000
+  );
 }
 
 /**
@@ -31,9 +36,7 @@ function shouldRender(prev: TimeLeft, next: TimeLeft): boolean {
   const isLastMinute = ms < LAST_MINUTE_MS;
   if (isLastMinute) return prev.seconds !== next.seconds;
   return (
-    prev.days !== next.days ||
-    prev.hours !== next.hours ||
-    prev.minutes !== next.minutes
+    prev.days !== next.days || prev.hours !== next.hours || prev.minutes !== next.minutes
   );
 }
 

@@ -2,7 +2,6 @@ import { useCallback, memo, useMemo, Fragment, useState, useEffect, useRef } fro
 import CustomText from "@/src/components/CustomText";
 import {
   View,
-  StyleSheet,
   Pressable,
   RefreshControl,
   ToastAndroid,
@@ -240,6 +239,7 @@ function LatestNews({
   enablePagination = false,
   itemsPerPage = 10,
   adInterval = 8,
+  mockData,
 }: LatestNewsProps) {
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
@@ -378,13 +378,25 @@ function LatestNews({
   const feedWebsite =
     website !== undefined && website !== null && website !== "" ? website : undefined;
 
-  const { articles, total, loading, error, refetch } = useFeed(
+  const {
+    articles: feedArticles,
+    total: feedTotal,
+    loading: feedLoading,
+    error,
+    refetch,
+  } = useFeed(
     feedCategory,
     feedWebsite,
     currentPage,
     itemsPerPage,
     language,
+    // Mock-only previews (Appearance screen) must not touch the cache or NetInfo.
+    !mockData,
   );
+
+  const articles = mockData ? mockData : feedArticles;
+  const total = mockData ? mockData.length : feedTotal;
+  const loading = mockData ? false : feedLoading;
 
   // Reset page if total items drop below current page range
   useEffect(() => {

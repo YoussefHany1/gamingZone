@@ -14,7 +14,6 @@ import { databases } from "@/src/lib/appwrite";
 import { openLink } from "@/src/lib/browser";
 import NotificationService from "@/src/services/notificationService";
 import SkeletonFreeGames from "@/src/features/games/skeleton/gamesScreen/SkeletonFreeGames";
-import { DARK_COLORS, LIGHT_COLORS } from "@/src/constants/colors";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useThemeStore } from "@/src/store/useThemeStore";
@@ -69,8 +68,8 @@ const fetchFreeGamesFromAppwrite = async (): Promise<FreeGameItem[]> => {
 };
 
 const renderStoreIcon = (store?: string) => {
-  const { isDark } = useThemeStore.getState();
-  const iconColor = isDark ? DARK_COLORS.text : LIGHT_COLORS.text;
+  // Called during render, so an imperative read observes the current palette.
+  const iconColor = useThemeStore.getState().colors.text;
   if (store === "steam") return <SteamIcon size={20} fill={iconColor} />;
   if (store === "gog") return <GogIcon size={20} fill={iconColor} />;
   return <EpicGamesIcon size={20} fill={iconColor} />;

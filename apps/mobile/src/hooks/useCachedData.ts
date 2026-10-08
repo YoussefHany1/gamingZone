@@ -104,29 +104,52 @@ export default function useCachedData<T>(
   dependencies: unknown[] = [],
   /** How long (ms) cached data is considered fresh before a background re-fetch. Default: 5 minutes. */
   ttl: number = 300_000,
+  /** When false, also skips the automatic load on mount and on key/TTL changes (e.g. a mock-only preview). Default: true. */
+  enabled: boolean = true,
 ): CachedDataResult<T> {
   // ── Seed state synchronously from MMKV ──────────────────────────────────
   // Because storageGet is synchronous, we can read the cached value *before*
   // the first render and pass it to useState as the initial value.  This means
   // the component never renders with null data when a cache entry exists.
-  const [data, setDataState] = useState<T | null>(() => {
+  //
+  // storageGet is a synchronous JSON.parse of the entire payload, and the Games
+  // screen mounts ~9 of these hooks at once, so the cache is read exactly once
+  // per key — not once per state field, and not again on every loadData call.
+  // Re-reading it in a second useState initialiser used to double the parse cost
+  // of every mount.
+  const snapshotRef = useRef<{
+    key: string;
+    data: T | null;
+    present: boolean;
+  } | null>(null);
+  if (snapshotRef.current === null || snapshotRef.current.key !== key) {
     const raw = storageGet<unknown>(key);
-    return raw !== null ? unwrapCachedValue<T>(raw) : null;
-  });
+    snapshotRef.current = {
+      key,
+      data: raw !== null ? unwrapCachedValue<T>(raw) : null,
+      present: raw !== null,
+    };
+  }
+  const snapshot = snapshotRef.current;
 
-  const [isLoading, setIsLoading] = useState(() => {
+  const [data, setDataState] = useState<T | null>(snapshot.data);
+
+  const [isLoading, setIsLoading] = useState(
     // If we already have cached data we don't need to show a full-page
     // loading spinner — just a background-refetch indicator if the TTL is
-    // expired.
-    const raw = storageGet<unknown>(key);
-    return raw === null; // true only when there is genuinely no cached data
-  });
+    // expired. Derived from the snapshot rather than a second cache read.
+    () => !snapshot.present,
+  );
   const [isRefetching, setIsRefetching] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   // Holds the latest in-memory copy so the Realtime callback and TTL check
   // can read it without triggering re-renders.
-  const currentDataRef = useRef<T | null>(data);
+  const currentDataRef = useRef<T | null>(snapshot.data);
+  // Which key the in-memory copy belongs to. useState does not re-run its
+  // initialiser, so after a key change the refs above would otherwise still
+  // hold the previous key's payload.
+  const currentKeyRef = useRef<string>(key);
 
   // Stable ref to fetchFn so useCallback deps stay minimal.
   const fetchFnRef = useRef(fetchFn);
@@ -146,16 +169,17 @@ export default function useCachedData<T>(
       safeSet(setError, null);
 
       try {
-        // 1. Serve cached data synchronously (already done in useState initialiser
-        //    on first call, but repeated here for subsequent calls after key changes).
-        if (!currentDataRef.current) {
-          const raw = storageGet<unknown>(key);
-          if (raw !== null) {
-            const parsed = unwrapCachedValue<T>(raw);
-            currentDataRef.current = parsed;
-            safeSet(setDataState, parsed);
-            safeSet(setIsLoading, false);
-          }
+        // 1. Serve cached data synchronously.
+        //    On the first call the snapshot above already seeded state, but on a
+        //    later key change these refs still hold the *previous* key's payload.
+        //    The guard therefore has to compare keys, not just test for
+        //    emptiness — otherwise a key change silently keeps serving the old
+        //    key's data (and its TTL) and can return early without fetching.
+        if (currentKeyRef.current !== key || currentDataRef.current == null) {
+          currentDataRef.current = snapshot.data;
+          currentKeyRef.current = key;
+          safeSet(setDataState, snapshot.data);
+          if (snapshot.present) safeSet(setIsLoading, false);
         }
 
         // 2. Respect TTL — skip the network call if the cache is still fresh.
@@ -186,6 +210,7 @@ export default function useCachedData<T>(
 
         if (hasChanged || forceRefresh) {
           currentDataRef.current = freshData;
+          currentKeyRef.current = key;
           storageSet(key, freshData); // synchronous write
           safeSet(setDataState, freshData);
         }
@@ -208,17 +233,24 @@ export default function useCachedData<T>(
     [key, ttl, ...dependencies],
   );
 
-  // Run on mount and whenever key, TTL, or deps change.
+  // Run on mount and whenever key, TTL, or deps change. Skipped entirely while
+  // `enabled` is false so disabled hooks do no cache reads, no connectivity
+  // checks and no writes (used for mock-only previews).
   useEffect(() => {
+    if (!enabled) return;
     const controller = new AbortController();
     loadData(false, controller.signal);
     return () => controller.abort();
-  }, [loadData]);
+  }, [loadData, enabled]);
 
   // Manually push a new value into state and cache (e.g. from Realtime events).
   const updateLocalData = useCallback(
     async (newData: T): Promise<void> => {
       currentDataRef.current = newData;
+      currentKeyRef.current = key;
+      // Keep the snapshot coherent so a later key change cannot resurrect the
+      // value that was in the cache at mount time.
+      snapshotRef.current = { key, data: newData, present: true };
       setDataState(newData);
       storageSet(key, newData);
       storageSetTimestamp(`${key}_timestamp`, Date.now());

@@ -14,29 +14,27 @@ interface SkeletonItemProps {
  * Pair with `usePulseAnimation()` from `./skeleton/shared` for the standard
  * pulse effect.
  */
-const SkeletonItem = React.memo<SkeletonItemProps>(
-  ({ style, animatedStyle }) => {
-    const colors = useThemeColors();
+const SkeletonItem = React.memo<SkeletonItemProps>(({ style, animatedStyle }) => {
+  const colors = useThemeColors();
 
-    return (
-      <Animated.View
-        style={[
-          styles.base,
-          { backgroundColor: colors.skeletonBase },
-          style,
-          animatedStyle,
-        ]}
-      >
-        <LinearGradient
-          colors={[colors.skeletonBase, colors.skeletonHighlight]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </Animated.View>
-    );
-  },
-);
+  return (
+    <Animated.View
+      style={[
+        styles.base,
+        { backgroundColor: colors.skeletonBase },
+        style,
+        animatedStyle,
+      ]}
+    >
+      <LinearGradient
+        colors={[colors.skeletonBase, colors.skeletonHighlight]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={StyleSheet.absoluteFill}
+      />
+    </Animated.View>
+  );
+});
 
 SkeletonItem.displayName = "SkeletonItem";
 export default SkeletonItem;

@@ -9,11 +9,8 @@ export async function fetchGamingEvents(): Promise<GamingEvent[]> {
       // lowest TTL among the entries its render touches, so moving one without
       // the other leaves both at the lower value.
       //
-      // This is a backstop, not the freshness mechanism: free-games.yml calls
-      // /api/revalidate with target "events" hourly, which drops this tag and
-      // revalidates the home pages carrying the event carousel. Without that
-      // trigger nothing would expire this tag and event data would go stale for
-      // the full window.
+      // This window is the sole freshness mechanism: nothing externally expires
+      // this tag, so event data goes stale for the full window once cached.
       next: { revalidate: 86400, tags: ["events"] },
     });
     if (!response.ok) {
