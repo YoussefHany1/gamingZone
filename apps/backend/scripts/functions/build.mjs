@@ -1,6 +1,6 @@
-// Local/manual bundler. Produces identically to Appwrite's Git-connected
-// build step (each function runs `npm run build` → build-function.mjs), so
-// `functions:build` is a faithful local reproduction for smoke tests.
+// Local bundler: produces the dist/main.js that gets committed. Appwrite's
+// Git-connected deploy skips building (it just runs `npm install`); this keeps
+// a faithful, reproducible local build for smoke tests and for updates.
 import { build } from 'esbuild';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';

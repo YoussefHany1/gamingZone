@@ -1,11 +1,12 @@
-// Shared esbuild options for every Appwrite function bundle.
+// Shared esbuild options for the Appwrite function bundle.
 //
 // Consumers:
-//  - scripts/functions/build.mjs           (local/manual builds, esbuild JS API)
-//  - scripts/functions/build-function.mjs   (each function's package.json
-//    "build" script, run by Appwrite's Git-connected build step)
+//  - scripts/functions/build.mjs            (npm run functions:build)
+//  - scripts/functions/build-function.mjs   (the function's package.json build)
 //
-// Stays a plain default export — spread into the esbuild API call.
+// Appwrite's Git deploy does NOT bundle — it activates the committed
+// dist/main.js this produces. Stays a plain default export, spread into the
+// esbuild API call.
 
 export default {
   bundle: true,

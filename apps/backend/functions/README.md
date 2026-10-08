@@ -23,35 +23,40 @@ Notes:
 apps/backend/
   functions/
     _shared/runner.ts                  # Appwrite handler context types
-    cron/            package.json · src/main.ts · dist/main.js (generated at build)
+    cron/            package.json · src/main.ts · dist/main.js (committed)
   scripts/functions/
     config.mjs         # single function entry: id, dir, name, schedule; required variables
     esbuild.config.mjs # shared bundle options (externals, target, banner)
-    build.mjs          # esbuild-bundles the function into its dist/main.js (local repro)
-    build-function.mjs # build script the function's package.json runs (Appwrite Git build)
+    build.mjs          # esbuild-bundles the function into its dist/main.js (local build)
+    build-function.mjs # same build, as the function's own package.json "build" script
     deploy.mjs         # create/update function config + sync variables (one-time setup)
 appwrite.json                        # Appwrite CLI spec (uses $APPWRITE_PROJECT_ID / $APPWRITE_ENDPOINT)
 ```
 
 ## How deployment works
 
-Appwrite only copies the function **root directory** (`apps/backend/functions/cron`) into the deployment package, while the job code lives outside it under `scripts/`. The function carries a **self-contained `build` script** that Appwrite runs inside the function folder via the function's `commands` (`npm install && npm run build`):
+`dist/main.js` is built **locally** and committed to the repo. Appwrite's Git-connected build cannot compile it in the container because it only copies the function **root directory** (`apps/backend/functions/cron`) — `scripts/` and `_shared/` are not present — and npm blocks esbuild's install script there. So:
 
-1. Appwrite clones the **whole repo**, so `src/main.ts` can import `../../../scripts/features/*`, `../../../scripts/lib/*`, and `../../_shared/runner.ts`.
-2. The `build` script (`node ../../scripts/functions/build-function.mjs`) runs with cwd = the function root, resolves `esbuild` from that root's `node_modules` (npm just installed it), and bundles the shared source into `dist/main.js`, externalizing the runtime-only packages (`firebase-admin`, `node-appwrite`, `pino` family, `puppeteer`) that Appwrite `npm install`s from the function's own `package.json`.
-3. The deployment packages only the root directory (`dist/` + installed `node_modules/`) — exactly what the executor needs.
+- The build command is plain `npm install` (installs the runtime deps from the function's `package.json`).
+- The committed bundle already contains `scripts/features/*`, `scripts/lib/*`, `_shared/runner.ts`, and the pure-JS deps, externalizing the runtime-only packages (`firebase-admin`, `node-appwrite`, `pino` family, `puppeteer`) that npm installs in the executor.
+- The deployment packages the root directory (`dist/` + installed `node_modules/`) — exactly what the executor needs.
 
-Because the function's `package.json` build script mirrors `scripts/functions/build.mjs`, `npm run functions:build` is a faithful local reproduction of what Appwrite's Git build does.
+Regenerate the bundle locally (this mirrors exactly what gets committed):
+
+```sh
+cd apps/backend
+npm run functions:build   # writes apps/backend/functions/cron/dist/main.js
+```
 
 ## Deployment via Git integration (connected to the repo)
 
 Code is deployed by Appwrite's GitHub integration — no CI workflow:
 
-1. Console → Functions → `cron` → Settings → Git: connect your GitHub account/repo, set **Branch** to `main`, **Root directory** to `apps/backend/functions/cron`, and enable auto-deploy.
-2. On **Create/Deploy from Git**, Appwrite runs `npm install && npm run build` (command + entrypoint come from the function config) and activates `dist/main.js`.
+1. Console → Functions → `cron` → Settings → Git: connect your GitHub account/repo, set **Branch** to `main`, **Root directory** to `apps/backend/functions/cron`, **Entrypoint** to `dist/main.js`, and **Build command** to `npm install`. Enable auto-deploy.
+2. On **Create/Deploy from Git**, Appwrite runs `npm install` and activates the committed `dist/main.js`.
 3. Thereafter, every push to `main` that changes files under that root directory rebuilds and redeploys the function automatically.
 
-One-time setup: after the function exists, `npm run functions:deploy` (below) only creates/updates the function config and syncs variables — it does **not** upload code. If you ever need to push a bundle from your machine instead (e.g. before Git is connected), run `APPWRITE_PUSH_CODE=1 npm run functions:deploy`.
+`npm run functions:deploy` (below) only creates/updates the function config and syncs variables — it does **not** upload code. If you ever need to push a bundle from your machine instead (e.g. before Git is connected), run `APPWRITE_PUSH_CODE=1 npm run functions:deploy`.
 
 ## One-time setup
 
@@ -98,4 +103,12 @@ Valid job names: `rss`, `free-games`, `weekly-summary`. Drop `"async":true` to w
 
 ## Updating a job
 
-Because the bundle pulls in `scripts/features` as source, editing a service and pushing to `main` is all that's needed — Appwrite's Git integration rebuilds and redeploys the function. To reproduce the exact build locally first, run `npm run functions:build`.
+The bundle pulls in `scripts/features` as source, so after editing a service run:
+
+```sh
+cd apps/backend
+npm run functions:build
+git add apps/backend/functions/cron/dist/main.js
+```
+
+Then push to `main` — Appwrite's Git integration redeploys it. To sanity-check the dispatcher locally, the bundle's default export can be invoked with a fake `{req, res, log, error}` context.

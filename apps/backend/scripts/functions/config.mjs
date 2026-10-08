@@ -1,10 +1,10 @@
 export const RUNTIME = 'node-20.0';
 export const ENTRYPOINT = 'dist/main.js';
-// Git-connected deployments run this inside the function root folder: install
-// runtime deps, then produce dist/main.js via the function's own "build"
-// script. The full repo is cloned, so src/ may import ../../../scripts and the
-// shared esbuild config stays outside the function folder.
-export const COMMANDS = 'npm install && npm run build';
+// Only install runtime deps — the deployment bundle (dist/main.js) is built
+// locally and committed, because the Git-connected build container receives
+// only the function root folder (../scripts, _shared aren't there) and npm
+// blocks esbuild's install script there.
+export const COMMANDS = 'npm install';
 export const TIMEOUT = 900;
 
 /**

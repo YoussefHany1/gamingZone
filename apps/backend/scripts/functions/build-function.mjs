@@ -1,12 +1,13 @@
-// Build entrypoint used by each function's package.json "build" script.
+// Build entrypoint used by the function's package.json "build" script.
 //
-// Appwrite's Git-connected build runs `npm install && npm run build` with cwd
-// set to the function root (apps/backend/functions/<id>). npm installs
-// esbuild into that root's node_modules, so resolve it from there — never
-// from here (scripts/functions is outside the packaged root).
+// Appwrite's Git-connected deploy does NOT run this — it only does `npm
+// install` and activates the committed dist/main.js, because the build
+// container gets just the function root folder (scripts/_shared aren't copied
+// in) and npm blocks esbuild's install script there. This script exists to
+// regenerate that bundle locally, from the full repo.
 //
-// Locally this also walks up to apps/<backend>/node_modules/esbuild, so it
-// doubles as a faithful local reproduction of the Appwrite Git build.
+// Runs with cwd = the function root: resolves esbuild via createRequire so it
+// finds apps/backend/node_modules/esbuild during local use.
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import fs from 'node:fs';

@@ -8,7 +8,7 @@
       "runtime": "node-20.0",
       "path": "apps/backend/functions/cron",
       "entrypoint": "dist/main.js",
-      "commands": "npm install && npm run build",
+      "commands": "npm install",
       "timeout": 900,
       "logging": true,
       "enabled": true,

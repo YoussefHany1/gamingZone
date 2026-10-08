@@ -7,6 +7,12 @@ dist/
 web-build/
 expo-env.d.ts
 
+# Appwrite cron function: dist/main.js is committed so Git-connected deploys
+# don't need a build step inside the container (only the function root is
+# copied in, and npm blocks esbuild's install script there).
+!apps/backend/functions/cron/dist/
+!apps/backend/functions/cron/dist/**
+
 # Native
 .kotlin/
 *.orig.*
