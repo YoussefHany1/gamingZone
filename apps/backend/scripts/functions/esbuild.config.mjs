@@ -23,6 +23,13 @@ export default {
     'node-appwrite',
     'puppeteer',
     'puppeteer-core',
+    // got-scraping breaks when inlined: its ESM/CJS interop mangled
+    // ("gotScraping is not a function") and its header-generator reads
+    // data_files/headers-order.json from its own package folder, which is
+    // lost in a single-file bundle. tough-cookie is another dual package used
+    // via dynamic import.
+    'got-scraping',
+    'tough-cookie',
     'pino',
     'pino-pretty',
     'thread-stream',

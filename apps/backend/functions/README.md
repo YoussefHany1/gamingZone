@@ -38,7 +38,7 @@ appwrite.json                        # Appwrite CLI spec (uses $APPWRITE_PROJECT
 `dist/main.js` is built **locally** and committed to the repo. Appwrite's Git-connected build cannot compile it in the container because it only copies the function **root directory** (`apps/backend/functions/cron`) — `scripts/` and `_shared/` are not present — and npm blocks esbuild's install script there. So:
 
 - The build command is plain `npm install` (installs the runtime deps from the function's `package.json`).
-- The committed bundle already contains `scripts/features/*`, `scripts/lib/*`, `_shared/runner.ts`, and the pure-JS deps, externalizing the runtime-only packages (`firebase-admin`, `node-appwrite`, `pino` family, `puppeteer`) that npm installs in the executor.
+- The committed bundle already contains `scripts/features/*`, `scripts/lib/*`, `_shared/runner.ts`, and the pure-JS deps, externalizing the runtime-only or bundle-unfriendly packages that npm installs in the executor: `firebase-admin`, `node-appwrite`, `pino` family, `puppeteer`, `got-scraping`, `tough-cookie`.
 - The deployment packages the root directory (`dist/` + installed `node_modules/`) — exactly what the executor needs.
 
 Regenerate the bundle locally (this mirrors exactly what gets committed):
@@ -97,9 +97,10 @@ curl -X POST "https://<region>.cloud.appwrite.io/v1/functions/cron/executions" \
 
 Valid job names: `rss`, `free-games`, `weekly-summary`. Drop `"async":true` to wait for the result synchronously (only for short runs / debugging).
 
-## Known constraint: Puppeteer
+## Known constraint: Puppeteer (and bundling)
 
-`scripts/features/rss/fetch.ts` lazily imports `puppeteer` as a fallback for JS-rendered pages and missing OG images. Puppeteer is **not** bundled and no Chromium exists inside the Appwrite runtime, so that fallback fails gracefully (logged, caught) and RSS runs on its static `got-scraping` path only. `free-games` and `weekly-summary` have no browser dependency and are unaffected.
+- `scripts/features/rss/fetch.ts` lazily imports `puppeteer` as a fallback for JS-rendered pages and missing OG images. Puppeteer is **not** bundled and no Chromium exists inside the Appwrite runtime, so that fallback fails gracefully (logged, caught) and RSS runs on its `got-scraping` path only. `free-games` and `weekly-summary` have no browser dependency and are unaffected.
+- `got-scraping` and `tough-cookie` must stay **external** (installed in `node_modules`): esbuild mangling got-scraping's ESM/CJS interop makes it a non-function, and its `header-generator` reads `data_files/headers-order.json` from its own package folder, which a single-file bundle doesn't ship. With them externalized, the real packages (including their data files) are used at runtime.
 
 ## Updating a job
 
