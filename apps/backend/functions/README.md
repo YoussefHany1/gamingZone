@@ -1,14 +1,14 @@
 # Appwrite Functions
 
-A **single** Appwrite function (`cron`) runs all three jobs inside Appwrite on one native schedule — keeping usage inside Appwrite's free tier (Appwrite allows one cron per function, so everything shares one `*/5 * * * *` tick).
+A **single** Appwrite function (`cron`) runs all three jobs inside Appwrite on one native schedule — keeping usage inside Appwrite's free tier (Appwrite allows one cron per function, so everything shares one `0 * * * *` hourly tick; hourly also keeps the full 69-source RSS sync inside the free 100 GB-hours/month compute allowance).
 
 ## How the dispatcher schedules jobs
 
-Appwrite functions support exactly **one** cron schedule, so the function runs every 5 minutes and a time-based dispatcher (`src/main.ts`) fans out based on the UTC server clock:
+Appwrite functions support exactly **one** cron schedule, so the function runs every hour and a time-based dispatcher (`src/main.ts`) fans out based on the UTC server clock:
 
 | job             | service                                   | when it runs                      |
 | --------------- | ----------------------------------------- | --------------------------------- |
-| `rss`           | `rss/rss.service.ts` (`runFetchRss`)      | every `*/5 * * * *` tick          |
+| `rss`           | `rss/rss.service.ts` (`runFetchRss`)      | every `0 * * * *` tick             |
 | `free-games`    | `freeGames/freeGames.service.ts`          | top of every hour (UTC minute 0)  |
 | `weekly-summary`| `summary/summary.service.ts`              | Fridays 12:00 UTC (minute 0 tick) |
 
@@ -38,7 +38,7 @@ appwrite.json                        # Appwrite CLI spec (uses $APPWRITE_PROJECT
 `dist/main.js` is built **locally** and committed to the repo. Appwrite's Git-connected build cannot compile it in the container because it only copies the function **root directory** (`apps/backend/functions/cron`) — `scripts/` and `_shared/` are not present — and npm blocks esbuild's install script there. So:
 
 - The build command is plain `npm install` (installs the runtime deps from the function's `package.json`).
-- The committed bundle already contains `scripts/features/*`, `scripts/lib/*`, `_shared/runner.ts`, and the pure-JS deps, externalizing the runtime-only or bundle-unfriendly packages that npm installs in the executor: `firebase-admin`, `node-appwrite`, `pino` family, `puppeteer`, `got-scraping`, `tough-cookie`.
+- The committed bundle already contains `scripts/features/*`, `scripts/lib/*`, `_shared/runner.ts`, and the pure-JS deps, externalizing the runtime-only or bundle-unfriendly packages that npm installs in the executor: `firebase-admin`, `node-appwrite`, `pino` family, `puppeteer`, `puppeteer-core`, `got-scraping`, `tough-cookie`, `jsdom`, `@mozilla/readability`.
 - The deployment packages the root directory (`dist/` + installed `node_modules/`) — exactly what the executor needs.
 
 Regenerate the bundle locally (this mirrors exactly what gets committed):
@@ -64,7 +64,7 @@ Code is deployed by Appwrite's GitHub integration — no CI workflow:
 2. `npm install --legacy-peer-deps` (installs `esbuild`; approve its install script if npm blocks postinstall scripts).
 3. Run `npm run functions:deploy` to create the function and sync its 10 variables.
 4. Connect the function to Git as described above, and create the initial deployment from Git.
-5. Confirm in your Appwrite console: Functions → `cron` → Settings shows the `*/5 * * * *` schedule; Deployments/Executions shows runs. If you already deployed the old `rss-fetch`, `free-games-fetch`, `weekly-summary`, or `cron-job` functions, delete them in the console (they are replaced by this single `cron` function).
+5. Confirm in your Appwrite console: Functions → `cron` → Settings shows the `0 * * * *` schedule and a **Timeout of 900**; Deployments/Executions shows runs. If you already deployed the old `rss-fetch`, `free-games-fetch`, `weekly-summary`, or `cron-job` functions, delete them in the console (they are replaced by this single `cron` function).
 
 Required function variables mirror `scripts/lib/config.ts`:
 
@@ -101,6 +101,7 @@ Valid job names: `rss`, `free-games`, `weekly-summary`. Drop `"async":true` to w
 
 - `scripts/features/rss/fetch.ts` lazily imports `puppeteer` as a fallback for JS-rendered pages and missing OG images. Puppeteer is **not** bundled and no Chromium exists inside the Appwrite runtime, so that fallback fails gracefully (logged, caught) and RSS runs on its `got-scraping` path only. `free-games` and `weekly-summary` have no browser dependency and are unaffected.
 - `got-scraping` and `tough-cookie` must stay **external** (installed in `node_modules`): esbuild mangling got-scraping's ESM/CJS interop makes it a non-function, and its `header-generator` reads `data_files/headers-order.json` from its own package folder, which a single-file bundle doesn't ship. With them externalized, the real packages (including their data files) are used at runtime.
+- `jsdom` and `@mozilla/readability` (OG-image/description enrichment) must also stay **external**: jsdom resolves `lib/jsdom/browser/default-stylesheet.css` by path at document creation, which fails inside a single-file bundle (`ENOENT`, `JSDOM is not a constructor`). The function's `package.json` lists them so `npm install` provides the real packages.
 
 ## Updating a job
 

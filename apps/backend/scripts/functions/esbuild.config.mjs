@@ -12,7 +12,7 @@ export default {
   bundle: true,
   platform: 'node',
   format: 'cjs',
-  target: 'node20',
+  target: 'node22',
   // Installed by the Appwrite runtime from each function's package.json —
   // never bundled (firebase-admin carries optional native/cloud deps; pino
   // spawns a worker thread by path, which breaks inside a single-file bundle;
@@ -30,6 +30,12 @@ export default {
     // via dynamic import.
     'got-scraping',
     'tough-cookie',
+    // jsdom reads lib/jsdom/browser/default-stylesheet.css via require.resolve
+    // at document creation — that file is lost in a single-file bundle
+    // (ENOENT) and the inlined interop breaks "new JSDOM(...)". Keep it
+    // external so the real package is installed by the function's npm install.
+    'jsdom',
+    '@mozilla/readability',
     'pino',
     'pino-pretty',
     'thread-stream',

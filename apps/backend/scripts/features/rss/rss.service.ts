@@ -357,7 +357,7 @@ async function processSource(sourceData: SourceData, summary: RssSummary): Promi
   }
 }
 
-async function runFetchRss(): Promise<void> {
+async function runFetchRss(): Promise<RssSummary> {
   logger.info('🚀 Starting Unified Fetcher (API & RSS)...');
   const summary: RssSummary = { notificationsSent: 0, errors: [] };
 

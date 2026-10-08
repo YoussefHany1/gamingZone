@@ -1,4 +1,4 @@
-export const RUNTIME = 'node-20.0';
+export const RUNTIME = 'node-22';
 export const ENTRYPOINT = 'dist/main.js';
 // Only install runtime deps — the deployment bundle (dist/main.js) is built
 // locally and committed, because the Git-connected build container receives
@@ -12,14 +12,16 @@ export const TIMEOUT = 900;
  * (see functions/cron/src/main.ts) fans out to the three job cadences:
  * rss every tick, free-games at the top of every hour, weekly-summary on
  * Fridays 12:00 UTC. Staying at one function keeps usage inside Appwrite's
- * free tier (one function = one schedule).
+ * free tier (one function = one schedule). Hourly cadence keeps the free
+ * 100 GB-hours/month compute allowance (a 5-minute full RSS sync would
+ * overshoot it by 1.5-3x).
  */
 export const FUNCTIONS = [
   {
     id: 'cron',
     dir: 'cron',
     name: 'Game Jobs Cron',
-    schedule: '*/5 * * * *',
+    schedule: '0 * * * *',
   },
 ];
 

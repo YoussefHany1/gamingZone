@@ -5,7 +5,7 @@
     {
       "$id": "cron",
       "name": "Game Jobs Cron",
-      "runtime": "node-20.0",
+      "runtime": "node-22",
       "path": "apps/backend/functions/cron",
       "entrypoint": "dist/main.js",
       "commands": "npm install",

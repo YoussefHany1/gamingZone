@@ -183,4 +183,4 @@ for (const fn of FUNCTIONS) {
 }
 
 console.log('✔ All functions configured and variables synced.');
-console.log('  cron schedules internally: rss (every tick) · free-games (hourly) · weekly-summary (Fri 12:00 UTC)');
+console.log('  cron schedules internally: rss (every hour) · free-games (hourly) · weekly-summary (Fri 12:00 UTC)');

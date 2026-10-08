@@ -8,10 +8,12 @@ import {
 import { runGenerateWeeklySummary } from '../../../scripts/features/summary/summary.service';
 import { setAppwriteLogger } from '../../../scripts/lib/logger';
 
-// One Appwrite function, one native schedule ("*/5 * * * *" in UTC). Every tick
-// runs against the server clock; free-games and weekly-summary fire only when
-// their time window matches, so a single cron slot covers all three cadences.
-// A manual /curl trigger can still run one job by name via a JSON body.
+// One Appwrite function, one native schedule ("0 * * * *" = hourly, UTC).
+// Every tick runs against the server clock; free-games and weekly-summary
+// fire only when their time window matches, so a single cron slot covers all
+// three cadences. Hourly (not */5) keeps the full 69-source RSS sync inside
+// Appwrite's free 100 GB-hours/month compute allowance. A manual /curl
+// trigger can still run one job by name via a JSON body.
 const JOBS: Record<string, () => Promise<unknown>> = {
   rss: runFetchRss,
   'free-games': async () => {
