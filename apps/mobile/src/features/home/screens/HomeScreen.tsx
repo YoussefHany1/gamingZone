@@ -28,9 +28,9 @@ import { adUnitId } from "@/src/constants/config";
 import Slideshow from "../components/Slideshow";
 import WeeklySummary from "../components/WeeklySummary";
 import ReleaseCalendar from "../components/ReleaseCalendar";
-import LatestNews from "@/src/features/news/components/LatestNews";
-import GamingEvents from "@/src/features/events/components/Gamingevents";
-import RecommendedGames from "@/src/features/games/components/gamesScreen/RecommendedGames";
+import { LatestNews } from "@/src/features/news";
+import { GamingEvents } from "@/src/features/events";
+import { RecommendedGames } from "@/src/features/games";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import type { SectionItem } from "../types";
 

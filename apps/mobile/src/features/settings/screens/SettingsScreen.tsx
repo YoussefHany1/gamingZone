@@ -187,7 +187,7 @@ const SettingsScreen = memo((): React.ReactElement => {
       {
         id: "theme",
         icon: Palette,
-        label: t("settings.theme.title"),
+        label: `${t("settings.theme.title")} (Beta)`,
         onPress: () => navigation.navigate("ThemeScreen"),
       },
       {

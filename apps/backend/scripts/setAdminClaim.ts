@@ -18,7 +18,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const { admin, enabled, error } = initFirebaseAdmin('FCM_SERVICE_ACCOUNT');
+  const { admin, enabled, error } = initFirebaseAdmin('adminClaim');
 
   if (!enabled) {
     logger.error(
@@ -27,7 +27,13 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const claims = await admin.auth().getUser(uid).then((u) => u.customClaims ?? {});
+  const app = admin.app('adminClaim');
+  if (!app) {
+    logger.error('❌ Firebase app "adminClaim" is not initialized.');
+    process.exit(1);
+  }
+
+  const claims = await admin.auth(app).getUser(uid).then((u) => u.customClaims ?? {});
 
   if (flag === '--revoke') {
     delete claims.admin;
@@ -35,11 +41,11 @@ async function main(): Promise<void> {
     claims.admin = true;
   }
 
-  await admin.auth().setCustomUserClaims(uid, claims);
+  await admin.auth(app).setCustomUserClaims(uid, claims);
   logger.info(`✅ customClaims for ${uid}: ${JSON.stringify(claims)}`);
 
   // Existing ID tokens keep their old claims for up to ~1h until refreshed.
-  await admin.auth().revokeRefreshTokens(uid);
+  await admin.auth(app).revokeRefreshTokens(uid);
   logger.info('↻ refresh tokens revoked — user re-authenticates on next app launch');
 }
 

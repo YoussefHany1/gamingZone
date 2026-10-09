@@ -28,6 +28,9 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 const FREE_GAMES_CATEGORY = "free_games";
 const FREE_GAMES_SOURCE = "alerts";
 
+const WEEKLY_SUMMARY_CATEGORY = "weekly_summary";
+const WEEKLY_SUMMARY_SOURCE = "alerts";
+
 const Notification: React.FC = () => {
   const colors = useThemeColors();
   const styles = useThemeStyles((c) => ({
@@ -242,6 +245,74 @@ const Notification: React.FC = () => {
     }
   };
 
+  // --- دالة جديدة: تبديل حالة إشعارات الملخص الأسبوعي ---
+  const toggleWeeklySummary = async (): Promise<void> => {
+    const userId = auth().currentUser?.uid;
+    if (!userId) return;
+
+    const topicId = NotificationService.getTopicName(
+      WEEKLY_SUMMARY_CATEGORY,
+      WEEKLY_SUMMARY_SOURCE,
+    );
+
+    const isEnabled: boolean = preferences[topicId] || false;
+    const newValue = !isEnabled;
+
+    // 1. تحديث الواجهة فوراً (Optimistic Update)
+    const newPreferences = { ...preferences, [topicId]: newValue };
+    setPreferences(newPreferences);
+
+    // 2. استدعاء الخدمة لحفظ التغيير في Firestore و FCM
+    try {
+      await NotificationService.toggleNotificationPreference(
+        userId,
+        WEEKLY_SUMMARY_CATEGORY,
+        WEEKLY_SUMMARY_SOURCE,
+        newValue,
+      );
+    } catch (error) {
+      console.error("[NotificationScreen] toggleWeeklySummary error:", error);
+      // Roll back the optimistic toggle on failure.
+      const rolledBack = { ...preferences, [topicId]: !newValue };
+      setPreferences(rolledBack);
+      ToastAndroid.show(
+        t("settings.notifications.updateFailed") ??
+          "Failed to update notification settings. Please try again.",
+        ToastAndroid.LONG,
+      );
+    }
+  };
+
+  // --- دالة جديدة: عرض قسم الملخص الأسبوعي ---
+  const renderWeeklySummarySection = (): React.ReactElement => {
+    const topicId = NotificationService.getTopicName(
+      WEEKLY_SUMMARY_CATEGORY,
+      WEEKLY_SUMMARY_SOURCE,
+    );
+    const isEnabled: boolean = preferences[topicId] || false;
+
+    return (
+      <View style={styles.categorySection}>
+        <View style={styles.categoryHeader}>
+          <View style={styles.categoryHeaderLeft}>
+            <Bell size={24} color={colors.accent} style={styles.chevronIcon} />
+            <CustomText style={styles.categoryTitle}>
+              {t("home.weeklySummary.title")}
+            </CustomText>
+          </View>
+
+          <Switch
+            value={isEnabled}
+            onValueChange={toggleWeeklySummary}
+            trackColor={{ false: "#3e3e3e", true: colors.textMuted }}
+            thumbColor={isEnabled ? colors.text : "#f4f3f4"}
+            style={styles.categorySwitch}
+          />
+        </View>
+      </View>
+    );
+  };
+
   const toggleCategoryExpansion = useCallback((category: string): void => {
     setExpandedCategories((prev) => ({
       ...prev,
@@ -392,6 +463,7 @@ const Notification: React.FC = () => {
         {renderCategorySection("esports", `${t("news.tabs.esports")}`)}
         {renderCategorySection("hardware", `${t("news.tabs.hardware")}`)}
         {renderFreeGamesSection()}
+        {renderWeeklySummarySection()}
         <CustomText style={styles.footerText}>
           {t("settings.notifications.footer")}
         </CustomText>

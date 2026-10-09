@@ -27,8 +27,9 @@ async function getNetworkStatus(): Promise<{ isConnected: boolean | null }> {
 
 // ---------------------------------------------------------------------------
 // Lightweight data-equality check.
-// For arrays we compare length + the $id of the first element, which is
-// enough to detect new content without serialising the entire payload.
+// For arrays we compare length + the $id of the FIRST and LAST elements,
+// which is enough to detect new content at either end (appends, prepends,
+// removals and end reorders) without serialising the entire payload.
 // Falls back to JSON.stringify only for non-array objects.
 // ---------------------------------------------------------------------------
 function isDataEqual<T>(a: T | null, b: T | null): boolean {
@@ -36,11 +37,22 @@ function isDataEqual<T>(a: T | null, b: T | null): boolean {
   if (a == null || b == null) return false;
   if (Array.isArray(a) && Array.isArray(b)) {
     if (a.length !== b.length) return false;
-    // Compare first-item $id as a fast proxy for "same content".
-    const firstA = (a as unknown[])[0] as Record<string, unknown> | undefined;
-    const firstB = (b as unknown[])[0] as Record<string, unknown> | undefined;
-    if (firstA?.$id !== undefined) return firstA.$id === firstB?.$id;
-    return JSON.stringify(a[0]) === JSON.stringify(b[0]);
+    if (a.length === 0) return true;
+
+    const headA = a[0] as Record<string, unknown> | undefined;
+    const headB = b[0] as Record<string, unknown> | undefined;
+    if (headA?.$id !== undefined) {
+      if (headA.$id !== (headB as Record<string, unknown> | undefined)?.$id) return false;
+    } else if (JSON.stringify(headA) !== JSON.stringify(headB)) {
+      return false;
+    }
+
+    const tailA = a[a.length - 1] as Record<string, unknown> | undefined;
+    const tailB = b[b.length - 1] as Record<string, unknown> | undefined;
+    if (tailA?.$id !== undefined) {
+      return tailA.$id === (tailB as Record<string, unknown> | undefined)?.$id;
+    }
+    return JSON.stringify(tailA) === JSON.stringify(tailB);
   }
   return JSON.stringify(a) === JSON.stringify(b);
 }

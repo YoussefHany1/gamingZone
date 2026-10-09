@@ -14,6 +14,8 @@ import apiClient from "./client";
 export interface SearchParams {
   query?: string | undefined;
   filters?: GameFilters | undefined;
+  /** 1-based page number; the backend returns up to 50 games per page. */
+  page?: number | undefined;
 }
 
 // ─── Endpoints ────────────────────────────────────────────────────────────────
@@ -113,13 +115,14 @@ export async function fetchGamingEvents(): Promise<GamingEvent[]> {
 }
 
 /** Search games by query text and optional filters. */
-export async function searchGames({ query, filters }: SearchParams): Promise<Game[]> {
+export async function searchGames({ query, filters, page }: SearchParams): Promise<Game[]> {
   const params: Record<string, string> = {};
   if (query) params.q = query;
   if (filters?.year) params.year = filters.year;
   if (filters?.genre) params.genre = filters.genre;
   if (filters?.platform) params.platform = filters.platform;
   if (filters?.sort) params.sort = filters.sort;
+  if (page) params.page = String(page);
 
   const response = await apiClient.get<Game[]>("/search", { params });
   return response.data;

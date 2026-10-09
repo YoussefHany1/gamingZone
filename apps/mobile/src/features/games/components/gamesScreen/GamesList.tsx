@@ -1,9 +1,9 @@
-import React, { useCallback, useMemo } from "react";
-import { View, TouchableOpacity, StyleSheet, RefreshControl } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { View, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
 import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, ArrowRight } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
@@ -21,6 +21,8 @@ import { searchGames } from "@/src/services/api/igdbApi";
 const CARD_HEIGHT = 270;
 const CARD_WIDTH = 160;
 const NUM_COLUMNS = 2;
+// The backend /search endpoint returns up to 50 games per page (page is 1-based).
+const PAGE_SIZE = 50;
 const VALID_GAME_TYPES = [1, 2, 5, 6, 7, 8, 9, 10];
 
 // Helpers
@@ -49,8 +51,9 @@ function getRatingStyle(rating: number) {
 async function fetchSearchResults(
   query: string | undefined,
   filters?: GameFilters,
+  page = 1,
 ): Promise<Game[]> {
-  return searchGames({ query, filters });
+  return searchGames({ query, filters, page });
 }
 
 // Game Card
@@ -192,6 +195,26 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
       fontSize: 18,
       fontWeight: "bold",
     },
+    footer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: 16,
+    },
+    nextBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: c.accent,
+      borderRadius: 20,
+      paddingHorizontal: 24,
+      paddingVertical: 10,
+      gap: 8,
+    },
+    nextText: {
+      color: c.onAccent,
+      fontSize: 16,
+      fontWeight: "bold",
+    },
   }));
 
   const safeQuery = (query ?? "all").replace(/\s/g, "_");
@@ -209,8 +232,52 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     [query, filters?.year, filters?.genre, filters?.platform, filters?.sort],
   );
 
-  const games = data ?? [];
-  const isInitialLoading = isLoading && games.length === 0;
+  // Page 1 base list (served from cache + revalidated). Additional pages are
+  // appended into extraGames so the cache stays a single-page snapshot.
+  const baseGames = useMemo(() => data ?? [], [data]);
+  const isInitialLoading = isLoading && baseGames.length === 0;
+
+  const [page, setPage] = useState(1);
+  const [extraGames, setExtraGames] = useState<Game[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const games = useMemo(() => [...baseGames, ...extraGames], [baseGames, extraGames]);
+
+  // Reset accumulated pages whenever the base (page 1) list is replaced — e.g.
+  // after a pull-to-refresh, a background TTL refetch, or a query/filters change.
+  const baseRef = useRef(baseGames);
+  useEffect(() => {
+    if (baseGames !== baseRef.current) {
+      baseRef.current = baseGames;
+      setExtraGames([]);
+      setPage(1);
+      setHasMore(true);
+    }
+  }, [baseGames]);
+
+  const extraRef = useRef(extraGames);
+  useEffect(() => {
+    extraRef.current = extraGames;
+  }, [extraGames]);
+
+  const handleLoadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setIsLoadingMore(true);
+    try {
+      const next = await fetchSearchResults(query, filters, nextPage);
+      const seen = new Set([...baseGames, ...extraRef.current].map((g) => g.id));
+      const uniqueNext = next.filter((g) => !seen.has(g.id));
+      setExtraGames([...extraRef.current, ...uniqueNext]);
+      setPage(nextPage);
+      if (next.length < PAGE_SIZE) setHasMore(false);
+    } catch {
+      // Keep the button visible so a later tap can retry.
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, hasMore, page, query, filters, baseGames]);
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<Game>) => (
@@ -255,6 +322,38 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     [],
   );
 
+  // Only show "Next" when there might be more: an already-loaded page 2, or a
+  // full page 1 (a short first page means the result set is exhausted).
+  const canLoadMore = hasMore && (page > 1 || baseGames.length >= PAGE_SIZE);
+
+  const renderFooter = useCallback(() => {
+    if (!canLoadMore) return null;
+    return (
+      <View style={styles.footer}>
+        {isLoadingMore ? (
+          <ActivityIndicator color={colors.accent} />
+        ) : (
+          <TouchableOpacity
+            style={styles.nextBtn}
+            onPress={handleLoadMore}
+            activeOpacity={0.7}
+          >
+            <CustomText style={styles.nextText}>{t("games.list.next")}</CustomText>
+            <ArrowRight size={20} color={colors.text} />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  }, [
+    canLoadMore,
+    isLoadingMore,
+    handleLoadMore,
+    colors.accent,
+    colors.text,
+    t,
+    styles,
+  ]);
+
   if (isInitialLoading) {
     return (
       <FlashList
@@ -292,6 +391,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
       renderItem={renderItem}
       showsVerticalScrollIndicator={false}
       ListHeaderComponent={renderBackButton}
+      ListFooterComponent={renderFooter}
       contentContainerStyle={styles.listContent}
       refreshControl={refreshControl}
       onScroll={onScroll}

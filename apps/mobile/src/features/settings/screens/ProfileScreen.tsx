@@ -322,7 +322,7 @@ const ProfileScreen = React.memo((): React.ReactElement => {
     container: {
       flex: 1,
       backgroundColor: c.background,
-      paddingBottom: 90,
+      // paddingBottom: 90,
     },
     content: {
       padding: 20,
@@ -429,9 +429,10 @@ const ProfileScreen = React.memo((): React.ReactElement => {
     : require("@/assets/default_profile.webp");
 
   return (
-    <SafeAreaView style={styles.container} edges={["right", "left"]}>
+    <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <ScrollView
         contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

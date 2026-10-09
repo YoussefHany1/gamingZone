@@ -265,7 +265,8 @@ const GameDetails = ({ route, navigation }: Props) => {
                         >
                           <Star
                             size={32}
-                            color={star <= rating ? "#ffc107" : colors.textMuted}
+                            color={colors.textMuted}
+                            fill={star <= rating ? colors.textMuted : "transparent"}
                           />
                         </TouchableOpacity>
                       ))}

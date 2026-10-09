@@ -22,27 +22,34 @@ import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import * as Notifications from "expo-notifications";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { adUnitId } from "../constants/config";
-import HomeScreen from "../features/home/screens/HomeScreen";
-import NewsScreen from "../features/news/screens/NewsScreen";
-import GamesScreen from "../features/games/screens/GamesScreen";
-import SettingsScreen from "../features/settings/screens/SettingsScreen";
-import GameDetails from "../features/games/screens/GameDetailsScreen";
-import UserGamesScreen from "../features/lists/screens/UserGamesScreen";
-import NotificationSettings from "../features/settings/screens/NotificationScreen";
-import Profile from "../features/settings/screens/ProfileScreen";
-import EditProfileScreen from "../features/settings/screens/EditProfileScreen";
-import AIChatScreen from "../features/ai/screens/AIChatScreen";
-import GameNewsScreen from "../features/games/screens/GameNewsScreen";
-import EventDetailsScreen from "../features/events/screens/EventDetailsScreen";
+import { HomeScreen } from "@/src/features/home";
+import {
+  NewsScreen,
+  NewsDetailsScreen as NewsDetails,
+} from "@/src/features/news";
+import {
+  GamesScreen,
+  GameDetailsScreen as GameDetails,
+  GameNewsScreen,
+} from "@/src/features/games";
+import {
+  SettingsScreen,
+  NotificationScreen as NotificationSettings,
+  ProfileScreen as Profile,
+  EditProfileScreen,
+  LanguageSelectScreen as LanguageScreen,
+  ThemeScreen,
+  ContactScreen,
+} from "@/src/features/settings";
+import { UserGamesScreen, UserListsScreen } from "@/src/features/lists";
+import { AIChatScreen } from "@/src/features/ai";
+import { EventDetailsScreen } from "@/src/features/events";
+import {
+  LoginScreen,
+  RegisterScreen,
+  ForgotPasswordScreen,
+} from "@/src/features/auth";
 import type { GamingEvent } from "@/src/types/sharedTypes";
-import UserListsScreen from "../features/lists/screens/UserListsScreen";
-import NewsDetails from "../features/news/screens/NewsDetailsScreen";
-import LanguageScreen from "../features/settings/screens/LanguageSelectScreen";
-import ThemeScreen from "../features/settings/screens/ThemeScreen";
-import ContactScreen from "../features/settings/screens/ContactScreen";
-import LoginScreen from "../features/auth/screens/LoginScreen";
-import RegisterScreen from "../features/auth/screens/RegisterScreen";
-import ForgotPasswordScreen from "../features/auth/screens/ForgotPasswordScreen";
 
 // Navigator Param Lists
 

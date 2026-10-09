@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { View, TouchableOpacity, StyleSheet, I18nManager } from "react-native";
+import { View, TouchableOpacity, StyleSheet, I18nManager, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
@@ -212,6 +212,8 @@ type DayGameRowProps = { game: Game };
 const DayGameRow = memo<DayGameRowProps>(({ game }) => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
+  const colors = useThemeColors();
+  const [coverLoading, setCoverLoading] = useState(true);
 
   // Minute precision is plenty for a calendar row, and keeps the home screen
   // from re-rendering every row every second (see useCountdown's own notes).
@@ -228,6 +230,13 @@ const DayGameRow = memo<DayGameRowProps>(({ game }) => {
       height: 46,
       borderRadius: 10,
       backgroundColor: c.accent,
+      overflow: "hidden",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    rowCoverImage: {
+      width: "100%",
+      height: "100%",
     },
     rowInfo: {
       flex: 1,
@@ -332,17 +341,27 @@ const DayGameRow = memo<DayGameRowProps>(({ game }) => {
 
   return (
     <TouchableOpacity style={styles.gameRow} onPress={handlePress} activeOpacity={0.85}>
-      <Image
-        source={
-          game.cover?.image_id
-            ? { uri: igdbImageUrl(game.cover.image_id, "cover_med") }
-            : require("@/assets/image-not-found.webp")
-        }
-        style={styles.rowCover}
-        contentFit="cover"
-        cachePolicy="memory-disk"
-        recyclingKey={game.cover?.image_id || String(game.id)}
-      />
+      <View style={styles.rowCover}>
+        {coverLoading && (
+          <View style={StyleSheet.absoluteFill} pointerEvents="none">
+            <ActivityIndicator size="small" color={colors.onAccent} />
+          </View>
+        )}
+        <Image
+          source={
+            game.cover?.image_id
+              ? { uri: igdbImageUrl(game.cover.image_id, "cover_med") }
+              : require("@/assets/image-not-found.webp")
+          }
+          style={styles.rowCoverImage}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          recyclingKey={game.cover?.image_id || String(game.id)}
+          onLoadStart={() => setCoverLoading(true)}
+          onLoad={() => setCoverLoading(false)}
+          onError={() => setCoverLoading(false)}
+        />
+      </View>
 
       <View style={styles.rowInfo}>
         <CustomText style={styles.rowTitle} numberOfLines={2}>

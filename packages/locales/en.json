@@ -140,7 +140,17 @@
       "title": "🗞️ Weekly Recap",
       "createdBy": "Created by",
       "readMore": "Read More..",
-      "readLess": "Read Less"
+      "readLess": "Read Less",
+      "subscribe": "Notify me weekly",
+      "notificationsOn": "Notifications on",
+      "subscribed": "You subscribed to weekly recap notifications",
+      "unsubscribed": "You unsubscribed from weekly recap notifications",
+      "subscribeAccessibility": "Subscribe to weekly recap notifications",
+      "unsubscribeAccessibility": "Unsubscribe from weekly recap notifications",
+      "notification": {
+        "title": "New Weekly Recap",
+        "body": "Your weekly gaming recap is ready. Tap to read it."
+      }
     },
     "gamingEvents": {
       "header": "Gaming Events",
@@ -281,6 +291,7 @@
       "searchResults": "Search Results",
       "noResults": "No games found.",
       "serverError": "The connection to the server failed. Please ensure you have an active internet connection and try again.",
+      "next": "Next",
       "gameTypes": {
         "1": "DLC",
         "2": "Expansion",
@@ -489,15 +500,15 @@
       "steam": {
         "modal": {
           "title": "Sync Your Steam Library",
-          "instructions": "Enter your Steam Custom URL or Steam ID to import your games to your lists (Playing, Played, Want to Play).",
-          "placeholder": "https://steamcommunity.com/profiles/76561198818022625",
+          "instructions": "Enter your Steam username (Custom URL), profile link, or Steam ID to import your games to your lists.",
+          "placeholder": "Username (Custom URL), profile link or ID",
           "privacy": "Please ensure your Steam Profile and Game Details are set to 'Public' in your privacy settings.",
           "syncing": "Syncing...",
           "syncBtn": "Sync Games",
           "cancel": "Cancel"
         },
         "errors": {
-          "empty": "Please enter a Steam ID/URL",
+          "empty": "Please enter a Steam username, link or ID",
           "resolveFailed": "Could not find Steam user",
           "privateProfile": "Your profile is private or has no games.",
           "fetchFailed": "Failed to fetch games",
@@ -604,7 +615,6 @@
       "sepia": "Sepia",
       "contrast": "High contrast",
       "steam": "Steam Blue",
-
       "blurple": "Discord",
       "nintendo": "Nintendo Switch",
       "playstation": "PlayStation",

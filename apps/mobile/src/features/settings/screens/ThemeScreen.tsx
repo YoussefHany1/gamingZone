@@ -17,7 +17,7 @@ import {
 } from "@/src/constants/theme";
 import { readableForeground, withAlpha } from "@/src/constants/colorUtils";
 import type { ThemeColors } from "@/src/constants/colors";
-import LatestNews from "@/src/features/news/components/LatestNews";
+import { LatestNews } from "@/src/features/news";
 import type { Article } from "@/src/features/news/types";
 
 const ACCENT_OPTIONS: AccentId[] = ["auto", "random", ...ACCENT_IDS];

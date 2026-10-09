@@ -106988,25 +106988,33 @@ var NEVER = INVALID;
 
 // scripts/lib/config.ts
 loadBackendEnv();
-var envSchema = external_exports.object({
+var coreEnvSchema = external_exports.object({
   APPWRITE_ENDPOINT: external_exports.string().url(),
   APPWRITE_PROJECT: external_exports.string().min(1),
   APPWRITE_API_KEY: external_exports.string().min(1),
   APPWRITE_DATABASE_ID: external_exports.string().min(1),
-  GEMINI_API_KEY: external_exports.string().min(1),
   RSS_COLLECTION_ID: external_exports.string().min(1).default("news_sources"),
   ARTICLES_COLLECTION_ID: external_exports.string().min(1).default("articles"),
   FREE_GAMES_COLLECTION_ID: external_exports.string().min(1).default("free_games"),
-  SUMMARIES_COLLECTION_ID: external_exports.string().min(1).default("weekly_summaries"),
-  FCM_SERVICE_ACCOUNT: external_exports.string().min(1)
+  SUMMARIES_COLLECTION_ID: external_exports.string().min(1).default("weekly_summaries")
 });
-var parsed = envSchema.safeParse(process.env);
+var parsed = coreEnvSchema.safeParse(process.env);
 if (!parsed.success) {
-  logger.error("\u274C Environment validation failed. Missing or invalid variables:");
+  logger.error("\u274C Core environment validation failed. Missing or invalid variables:");
   logger.error(parsed.error.format());
-  process.exit(1);
+  throw new Error("Core environment validation failed \u2014 see log output above.");
 }
 var env = parsed.data;
+function requireGeminiKey() {
+  const value = process.env.GEMINI_API_KEY;
+  if (!value) {
+    throw new Error("GEMINI_API_KEY is not set \u2014 required for the weekly summary job.");
+  }
+  return value;
+}
+function requireFcmServiceAccount() {
+  return process.env.FCM_SERVICE_ACCOUNT ?? null;
+}
 
 // scripts/lib/appwrite.ts
 var import_node_appwrite = require("node-appwrite");
@@ -107021,23 +107029,35 @@ function createAppwriteDatabases() {
 
 // scripts/lib/firebaseAdmin.ts
 var admin = __toESM(require("firebase-admin"));
-function initFirebaseAdmin(serviceAccountEnvVarKey) {
-  const rawServiceAccount = env[serviceAccountEnvVarKey];
+function initFirebaseAdmin(appName) {
+  const rawServiceAccount = requireFcmServiceAccount();
   if (!rawServiceAccount) {
-    return { admin, enabled: false, error: null };
+    return { admin, enabled: false, error: null, appName: null };
   }
   try {
     const serviceAccount = JSON.parse(rawServiceAccount);
-    if (!admin.apps.length) {
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        projectId: serviceAccount.project_id
-      });
+    const existing = admin.apps.find(
+      (app) => app !== null && app.name === appName
+    );
+    if (!existing) {
+      admin.initializeApp(
+        {
+          credential: admin.credential.cert(serviceAccount),
+          projectId: serviceAccount.project_id
+        },
+        appName
+      );
     }
-    return { admin, enabled: true, error: null };
+    return { admin, enabled: true, error: null, appName };
   } catch (error) {
-    return { admin, enabled: false, error: error.message };
+    return { admin, enabled: false, error: error.message, appName: null };
   }
+}
+function firebaseAppFor(state) {
+  if (state.appName === null) return null;
+  return admin.apps.find(
+    (app) => app !== null && app.name === state.appName
+  ) ?? null;
 }
 
 // scripts/lib/hash.ts
@@ -113077,7 +113097,7 @@ var CONFIG = {
   APPWRITE_DATABASE_ID: env.APPWRITE_DATABASE_ID
 };
 var databases = createAppwriteDatabases();
-var firebaseState = initFirebaseAdmin("FCM_SERVICE_ACCOUNT");
+var firebaseState = initFirebaseAdmin("rss");
 if (firebaseState.enabled) {
   logger.info("\u2705 Firebase Admin initialized.");
 } else if (firebaseState.error) {
@@ -113097,6 +113117,8 @@ function getStringValue(value) {
 }
 async function sendNotifications(articles, summary) {
   if (!articles.length || !firebaseState.enabled || !firebaseState.admin) return;
+  const app = firebaseAppFor(firebaseState);
+  if (!app) return;
   logger.info(`\u{1F514} Sending ${articles.length} notifications...`);
   const BATCH_SIZE = 10;
   for (let i = 0; i < articles.length; i += BATCH_SIZE) {
@@ -113125,7 +113147,7 @@ async function sendNotifications(articles, summary) {
           }
         };
         try {
-          await firebaseState.admin.messaging().send(message);
+          await firebaseState.admin.messaging(app).send(message);
           summary.notificationsSent++;
           logger.info(`   -> Sent: ${article.title.substring(0, 30)}...`);
         } catch (error) {
@@ -113522,7 +113544,7 @@ var CONFIG2 = {
   API_BASE_URL: "https://igdb-api-omega.vercel.app"
 };
 var databases2 = createAppwriteDatabases();
-var firebaseState2 = initFirebaseAdmin("FCM_SERVICE_ACCOUNT");
+var firebaseState2 = initFirebaseAdmin("freeGames");
 if (firebaseState2.enabled) {
   logger.info("\u2705 Firebase Admin initialized.");
 } else if (firebaseState2.error) {
@@ -113530,6 +113552,8 @@ if (firebaseState2.enabled) {
 }
 async function sendGameNotification(game) {
   if (!firebaseState2.enabled || !firebaseState2.admin) return;
+  const app = firebaseAppFor(firebaseState2);
+  if (!app) return;
   const imageLink = game.image || null;
   const storeName = game.store === "steam" ? "Steam" : game.store === "gog" ? "GOG" : "Epic Games";
   const message = {
@@ -113555,7 +113579,7 @@ async function sendGameNotification(game) {
     }
   };
   try {
-    await firebaseState2.admin.messaging().send(message);
+    await firebaseState2.admin.messaging(app).send(message);
     logger.info(`   \u{1F514} Notification sent for: ${game.title}`);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -113709,24 +113733,30 @@ async function runFetchFreeGames() {
   logger.info("--- Done. ---");
 }
 async function teardownFreeGamesService() {
-  if (firebaseState2.enabled && firebaseState2.admin) {
-    try {
-      await firebaseState2.admin.app().delete();
-      logger.info("\u{1F6D1} Firebase app deleted cleanly.");
-    } catch (error) {
-      logger.error(`\u274C Error deleting Firebase app: ${error}`);
-    }
+  const app = firebaseAppFor(firebaseState2);
+  if (!app) return;
+  try {
+    await app.delete();
+    logger.info("\u{1F6D1} Free-games Firebase app deleted cleanly.");
+  } catch (error) {
+    logger.error(`\u274C Error deleting Firebase app: ${error}`);
   }
 }
 
 // scripts/features/summary/summary.service.ts
 var sdk = __toESM(require("node-appwrite"));
 loadBackendEnv();
-var GEMINI_API_KEY = env.GEMINI_API_KEY;
 var DATABASE_ID = env.APPWRITE_DATABASE_ID;
 var NEWS_COLLECTION_ID = env.ARTICLES_COLLECTION_ID;
 var SUMMARIES_COLLECTION_ID = env.SUMMARIES_COLLECTION_ID;
+var FCM_TOPIC = "weekly_summary_alerts";
 var databases3 = createAppwriteDatabases();
+var firebaseState3 = initFirebaseAdmin("summary");
+if (firebaseState3.enabled) {
+  logger.info("\u2705 Firebase Admin initialized.");
+} else if (firebaseState3.error) {
+  logger.warn(`\u26A0\uFE0F Firebase error: ${firebaseState3.error}`);
+}
 var SUMMARY_PROMPT = (startDate, endDate, newsText) => `You are a senior gaming news editor writing a weekly recap for a gaming audience.
 
 TASK: Synthesize the gaming news articles below into a cohesive Weekly Recap. Output BOTH Arabic and English versions.
@@ -113811,13 +113841,14 @@ function parseJsonSummary(rawText) {
 }
 var delay = (ms) => new Promise((resolve2) => setTimeout(resolve2, ms));
 async function callGeminiWithRetry(prompt, maxRetries = 3) {
+  const apiKey = requireGeminiKey();
   let attempt = 0;
   while (true) {
     attempt++;
     try {
       logger.info(`\u{1F916} Trying Gemini... (Attempt ${attempt}/${maxRetries})`);
       const aiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -113940,6 +113971,35 @@ async function saveWeeklySummary(summary, startDate) {
     endDate: (/* @__PURE__ */ new Date()).toISOString()
   });
 }
+async function sendSummaryNotification() {
+  if (!firebaseState3.enabled || !firebaseState3.admin) return;
+  const app = firebaseAppFor(firebaseState3);
+  if (!app) return;
+  const message = {
+    topic: FCM_TOPIC,
+    notification: {
+      title: "\u{1F3AE} Weekly Gaming Recap",
+      body: "Your weekly recap is ready. Tap to read it!"
+    },
+    android: {
+      priority: "high",
+      notification: {
+        channelId: "news_notifications"
+      }
+    },
+    data: {
+      type: "weekly_summary",
+      clickAction: "FLUTTER_NOTIFICATION_CLICK"
+    }
+  };
+  try {
+    await firebaseState3.admin.messaging(app).send(message);
+    logger.info("\u{1F514} Weekly summary notification sent.");
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error(`\u274C Weekly summary notification failed: ${errorMessage}`);
+  }
+}
 async function runGenerateWeeklySummary() {
   try {
     logger.info("Fetching news from the last 7 days...");
@@ -114004,6 +114064,7 @@ ${s.english}`).join("\n\n");
     logger.info("Summary generated successfully. Saving to Appwrite...");
     await saveWeeklySummary(jsonSummary, sevenDaysAgo);
     logger.info("\u2705 Weekly summary saved!");
+    await sendSummaryNotification();
   } catch (error) {
     logger.error("\u274C Error generating summary:", error.message);
     if (error instanceof SyntaxError) {

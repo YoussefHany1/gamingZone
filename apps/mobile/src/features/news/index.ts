@@ -8,3 +8,6 @@
 // ── Screens ───────────────────────────────────────────────────────────────────
 export { default as NewsScreen } from "./screens/NewsScreen";
 export { default as NewsDetailsScreen } from "./screens/NewsDetailsScreen";
+
+// ── Components ────────────────────────────────────────────────────────────────
+export { default as LatestNews } from "./components/LatestNews";

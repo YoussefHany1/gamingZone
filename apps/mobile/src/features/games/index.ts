@@ -65,3 +65,7 @@ export type {
 // ── Screens ───────────────────────────────────────────────────────────────────
 export { default as GamesScreen } from "./screens/GamesScreen";
 export { default as GameDetailsScreen } from "./screens/GameDetailsScreen";
+export { default as GameNewsScreen } from "./screens/GameNewsScreen";
+
+// ── Components ────────────────────────────────────────────────────────────────
+export { default as RecommendedGames } from "./components/gamesScreen/RecommendedGames";

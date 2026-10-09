@@ -140,7 +140,17 @@
       "title": "🗞️ Resumen semanal",
       "createdBy": "Creado por",
       "readMore": "Leer más...",
-      "readLess": "Leer menos"
+      "readLess": "Leer menos",
+      "subscribe": "Avisarme semanalmente",
+      "notificationsOn": "Notificaciones activadas",
+      "subscribed": "Te suscribiste a los resúmenes semanales",
+      "unsubscribed": "Te diste de baja de los resúmenes semanales",
+      "subscribeAccessibility": "Suscribirse a los resúmenes semanales",
+      "unsubscribeAccessibility": "Darse de baja de los resúmenes semanales",
+      "notification": {
+        "title": "Nuevo resumen semanal",
+        "body": "Tu resumen semanal está listo. Toca para leerlo."
+      }
     },
     "gamingEvents": {
       "header": "Eventos de videojuegos",
@@ -281,6 +291,7 @@
       "searchResults": "Resultados de búsqueda",
       "noResults": "No se encontraron juegos.",
       "serverError": "Falló la conexión con el servidor. Asegúrate de tener una conexión a Internet activa e inténtalo de nuevo.",
+      "next": "Siguiente",
       "gameTypes": {
         "1": "DLC",
         "2": "Expansión",
@@ -472,7 +483,6 @@
       "sepia": "Sepia",
       "contrast": "Alto contraste",
       "steam": "Azul Steam",
-
       "blurple": "Discord",
       "nintendo": "Nintendo Switch",
       "playstation": "PlayStation",
@@ -528,15 +538,15 @@
       "steam": {
         "modal": {
           "title": "Sincroniza tu biblioteca de Steam",
-          "instructions": "Ingresa tu URL personalizada de Steam o tu Steam ID para importar tus juegos a tus listas (Jugando, Jugado, Quiero jugar).",
-          "placeholder": "https://steamcommunity.com/profiles/76561198818022625",
+          "instructions": "Ingresa tu nombre de usuario de Steam (URL personalizada), enlace de perfil o Steam ID para importar tus juegos a tus listas.",
+          "placeholder": "Usuario (URL personalizada), enlace o ID",
           "privacy": "Asegúrate de que tu perfil de Steam y los detalles de los juegos estén configurados como «Públicos» en tu configuración de privacidad.",
           "syncing": "Sincronizando...",
           "syncBtn": "Sincronizar juegos",
           "cancel": "Cancelar"
         },
         "errors": {
-          "empty": "Por favor, ingresa un ID/URL de Steam",
+          "empty": "Por favor, ingresa un nombre de usuario, enlace o ID de Steam",
           "resolveFailed": "No se pudo encontrar el usuario de Steam",
           "privateProfile": "Tu perfil es privado o no contiene juegos.",
           "fetchFailed": "No se pudieron obtener los juegos",

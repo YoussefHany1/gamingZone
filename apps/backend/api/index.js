@@ -8,36 +8,11 @@ app.use(express.json());
 
 const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 const CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
-// const MY_APP_SECRET = process.env.MY_APP_SECRET;
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error('TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET must be set in environment.');
   process.exit(1);
 }
-
-// if (!MY_APP_SECRET) {
-//   console.warn(
-//     "Warning: MY_APP_SECRET is not set in environment variables. The API is running with a default insecure key (default-insecure-key).",
-//   );
-// }
-
-// const authenticateRequest = (req, res, next) => {
-//   // Exclude the homepage from authentication (for Health Check purposes)
-//   if (req.path === "/") return next();
-
-//   const apiKey = req.headers["x-api-key"];
-
-//   // Use the key from the environment or a temporary default key
-//   const validKey = MY_APP_SECRET || "default-insecure-key";
-
-//   if (!apiKey || apiKey !== validKey) {
-//     return res
-//       .status(403)
-//       .json({ message: "Forbidden: Invalid or missing API Key" });
-//   }
-
-//   next();
-// };
 
 const cacheMiddleware = (duration) => (req, res, next) => {
   if (req.method === 'GET') {
@@ -45,6 +20,26 @@ const cacheMiddleware = (duration) => (req, res, next) => {
   }
   next();
 };
+
+/**
+ * Error carrying an HTTP status. 4xx statuses surface `err.message` to the
+ * client (expected, user-fixable); 5xx are collapsed to a generic message.
+ */
+class AppError extends Error {
+  constructor(message, status = 500) {
+    super(message);
+    this.status = status;
+  }
+}
+
+/** Wraps an async route handler; rejections flow to the central error handler. */
+const asyncRoute = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+// NOTE: the central error handler (app.use with 4 params) is registered at the
+// bottom of this file — Express only reaches error middleware positioned after
+// the route that rejected. See near `app.get('*')`.
 
 let cachedToken = null;
 
@@ -96,7 +91,7 @@ async function callIgdb(apiEndpoint, queryBody) {
     if (!res.ok) {
       console.error('IGDB returned non-OK status:', res.status, res.statusText);
       console.error('IGDB response body:', text);
-      throw new Error(`IGDB API Error: ${res.status} ${res.statusText} - ${text}`);
+      throw new AppError(`IGDB API Error: ${res.status} ${res.statusText}`, 502);
     }
 
     // Attempt to parse JSON, with error handling
@@ -106,7 +101,7 @@ async function callIgdb(apiEndpoint, queryBody) {
     } catch (err) {
       console.error('Failed to parse IGDB JSON response:', err);
       console.error('Raw body:', text);
-      throw new Error('Failed to parse IGDB JSON response');
+      throw new AppError('Failed to parse IGDB JSON response', 502);
     }
 
     // Adjust cover URLs
@@ -118,8 +113,9 @@ async function callIgdb(apiEndpoint, queryBody) {
       return game;
     });
   } catch (error) {
+    if (error instanceof AppError) throw error;
     console.error('Error calling IGDB:', error);
-    throw error;
+    throw new AppError('Failed to reach IGDB', 502);
   }
 }
 //  Endpoints
@@ -197,109 +193,85 @@ app.get('/news-details', (req, res) => {
 });
 
 // Top Rated
-app.get('/top-rated', cacheMiddleware(3600), async (req, res) => {
-  try {
-    const query = `
-      ${BASE_QUERY_FIELDS}, genres.name;
-      ${BASE_QUERY_WHERE} & total_rating_count > 20;
-      sort total_rating desc;
-      limit 10;
-    `;
-    const data = await callIgdb('games', query);
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      message: 'An error occurred on the server while fetching data. Please try again later.',
-    });
-  }
-});
+app.get('/top-rated', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const query = `
+    ${BASE_QUERY_FIELDS}, genres.name;
+    ${BASE_QUERY_WHERE} & total_rating_count > 20;
+    sort total_rating desc;
+    limit 10;
+  `;
+  const data = await callIgdb('games', query);
+  res.json(data);
+}));
 
 // Recently Released
-app.get('/recently-released', cacheMiddleware(3600), async (req, res) => {
-  try {
-    const nowTs = Math.floor(Date.now() / 1000);
-    const query = `
-      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
-      ${BASE_QUERY_WHERE} & first_release_date < ${nowTs} & total_rating_count > 5;
-      sort first_release_date desc;
-      limit 10;
-    `;
-    const data = await callIgdb('games', query);
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      message: 'An error occurred on the server while fetching data. Please try again later.',
-    });
-  }
-});
+app.get('/recently-released', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const nowTs = Math.floor(Date.now() / 1000);
+  const query = `
+    ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
+    ${BASE_QUERY_WHERE} & first_release_date < ${nowTs} & total_rating_count > 5;
+    sort first_release_date desc;
+    limit 10;
+  `;
+  const data = await callIgdb('games', query);
+  res.json(data);
+}));
 
 // Trending Mobile Games
-app.get('/trending-mobile', cacheMiddleware(3600), async (req, res) => {
-  try {
-    const nowTs = Math.floor(Date.now() / 1000);
-    const pastDate = new Date();
-    pastDate.setFullYear(pastDate.getFullYear() - 2);
-    const startTs = Math.floor(pastDate.getTime() / 1000);
+app.get('/trending-mobile', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const nowTs = Math.floor(Date.now() / 1000);
+  const pastDate = new Date();
+  pastDate.setFullYear(pastDate.getFullYear() - 2);
+  const startTs = Math.floor(pastDate.getTime() / 1000);
 
-    const query = `
-      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
-      ${BASE_QUERY_WHERE} & platforms = (34,39) & first_release_date > ${startTs} & first_release_date < ${nowTs} & total_rating_count > 5;
-      sort total_rating desc;
-      limit 10;
-    `;
-    const data = await callIgdb('games', query);
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      message: 'An error occurred on the server while fetching data. Please try again later.',
-    });
-  }
-});
+  const query = `
+    ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
+    ${BASE_QUERY_WHERE} & platforms = (34,39) & first_release_date > ${startTs} & first_release_date < ${nowTs} & total_rating_count > 5;
+    sort total_rating desc;
+    limit 10;
+  `;
+  const data = await callIgdb('games', query);
+  res.json(data);
+}));
 
 // Popular Right Now
-app.get('/popular', cacheMiddleware(3600), async (req, res) => {
-  try {
-    const nowTs = Math.floor(Date.now() / 1000);
-    // 6 months ago
-    const pastDate = new Date();
-    pastDate.setMonth(pastDate.getMonth() - 6);
-    const startTs = Math.floor(pastDate.getTime() / 1000);
+app.get('/popular', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const nowTs = Math.floor(Date.now() / 1000);
+  // 6 months ago
+  const pastDate = new Date();
+  pastDate.setMonth(pastDate.getMonth() - 6);
+  const startTs = Math.floor(pastDate.getTime() / 1000);
 
-    // Fetch top 100 IDs from popularity_primitives (was 500 — reduced for performance)
-    const primitivesQuery = `
-      fields game_id;
-      sort value desc;
-      where popularity_type = 1;
-      limit 100;
-    `;
+  // Fetch top 100 IDs from popularity_primitives (was 500 — reduced for performance)
+  const primitivesQuery = `
+    fields game_id;
+    sort value desc;
+    where popularity_type = 1;
+    limit 100;
+  `;
 
-    const primitivesData = await callIgdb('popularity_primitives', primitivesQuery);
+  const primitivesData = await callIgdb('popularity_primitives', primitivesQuery);
 
-    if (!primitivesData || primitivesData.length === 0) {
-      return res.json([]);
-    }
-
-    const gameIds = primitivesData.map((p) => p.game_id).join(',');
-
-    const gamesQuery = `
-      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name;
-      ${BASE_QUERY_WHERE} & id = (${gameIds}) & first_release_date > ${startTs} & first_release_date < ${nowTs};
-    `;
-
-    const gamesData = await callIgdb('games', gamesQuery);
-
-    // Reorder games to match popularity order
-    const sortedGames = primitivesData
-      .map((p) => gamesData.find((g) => g.id === p.game_id))
-      .filter((g) => g);
-
-    res.json(sortedGames);
-  } catch (error) {
-    res.status(500).json({
-      message: 'An error occurred on the server while fetching data. Please try again later.',
-    });
+  if (!primitivesData || primitivesData.length === 0) {
+    return res.json([]);
   }
-});
+
+  const gameIds = primitivesData.map((p) => p.game_id).join(',');
+
+  const gamesQuery = `
+    ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name;
+    ${BASE_QUERY_WHERE} & id = (${gameIds}) & first_release_date > ${startTs} & first_release_date < ${nowTs};
+  `;
+
+  const gamesData = await callIgdb('games', gamesQuery);
+
+  // Reorder games to match popularity order
+  const sortedGames = primitivesData
+    .map((p) => gamesData.find((g) => g.id === p.game_id))
+    .filter((g) => g);
+
+  res.json(sortedGames);
+}));
 
 // ── YouTube helper ──────────────────────────────────────────────────────────
 
@@ -353,687 +325,665 @@ async function fetchYouTubeStats(videoIds) {
 
 // Most Viewed Recent Trailers
 // NOTE: endpoint name kept as /latest-trailers to avoid breaking the frontend.
-app.get('/latest-trailers', cacheMiddleware(3600), async (req, res) => {
-  try {
-    // ── 1. Fetch candidate games from IGDB ──────────────────────────────────
-    // We pull more candidates than needed so the YouTube filter+sort has room
-    // to work with. Widening the IGDB window to 6 months gives good coverage.
-    const nowTs = Math.floor(Date.now() / 1000);
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    const startTs = Math.floor(sixMonthsAgo.getTime() / 1000);
+app.get('/latest-trailers', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  // ── 1. Fetch candidate games from IGDB ──────────────────────────────────
+  // We pull more candidates than needed so the YouTube filter+sort has room
+  // to work with. Widening the IGDB window to 6 months gives good coverage.
+  const nowTs = Math.floor(Date.now() / 1000);
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+  const startTs = Math.floor(sixMonthsAgo.getTime() / 1000);
 
-    const query = `
-      ${BASE_QUERY_FIELDS}, videos.name, videos.video_id, screenshots.image_id;
-      ${BASE_QUERY_WHERE} & videos != null & screenshots != null & first_release_date > ${startTs} & first_release_date < ${nowTs};
-      sort total_rating_count desc;
-      limit 50;
-    `;
-    const igdbGames = await callIgdb('games', query);
+  const query = `
+    ${BASE_QUERY_FIELDS}, videos.name, videos.video_id, screenshots.image_id;
+    ${BASE_QUERY_WHERE} & videos != null & screenshots != null & first_release_date > ${startTs} & first_release_date < ${nowTs};
+    sort total_rating_count desc;
+    limit 50;
+  `;
+  const igdbGames = await callIgdb('games', query);
 
-    if (!igdbGames || igdbGames.length === 0) {
-      return res.json([]);
+  if (!igdbGames || igdbGames.length === 0) {
+    return res.json([]);
+  }
+
+  // ── 2. Extract unique video IDs ─────────────────────────────────────────
+  const seenVideoIds = new Set();
+  // Map: videoId → game (keep first occurrence only)
+  const videoToGame = new Map();
+
+  for (const game of igdbGames) {
+    if (!Array.isArray(game.videos)) continue;
+    for (const v of game.videos) {
+      if (!v.video_id || seenVideoIds.has(v.video_id)) continue;
+      seenVideoIds.add(v.video_id);
+      videoToGame.set(v.video_id, { game, videoName: v.name ?? null });
     }
+  }
 
-    // ── 2. Extract unique video IDs ─────────────────────────────────────────
-    const seenVideoIds = new Set();
-    // Map: videoId → game (keep first occurrence only)
-    const videoToGame = new Map();
+  const uniqueVideoIds = [...seenVideoIds];
 
-    for (const game of igdbGames) {
-      if (!Array.isArray(game.videos)) continue;
-      for (const v of game.videos) {
-        if (!v.video_id || seenVideoIds.has(v.video_id)) continue;
-        seenVideoIds.add(v.video_id);
-        videoToGame.set(v.video_id, { game, videoName: v.name ?? null });
-      }
-    }
+  // ── 3. Fetch YouTube stats (batched) ────────────────────────────────────
+  const statsMap = await fetchYouTubeStats(uniqueVideoIds);
 
-    const uniqueVideoIds = [...seenVideoIds];
+  // ── 4. Filter: published within the last 30 days ────────────────────────
+  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
 
-    // ── 3. Fetch YouTube stats (batched) ────────────────────────────────────
-    const statsMap = await fetchYouTubeStats(uniqueVideoIds);
+  const candidates = [];
+  for (const [videoId, ytStats] of statsMap) {
+    // Skip if no publishedAt (deleted / private)
+    if (!ytStats.publishedAt) continue;
+    const publishedMs = new Date(ytStats.publishedAt).getTime();
+    if (publishedMs < thirtyDaysAgo) continue;
+    // Skip if viewCount missing
+    if (ytStats.viewCount === null) continue;
 
-    // ── 4. Filter: published within the last 30 days ────────────────────────
-    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const entry = videoToGame.get(videoId);
+    if (!entry) continue;
 
-    const candidates = [];
-    for (const [videoId, ytStats] of statsMap) {
-      // Skip if no publishedAt (deleted / private)
-      if (!ytStats.publishedAt) continue;
-      const publishedMs = new Date(ytStats.publishedAt).getTime();
-      if (publishedMs < thirtyDaysAgo) continue;
-      // Skip if viewCount missing
-      if (ytStats.viewCount === null) continue;
-
-      const entry = videoToGame.get(videoId);
-      if (!entry) continue;
-
-      candidates.push({
-        videoId,
-        ytStats,
-        game: entry.game,
-        videoName: entry.videoName,
-      });
-    }
-
-    // ── 5. Sort by viewCount DESC, deduplicate by game, take top 10 ──────────
-    // A game may have multiple trailers that passed the filter (e.g. Wolverine ×3).
-    // After sorting, keep only the highest-viewed trailer per game.
-    candidates.sort((a, b) => b.ytStats.viewCount - a.ytStats.viewCount);
-    const seenGameIds = new Set();
-    const deduped = [];
-    for (const c of candidates) {
-      const gid = c.game.id;
-      if (seenGameIds.has(gid)) continue;
-      seenGameIds.add(gid);
-      deduped.push(c);
-    }
-    const top10 = deduped.slice(0, 10);
-
-    // ── 6. Build response (backward-compatible shape + YouTube fields) ───────
-    // Each item mirrors the IGDB game object but replaces videos[] with a
-    // single "trailer" object so the frontend doesn't need to change.
-    const result = top10.map(({ videoId, ytStats, game, videoName }) => ({
-      ...game,
-      // Flatten to a single trailer so frontend can use it directly
-      trailer: {
-        video_id: videoId,
-        name: videoName ?? ytStats.title,
-        youtube_title: ytStats.title,
-        published_at: ytStats.publishedAt,
-        view_count: ytStats.viewCount,
-        like_count: ytStats.likeCount,
-      },
-    }));
-
-    res.json(result);
-  } catch (error) {
-    console.error('Latest Trailers Error:', error);
-    res.status(500).json({
-      message: 'An error occurred on the server while fetching data. Please try again later.',
+    candidates.push({
+      videoId,
+      ytStats,
+      game: entry.game,
+      videoName: entry.videoName,
     });
   }
-});
+
+  // ── 5. Sort by viewCount DESC, deduplicate by game, take top 10 ──────────
+  // A game may have multiple trailers that passed the filter (e.g. Wolverine ×3).
+  // After sorting, keep only the highest-viewed trailer per game.
+  candidates.sort((a, b) => b.ytStats.viewCount - a.ytStats.viewCount);
+  const seenGameIds = new Set();
+  const deduped = [];
+  for (const c of candidates) {
+    const gid = c.game.id;
+    if (seenGameIds.has(gid)) continue;
+    seenGameIds.add(gid);
+    deduped.push(c);
+  }
+  const top10 = deduped.slice(0, 10);
+
+  // ── 6. Build response (backward-compatible shape + YouTube fields) ───────
+  // Each item mirrors the IGDB game object but replaces videos[] with a
+  // single "trailer" object so the frontend doesn't need to change.
+  const result = top10.map(({ videoId, ytStats, game, videoName }) => ({
+    ...game,
+    // Flatten to a single trailer so frontend can use it directly
+    trailer: {
+      video_id: videoId,
+      name: videoName ?? ytStats.title,
+      youtube_title: ytStats.title,
+      published_at: ytStats.publishedAt,
+      view_count: ytStats.viewCount,
+      like_count: ytStats.likeCount,
+    },
+  }));
+
+  res.json(result);
+}));
 
 // Coming Soon
-app.get('/coming-soon', cacheMiddleware(3600), async (req, res) => {
-  try {
-    const nowTs = Math.floor(Date.now() / 1000);
-    const query = `
-      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, hypes;
-      ${BASE_QUERY_WHERE} & first_release_date > ${nowTs};
-      sort first_release_date asc;
-      limit 10;
-    `;
-    const data = await callIgdb('games', query);
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      message: 'An error occurred on the server while fetching data. Please try again later.',
-    });
-  }
-});
+app.get('/coming-soon', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const nowTs = Math.floor(Date.now() / 1000);
+  const query = `
+    ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, hypes;
+    ${BASE_QUERY_WHERE} & first_release_date > ${nowTs};
+    sort first_release_date asc;
+    limit 10;
+  `;
+  const data = await callIgdb('games', query);
+  res.json(data);
+}));
 
 // Most Anticipated
-app.get('/most-anticipated', cacheMiddleware(3600), async (req, res) => {
-  try {
-    const nowTs = Math.floor(Date.now() / 1000);
-    const query = `
-      ${BASE_QUERY_FIELDS};
-      ${BASE_QUERY_WHERE} & first_release_date > ${nowTs} & hypes > 0;
-      sort hypes desc;
-      limit 10;
-    `;
-    const data = await callIgdb('games', query);
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      message: 'An error occurred on the server while fetching data. Please try again later.',
-    });
-  }
-});
+app.get('/most-anticipated', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const nowTs = Math.floor(Date.now() / 1000);
+  const query = `
+    ${BASE_QUERY_FIELDS};
+    ${BASE_QUERY_WHERE} & first_release_date > ${nowTs} & hypes > 0;
+    sort hypes desc;
+    limit 10;
+  `;
+  const data = await callIgdb('games', query);
+  res.json(data);
+}));
 
 // Nostalgia Corner
-app.get('/nostalgia-corner', cacheMiddleware(3600), async (req, res) => {
-  try {
-    const nostalgiaDate = new Date();
-    nostalgiaDate.setFullYear(nostalgiaDate.getFullYear() - 20);
-    const nostalgiaTs = Math.floor(nostalgiaDate.getTime() / 1000);
-    const query = `
-      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name;
-      ${BASE_QUERY_WHERE} & first_release_date < ${nostalgiaTs} & total_rating > 70;
-      sort total_rating_count desc;
-      limit 50;
-    `;
-    const data = await callIgdb('games', query);
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      message: 'An error occurred on the server while fetching data. Please try again later.',
-    });
+app.get('/nostalgia-corner', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const nostalgiaDate = new Date();
+  nostalgiaDate.setFullYear(nostalgiaDate.getFullYear() - 20);
+  const nostalgiaTs = Math.floor(nostalgiaDate.getTime() / 1000);
+  const query = `
+    ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name;
+    ${BASE_QUERY_WHERE} & first_release_date < ${nostalgiaTs} & total_rating > 70;
+    sort total_rating_count desc;
+    limit 50;
+  `;
+  const data = await callIgdb('games', query);
+  res.json(data);
+}));
+
+// Release Calendar — every game releasing inside the [from, to] window
+// (Unix seconds, inclusive), one flat date-ascending list so the client can
+// bucket games per UTC day. The window is clamped to 62 days and the result
+// capped at 500 games.
+app.get('/release-calendar', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const nowTs = Math.floor(Date.now() / 1000);
+  let from = parseInt(req.query.from, 10);
+  if (isNaN(from)) from = nowTs - 7 * 86400;
+  let to = parseInt(req.query.to, 10);
+  if (isNaN(to)) to = nowTs + 30 * 86400;
+
+  const MAX_DAYS = 62;
+  if (to - from > MAX_DAYS * 86400) to = from + MAX_DAYS * 86400;
+
+  const query = `
+    ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, hypes;
+    ${BASE_QUERY_WHERE} & first_release_date >= ${from} & first_release_date <= ${to};
+    sort first_release_date asc;
+    limit 500;
+  `;
+  const data = await callIgdb('games', query);
+  res.json(data);
+}));
+
+// Search with stable, page-independent ordering.
+//
+// Pagination strategy:
+//  - Browse filters (year/genre/platform): IGDB `sort` is applied engine-side
+//    and we stream `limit 50 / offset N` straight off that ordered stream.
+//  - Text `q` with relevance (default): IGDB's native search ordering, also
+//    streamed off the engine's order.
+//  - Text `q` with a non-relevance `sort`: IGDB forbids `sort` alongside the
+//    `search` keyword, so we pull the full bounded match set (≤ 500, IGDB's
+//    hard limit) in ONE relevance query, sort that whole set once in Node
+//    (stable, with an `id` tie-break), then slice the requested page. Sorting
+//    a single snapshot instead of per-page kills the old cross-page
+//    reordering bug.
+app.get('/search', cacheMiddleware(300), asyncRoute(async (req, res) => {
+  const { q, year, genre, platform, sort, page } = req.query;
+
+  // At least one of q, year, genre, or platform must be provided
+  if (!q && !year && !genre && !platform) {
+    throw new AppError('At least one filter (q, year, genre, or platform) is required', 400);
   }
-});
 
-app.get('/search', cacheMiddleware(300), async (req, res) => {
-  try {
-    const { q, year, genre, platform, sort, page } = req.query;
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const offset = (pageNum - 1) * 50;
+  const PAGE_SIZE = 50;
+  const MAX_MATCHES = 500;
 
-    // At least one of q, year, genre, or platform must be provided
-    if (!q && !year && !genre && !platform) {
-      return res.status(400).json({
-        message: 'At least one filter (q, year, genre, or platform) is required',
-      });
+  // Always include genres and platforms in fields so client can display them
+  const fields = `${BASE_QUERY_FIELDS}, genres.name, platforms.name, platforms.abbreviation`;
+
+  // Build WHERE clauses
+  const whereClauses = ['cover.image_id != null', 'game_type = (0,8,9,10)'];
+
+  // Year filter: convert to Unix timestamp range
+  if (year) {
+    const y = parseInt(year, 10);
+    if (!isNaN(y)) {
+      const start = Math.floor(new Date(y, 0, 1).getTime() / 1000);
+      const end = Math.floor(new Date(y + 1, 0, 1).getTime() / 1000) - 1;
+      whereClauses.push(`first_release_date >= ${start}`, `first_release_date <= ${end}`);
     }
+  }
 
-    const pageNum = parseInt(page, 10) || 1;
-    const offset = (pageNum - 1) * 50;
+  // Genre filter: match by genre name
+  if (genre) {
+    const safeGenre = genre.replace(/"/g, '\\"');
+    whereClauses.push(`genres.name = "${safeGenre}"`);
+  }
 
-    // Always include genres and platforms in fields so client can display them
-    const fields = `${BASE_QUERY_FIELDS}, genres.name, platforms.name, platforms.abbreviation`;
+  // Platform filter: match by platform name
+  if (platform) {
+    const safePlatform = platform.replace(/"/g, '\\"');
+    whereClauses.push(`platforms.name = "${safePlatform}"`);
+  }
 
-    // Build WHERE clauses
-    const whereClauses = ['cover.image_id != null', 'game_type = (0,8,9,10)'];
+  const whereStr = whereClauses.join(' & ');
 
-    // Year filter: convert to Unix timestamp range
-    if (year) {
-      const y = parseInt(year, 10);
-      if (!isNaN(y)) {
-        const start = Math.floor(new Date(y, 0, 1).getTime() / 1000);
-        const end = Math.floor(new Date(y + 1, 0, 1).getTime() / 1000) - 1;
-        whereClauses.push(`first_release_date >= ${start}`);
-        whereClauses.push(`first_release_date <= ${end}`);
-      }
-    }
+  const sortField =
+    sort === 'title' ? 'name'
+    : sort === 'release_date' ? 'first_release_date'
+    : sort === 'rating' ? 'total_rating'
+    : null;
+  const sortDir = sortField === 'name' ? 'asc' : 'desc';
 
-    // Genre filter: match by genre name
-    if (genre) {
-      const safeGenre = genre.replace(/"/g, '\\"');
-      whereClauses.push(`genres.name = "${safeGenre}"`);
-    }
+  let data;
 
-    // Platform filter: match by platform name
-    if (platform) {
-      const safePlatform = platform.replace(/"/g, '\\"');
-      whereClauses.push(`platforms.name = "${safePlatform}"`);
-    }
+  if (q) {
+    const safeQ = q.replace(/"/g, '\\"');
 
-    const whereStr = whereClauses.join(' & ');
-
-    let igdbQuery;
-
-    if (q) {
-      // IGDB does NOT allow `sort` when using the `search` keyword.
-      // Fetch in relevance order; sort is applied in Node.js below.
-      const safeQ = q.replace(/"/g, '\\"');
-      igdbQuery = `
+    if (!sortField) {
+      // Relevance — IGDB's own ordering; page straight off the engine.
+      data = await callIgdb('games', `
         ${fields};
         search "${safeQ}";
         where ${whereStr};
-        limit 50;
+        limit ${PAGE_SIZE};
         offset ${offset};
-      `;
+      `);
     } else {
-      // Browse/filter only — server-side sort is fine here.
-      let serverSort;
-      if (sort === 'title') {
-        serverSort = 'sort name asc;';
-      } else if (sort === 'release_date') {
-        serverSort = 'sort first_release_date desc;';
-      } else {
-        serverSort = 'sort total_rating desc;';
-      }
-      const ratingFilter =
-        sort === 'title' || sort === 'release_date' ? '' : '& total_rating_count > 0';
-      igdbQuery = `
-        ${fields};
-        where ${whereStr} ${ratingFilter};
-        ${serverSort}
-        limit 50;
-        offset ${offset};
-      `;
+      // Non-relevance sort — fetch the bounded relevance match set once
+      // (≤ 500), sort the full set once, then slice the requested page.
+      const matches = await callIgdb('games', `
+        fields id;
+        search "${safeQ}";
+        where ${whereStr};
+        limit ${MAX_MATCHES};
+      `);
+
+      data = [...matches]
+        .sort((a, b) => {
+          const av = a[sortField] ?? (sortDir === 'asc' ? Infinity : -Infinity);
+          const bv = b[sortField] ?? (sortDir === 'asc' ? Infinity : -Infinity);
+          if (av !== bv) return sortDir === 'asc' ? av - bv : bv - av;
+          return a.id - b.id; // stable tie-break for identical keys
+        })
+        .slice(offset, offset + PAGE_SIZE);
     }
-
-    let data = await callIgdb('games', igdbQuery);
-
-    // For text search, IGDB can't sort — so we do it here in Node
-    if (q && sort && sort !== 'relevance') {
-      data = [...data].sort((a, b) => {
-        if (sort === 'title') return (a.name ?? '').localeCompare(b.name ?? '');
-        if (sort === 'release_date')
-          return (b.first_release_date ?? 0) - (a.first_release_date ?? 0);
-        if (sort === 'rating') return (b.total_rating ?? 0) - (a.total_rating ?? 0);
-        return 0;
-      });
-    }
-
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      message: 'An error occurred on the server while fetching data. Please try again later.',
-    });
+  } else {
+    // Browse/filter only — IGDB handles the sort engine-side.
+    const serverSort = sortField ? `sort ${sortField} ${sortDir};` : 'sort total_rating desc;';
+    const ratingFilter =
+      sortField === 'name' || sortField === 'first_release_date' ? '' : '& total_rating_count > 0';
+    data = await callIgdb('games', `
+      ${fields};
+      where ${whereStr} ${ratingFilter};
+      ${serverSort}
+      limit ${PAGE_SIZE};
+      offset ${offset};
+    `);
   }
-});
+
+  res.json(data);
+}));
 
 // Fetch Multiple Games by IDs
-app.get('/games', cacheMiddleware(3600), async (req, res) => {
-  try {
-    const { ids } = req.query;
+app.get('/games', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const { ids } = req.query;
 
-    if (!ids) {
-      return res.status(400).json({ message: 'Game IDs are required' });
-    }
-
-    // Always include genres and platforms in fields so client can display them.
-    // similar_games is needed by the mobile "Recommended for You" engine, which
-    // builds its candidate list from the similar_games of the user's top games.
-    const fields = `${BASE_QUERY_FIELDS}, genres.name, platforms.name, platforms.abbreviation, similar_games.name, similar_games.cover.image_id`;
-    const whereStr = `cover.image_id != null & game_type = (0,8,9,10) & id = (${ids})`;
-
-    const query = `
-      ${fields};
-      where ${whereStr};
-      limit 50;
-    `;
-
-    const data = await callIgdb('games', query);
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      message: 'An error occurred on the server while fetching data. Please try again later.',
-    });
+  if (!ids) {
+    throw new AppError('Game IDs are required', 400);
   }
-});
+
+  // Always include genres and platforms in fields so client can display them.
+  // similar_games is needed by the mobile "Recommended for You" engine, which
+  // builds its candidate list from the similar_games of the user's top games.
+  const fields = `${BASE_QUERY_FIELDS}, genres.name, platforms.name, platforms.abbreviation, similar_games.name, similar_games.cover.image_id`;
+  const whereStr = `cover.image_id != null & game_type = (0,8,9,10) & id = (${ids})`;
+
+  const query = `
+    ${fields};
+    where ${whereStr};
+    limit 50;
+  `;
+
+  const data = await callIgdb('games', query);
+  res.json(data);
+}));
 
 // Game Details
-app.get('/game-details', cacheMiddleware(3600), async (req, res) => {
-  try {
-    const { id } = req.query;
+app.get('/game-details', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const { id } = req.query;
 
-    if (!id) {
-      return res.status(400).json({ message: 'Game ID is required' });
-    }
-
-    // Define two queries "Game" and "TimeToBeat"
-    const query = `
-      query games "Game" {
-        fields id, name, cover.image_id, cover.url, first_release_date, total_rating, total_rating_count, summary, dlcs, game_type, multiplayer_modes, remakes, remasters, screenshots.image_id, release_dates.human, platforms.abbreviation, websites.type, websites.url, genres.name, game_modes.name, language_supports.language.name, language_supports.language_support_type.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, game_engines.name, videos.name, videos.video_id, collection.name, similar_games.name, similar_games.cover.image_id, collections.games.name, collections.games.cover.image_id, age_ratings.organization, age_ratings.rating_category;
-        where id = ${id};
-        limit 1;
-      };
-      
-      query game_time_to_beats "TimeToBeat" {
-        fields normally, hastily, completely, game_id;
-        where game_id = ${id};
-      };
-    `;
-
-    // Call "multiquery" endpoint
-    const data = await callIgdb('multiquery', query);
-
-    const gameResult = data.find((item) => item.name === 'Game');
-    const timeResult = data.find((item) => item.name === 'TimeToBeat');
-
-    // Extract the game object
-    let game = gameResult && gameResult.result.length > 0 ? gameResult.result[0] : null;
-
-    // Extract the time data
-    const timeToBeat = timeResult && timeResult.result.length > 0 ? timeResult.result[0] : null;
-
-    if (game) {
-      // Fix the cover URL manually here
-      if (game.cover && game.cover.url) {
-        game.cover.url = `https:${game.cover.url.replace('t_thumb', 't_cover_big')}`;
-      }
-
-      // Merge time data into the game object
-      if (timeToBeat) {
-        // Remove id and game_id from time data
-        delete timeToBeat.id;
-        delete timeToBeat.game_id;
-
-        game.game_time_to_beats = timeToBeat;
-      } else {
-        game.game_time_to_beats = null;
-      }
-    }
-
-    res.json(game);
-  } catch (error) {
-    res.status(500).json({
-      message: 'An error occurred on the server while fetching data. Please try again later.',
-    });
+  if (!id) {
+    throw new AppError('Game ID is required', 400);
   }
-});
+
+  // Define two queries "Game" and "TimeToBeat"
+  const query = `
+    query games "Game" {
+      fields id, name, cover.image_id, cover.url, first_release_date, total_rating, total_rating_count, summary, dlcs, game_type, multiplayer_modes, remakes, remasters, screenshots.image_id, release_dates.human, platforms.abbreviation, websites.type, websites.url, genres.name, game_modes.name, language_supports.language.name, language_supports.language_support_type.name, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, game_engines.name, videos.name, videos.video_id, collection.name, similar_games.name, similar_games.cover.image_id, collections.games.name, collections.games.cover.image_id, age_ratings.organization, age_ratings.rating_category;
+      where id = ${id};
+      limit 1;
+    };
+    
+    query game_time_to_beats "TimeToBeat" {
+      fields normally, hastily, completely, game_id;
+      where game_id = ${id};
+    };
+  `;
+
+  // Call "multiquery" endpoint
+  const data = await callIgdb('multiquery', query);
+
+  const gameResult = data.find((item) => item.name === 'Game');
+  const timeResult = data.find((item) => item.name === 'TimeToBeat');
+
+  // Extract the game object
+  let game = gameResult && gameResult.result.length > 0 ? gameResult.result[0] : null;
+
+  // Extract the time data
+  const timeToBeat = timeResult && timeResult.result.length > 0 ? timeResult.result[0] : null;
+
+  if (game) {
+    // Fix the cover URL manually here
+    if (game.cover && game.cover.url) {
+      game.cover.url = `https:${game.cover.url.replace('t_thumb', 't_cover_big')}`;
+    }
+
+    // Merge time data into the game object
+    if (timeToBeat) {
+      // Remove id and game_id from time data
+      delete timeToBeat.id;
+      delete timeToBeat.game_id;
+
+      game.game_time_to_beats = timeToBeat;
+    } else {
+      game.game_time_to_beats = null;
+    }
+  }
+
+  res.json(game);
+}));
 
 // Search for game by name to get IGDB ID (used for free games section in the app)
-app.get('/search-game-id', cacheMiddleware(3600), async (req, res) => {
-  try {
-    const { name } = req.query;
+app.get('/search-game-id', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const { name } = req.query;
 
-    if (!name) {
-      return res.status(400).json({ message: 'Game name is required' });
-    }
-
-    const safeQuery = name.replace(/"/g, '\\"');
-
-    const query = `
-      fields id, name;
-      search "${safeQuery}";
-      limit 1;
-    `;
-
-    const data = await callIgdb('games', query);
-
-    if (data && data.length > 0) {
-      res.json({ igdb_id: data[0].id });
-    } else {
-      res.json({ igdb_id: null });
-    }
-  } catch (error) {
-    res.status(500).json({
-      message: 'An error occurred while searching for game.',
-    });
+  if (!name) {
+    throw new AppError('Game name is required', 400);
   }
-});
+
+  const safeQuery = name.replace(/"/g, '\\"');
+
+  const query = `
+    fields id, name;
+    search "${safeQuery}";
+    limit 1;
+  `;
+
+  const data = await callIgdb('games', query);
+
+  if (data && data.length > 0) {
+    res.json({ igdb_id: data[0].id });
+  } else {
+    res.json({ igdb_id: null });
+  }
+}));
 
 // Gaming Events
-app.get('/events', cacheMiddleware(3600), async (req, res) => {
-  try {
-    const nowTs = Math.floor(Date.now() / 1000);
-    // Fetch events from the last 30 days and future
-    const thirtyDaysAgo = nowTs - 3 * 24 * 60 * 60;
-    const query = `
-      fields name, start_time, end_time, time_zone, event_logo.image_id, live_stream_url,
-             description,
-             games.name, games.cover.image_id,
-             videos.name, videos.video_id,
-             event_networks.url, event_networks.network_type;
-      where end_time > ${thirtyDaysAgo};
-      sort start_time asc;
-      limit 15;
-    `;
-    const data = await callIgdb('events', query);
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({
-      message: 'An error occurred on the server while fetching data. Please try again later.',
-    });
-  }
-});
+app.get('/events', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const nowTs = Math.floor(Date.now() / 1000);
+  // Fetch events from the last 30 days and future
+  const thirtyDaysAgo = nowTs - 3 * 24 * 60 * 60;
+  const query = `
+    fields name, start_time, end_time, time_zone, event_logo.image_id, live_stream_url,
+           description,
+           games.name, games.cover.image_id,
+           videos.name, videos.video_id,
+           event_networks.url, event_networks.network_type;
+    where end_time > ${thirtyDaysAgo};
+    sort start_time asc;
+    limit 15;
+  `;
+  const data = await callIgdb('events', query);
+  res.json(data);
+}));
 
 // ======= STEAM INTEGRATION =======
 
 const STEAM_API_KEY = process.env.STEAM_API_KEY;
 
 // Get Steam Top Sellers and map to IGDB
-app.get('/steam-top-sellers', cacheMiddleware(3600), async (req, res) => {
-  try {
-    const steamRes = await fetch('https://store.steampowered.com/api/featuredcategories/');
-    const steamData = await steamRes.json();
+app.get('/steam-top-sellers', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const steamRes = await fetch('https://store.steampowered.com/api/featuredcategories/');
+  const steamData = await steamRes.json();
 
-    const topSellersItems = steamData?.top_sellers?.items || [];
-    const appIds = topSellersItems.map((item) => `"${item.id}"`);
+  const topSellersItems = steamData?.top_sellers?.items || [];
+  const appIds = topSellersItems.map((item) => `"${item.id}"`);
 
-    if (appIds.length === 0) {
-      return res.json([]);
-    }
+  if (appIds.length === 0) {
+    return res.json([]);
+  }
 
-    // 1) Find IGDB game IDs from Steam appIds
-    const extQuery = `
-      fields game, uid;
-      where uid = (${appIds.join(',')});
-      limit 50;
-    `;
-    const extGames = await callIgdb('external_games', extQuery);
-    const gameIds = extGames
-      .map((e) => e.game)
-      .filter((id) => id)
-      .join(',');
+  // 1) Find IGDB game IDs from Steam appIds
+  const extQuery = `
+    fields game, uid;
+    where uid = (${appIds.join(',')});
+    limit 50;
+  `;
+  const extGames = await callIgdb('external_games', extQuery);
+  const gameIds = extGames
+    .map((e) => e.game)
+    .filter((id) => id)
+    .join(',');
 
-    if (!gameIds) {
-      return res.json([]);
-    }
+  if (!gameIds) {
+    return res.json([]);
+  }
 
-    // 2) Get full game details from IGDB
-    const query = `
-      ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
-      ${BASE_QUERY_WHERE} & id = (${gameIds});
-      limit 50;
-    `;
-    const igdbGames = await callIgdb('games', query);
+  // 2) Get full game details from IGDB
+  const query = `
+    ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
+    ${BASE_QUERY_WHERE} & id = (${gameIds});
+    limit 50;
+  `;
+  const igdbGames = await callIgdb('games', query);
 
-    // 3) Reorder based on Steam's top sellers list to maintain rank
-    const sortedGames = [];
-    const addedIds = new Set();
+  // 3) Reorder based on Steam's top sellers list to maintain rank
+  const sortedGames = [];
+  const addedIds = new Set();
 
-    for (const appIdStr of appIds) {
-      const cleanId = appIdStr.replace(/"/g, '');
-      const extMatch = extGames.find((e) => e.uid === cleanId);
-      if (extMatch) {
-        const game = igdbGames.find((g) => g.id === extMatch.game);
-        if (game && !addedIds.has(game.id)) {
-          sortedGames.push(game);
-          addedIds.add(game.id);
-        }
+  for (const appIdStr of appIds) {
+    const cleanId = appIdStr.replace(/"/g, '');
+    const extMatch = extGames.find((e) => e.uid === cleanId);
+    if (extMatch) {
+      const game = igdbGames.find((g) => g.id === extMatch.game);
+      if (game && !addedIds.has(game.id)) {
+        sortedGames.push(game);
+        addedIds.add(game.id);
       }
     }
-
-    res.json(sortedGames);
-  } catch (error) {
-    console.error('Steam Top Sellers Error:', error);
-    res.status(500).json({
-      message: 'An error occurred while fetching Steam top sellers.',
-    });
   }
-});
+
+  res.json(sortedGames);
+}));
 
 // Resolve Steam Vanity URL to 64-bit Steam ID
-app.get('/steam/resolve', async (req, res) => {
-  try {
-    const { vanityurl } = req.query;
-    if (!vanityurl) return res.status(400).json({ message: 'vanityurl is required' });
-    if (!STEAM_API_KEY) return res.status(500).json({ message: 'STEAM_API_KEY is not configured' });
+app.get('/steam/resolve', asyncRoute(async (req, res) => {
+  const { vanityurl } = req.query;
+  if (!vanityurl) throw new AppError('vanityurl is required', 400);
+  if (!STEAM_API_KEY) throw new AppError('STEAM_API_KEY is not configured', 500);
 
-    const response = await fetch(
-      `https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key=${STEAM_API_KEY}&vanityurl=${vanityurl}`,
-    );
-    const data = await response.json();
+  const response = await fetch(
+    `https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key=${STEAM_API_KEY}&vanityurl=${vanityurl}`,
+  );
+  const data = await response.json();
 
-    if (data?.response?.success === 1) {
-      res.json({ steamid: data.response.steamid });
-    } else {
-      res.status(404).json({ message: 'Steam user not found.' });
-    }
-  } catch (error) {
-    console.error('Steam Resolve Error:', error);
-    res.status(500).json({ message: 'Error resolving Steam ID.' });
+  if (data?.response?.success === 1) {
+    res.json({ steamid: data.response.steamid });
+  } else {
+    throw new AppError('Steam user not found.', 404);
   }
-});
+}));
 
 // Get User's Owned Steam Games
-app.get('/steam/owned-games', async (req, res) => {
-  try {
-    const { steamid } = req.query;
-    if (!steamid) return res.status(400).json({ message: 'steamid is required' });
-    if (!STEAM_API_KEY) return res.status(500).json({ message: 'STEAM_API_KEY is not configured' });
+app.get('/steam/owned-games', asyncRoute(async (req, res) => {
+  const { steamid } = req.query;
+  if (!steamid) throw new AppError('steamid is required', 400);
+  if (!STEAM_API_KEY) throw new AppError('STEAM_API_KEY is not configured', 500);
 
-    const response = await fetch(
-      `https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=${STEAM_API_KEY}&steamid=${steamid}&format=json&include_appinfo=1`,
-    );
-    const data = await response.json();
+  const response = await fetch(
+    `https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=${STEAM_API_KEY}&steamid=${steamid}&format=json&include_appinfo=1`,
+  );
+  const data = await response.json();
 
-    if (data?.response?.games) {
-      const playedGames = data.response.games.filter((game) => Number(game.playtime_forever) > 0);
-      res.json({ games: playedGames });
-    } else if (Object.keys(data?.response || {}).length === 0) {
-      // Empty response usually indicates a private profile
-      res.status(403).json({ message: 'Profile is private or has no games.' });
-    } else {
-      res.status(404).json({ message: 'Could not retrieve games.' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: 'Error retrieving owned games.' });
+  if (data?.response?.games) {
+    const playedGames = data.response.games.filter((game) => Number(game.playtime_forever) > 0);
+    res.json({ games: playedGames });
+  } else if (Object.keys(data?.response || {}).length === 0) {
+    // Empty response usually indicates a private profile
+    throw new AppError('Profile is private or has no games.', 403);
+  } else {
+    throw new AppError('Could not retrieve games.', 404);
   }
-});
+}));
 
 // Get User's Steam Wishlist AppIDs
-app.get('/steam/wishlist', async (req, res) => {
-  try {
-    const { steamid } = req.query;
-    if (!steamid) return res.status(400).json({ message: 'steamid is required' });
-    if (!STEAM_API_KEY) return res.status(500).json({ message: 'STEAM_API_KEY is not configured' });
+app.get('/steam/wishlist', asyncRoute(async (req, res) => {
+  const { steamid } = req.query;
+  if (!steamid) throw new AppError('steamid is required', 400);
+  if (!STEAM_API_KEY) throw new AppError('STEAM_API_KEY is not configured', 500);
 
-    const response = await fetch(
-      `https://api.steampowered.com/IWishlistService/GetWishlist/v1/?key=${STEAM_API_KEY}&steamid=${steamid}`,
-    );
-    const data = await response.json();
+  const response = await fetch(
+    `https://api.steampowered.com/IWishlistService/GetWishlist/v1/?key=${STEAM_API_KEY}&steamid=${steamid}`,
+  );
+  const data = await response.json();
 
-    const rawItems = data?.response?.items;
-    const wishlistAppIds = Array.isArray(rawItems)
-      ? rawItems
-          .map((item) => Number(item?.appid))
-          .filter((appid) => Number.isFinite(appid) && appid > 0)
-      : [];
+  const rawItems = data?.response?.items;
+  const wishlistAppIds = Array.isArray(rawItems)
+    ? rawItems
+        .map((item) => Number(item?.appid))
+        .filter((appid) => Number.isFinite(appid) && appid > 0)
+    : [];
 
-    res.json({ appIds: wishlistAppIds });
-  } catch (error) {
-    console.error('Steam Wishlist Error:', error);
-    res.status(500).json({ message: 'Error retrieving wishlist.' });
-  }
-});
+  res.json({ appIds: wishlistAppIds });
+}));
 
 // Map Steam AppIDs to IGDB Game Details
-app.post('/steam/map-to-igdb', async (req, res) => {
-  try {
-    const { appIds } = req.body;
-    if (!appIds || !Array.isArray(appIds) || appIds.length === 0) {
-      return res.status(400).json({ message: 'Array of appIds is required' });
-    }
-
-    // Batching to avoid IGDB payload limits (50-100 per request is good)
-    const BATCH_SIZE = 50;
-    const promises = [];
-
-    for (let i = 0; i < appIds.length; i += BATCH_SIZE) {
-      const batchIds = appIds.slice(i, i + BATCH_SIZE);
-      const formattedIds = batchIds.map((id) => `"${id}"`).join(',');
-
-      const query = `
-  fields uid, game.id, game.name, game.cover.image_id, game.first_release_date;
-  where uid = (${formattedIds});
-  limit 500;
-      `;
-
-      console.log('==> IGDB Query:', query);
-      console.log('==> Batch IDs:', batchIds);
-      promises.push(callIgdb('external_games', query));
-    }
-
-    // Run in chunks of 4 concurrent requests to respect IGDB 4 req/sec limit
-    // while still being much faster than 1 by 1.
-    const allMappedGames = [];
-    for (let i = 0; i < promises.length; i += 4) {
-      const chunk = promises.slice(i, i + 4);
-      const results = await Promise.all(chunk);
-
-      for (const data of results) {
-        if (Array.isArray(data)) {
-          const games = data
-            .filter((e) => e.game != null)
-            .map((e) => ({
-              steam_appid: Number(e.uid),
-              id: e.game.id,
-              name: e.game.name,
-              cover_image_id: e.game.cover?.image_id || null,
-              release_date: e.game.first_release_date
-                ? new Date(e.game.first_release_date * 1000).getFullYear().toString()
-                : '',
-            }));
-          allMappedGames.push(...games);
-        }
-      }
-
-      // Sleep for 250ms to ensure we don't bombard IGDB too heavily (safe rate limit buffer)
-      if (i + 4 < promises.length) {
-        await new Promise((r) => setTimeout(r, 250));
-      }
-    }
-
-    res.json(allMappedGames);
-  } catch (error) {
-    console.error('IGDB Mapping Error:', error);
-    res.status(500).json({ message: 'Error mapping Steam games to IGDB.' });
+app.post('/steam/map-to-igdb', asyncRoute(async (req, res) => {
+  const { appIds } = req.body;
+  if (!appIds || !Array.isArray(appIds) || appIds.length === 0) {
+    throw new AppError('Array of appIds is required', 400);
   }
-});
+
+  // Batching to avoid IGDB payload limits (50-100 per request is good)
+  const BATCH_SIZE = 50;
+  const promises = [];
+
+  for (let i = 0; i < appIds.length; i += BATCH_SIZE) {
+    const batchIds = appIds.slice(i, i + BATCH_SIZE);
+    const formattedIds = batchIds.map((id) => `"${id}"`).join(',');
+
+    const query = `
+fields uid, game.id, game.name, game.cover.image_id, game.first_release_date;
+where uid = (${formattedIds});
+limit 500;
+    `;
+
+    console.log('==> IGDB Query:', query);
+    console.log('==> Batch IDs:', batchIds);
+    promises.push(callIgdb('external_games', query));
+  }
+
+  // Run in chunks of 4 concurrent requests to respect IGDB 4 req/sec limit
+  // while still being much faster than 1 by 1.
+  const allMappedGames = [];
+  for (let i = 0; i < promises.length; i += 4) {
+    const chunk = promises.slice(i, i + 4);
+    const results = await Promise.all(chunk);
+
+    for (const data of results) {
+      if (Array.isArray(data)) {
+        const games = data
+          .filter((e) => e.game != null)
+          .map((e) => ({
+            steam_appid: Number(e.uid),
+            id: e.game.id,
+            name: e.game.name,
+            cover_image_id: e.game.cover?.image_id || null,
+            release_date: e.game.first_release_date
+              ? new Date(e.game.first_release_date * 1000).getFullYear().toString()
+              : '',
+          }));
+        allMappedGames.push(...games);
+      }
+    }
+
+    // Sleep for 250ms to ensure we don't bombard IGDB too heavily (safe rate limit buffer)
+    if (i + 4 < promises.length) {
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  }
+
+  res.json(allMappedGames);
+}));
 
 // ======= PLAYSTATION STORE INTEGRATION =======
 
 // Search PlayStation Store for a game's price
 // Usage: GET /psn/search?query=Spider-Man&country=US
 // country defaults to US. Other examples: GB, EG, DE, FR, SA
-app.get('/psn/search', cacheMiddleware(3600), async (req, res) => {
-  try {
-    const { query, country = 'US' } = req.query;
+app.get('/psn/search', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const { query, country = 'US' } = req.query;
 
-    if (!query) {
-      return res.status(400).json({ message: 'query parameter is required' });
-    }
+  if (!query) {
+    throw new AppError('query parameter is required', 400);
+  }
 
-    // PSN internal search API � returns structured JSON, no HTML scraping needed
-    const psnSearchUrl = `https://store.playstation.com/store/api/chihiro/00_09_000/tumbler/${country}/en/999/search/${encodeURIComponent(query)}?suggested_size=5&mode=game`;
+  // PSN internal search API — returns structured JSON, no HTML scraping needed
+  const psnSearchUrl = `https://store.playstation.com/store/api/chihiro/00_09_000/tumbler/${country}/en/999/search/${encodeURIComponent(query)}?suggested_size=5&mode=game`;
 
-    const response = await fetch(psnSearchUrl, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        Accept: 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        Referer: 'https://store.playstation.com/',
-      },
+  const response = await fetch(psnSearchUrl, {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      Accept: 'application/json, text/plain, */*',
+      'Accept-Language': 'en-US,en;q=0.9',
+      Referer: 'https://store.playstation.com/',
+    },
+  });
+
+  if (!response.ok) {
+    throw new AppError(
+      `PlayStation Store returned status ${response.status}. Try a different country code.`,
+      502,
+    );
+  }
+
+  const data = await response.json();
+
+  const links = data?.links ?? [];
+  const results = links
+    .filter((item) => item?.top_category === 'games' || item?.game_content_type != null)
+    .map((item) => {
+      const priceObj = item?.default_sku?.display_price;
+      const strikethroughPrice = item?.default_sku?.strikethrough_price;
+      const isOnSale = strikethroughPrice != null;
+
+      return {
+        id: item?.id ?? null,
+        name: item?.name ?? null,
+        imageUrl: item?.images?.[0]?.url ?? null,
+        price: priceObj ?? null,
+        originalPrice: strikethroughPrice ?? null,
+        isOnSale,
+        url: item?.url
+          ? `https://store.playstation.com${item.url}`
+          : `https://store.playstation.com/${country.toLowerCase()}/en/search/${encodeURIComponent(query)}`,
+        contentType: item?.game_content_type ?? null,
+        platforms: item?.platforms ?? [],
+      };
     });
 
-    if (!response.ok) {
-      return res.status(502).json({
-        message: `PlayStation Store returned status ${response.status}. Try a different country code.`,
-      });
-    }
+  res.json({ query, country, results });
+}));
 
-    const data = await response.json();
-
-    const links = data?.links ?? [];
-    const results = links
-      .filter((item) => item?.top_category === 'games' || item?.game_content_type != null)
-      .map((item) => {
-        const priceObj = item?.default_sku?.display_price;
-        const strikethroughPrice = item?.default_sku?.strikethrough_price;
-        const isOnSale = strikethroughPrice != null;
-
-        return {
-          id: item?.id ?? null,
-          name: item?.name ?? null,
-          imageUrl: item?.images?.[0]?.url ?? null,
-          price: priceObj ?? null,
-          originalPrice: strikethroughPrice ?? null,
-          isOnSale,
-          url: item?.url
-            ? `https://store.playstation.com${item.url}`
-            : `https://store.playstation.com/${country.toLowerCase()}/en/search/${encodeURIComponent(query)}`,
-          contentType: item?.game_content_type ?? null,
-          platforms: item?.platforms ?? [],
-        };
-      });
-
-    res.json({ query, country, results });
-  } catch (error) {
-    console.error('PSN Search Error:', error);
-    res.status(500).json({ message: 'An error occurred while searching the PlayStation Store.' });
-  }
-});
 // invalid route handler (404)
 app.get('*', (req, res) => {
   res.redirect('https://play.google.com/store/apps/details?id=com.yh.gamingzone');
 });
+
+// Central error handler — positioned after every route so Express reaches it
+// when a route rejects (asyncRoute) or throws synchronously.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, _next) => {
+  const status = err instanceof AppError ? err.status : 500;
+  if (status >= 500) {
+    console.error('Unhandled error:', err);
+  } else {
+    console.warn('Request error:', err.message);
+  }
+  res.status(status).json({
+    message:
+      status >= 500
+        ? 'An error occurred on the server while fetching data. Please try again later.'
+        : err.message,
+  });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

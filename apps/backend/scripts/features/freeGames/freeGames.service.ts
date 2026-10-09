@@ -4,7 +4,7 @@ import { withRetry } from '../../lib/http';
 import { loadBackendEnv } from '../../lib/env';
 import { env } from '../../lib/config';
 import { createAppwriteDatabases } from '../../lib/appwrite';
-import { initFirebaseAdmin } from '../../lib/firebaseAdmin';
+import { initFirebaseAdmin, firebaseAppFor } from '../../lib/firebaseAdmin';
 import { logger } from '../../lib/logger';
 
 import { generateDocId } from './helpers';
@@ -25,7 +25,7 @@ const CONFIG = {
 };
 
 const databases = createAppwriteDatabases();
-const firebaseState = initFirebaseAdmin('FCM_SERVICE_ACCOUNT');
+const firebaseState = initFirebaseAdmin('freeGames');
 
 if (firebaseState.enabled) {
   logger.info('✅ Firebase Admin initialized.');
@@ -42,6 +42,9 @@ interface FreeGameDoc extends Models.Document, FreeGameData {}
 
 async function sendGameNotification(game: FreeGameData): Promise<void> {
   if (!firebaseState.enabled || !firebaseState.admin) return;
+
+  const app = firebaseAppFor(firebaseState);
+  if (!app) return;
 
   const imageLink = game.image || null;
   const storeName = game.store === 'steam' ? 'Steam' : game.store === 'gog' ? 'GOG' : 'Epic Games';
@@ -70,7 +73,7 @@ async function sendGameNotification(game: FreeGameData): Promise<void> {
   };
 
   try {
-    await firebaseState.admin.messaging().send(message);
+    await firebaseState.admin.messaging(app).send(message);
     logger.info(`   🔔 Notification sent for: ${game.title}`);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -274,13 +277,14 @@ async function runFetchFreeGames(): Promise<void> {
 }
 
 export async function teardownFreeGamesService(): Promise<void> {
-  if (firebaseState.enabled && firebaseState.admin) {
-    try {
-      await firebaseState.admin.app().delete();
-      logger.info('🛑 Firebase app deleted cleanly.');
-    } catch (error) {
-      logger.error(`❌ Error deleting Firebase app: ${error}`);
-    }
+  const app = firebaseAppFor(firebaseState);
+  if (!app) return;
+
+  try {
+    await app.delete();
+    logger.info('🛑 Free-games Firebase app deleted cleanly.');
+  } catch (error) {
+    logger.error(`❌ Error deleting Firebase app: ${error}`);
   }
 }
 

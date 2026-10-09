@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import SteamSyncButton from "@/src/components/SteamSyncButton";
 import type { GameItemProps, StackParamList, GameEntry, Props } from "../types";
 
 const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
@@ -177,11 +178,22 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
       marginTop: 8,
       paddingHorizontal: 20,
     },
+    emptyActionsContainer: {
+      width: "100%",
+      paddingHorizontal: 40,
+      marginTop: 28,
+      alignItems: "center",
+      gap: 12,
+    },
+    steamSyncBtn: {
+      borderRadius: 16,
+      width: "100%",
+    },
     findGameButton: {
       backgroundColor: c.accent,
       padding: 10,
       borderRadius: 16,
-      marginTop: 28,
+      width: "100%",
     },
     findGameText: {
       color: c.onAccent,
@@ -569,6 +581,13 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
         ? (t("userLists.empty.ratedSub") ??
           "Rate and review the games you have played here.")
         : t("settings.userGames.emptySubText");
+
+    const isDefaultGameList = ["playing", "played", "wantToPlay"].includes(listId);
+    const showSteamSync =
+      !isSharedList &&
+      isDefaultGameList &&
+      Boolean(currentUser && !currentUser.isAnonymous);
+
     return (
       <View style={styles.emptyContainer}>
         <Bookmark size={80} color={colors.accent} />
@@ -577,18 +596,23 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
         </CustomText>
         <CustomText style={styles.emptySubText}>{emptySubText}</CustomText>
         {!isSharedList && (
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Games")}
-            style={styles.findGameButton}
-          >
-            <CustomText style={styles.findGameText}>
-              {t("settings.userGames.findButton")}
-            </CustomText>
-          </TouchableOpacity>
+          <View style={styles.emptyActionsContainer}>
+            {showSteamSync && (
+              <SteamSyncButton style={styles.steamSyncBtn} />
+            )}
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Games")}
+              style={styles.findGameButton}
+            >
+              <CustomText style={styles.findGameText}>
+                {t("settings.userGames.findButton")}
+              </CustomText>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     );
-  }, [t, navigation, isSharedList, listId, colors.textMuted, styles]);
+  }, [t, navigation, isSharedList, listId, currentUser, colors.accent, styles]);
 
   // Render item
   const renderItem = useCallback(

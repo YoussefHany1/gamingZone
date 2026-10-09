@@ -4,7 +4,7 @@ import { Query } from 'node-appwrite';
 import { loadBackendEnv } from '../../lib/env';
 import { env } from '../../lib/config';
 import { createAppwriteDatabases } from '../../lib/appwrite';
-import { initFirebaseAdmin } from '../../lib/firebaseAdmin';
+import { initFirebaseAdmin, firebaseAppFor } from '../../lib/firebaseAdmin';
 import { sha1Id } from '../../lib/hash';
 
 import { safeId, resolveImageUrl } from './helpers';
@@ -24,7 +24,7 @@ const CONFIG = {
 };
 
 const databases = createAppwriteDatabases();
-const firebaseState = initFirebaseAdmin('FCM_SERVICE_ACCOUNT');
+const firebaseState = initFirebaseAdmin('rss');
 
 if (firebaseState.enabled) {
   logger.info('✅ Firebase Admin initialized.');
@@ -68,6 +68,9 @@ async function sendNotifications(
 ): Promise<void> {
   if (!articles.length || !firebaseState.enabled || !firebaseState.admin) return;
 
+  const app = firebaseAppFor(firebaseState);
+  if (!app) return;
+
   logger.info(`🔔 Sending ${articles.length} notifications...`);
   const BATCH_SIZE = 10;
 
@@ -99,7 +102,7 @@ async function sendNotifications(
         };
 
         try {
-          await firebaseState.admin.messaging().send(message);
+          await firebaseState.admin.messaging(app).send(message);
           summary.notificationsSent++;
           logger.info(`   -> Sent: ${article.title.substring(0, 30)}...`);
         } catch (error: unknown) {

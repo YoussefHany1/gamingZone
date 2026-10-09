@@ -17,11 +17,16 @@ import firestore from "@react-native-firebase/firestore";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import axios from "axios";
-import { Props, SteamGame, IgdbGame, SteamWishlistResponse } from "../types";
+import type {
+  Props,
+  SteamGame,
+  IgdbGame,
+  SteamWishlistResponse,
+} from "@/src/features/settings/types";
 import CustomTextInput from "@/src/components/CustomTextInput";
+import { SERVER_URL } from "@/src/constants/config";
 
-// Hardcoded raw Vercel deployment URL to bypass possible DNS caching issues on 'igdb-api-omega' domain
-const SERVER_URL = "https://igdb-api-omega.vercel.app";
+export type SteamLinkModalProps = Props;
 
 export default function SteamLinkModal({ visible, onClose }: Props) {
   const { t } = useTranslation();
@@ -127,7 +132,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
   const handleSync = useCallback(async () => {
     if (!steamInput.trim()) {
       ToastAndroid.show(
-        t("steam.errors.empty") || "Please enter a Steam ID",
+        t("settings.profile.steam.errors.empty") || "Please enter a Steam ID",
         ToastAndroid.SHORT,
       );
       return;
@@ -147,7 +152,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
       console.log("==> Step 1 Result:", steamId);
       if (!steamId) {
         ToastAndroid.show(
-          t("steam.errors.resolveFailed") || "Could not find user",
+          t("settings.profile.steam.errors.resolveFailed") || "Could not find user",
           ToastAndroid.LONG,
         );
         setLoading(false);
@@ -166,7 +171,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
       } catch (err: any) {
         if (err.response && err.response.status === 403) {
           ToastAndroid.show(
-            t("steam.errors.privateProfile") || "Profile private",
+            t("settings.profile.steam.errors.privateProfile") || "Profile private",
             ToastAndroid.LONG,
           );
           setLoading(false);
@@ -422,7 +427,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
               style={styles.input}
               placeholder={
                 t("settings.profile.steam.modal.placeholder") ||
-                "e.g., https://steamcommunity.com/profiles/76561198818022625"
+                "e.g., username, profile link or Steam ID"
               }
               placeholderTextColor={colors.textSubtle}
               value={steamInput}

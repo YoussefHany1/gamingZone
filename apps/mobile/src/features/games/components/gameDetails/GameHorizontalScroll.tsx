@@ -1,8 +1,9 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import CustomText from "@/src/components/CustomText";
-import { View, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
+import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useSharedStyles } from "./shared";
 import type { GameHorizontalScrollProps } from "../../types";
@@ -13,11 +14,49 @@ const IMAGE_NOT_FOUND = require("@/assets/image-not-found.webp");
 const coverUrl = (imageId: string) =>
   `https://images.igdb.com/igdb/image/upload/t_cover_small/${imageId}.webp`;
 
+const HorizontalGameCard: React.FC<{
+  game: any;
+  onPress: (id: number) => void;
+  styles: any;
+  accentColor: string;
+}> = memo(({ game, onPress, styles, accentColor }) => {
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <TouchableOpacity style={styles.card} onPress={() => onPress(game.id)}>
+      <View style={styles.imageContainer}>
+        <Image
+          recyclingKey={game.cover?.image_id ?? ""}
+          style={styles.coverImage}
+          source={game.cover?.image_id ? coverUrl(game.cover.image_id) : IMAGE_NOT_FOUND}
+          contentFit="cover"
+          transition={500}
+          cachePolicy="memory-disk"
+          allowDownscaling
+          onLoadStart={() => setLoading(true)}
+          onLoad={() => setLoading(false)}
+          onError={() => setLoading(false)}
+        />
+        {loading && (
+          <View style={styles.loaderOverlay} pointerEvents="none">
+            <ActivityIndicator size="small" color={accentColor} />
+          </View>
+        )}
+      </View>
+      <CustomText style={styles.gameName} numberOfLines={2}>
+        {game.name}
+      </CustomText>
+    </TouchableOpacity>
+  );
+});
+HorizontalGameCard.displayName = "HorizontalGameCard";
+
 const GameHorizontalScroll: React.FC<GameHorizontalScrollProps> = ({
   title,
   games,
   onGamePress,
 }) => {
+  const colors = useThemeColors();
   const sharedStyles = useSharedStyles();
   const styles = useThemeStyles((c) => ({
     container: {
@@ -33,11 +72,27 @@ const GameHorizontalScroll: React.FC<GameHorizontalScrollProps> = ({
       marginRight: 12,
       alignItems: "center",
     },
-    coverImage: {
+    imageContainer: {
       width: 120,
       height: 160,
       borderRadius: 8,
       marginBottom: 6,
+      position: "relative",
+      backgroundColor: c.skeletonBase,
+      overflow: "hidden",
+    },
+    coverImage: {
+      width: "100%",
+      height: "100%",
+    },
+    loaderOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      justifyContent: "center",
+      alignItems: "center",
     },
     gameName: {
       color: c.textMuted,
@@ -48,22 +103,14 @@ const GameHorizontalScroll: React.FC<GameHorizontalScrollProps> = ({
 
   const renderItem = React.useCallback(
     ({ item: game }: { item: (typeof games)[0] }) => (
-      <TouchableOpacity style={styles.card} onPress={() => onGamePress(game.id)}>
-        <Image
-          recyclingKey={game.cover?.image_id ?? ""}
-          style={styles.coverImage}
-          source={game.cover?.image_id ? coverUrl(game.cover.image_id) : IMAGE_NOT_FOUND}
-          contentFit="cover"
-          transition={500}
-          cachePolicy="memory-disk"
-          allowDownscaling
-        />
-        <CustomText style={styles.gameName} numberOfLines={2}>
-          {game.name}
-        </CustomText>
-      </TouchableOpacity>
+      <HorizontalGameCard
+        game={game}
+        onPress={onGamePress}
+        styles={styles}
+        accentColor={colors.accent}
+      />
     ),
-    [onGamePress, styles],
+    [onGamePress, styles, colors.accent],
   );
 
   if (games.length === 0) return null;

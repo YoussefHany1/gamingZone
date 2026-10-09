@@ -30,7 +30,7 @@ import frLang from "i18n-iso-countries/langs/fr.json";
 import hiLang from "i18n-iso-countries/langs/hi.json";
 import ptLang from "i18n-iso-countries/langs/pt.json";
 import { PickerOption } from "@/src/types/sharedTypes";
-import SteamLinkModal from "../components/SteamLinkModal";
+import SteamLinkModal from "@/src/components/SteamLinkModal";
 import { Mars, Monitor, Venus } from "lucide-react-native";
 import {
   AndroidIcon,

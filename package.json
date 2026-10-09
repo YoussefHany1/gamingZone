@@ -13,7 +13,8 @@
     "web": "npm --prefix apps/mobile run web"
   },
   "overrides": {
-    "react-native": "0.81.5"
+    "react-native": "0.86.3",
+    "expo-file-system": "~57.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

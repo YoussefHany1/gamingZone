@@ -2,17 +2,25 @@ import { logger } from '../../lib/logger';
 import * as sdk from 'node-appwrite';
 
 import { loadBackendEnv } from '../../lib/env';
-import { env } from '../../lib/config';
+import { env, requireGeminiKey } from '../../lib/config';
 import { createAppwriteDatabases } from '../../lib/appwrite';
+import { initFirebaseAdmin, firebaseAppFor } from '../../lib/firebaseAdmin';
 
 loadBackendEnv();
 
-const GEMINI_API_KEY = env.GEMINI_API_KEY;
 const DATABASE_ID = env.APPWRITE_DATABASE_ID;
 const NEWS_COLLECTION_ID = env.ARTICLES_COLLECTION_ID;
 const SUMMARIES_COLLECTION_ID = env.SUMMARIES_COLLECTION_ID;
+const FCM_TOPIC = 'weekly_summary_alerts';
 
 const databases = createAppwriteDatabases();
+const firebaseState = initFirebaseAdmin('summary');
+
+if (firebaseState.enabled) {
+  logger.info('✅ Firebase Admin initialized.');
+} else if (firebaseState.error) {
+  logger.warn(`⚠️ Firebase error: ${firebaseState.error}`);
+}
 
 interface SummaryResponse {
   arabic: string;
@@ -121,6 +129,7 @@ function parseJsonSummary(rawText: string): SummaryResponse {
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function callGeminiWithRetry(prompt: string, maxRetries = 3): Promise<SummaryResponse> {
+  const apiKey = requireGeminiKey();
   let attempt = 0;
   while (true) {
     attempt++;
@@ -128,7 +137,7 @@ async function callGeminiWithRetry(prompt: string, maxRetries = 3): Promise<Summ
       logger.info(`🤖 Trying Gemini... (Attempt ${attempt}/${maxRetries})`);
 
       const aiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -287,6 +296,46 @@ async function saveWeeklySummary(summary: SummaryResponse, startDate: string) {
   });
 }
 
+/**
+ * Broadcasts a topic push on the app's news channel so subscribed users are
+ * alerted (even when the app is closed) that a fresh recap is available.
+ *
+ * Best-effort like the RSS/free-games pushes: a failure is logged, never
+ * thrown, so a lost push can't fail the whole weekly job.
+ */
+async function sendSummaryNotification(): Promise<void> {
+  if (!firebaseState.enabled || !firebaseState.admin) return;
+
+  const app = firebaseAppFor(firebaseState);
+  if (!app) return;
+
+  const message = {
+    topic: FCM_TOPIC,
+    notification: {
+      title: '🎮 Weekly Gaming Recap',
+      body: 'Your weekly recap is ready. Tap to read it!',
+    },
+    android: {
+      priority: 'high' as const,
+      notification: {
+        channelId: 'news_notifications',
+      },
+    },
+    data: {
+      type: 'weekly_summary',
+      clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+    },
+  };
+
+  try {
+    await firebaseState.admin.messaging(app).send(message);
+    logger.info('🔔 Weekly summary notification sent.');
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error(`❌ Weekly summary notification failed: ${errorMessage}`);
+  }
+}
+
 async function runGenerateWeeklySummary() {
   try {
     logger.info('Fetching news from the last 7 days...');
@@ -366,6 +415,7 @@ async function runGenerateWeeklySummary() {
     logger.info('Summary generated successfully. Saving to Appwrite...');
     await saveWeeklySummary(jsonSummary, sevenDaysAgo);
     logger.info('✅ Weekly summary saved!');
+    await sendSummaryNotification();
   } catch (error: any) {
     logger.error('❌ Error generating summary:', error.message);
     if (error instanceof SyntaxError) {

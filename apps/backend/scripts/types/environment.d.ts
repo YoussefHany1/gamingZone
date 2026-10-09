@@ -7,8 +7,10 @@ declare global {
       APPWRITE_DATABASE_ID: string;
       ARTICLES_COLLECTION_ID: string;
       RSS_COLLECTION_ID: string;
-      FIREBASE_SERVICE_ACCOUNT: string;
+      FREE_GAMES_COLLECTION_ID: string;
+      SUMMARIES_COLLECTION_ID: string;
       GEMINI_API_KEY: string;
+      FCM_SERVICE_ACCOUNT: string;
       [key: string]: string | undefined;
     }
   }

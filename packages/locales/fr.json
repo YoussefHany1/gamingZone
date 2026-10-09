@@ -140,7 +140,17 @@
       "title": "🗞️ Résumé hebdomadaire",
       "createdBy": "Créé par",
       "readMore": "Lire plus…",
-      "readLess": "Lire moins"
+      "readLess": "Lire moins",
+      "subscribe": "Me notifier chaque semaine",
+      "notificationsOn": "Notifications activées",
+      "subscribed": "Vous êtes abonné aux récaps hebdo",
+      "unsubscribed": "Vous vous êtes désabonné des récaps hebdo",
+      "subscribeAccessibility": "S'abonner aux récaps hebdo",
+      "unsubscribeAccessibility": "Se désabonner des récaps hebdo",
+      "notification": {
+        "title": "Nouveau récap hebdo",
+        "body": "Votre récap hebdo est prêt. Touchez pour le lire."
+      }
     },
     "gamingEvents": {
       "header": "Événements gaming",
@@ -281,6 +291,7 @@
       "searchResults": "Résultats de recherche",
       "noResults": "Aucun jeu trouvé.",
       "serverError": "Échec de la connexion au serveur. Veuillez vous assurer que votre connexion internet est active et réessayer.",
+      "next": "Suivant",
       "gameTypes": {
         "1": "DLC",
         "2": "Extension",
@@ -468,7 +479,6 @@
       "sepia": "Sépia",
       "contrast": "Contraste élevé",
       "steam": "Bleu Steam",
-
       "blurple": "Discord",
       "nintendo": "Nintendo Switch",
       "playstation": "PlayStation",
@@ -528,15 +538,15 @@
       "steam": {
         "modal": {
           "title": "Synchroniser votre bibliothèque Steam",
-          "instructions": "Saisissez votre URL personnalisée Steam ou votre Steam ID pour importer vos jeux dans vos listes (En cours, Joué, À jouer).",
-          "placeholder": "https://steamcommunity.com/profiles/76561198818022625",
+          "instructions": "Saisissez votre nom d'utilisateur Steam (URL personnalisée), lien de profil ou Steam ID pour importer vos jeux dans vos listes.",
+          "placeholder": "Nom d'utilisateur (URL personnalisée), lien ou ID",
           "privacy": "Assurez-vous que votre profil Steam et les détails de vos jeux sont définis sur « Public » dans vos paramètres de confidentialité.",
           "syncing": "Synchronisation...",
           "syncBtn": "Synchroniser les jeux",
           "cancel": "Annuler"
         },
         "errors": {
-          "empty": "Veuillez saisir un ID ou une URL Steam",
+          "empty": "Veuillez saisir un nom d'utilisateur, un lien ou un ID Steam",
           "resolveFailed": "Utilisateur Steam introuvable",
           "privateProfile": "Votre profil est privé ou ne contient aucun jeu.",
           "fetchFailed": "Échec de la récupération des jeux",

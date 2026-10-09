@@ -7,3 +7,6 @@
 
 // ── Screens ───────────────────────────────────────────────────────────────────
 export { default as EventDetailsScreen } from "./screens/EventDetailsScreen";
+
+// ── Components ────────────────────────────────────────────────────────────────
+export { default as GamingEvents } from "./components/Gamingevents";

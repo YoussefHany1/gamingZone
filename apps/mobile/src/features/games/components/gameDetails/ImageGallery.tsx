@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from "react";
+import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import CustomText from "@/src/components/CustomText";
 import {
   View,
@@ -11,6 +11,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import { ChevronLeft, ChevronRight, Images, X } from "lucide-react-native";
@@ -61,10 +62,15 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({
   onSwipeRight,
   onSwipeDown,
 }) => {
+  const [loading, setLoading] = useState(true);
   const scale = useRef(new Animated.Value(1)).current;
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const pinchAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    setLoading(true);
+  }, [imageUrl]);
 
   const styles = useThemeStyles(() => ({
     zoomContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
@@ -82,6 +88,16 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({
       alignItems: "center",
     },
     fullScreenImage: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
+    fullScreenLoaderOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1,
+    },
   }));
   const lastScale = useRef(1);
   const lastTX = useRef(0);
@@ -226,7 +242,15 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({
                   contentFit="contain"
                   transition={300}
                   cachePolicy="memory-disk"
+                  onLoadStart={() => setLoading(true)}
+                  onLoad={() => setLoading(false)}
+                  onError={() => setLoading(false)}
                 />
+                {loading && (
+                  <View style={styles.fullScreenLoaderOverlay} pointerEvents="none">
+                    <ActivityIndicator size="large" color="#ffffff" />
+                  </View>
+                )}
               </Animated.View>
             </TouchableOpacity>
           </Animated.View>
@@ -235,6 +259,71 @@ const ZoomableImage: React.FC<ZoomableImageProps> = ({
     </PanGestureHandler>
   );
 };
+
+// ─── GalleryThumbnail ────────────────────────────────────────────────────────
+
+interface GalleryThumbnailProps {
+  image: GalleryImage;
+  index: number;
+  totalImages: number;
+  onPress: () => void;
+  colors: ReturnType<typeof useThemeColors>;
+  isRtl: boolean;
+  styles: any;
+}
+
+const GalleryThumbnail: React.FC<GalleryThumbnailProps> = React.memo(
+  ({ image, index, totalImages, onPress, colors, isRtl, styles }) => {
+    const [loading, setLoading] = useState(true);
+
+    return (
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={onPress}
+        style={styles.thumbnailContainer}
+        accessibilityLabel={`Image ${index + 1} of ${totalImages}`}
+        accessibilityRole="imagebutton"
+        accessibilityHint="Double tap to view full screen"
+      >
+        <Image
+          style={styles.thumbnail}
+          source={image.thumbnail}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          onLoadStart={() => setLoading(true)}
+          onLoad={() => setLoading(false)}
+          onError={() => setLoading(false)}
+        />
+        {loading && (
+          <View style={styles.thumbnailLoaderOverlay} pointerEvents="none">
+            <ActivityIndicator size="small" color={colors.accent} />
+          </View>
+        )}
+        {/* Side-gradient overlay — direction mirrors app locale */}
+        <View
+          style={[
+            styles.gradientOverlay,
+            { flexDirection: isRtl ? "row-reverse" : "row" },
+          ]}
+        >
+          <LinearGradient
+            colors={["transparent", colors.background]}
+            style={styles.gradient}
+            start={{ x: 1, y: 0.5 }}
+            end={{ x: 0, y: 0.5 }}
+          />
+          <LinearGradient
+            colors={[colors.background, "transparent"]}
+            style={styles.gradient}
+            start={{ x: 1, y: 0.5 }}
+            end={{ x: 0, y: 0.5 }}
+          />
+        </View>
+      </TouchableOpacity>
+    );
+  },
+);
+GalleryThumbnail.displayName = "GalleryThumbnail";
 
 // ─── ImageGalleryAdvanced ─────────────────────────────────────────────────────
 
@@ -264,6 +353,16 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
       width: "100%",
       height: "100%",
       backgroundColor: c.skeletonBase,
+    },
+    thumbnailLoaderOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1,
     },
     gradientOverlay: {
       justifyContent: "space-between",
@@ -395,42 +494,16 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
         style={styles.scrollView}
       >
         {allImages.map((image, index) => (
-          <TouchableOpacity
+          <GalleryThumbnail
             key={image.id}
-            activeOpacity={0.9}
+            image={image}
+            index={index}
+            totalImages={allImages.length}
             onPress={() => openFullScreen(index)}
-            style={styles.thumbnailContainer}
-            accessibilityLabel={`Image ${index + 1} of ${allImages.length}`}
-            accessibilityRole="imagebutton"
-            accessibilityHint="Double tap to view full screen"
-          >
-            <Image
-              style={styles.thumbnail}
-              source={image.thumbnail}
-              contentFit="cover"
-              cachePolicy="memory-disk"
-            />
-            {/* Side-gradient overlay — direction mirrors app locale */}
-            <View
-              style={[
-                styles.gradientOverlay,
-                { flexDirection: isRtl ? "row-reverse" : "row" },
-              ]}
-            >
-              <LinearGradient
-                colors={["transparent", colors.background]}
-                style={styles.gradient}
-                start={{ x: 1, y: 0.5 }}
-                end={{ x: 0, y: 0.5 }}
-              />
-              <LinearGradient
-                colors={[colors.background, "transparent"]}
-                style={styles.gradient}
-                start={{ x: 1, y: 0.5 }}
-                end={{ x: 0, y: 0.5 }}
-              />
-            </View>
-          </TouchableOpacity>
+            colors={colors}
+            isRtl={isRtl}
+            styles={styles}
+          />
         ))}
       </Animated.ScrollView>
 

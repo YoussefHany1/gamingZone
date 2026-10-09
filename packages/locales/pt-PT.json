@@ -140,7 +140,17 @@
       "title": "🗞️ Resumo semanal",
       "createdBy": "Criado por",
       "readMore": "Ler mais…",
-      "readLess": "Ler menos"
+      "readLess": "Ler menos",
+      "subscribe": "Notificar-me semanalmente",
+      "notificationsOn": "Notificações ativadas",
+      "subscribed": "Subscreveu os resumos semanais",
+      "unsubscribed": "Cancelou a subscrição dos resumos semanais",
+      "subscribeAccessibility": "Subscrever os resumos semanais",
+      "unsubscribeAccessibility": "Cancelar a subscrição dos resumos semanais",
+      "notification": {
+        "title": "Novo resumo semanal",
+        "body": "O seu resumo semanal está pronto. Toque para ler."
+      }
     },
     "gamingEvents": {
       "header": "Eventos de gaming",
@@ -281,6 +291,7 @@
       "searchResults": "Resultados da Pesquisa",
       "noResults": "Nenhum jogo encontrado.",
       "serverError": "A ligação ao servidor falhou. Certifique-se de que tem uma ligação à internet ativa e tente novamente.",
+      "next": "Seguinte",
       "gameTypes": {
         "1": "DLC",
         "2": "Expansão",
@@ -472,7 +483,6 @@
       "sepia": "Sépia",
       "contrast": "Alto contraste",
       "steam": "Azul Steam",
-
       "blurple": "Discord",
       "nintendo": "Nintendo Switch",
       "playstation": "PlayStation",
@@ -528,15 +538,15 @@
       "steam": {
         "modal": {
           "title": "Sincronizar a sua biblioteca Steam",
-          "instructions": "Introduza o seu URL personalizado da Steam ou Steam ID para importar os seus jogos para as suas listas (A jogar, Jogado, Quero jogar).",
-          "placeholder": "https://steamcommunity.com/profiles/76561198818022625",
+          "instructions": "Introduza o seu nome de utilizador Steam (URL personalizado), ligação do perfil ou Steam ID para importar os seus jogos para as suas listas.",
+          "placeholder": "Nome de utilizador (URL personalizado), ligação ou ID",
           "privacy": "Certifique-se de que o seu perfil Steam e os detalhes dos jogos estão definidos como públicos nas suas definições de privacidade.",
           "syncing": "A sincronizar...",
           "syncBtn": "Sincronizar jogos",
           "cancel": "Cancelar"
         },
         "errors": {
-          "empty": "Introduza um Steam ID ou URL",
+          "empty": "Introduza um nome de utilizador, ligação ou Steam ID",
           "resolveFailed": "Não foi possível encontrar o utilizador da Steam",
           "privateProfile": "O seu perfil é privado ou não tem jogos.",
           "fetchFailed": "Não foi possível obter os jogos",
