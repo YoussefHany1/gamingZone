@@ -157,8 +157,12 @@ async function fetchArticleDataWithPuppeteer(url: string) {
     const html = await page.content();
     const { JSDOM } = await import('jsdom');
     const dom = new JSDOM(html, { url });
-
-    const fullDescription = await extractDescriptionFromDoc(dom.window.document);
+    let fullDescription: string | null = null;
+    try {
+      fullDescription = await extractDescriptionFromDoc(dom.window.document);
+    } finally {
+      dom.window.close();
+    }
 
     const imageCandidates = await page.evaluate(() => {
       const candidates: string[] = [];
@@ -269,57 +273,72 @@ async function fetchArticleData(url: string) {
 
     const { JSDOM } = await import('jsdom');
     const dom = new JSDOM(body, { url });
-    const fullDescription = await extractDescriptionFromDoc(dom.window.document);
+    let selectedImage: string | null = null;
+    let fullDescription: string | null = null;
 
-    // Try to extract from JSON-LD
-    const ldScripts = dom.window.document.querySelectorAll("script[type='application/ld+json']");
-    for (const script of ldScripts) {
-      try {
-        const parsed = JSON.parse(script.textContent || '{}');
-        const image = findImageInJsonLd(parsed);
-        if (image && typeof image === 'string' && !isBadImage(image)) {
-          return { imageUrl: image, fullDescription };
-        }
-      } catch (error: unknown) {
-        logger.debug(`JSON-LD parse failed: ${getErrorMessage(error)}`);
-      }
-    }
+    try {
+      fullDescription = await extractDescriptionFromDoc(dom.window.document);
 
-    // Find all meta and link tags using JSDOM
-    const tags = dom.window.document.querySelectorAll('meta, link');
-    const images: Record<string, string> = {};
-
-    for (const tag of tags) {
-      const key =
-        tag.getAttribute('property') ||
-        tag.getAttribute('name') ||
-        tag.getAttribute('itemprop') ||
-        tag.getAttribute('rel');
-      const val = tag.getAttribute('content') || tag.getAttribute('href');
-
-      if (key && val) {
-        const decodedVal = he.decode(val.trim());
-        if (decodedVal) {
-          images[key.toLowerCase().trim()] = decodedVal;
+      // Try to extract from JSON-LD
+      const ldScripts = dom.window.document.querySelectorAll("script[type='application/ld+json']");
+      for (const script of ldScripts) {
+        try {
+          const parsed = JSON.parse(script.textContent || '{}');
+          const image = findImageInJsonLd(parsed);
+          if (image && typeof image === 'string' && !isBadImage(image)) {
+            selectedImage = image;
+            break;
+          }
+        } catch (error: unknown) {
+          logger.debug(`JSON-LD parse failed: ${getErrorMessage(error)}`);
         }
       }
+
+      if (!selectedImage) {
+        // Find all meta and link tags using JSDOM
+        const tags = dom.window.document.querySelectorAll('meta, link');
+        const images: Record<string, string> = {};
+
+        for (const tag of tags) {
+          const key =
+            tag.getAttribute('property') ||
+            tag.getAttribute('name') ||
+            tag.getAttribute('itemprop') ||
+            tag.getAttribute('rel');
+          const val = tag.getAttribute('content') || tag.getAttribute('href');
+
+          if (key && val) {
+            const decodedVal = he.decode(val.trim());
+            if (decodedVal) {
+              images[key.toLowerCase().trim()] = decodedVal;
+            }
+          }
+        }
+
+        // Prioritize the best image candidate
+        const candidateKeys = [
+          'og:image',
+          'og:image:secure_url',
+          'twitter:image',
+          'twitter:image:src',
+          'image',
+          'image_src',
+          'thumbnail',
+        ];
+
+        for (const key of candidateKeys) {
+          if (images[key] && !isBadImage(images[key])) {
+            selectedImage = images[key];
+            break;
+          }
+        }
+      }
+    } finally {
+      dom.window.close();
     }
 
-    // Prioritize the best image candidate
-    const candidateKeys = [
-      'og:image',
-      'og:image:secure_url',
-      'twitter:image',
-      'twitter:image:src',
-      'image',
-      'image_src',
-      'thumbnail',
-    ];
-
-    for (const key of candidateKeys) {
-      if (images[key] && !isBadImage(images[key])) {
-        return { imageUrl: images[key], fullDescription };
-      }
+    if (selectedImage) {
+      return { imageUrl: selectedImage, fullDescription };
     }
 
     // Fall back to Puppeteer if gotScraping worked but didn't find meta images

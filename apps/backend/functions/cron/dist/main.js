@@ -112805,7 +112805,12 @@ async function fetchArticleDataWithPuppeteer(url2) {
     const html = await page.content();
     const { JSDOM } = await import("jsdom");
     const dom = new JSDOM(html, { url: url2 });
-    const fullDescription = await extractDescriptionFromDoc(dom.window.document);
+    let fullDescription = null;
+    try {
+      fullDescription = await extractDescriptionFromDoc(dom.window.document);
+    } finally {
+      dom.window.close();
+    }
     const imageCandidates = await page.evaluate(() => {
       const candidates = [];
       const metaKeys = [
@@ -112901,44 +112906,57 @@ async function fetchArticleData(url2) {
     }
     const { JSDOM } = await import("jsdom");
     const dom = new JSDOM(body, { url: url2 });
-    const fullDescription = await extractDescriptionFromDoc(dom.window.document);
-    const ldScripts = dom.window.document.querySelectorAll("script[type='application/ld+json']");
-    for (const script of ldScripts) {
-      try {
-        const parsed2 = JSON.parse(script.textContent || "{}");
-        const image = findImageInJsonLd(parsed2);
-        if (image && typeof image === "string" && !isBadImage(image)) {
-          return { imageUrl: image, fullDescription };
-        }
-      } catch (error) {
-        logger.debug(`JSON-LD parse failed: ${getErrorMessage(error)}`);
-      }
-    }
-    const tags = dom.window.document.querySelectorAll("meta, link");
-    const images = {};
-    for (const tag of tags) {
-      const key = tag.getAttribute("property") || tag.getAttribute("name") || tag.getAttribute("itemprop") || tag.getAttribute("rel");
-      const val = tag.getAttribute("content") || tag.getAttribute("href");
-      if (key && val) {
-        const decodedVal = he2.decode(val.trim());
-        if (decodedVal) {
-          images[key.toLowerCase().trim()] = decodedVal;
+    let selectedImage = null;
+    let fullDescription = null;
+    try {
+      fullDescription = await extractDescriptionFromDoc(dom.window.document);
+      const ldScripts = dom.window.document.querySelectorAll("script[type='application/ld+json']");
+      for (const script of ldScripts) {
+        try {
+          const parsed2 = JSON.parse(script.textContent || "{}");
+          const image = findImageInJsonLd(parsed2);
+          if (image && typeof image === "string" && !isBadImage(image)) {
+            selectedImage = image;
+            break;
+          }
+        } catch (error) {
+          logger.debug(`JSON-LD parse failed: ${getErrorMessage(error)}`);
         }
       }
-    }
-    const candidateKeys = [
-      "og:image",
-      "og:image:secure_url",
-      "twitter:image",
-      "twitter:image:src",
-      "image",
-      "image_src",
-      "thumbnail"
-    ];
-    for (const key of candidateKeys) {
-      if (images[key] && !isBadImage(images[key])) {
-        return { imageUrl: images[key], fullDescription };
+      if (!selectedImage) {
+        const tags = dom.window.document.querySelectorAll("meta, link");
+        const images = {};
+        for (const tag of tags) {
+          const key = tag.getAttribute("property") || tag.getAttribute("name") || tag.getAttribute("itemprop") || tag.getAttribute("rel");
+          const val = tag.getAttribute("content") || tag.getAttribute("href");
+          if (key && val) {
+            const decodedVal = he2.decode(val.trim());
+            if (decodedVal) {
+              images[key.toLowerCase().trim()] = decodedVal;
+            }
+          }
+        }
+        const candidateKeys = [
+          "og:image",
+          "og:image:secure_url",
+          "twitter:image",
+          "twitter:image:src",
+          "image",
+          "image_src",
+          "thumbnail"
+        ];
+        for (const key of candidateKeys) {
+          if (images[key] && !isBadImage(images[key])) {
+            selectedImage = images[key];
+            break;
+          }
+        }
       }
+    } finally {
+      dom.window.close();
+    }
+    if (selectedImage) {
+      return { imageUrl: selectedImage, fullDescription };
     }
     logger.info(`      \u26A0\uFE0F No OG image found in static body for ${url2}. Switching to Puppeteer...`);
     const fallback = await fetchArticleDataWithPuppeteer(url2);
