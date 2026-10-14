@@ -1,4 +1,5 @@
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import { igdbImageUrl } from "@gaming-zone/utils";
 import React, { useCallback, useMemo } from "react";
 import CustomText from "@/src/components/CustomText";
 import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
@@ -99,7 +100,7 @@ const ComingSoonCard = React.memo<ComingSoonCardProps>(({ item }) => {
         source={
           item.cover
             ? {
-                uri: `https://images.igdb.com/igdb/image/upload/t_screenshot_med/${item.cover.image_id}.webp`,
+                uri: igdbImageUrl(item.cover.image_id, "screenshot_med"),
               }
             : require("@/assets/image-not-found.webp")
         }

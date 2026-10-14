@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import { unixDaysAgo, unixDaysFromNow, unixMonthsAgo, unixNow, unixYearsAgo } from './time.js';
 const app = express();
 
 app.use(cors());
@@ -206,7 +207,7 @@ app.get('/top-rated', cacheMiddleware(3600), asyncRoute(async (req, res) => {
 
 // Recently Released
 app.get('/recently-released', cacheMiddleware(3600), asyncRoute(async (req, res) => {
-  const nowTs = Math.floor(Date.now() / 1000);
+  const nowTs = unixNow();
   const query = `
     ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
     ${BASE_QUERY_WHERE} & first_release_date < ${nowTs} & total_rating_count > 5;
@@ -219,10 +220,8 @@ app.get('/recently-released', cacheMiddleware(3600), asyncRoute(async (req, res)
 
 // Trending Mobile Games
 app.get('/trending-mobile', cacheMiddleware(3600), asyncRoute(async (req, res) => {
-  const nowTs = Math.floor(Date.now() / 1000);
-  const pastDate = new Date();
-  pastDate.setFullYear(pastDate.getFullYear() - 2);
-  const startTs = Math.floor(pastDate.getTime() / 1000);
+  const nowTs = unixNow();
+  const startTs = unixYearsAgo(2);
 
   const query = `
     ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
@@ -236,11 +235,9 @@ app.get('/trending-mobile', cacheMiddleware(3600), asyncRoute(async (req, res) =
 
 // Popular Right Now
 app.get('/popular', cacheMiddleware(3600), asyncRoute(async (req, res) => {
-  const nowTs = Math.floor(Date.now() / 1000);
+  const nowTs = unixNow();
   // 6 months ago
-  const pastDate = new Date();
-  pastDate.setMonth(pastDate.getMonth() - 6);
-  const startTs = Math.floor(pastDate.getTime() / 1000);
+  const startTs = unixMonthsAgo(6);
 
   // Fetch top 100 IDs from popularity_primitives (was 500 — reduced for performance)
   const primitivesQuery = `
@@ -329,10 +326,8 @@ app.get('/latest-trailers', cacheMiddleware(3600), asyncRoute(async (req, res) =
   // ── 1. Fetch candidate games from IGDB ──────────────────────────────────
   // We pull more candidates than needed so the YouTube filter+sort has room
   // to work with. Widening the IGDB window to 6 months gives good coverage.
-  const nowTs = Math.floor(Date.now() / 1000);
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-  const startTs = Math.floor(sixMonthsAgo.getTime() / 1000);
+  const nowTs = unixNow();
+  const startTs = unixMonthsAgo(6);
 
   const query = `
     ${BASE_QUERY_FIELDS}, videos.name, videos.video_id, screenshots.image_id;
@@ -423,7 +418,7 @@ app.get('/latest-trailers', cacheMiddleware(3600), asyncRoute(async (req, res) =
 
 // Coming Soon
 app.get('/coming-soon', cacheMiddleware(3600), asyncRoute(async (req, res) => {
-  const nowTs = Math.floor(Date.now() / 1000);
+  const nowTs = unixNow();
   const query = `
     ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, hypes;
     ${BASE_QUERY_WHERE} & first_release_date > ${nowTs};
@@ -436,7 +431,7 @@ app.get('/coming-soon', cacheMiddleware(3600), asyncRoute(async (req, res) => {
 
 // Most Anticipated
 app.get('/most-anticipated', cacheMiddleware(3600), asyncRoute(async (req, res) => {
-  const nowTs = Math.floor(Date.now() / 1000);
+  const nowTs = unixNow();
   const query = `
     ${BASE_QUERY_FIELDS};
     ${BASE_QUERY_WHERE} & first_release_date > ${nowTs} & hypes > 0;
@@ -449,9 +444,7 @@ app.get('/most-anticipated', cacheMiddleware(3600), asyncRoute(async (req, res) 
 
 // Nostalgia Corner
 app.get('/nostalgia-corner', cacheMiddleware(3600), asyncRoute(async (req, res) => {
-  const nostalgiaDate = new Date();
-  nostalgiaDate.setFullYear(nostalgiaDate.getFullYear() - 20);
-  const nostalgiaTs = Math.floor(nostalgiaDate.getTime() / 1000);
+  const nostalgiaTs = unixYearsAgo(20);
   const query = `
     ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name;
     ${BASE_QUERY_WHERE} & first_release_date < ${nostalgiaTs} & total_rating > 70;
@@ -467,11 +460,11 @@ app.get('/nostalgia-corner', cacheMiddleware(3600), asyncRoute(async (req, res) 
 // bucket games per UTC day. The window is clamped to 62 days and the result
 // capped at 500 games.
 app.get('/release-calendar', cacheMiddleware(3600), asyncRoute(async (req, res) => {
-  const nowTs = Math.floor(Date.now() / 1000);
+  const nowTs = unixNow();
   let from = parseInt(req.query.from, 10);
-  if (isNaN(from)) from = nowTs - 7 * 86400;
+  if (isNaN(from)) from = unixDaysAgo(7);
   let to = parseInt(req.query.to, 10);
-  if (isNaN(to)) to = nowTs + 30 * 86400;
+  if (isNaN(to)) to = unixDaysFromNow(30);
 
   const MAX_DAYS = 62;
   if (to - from > MAX_DAYS * 86400) to = from + MAX_DAYS * 86400;
@@ -705,9 +698,9 @@ app.get('/search-game-id', cacheMiddleware(3600), asyncRoute(async (req, res) =>
 
 // Gaming Events
 app.get('/events', cacheMiddleware(3600), asyncRoute(async (req, res) => {
-  const nowTs = Math.floor(Date.now() / 1000);
+  const nowTs = unixNow();
   // Fetch events from the last 30 days and future
-  const thirtyDaysAgo = nowTs - 3 * 24 * 60 * 60;
+  const thirtyDaysAgo = unixDaysAgo(3);
   const query = `
     fields name, start_time, end_time, time_zone, event_logo.image_id, live_stream_url,
            description,
@@ -913,8 +906,8 @@ app.get('/psn/search', cacheMiddleware(3600), asyncRoute(async (req, res) => {
     throw new AppError('query parameter is required', 400);
   }
 
-  // PSN internal search API — returns structured JSON, no HTML scraping needed
-  const psnSearchUrl = `https://store.playstation.com/store/api/chihiro/00_09_000/tumbler/${country}/en/999/search/${encodeURIComponent(query)}?suggested_size=5&mode=game`;
+  // Modern PlayStation Network Universal Search API
+  const psnSearchUrl = `https://m.np.playstation.com/api/search/v1/universalSearch?searchTerm=${encodeURIComponent(query)}&countryCode=${country}&languageCode=en&pageSize=10&searchDomains=ConceptGameWeb`;
 
   const response = await fetch(psnSearchUrl, {
     headers: {
@@ -922,7 +915,6 @@ app.get('/psn/search', cacheMiddleware(3600), asyncRoute(async (req, res) => {
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       Accept: 'application/json, text/plain, */*',
       'Accept-Language': 'en-US,en;q=0.9',
-      Referer: 'https://store.playstation.com/',
     },
   });
 
@@ -934,29 +926,94 @@ app.get('/psn/search', cacheMiddleware(3600), asyncRoute(async (req, res) => {
   }
 
   const data = await response.json();
+  const rawResults = data?.domainResponses?.[0]?.results ?? [];
 
-  const links = data?.links ?? [];
-  const results = links
-    .filter((item) => item?.top_category === 'games' || item?.game_content_type != null)
+  const results = rawResults
     .map((item) => {
-      const priceObj = item?.default_sku?.display_price;
-      const strikethroughPrice = item?.default_sku?.strikethrough_price;
-      const isOnSale = strikethroughPrice != null;
+      const meta = item?.conceptProductMetadata;
+      if (!meta) return null;
+
+      const skus = meta.skus ?? [];
+      const sku =
+        skus.find((s) => s.type === 'STANDARD' && s.price > 0) ??
+        skus.find((s) => s.price > 0) ??
+        skus[0];
+
+      if (!sku || sku.price == null) return null;
+
+      const normalPriceNum = sku.price / 100;
+      let salePriceNum = normalPriceNum;
+      let isOnSale = false;
+
+      // Check active promotional discounts
+      if (meta.offers?.osls && meta.offers?.skuRelevancy) {
+        const relevantOffers =
+          meta.offers.skuRelevancy.find((r) => r.skuId === sku.id)?.offerAvailability ?? [];
+        const now = new Date();
+
+        for (const rel of relevantOffers) {
+          if (rel.startDate && new Date(rel.startDate) > now) continue;
+          if (rel.endDate && new Date(rel.endDate) < now) continue;
+
+          const oslStr = meta.offers.osls.find((o) => o.includes(rel.offerId));
+          if (!oslStr) continue;
+
+          try {
+            const osl = JSON.parse(oslStr);
+            // Skip subscription entitlements (PS Plus Game Catalog)
+            if (
+              osl.qualification?.criteria?.entitledTo ||
+              osl.display?.branding?.includes('PS_PLUS') ||
+              osl.metadata?.id?.startsWith('SUB')
+            ) {
+              continue;
+            }
+
+            const discount = osl.reward?.itemReward?.discount;
+            if (discount?.pricepoints?.[0]?.retail != null) {
+              const discountedPrice = discount.pricepoints[0].retail / 100;
+              if (discountedPrice < salePriceNum && discountedPrice > 0) {
+                salePriceNum = discountedPrice;
+                isOnSale = true;
+              }
+            } else if (discount?.percent?.retail != null) {
+              const percent = discount.percent.retail;
+              const discountedPrice =
+                Math.round(normalPriceNum * (1 - percent / 100) * 100) / 100;
+              if (discountedPrice < salePriceNum && discountedPrice > 0) {
+                salePriceNum = discountedPrice;
+                isOnSale = true;
+              }
+            }
+          } catch (_e) {
+            // Ignore parse errors on malformed offer strings
+          }
+        }
+      }
+
+      const masterImage =
+        meta.media?.images?.find(
+          (i) => i.type === 'GAMEHUB_COVER_ART' || i.type === 'MASTER',
+        ) ?? meta.media?.images?.[0];
+
+      const countryLower = (meta.country || country || 'us').toLowerCase();
+      const productUrl = meta.id
+        ? `https://store.playstation.com/${countryLower}/product/${meta.id}`
+        : `https://store.playstation.com/${countryLower}/concept/${meta.conceptId}`;
 
       return {
-        id: item?.id ?? null,
-        name: item?.name ?? null,
-        imageUrl: item?.images?.[0]?.url ?? null,
-        price: priceObj ?? null,
-        originalPrice: strikethroughPrice ?? null,
+        id: meta.id ?? (meta.conceptId ? String(meta.conceptId) : null),
+        name: meta.name ?? null,
+        imageUrl: masterImage?.url ?? null,
+        price: `${salePriceNum.toFixed(2)}`,
+        originalPrice: isOnSale ? `${normalPriceNum.toFixed(2)}` : null,
         isOnSale,
-        url: item?.url
-          ? `https://store.playstation.com${item.url}`
-          : `https://store.playstation.com/${country.toLowerCase()}/en/search/${encodeURIComponent(query)}`,
-        contentType: item?.game_content_type ?? null,
-        platforms: item?.platforms ?? [],
+        url: productUrl,
+        contentType: meta.topCategory ?? null,
+        platforms: meta.targetPlatforms ?? [],
       };
-    });
+    })
+    .filter(Boolean);
 
   res.json({ query, country, results });
 }));

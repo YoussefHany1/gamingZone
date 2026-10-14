@@ -381,7 +381,11 @@
         "wantToPlay": "Quero jogar",
         "rated": "Avaliado"
       },
-      "ratingFailed": "Não foi possível guardar a sua avaliação. Tente novamente."
+      "ratingFailed": "Não foi possível guardar a sua avaliação. Tente novamente.",
+      "notifyOnRelease": "Notificar-me no lançamento",
+      "notificationEnabled": "Notificação de lançamento ativa",
+      "subscribed": "Está subscrito para receber notificações de lançamento deste jogo",
+      "unsubscribed": "Cancelou a subscrição das notificações de lançamento deste jogo"
     },
     "filter": {
       "title": "Filtrar jogos",

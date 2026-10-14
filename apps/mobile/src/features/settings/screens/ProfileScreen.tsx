@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { igdbImageUrl } from "@gaming-zone/utils";
 import CustomText from "@/src/components/CustomText";
 import { View, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
 import { Image } from "expo-image";
@@ -100,7 +101,7 @@ StatTile.displayName = "StatTile";
 const coverSource = (entry: GameEntry) =>
   entry.cover_image_id
     ? {
-        uri: `https://images.igdb.com/igdb/image/upload/t_cover_small/${entry.cover_image_id}.webp`,
+        uri: igdbImageUrl(entry.cover_image_id, "cover_small"),
       }
     : require("@/assets/image-not-found.webp");
 

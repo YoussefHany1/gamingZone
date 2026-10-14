@@ -11,7 +11,8 @@
     "format": "prettier --write \"scripts/**/*.ts\"",
     "test": "vitest run",
     "functions:build": "node scripts/functions/build.mjs",
-    "functions:deploy": "node scripts/functions/deploy.mjs"
+    "functions:deploy": "node scripts/functions/deploy.mjs",
+    "check:game-releases": "tsx ./scripts/jobs/gameReleases.job.ts"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",

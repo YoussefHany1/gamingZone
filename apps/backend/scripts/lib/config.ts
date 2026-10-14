@@ -54,3 +54,14 @@ export function requireGeminiKey(): string {
 export function requireFcmServiceAccount(): string | null {
   return process.env.FCM_SERVICE_ACCOUNT ?? null;
 }
+/**
+ * TWITCH_CLIENT_ID & TWITCH_CLIENT_SECRET — required for querying IGDB directly.
+ */
+export function requireTwitchCredentials(): { clientId: string; clientSecret: string } {
+  const clientId = process.env.TWITCH_CLIENT_ID;
+  const clientSecret = process.env.TWITCH_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error('TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET are required for the game releases job.');
+  }
+  return { clientId: clientId.trim(), clientSecret: clientSecret.trim() };
+}

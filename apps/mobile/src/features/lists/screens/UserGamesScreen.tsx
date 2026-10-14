@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import { igdbImageUrl } from "@gaming-zone/utils";
 import CustomText from "@/src/components/CustomText";
 import {
   View,
@@ -71,7 +72,7 @@ const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
 
   const coverUrl = game.cover_image_id
     ? {
-        uri: `https://images.igdb.com/igdb/image/upload/t_cover_small/${game.cover_image_id}.webp`,
+        uri: igdbImageUrl(game.cover_image_id, "cover_small"),
       }
     : require("@/assets/image-not-found.webp");
 

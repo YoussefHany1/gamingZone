@@ -141,6 +141,9 @@ export type GameActionButtonsProps = {
   claimUrl?: string | undefined;
   store?: string | undefined;
   onAddToList: () => void;
+  isUpcoming?: boolean | undefined;
+  isSubscribed?: boolean | undefined;
+  onToggleNotification?: (() => void) | undefined;
 };
 
 export type GameDetailsBackgroundProps = {
@@ -320,6 +323,8 @@ export type NewsGameCardProps = {
 
 export type AnticipatedCardProps = {
   item: Game;
+  isSubscribed?: boolean;
+  onToggleNotification?: (item: Game) => void;
 };
 
 export type NostalgiaCardProps = {

@@ -6,7 +6,12 @@ import {
   teardownFreeGamesService,
 } from '../../../scripts/features/freeGames/freeGames.service';
 import { runGenerateWeeklySummary } from '../../../scripts/features/summary/summary.service';
+import {
+  runCheckGameReleases,
+  teardownGameReleasesService,
+} from '../../../scripts/features/gameReleases/gameReleases.service';
 import { setAppwriteLogger } from '../../../scripts/lib/logger';
+import { getErrorMessage } from '../../../scripts/lib/errors';
 
 // One Appwrite function, one native schedule ("0 * * * *" = hourly, UTC).
 // Every tick runs against the server clock; free-games and weekly-summary
@@ -21,6 +26,10 @@ const JOBS: Record<string, () => Promise<unknown>> = {
     await teardownFreeGamesService();
   },
   'weekly-summary': runGenerateWeeklySummary,
+  'game-releases': async () => {
+    await runCheckGameReleases();
+    await teardownGameReleasesService();
+  },
 };
 
 function jobsFromScheduledTick(now: Date): string[] {
@@ -28,6 +37,11 @@ function jobsFromScheduledTick(now: Date): string[] {
 
   if (now.getUTCMinutes() === 0) {
     jobs.push('free-games');
+  }
+
+  // Game releases check runs once a day at 09:00 UTC
+  if (now.getUTCHours() === 9 && now.getUTCMinutes() === 0) {
+    jobs.push('game-releases');
   }
 
   // Exactly once: only the 12:00 tick can match minute 0 (weekly recap is not
@@ -97,7 +111,7 @@ export default async ({ req, res, log, error }: AppwriteContext) => {
         results.push({ job, ok: true, ms, result: result ?? null });
       } catch (cause) {
         allOk = false;
-        const message = cause instanceof Error ? cause.message : String(cause);
+        const message = getErrorMessage(cause);
         error(`cron: job '${job}' failed: ${message}`);
         results.push({ job, ok: false, ms: Date.now() - jobStartedAt, error: message });
       }

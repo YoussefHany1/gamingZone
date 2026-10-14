@@ -1,4 +1,5 @@
 import { logger } from '../../lib/logger';
+import { getErrorMessage } from '../../lib/errors';
 
 import * as xml2js from 'xml2js';
 import * as iconv from 'iconv-lite';
@@ -39,10 +40,6 @@ type ErrorResponse = {
 type ErrorWithResponse = {
   response?: ErrorResponse;
 };
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
 
 function getResponseStatus(error: unknown): number | undefined {
   if (!error || typeof error !== 'object' || !('response' in error)) return undefined;

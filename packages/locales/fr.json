@@ -381,7 +381,11 @@
         "playing": "En cours",
         "wantToPlay": "À jouer",
         "rated": "Noté"
-      }
+      },
+      "notifyOnRelease": "M'avertir de la sortie",
+      "notificationEnabled": "Notification de sortie activée",
+      "subscribed": "Vous êtes abonné aux notifications de sortie de ce jeu",
+      "unsubscribed": "Vous êtes désabonné des notifications de sortie de ce jeu"
     },
     "filter": {
       "title": "Filtrer les jeux",

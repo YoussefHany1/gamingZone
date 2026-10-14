@@ -107015,6 +107015,14 @@ function requireGeminiKey() {
 function requireFcmServiceAccount() {
   return process.env.FCM_SERVICE_ACCOUNT ?? null;
 }
+function requireTwitchCredentials() {
+  const clientId = process.env.TWITCH_CLIENT_ID;
+  const clientSecret = process.env.TWITCH_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error("TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET are required for the game releases job.");
+  }
+  return { clientId: clientId.trim(), clientSecret: clientSecret.trim() };
+}
 
 // scripts/lib/appwrite.ts
 var import_node_appwrite = require("node-appwrite");
@@ -107064,6 +107072,55 @@ function firebaseAppFor(state) {
 var crypto = __toESM(require("crypto"));
 function sha1Id(value, length = 36) {
   return crypto.createHash("sha1").update(String(value)).digest("hex").substring(0, length);
+}
+
+// scripts/lib/errors.ts
+function getErrorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+// scripts/lib/fcm.ts
+var ANDROID_CHANNEL_ID = {
+  NEWS: "news_notifications",
+  FREE_GAMES: "free_games_channel"
+};
+var FCM_TOPIC = {
+  FREE_GAMES: "free_games_alerts",
+  WEEKLY_SUMMARY: "weekly_summary_alerts"
+};
+var FLUTTER_NOTIFICATION_CLICK = "FLUTTER_NOTIFICATION_CLICK";
+function buildTopicPush(opts) {
+  const { topic, title, body, image, channelId, sound, data } = opts;
+  return {
+    topic,
+    notification: {
+      title,
+      body,
+      ...image ? { image } : {}
+    },
+    android: {
+      priority: "high",
+      notification: {
+        ...sound ? { sound } : {},
+        channelId,
+        ...image ? { image } : {}
+      }
+    },
+    data: {
+      ...data ?? {},
+      clickAction: FLUTTER_NOTIFICATION_CLICK
+    }
+  };
+}
+async function sendTopicPush(state, message) {
+  const app = firebaseAppFor(state);
+  if (!state.enabled || !app) return { ok: false, error: null };
+  try {
+    await state.admin.messaging(app).send(message);
+    return { ok: true, error: null };
+  } catch (error) {
+    return { ok: false, error: new Error(getErrorMessage(error)) };
+  }
 }
 
 // scripts/features/rss/helpers.ts
@@ -112733,9 +112790,6 @@ function cleanXmlBody(body) {
   cleaned = cleaned.replace(invalidXmlCharacters, "");
   return cleaned;
 }
-function getErrorMessage(error) {
-  return error instanceof Error ? error.message : String(error);
-}
 function getResponseStatus(error) {
   if (!error || typeof error !== "object" || !("response" in error)) return void 0;
   const response = error.response;
@@ -113103,9 +113157,6 @@ if (firebaseState.enabled) {
 } else if (firebaseState.error) {
   logger.warn(`\u26A0\uFE0F Firebase error: ${firebaseState.error}`);
 }
-function getErrorMessage2(error) {
-  return error instanceof Error ? error.message : String(error);
-}
 function getErrorCode(error) {
   if (error && typeof error === "object" && "code" in error) {
     return error.code;
@@ -113116,9 +113167,7 @@ function getStringValue(value) {
   return typeof value === "string" && value ? value : null;
 }
 async function sendNotifications(articles, summary) {
-  if (!articles.length || !firebaseState.enabled || !firebaseState.admin) return;
-  const app = firebaseAppFor(firebaseState);
-  if (!app) return;
+  if (!articles.length) return;
   logger.info(`\u{1F514} Sending ${articles.length} notifications...`);
   const BATCH_SIZE = 10;
   for (let i = 0; i < articles.length; i += BATCH_SIZE) {
@@ -113126,32 +113175,25 @@ async function sendNotifications(articles, summary) {
     await Promise.allSettled(
       chunk.map(async (article) => {
         const imageLink = article.thumbnail || "";
-        const message = {
-          topic: article.topicName,
-          notification: {
+        const { ok, error } = await sendTopicPush(
+          firebaseState,
+          buildTopicPush({
+            topic: article.topicName,
             title: article.title.substring(0, 150),
             body: article.description.substring(0, 150),
-            ...imageLink && { image: imageLink }
-          },
-          android: {
-            priority: "high",
-            notification: {
-              channelId: "news_notifications",
-              ...imageLink && { image: imageLink }
+            image: imageLink,
+            channelId: ANDROID_CHANNEL_ID.NEWS,
+            data: {
+              link: article.link || "",
+              image: imageLink
             }
-          },
-          data: {
-            link: article.link || "",
-            image: imageLink || "",
-            clickAction: "FLUTTER_NOTIFICATION_CLICK"
-          }
-        };
-        try {
-          await firebaseState.admin.messaging(app).send(message);
+          })
+        );
+        if (ok) {
           summary.notificationsSent++;
           logger.info(`   -> Sent: ${article.title.substring(0, 30)}...`);
-        } catch (error) {
-          logger.error(`   -> Failed: ${getErrorMessage2(error)}`);
+        } else if (error) {
+          logger.error(`   -> Failed: ${getErrorMessage(error)}`);
         }
       })
     );
@@ -113175,7 +113217,7 @@ async function createArticle(sourceData, item) {
       if (articleData.fullDescription) fullDescription = articleData.fullDescription;
     }
   } catch (error) {
-    logger.warn(`      \u26A0\uFE0F Article enrichment failed for ${item.link}: ${getErrorMessage2(error)}`);
+    logger.warn(`      \u26A0\uFE0F Article enrichment failed for ${item.link}: ${getErrorMessage(error)}`);
   }
   const pubDate = serializePubDate(item.pubDate);
   if (!pubDate) logger.warn(`      \u26A0\uFE0F No valid publication date for ${item.link}`);
@@ -113210,10 +113252,10 @@ async function createArticle(sourceData, item) {
         );
         if (existing.link === item.link || existing.guid === item.guid) return "exists";
       } catch (lookupError) {
-        logger.warn(`      \u26A0\uFE0F Could not verify existing article: ${getErrorMessage2(lookupError)}`);
+        logger.warn(`      \u26A0\uFE0F Could not verify existing article: ${getErrorMessage(lookupError)}`);
       }
     } else {
-      logger.error(`      \u274C Save failed: ${getErrorMessage2(error)}`);
+      logger.error(`      \u274C Save failed: ${getErrorMessage(error)}`);
     }
     return "failed";
   }
@@ -113249,7 +113291,7 @@ async function cleanupOldArticles(siteName, category) {
       );
     }
   } catch (error) {
-    logger.error(`      \u26A0\uFE0F Cleanup failed: ${getErrorMessage2(error)}`);
+    logger.error(`      \u26A0\uFE0F Cleanup failed: ${getErrorMessage(error)}`);
   }
 }
 async function processSource(sourceData, summary) {
@@ -113327,7 +113369,7 @@ async function processSource(sourceData, summary) {
             if (result.value === "created") createdItems.push(item);
             return;
           }
-          const message = result.reason instanceof Error ? result.reason.message : String(result.reason);
+          const message = getErrorMessage(result.reason);
           logger.error(`      \u274C Save failed for ${item.title}: ${message}`);
           summary.errors.push({ name, msg: message });
         });
@@ -113362,8 +113404,8 @@ async function processSource(sourceData, summary) {
     }
     await cleanupOldArticles(name, category);
   } catch (error) {
-    logger.error(`\u274C Error in ${name}: ${getErrorMessage2(error)}`);
-    summary.errors.push({ name, msg: getErrorMessage2(error) });
+    logger.error(`\u274C Error in ${name}: ${getErrorMessage(error)}`);
+    summary.errors.push({ name, msg: getErrorMessage(error) });
   }
 }
 async function runFetchRss() {
@@ -113424,8 +113466,7 @@ async function searchIgdbGameId(gameName, apiBaseUrl) {
     );
     return response.data.igdb_id || null;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.log(`   \u26A0\uFE0F Failed to get IGDB ID for "${cleanName}": ${errorMessage}`);
+    console.log(`   \u26A0\uFE0F Failed to get IGDB ID for "${cleanName}": ${getErrorMessage(error)}`);
     return null;
   }
 }
@@ -113456,8 +113497,7 @@ async function fetchSteamGames(steamApiUrl) {
       fetchedAt: (/* @__PURE__ */ new Date()).toISOString()
     }));
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`\u26A0\uFE0F Steam Fetch failed: ${errorMessage}`);
+    console.error(`\u26A0\uFE0F Steam Fetch failed: ${getErrorMessage(error)}`);
     return [];
   }
 }
@@ -113480,8 +113520,7 @@ async function fetchGogGames(gogApiUrl) {
       fetchedAt: (/* @__PURE__ */ new Date()).toISOString()
     }));
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`\u26A0\uFE0F GOG Fetch failed: ${errorMessage}`);
+    console.error(`\u26A0\uFE0F GOG Fetch failed: ${getErrorMessage(error)}`);
     return [];
   }
 }
@@ -113526,8 +113565,7 @@ async function fetchEpicGames(epicApiUrl) {
     const nextGames = allGames.filter(hasUpcomingEpicOffer).map((game) => normalizeEpicGame(game, "next"));
     return [...currentGames, ...nextGames];
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`\u26A0\uFE0F Epic Fetch failed: ${errorMessage}`);
+    console.error(`\u26A0\uFE0F Epic Fetch failed: ${getErrorMessage(error)}`);
     return [];
   }
 }
@@ -113540,7 +113578,6 @@ var CONFIG2 = {
   EPIC_API_URL: "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US",
   STEAM_API_URL: "https://www.gamerpower.com/api/giveaways?platform=steam&type=game&sort-by=value",
   GOG_API_URL: "https://www.gamerpower.com/api/giveaways?platform=gog&type=game&sort-by=value",
-  FCM_TOPIC: "free_games_alerts",
   API_BASE_URL: "https://igdb-api-omega.vercel.app"
 };
 var databases2 = createAppwriteDatabases();
@@ -113551,39 +113588,26 @@ if (firebaseState2.enabled) {
   logger.warn(`\u26A0\uFE0F Firebase error: ${firebaseState2.error}`);
 }
 async function sendGameNotification(game) {
-  if (!firebaseState2.enabled || !firebaseState2.admin) return;
-  const app = firebaseAppFor(firebaseState2);
-  if (!app) return;
   const imageLink = game.image || null;
   const storeName = game.store === "steam" ? "Steam" : game.store === "gog" ? "GOG" : "Epic Games";
-  const message = {
-    topic: CONFIG2.FCM_TOPIC,
-    notification: {
-      title: "New Free Game! \u{1F381}",
-      body: `${game.title} is now free on ${storeName}!`,
-      ...imageLink && { image: imageLink }
-    },
-    android: {
-      priority: "high",
-      notification: {
-        sound: "default",
-        channelId: "free_games_channel",
-        ...imageLink && { image: imageLink }
-      }
-    },
+  const message = buildTopicPush({
+    topic: FCM_TOPIC.FREE_GAMES,
+    title: "New Free Game! \u{1F381}",
+    body: `${game.title} is now free on ${storeName}!`,
+    image: imageLink,
+    channelId: ANDROID_CHANNEL_ID.FREE_GAMES,
+    sound: "default",
     data: {
       type: "free_game",
       slug: game.slug || "",
-      url: game.url || "",
-      clickAction: "FLUTTER_NOTIFICATION_CLICK"
+      url: game.url || ""
     }
-  };
-  try {
-    await firebaseState2.admin.messaging(app).send(message);
+  });
+  const { ok, error } = await sendTopicPush(firebaseState2, message);
+  if (ok) {
     logger.info(`   \u{1F514} Notification sent for: ${game.title}`);
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error(`   \u274C Notification failed: ${errorMessage}`);
+  } else if (error) {
+    logger.error(`   \u274C Notification failed: ${getErrorMessage(error)}`);
   }
 }
 async function listAllDocuments(databaseId, collectionId, pageSize = 100) {
@@ -113643,8 +113667,7 @@ async function createNewGame(docId, game) {
     );
     logger.info("   \u2728 Created NEW game document.");
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error(`   \u274C Failed to create: ${errorMessage}`);
+    logger.error(`   \u274C Failed to create: ${getErrorMessage(error)}`);
   }
 }
 async function updateExistingGame(docId, game, existingDoc) {
@@ -113749,7 +113772,6 @@ loadBackendEnv();
 var DATABASE_ID = env.APPWRITE_DATABASE_ID;
 var NEWS_COLLECTION_ID = env.ARTICLES_COLLECTION_ID;
 var SUMMARIES_COLLECTION_ID = env.SUMMARIES_COLLECTION_ID;
-var FCM_TOPIC = "weekly_summary_alerts";
 var databases3 = createAppwriteDatabases();
 var firebaseState3 = initFirebaseAdmin("summary");
 if (firebaseState3.enabled) {
@@ -113881,7 +113903,7 @@ async function callGeminiWithRetry(prompt, maxRetries = 3) {
       }
       return parseJsonSummary(rawText);
     } catch (error) {
-      logger.error(`\u274C Gemini attempt ${attempt} failed: ${error.message}`);
+      logger.error(`\u274C Gemini attempt ${attempt} failed: ${getErrorMessage(error)}`);
       if (attempt >= maxRetries) {
         throw error;
       }
@@ -113972,32 +113994,20 @@ async function saveWeeklySummary(summary, startDate) {
   });
 }
 async function sendSummaryNotification() {
-  if (!firebaseState3.enabled || !firebaseState3.admin) return;
-  const app = firebaseAppFor(firebaseState3);
-  if (!app) return;
-  const message = {
-    topic: FCM_TOPIC,
-    notification: {
-      title: "\u{1F3AE} Weekly Gaming Recap",
-      body: "Your weekly recap is ready. Tap to read it!"
-    },
-    android: {
-      priority: "high",
-      notification: {
-        channelId: "news_notifications"
-      }
-    },
+  const message = buildTopicPush({
+    topic: FCM_TOPIC.WEEKLY_SUMMARY,
+    title: "\u{1F3AE} Weekly Gaming Recap",
+    body: "Your weekly recap is ready. Tap to read it!",
+    channelId: ANDROID_CHANNEL_ID.NEWS,
     data: {
-      type: "weekly_summary",
-      clickAction: "FLUTTER_NOTIFICATION_CLICK"
+      type: "weekly_summary"
     }
-  };
-  try {
-    await firebaseState3.admin.messaging(app).send(message);
+  });
+  const { ok, error } = await sendTopicPush(firebaseState3, message);
+  if (ok) {
     logger.info("\u{1F514} Weekly summary notification sent.");
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error(`\u274C Weekly summary notification failed: ${errorMessage}`);
+  } else if (error) {
+    logger.error(`\u274C Weekly summary notification failed: ${getErrorMessage(error)}`);
   }
 }
 async function runGenerateWeeklySummary() {
@@ -114066,11 +114076,113 @@ ${s.english}`).join("\n\n");
     logger.info("\u2705 Weekly summary saved!");
     await sendSummaryNotification();
   } catch (error) {
-    logger.error("\u274C Error generating summary:", error.message);
+    logger.error("\u274C Error generating summary:", getErrorMessage(error));
     if (error instanceof SyntaxError) {
       logger.info("JSON Parse Error \u2013 check the raw AI response.");
     }
     throw error;
+  }
+}
+
+// scripts/features/gameReleases/gameReleases.service.ts
+loadBackendEnv();
+var firebaseState4 = initFirebaseAdmin("gameReleases");
+if (firebaseState4.enabled) {
+  logger.info("\u2705 Firebase Admin initialized for gameReleases.");
+} else if (firebaseState4.error) {
+  logger.warn(`\u26A0\uFE0F Firebase error in gameReleases: ${firebaseState4.error}`);
+}
+var cachedTwitchToken = null;
+async function getTwitchAppToken(clientId, clientSecret) {
+  if (cachedTwitchToken && cachedTwitchToken.expiresAt > Date.now() + 1e4) {
+    return cachedTwitchToken.token;
+  }
+  const params = new URLSearchParams({
+    client_id: clientId,
+    client_secret: clientSecret,
+    grant_type: "client_credentials"
+  });
+  const res = await withRetry(
+    () => axios_default.post("https://id.twitch.tv/oauth2/token", params.toString(), {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      timeout: 1e4
+    }),
+    { label: "Twitch OAuth Token" }
+  );
+  cachedTwitchToken = {
+    token: res.data.access_token,
+    expiresAt: Date.now() + res.data.expires_in * 1e3
+  };
+  return cachedTwitchToken.token;
+}
+async function runCheckGameReleases() {
+  logger.info("\u{1F680} Starting Daily Game Releases Notification Job...");
+  const { clientId, clientSecret } = requireTwitchCredentials();
+  const token = await getTwitchAppToken(clientId, clientSecret);
+  const now = /* @__PURE__ */ new Date();
+  const startOfDay = Math.floor(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0) / 1e3
+  );
+  const endOfDay = startOfDay + 86400 - 1;
+  logger.info(
+    `\u{1F4C5} Checking games releasing today (UTC): ${new Date(startOfDay * 1e3).toISOString()} to ${new Date(endOfDay * 1e3).toISOString()}`
+  );
+  const query = `
+    fields id, name, cover.image_id, first_release_date;
+    where first_release_date >= ${startOfDay} & first_release_date <= ${endOfDay};
+    sort first_release_date asc;
+    limit 100;
+  `;
+  const response = await withRetry(
+    () => axios_default.post("https://api.igdb.com/v4/games", query, {
+      headers: {
+        "Client-ID": clientId,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "text/plain",
+        Accept: "application/json"
+      },
+      timeout: 1e4
+    }),
+    { label: "IGDB Games Releasing Today" }
+  );
+  const games = Array.isArray(response.data) ? response.data : [];
+  logger.info(`\u{1F3AE} Found ${games.length} game(s) releasing today.`);
+  let sent = 0;
+  for (const game of games) {
+    const topic = `game_release_${game.id}`;
+    const imageLink = game.cover?.image_id ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.jpg` : null;
+    logger.info(`\u{1F4E1} Sending release push for [${game.id}]: ${game.name} on topic: ${topic}`);
+    const message = buildTopicPush({
+      topic,
+      title: "\u{1F3AE} \u062D\u0627\u0646 \u0648\u0642\u062A \u0627\u0644\u0644\u0639\u0628!",
+      body: `\u0644\u0639\u0628\u0629 "${game.name}" \u0645\u062A\u0648\u0641\u0631\u0629 \u0631\u0633\u0645\u064A\u0627\u064B \u0627\u0644\u0622\u0646! \u062A\u0641\u0642\u062F\u0647\u0627 \u0627\u0644\u0622\u0646 \u0641\u064A \u0627\u0644\u062A\u0637\u0628\u064A\u0642.`,
+      image: imageLink,
+      channelId: ANDROID_CHANNEL_ID.NEWS,
+      sound: "default",
+      data: {
+        type: "game_release",
+        gameID: String(game.id)
+      }
+    });
+    const { ok, error } = await sendTopicPush(firebaseState4, message);
+    if (ok) {
+      sent++;
+      logger.info(`   \u{1F514} Release notification sent for: ${game.name}`);
+    } else if (error) {
+      logger.error(`   \u274C Release notification failed for ${game.name}: ${getErrorMessage(error)}`);
+    }
+  }
+  logger.info(`\u2705 Game releases job finished. (Found: ${games.length}, Sent: ${sent})`);
+  return { found: games.length, sent };
+}
+async function teardownGameReleasesService() {
+  const app = firebaseAppFor(firebaseState4);
+  if (!app) return;
+  try {
+    await app.delete();
+    logger.info("\u{1F6D1} Game-releases Firebase app deleted cleanly.");
+  } catch (error) {
+    logger.error(`\u274C Error deleting Firebase app: ${error}`);
   }
 }
 
@@ -114081,12 +114193,19 @@ var JOBS = {
     await runFetchFreeGames();
     await teardownFreeGamesService();
   },
-  "weekly-summary": runGenerateWeeklySummary
+  "weekly-summary": runGenerateWeeklySummary,
+  "game-releases": async () => {
+    await runCheckGameReleases();
+    await teardownGameReleasesService();
+  }
 };
 function jobsFromScheduledTick(now) {
   const jobs = ["rss"];
   if (now.getUTCMinutes() === 0) {
     jobs.push("free-games");
+  }
+  if (now.getUTCHours() === 9 && now.getUTCMinutes() === 0) {
+    jobs.push("game-releases");
   }
   if (now.getUTCDay() === 5 && now.getUTCHours() === 12 && now.getUTCMinutes() === 0) {
     jobs.push("weekly-summary");
@@ -114138,7 +114257,7 @@ var main_default = async ({ req, res, log, error }) => {
         results.push({ job, ok: true, ms, result: result ?? null });
       } catch (cause) {
         allOk = false;
-        const message = cause instanceof Error ? cause.message : String(cause);
+        const message = getErrorMessage(cause);
         error(`cron: job '${job}' failed: ${message}`);
         results.push({ job, ok: false, ms: Date.now() - jobStartedAt, error: message });
       }

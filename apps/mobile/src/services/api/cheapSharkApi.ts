@@ -6,6 +6,7 @@
  * never persisted to the database — they live only in component state.
  */
 import axios from "axios";
+import { extractSteamAppId, normalizeGameTitle } from "@gaming-zone/utils";
 import type { Website } from "@/src/features/games/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -57,15 +58,6 @@ const CHEAPSHARK_STORE_TO_IGDB_TYPE: Record<string, number> = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Normalises a game title so CheapShark results can be compared reliably. */
-function normalizeTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, " ")
-    .trim()
-    .replace(/\s+/g, " ");
-}
-
 /** Picks the cheapest live deal among one or more matching deals. */
 function pickBestDeal(deals: CheapSharkDeal[]): CheapSharkDeal | null {
   if (!deals.length) return null;
@@ -88,8 +80,7 @@ export function matchCheapSharkDeals(
 ): CheapSharkDeal[] {
   if (!deals?.length) return [];
 
-  const steamSite = websites?.find((w) => w.type === STEAM_IGDB_TYPE);
-  const steamAppId = steamSite?.url.match(/store\.steampowered\.com\/app\/(\d+)/)?.[1];
+  const steamAppId = extractSteamAppId(websites);
 
   if (steamAppId) {
     const appIdMatches = deals.filter(
@@ -98,16 +89,16 @@ export function matchCheapSharkDeals(
     if (appIdMatches.length) return appIdMatches;
   }
 
-  const normalizedName = normalizeTitle(gameName);
+  const normalizedName = normalizeGameTitle(gameName);
   const titleMatches = deals.filter(
-    (deal) => normalizeTitle(deal.title) === normalizedName,
+    (deal) => normalizeGameTitle(deal.title) === normalizedName,
   );
   if (titleMatches.length) return titleMatches;
 
   // Favour deals whose internal name shares the base game title.
   const baseWords = normalizedName.split(" ");
   const partialMatches = deals.filter((deal) => {
-    const internal = normalizeTitle(deal.internalName);
+    const internal = normalizeGameTitle(deal.internalName);
     return baseWords.some((word) => word.length > 3 && internal.includes(word));
   });
   if (partialMatches.length) return partialMatches;

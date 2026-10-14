@@ -245,10 +245,26 @@ export function computeTimeLeft(
 }
 
 // ---------------------------------------------------------------------------
+// Title normalization
+// ---------------------------------------------------------------------------
+
+/** Normalizes a game title for fuzzy comparisons (lowercase, single-spaced). */
+export function normalizeGameTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+// ---------------------------------------------------------------------------
 // IGDB images
 // ---------------------------------------------------------------------------
 
 /** Builds an IGDB image URL for a given image id and size token (e.g. "cover_big"). */
-export function igdbImageUrl(imageId: string, size: string): string {
-  return `https://images.igdb.com/igdb/image/upload/t_${size}/${imageId}.webp`;
+export function igdbImageUrl(
+  imageId: string | null | undefined,
+  size: string,
+): string {
+  return `https://images.igdb.com/igdb/image/upload/t_${size}/${String(imageId)}.webp`;
 }

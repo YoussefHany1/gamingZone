@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
-import { CircleCheck, FileText, Languages, Mic, Monitor } from "lucide-react-native";
+import { Check, CircleCheck, FileText, Languages, Mic, Monitor } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -111,6 +111,14 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
       alignItems: "center",
       justifyContent: "center",
     },
+    filledCheck: {
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: c.accent,
+      alignItems: "center",
+      justifyContent: "center",
+    },
   }));
 
   const { t, i18n } = useTranslation();
@@ -182,7 +190,14 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
 
             {COLUMN_KEYS.map((key) => (
               <View key={key} style={styles.checkCell}>
-                {lang[key] && <CircleCheck size={20} color={colors.accent} />}
+                {lang[key] &&
+                  (isAppLanguage ? (
+                    <View style={styles.filledCheck}>
+                      <Check size={12} color={colors.onAccent} strokeWidth={2.8} />
+                    </View>
+                  ) : (
+                    <CircleCheck size={20} color={colors.accent} />
+                  ))}
               </View>
             ))}
           </View>

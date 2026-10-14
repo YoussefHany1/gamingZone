@@ -1,7 +1,7 @@
 import React, { memo, useCallback } from "react";
 import { View, TouchableOpacity } from "react-native";
 import CustomText from "@/src/components/CustomText";
-import { CirclePlus, Gift } from "lucide-react-native";
+import { Bell, CirclePlus, Gift } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -21,48 +21,45 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
   claimUrl,
   store = "",
   onAddToList,
+  isUpcoming,
+  isSubscribed,
+  onToggleNotification,
 }) => {
   const colors = useThemeColors();
   const gradientColors: [string, string] = [colors.accent, "#3b4d6e"];
   const styles = useThemeStyles((c) => ({
     container: {
-      marginVertical: 20,
+      marginVertical: 16,
+      gap: 12,
     },
     buttonWrapper: {
-      alignItems: "center",
-      marginVertical: 10,
       width: "100%",
     },
     button: {
-      padding: 15,
+      paddingVertical: 14,
+      paddingHorizontal: 20,
       borderRadius: 12,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      elevation: 5,
-      shadowColor: c.accentText,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 5,
       width: "100%",
+      gap: 10,
+    },
+    buttonSubscribed: {
+      borderWidth: 1.5,
+      borderColor: c.accentBorder,
+      borderRadius: 12,
     },
     buttonText: {
       color: c.text,
-      fontSize: 18,
+      fontSize: 17,
       fontWeight: "bold",
-      letterSpacing: 0.5,
-    },
-    claimIcon: {
-      marginRight: 10,
-    },
-    addToListText: {
-      fontWeight: "600",
-      letterSpacing: 0,
-      marginLeft: 8,
+      letterSpacing: 0.3,
     },
   }));
 
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language;
 
   const handleClaimPress = useCallback(() => {
     if (claimUrl) openLink(claimUrl);
@@ -72,7 +69,7 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
     <View style={styles.container}>
       {claimUrl && (
         <TouchableOpacity
-          activeOpacity={0.9}
+          activeOpacity={0.85}
           onPress={handleClaimPress}
           style={styles.buttonWrapper}
           accessibilityLabel={`${t("games.details.claimNow")} ${capitalise(store)}`}
@@ -84,16 +81,48 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
             end={GRADIENT_END}
             style={styles.button}
           >
-            <Gift size={24} color={colors.text} style={styles.claimIcon} />
+            <Gift size={22} color={colors.text} />
             <CustomText style={styles.buttonText}>
-              {t("games.details.claimNow")}
-              {capitalise(store)}
+              {`${t("games.details.claimNow")} ${capitalise(store)}`}
+            </CustomText>
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+
+      {isUpcoming && onToggleNotification && (
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={onToggleNotification}
+          style={styles.buttonWrapper}
+          accessibilityLabel={
+            isSubscribed
+              ? t("games.details.notificationEnabled", "Notification Enabled")
+              : t("games.details.notifyOnRelease", "Notify on Release")
+          }
+          accessibilityRole="button"
+        >
+          <LinearGradient
+            colors={gradientColors}
+            start={GRADIENT_START}
+            end={GRADIENT_END}
+            style={[styles.button, isSubscribed && styles.buttonSubscribed]}
+          >
+            <Bell
+              size={22}
+              color={colors.text}
+              fill={isSubscribed ? colors.text : "none"}
+            />
+            <CustomText style={styles.buttonText}>
+              {isSubscribed
+                ? t("games.details.notificationEnabled")
+                : t("games.details.notifyOnRelease")}
             </CustomText>
           </LinearGradient>
         </TouchableOpacity>
       )}
 
       <TouchableOpacity
+        activeOpacity={0.85}
         onPress={onAddToList}
         style={styles.buttonWrapper}
         accessibilityLabel={t("games.details.addToList")}
@@ -105,8 +134,8 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
           end={GRADIENT_END}
           style={styles.button}
         >
-          <CirclePlus size={24} color={colors.text} />
-          <CustomText style={[styles.buttonText, styles.addToListText]}>
+          <CirclePlus size={22} color={colors.text} />
+          <CustomText style={styles.buttonText}>
             {t("games.details.addToList")}
           </CustomText>
         </LinearGradient>

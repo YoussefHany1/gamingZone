@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { igdbImageUrl } from "@gaming-zone/utils";
 import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
@@ -31,7 +32,7 @@ const GameCard = memo<GameCardProps>(({ game }) => {
         recyclingKey={game.cover?.image_id ?? `game-${game.id}`}
         source={
           game.cover
-            ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.webp`
+            ? igdbImageUrl(game.cover.image_id, "cover_big")
             : require("@/assets/image-not-found.webp")
         }
         style={styles.gameCover}

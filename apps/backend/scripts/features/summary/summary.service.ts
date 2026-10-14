@@ -4,14 +4,15 @@ import * as sdk from 'node-appwrite';
 import { loadBackendEnv } from '../../lib/env';
 import { env, requireGeminiKey } from '../../lib/config';
 import { createAppwriteDatabases } from '../../lib/appwrite';
-import { initFirebaseAdmin, firebaseAppFor } from '../../lib/firebaseAdmin';
+import { initFirebaseAdmin } from '../../lib/firebaseAdmin';
+import { getErrorMessage } from '../../lib/errors';
+import { ANDROID_CHANNEL_ID, buildTopicPush, FCM_TOPIC, sendTopicPush } from '../../lib/fcm';
 
 loadBackendEnv();
 
 const DATABASE_ID = env.APPWRITE_DATABASE_ID;
 const NEWS_COLLECTION_ID = env.ARTICLES_COLLECTION_ID;
 const SUMMARIES_COLLECTION_ID = env.SUMMARIES_COLLECTION_ID;
-const FCM_TOPIC = 'weekly_summary_alerts';
 
 const databases = createAppwriteDatabases();
 const firebaseState = initFirebaseAdmin('summary');
@@ -175,7 +176,7 @@ async function callGeminiWithRetry(prompt: string, maxRetries = 3): Promise<Summ
 
       return parseJsonSummary(rawText);
     } catch (error: any) {
-      logger.error(`❌ Gemini attempt ${attempt} failed: ${error.message}`);
+      logger.error(`❌ Gemini attempt ${attempt} failed: ${getErrorMessage(error)}`);
       if (attempt >= maxRetries) {
         throw error;
       }
@@ -304,35 +305,21 @@ async function saveWeeklySummary(summary: SummaryResponse, startDate: string) {
  * thrown, so a lost push can't fail the whole weekly job.
  */
 async function sendSummaryNotification(): Promise<void> {
-  if (!firebaseState.enabled || !firebaseState.admin) return;
-
-  const app = firebaseAppFor(firebaseState);
-  if (!app) return;
-
-  const message = {
-    topic: FCM_TOPIC,
-    notification: {
-      title: '🎮 Weekly Gaming Recap',
-      body: 'Your weekly recap is ready. Tap to read it!',
-    },
-    android: {
-      priority: 'high' as const,
-      notification: {
-        channelId: 'news_notifications',
-      },
-    },
+  const message = buildTopicPush({
+    topic: FCM_TOPIC.WEEKLY_SUMMARY,
+    title: '🎮 Weekly Gaming Recap',
+    body: 'Your weekly recap is ready. Tap to read it!',
+    channelId: ANDROID_CHANNEL_ID.NEWS,
     data: {
       type: 'weekly_summary',
-      clickAction: 'FLUTTER_NOTIFICATION_CLICK',
     },
-  };
+  });
 
-  try {
-    await firebaseState.admin.messaging(app).send(message);
+  const { ok, error } = await sendTopicPush(firebaseState, message);
+  if (ok) {
     logger.info('🔔 Weekly summary notification sent.');
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error(`❌ Weekly summary notification failed: ${errorMessage}`);
+  } else if (error) {
+    logger.error(`❌ Weekly summary notification failed: ${getErrorMessage(error)}`);
   }
 }
 
@@ -417,7 +404,7 @@ async function runGenerateWeeklySummary() {
     logger.info('✅ Weekly summary saved!');
     await sendSummaryNotification();
   } catch (error: any) {
-    logger.error('❌ Error generating summary:', error.message);
+    logger.error('❌ Error generating summary:', getErrorMessage(error));
     if (error instanceof SyntaxError) {
       logger.info('JSON Parse Error – check the raw AI response.');
     }

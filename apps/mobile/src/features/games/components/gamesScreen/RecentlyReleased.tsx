@@ -1,4 +1,5 @@
 import React, { useCallback } from "react";
+import { igdbImageUrl } from "@gaming-zone/utils";
 import { View, TouchableOpacity } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
@@ -139,7 +140,7 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
             source={
               item.cover
                 ? {
-                    uri: `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`,
+                    uri: igdbImageUrl(item.cover.image_id, "cover_big"),
                   }
                 : require("@/assets/image-not-found.webp")
             }

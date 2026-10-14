@@ -1,4 +1,5 @@
 import { axiosGetWithRetry } from '../../lib/http';
+import { getErrorMessage } from '../../lib/errors';
 import { cleanSlug, cleanGameNameForSearch } from './helpers';
 
 export interface GamerPowerGame {
@@ -76,8 +77,7 @@ async function fetchSteamGames(steamApiUrl: string): Promise<NormalizedGame[]> {
       fetchedAt: new Date().toISOString(),
     }));
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`⚠️ Steam Fetch failed: ${errorMessage}`);
+    console.error(`⚠️ Steam Fetch failed: ${getErrorMessage(error)}`);
     return [];
   }
 }
@@ -102,8 +102,7 @@ async function fetchGogGames(gogApiUrl: string): Promise<NormalizedGame[]> {
       fetchedAt: new Date().toISOString(),
     }));
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`⚠️ GOG Fetch failed: ${errorMessage}`);
+    console.error(`⚠️ GOG Fetch failed: ${getErrorMessage(error)}`);
     return [];
   }
 }
@@ -166,8 +165,7 @@ async function fetchEpicGames(epicApiUrl: string): Promise<NormalizedGame[]> {
 
     return [...currentGames, ...nextGames];
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`⚠️ Epic Fetch failed: ${errorMessage}`);
+    console.error(`⚠️ Epic Fetch failed: ${getErrorMessage(error)}`);
     return [];
   }
 }

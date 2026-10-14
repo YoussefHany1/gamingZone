@@ -37,6 +37,8 @@ export const REQUIRED_VARS = [
   'ARTICLES_COLLECTION_ID',
   'FREE_GAMES_COLLECTION_ID',
   'SUMMARIES_COLLECTION_ID',
+  'TWITCH_CLIENT_ID',
+  'TWITCH_CLIENT_SECRET',
 ];
 
 // Collection IDs fall back to the same defaults used by config.ts.

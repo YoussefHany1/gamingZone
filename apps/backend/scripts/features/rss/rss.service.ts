@@ -4,8 +4,10 @@ import { Query } from 'node-appwrite';
 import { loadBackendEnv } from '../../lib/env';
 import { env } from '../../lib/config';
 import { createAppwriteDatabases } from '../../lib/appwrite';
-import { initFirebaseAdmin, firebaseAppFor } from '../../lib/firebaseAdmin';
+import { initFirebaseAdmin } from '../../lib/firebaseAdmin';
 import { sha1Id } from '../../lib/hash';
+import { getErrorMessage } from '../../lib/errors';
+import { ANDROID_CHANNEL_ID, buildTopicPush, sendTopicPush } from '../../lib/fcm';
 
 import { safeId, resolveImageUrl } from './helpers';
 import { fetchFeed, fetchArticleData } from './fetch';
@@ -47,10 +49,6 @@ interface SourceData {
 
 type SaveResult = 'created' | 'exists' | 'failed';
 
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
 function getErrorCode(error: unknown): unknown {
   if (error && typeof error === 'object' && 'code' in error) {
     return (error as { code?: unknown }).code;
@@ -66,10 +64,7 @@ async function sendNotifications(
   articles: (NormalizedArticle & { topicName: string })[],
   summary: RssSummary,
 ): Promise<void> {
-  if (!articles.length || !firebaseState.enabled || !firebaseState.admin) return;
-
-  const app = firebaseAppFor(firebaseState);
-  if (!app) return;
+  if (!articles.length) return;
 
   logger.info(`🔔 Sending ${articles.length} notifications...`);
   const BATCH_SIZE = 10;
@@ -80,32 +75,26 @@ async function sendNotifications(
     await Promise.allSettled(
       chunk.map(async (article) => {
         const imageLink = article.thumbnail || '';
-        const message = {
-          topic: article.topicName,
-          notification: {
+
+        const { ok, error } = await sendTopicPush(
+          firebaseState,
+          buildTopicPush({
+            topic: article.topicName,
             title: article.title.substring(0, 150),
             body: article.description.substring(0, 150),
-            ...(imageLink && { image: imageLink }),
-          },
-          android: {
-            priority: 'high' as const,
-            notification: {
-              channelId: 'news_notifications',
-              ...(imageLink && { image: imageLink }),
+            image: imageLink,
+            channelId: ANDROID_CHANNEL_ID.NEWS,
+            data: {
+              link: article.link || '',
+              image: imageLink,
             },
-          },
-          data: {
-            link: article.link || '',
-            image: imageLink || '',
-            clickAction: 'FLUTTER_NOTIFICATION_CLICK',
-          },
-        };
+          }),
+        );
 
-        try {
-          await firebaseState.admin.messaging(app).send(message);
+        if (ok) {
           summary.notificationsSent++;
           logger.info(`   -> Sent: ${article.title.substring(0, 30)}...`);
-        } catch (error: unknown) {
+        } else if (error) {
           logger.error(`   -> Failed: ${getErrorMessage(error)}`);
         }
       }),
@@ -311,8 +300,7 @@ async function processSource(sourceData: SourceData, summary: RssSummary): Promi
             return;
           }
 
-          const message =
-            result.reason instanceof Error ? result.reason.message : String(result.reason);
+          const message = getErrorMessage(result.reason);
           logger.error(`      ❌ Save failed for ${item.title}: ${message}`);
           summary.errors.push({ name, msg: message });
         });

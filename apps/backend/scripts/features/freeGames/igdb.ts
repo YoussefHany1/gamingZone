@@ -1,4 +1,5 @@
 import { axiosGetWithRetry } from '../../lib/http';
+import { getErrorMessage } from '../../lib/errors';
 
 import { cleanGameNameForSearch } from './helpers';
 
@@ -17,8 +18,7 @@ async function searchIgdbGameId(gameName: string, apiBaseUrl: string): Promise<s
 
     return response.data.igdb_id || null;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.log(`   ⚠️ Failed to get IGDB ID for "${cleanName}": ${errorMessage}`);
+    console.log(`   ⚠️ Failed to get IGDB ID for "${cleanName}": ${getErrorMessage(error)}`);
     return null;
   }
 }

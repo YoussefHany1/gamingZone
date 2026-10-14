@@ -1,4 +1,5 @@
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import { igdbImageUrl } from "@gaming-zone/utils";
 import React, { useCallback } from "react";
 import CustomText from "@/src/components/CustomText";
 import { View, TouchableOpacity, Dimensions } from "react-native";
@@ -291,7 +292,7 @@ const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
               source={
                 item.cover
                   ? {
-                      uri: `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`,
+                      uri: igdbImageUrl(item.cover.image_id, "cover_big"),
                     }
                   : require("@/assets/image-not-found.webp")
               }

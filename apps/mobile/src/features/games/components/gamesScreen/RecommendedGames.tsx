@@ -1,4 +1,5 @@
 import React, { useCallback } from "react";
+import { igdbImageUrl } from "@gaming-zone/utils";
 import { View, TouchableOpacity } from "react-native";
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import CustomText from "@/src/components/CustomText";
@@ -97,7 +98,7 @@ const RecommendedCard = React.memo<RecommendedCardProps>(({ item }) => {
           source={
             item.cover
               ? {
-                  uri: `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.webp`,
+                  uri: igdbImageUrl(item.cover.image_id, "cover_big"),
                 }
               : require("@/assets/image-not-found.webp")
           }

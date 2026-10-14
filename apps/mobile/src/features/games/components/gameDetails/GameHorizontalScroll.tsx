@@ -1,6 +1,7 @@
 import React, { memo, useState } from "react";
+import { igdbImageUrl } from "@gaming-zone/utils";
 import CustomText from "@/src/components/CustomText";
-import { View, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import { View, TouchableOpacity, ActivityIndicator } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -11,8 +12,7 @@ import type { GameHorizontalScrollProps } from "../../types";
 const IMAGE_NOT_FOUND = require("@/assets/image-not-found.webp");
 
 /** Returns the IGDB small cover URL for a given image_id. */
-const coverUrl = (imageId: string) =>
-  `https://images.igdb.com/igdb/image/upload/t_cover_small/${imageId}.webp`;
+const coverUrl = (imageId: string) => igdbImageUrl(imageId, "cover_small");
 
 const HorizontalGameCard: React.FC<{
   game: any;

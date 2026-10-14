@@ -381,7 +381,11 @@
         "playing": "Jogando",
         "wantToPlay": "Quero jogar",
         "rated": "Avaliado"
-      }
+      },
+      "notifyOnRelease": "Notificar-me no lançamento",
+      "notificationEnabled": "Notificação de lançamento ativa",
+      "subscribed": "Você está inscrito para receber notificações de lançamento deste jogo",
+      "unsubscribed": "Você cancelou a inscrição das notificações de lançamento deste jogo"
     },
     "filter": {
       "title": "Filtrar jogos",

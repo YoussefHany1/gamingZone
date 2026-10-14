@@ -14,7 +14,7 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SectionTitle from "@/src/components/SectionTitle";
 import { useCountdown } from "@/src/hooks/useCountdown";
 import type { TimeLeft } from "@/src/hooks/useCountdown";
-import { formatEventDateShort, getEventStatus } from "@gaming-zone/utils";
+import { formatEventDateShort, getEventStatus, igdbImageUrl } from "@gaming-zone/utils";
 import type { EventStatus } from "@gaming-zone/utils";
 import ErrorState from "@/src/components/ErrorState";
 import useCachedData from "@/src/hooks/useCachedData";
@@ -185,7 +185,7 @@ const EventCard = memo<EventCardProps>(({ item }) => {
         recyclingKey={item.event_logo?.image_id ?? ""}
         source={
           item.event_logo
-            ? `https://images.igdb.com/igdb/image/upload/t_screenshot_med/${item.event_logo.image_id}.webp`
+            ? igdbImageUrl(item.event_logo.image_id, "screenshot_med")
             : require("@/assets/image-not-found.webp")
         }
         style={styles.backgroundImage}

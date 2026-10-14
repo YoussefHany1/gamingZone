@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { igdbImageUrl } from "@gaming-zone/utils";
 import CustomText from "@/src/components/CustomText";
 import {
   View,
@@ -21,7 +22,7 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 function getCoverUri(imageId?: string): string | null {
   if (!imageId) return null;
-  return `https://images.igdb.com/igdb/image/upload/t_cover_small/${imageId}.webp`;
+  return igdbImageUrl(imageId, "cover_small");
 }
 
 const DEBOUNCE_MS = 300;

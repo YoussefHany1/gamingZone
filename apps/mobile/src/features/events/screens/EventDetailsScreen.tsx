@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useCountdown } from "@/src/hooks/useCountdown";
-import { formatEventDate, getEventStatus } from "@gaming-zone/utils";
+import { formatEventDate, getEventStatus, igdbImageUrl } from "@gaming-zone/utils";
 import type { EventStatus } from "@gaming-zone/utils";
 import type { EventDetailsParamList } from "../types";
 import type { GamingEvent } from "@/src/types/sharedTypes";
@@ -230,7 +230,7 @@ const EventDetailsScreen = memo((): React.ReactElement => {
   }, [event.live_stream_url]);
 
   const logoUri = event.event_logo
-    ? `https://images.igdb.com/igdb/image/upload/t_screenshot_big/${event.event_logo.image_id}.webp`
+    ? igdbImageUrl(event.event_logo.image_id, "screenshot_big")
     : null;
 
   const startDateStr = useMemo(

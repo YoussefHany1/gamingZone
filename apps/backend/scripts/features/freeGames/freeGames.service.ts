@@ -5,6 +5,8 @@ import { loadBackendEnv } from '../../lib/env';
 import { env } from '../../lib/config';
 import { createAppwriteDatabases } from '../../lib/appwrite';
 import { initFirebaseAdmin, firebaseAppFor } from '../../lib/firebaseAdmin';
+import { getErrorMessage } from '../../lib/errors';
+import { ANDROID_CHANNEL_ID, buildTopicPush, FCM_TOPIC, sendTopicPush } from '../../lib/fcm';
 import { logger } from '../../lib/logger';
 
 import { generateDocId } from './helpers';
@@ -20,7 +22,6 @@ const CONFIG = {
     'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US',
   STEAM_API_URL: 'https://www.gamerpower.com/api/giveaways?platform=steam&type=game&sort-by=value',
   GOG_API_URL: 'https://www.gamerpower.com/api/giveaways?platform=gog&type=game&sort-by=value',
-  FCM_TOPIC: 'free_games_alerts',
   API_BASE_URL: 'https://igdb-api-omega.vercel.app',
 };
 
@@ -41,43 +42,28 @@ type FreeGameData = NormalizedGame & {
 interface FreeGameDoc extends Models.Document, FreeGameData {}
 
 async function sendGameNotification(game: FreeGameData): Promise<void> {
-  if (!firebaseState.enabled || !firebaseState.admin) return;
-
-  const app = firebaseAppFor(firebaseState);
-  if (!app) return;
-
   const imageLink = game.image || null;
   const storeName = game.store === 'steam' ? 'Steam' : game.store === 'gog' ? 'GOG' : 'Epic Games';
 
-  const message = {
-    topic: CONFIG.FCM_TOPIC,
-    notification: {
-      title: 'New Free Game! 🎁',
-      body: `${game.title} is now free on ${storeName}!`,
-      ...(imageLink && { image: imageLink }),
-    },
-    android: {
-      priority: 'high' as const,
-      notification: {
-        sound: 'default',
-        channelId: 'free_games_channel',
-        ...(imageLink && { image: imageLink }),
-      },
-    },
+  const message = buildTopicPush({
+    topic: FCM_TOPIC.FREE_GAMES,
+    title: 'New Free Game! 🎁',
+    body: `${game.title} is now free on ${storeName}!`,
+    image: imageLink,
+    channelId: ANDROID_CHANNEL_ID.FREE_GAMES,
+    sound: 'default',
     data: {
       type: 'free_game',
       slug: game.slug || '',
       url: game.url || '',
-      clickAction: 'FLUTTER_NOTIFICATION_CLICK',
     },
-  };
+  });
 
-  try {
-    await firebaseState.admin.messaging(app).send(message);
+  const { ok, error } = await sendTopicPush(firebaseState, message);
+  if (ok) {
     logger.info(`   🔔 Notification sent for: ${game.title}`);
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error(`   ❌ Notification failed: ${errorMessage}`);
+  } else if (error) {
+    logger.error(`   ❌ Notification failed: ${getErrorMessage(error)}`);
   }
 }
 
@@ -158,8 +144,7 @@ async function createNewGame(docId: string, game: FreeGameData): Promise<void> {
 
     logger.info('   ✨ Created NEW game document.');
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error(`   ❌ Failed to create: ${errorMessage}`);
+    logger.error(`   ❌ Failed to create: ${getErrorMessage(error)}`);
   }
 }
 

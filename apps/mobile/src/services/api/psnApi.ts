@@ -7,6 +7,7 @@
  * never persisted — they live only in component state.
  */
 import apiClient from "./client";
+import { normalizeGameTitle } from "@gaming-zone/utils";
 import type { Website } from "@/src/features/games/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -38,15 +39,6 @@ const PSN_IGDB_TYPE = 23;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Normalises a game title for fuzzy matching against PSN result names. */
-function normalizeTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, " ")
-    .trim()
-    .replace(/\s+/g, " ");
-}
-
 /**
  * Parses a PSN display-price string into a plain number (USD).
  * Returns null when the string isn't parseable (e.g. "Free", null, empty).
@@ -70,29 +62,37 @@ function pickBestResult(
 ): PsnSearchResult | null {
   if (!results.length) return null;
 
-  const normalized = normalizeTitle(gameName);
+  const normalized = normalizeGameTitle(gameName);
 
   // 1. Exact normalised match
-  const exact = results.find((r) => r.name && normalizeTitle(r.name) === normalized);
+  const exact = results.find((r) => r.name && normalizeGameTitle(r.name) === normalized);
   if (exact) return exact;
 
   // 2. Starts-with match (handles subtitles)
   const startsWith = results.find(
-    (r) => r.name && normalizeTitle(r.name).startsWith(normalized),
+    (r) => r.name && normalizeGameTitle(r.name).startsWith(normalized),
   );
   if (startsWith) return startsWith;
 
-  // 3. All significant words present
-  const words = normalized.split(" ").filter((w) => w.length > 3);
-  const wordMatch = results.find((r) => {
-    if (!r.name) return false;
-    const rNorm = normalizeTitle(r.name);
-    return words.every((w) => rNorm.includes(w));
-  });
-  if (wordMatch) return wordMatch;
+  // 3. Includes full normalised name (handles prefixes e.g. Marvel's)
+  const includesMatch = results.find(
+    (r) => r.name && normalizeGameTitle(r.name).includes(normalized),
+  );
+  if (includesMatch) return includesMatch;
 
-  // 4. Fall back to first result if only one is returned
-  return results.length === 1 ? (results[0] ?? null) : null;
+  // 4. All significant words present
+  const words = normalized.split(" ").filter((w) => w.length > 2);
+  if (words.length > 0) {
+    const wordMatch = results.find((r) => {
+      if (!r.name) return false;
+      const rNorm = normalizeGameTitle(r.name);
+      return words.every((w) => rNorm.includes(w));
+    });
+    if (wordMatch) return wordMatch;
+  }
+
+  // 5. Fall back to highest-relevance result
+  return results[0] ?? null;
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────

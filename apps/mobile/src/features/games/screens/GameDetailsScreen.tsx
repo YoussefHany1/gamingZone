@@ -1,6 +1,6 @@
-import React from "react";
+import { useCallback, useMemo } from "react";
 import CustomText from "@/src/components/CustomText";
-import { View, ScrollView, TouchableOpacity } from "react-native";
+import { View, ScrollView, TouchableOpacity, ToastAndroid } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, ArrowRight, Star } from "lucide-react-native";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
@@ -20,6 +20,8 @@ import { adUnitId } from "../../../constants/config";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
+import { useNotificationPreferences } from "@/src/hooks/useNotificationPreferences";
+import NotificationService from "@/src/services/notificationService";
 // gameDetails sub-components
 import GameDetailsMeta from "../components/gameDetails/GameDetailsMeta";
 import GameStores from "../components/gameDetails/GameStores";
@@ -35,6 +37,8 @@ import GameDetailsBackground from "../components/gameDetails/GameDetailsBackgrou
 import type { GamesStackParamList, Props } from "../types";
 export type { GamesStackParamList };
 import { useGameDetails } from "../hooks/useGameDetails";
+
+const NOTIF_CATEGORY = "game_release";
 
 const GameDetails = ({ route, navigation }: Props) => {
   const colors = useThemeColors();
@@ -147,6 +151,54 @@ const GameDetails = ({ route, navigation }: Props) => {
     handleNavigateToGame,
   } = useGameDetails({ initialGameID, navigation });
 
+  const { preferences, toggleSource } = useNotificationPreferences();
+
+  const isFutureGame = useMemo(() => {
+    if (!game) return false;
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+
+    // If first_release_date exists, check if it's strictly in the future
+    if (typeof game.first_release_date === "number") {
+      return game.first_release_date > nowInSeconds;
+    }
+
+    // If first_release_date is missing or undefined (TBD upcoming game)
+    if (Array.isArray(game.release_dates) && game.release_dates.length > 0) {
+      return true;
+    }
+
+    return false;
+  }, [game]);
+
+  const topicName = useMemo(() => {
+    if (!currentId) return "";
+    return NotificationService.getTopicName(NOTIF_CATEGORY, String(currentId));
+  }, [currentId]);
+
+  const isSubscribed = Boolean(topicName && preferences[topicName]);
+
+  const handleToggleNotification = useCallback(async () => {
+    if (!user || user.isAnonymous) {
+      ToastAndroid.show(t("common.loginRequired"), ToastAndroid.LONG);
+      return;
+    }
+
+    if (!currentId) return;
+
+    const willEnable = !isSubscribed;
+
+    try {
+      await toggleSource(NOTIF_CATEGORY, String(currentId));
+      ToastAndroid.show(
+        willEnable ? t("games.details.subscribed") : t("games.details.unsubscribed"),
+        ToastAndroid.SHORT,
+      );
+    } catch (e) {
+      console.error("Toggle notification error:", e);
+      ToastAndroid.show(t("error"), ToastAndroid.SHORT);
+    }
+  }, [user, currentId, isSubscribed, toggleSource, t]);
+
   return (
     <SafeAreaView edges={["right", "left"]} style={styles.container}>
       {/* Back button — always visible */}
@@ -247,6 +299,9 @@ const GameDetails = ({ route, navigation }: Props) => {
                   claimUrl={claimUrl}
                   store={store}
                   onAddToList={handleAddToList}
+                  isUpcoming={isFutureGame}
+                  isSubscribed={isSubscribed}
+                  onToggleNotification={handleToggleNotification}
                 />
 
                 {/* Rating Section */}

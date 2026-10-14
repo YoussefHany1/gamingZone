@@ -381,7 +381,11 @@
         "wantToPlay": "Quiero jugar",
         "rated": "Calificado"
       },
-      "ratingFailed": "No se pudo guardar tu calificación. Por favor, inténtalo de nuevo."
+      "ratingFailed": "No se pudo guardar tu calificación. Por favor, inténtalo de nuevo.",
+      "notifyOnRelease": "Notificarme del lanzamiento",
+      "notificationEnabled": "Notificación de lanzamiento activada",
+      "subscribed": "Te has suscrito a las notificaciones de lanzamiento de este juego",
+      "unsubscribed": "Te has dado de baja de las notificaciones de lanzamiento de este juego"
     },
     "filter": {
       "title": "Filtrar juegos",

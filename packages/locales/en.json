@@ -381,7 +381,11 @@
         "wantToPlay": "Want to Play",
         "rated": "Rated"
       },
-      "ratingFailed": "Couldn't save your rating. Please try again."
+      "ratingFailed": "Couldn't save your rating. Please try again.",
+      "notifyOnRelease": "Notify Me on Release",
+      "notificationEnabled": "Release Notification Active",
+      "subscribed": "You are subscribed to release notifications for this game",
+      "unsubscribed": "You have unsubscribed from release notifications for this game"
     },
     "filter": {
       "title": "Filter Games",
