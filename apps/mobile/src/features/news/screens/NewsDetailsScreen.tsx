@@ -27,6 +27,7 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { adUnitId } from "@/src/constants/config";
 import { openLink } from "@/src/lib/browser";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
+import { getArticleSummary } from "@gaming-zone/utils";
 import type { ArticleParams, RootParamList } from "../types";
 
 // Constants
@@ -129,6 +130,15 @@ const NewsDetails = memo((): React.ReactElement => {
       color: c.text,
       lineHeight: 26,
     },
+    summary: {
+      fontSize: 15,
+      color: c.text,
+      lineHeight: 24,
+      backgroundColor: c.accentSurface,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 16,
+    },
     ad: {
       alignItems: "center",
       width: "100%",
@@ -194,6 +204,13 @@ const NewsDetails = memo((): React.ReactElement => {
               pubDate: doc.pubDate,
               description: doc.description,
               language: doc.language,
+              summary_en: doc.summary_en,
+              summary_ar: doc.summary_ar,
+              summary_es: doc.summary_es,
+              summary_fr: doc.summary_fr,
+              summary_hi: doc.summary_hi,
+              summary_pt_br: doc.summary_pt_br,
+              summary_pt_pt: doc.summary_pt_pt,
             });
           }
         } catch (err: any) {
@@ -224,6 +241,10 @@ const NewsDetails = memo((): React.ReactElement => {
   const siteImage = activeArticle.siteImage ?? "";
   const pubDate = activeArticle.pubDate ?? "";
   const description = activeArticle.description ?? "";
+  // Summary is written in the active UI language (falls back to English),
+  // independent of the article's own content language.
+  const summary = getArticleSummary(activeArticle, i18n.language);
+  const summaryIsRtl = i18n.language.startsWith("ar");
 
   const currentLang = activeArticle.language ?? i18n.language;
 
@@ -384,6 +405,19 @@ const NewsDetails = memo((): React.ReactElement => {
           <View style={styles.site}>
             <CustomText style={styles.date}>{formattedDate}</CustomText>
           </View>
+          {summary ? (
+            <View style={[styles.summary, { direction: summaryIsRtl ? "rtl" : "ltr" }]}>
+              <CustomText
+                style={{
+                  color: colors.text,
+                  fontFamily: summaryIsRtl ? "Cairo" : "Inter",
+                  textAlign: summaryIsRtl ? "right" : "left",
+                }}
+              >
+                {summary}
+              </CustomText>
+            </View>
+          ) : null}
           <CustomText
             style={[
               styles.description,

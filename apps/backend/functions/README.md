@@ -9,10 +9,12 @@ Appwrite functions support exactly **one** cron schedule, so the function runs e
 | job             | service                                   | when it runs                      |
 | --------------- | ----------------------------------------- | --------------------------------- |
 | `rss`           | `rss/rss.service.ts` (`runFetchRss`)      | every `0 * * * *` tick             |
+| `article-summaries` | `summary/articleSummary.service.ts` (`runBackfillArticleSummaries`) | every `0 * * * *` tick |
 | `free-games`    | `freeGames/freeGames.service.ts`          | top of every hour (UTC minute 0)  |
 | `weekly-summary`| `summary/summary.service.ts`              | Fridays 12:00 UTC (minute 0 tick) |
 
 Notes:
+- `article-summaries` runs immediately after `rss` on every tick, so articles created in the same invocation are summarized within seconds — no AI work is added to the ingestion path. It generates a ≤3-line summary per supported app language (en/ar/es/fr/hi/pt-BR/pt-PT), newest-first, plus a bounded oldest-first slice so the backlog converges. Requires the `articles` collection to have the `summary_*` / `summaries_at` / `summaries_attempts` / `summaries_failed` attributes.
 - `weekly-summary` is **not** idempotent (it creates a new document each run), so it only fires on the single 12:00 Friday tick.
 - Jobs broadcast FCM topic pushes via `firebase-admin` (`FCM_SERVICE_ACCOUNT`): `rss` → `news_<category>_<source>`, `free-games` → `free_games_alerts`, `weekly-summary` → `weekly_summary_alerts`. Pushes are best-effort (a failure is logged, never thrown).
 - All GitHub Actions workflows were removed (`trigger-rss.yml`, `free-games.yml`, `weekly-summary.yml`, `deploy-functions.yml`) — scheduling and code deployment are entirely inside Appwrite now.
@@ -33,6 +35,34 @@ apps/backend/
     deploy.mjs         # create/update function config + sync variables (one-time setup)
 appwrite.json                        # Appwrite CLI spec (uses $APPWRITE_PROJECT_ID / $APPWRITE_ENDPOINT)
 ```
+
+## Article summaries (schema + backfill)
+
+`article-summaries` needs 10 extra attributes on the `articles` collection. They
+are created idempotently (only the missing ones) by:
+
+```sh
+cd apps/backend
+npm run migrate:article-summaries                       # apps/backend/.env
+npm run migrate:article-summaries -- --dry-run          # report only
+npm run migrate:article-summaries -- --app-env .env.staging   # target staging
+```
+
+The script derives the seven `summary_*` names from the same language map the
+code uses, and never alters an existing attribute — a shape mismatch is logged
+as a warning for manual review.
+
+Verify state at any time (read-only):
+
+```sh
+npm run summary:articles:status                        # counts + a sample
+npm run summary:articles -- --limit 2 --app-env .env.staging   # cheap smoke run
+```
+
+`--app-env <file>` (or `ENV_FILE=<file>`) selects an env file other than
+`apps/backend/.env`; it wins over anything already in the shell so a staging
+run can never silently fall back to production values. **(Note: Node.js reserves
+`--env-file`, hence the `--app-env` name.)**
 
 ## How deployment works
 
@@ -96,7 +126,7 @@ curl -X POST "https://<region>.cloud.appwrite.io/v1/functions/cron/executions" \
   -d '{"async":true,"method":"POST","path":"/","body":"{\"job\":\"free-games\"}"}'
 ```
 
-Valid job names: `rss`, `free-games`, `weekly-summary`. Drop `"async":true` to wait for the result synchronously (only for short runs / debugging).
+Valid job names: `rss`, `article-summaries`, `free-games`, `weekly-summary`. Drop `"async":true` to wait for the result synchronously (only for short runs / debugging).
 
 ## Known constraint: Puppeteer (and bundling)
 

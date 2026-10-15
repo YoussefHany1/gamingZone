@@ -22,6 +22,13 @@ export type ArticleParams = {
   siteImage?: string;
   pubDate?: string;
   description?: string;
+  summary_en?: string;
+  summary_ar?: string;
+  summary_es?: string;
+  summary_fr?: string;
+  summary_hi?: string;
+  summary_pt_br?: string;
+  summary_pt_pt?: string;
   article?: ArticleParams;
 };
 

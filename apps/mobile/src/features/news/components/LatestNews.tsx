@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useNavigation } from "@react-navigation/native";
+import { getArticleSummary } from "@gaming-zone/utils";
 import type { Article, NewsItemProps, LatestNewsProps, RssFeedSource } from "../types";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 
@@ -109,6 +110,10 @@ const NewsItem = memo(function NewsItem({
   itemRef.current = item;
   const handlePress = useCallback(() => onPress(itemRef.current), [onPress]);
 
+  // Prefer the AI summary for the active locale; fall back to the raw
+  // description while a summary hasn't been generated yet.
+  const summary = getArticleSummary(item, language ?? "en") || item.description || "";
+
   return (
     <View
       style={[
@@ -131,9 +136,9 @@ const NewsItem = memo(function NewsItem({
           >
             {item?.title ? item.title.substring(0, 100) : ""}
           </CustomText>
-          {item?.description ? (
-            <CustomText numberOfLines={2} style={styles.par}>
-              {item.description}..
+          {summary ? (
+            <CustomText numberOfLines={3} style={styles.par}>
+              {summary}
             </CustomText>
           ) : null}
           <CustomText style={styles.timeAgoText}>{timeAgo}</CustomText>

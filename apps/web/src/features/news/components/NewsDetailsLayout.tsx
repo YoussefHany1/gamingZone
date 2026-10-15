@@ -5,6 +5,7 @@ import TimeAgoClient from "./TimeAgoClient";
 import { Article } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { getTranslations } from "@/i18n/server";
+import { getArticleSummary } from "@gaming-zone/utils";
 
 interface NewsDetailsLayoutProps {
   art: Article;
@@ -18,6 +19,8 @@ export default function NewsDetailsLayout({
   locale,
 }: NewsDetailsLayoutProps) {
   const t = getTranslations(locale);
+  const summary = getArticleSummary(art, locale);
+  const summaryIsRtl = locale.startsWith("ar");
 
   return (
     <div className="w-full flex flex-col text-white">
@@ -93,6 +96,18 @@ export default function NewsDetailsLayout({
               {art.siteName}
             </span>
           </div>
+
+          {/* AI summary (in the active UI language) */}
+          {summary && (
+            <div
+              dir={summaryIsRtl ? "rtl" : "ltr"}
+              className={`rounded-2xl border border-light-blue/20 bg-light-blue/5 p-4 text-sm sm:text-base text-gray-200 leading-relaxed ${
+                summaryIsRtl ? "font-cairo text-right" : "font-inter text-left"
+              }`}
+            >
+              {summary}
+            </div>
+          )}
 
           {/* Article Description / Body */}
           <div

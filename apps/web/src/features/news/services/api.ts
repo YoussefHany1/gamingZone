@@ -131,8 +131,26 @@ export const fetchServerArticles = cache(
               Query.equal("language", lang),
               Query.orderDesc("pubDate"),
               Query.limit(6),
-              // Fetch only fields rendered in the UI — reduces Fast Origin Transfer
-              Query.select(["$id", "title", "description", "thumbnail", "pubDate", "siteName", "link", "category", "language"]),
+              // Fetch only fields rendered in the UI — reduces Fast Origin Transfer.
+              // Summaries are per-language AI fields resolved client-side by locale.
+              Query.select([
+                "$id",
+                "title",
+                "description",
+                "thumbnail",
+                "pubDate",
+                "siteName",
+                "link",
+                "category",
+                "language",
+                "summary_en",
+                "summary_ar",
+                "summary_es",
+                "summary_fr",
+                "summary_hi",
+                "summary_pt_br",
+                "summary_pt_pt",
+              ]),
             ],
           );
 
@@ -243,8 +261,26 @@ export const fetchNews = cache(
               Query.equal("category", category),
               Query.orderDesc("pubDate"),
               Query.limit(50),
-              // Fetch only fields rendered in the UI — reduces Fast Origin Transfer
-              Query.select(["$id", "title", "description", "thumbnail", "pubDate", "siteName", "link", "category", "language"]),
+              // Fetch only fields rendered in the UI — reduces Fast Origin Transfer.
+              // Summaries are per-language AI fields resolved client-side by locale.
+              Query.select([
+                "$id",
+                "title",
+                "description",
+                "thumbnail",
+                "pubDate",
+                "siteName",
+                "link",
+                "category",
+                "language",
+                "summary_en",
+                "summary_ar",
+                "summary_es",
+                "summary_fr",
+                "summary_hi",
+                "summary_pt_br",
+                "summary_pt_pt",
+              ]),
             ],
           );
 

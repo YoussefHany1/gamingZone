@@ -205,6 +205,27 @@ export interface NewsGame {
 }
 
 /**
+ * Languages the app's UI supports. AI article summaries are generated and
+ * stored for every one of these (article *content* is still only `ar`/`en`).
+ */
+export type SummaryLanguage = "en" | "ar" | "es" | "fr" | "hi" | "pt-BR" | "pt-PT";
+
+/**
+ * Appwrite attribute names on the `articles` collection that hold the
+ * per-language AI summary. Lowercased to avoid mixed-case key surprises; the
+ * `pt-BR`/`pt-PT` variants use underscores since attribute names cannot contain
+ * a hyphen.
+ */
+export type ArticleSummaryKey =
+  | "summary_en"
+  | "summary_ar"
+  | "summary_es"
+  | "summary_fr"
+  | "summary_hi"
+  | "summary_pt_br"
+  | "summary_pt_pt";
+
+/**
  * A news article / review item. The required fields are guaranteed by the
  * Appwrite `articles` collection schema.
  */
@@ -220,6 +241,21 @@ export interface Article {
   language?: string;
   url?: string;
   link?: string;
+  /** AI-generated, ≤3-line summaries (one per supported language). */
+  summary_en?: string;
+  summary_ar?: string;
+  summary_es?: string;
+  summary_fr?: string;
+  summary_hi?: string;
+  summary_pt_br?: string;
+  summary_pt_pt?: string;
+  /**
+   * Set once a document's summaries have all been generated. `summaries_failed`
+   * marks documents that exhausted their retry budget (distinct from success).
+   */
+  summaries_at?: string;
+  summaries_attempts?: number;
+  summaries_failed?: boolean;
 }
 
 // ---------------------------------------------------------------------------

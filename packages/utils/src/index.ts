@@ -4,6 +4,7 @@
  */
 import axios from "axios";
 import type {
+  ArticleSummaryKey,
   CountdownResult,
   GameTimeToBeat,
   LangRow,
@@ -218,6 +219,53 @@ export function formatEventDateShort(
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+// ---------------------------------------------------------------------------
+// AI article summaries
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps an app locale to the Appwrite `articles` attribute holding that
+ * language's AI summary. Single source of truth for the read side (web +
+ * mobile); the backend job keeps a mirrored write-side map.
+ */
+const SUMMARY_KEY_BY_LOCALE: Record<string, ArticleSummaryKey> = {
+  en: "summary_en",
+  ar: "summary_ar",
+  es: "summary_es",
+  fr: "summary_fr",
+  hi: "summary_hi",
+  "pt-BR": "summary_pt_br",
+  "pt-PT": "summary_pt_pt",
+};
+
+/**
+ * Resolves the summary attribute key for a locale, falling back through the
+ * bare language code and finally to English.
+ */
+export function getSummaryKey(locale: string): ArticleSummaryKey {
+  const normalized = (locale || "").trim();
+  const direct = SUMMARY_KEY_BY_LOCALE[normalized];
+  if (direct) return direct;
+
+  const base = normalized.split("-")[0] ?? "";
+  return SUMMARY_KEY_BY_LOCALE[base] ?? "summary_en";
+}
+
+/**
+ * Returns the AI summary for the given locale, falling back to the English
+ * summary (and then to an empty string) when it is missing or blank.
+ */
+export function getArticleSummary(
+  article: Partial<Record<ArticleSummaryKey, string | undefined>>,
+  locale: string,
+): string {
+  const localized = article[getSummaryKey(locale)];
+  if (localized && localized.trim()) return localized;
+
+  const english = article.summary_en;
+  return english && english.trim() ? english : "";
 }
 
 // ---------------------------------------------------------------------------

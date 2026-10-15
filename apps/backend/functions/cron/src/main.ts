@@ -6,6 +6,7 @@ import {
   teardownFreeGamesService,
 } from '../../../scripts/features/freeGames/freeGames.service';
 import { runGenerateWeeklySummary } from '../../../scripts/features/summary/summary.service';
+import { runBackfillArticleSummaries } from '../../../scripts/features/summary/articleSummary.service';
 import {
   runCheckGameReleases,
   teardownGameReleasesService,
@@ -21,6 +22,7 @@ import { getErrorMessage } from '../../../scripts/lib/errors';
 // trigger can still run one job by name via a JSON body.
 const JOBS: Record<string, () => Promise<unknown>> = {
   rss: runFetchRss,
+  'article-summaries': runBackfillArticleSummaries,
   'free-games': async () => {
     await runFetchFreeGames();
     await teardownFreeGamesService();
@@ -33,7 +35,10 @@ const JOBS: Record<string, () => Promise<unknown>> = {
 };
 
 function jobsFromScheduledTick(now: Date): string[] {
-  const jobs: string[] = ['rss'];
+  // RSS sync and the article-summary backfill both run every tick. The summary
+  // job runs second so freshly created articles are summarized in the same
+  // invocation without adding work to the ingestion path.
+  const jobs: string[] = ['rss', 'article-summaries'];
 
   if (now.getUTCMinutes() === 0) {
     jobs.push('free-games');

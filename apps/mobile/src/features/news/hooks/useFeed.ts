@@ -29,6 +29,16 @@ export interface Article extends Models.Document {
   language?: string;
   title?: string;
   thumbnail?: string;
+  description?: string;
+  link?: string;
+  /** Per-language AI summaries (resolved by UI locale with English fallback). */
+  summary_en?: string;
+  summary_ar?: string;
+  summary_es?: string;
+  summary_fr?: string;
+  summary_hi?: string;
+  summary_pt_br?: string;
+  summary_pt_pt?: string;
 }
 
 export interface UseFeedResult {

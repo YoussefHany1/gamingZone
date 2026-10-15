@@ -6,6 +6,7 @@ import TimeAgoClient from "./TimeAgoClient";
 import { Article } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { getTranslations } from "@/i18n/server";
+import { getArticleSummary } from "@gaming-zone/utils";
 
 interface NewsListProps {
   currentCategory: string;
@@ -88,6 +89,9 @@ export default function NewsList({
               const thumbnail = art.thumbnail || "/assets/image-not-found.webp";
               const artLang =
                 sources.find((s) => s.name === art.siteName)?.language || "en";
+              // Prefer the AI summary (in the active locale); fall back to the
+              // raw description when it hasn't been generated yet.
+              const summary = getArticleSummary(art, locale) || art.description;
 
               return (
                 <Link href={`/news/${art.$id}`} key={art.$id}>
@@ -117,9 +121,9 @@ export default function NewsList({
                           {art.title}
                         </h2>
 
-                        {art.description && (
+                        {summary && (
                           <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
-                            {art.description}
+                            {summary}
                           </p>
                         )}
                       </div>

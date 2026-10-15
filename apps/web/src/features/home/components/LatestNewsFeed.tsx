@@ -8,6 +8,7 @@ import { useLangStore } from "../../../store/useLangStore";
 import { Newspaper, ChevronRight, Calendar } from "lucide-react";
 import { LatestNewsFeedProps } from "../types";
 import { Card } from "@/components/ui/Card";
+import { getArticleSummary } from "@gaming-zone/utils";
 
 const LatestNewsFeed = React.memo(function LatestNewsFeed({
   category,
@@ -50,6 +51,7 @@ const LatestNewsFeed = React.memo(function LatestNewsFeed({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 sm:px-0">
           {articles.map((art, index) => {
             const thumbnail = art.thumbnail || "/assets/image-not-found.webp";
+            const summary = getArticleSummary(art, activeLang);
             return (
               <Card
                 key={art.$id}
@@ -91,6 +93,11 @@ const LatestNewsFeed = React.memo(function LatestNewsFeed({
                     <h3 className="font-extrabold text-sm line-clamp-2 text-white group-hover:text-light-blue transition-colors duration-300">
                       {art.title}
                     </h3>
+                    {summary && (
+                      <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
+                        {summary}
+                      </p>
+                    )}
                   </div>
 
                   <Link
