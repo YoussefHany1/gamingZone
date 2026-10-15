@@ -8,6 +8,8 @@
  * Keep the two in sync — `articleSummary.test.ts` pins the attribute names.
  */
 
+import { Query } from 'node-appwrite';
+
 /** Every language the app's UI supports (`article` content is still only ar/en). */
 const SUMMARY_LANGUAGES = ['en', 'ar', 'es', 'fr', 'hi', 'pt-BR', 'pt-PT'] as const;
 type SummaryLanguage = (typeof SUMMARY_LANGUAGES)[number];
@@ -213,6 +215,27 @@ function parseBackfillLimit(argv: string[], envValue?: string): number | undefin
   return toPositiveInt(envValue);
 }
 
+/**
+ * Appwrite query filters that select articles still awaiting a summary:
+ * `summaries_at` is unset AND the article has not permanently failed.
+ *
+ * The failure check accepts BOTH `false` and unset (`null`). Appwrite does not
+ * backfill an attribute's default onto documents that already existed when the
+ * attribute was created, so on a pre-existing collection `summaries_failed`
+ * reads as `null` rather than `false` — an `equal(false)`-only filter silently
+ * skips the entire backlog. Documents created after the attribute exists do
+ * receive the `false` default and match the first branch.
+ *
+ * Returned as strings (what `Query.*` produces) so both the backfill service and
+ * the read-only status job can share one source of truth and unit test it.
+ */
+function pendingSummaryFilters(): string[] {
+  return [
+    Query.isNull('summaries_at'),
+    Query.or([Query.equal('summaries_failed', false), Query.isNull('summaries_failed')]),
+  ];
+}
+
 export {
   SUMMARY_LANGUAGES,
   LANGUAGE_TO_JSON_KEY,
@@ -235,5 +258,6 @@ export {
   sanitizeQueueLimit,
   buildPendingQueueQuery,
   parseBackfillLimit,
+  pendingSummaryFilters,
 };
 export type { SummaryLanguage, SummaryMap, SummarizableArticle };

@@ -13,6 +13,7 @@ import {
   sanitizeQueueLimit,
   buildPendingQueueQuery,
   parseBackfillLimit,
+  pendingSummaryFilters,
 } from './articleSummary.shared';
 
 describe('parseSummaries', () => {
@@ -194,5 +195,40 @@ describe('backfill queue limits', () => {
       order: 'asc',
       limit: BACKFILL_OLDEST,
     });
+  });
+});
+
+describe('pending summary filters', () => {
+  it('matches unsummarized articles and treats null summaries_failed as pending', () => {
+    const filters = pendingSummaryFilters();
+    expect(filters).toHaveLength(2);
+
+    expect(filters[0]).toContain('"method":"isNull"');
+    expect(filters[0]).toContain('"attribute":"summaries_at"');
+
+    const failureFilter = JSON.parse(filters[1]) as {
+      method: string;
+      attribute?: string;
+      values?: Array<{ method: string; attribute: string; values?: unknown[] }>;
+    };
+    expect(failureFilter.method).toBe('or');
+    expect(failureFilter.values).toEqual([
+      { method: 'equal', attribute: 'summaries_failed', values: [false] },
+      { method: 'isNull', attribute: 'summaries_failed' },
+    ]);
+  });
+
+  it('regression: accepts both false and unset summaries_failed (Appwrite does not backfill defaults)', () => {
+    // Documents that predate the attribute read as `null`, not `false`, so a
+    // plain `summaries_failed = false` filter silently skips the whole backlog.
+    // The OR branch must include an explicit isNull clause.
+    const [, failureFilter] = pendingSummaryFilters();
+    expect(failureFilter).toContain('"method":"or"');
+    expect(failureFilter).toContain('"equal"');
+    expect(failureFilter).toContain('"isNull"');
+    expect(failureFilter).toContain('"attribute":"summaries_failed"');
+    expect(failureFilter).not.toBe(
+      '{"method":"equal","attribute":"summaries_failed","values":[false]}',
+    );
   });
 });

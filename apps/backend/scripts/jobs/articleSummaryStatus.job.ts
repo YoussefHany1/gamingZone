@@ -7,6 +7,7 @@ import { createAppwriteDatabases } from '../lib/appwrite';
 import {
   SUMMARY_LANGUAGES,
   LANGUAGE_TO_ATTRIBUTE,
+  pendingSummaryFilters,
 } from '../features/summary/articleSummary.shared';
 
 // Read-only inspector: reports how many articles are pending / summarized /
@@ -46,7 +47,7 @@ async function main(): Promise<void> {
   logger.info(`📊 Article summary status — ${DATABASE_ID}/${ARTICLES_COLLECTION_ID}`);
 
   const [pending, summarized, failed, total] = await Promise.all([
-    count([sdk.Query.isNull('summaries_at'), sdk.Query.equal('summaries_failed', false)]),
+    count(pendingSummaryFilters()),
     count([sdk.Query.isNotNull('summaries_at')]),
     count([sdk.Query.equal('summaries_failed', true)]),
     count([]),

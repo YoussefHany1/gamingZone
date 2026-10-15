@@ -114516,6 +114516,7 @@ ${s.english}`).join("\n\n");
 var sdk2 = __toESM(require("node-appwrite"));
 
 // scripts/features/summary/articleSummary.shared.ts
+var import_node_appwrite4 = require("node-appwrite");
 var SUMMARY_LANGUAGES = ["en", "ar", "es", "fr", "hi", "pt-BR", "pt-PT"];
 var LANGUAGE_TO_JSON_KEY = {
   en: "en",
@@ -114623,6 +114624,12 @@ function sanitizeQueueLimit(value, fallback) {
 function buildPendingQueueQuery(order, limit) {
   if (!Number.isInteger(limit) || limit < 1) return null;
   return { order, limit };
+}
+function pendingSummaryFilters() {
+  return [
+    import_node_appwrite4.Query.isNull("summaries_at"),
+    import_node_appwrite4.Query.or([import_node_appwrite4.Query.equal("summaries_failed", false), import_node_appwrite4.Query.isNull("summaries_failed")])
+  ];
 }
 
 // scripts/features/summary/articleSummary.service.ts
@@ -114747,8 +114754,7 @@ async function listPending(order, limit) {
     return [];
   }
   const response = await databases4.listDocuments(DATABASE_ID2, ARTICLES_COLLECTION_ID, [
-    sdk2.Query.isNull("summaries_at"),
-    sdk2.Query.equal("summaries_failed", false),
+    ...pendingSummaryFilters(),
     queue.order === "desc" ? sdk2.Query.orderDesc("pubDate") : sdk2.Query.orderAsc("pubDate"),
     sdk2.Query.limit(queue.limit)
   ]);

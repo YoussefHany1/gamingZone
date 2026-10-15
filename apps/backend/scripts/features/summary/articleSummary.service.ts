@@ -22,6 +22,7 @@ import {
   buildPrompt,
   cleanSummary,
   parseSummaries,
+  pendingSummaryFilters,
   sanitizeQueueLimit,
 } from './articleSummary.shared';
 import type { SummarizableArticle, SummaryMap } from './articleSummary.shared';
@@ -198,8 +199,7 @@ async function listPending(order: 'desc' | 'asc', limit: number): Promise<sdk.Mo
   }
 
   const response = await databases.listDocuments(DATABASE_ID, ARTICLES_COLLECTION_ID, [
-    sdk.Query.isNull('summaries_at'),
-    sdk.Query.equal('summaries_failed', false),
+    ...pendingSummaryFilters(),
     queue.order === 'desc' ? sdk.Query.orderDesc('pubDate') : sdk.Query.orderAsc('pubDate'),
     sdk.Query.limit(queue.limit),
   ]);
