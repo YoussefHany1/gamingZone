@@ -2,10 +2,17 @@ import { logger } from '../../lib/logger';
 import * as sdk from 'node-appwrite';
 
 import { loadBackendEnv } from '../../lib/env';
-import { env, requireGeminiKey } from '../../lib/config';
+import {
+  env,
+  getAiProviderOverride,
+  getGeminiKey,
+  getGroqKey,
+  getGroqModel,
+} from '../../lib/config';
 import { createAppwriteDatabases } from '../../lib/appwrite';
 import { initFirebaseAdmin } from '../../lib/firebaseAdmin';
 import { getErrorMessage } from '../../lib/errors';
+import { generateAiText } from '../../lib/ai';
 import { ANDROID_CHANNEL_ID, buildTopicPush, FCM_TOPIC, sendTopicPush } from '../../lib/fcm';
 
 loadBackendEnv();
@@ -129,65 +136,47 @@ function parseJsonSummary(rawText: string): SummaryResponse {
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function callGeminiWithRetry(prompt: string, maxRetries = 3): Promise<SummaryResponse> {
-  const apiKey = requireGeminiKey();
-  let attempt = 0;
-  while (true) {
-    attempt++;
-    try {
-      logger.info(`🤖 Trying Gemini... (Attempt ${attempt}/${maxRetries})`);
+const WEEKLY_GEMINI_MODEL = 'gemini-2.5-flash';
+const WEEKLY_GEMINI_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    arabic: { type: 'STRING' },
+    english: { type: 'STRING' },
+  },
+  required: ['arabic', 'english'],
+};
 
-      const aiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              response_mime_type: 'application/json',
-              responseSchema: {
-                type: 'OBJECT',
-                properties: {
-                  arabic: { type: 'STRING' },
-                  english: { type: 'STRING' },
-                },
-                required: ['arabic', 'english'],
-              },
-            },
-          }),
-        },
-      );
+/**
+ * Generates the Arabic/English recap JSON via the provider chain (Gemini, then
+ * the Groq fallback — see `lib/ai`). Each provider retries internally; throws
+ * only when every configured provider fails.
+ */
+async function callAiWithRetry(prompt: string, maxRetries = 3): Promise<SummaryResponse> {
+  const { provider, text } = await generateAiText(
+    {
+      prompt,
+      label: 'weekly summary',
+      geminiModel: WEEKLY_GEMINI_MODEL,
+      geminiSchema: WEEKLY_GEMINI_SCHEMA,
+      groqModel: getGroqModel(),
+      retries: maxRetries,
+      // The weekly prompt is large (up to ~250 articles), so allow more time
+      // than the per-article default.
+      timeoutMs: 60_000,
+    },
+    {
+      geminiKey: getGeminiKey(),
+      groqKey: getGroqKey(),
+      override: getAiProviderOverride(),
+    },
+    { log: logger },
+  );
 
-      const aiData = await aiResponse.json();
-
-      if (aiData.error) {
-        throw new Error(`Gemini API Error: ${JSON.stringify(aiData.error)}`);
-      }
-
-      if (!aiData.candidates?.length) {
-        throw new Error(`Gemini returned no candidates: ${JSON.stringify(aiData)}`);
-      }
-
-      const rawText = aiData.candidates[0]?.content?.parts?.[0]?.text;
-      if (!rawText) {
-        throw new Error('Gemini returned empty text.');
-      }
-
-      return parseJsonSummary(rawText);
-    } catch (error: any) {
-      logger.error(`❌ Gemini attempt ${attempt} failed: ${getErrorMessage(error)}`);
-      if (attempt >= maxRetries) {
-        throw error;
-      }
-      const backoffTime = Math.pow(2, attempt) * 1000;
-      logger.info(`Waiting ${backoffTime / 1000}s before retrying...`);
-      await delay(backoffTime);
-    }
-  }
+  logger.info(`✅ Weekly summary generated via ${provider}.`);
+  return parseJsonSummary(text);
 }
 
-async function summarizeWithGemini(
+async function summarizeWithAi(
   newsText: string,
   opts: {
     isPartial: boolean;
@@ -202,17 +191,16 @@ async function summarizeWithGemini(
   const prompt = opts.isPartial
     ? PARTIAL_SUMMARY_PROMPT(opts.batchIndex ?? 1, opts.totalBatches ?? 1, newsText)
     : SUMMARY_PROMPT(opts.startDate ?? '', opts.endDate ?? '', newsText);
-  return callGeminiWithRetry(prompt);
+  return callAiWithRetry(prompt);
 }
 
-function mergeSummariesWithGemini(
+function mergeSummariesWithAi(
   startDate: string,
   endDate: string,
   arabicSummaries: string,
   englishSummaries: string,
 ): Promise<SummaryResponse> {
-  logger.info('🤖 Merging chunk summaries with Gemini...');
-  return callGeminiWithRetry(
+  return callAiWithRetry(
     MERGE_SUMMARY_PROMPT(startDate, endDate, arabicSummaries, englishSummaries),
   );
 }
@@ -349,12 +337,12 @@ async function runGenerateWeeklySummary() {
     if (documents.length <= CHUNK_SIZE) {
       const newsText = documents.map(formatDoc).join('\n');
       logger.info(`Sending all ${documents.length} articles in a single batch to AI...`);
-      jsonSummary = await summarizeWithGemini(newsText, {
+      jsonSummary = await summarizeWithAi(newsText, {
         isPartial: false,
         startDate: sevenDaysAgo,
         endDate,
       });
-      logger.info('✅ Gemini succeeded.');
+      logger.info('✅ Weekly recap generated.');
     } else {
       const chunks = [];
       for (let i = 0; i < documents.length; i += CHUNK_SIZE) {
@@ -369,7 +357,7 @@ async function runGenerateWeeklySummary() {
         const chunkText = chunk.map(formatDoc).join('\n');
         logger.info(`Processing chunk ${i + 1}/${chunks.length} (size: ${chunk.length})...`);
 
-        const summary = await summarizeWithGemini(chunkText, {
+        const summary = await summarizeWithAi(chunkText, {
           isPartial: true,
           batchIndex: i + 1,
           totalBatches: chunks.length,
@@ -390,13 +378,13 @@ async function runGenerateWeeklySummary() {
         .map((s, idx) => `[Batch ${idx + 1} English Recap segment]:\n${s.english}`)
         .join('\n\n');
 
-      jsonSummary = await mergeSummariesWithGemini(
+      jsonSummary = await mergeSummariesWithAi(
         sevenDaysAgo,
         endDate,
         arabicSummaries,
         englishSummaries,
       );
-      logger.info('✅ Gemini merging succeeded.');
+      logger.info('✅ Weekly recap merged.');
     }
 
     logger.info('Summary generated successfully. Saving to Appwrite...');

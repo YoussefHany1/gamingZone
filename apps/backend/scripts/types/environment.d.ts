@@ -10,6 +10,9 @@ declare global {
       FREE_GAMES_COLLECTION_ID: string;
       SUMMARIES_COLLECTION_ID: string;
       GEMINI_API_KEY: string;
+      GROQ_API_KEY: string;
+      GROQ_MODEL: string;
+      AI_PROVIDER: string;
       FCM_SERVICE_ACCOUNT: string;
       [key: string]: string | undefined;
     }

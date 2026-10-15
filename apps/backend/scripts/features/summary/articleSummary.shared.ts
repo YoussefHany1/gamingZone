@@ -56,9 +56,7 @@ const PER_LANGUAGE_MAX_CHARS: Record<SummaryLanguage, number> = {
   'pt-PT': 280,
 };
 
-const MODEL = 'gemini-2.5-flash';
-const GEMINI_TIMEOUT_MS = 25_000;
-const MAX_GEMINI_RETRIES = 3;
+const MODEL = 'gemini-3.1-flash-lite';
 /** Attempts per article across backfill runs before it is marked failed. */
 const MAX_ATTEMPTS = 3;
 const MAX_DESCRIPTION_CHARS = 1_500;
@@ -243,8 +241,6 @@ export {
   LANGUAGE_TO_ATTRIBUTE,
   PER_LANGUAGE_MAX_CHARS,
   MODEL,
-  GEMINI_TIMEOUT_MS,
-  MAX_GEMINI_RETRIES,
   MAX_ATTEMPTS,
   MAX_DESCRIPTION_CHARS,
   BACKFILL_NEWEST,

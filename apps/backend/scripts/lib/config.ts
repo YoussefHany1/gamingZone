@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { loadBackendEnv } from './env';
 import { logger } from './logger';
+import { DEFAULT_GROQ_MODEL } from './ai.shared';
+import type { AiProvider } from './ai.shared';
 
 // Ensure the environment is loaded first
 loadBackendEnv();
@@ -34,17 +36,33 @@ if (!parsed.success) {
 export const env = parsed.data;
 
 /**
- * GEMINI_API_KEY — required only by the weekly-summary job. Resolving it lazily
- * (instead of at module load) means a missing key fails just that job, which the
- * cron runner catches per-job, while the rss/free-games jobs still run.
- * Throwing (not process.exit) keeps the failure recoverable and testable.
+ * AI provider keys for the summary jobs. Resolved lazily (instead of at module
+ * load) so a missing key fails just the job that needs it — the cron runner
+ * catches failures per job, so rss/free-games still run.
+ *
+ * Gemini is the primary provider; Groq is the fallback. Either may be absent.
  */
-export function requireGeminiKey(): string {
-  const value = process.env.GEMINI_API_KEY;
-  if (!value) {
-    throw new Error('GEMINI_API_KEY is not set — required for the weekly summary job.');
-  }
-  return value;
+export function getGeminiKey(): string | null {
+  const value = process.env.GEMINI_API_KEY?.trim();
+  return value ? value : null;
+}
+
+/** Optional fallback provider key. `null` disables the Groq fallback. */
+export function getGroqKey(): string | null {
+  const value = process.env.GROQ_API_KEY?.trim();
+  return value ? value : null;
+}
+
+/** Groq model id; falls back to a sane generative default. */
+export function getGroqModel(): string {
+  const value = process.env.GROQ_MODEL?.trim();
+  return value ? value : DEFAULT_GROQ_MODEL;
+}
+
+/** `AI_PROVIDER=gemini|groq` forces a single provider (smoke tests / ops). */
+export function getAiProviderOverride(): AiProvider | null {
+  const value = process.env.AI_PROVIDER?.trim().toLowerCase();
+  return value === 'gemini' || value === 'groq' ? value : null;
 }
 
 /**
@@ -61,7 +79,9 @@ export function requireTwitchCredentials(): { clientId: string; clientSecret: st
   const clientId = process.env.TWITCH_CLIENT_ID;
   const clientSecret = process.env.TWITCH_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    throw new Error('TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET are required for the game releases job.');
+    throw new Error(
+      'TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET are required for the game releases job.',
+    );
   }
   return { clientId: clientId.trim(), clientSecret: clientSecret.trim() };
 }

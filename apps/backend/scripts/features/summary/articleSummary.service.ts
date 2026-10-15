@@ -2,20 +2,25 @@ import { logger } from '../../lib/logger';
 import * as sdk from 'node-appwrite';
 
 import { loadBackendEnv } from '../../lib/env';
-import { env, requireGeminiKey } from '../../lib/config';
+import {
+  env,
+  getAiProviderOverride,
+  getGeminiKey,
+  getGroqKey,
+  getGroqModel,
+} from '../../lib/config';
 import { createAppwriteDatabases } from '../../lib/appwrite';
 import { getErrorMessage } from '../../lib/errors';
+import { generateAiText } from '../../lib/ai';
 
 import {
   BACKFILL_CONCURRENCY,
   BACKFILL_NEWEST,
   BACKFILL_OLDEST,
-  GEMINI_TIMEOUT_MS,
   LANGUAGE_TO_ATTRIBUTE,
   LANGUAGE_TO_JSON_KEY,
   MAX_ATTEMPTS,
   MAX_BACKFILL_MS,
-  MAX_GEMINI_RETRIES,
   MODEL,
   SUMMARY_LANGUAGES,
   buildPendingQueueQuery,
@@ -50,70 +55,37 @@ export interface BackfillOptions {
   maxDurationMs?: number;
 }
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+/**
+ * Generates the 7-language summary JSON, trying Gemini first and falling back
+ * to Groq (see `lib/ai`). Returns the parsed map; validation/cleaning happens in
+ * `parseSummaries`, so a partial response is still usable.
+ */
+async function generateSummaries(prompt: string): Promise<SummaryMap> {
+  const { provider, text } = await generateAiText(
+    {
+      prompt,
+      label: 'article summary',
+      geminiModel: MODEL,
+      geminiSchema: {
+        type: 'OBJECT',
+        properties: Object.fromEntries(
+          Object.values(LANGUAGE_TO_JSON_KEY).map((key) => [key, { type: 'STRING' }]),
+        ),
+      },
+      groqModel: getGroqModel(),
+      temperature: 0.4,
+    },
+    {
+      geminiKey: getGeminiKey(),
+      groqKey: getGroqKey(),
+      override: getAiProviderOverride(),
+    },
+    { log: logger },
+  );
 
-async function callGemini(prompt: string): Promise<SummaryMap> {
-  const apiKey = requireGeminiKey();
-  let attempt = 0;
-
-  while (true) {
-    attempt++;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
-
-    try {
-      logger.info(
-        `🤖 Article summary: trying Gemini (attempt ${attempt}/${MAX_GEMINI_RETRIES})...`,
-      );
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.4,
-              response_mime_type: 'application/json',
-              // Intentionally omitting `required`: a single missing language
-              // must not invalidate an otherwise usable response.
-              responseSchema: {
-                type: 'OBJECT',
-                properties: Object.fromEntries(
-                  Object.values(LANGUAGE_TO_JSON_KEY).map((key) => [key, { type: 'STRING' }]),
-                ),
-              },
-            },
-          }),
-        },
-      );
-
-      const aiData = await response.json();
-
-      if (aiData.error) {
-        throw new Error(`Gemini API Error: ${JSON.stringify(aiData.error)}`);
-      }
-
-      const rawText = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) {
-        throw new Error(`Gemini returned no text: ${JSON.stringify(aiData).substring(0, 200)}`);
-      }
-
-      return parseSummaries(rawText);
-    } catch (error: unknown) {
-      logger.warn(`⚠️ Article summary attempt ${attempt} failed: ${getErrorMessage(error)}`);
-      if (attempt >= MAX_GEMINI_RETRIES) throw error;
-
-      const backoffTime = Math.pow(2, attempt) * 1000;
-      await delay(backoffTime);
-    } finally {
-      clearTimeout(timer);
-    }
-  }
+  logger.info(`🤖 Article summary generated via ${provider}.`);
+  return parseSummaries(text);
 }
-
 /**
  * Generates and stores the summaries for one article.
  *
@@ -134,7 +106,7 @@ async function enrichArticleWithSummaries(article: SummarizableArticle): Promise
   }
 
   try {
-    const summaries = await callGemini(buildPrompt(article));
+    const summaries = await generateSummaries(buildPrompt(article));
 
     const payload: Record<string, unknown> = { summaries_attempts: attempts };
     let found = 0;

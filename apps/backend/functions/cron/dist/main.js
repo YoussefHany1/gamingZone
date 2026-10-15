@@ -107009,6 +107009,66 @@ var coerce = {
 };
 var NEVER = INVALID;
 
+// scripts/lib/ai.shared.ts
+var AI_PROVIDERS = ["gemini", "groq"];
+var GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+var GROQ_CHAT_COMPLETIONS_URL = "https://api.groq.com/openai/v1/chat/completions";
+var DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b";
+var AI_TIMEOUT_MS = 25e3;
+var AI_RETRIES = 3;
+function resolveAiProviders(keys) {
+  const override = keys.override ?? null;
+  if (override === "gemini") return keys.geminiKey ? ["gemini"] : [];
+  if (override === "groq") return keys.groqKey ? ["groq"] : [];
+  return AI_PROVIDERS.filter(
+    (provider) => provider === "gemini" ? Boolean(keys.geminiKey) : Boolean(keys.groqKey)
+  );
+}
+function buildGeminiRequestBody(prompt, schema, temperature) {
+  const generationConfig = {
+    response_mime_type: "application/json",
+    // Omitting `required`: a single missing language must not invalidate an
+    // otherwise usable response (the caller parses defensively).
+    responseSchema: schema
+  };
+  if (temperature !== void 0) generationConfig.temperature = temperature;
+  return {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig
+  };
+}
+function buildGroqRequestBody(model, prompt, temperature) {
+  const body = {
+    model,
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" }
+  };
+  if (temperature !== void 0) body.temperature = temperature;
+  return body;
+}
+function extractGeminiText(data) {
+  const payload = data;
+  if (payload?.error) {
+    throw new Error(`Gemini API error: ${JSON.stringify(payload.error)}`);
+  }
+  const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    throw new Error(`Gemini returned no text: ${JSON.stringify(data).slice(0, 200)}`);
+  }
+  return text;
+}
+function extractGroqText(data) {
+  const payload = data;
+  if (payload?.error) {
+    throw new Error(`Groq API error: ${JSON.stringify(payload.error)}`);
+  }
+  const text = payload?.choices?.[0]?.message?.content;
+  if (!text) {
+    throw new Error(`Groq returned no text: ${JSON.stringify(data).slice(0, 200)}`);
+  }
+  return text;
+}
+
 // scripts/lib/config.ts
 loadBackendEnv();
 var coreEnvSchema = external_exports.object({
@@ -107028,12 +107088,21 @@ if (!parsed.success) {
   throw new Error("Core environment validation failed \u2014 see log output above.");
 }
 var env = parsed.data;
-function requireGeminiKey() {
-  const value = process.env.GEMINI_API_KEY;
-  if (!value) {
-    throw new Error("GEMINI_API_KEY is not set \u2014 required for the weekly summary job.");
-  }
-  return value;
+function getGeminiKey() {
+  const value = process.env.GEMINI_API_KEY?.trim();
+  return value ? value : null;
+}
+function getGroqKey() {
+  const value = process.env.GROQ_API_KEY?.trim();
+  return value ? value : null;
+}
+function getGroqModel() {
+  const value = process.env.GROQ_MODEL?.trim();
+  return value ? value : DEFAULT_GROQ_MODEL;
+}
+function getAiProviderOverride() {
+  const value = process.env.AI_PROVIDER?.trim().toLowerCase();
+  return value === "gemini" || value === "groq" ? value : null;
 }
 function requireFcmServiceAccount() {
   return process.env.FCM_SERVICE_ACCOUNT ?? null;
@@ -107042,7 +107111,9 @@ function requireTwitchCredentials() {
   const clientId = process.env.TWITCH_CLIENT_ID;
   const clientSecret = process.env.TWITCH_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    throw new Error("TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET are required for the game releases job.");
+    throw new Error(
+      "TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET are required for the game releases job."
+    );
   }
   return { clientId: clientId.trim(), clientSecret: clientSecret.trim() };
 }
@@ -112948,11 +113019,11 @@ async function withRetry(operation, options = {}) {
     } catch (error) {
       const shouldRetry = attempt <= retries && isRetryableError(error);
       if (!shouldRetry) throw error;
-      const delay3 = Math.min(baseDelayMs * 2 ** (attempt - 1), maxDelayMs);
+      const delay2 = Math.min(baseDelayMs * 2 ** (attempt - 1), maxDelayMs);
       logger.warn(
-        `   \u26A0\uFE0F ${label} failed (attempt ${attempt}/${retries + 1}): ${error.message}. Retrying in ${delay3}ms...`
+        `   \u26A0\uFE0F ${label} failed (attempt ${attempt}/${retries + 1}): ${error.message}. Retrying in ${delay2}ms...`
       );
-      await sleep(delay3);
+      await sleep(delay2);
     }
   }
 }
@@ -114196,6 +114267,101 @@ async function teardownFreeGamesService() {
 
 // scripts/features/summary/summary.service.ts
 var sdk = __toESM(require("node-appwrite"));
+
+// scripts/lib/ai.ts
+var NOOP_LOG = { info: () => {
+}, warn: () => {
+} };
+async function callGemini(options, keys, fetchImpl, signal) {
+  if (!keys.geminiKey) throw new Error("GEMINI_API_KEY is not set.");
+  const response = await fetchImpl(
+    `${GEMINI_BASE_URL}/${options.geminiModel}:generateContent?key=${keys.geminiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal,
+      body: JSON.stringify(
+        buildGeminiRequestBody(options.prompt, options.geminiSchema, options.temperature)
+      )
+    }
+  );
+  return extractGeminiText(await response.json());
+}
+async function callGroq(options, keys, fetchImpl, signal) {
+  if (!keys.groqKey) throw new Error("GROQ_API_KEY is not set.");
+  const response = await fetchImpl(GROQ_CHAT_COMPLETIONS_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${keys.groqKey}`
+    },
+    signal,
+    body: JSON.stringify(
+      buildGroqRequestBody(options.groqModel, options.prompt, options.temperature)
+    )
+  });
+  return extractGroqText(await response.json());
+}
+async function callProviderWithRetry(provider, options, keys, fetchImpl, log, sleep2, retries, timeoutMs, backoffBaseMs) {
+  const label = options.label ?? "AI request";
+  let attempt = 0;
+  while (true) {
+    attempt++;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      log.info(`\u{1F916} ${label}: trying ${provider} (attempt ${attempt}/${retries})...`);
+      return provider === "gemini" ? await callGemini(options, keys, fetchImpl, controller.signal) : await callGroq(options, keys, fetchImpl, controller.signal);
+    } catch (error) {
+      if (attempt >= retries) throw error;
+      const backoff = backoffBaseMs * 2 ** attempt;
+      log.warn(`\u26A0\uFE0F ${label}: ${provider} attempt ${attempt} failed: ${getErrorMessage(error)}`);
+      await sleep2(backoff);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+}
+async function generateAiText(options, keys, deps = {}) {
+  const fetchImpl = deps.fetchImpl ?? fetch;
+  const log = deps.log ?? NOOP_LOG;
+  const sleep2 = deps.sleep ?? ((ms) => new Promise((resolve2) => setTimeout(resolve2, ms)));
+  const retries = Math.max(1, options.retries ?? AI_RETRIES);
+  const timeoutMs = options.timeoutMs ?? AI_TIMEOUT_MS;
+  const backoffBaseMs = deps.backoffBaseMs ?? 1e3;
+  const label = options.label ?? "AI request";
+  const providers = resolveAiProviders({
+    geminiKey: keys.geminiKey,
+    groqKey: keys.groqKey,
+    override: keys.override ?? null
+  });
+  if (providers.length === 0) {
+    throw new Error("No AI provider is configured \u2014 set GEMINI_API_KEY and/or GROQ_API_KEY.");
+  }
+  let lastError;
+  for (const provider of providers) {
+    try {
+      const text = await callProviderWithRetry(
+        provider,
+        options,
+        keys,
+        fetchImpl,
+        log,
+        sleep2,
+        retries,
+        timeoutMs,
+        backoffBaseMs
+      );
+      return { provider, text };
+    } catch (error) {
+      lastError = error;
+      log.warn(`\u26A0\uFE0F ${label}: ${provider} failed: ${getErrorMessage(error)}`);
+    }
+  }
+  throw new Error(`All AI providers failed for ${label}: ${getErrorMessage(lastError)}`);
+}
+
+// scripts/features/summary/summary.service.ts
 loadBackendEnv();
 var DATABASE_ID = env.APPWRITE_DATABASE_ID;
 var NEWS_COLLECTION_ID = env.ARTICLES_COLLECTION_ID;
@@ -114290,66 +114456,46 @@ function parseJsonSummary(rawText) {
   }
 }
 var delay = (ms) => new Promise((resolve2) => setTimeout(resolve2, ms));
-async function callGeminiWithRetry(prompt, maxRetries = 3) {
-  const apiKey = requireGeminiKey();
-  let attempt = 0;
-  while (true) {
-    attempt++;
-    try {
-      logger.info(`\u{1F916} Trying Gemini... (Attempt ${attempt}/${maxRetries})`);
-      const aiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              response_mime_type: "application/json",
-              responseSchema: {
-                type: "OBJECT",
-                properties: {
-                  arabic: { type: "STRING" },
-                  english: { type: "STRING" }
-                },
-                required: ["arabic", "english"]
-              }
-            }
-          })
-        }
-      );
-      const aiData = await aiResponse.json();
-      if (aiData.error) {
-        throw new Error(`Gemini API Error: ${JSON.stringify(aiData.error)}`);
-      }
-      if (!aiData.candidates?.length) {
-        throw new Error(`Gemini returned no candidates: ${JSON.stringify(aiData)}`);
-      }
-      const rawText = aiData.candidates[0]?.content?.parts?.[0]?.text;
-      if (!rawText) {
-        throw new Error("Gemini returned empty text.");
-      }
-      return parseJsonSummary(rawText);
-    } catch (error) {
-      logger.error(`\u274C Gemini attempt ${attempt} failed: ${getErrorMessage(error)}`);
-      if (attempt >= maxRetries) {
-        throw error;
-      }
-      const backoffTime = Math.pow(2, attempt) * 1e3;
-      logger.info(`Waiting ${backoffTime / 1e3}s before retrying...`);
-      await delay(backoffTime);
-    }
-  }
+var WEEKLY_GEMINI_MODEL = "gemini-2.5-flash";
+var WEEKLY_GEMINI_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    arabic: { type: "STRING" },
+    english: { type: "STRING" }
+  },
+  required: ["arabic", "english"]
+};
+async function callAiWithRetry(prompt, maxRetries = 3) {
+  const { provider, text } = await generateAiText(
+    {
+      prompt,
+      label: "weekly summary",
+      geminiModel: WEEKLY_GEMINI_MODEL,
+      geminiSchema: WEEKLY_GEMINI_SCHEMA,
+      groqModel: getGroqModel(),
+      retries: maxRetries,
+      // The weekly prompt is large (up to ~250 articles), so allow more time
+      // than the per-article default.
+      timeoutMs: 6e4
+    },
+    {
+      geminiKey: getGeminiKey(),
+      groqKey: getGroqKey(),
+      override: getAiProviderOverride()
+    },
+    { log: logger }
+  );
+  logger.info(`\u2705 Weekly summary generated via ${provider}.`);
+  return parseJsonSummary(text);
 }
-async function summarizeWithGemini(newsText, opts = {
+async function summarizeWithAi(newsText, opts = {
   isPartial: false
 }) {
   const prompt = opts.isPartial ? PARTIAL_SUMMARY_PROMPT(opts.batchIndex ?? 1, opts.totalBatches ?? 1, newsText) : SUMMARY_PROMPT(opts.startDate ?? "", opts.endDate ?? "", newsText);
-  return callGeminiWithRetry(prompt);
+  return callAiWithRetry(prompt);
 }
-function mergeSummariesWithGemini(startDate, endDate, arabicSummaries, englishSummaries) {
-  logger.info("\u{1F916} Merging chunk summaries with Gemini...");
-  return callGeminiWithRetry(
+function mergeSummariesWithAi(startDate, endDate, arabicSummaries, englishSummaries) {
+  return callAiWithRetry(
     MERGE_SUMMARY_PROMPT(startDate, endDate, arabicSummaries, englishSummaries)
   );
 }
@@ -114458,12 +114604,12 @@ async function runGenerateWeeklySummary() {
     if (documents.length <= CHUNK_SIZE) {
       const newsText = documents.map(formatDoc).join("\n");
       logger.info(`Sending all ${documents.length} articles in a single batch to AI...`);
-      jsonSummary = await summarizeWithGemini(newsText, {
+      jsonSummary = await summarizeWithAi(newsText, {
         isPartial: false,
         startDate: sevenDaysAgo,
         endDate
       });
-      logger.info("\u2705 Gemini succeeded.");
+      logger.info("\u2705 Weekly recap generated.");
     } else {
       const chunks = [];
       for (let i = 0; i < documents.length; i += CHUNK_SIZE) {
@@ -114475,7 +114621,7 @@ async function runGenerateWeeklySummary() {
         const chunk = chunks[i];
         const chunkText = chunk.map(formatDoc).join("\n");
         logger.info(`Processing chunk ${i + 1}/${chunks.length} (size: ${chunk.length})...`);
-        const summary = await summarizeWithGemini(chunkText, {
+        const summary = await summarizeWithAi(chunkText, {
           isPartial: true,
           batchIndex: i + 1,
           totalBatches: chunks.length
@@ -114491,13 +114637,13 @@ async function runGenerateWeeklySummary() {
 ${s.arabic}`).join("\n\n");
       const englishSummaries = chunkSummaries.map((s, idx) => `[Batch ${idx + 1} English Recap segment]:
 ${s.english}`).join("\n\n");
-      jsonSummary = await mergeSummariesWithGemini(
+      jsonSummary = await mergeSummariesWithAi(
         sevenDaysAgo,
         endDate,
         arabicSummaries,
         englishSummaries
       );
-      logger.info("\u2705 Gemini merging succeeded.");
+      logger.info("\u2705 Weekly recap merged.");
     }
     logger.info("Summary generated successfully. Saving to Appwrite...");
     await saveWeeklySummary(jsonSummary, sevenDaysAgo);
@@ -114548,9 +114694,7 @@ var PER_LANGUAGE_MAX_CHARS = {
   "pt-BR": 280,
   "pt-PT": 280
 };
-var MODEL = "gemini-2.5-flash";
-var GEMINI_TIMEOUT_MS = 25e3;
-var MAX_GEMINI_RETRIES = 3;
+var MODEL = "gemini-3.1-flash-lite";
 var MAX_ATTEMPTS = 3;
 var MAX_DESCRIPTION_CHARS = 1500;
 var BACKFILL_NEWEST = 20;
@@ -114637,59 +114781,30 @@ loadBackendEnv();
 var DATABASE_ID2 = env.APPWRITE_DATABASE_ID;
 var ARTICLES_COLLECTION_ID = env.ARTICLES_COLLECTION_ID;
 var databases4 = createAppwriteDatabases();
-var delay2 = (ms) => new Promise((resolve2) => setTimeout(resolve2, ms));
-async function callGemini(prompt) {
-  const apiKey = requireGeminiKey();
-  let attempt = 0;
-  while (true) {
-    attempt++;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
-    try {
-      logger.info(
-        `\u{1F916} Article summary: trying Gemini (attempt ${attempt}/${MAX_GEMINI_RETRIES})...`
-      );
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.4,
-              response_mime_type: "application/json",
-              // Intentionally omitting `required`: a single missing language
-              // must not invalidate an otherwise usable response.
-              responseSchema: {
-                type: "OBJECT",
-                properties: Object.fromEntries(
-                  Object.values(LANGUAGE_TO_JSON_KEY).map((key) => [key, { type: "STRING" }])
-                )
-              }
-            }
-          })
-        }
-      );
-      const aiData = await response.json();
-      if (aiData.error) {
-        throw new Error(`Gemini API Error: ${JSON.stringify(aiData.error)}`);
-      }
-      const rawText = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) {
-        throw new Error(`Gemini returned no text: ${JSON.stringify(aiData).substring(0, 200)}`);
-      }
-      return parseSummaries(rawText);
-    } catch (error) {
-      logger.warn(`\u26A0\uFE0F Article summary attempt ${attempt} failed: ${getErrorMessage(error)}`);
-      if (attempt >= MAX_GEMINI_RETRIES) throw error;
-      const backoffTime = Math.pow(2, attempt) * 1e3;
-      await delay2(backoffTime);
-    } finally {
-      clearTimeout(timer);
-    }
-  }
+async function generateSummaries(prompt) {
+  const { provider, text } = await generateAiText(
+    {
+      prompt,
+      label: "article summary",
+      geminiModel: MODEL,
+      geminiSchema: {
+        type: "OBJECT",
+        properties: Object.fromEntries(
+          Object.values(LANGUAGE_TO_JSON_KEY).map((key) => [key, { type: "STRING" }])
+        )
+      },
+      groqModel: getGroqModel(),
+      temperature: 0.4
+    },
+    {
+      geminiKey: getGeminiKey(),
+      groqKey: getGroqKey(),
+      override: getAiProviderOverride()
+    },
+    { log: logger }
+  );
+  logger.info(`\u{1F916} Article summary generated via ${provider}.`);
+  return parseSummaries(text);
 }
 async function enrichArticleWithSummaries(article) {
   const attempts = (article.summaries_attempts ?? 0) + 1;
@@ -114701,7 +114816,7 @@ async function enrichArticleWithSummaries(article) {
     logger.warn(`\u26A0\uFE0F Could not bump summary attempts for ${article.$id}: ${getErrorMessage(error)}`);
   }
   try {
-    const summaries = await callGemini(buildPrompt(article));
+    const summaries = await generateSummaries(buildPrompt(article));
     const payload = { summaries_attempts: attempts };
     let found = 0;
     for (const language of SUMMARY_LANGUAGES) {
