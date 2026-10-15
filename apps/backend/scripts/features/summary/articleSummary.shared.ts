@@ -164,6 +164,55 @@ function parseSummaries(rawText: string): SummaryMap {
   return summaries;
 }
 
+/**
+ * Coerces an optional queue-size override into a usable non-negative integer.
+ * `undefined`, non-finite (`NaN`/`Infinity`) and negative values fall back to
+ * `fallback`; `0` is preserved as the explicit "skip this queue" signal;
+ * positives are floored. Guards against junk reaching `Query.limit(...)`, which
+ * Appwrite rejects outside `1..9_223_372_036_854_775_807`.
+ */
+function sanitizeQueueLimit(value: number | undefined, fallback: number): number {
+  if (value === undefined || !Number.isFinite(value)) return fallback;
+  const floored = Math.floor(value);
+  return floored < 0 ? fallback : floored;
+}
+
+/**
+ * Describes one pending-articles queue query, or `null` when the queue must be
+ * skipped entirely. Appwrite requires `Query.limit` to be >= 1, so a zero /
+ * non-integer limit here means "don't run this query" rather than `limit(0)`.
+ */
+function buildPendingQueueQuery(
+  order: 'desc' | 'asc',
+  limit: number,
+): { order: 'desc' | 'asc'; limit: number } | null {
+  if (!Number.isInteger(limit) || limit < 1) return null;
+  return { order, limit };
+}
+
+/**
+ * Reads the `--limit <n>` / `--limit=<n>` CLI override (or the
+ * `SUMMARY_BACKFILL_LIMIT` env fallback). Always returns a positive integer or
+ * `undefined`: `NaN`, `Infinity`, `0`, negatives and a missing value are
+ * rejected so they can never be forwarded to `Query.limit`.
+ */
+function parseBackfillLimit(argv: string[], envValue?: string): number | undefined {
+  const toPositiveInt = (raw: string | undefined): number | undefined => {
+    if (raw === undefined) return undefined;
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return undefined;
+    const floored = Math.floor(value);
+    return floored >= 1 ? floored : undefined;
+  };
+
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--limit') return toPositiveInt(argv[i + 1]);
+    if (argv[i].startsWith('--limit=')) return toPositiveInt(argv[i].slice('--limit='.length));
+  }
+
+  return toPositiveInt(envValue);
+}
+
 export {
   SUMMARY_LANGUAGES,
   LANGUAGE_TO_JSON_KEY,
@@ -183,5 +232,8 @@ export {
   buildPrompt,
   cleanSummary,
   parseSummaries,
+  sanitizeQueueLimit,
+  buildPendingQueueQuery,
+  parseBackfillLimit,
 };
 export type { SummaryLanguage, SummaryMap, SummarizableArticle };

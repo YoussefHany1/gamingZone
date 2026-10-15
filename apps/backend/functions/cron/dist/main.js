@@ -114615,6 +114615,15 @@ function parseSummaries(rawText) {
   }
   return summaries;
 }
+function sanitizeQueueLimit(value, fallback) {
+  if (value === void 0 || !Number.isFinite(value)) return fallback;
+  const floored = Math.floor(value);
+  return floored < 0 ? fallback : floored;
+}
+function buildPendingQueueQuery(order, limit) {
+  if (!Number.isInteger(limit) || limit < 1) return null;
+  return { order, limit };
+}
 
 // scripts/features/summary/articleSummary.service.ts
 loadBackendEnv();
@@ -114730,18 +114739,25 @@ async function enrichArticleWithSummaries(article) {
   }
 }
 async function listPending(order, limit) {
+  const queue = buildPendingQueueQuery(order, limit);
+  if (!queue) {
+    logger.info(
+      `\u{1F4A4} Skipping the ${order === "desc" ? "newest" : "oldest"} pending queue (limit ${limit}).`
+    );
+    return [];
+  }
   const response = await databases4.listDocuments(DATABASE_ID2, ARTICLES_COLLECTION_ID, [
     sdk2.Query.isNull("summaries_at"),
     sdk2.Query.equal("summaries_failed", false),
-    order === "desc" ? sdk2.Query.orderDesc("pubDate") : sdk2.Query.orderAsc("pubDate"),
-    sdk2.Query.limit(limit)
+    queue.order === "desc" ? sdk2.Query.orderDesc("pubDate") : sdk2.Query.orderAsc("pubDate"),
+    sdk2.Query.limit(queue.limit)
   ]);
   return response.documents;
 }
 async function runBackfillArticleSummaries(options = {}) {
   const stats = { processed: 0, succeeded: 0, failed: 0, complete: true };
-  const newestLimit = options.newest ?? BACKFILL_NEWEST;
-  const oldestLimit = options.oldest ?? BACKFILL_OLDEST;
+  const newestLimit = sanitizeQueueLimit(options.newest, BACKFILL_NEWEST);
+  const oldestLimit = sanitizeQueueLimit(options.oldest, BACKFILL_OLDEST);
   const maxDurationMs = options.maxDurationMs ?? MAX_BACKFILL_MS;
   let newest = [];
   let oldest = [];

@@ -18,9 +18,11 @@ import {
   MAX_GEMINI_RETRIES,
   MODEL,
   SUMMARY_LANGUAGES,
+  buildPendingQueueQuery,
   buildPrompt,
   cleanSummary,
   parseSummaries,
+  sanitizeQueueLimit,
 } from './articleSummary.shared';
 import type { SummarizableArticle, SummaryMap } from './articleSummary.shared';
 
@@ -184,11 +186,22 @@ async function enrichArticleWithSummaries(article: SummarizableArticle): Promise
 }
 
 async function listPending(order: 'desc' | 'asc', limit: number): Promise<sdk.Models.Document[]> {
+  // `limit <= 0` (e.g. the `--limit N` smoke path sets `oldest: 0`) means
+  // "skip this queue". Appwrite rejects `Query.limit(0)`, so we never build the
+  // query at all rather than passing an invalid value.
+  const queue = buildPendingQueueQuery(order, limit);
+  if (!queue) {
+    logger.info(
+      `💤 Skipping the ${order === 'desc' ? 'newest' : 'oldest'} pending queue (limit ${limit}).`,
+    );
+    return [];
+  }
+
   const response = await databases.listDocuments(DATABASE_ID, ARTICLES_COLLECTION_ID, [
     sdk.Query.isNull('summaries_at'),
     sdk.Query.equal('summaries_failed', false),
-    order === 'desc' ? sdk.Query.orderDesc('pubDate') : sdk.Query.orderAsc('pubDate'),
-    sdk.Query.limit(limit),
+    queue.order === 'desc' ? sdk.Query.orderDesc('pubDate') : sdk.Query.orderAsc('pubDate'),
+    sdk.Query.limit(queue.limit),
   ]);
 
   return response.documents;
@@ -207,8 +220,8 @@ async function listPending(order: 'desc' | 'asc', limit: number): Promise<sdk.Mo
  */
 async function runBackfillArticleSummaries(options: BackfillOptions = {}): Promise<BackfillStats> {
   const stats: BackfillStats = { processed: 0, succeeded: 0, failed: 0, complete: true };
-  const newestLimit = options.newest ?? BACKFILL_NEWEST;
-  const oldestLimit = options.oldest ?? BACKFILL_OLDEST;
+  const newestLimit = sanitizeQueueLimit(options.newest, BACKFILL_NEWEST);
+  const oldestLimit = sanitizeQueueLimit(options.oldest, BACKFILL_OLDEST);
   const maxDurationMs = options.maxDurationMs ?? MAX_BACKFILL_MS;
 
   let newest: sdk.Models.Document[] = [];

@@ -6,8 +6,13 @@ import {
   LANGUAGE_TO_JSON_KEY,
   JSON_KEY_TO_LANGUAGE,
   PER_LANGUAGE_MAX_CHARS,
+  BACKFILL_NEWEST,
+  BACKFILL_OLDEST,
   cleanSummary,
   parseSummaries,
+  sanitizeQueueLimit,
+  buildPendingQueueQuery,
+  parseBackfillLimit,
 } from './articleSummary.shared';
 
 describe('parseSummaries', () => {
@@ -114,5 +119,80 @@ describe('language mappings', () => {
       const jsonKey = LANGUAGE_TO_JSON_KEY[language];
       expect(JSON_KEY_TO_LANGUAGE[jsonKey]).toBe(language);
     }
+  });
+});
+
+describe('backfill queue limits', () => {
+  it('skips a zero/invalid queue instead of building Query.limit(0)', () => {
+    expect(buildPendingQueueQuery('asc', 0)).toBeNull();
+    expect(buildPendingQueueQuery('desc', -1)).toBeNull();
+    expect(buildPendingQueueQuery('desc', Number.NaN)).toBeNull();
+    expect(buildPendingQueueQuery('desc', Number.POSITIVE_INFINITY)).toBeNull();
+    expect(buildPendingQueueQuery('desc', 1.5)).toBeNull();
+  });
+
+  it('builds a query for every valid positive integer limit', () => {
+    expect(buildPendingQueueQuery('desc', 2)).toEqual({ order: 'desc', limit: 2 });
+    expect(buildPendingQueueQuery('asc', 10)).toEqual({ order: 'asc', limit: 10 });
+    expect(buildPendingQueueQuery('desc', 1)).toEqual({ order: 'desc', limit: 1 });
+  });
+
+  it('sanitizes undefined/NaN/negative to the fallback and keeps 0 as the skip signal', () => {
+    expect(sanitizeQueueLimit(undefined, 20)).toBe(20);
+    expect(sanitizeQueueLimit(Number.NaN, 10)).toBe(10);
+    expect(sanitizeQueueLimit(Number.POSITIVE_INFINITY, 10)).toBe(10);
+    expect(sanitizeQueueLimit(-3, 10)).toBe(10);
+    expect(sanitizeQueueLimit(0, 10)).toBe(0);
+    expect(sanitizeQueueLimit(2.9, 10)).toBe(2);
+  });
+
+  it('parses --limit into a strictly positive integer or undefined', () => {
+    expect(parseBackfillLimit(['--limit', '2'])).toBe(2);
+    expect(parseBackfillLimit(['--limit=2'])).toBe(2);
+    expect(parseBackfillLimit(['--limit', '2.9'])).toBe(2);
+    expect(parseBackfillLimit(['--limit', 'abc'])).toBeUndefined();
+    expect(parseBackfillLimit(['--limit', '0'])).toBeUndefined();
+    expect(parseBackfillLimit(['--limit', '-4'])).toBeUndefined();
+    expect(parseBackfillLimit(['--limit'])).toBeUndefined();
+    expect(parseBackfillLimit(['--app-env', '.env.staging'])).toBeUndefined();
+    expect(parseBackfillLimit([], '5')).toBe(5);
+    expect(parseBackfillLimit([], 'nope')).toBeUndefined();
+  });
+
+  it('regression: `--limit 2` produces exactly one query, and every emitted limit is >= 1', () => {
+    // Mirrors the real CLI path: `summary:articles -- --limit 2 --app-env ...`
+    const limit = parseBackfillLimit(['--limit', '2', '--app-env', '.env.staging']);
+    expect(limit).toBe(2);
+
+    const options = limit ? { newest: limit, oldest: 0 } : {};
+    const newestLimit = sanitizeQueueLimit(options.newest, BACKFILL_NEWEST);
+    const oldestLimit = sanitizeQueueLimit(options.oldest, BACKFILL_OLDEST);
+
+    const queues = [
+      buildPendingQueueQuery('desc', newestLimit),
+      buildPendingQueueQuery('asc', oldestLimit),
+    ].filter((queue) => queue !== null);
+
+    // The oldest queue is skipped (oldest: 0) → no Query.limit(0) is ever built.
+    expect(queues).toEqual([{ order: 'desc', limit: 2 }]);
+    for (const queue of queues) {
+      expect(Number.isInteger(queue.limit)).toBe(true);
+      expect(queue.limit).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('uses the default batch sizes (both queues) when no limit is given', () => {
+    const options: { newest?: number; oldest?: number } = {};
+    const newestLimit = sanitizeQueueLimit(options.newest, BACKFILL_NEWEST);
+    const oldestLimit = sanitizeQueueLimit(options.oldest, BACKFILL_OLDEST);
+
+    expect(buildPendingQueueQuery('desc', newestLimit)).toEqual({
+      order: 'desc',
+      limit: BACKFILL_NEWEST,
+    });
+    expect(buildPendingQueueQuery('asc', oldestLimit)).toEqual({
+      order: 'asc',
+      limit: BACKFILL_OLDEST,
+    });
   });
 });
