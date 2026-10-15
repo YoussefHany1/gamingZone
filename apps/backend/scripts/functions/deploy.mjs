@@ -1,4 +1,5 @@
 import { Client, Functions, AppwriteException } from 'node-appwrite';
+import { InputFile } from 'node-appwrite/file';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -109,13 +110,18 @@ function buildTarball(fnDir) {
 
 async function deployCode(functionId, fnDir) {
   const tgz = buildTarball(fnDir);
-  const code = fs.readFileSync(tgz);
+  // Appwrite's SDK uploads a real `File` (see Client.chunkedUpload); a raw
+  // Buffer is rejected with "File not found in payload".
+  const code = InputFile.fromPath(tgz, 'code.tar.gz');
   const deployment = await functions.createDeployment(
     functionId,
     code,
     true, // activate immediately
     ENTRYPOINT,
     COMMANDS,
+    (progress) => {
+      console.log(`   ↑ upload ${progress.progress}% (${progress.sizeUploaded} bytes)`);
+    },
   );
   console.log(`🚀 Deployment ${deployment.$id} created and activated (entrypoint ${ENTRYPOINT}).`);
 }
