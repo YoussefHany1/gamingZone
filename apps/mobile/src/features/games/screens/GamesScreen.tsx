@@ -22,7 +22,7 @@ import NostalgiaCorner from "../components/gamesScreen/NostalgiaCorner";
 import SteamTopSellers from "../components/gamesScreen/SteamTopSellers";
 import Popular from "../components/gamesScreen/Popular";
 import RecommendedGames from "../components/gamesScreen/RecommendedGames";
-import TrendingMobileGames from "../components/gamesScreen/TrendingMobile";
+import TrendingPlatformSection from "../components/gamesScreen/TrendingPlatformSection";
 import FilterModal from "../components/gamesScreen/FilterModal";
 import SearchAutocomplete from "../components/gamesScreen/SearchAutocomplete";
 import type { FeedItemConfig } from "../types";
@@ -31,6 +31,7 @@ import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { LinearGradient } from "expo-linear-gradient";
 import { useGames } from "../hooks/useGames";
+import RandomGameButton from "../components/gamesScreen/RandomGameButton";
 
 // Feed items that are pure static components (no props/state); defined outside
 // the component so the array reference never changes between renders.
@@ -41,7 +42,7 @@ const STATIC_FEED_ITEMS: FeedItemConfig[] = [
   { id: "news", type: "COMPONENT" },
   { id: "ad_1", type: "AD" },
   { id: "popular", type: "COMPONENT" },
-  { id: "trending_mobile", type: "COMPONENT" },
+  { id: "trending_platform", type: "COMPONENT" },
   { id: "ad_2", type: "AD" },
   { id: "anticipated", type: "COMPONENT" },
   { id: "steam_top_sellers", type: "COMPONENT" },
@@ -125,7 +126,7 @@ const RecommendedSection = memo(() => <RecommendedGames />);
 // const GamesNewsSection = memo(() => <GamesNews />);
 const PopularSection = memo(() => <Popular />);
 const SteamSection = memo(() => <SteamTopSellers />);
-const TrendingSection = memo(() => <TrendingMobileGames />);
+const TrendingSection = memo(() => <TrendingPlatformSection />);
 const ReleasedSection = memo(() => <RecentlyReleased />);
 const ComingSoonSection = memo(() => <ComingSoon />);
 const AnticipatedSection = memo(() => <MostAnticipated />);
@@ -137,6 +138,7 @@ RecommendedSection.displayName = "RecommendedSection";
 PopularSection.displayName = "PopularSection";
 SteamSection.displayName = "SteamSection";
 TrendingSection.displayName = "TrendingSection";
+TrendingPlatformSection.displayName = "TrendingPlatformSection";
 ReleasedSection.displayName = "ReleasedSection";
 ComingSoonSection.displayName = "ComingSoonSection";
 AnticipatedSection.displayName = "AnticipatedSection";
@@ -258,7 +260,6 @@ function GamesScreen(): React.ReactElement {
     openFilter,
     closeFilter,
   } = useGames();
-
   // Keep a ref so renderFeedItem can read t() without it being a dep
   const tRef = useRef(t);
   tRef.current = t;
@@ -313,7 +314,7 @@ function GamesScreen(): React.ReactElement {
               <SteamSection />
             </DeferredSection>
           );
-        case "trending_mobile":
+        case "trending_platform":
           return (
             <DeferredSection delay={1200}>
               <TrendingSection />
@@ -384,6 +385,9 @@ function GamesScreen(): React.ReactElement {
               </TouchableOpacity>
             )}
           </View>
+
+          {/* Random game suggestion button */}
+          <RandomGameButton />
 
           {/* Filter button */}
           <TouchableOpacity

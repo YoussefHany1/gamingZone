@@ -4,7 +4,6 @@ import CustomTextInput from "@/src/components/CustomTextInput";
 import {
   View,
   TouchableOpacity,
-  StyleSheet,
   ToastAndroid,
   ScrollView,
   KeyboardAvoidingView,
@@ -255,7 +254,7 @@ const LoginScreen: React.FC<LoginScreenProps> = memo(({ navigation }) => {
       cachePolicy="memory-disk"
     >
       <SafeAreaView style={styles.container}>
-        <ScrollView>
+        <ScrollView showsVerticalScrollIndicator={false}>
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.keyboardView}

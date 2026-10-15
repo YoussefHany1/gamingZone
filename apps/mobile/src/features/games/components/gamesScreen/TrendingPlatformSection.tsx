@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import { View, TouchableOpacity } from "react-native";
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
@@ -18,17 +18,29 @@ import type { TrendingMobileCardProps } from "../../types";
 import type { Game } from "@/src/types/sharedTypes";
 import SectionTitle from "@/src/components/SectionTitle";
 import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
-import { fetchTrendingMobileGames } from "@/src/services/api/igdbApi";
+import { fetchTrendingGamesByPlatform, fetchTrendingMobileGames } from "@/src/services/api/igdbApi";
 import { Star } from "lucide-react-native";
+import { useUserPlatform, type UserPlatform } from "@/src/hooks/useUserPlatform";
 
 const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
 const CARD_MARGIN = 5;
-const STORAGE_KEY = "GAMES_CACHE_TRENDING_MOBILE";
+const MOBILE_STORAGE_KEY = "GAMES_CACHE_TRENDING_MOBILE";
 
-// Card
+function storageKeyForPlatform(platform: UserPlatform): string {
+  return `GAMES_CACHE_TRENDING_${platform.toUpperCase()}`;
+}
 
-const TrendingMobileCard = React.memo<TrendingMobileCardProps>(({ item, index }) => {
+const PLATFORM_LABELS: Record<UserPlatform, string> = {
+  pc: "PC",
+  playstation: "PlayStation",
+  xbox: "Xbox",
+  nintendo: "Nintendo Switch",
+  android: "Android",
+  ios: "iOS",
+};
+
+const TrendingGameCard = React.memo<TrendingMobileCardProps>(({ item, index }) => {
   const colors = useThemeColors();
   const styles = useThemeStyles((c) => ({
     gameCard: {
@@ -39,7 +51,6 @@ const TrendingMobileCard = React.memo<TrendingMobileCardProps>(({ item, index })
       overflow: "hidden",
       position: "relative",
     },
-    cardBackground: { position: "absolute", width: "100%", height: "100%" },
     coverContainer: { width: "100%", height: 190, position: "relative" },
     cover: { width: "100%", height: "100%" },
     coverGradient: {
@@ -105,8 +116,6 @@ const TrendingMobileCard = React.memo<TrendingMobileCardProps>(({ item, index })
 
   return (
     <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.9}>
-      {/* <LinearGradient colors={["#172a4a", "#0c1a33"]} style={styles.cardBackground} /> */}
-
       <View style={styles.coverContainer}>
         <Image
           source={
@@ -158,11 +167,9 @@ const TrendingMobileCard = React.memo<TrendingMobileCardProps>(({ item, index })
     </TouchableOpacity>
   );
 });
-TrendingMobileCard.displayName = "TrendingMobileCard";
+TrendingGameCard.displayName = "TrendingGameCard";
 
-// Main
-
-function TrendingMobileGames(): React.ReactElement {
+function TrendingMobileInternal(): React.ReactElement {
   const styles = useThemeStyles((c) => ({
     errorContainer: {
       width: "100%",
@@ -184,14 +191,14 @@ function TrendingMobileGames(): React.ReactElement {
     data: games,
     isLoading,
     error,
-  } = useCachedData<Game[]>(STORAGE_KEY, fetchTrendingMobileGames, []);
+  } = useCachedData<Game[]>(MOBILE_STORAGE_KEY, fetchTrendingMobileGames, []);
 
   const gamesToShow: Game[] = games ?? [];
   const isActuallyLoading = isLoading && gamesToShow.length === 0;
 
   const renderItem = useCallback(
     ({ item, index }: ListRenderItemInfo<Game>) => (
-      <TrendingMobileCard item={item} index={index} />
+      <TrendingGameCard item={item} index={index} />
     ),
     [],
   );
@@ -244,4 +251,111 @@ function TrendingMobileGames(): React.ReactElement {
   );
 }
 
-export default TrendingMobileGames;
+TrendingMobileInternal.displayName = "TrendingMobileInternal";
+
+function TrendingByPlatformInternal({ platform }: { platform: UserPlatform }): React.ReactElement {
+  const styles = useThemeStyles((c) => ({
+    errorContainer: {
+      width: "100%",
+      height: CARD_HEIGHT,
+    },
+    headerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      margin: 18,
+    },
+    listContent: { paddingHorizontal: 10, paddingVertical: 5 },
+  }));
+
+  const { t } = useTranslation();
+  const storageKey = useMemo(() => storageKeyForPlatform(platform), [platform]);
+  const platformLabel = PLATFORM_LABELS[platform];
+
+  const {
+    data: games,
+    isLoading,
+    error,
+  } = useCachedData<Game[]>(storageKey, () => fetchTrendingGamesByPlatform(platform), [platform]);
+
+  const gamesToShow: Game[] = games ?? [];
+  const isActuallyLoading = isLoading && gamesToShow.length === 0;
+
+  const renderItem = useCallback(
+    ({ item, index }: ListRenderItemInfo<Game>) => (
+      <TrendingGameCard item={item} index={index} />
+    ),
+    [],
+  );
+
+  return (
+    <View>
+      <View style={styles.headerContainer}>
+        <SectionTitle
+          title={t("games.list.trendingPlatform.title", {
+            platform: platformLabel,
+          })}
+          fontSize={24}
+          subtitle={t("games.list.trendingPlatform.subtitle")}
+        />
+      </View>
+
+      {isActuallyLoading && (
+        <FlashList
+          data={Array.from({ length: 5 }, (_, i) => ({ id: i }) as any)}
+          horizontal
+          renderItem={() => <SkeletonPopular />}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
+
+      {(error || !Array.isArray(gamesToShow)) && (
+        <View style={styles.errorContainer}>
+          <ErrorState message={t("games.list.serverError")} />
+        </View>
+      )}
+
+      {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
+        <FlashList
+          renderScrollComponent={GHScrollView as any}
+          data={gamesToShow}
+          horizontal
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderItem}
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
+          decelerationRate="fast"
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.errorContainer}>
+              <ErrorState message={t("games.list.noResults", "No games found")} />
+            </View>
+          }
+        />
+      )}
+    </View>
+  );
+}
+
+TrendingByPlatformInternal.displayName = "TrendingByPlatformInternal";
+
+function TrendingPlatformSection(): React.ReactElement | null {
+  const { platform, loading } = useUserPlatform();
+
+  if (loading) {
+    return null;
+  }
+
+  if (platform) {
+    return <TrendingByPlatformInternal platform={platform} />;
+  }
+
+  return <TrendingMobileInternal />;
+}
+
+TrendingPlatformSection.displayName = "TrendingPlatformSection";
+
+export default TrendingPlatformSection;
+export { TrendingByPlatformInternal, TrendingMobileInternal };

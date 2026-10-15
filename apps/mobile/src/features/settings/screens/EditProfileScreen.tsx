@@ -1,5 +1,5 @@
 import CustomText from "@/src/components/CustomText";
-import { View, ScrollView, TouchableOpacity, ToastAndroid } from "react-native";
+import { View, ScrollView, TouchableOpacity, ToastAndroid, ActivityIndicator } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import { Image } from "expo-image";
@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import firestore from "@react-native-firebase/firestore";
+import auth from "@react-native-firebase/auth";
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -187,6 +188,10 @@ function EditProfileScreen(): React.ReactElement {
   const adsEnabled = useAdsEnabled();
   const [isReady, setIsReady] = useState<boolean>(false);
   const [showSteamModal, setShowSteamModal] = useState<boolean>(false);
+  const [emailVerified, setEmailVerified] = useState<boolean>(
+    currentUser?.emailVerified ?? false,
+  );
+  const [isCheckingVerification, setIsCheckingVerification] = useState<boolean>(false);
   const { t, i18n } = useTranslation();
 
   // Defer ad rendering until after the main UI has settled
@@ -237,6 +242,35 @@ function EditProfileScreen(): React.ReactElement {
       isMounted = false;
     };
   }, [currentUser]);
+
+  // Keep the verification status in sync with the auth user. `reload()`
+  // mutates the same User reference, so we mirror the flag into local state
+  // to guarantee a re-render once the account is verified.
+  useEffect(() => {
+    setEmailVerified(currentUser?.emailVerified ?? false);
+  }, [currentUser]);
+
+  // Re-check verification after the user clicks the link in their inbox
+  const handleRefreshVerification = useCallback(async (): Promise<void> => {
+    if (isCheckingVerification) return;
+    setIsCheckingVerification(true);
+    try {
+      await auth().currentUser?.reload();
+      const verified = auth().currentUser?.emailVerified ?? false;
+      setEmailVerified(verified);
+      ToastAndroid.show(
+        verified
+          ? t("auth.verifyPrompt.verifiedSuccess")
+          : t("auth.verifyPrompt.notVerifiedYet"),
+        ToastAndroid.LONG,
+      );
+    } catch (error) {
+      console.error("Failed to refresh verification status:", error);
+      ToastAndroid.show(t("auth.verifyPrompt.notVerifiedYet"), ToastAndroid.LONG);
+    } finally {
+      setIsCheckingVerification(false);
+    }
+  }, [isCheckingVerification, t]);
 
   const pickImage = useCallback(async (): Promise<void> => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -418,33 +452,53 @@ function EditProfileScreen(): React.ReactElement {
           </TouchableOpacity>
 
           {/* Email verification */}
-          {!currentUser.emailVerified && (
+          {!emailVerified && (
             <View style={styles.verifyContainer}>
-              <TouchableOpacity
-                style={styles.verifyBox}
-                onPress={async () => {
-                  try {
-                    await currentUser.sendEmailVerification();
-                    ToastAndroid.show(t("auth.verificationEmailSent"), ToastAndroid.LONG);
-                  } catch (e) {
-                    console.error("Failed to send verification email:", e);
-                    ToastAndroid.show(
-                      t("settings.profile.messages.saveError"),
-                      ToastAndroid.LONG,
-                    );
-                  }
-                }}
-              >
+              <View style={styles.verifyBox}>
                 <CustomText style={styles.verifyText}>
                   {t("auth.emailNotVerified")}
                 </CustomText>
-                <CustomText style={styles.verifyAction}>
-                  {t("auth.verifyEmail")}
-                </CustomText>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={async () => {
+                    try {
+                      await currentUser.sendEmailVerification();
+                      ToastAndroid.show(t("auth.verificationEmailSent"), ToastAndroid.LONG);
+                    } catch (e) {
+                      console.error("Failed to send verification email:", e);
+                      const code = (e as { code?: string }).code;
+                      ToastAndroid.show(
+                        code === "auth/too-many-requests"
+                          ? t("auth.verifyPrompt.tooManyRequests")
+                          : t("settings.profile.messages.saveError"),
+                        ToastAndroid.LONG,
+                      );
+                    }
+                  }}
+                >
+                  <CustomText style={styles.verifyAction}>
+                    {t("auth.verifyEmail")}
+                  </CustomText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleRefreshVerification}
+                  disabled={isCheckingVerification}
+                >
+                  {isCheckingVerification ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={colors.accentText}
+                      style={{ marginTop: 6 }}
+                    />
+                  ) : (
+                    <CustomText style={styles.verifyAction}>
+                      {t("auth.verifyPrompt.iveVerified")}
+                    </CustomText>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
           )}
-          {currentUser.emailVerified && (
+          {emailVerified && (
             <View style={[styles.verifyContainer, styles.verifyBoxVerified]}>
               <CustomText style={styles.verifyText}>{t("auth.emailVerified")}</CustomText>
             </View>

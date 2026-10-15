@@ -54,6 +54,7 @@ const DEFAULT_LISTS: { id: string; name: string; type: ListType }[] = [
 const UserListsScreen = ({ navigation }: Props) => {
   const [lists, setLists] = useState<GameList[]>([]);
   const [newListName, setNewListName] = useState<string>("");
+  const [newListDescription, setNewListDescription] = useState<string>("");
   const [isModalVisible, setModalVisible] = useState<boolean>(false);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [showAds, setShowAds] = useState<boolean>(false);
@@ -123,6 +124,10 @@ const UserListsScreen = ({ navigation }: Props) => {
       borderRadius: 8,
       marginBottom: 20,
       color: c.text,
+    },
+    descriptionInput: {
+      minHeight: 80,
+      textAlignVertical: "top",
     },
 
     modalButtons: { flexDirection: "row", justifyContent: "space-around" },
@@ -283,10 +288,12 @@ const UserListsScreen = ({ navigation }: Props) => {
         .doc();
       await ref.set({
         name: trimmed,
+        description: newListDescription.trim(),
         type: "custom",
         createdAt: firestore.FieldValue.serverTimestamp(),
       });
       setNewListName("");
+      setNewListDescription("");
       setModalVisible(false);
     } catch (error) {
       console.error("[UserListsScreen] Create list error:", error);
@@ -294,7 +301,7 @@ const UserListsScreen = ({ navigation }: Props) => {
     } finally {
       setIsCreating(false);
     }
-  }, [newListName, lists, t, isAnonymous]);
+  }, [newListName, newListDescription, lists, t, isAnonymous]);
 
   // Delete list
   const handleDeleteList = useCallback(
@@ -431,6 +438,16 @@ const UserListsScreen = ({ navigation }: Props) => {
                 onChangeText={setNewListName}
                 placeholder={t("userLists.placeholders.newListName")}
                 placeholderTextColor={colors.textSubtle}
+                maxLength={60}
+              />
+              <CustomTextInput
+                style={[styles.input, styles.descriptionInput]}
+                value={newListDescription}
+                onChangeText={setNewListDescription}
+                placeholder={t("userLists.placeholders.newListDescription")}
+                placeholderTextColor={colors.textSubtle}
+                multiline
+                maxLength={300}
               />
               <View style={styles.modalButtons}>
                 <TouchableOpacity

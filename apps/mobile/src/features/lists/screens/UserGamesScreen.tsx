@@ -7,6 +7,7 @@ import {
   Alert,
   ToastAndroid,
   RefreshControl,
+  Share,
 } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { FlashList } from "@shopify/flash-list";
@@ -14,10 +15,11 @@ import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Bookmark, CirclePlus, Share2, Star, Trash2 } from "lucide-react-native";
+import { Bookmark, CirclePlus, Pencil, Share2, Star, Trash2 } from "lucide-react-native";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import { NativeAdComponent } from "@/src/components/NativeAd";
+import CustomTextInput from "@/src/components/CustomTextInput";
 import UserGamesSkeleton from "../skeleton/SkeletonUserGames";
 import { storageGet, storageSet } from "@/src/lib/storage";
 import NetInfo from "@react-native-community/netinfo";
@@ -26,7 +28,9 @@ import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SteamSyncButton from "@/src/components/SteamSyncButton";
-import type { GameItemProps, StackParamList, GameEntry, Props } from "../types";
+import type { GameItemProps, StackParamList, GameEntry, Props, UserList } from "../types";
+
+const DEFAULT_LIST_IDS = ["played", "wantToPlay", "playing", "rated"];
 
 const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
   const navigation = useNavigation<NativeStackNavigationProp<StackParamList>>();
@@ -138,6 +142,11 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [showAds, setShowAds] = useState<boolean>(false);
   const [isReady, setIsReady] = useState<boolean>(false);
+  const [listMeta, setListMeta] = useState<UserList | null>(null);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [draftTitle, setDraftTitle] = useState<string>("");
+  const [draftDescription, setDraftDescription] = useState<string>("");
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   const colors = useThemeColors();
   const styles = useThemeStyles((c) => ({
     container: {
@@ -165,6 +174,76 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
       fontSize: 13,
       textAlign: "center",
       fontWeight: "600",
+    },
+    listHeader: {
+      marginTop: 16,
+    },
+    headerCard: {
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      padding: 16,
+    },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    headerTitle: {
+      color: c.text,
+      fontSize: 22,
+      fontWeight: "bold",
+    },
+    headerDescription: {
+      color: c.textSubtle,
+      fontSize: 14,
+      marginTop: 6,
+      lineHeight: 20,
+    },
+    fieldLabel: {
+      color: c.textSubtle,
+      fontSize: 13,
+      fontWeight: "600",
+      marginBottom: 6,
+      marginTop: 8,
+    },
+    headerInput: {
+      backgroundColor: c.background,
+      padding: 10,
+      borderRadius: 8,
+      color: c.text,
+    },
+    headerInputMultiline: {
+      minHeight: 80,
+      textAlignVertical: "top",
+    },
+    editActions: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      alignItems: "center",
+      gap: 12,
+      marginTop: 16,
+    },
+    cancelBtn: {
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+    },
+    cancelBtnText: {
+      color: c.text,
+      fontWeight: "bold",
+      fontSize: 16,
+    },
+    saveBtn: {
+      backgroundColor: c.accent,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+    },
+    saveBtnDisabled: {
+      opacity: 0.6,
+    },
+    saveBtnText: {
+      color: c.onAccent,
+      fontWeight: "bold",
+      fontSize: 16,
     },
     emptyText: {
       color: c.text,
@@ -251,6 +330,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const mountedRef = useRef<boolean>(true);
+  const savingRef = useRef<boolean>(false);
   const { t } = useTranslation();
   const { onScroll } = useScrollDirection();
   const currentUser = auth().currentUser;
@@ -258,6 +338,19 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
   const isSharedList = ownerId && (!currentUser || ownerId !== currentUser.uid);
   const targetUserId = isSharedList ? ownerId : currentUser ? currentUser.uid : null;
   const CACHE_KEY = targetUserId ? `USER_GAMES_${targetUserId}_LIST_${listId}` : null;
+
+  // Title / description shown in the screen header.
+  const displayTitle = listMeta?.name ?? listName;
+  const displayDescription = listMeta?.description ?? "";
+  // Default lists (Playing/Played/Want to Play/Rated) keep their fixed,
+  // localized titles. Anything else is a user-created custom list.
+  const isCustomList = listMeta?.type
+    ? listMeta.type === "custom"
+    : !DEFAULT_LIST_IDS.includes(listId);
+  // Only the signed-in owner of a custom list can edit title/description/games.
+  const canEdit = Boolean(
+    !isSharedList && isCustomList && currentUser && !currentUser.isAnonymous,
+  );
 
   // List name i18n
   const getDisplayName = useCallback(
@@ -283,14 +376,13 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
 
   const handleShare = useCallback(async () => {
     try {
-      const shareUrl = `https://gz1.games/lists/${listId}?ownerId=${targetUserId}&name=${encodeURIComponent(listName)}`;
+      const shareUrl = `https://gz1.games/lists/${listId}?ownerId=${targetUserId}&name=${encodeURIComponent(displayTitle)}`;
       const message = `${
         t("userLists.actions.shareMessage", {
-          listName: getDisplayName(listName),
-        }) ?? `Check out my list "${getDisplayName(listName)}" on Gaming Zone:`
+          listName: getDisplayName(displayTitle),
+        }) ?? `Check out my list "${getDisplayName(displayTitle)}" on Gaming Zone:`
       } ${shareUrl}`;
 
-      const { Share } = require("react-native");
       await Share.share({
         message,
         url: shareUrl,
@@ -298,7 +390,61 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
     } catch (error) {
       console.error("[UserGamesScreen] Share error:", error);
     }
-  }, [listId, targetUserId, listName, getDisplayName, t]);
+  }, [listId, targetUserId, displayTitle, getDisplayName, t]);
+
+  // Title / description editing (owner of a custom list only)
+  const handleStartEdit = useCallback((): void => {
+    setDraftTitle(displayTitle);
+    setDraftDescription(displayDescription);
+    setIsEditing(true);
+  }, [displayTitle, displayDescription]);
+
+  const handleCancelEdit = useCallback((): void => {
+    setIsEditing(false);
+    setDraftTitle("");
+    setDraftDescription("");
+  }, []);
+
+  const handleSaveEdit = useCallback(async (): Promise<void> => {
+    // Hard guard against double submits (state may be stale in the closure).
+    if (savingRef.current || !canEdit || !targetUserId) return;
+
+    const trimmedTitle = draftTitle.trim();
+    if (!trimmedTitle) {
+      ToastAndroid.show(
+        t("userLists.list.titleRequired"),
+        ToastAndroid.LONG,
+      );
+      return;
+    }
+
+    savingRef.current = true;
+    setIsSaving(true);
+    try {
+      const description = draftDescription.trim();
+      await firestore()
+        .collection("users")
+        .doc(targetUserId)
+        .collection("lists")
+        .doc(listId)
+        .update({ name: trimmedTitle, description });
+
+      setListMeta((prev) => ({
+        id: listId,
+        name: trimmedTitle,
+        description,
+        type: prev?.type ?? "custom",
+      }));
+      setIsEditing(false);
+      ToastAndroid.show(t("userLists.list.saved"), ToastAndroid.SHORT);
+    } catch (error) {
+      console.error("[UserGamesScreen] Update list error:", error);
+      ToastAndroid.show(t("userLists.list.saveError"), ToastAndroid.LONG);
+    } finally {
+      savingRef.current = false;
+      setIsSaving(false);
+    }
+  }, [canEdit, targetUserId, listId, draftTitle, draftDescription, t]);
 
   // Effects
   useEffect(() => {
@@ -311,7 +457,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
 
   useEffect(() => {
     navigation.setOptions({
-      title: getDisplayName(listName),
+      title: getDisplayName(displayTitle),
       headerRight: () => (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           {targetUserId && games.length > 0 ? (
@@ -334,13 +480,14 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
       ),
     });
   }, [
-    listName,
+    displayTitle,
     getDisplayName,
     navigation,
     isSharedList,
     handleShare,
     targetUserId,
     games.length,
+    colors.text,
   ]);
 
   useEffect(() => {
@@ -351,6 +498,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
     }
 
     let unsubscribe: () => void = () => {};
+    let unsubscribeList: () => void = () => {};
 
     const init = async (): Promise<void> => {
       try {
@@ -370,6 +518,31 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
       if (!netState.isConnected && mountedRef.current) {
         setLoading(false);
       }
+
+      // Avoid creating subscriptions after the screen has unmounted (the
+      // cleanup would otherwise have already run and miss them).
+      if (!mountedRef.current) return;
+
+      // List document (title + description). Readable by any authenticated
+      // user so shared lists show their title/description; only the owner can
+      // write it.
+      unsubscribeList = firestore()
+        .collection("users")
+        .doc(targetUserId)
+        .collection("lists")
+        .doc(listId)
+        .onSnapshot(
+          (snap) => {
+            if (!mountedRef.current || !snap.exists()) return;
+            setListMeta({
+              id: snap.id,
+              ...(snap.data() as Omit<UserList, "id">),
+            });
+          },
+          (error) => {
+            console.error("[UserGamesScreen] List doc snapshot error:", error);
+          },
+        );
 
       const colRef = firestore()
         .collection("users")
@@ -412,6 +585,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
     return () => {
       mountedRef.current = false;
       unsubscribe();
+      unsubscribeList();
     };
   }, [targetUserId, listId, CACHE_KEY, refreshKey]);
 
@@ -636,6 +810,89 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
     [showAds, games.length, handleRemoveGame, handleRateGame, isSharedList],
   );
 
+  // Header: title + description (editable by the list owner)
+  const listHeader = (
+    <View style={styles.listHeader}>
+      <View style={styles.headerCard}>
+        {isEditing ? (
+          <>
+            <CustomText style={styles.fieldLabel}>
+              {t("userLists.list.titleLabel")}
+            </CustomText>
+            <CustomTextInput
+              style={styles.headerInput}
+              value={draftTitle}
+              onChangeText={setDraftTitle}
+              placeholder={t("userLists.list.titlePlaceholder")}
+              placeholderTextColor={colors.textSubtle}
+              maxLength={60}
+              editable={!isSaving}
+            />
+            <CustomText style={styles.fieldLabel}>
+              {t("userLists.list.descriptionLabel")}
+            </CustomText>
+            <CustomTextInput
+              style={[styles.headerInput, styles.headerInputMultiline]}
+              value={draftDescription}
+              onChangeText={setDraftDescription}
+              placeholder={t("userLists.list.descriptionPlaceholder")}
+              placeholderTextColor={colors.textSubtle}
+              multiline
+              maxLength={300}
+              editable={!isSaving}
+            />
+            <View style={styles.editActions}>
+              <TouchableOpacity
+                onPress={handleCancelEdit}
+                style={styles.cancelBtn}
+                disabled={isSaving}
+              >
+                <CustomText style={styles.cancelBtnText}>
+                  {t("common.cancel")}
+                </CustomText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSaveEdit}
+                style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}
+                disabled={isSaving}
+              >
+                <CustomText style={styles.saveBtnText}>
+                  {t("common.saveChanges")}
+                </CustomText>
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
+          <TouchableOpacity
+            style={styles.headerRow}
+            activeOpacity={canEdit ? 0.7 : 1}
+            disabled={!canEdit}
+            onPress={handleStartEdit}
+          >
+            <View style={{ flex: 1 }}>
+              <CustomText style={styles.headerTitle}>
+                {getDisplayName(displayTitle)}
+              </CustomText>
+              {displayDescription ? (
+                <CustomText style={styles.headerDescription}>
+                  {displayDescription}
+                </CustomText>
+              ) : null}
+            </View>
+            {canEdit && <Pencil size={20} color={colors.accent} />}
+          </TouchableOpacity>
+        )}
+      </View>
+      {isSharedList ? (
+        <View style={styles.viewOnlyBanner}>
+          <CustomText style={styles.viewOnlyText}>
+            {t("settings.userGames.viewOnly")}
+          </CustomText>
+        </View>
+      ) : null}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
       {!isReady || (loading && games.length === 0) ? (
@@ -646,15 +903,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           ListEmptyComponent={renderEmptyList}
-          ListHeaderComponent={
-            isSharedList ? (
-              <View style={styles.viewOnlyBanner}>
-                <CustomText style={styles.viewOnlyText}>
-                  {t("settings.userGames.viewOnly")}
-                </CustomText>
-              </View>
-            ) : null
-          }
+          ListHeaderComponent={listHeader}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 90 }}
           onScroll={onScroll}
           scrollEventThrottle={16}

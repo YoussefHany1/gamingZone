@@ -71,6 +71,20 @@
     "verifyEmail": "Verificar e-mail",
     "emailVerified": "E-mail verificado",
     "emailNotVerified": "E-mail não verificado",
+    "verifyPrompt": {
+      "title": "Verifique seu e-mail",
+      "message": "Enviamos um link de verificação para {{email}}.",
+      "optionalNote": "Esta etapa é opcional — você pode continuar usando o app sem verificar. A verificação ajuda a proteger sua conta e a recuperá-la depois.",
+      "resend": "Reenviar e-mail",
+      "resending": "Enviando...",
+      "iveVerified": "Já verifiquei",
+      "checking": "Verificando...",
+      "continue": "Continuar",
+      "verifiedSuccess": "Seu e-mail foi verificado",
+      "notVerifiedYet": "Seu e-mail ainda não foi verificado. Verifique sua caixa de entrada e tente novamente.",
+      "resendError": "Não foi possível enviar o e-mail. Tente novamente mais tarde.",
+      "tooManyRequests": "Muitas tentativas. Aguarde um momento e tente novamente."
+    },
     "verificationEmailSent": "Um e-mail de verificação foi enviado para sua caixa de entrada.",
     "forgotPassword": {
       "title": "Redefinir sua senha",
@@ -227,6 +241,13 @@
     "searchPlaceholder": "Buscar jogos...",
     "search": "Buscar",
     "header": "Encontre sua próxima aventura nos games",
+    "random": {
+      "badge": "Escolha aleatória",
+      "another": "Outro",
+      "view": "Ver detalhes",
+      "close": "Fechar",
+      "error": "Não foi possível carregar um jogo aleatório. Tente novamente."
+    },
     "list": {
       "freeGames": {
         "header": "Garanta seus jogos grátis!",
@@ -260,6 +281,10 @@
       "trendingMobile": {
         "title": "Jogos mobile em alta\nagora",
         "subtitle": "Jogos mobile em alta no momento"
+      },
+      "trendingPlatform": {
+        "title": "Popular no {{platform}}",
+        "subtitle": "Jogos mais populares agora"
       },
       "recentlyReleased": {
         "title": "Lançados recentemente",
@@ -454,7 +479,17 @@
       "shareMessage": "Confira minha lista de jogos \"{{listName}}\" no Gaming Zone!"
     },
     "placeholders": {
-      "newListName": "ex.: Favoritos de RPG"
+      "newListName": "ex.: Favoritos de RPG",
+      "newListDescription": "ex.: Meus RPGs favoritos de todos os tempos (opcional)"
+    },
+    "list": {
+      "titleLabel": "Título",
+      "descriptionLabel": "Descrição",
+      "titlePlaceholder": "Título da lista",
+      "descriptionPlaceholder": "Adicione uma descrição para esta lista...",
+      "titleRequired": "Insira um título para a lista",
+      "saved": "Lista atualizada",
+      "saveError": "Não foi possível atualizar a lista. Tente novamente mais tarde."
     },
     "errors": {
       "couldNotCreateList": "Não foi possível criar a lista. Tente novamente mais tarde.",
@@ -525,6 +560,7 @@
         "pc": "PC",
         "playstation": "PlayStation",
         "xbox": "Xbox",
+        "nintendo": "Nintendo Switch",
         "android": "Android",
         "ios": "iOS"
       },

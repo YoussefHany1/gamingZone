@@ -71,6 +71,20 @@
     "verifyEmail": "Vérifier l'e-mail",
     "emailVerified": "E-mail vérifié",
     "emailNotVerified": "E-mail non vérifié",
+    "verifyPrompt": {
+      "title": "Vérifiez votre e-mail",
+      "message": "Nous avons envoyé un lien de vérification à {{email}}.",
+      "optionalNote": "Cette étape est facultative — vous pouvez continuer à utiliser l'application sans vérifier. La vérification aide à sécuriser votre compte et à le récupérer plus tard.",
+      "resend": "Renvoyer l'e-mail",
+      "resending": "Envoi...",
+      "iveVerified": "J'ai vérifié",
+      "checking": "Vérification...",
+      "continue": "Continuer",
+      "verifiedSuccess": "Votre e-mail a été vérifié",
+      "notVerifiedYet": "Votre e-mail n'est pas encore vérifié. Vérifiez votre boîte de réception et réessayez.",
+      "resendError": "Impossible d'envoyer l'e-mail. Veuillez réessayer plus tard.",
+      "tooManyRequests": "Trop de tentatives. Veuillez patienter un instant et réessayer."
+    },
     "verificationEmailSent": "Un e-mail de vérification a été envoyé à votre boîte de réception",
     "forgotPassword": {
       "title": "Réinitialiser votre mot de passe",
@@ -227,6 +241,13 @@
     "searchPlaceholder": "Rechercher des jeux...",
     "search": "Rechercher",
     "header": "Trouvez votre prochaine aventure gaming",
+    "random": {
+      "badge": "Choix aléatoire",
+      "another": "Un autre",
+      "view": "Voir les détails",
+      "close": "Fermer",
+      "error": "Impossible de charger un jeu aléatoire. Réessayez."
+    },
     "list": {
       "freeGames": {
         "header": "Obtenez vos jeux gratuits !",
@@ -260,6 +281,10 @@
       "trendingMobile": {
         "title": "Jeux mobiles populaires\nen ce moment",
         "subtitle": "Les jeux mobiles les plus tendance en ce moment"
+      },
+      "trendingPlatform": {
+        "title": "Populaire sur {{platform}}",
+        "subtitle": "Jeux les plus tendance en ce moment"
       },
       "recentlyReleased": {
         "title": "Sortis récemment",
@@ -454,7 +479,17 @@
       "shareMessage": "Découvrez ma liste de jeux \"{{listName}}\" sur Gaming Zone !"
     },
     "placeholders": {
-      "newListName": "ex. Favoris RPG"
+      "newListName": "ex. Favoris RPG",
+      "newListDescription": "ex. Mes RPG préférés de tous les temps (facultatif)"
+    },
+    "list": {
+      "titleLabel": "Titre",
+      "descriptionLabel": "Description",
+      "titlePlaceholder": "Titre de la liste",
+      "descriptionPlaceholder": "Ajoutez une description à cette liste...",
+      "titleRequired": "Veuillez saisir un titre pour la liste",
+      "saved": "Liste mise à jour",
+      "saveError": "Impossible de mettre à jour la liste. Veuillez réessayer plus tard."
     },
     "errors": {
       "couldNotCreateList": "Impossible de créer la liste. Veuillez réessayer plus tard",
@@ -525,6 +560,7 @@
         "pc": "PC",
         "playstation": "PlayStation",
         "xbox": "Xbox",
+        "nintendo": "Nintendo Switch",
         "android": "Android",
         "ios": "iOS"
       },

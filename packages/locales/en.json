@@ -108,6 +108,20 @@
     "verifyEmail": "Verify Email",
     "emailVerified": "Email Verified",
     "emailNotVerified": "Email Not Verified",
+    "verifyPrompt": {
+      "title": "Verify your email",
+      "message": "We've sent a verification link to {{email}}.",
+      "optionalNote": "This step is optional — you can keep using the app without verifying. Verifying helps secure your account and recover it later.",
+      "resend": "Resend email",
+      "resending": "Sending...",
+      "iveVerified": "I've verified",
+      "checking": "Checking...",
+      "continue": "Continue",
+      "verifiedSuccess": "Your email has been verified",
+      "notVerifiedYet": "Your email isn't verified yet. Check your inbox and try again.",
+      "resendError": "Couldn't send the email. Please try again later.",
+      "tooManyRequests": "Too many attempts. Please wait a moment and try again."
+    },
     "verificationEmailSent": "A verification email has been sent to your inbox"
   },
   "navigation": {
@@ -227,6 +241,13 @@
     "searchPlaceholder": "Search for Games...",
     "search": "Search",
     "header": "Find Your Next Gaming Adventure",
+    "random": {
+      "badge": "Random pick",
+      "another": "Another",
+      "view": "View details",
+      "close": "Close",
+      "error": "Couldn't load a random game. Try again."
+    },
     "list": {
       "freeGames": {
         "header": "Get Your Free Games!",
@@ -260,6 +281,10 @@
       "trendingMobile": {
         "title": "Popular Mobile Games\nRight now",
         "subtitle": "Top trending mobile games right now"
+      },
+      "trendingPlatform": {
+        "title": "Popular on {{platform}}",
+        "subtitle": "Top trending games right now"
       },
       "recentlyReleased": {
         "title": "Recently Released",
@@ -454,7 +479,17 @@
       "shareMessage": "Check out my games list \"{{listName}}\" on Gaming Zone!"
     },
     "placeholders": {
-      "newListName": "e.g. RPG Favorites"
+      "newListName": "e.g. RPG Favorites",
+      "newListDescription": "e.g. My all-time favorite RPGs (optional)"
+    },
+    "list": {
+      "titleLabel": "Title",
+      "descriptionLabel": "Description",
+      "titlePlaceholder": "List title",
+      "descriptionPlaceholder": "Add a description for this list...",
+      "titleRequired": "Please enter a list title",
+      "saved": "List updated",
+      "saveError": "Could not update the list. Please try again later."
     },
     "errors": {
       "couldNotCreateList": "Could not create list. Please try again later",
@@ -487,6 +522,7 @@
         "pc": "PC",
         "playstation": "Playstation",
         "xbox": "Xbox",
+        "nintendo": "Nintendo Switch",
         "android": "Android",
         "ios": "IOS"
       },

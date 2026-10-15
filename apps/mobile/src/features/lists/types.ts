@@ -3,6 +3,16 @@ import type { GameEntry } from "@gaming-zone/core";
 
 export type { GameEntry } from "@gaming-zone/core";
 
+export type ListType = "default" | "custom";
+
+/** Document stored at `users/{uid}/lists/{listId}`. */
+export type UserList = {
+  id: string;
+  name: string;
+  description?: string;
+  type?: ListType;
+};
+
 export type StackParamList = {
   UserGamesScreen: { listId: string; listName: string; ownerId?: string };
   GameDetails: { gameID: string | number };

@@ -81,7 +81,8 @@
           "delayAppMeasurementInit": false
         }
       ],
-      "./plugins/withR8Optimization.cjs"
+      "./plugins/withR8Optimization.cjs",
+      "./plugins/withAbiSplitsDisabled.cjs"
     ],
     "updates": {
       "url": "https://u.expo.dev/25078fb9-8a54-4056-b988-2ac45be30e52"

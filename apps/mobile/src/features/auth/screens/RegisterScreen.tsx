@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { Image, ImageBackground } from "expo-image";
 import auth from "@react-native-firebase/auth";
@@ -82,6 +83,10 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
   const [country, setCountry] = useState<string>("");
   const [gender, setGender] = useState<Gender>("male");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [verifyModalVisible, setVerifyModalVisible] = useState<boolean>(false);
+  const [verificationEmail, setVerificationEmail] = useState<string>("");
+  const [isResending, setIsResending] = useState<boolean>(false);
+  const [isChecking, setIsChecking] = useState<boolean>(false);
   const colors = useThemeColors();
 
   const styles = useThemeStyles((c) => ({
@@ -158,6 +163,72 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
       color: c.textMuted,
       fontSize: 16,
       textDecorationLine: "underline",
+    },
+    verifyModalContainer: {
+      flex: 1,
+      justifyContent: "center",
+      backgroundColor: c.overlay,
+      paddingHorizontal: 24,
+    },
+    verifyModalContent: {
+      backgroundColor: c.background,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.accentBorder,
+      padding: 20,
+    },
+    verifyModalTitle: {
+      color: c.text,
+      fontSize: 20,
+      fontWeight: "bold",
+      textAlign: "center",
+      marginBottom: 12,
+    },
+    verifyModalText: {
+      color: c.text,
+      fontSize: 15,
+      textAlign: "center",
+      marginBottom: 10,
+    },
+    verifyModalNote: {
+      color: c.textSubtle,
+      fontSize: 13,
+      textAlign: "center",
+      lineHeight: 18,
+      marginBottom: 18,
+    },
+    verifyModalActions: {
+      gap: 10,
+    },
+    verifyPrimaryBtn: {
+      backgroundColor: c.accent,
+      padding: 14,
+      borderRadius: 10,
+      alignItems: "center",
+    },
+    verifySecondaryBtn: {
+      borderWidth: 2,
+      borderColor: c.accent,
+      padding: 14,
+      borderRadius: 10,
+      alignItems: "center",
+    },
+    verifyPrimaryBtnText: {
+      color: c.onAccent,
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    verifySecondaryBtnText: {
+      color: c.text,
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    verifySkipText: {
+      color: c.textMuted,
+      fontSize: 14,
+      textAlign: "center",
+      textDecorationLine: "underline",
+      paddingVertical: 6,
     },
   }));
 
@@ -269,7 +340,10 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
         dob: "",
       });
 
-      navigation.replace("MainApp");
+      // Ask the user to verify their email. This is optional — the modal
+      // offers a "Continue" action that enters the app without verifying.
+      setVerificationEmail(email);
+      setVerifyModalVisible(true);
     } catch (error) {
       console.error("Sign up failed:", error);
       const err = error as { code?: string };
@@ -287,7 +361,55 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [email, password, name, country, gender, t, validatePassword, navigation]);
+  }, [email, password, name, country, gender, t, validatePassword]);
+
+  // Resend the verification email
+  const handleResendVerification = useCallback(async (): Promise<void> => {
+    if (isResending) return;
+    setIsResending(true);
+    try {
+      await auth().currentUser?.sendEmailVerification();
+      ToastAndroid.show(t("auth.verificationEmailSent"), ToastAndroid.LONG);
+    } catch (error) {
+      console.error("Failed to resend verification email:", error);
+      const code = (error as { code?: string }).code;
+      ToastAndroid.show(
+        code === "auth/too-many-requests"
+          ? t("auth.verifyPrompt.tooManyRequests")
+          : t("auth.verifyPrompt.resendError"),
+        ToastAndroid.LONG,
+      );
+    } finally {
+      setIsResending(false);
+    }
+  }, [isResending, t]);
+
+  // Refresh the account and check whether the email is verified now
+  const handleCheckVerified = useCallback(async (): Promise<void> => {
+    if (isChecking) return;
+    setIsChecking(true);
+    try {
+      await auth().currentUser?.reload();
+      if (auth().currentUser?.emailVerified) {
+        ToastAndroid.show(t("auth.verifyPrompt.verifiedSuccess"), ToastAndroid.LONG);
+        setVerifyModalVisible(false);
+        navigation.replace("MainApp");
+      } else {
+        ToastAndroid.show(t("auth.verifyPrompt.notVerifiedYet"), ToastAndroid.LONG);
+      }
+    } catch (error) {
+      console.error("Failed to refresh verification status:", error);
+      ToastAndroid.show(t("auth.verifyPrompt.notVerifiedYet"), ToastAndroid.LONG);
+    } finally {
+      setIsChecking(false);
+    }
+  }, [isChecking, navigation, t]);
+
+  // Continue into the app without verifying (verification is optional)
+  const handleSkipVerification = useCallback((): void => {
+    setVerifyModalVisible(false);
+    navigation.replace("MainApp");
+  }, [navigation]);
 
   // Google Sign-Up handler
 
@@ -477,6 +599,72 @@ const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
           </ScrollView>
         </SafeAreaView>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={verifyModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleSkipVerification}
+      >
+        <View style={styles.verifyModalContainer}>
+          <View style={styles.verifyModalContent}>
+            <CustomText style={styles.verifyModalTitle}>
+              {t("auth.verifyPrompt.title")}
+            </CustomText>
+            <CustomText style={styles.verifyModalText}>
+              {t("auth.verifyPrompt.message", { email: verificationEmail })}
+            </CustomText>
+            <CustomText style={styles.verifyModalNote}>
+              {t("auth.verifyPrompt.optionalNote")}
+            </CustomText>
+
+            <View style={styles.verifyModalActions}>
+              <TouchableOpacity
+                style={[
+                  styles.verifyPrimaryBtn,
+                  (isChecking || isResending) && styles.buttonDisabled,
+                ]}
+                onPress={handleCheckVerified}
+                disabled={isChecking || isResending}
+              >
+                {isChecking ? (
+                  <ActivityIndicator color={colors.onAccent} size="small" />
+                ) : (
+                  <CustomText style={styles.verifyPrimaryBtnText}>
+                    {t("auth.verifyPrompt.iveVerified")}
+                  </CustomText>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.verifySecondaryBtn,
+                  (isResending || isChecking) && styles.buttonDisabled,
+                ]}
+                onPress={handleResendVerification}
+                disabled={isResending || isChecking}
+              >
+                {isResending ? (
+                  <ActivityIndicator color={colors.text} size="small" />
+                ) : (
+                  <CustomText style={styles.verifySecondaryBtnText}>
+                    {t("auth.verifyPrompt.resend")}
+                  </CustomText>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleSkipVerification}
+                disabled={isChecking || isResending}
+              >
+                <CustomText style={styles.verifySkipText}>
+                  {t("auth.verifyPrompt.continue")}
+                </CustomText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 });

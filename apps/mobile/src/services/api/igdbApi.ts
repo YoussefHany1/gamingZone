@@ -62,6 +62,12 @@ export async function fetchTopRatedGames(): Promise<Game[]> {
   return response.data;
 }
 
+/** Fetch a single, completely random game. Resolves to `null` if none found. */
+export async function fetchRandomGame(): Promise<Game | null> {
+  const response = await apiClient.get<Game | null>("/random-game");
+  return response.data;
+}
+
 /** Fetch top sellers on Steam. */
 export async function fetchSteamTopSellerGames(): Promise<Game[]> {
   const response = await apiClient.get<Game[]>("/steam-top-sellers");
@@ -93,6 +99,18 @@ export async function fetchMostAnticipatedGames(): Promise<Game[]> {
 /** Fetch trending mobile games. */
 export async function fetchTrendingMobileGames(): Promise<Game[]> {
   const response = await apiClient.get<Game[]>("/trending-mobile");
+  return response.data;
+}
+
+/**
+ * Fetch trending games for a specific platform (`pc`, `playstation`, `xbox`,
+ * `nintendo`, `android`, `ios`). Resolves to an empty array for unknown
+ * platforms so callers can safely render nothing.
+ */
+export async function fetchTrendingGamesByPlatform(platform: string): Promise<Game[]> {
+  const response = await apiClient.get<Game[]>("/trending-platform", {
+    params: { platform },
+  });
   return response.data;
 }
 

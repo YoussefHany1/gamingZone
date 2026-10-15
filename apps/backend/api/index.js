@@ -205,6 +205,28 @@ app.get('/top-rated', cacheMiddleware(3600), asyncRoute(async (req, res) => {
   res.json(data);
 }));
 
+// Random Game — a single, completely random game.
+// No caching: every request should be able to return a different result.
+app.get('/random-game', asyncRoute(async (req, res) => {
+  // 1) How many games match the base filters?
+  const countResult = await callIgdb('games/count', `${BASE_QUERY_WHERE};`);
+  const total = Number(countResult?.count) || 0;
+
+  // 2) Jump to a random position and grab the game sitting there.
+  const offset = total > 0 ? Math.floor(Math.random() * total) : 0;
+
+  const query = `
+    ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
+    ${BASE_QUERY_WHERE};
+    limit 1;
+    offset ${offset};
+  `;
+  const data = await callIgdb('games', query);
+
+  res.setHeader('Cache-Control', 'no-store');
+  res.json(Array.isArray(data) && data.length > 0 ? data[0] : null);
+}));
+
 // Recently Released
 app.get('/recently-released', cacheMiddleware(3600), asyncRoute(async (req, res) => {
   const nowTs = unixNow();
@@ -226,6 +248,41 @@ app.get('/trending-mobile', cacheMiddleware(3600), asyncRoute(async (req, res) =
   const query = `
     ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
     ${BASE_QUERY_WHERE} & platforms = (34,39) & first_release_date > ${startTs} & first_release_date < ${nowTs} & total_rating_count > 5;
+    sort total_rating desc;
+    limit 10;
+  `;
+  const data = await callIgdb('games', query);
+  res.json(data);
+}));
+
+// Trending games for a specific platform (the one registered on the user's
+// account). `platform` values mirror the profile options in the app.
+// IGDB platform IDs: 6=PC, 48=PS4, 167=PS5, 49=Xbox One, 169=Xbox Series,
+// 130=Nintendo Switch, 34=Android, 39=iOS.
+const TRENDING_PLATFORM_IDS = {
+  pc: [6],
+  playstation: [167, 48],
+  xbox: [169, 49],
+  nintendo: [130],
+  android: [34],
+  ios: [39],
+};
+
+app.get('/trending-platform', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const key = String(req.query.platform || '').toLowerCase();
+  const platformIds = TRENDING_PLATFORM_IDS[key];
+
+  // Unknown / missing platform → nothing to show.
+  if (!platformIds) {
+    return res.json([]);
+  }
+
+  const nowTs = unixNow();
+  const startTs = unixYearsAgo(2);
+
+  const query = `
+    ${BASE_QUERY_FIELDS}, platforms.abbreviation, platforms.name, genres.name;
+    ${BASE_QUERY_WHERE} & platforms = (${platformIds.join(',')}) & first_release_date > ${startTs} & first_release_date < ${nowTs} & total_rating_count > 5;
     sort total_rating desc;
     limit 10;
   `;
