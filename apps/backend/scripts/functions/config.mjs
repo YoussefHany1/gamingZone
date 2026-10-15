@@ -32,6 +32,8 @@ export const REQUIRED_VARS = [
   'APPWRITE_API_KEY',
   'APPWRITE_DATABASE_ID',
   'GEMINI_API_KEY',
+  'GROQ_API_KEY',
+  'GROQ_MODEL',
   'FCM_SERVICE_ACCOUNT',
   'RSS_COLLECTION_ID',
   'ARTICLES_COLLECTION_ID',
@@ -47,4 +49,6 @@ export const VAR_DEFAULTS = {
   ARTICLES_COLLECTION_ID: 'articles',
   FREE_GAMES_COLLECTION_ID: 'free_games',
   SUMMARIES_COLLECTION_ID: 'weekly_summaries',
+  // Must match DEFAULT_GROQ_MODEL in scripts/lib/ai.shared.ts.
+  GROQ_MODEL: 'openai/gpt-oss-120b',
 };
