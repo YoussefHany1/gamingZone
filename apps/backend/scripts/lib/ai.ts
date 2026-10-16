@@ -143,12 +143,11 @@ async function callProviderWithRetry(
   backoffBaseMs: number,
 ): Promise<string> {
   const label = options.label ?? 'AI request';
-  let attempt = 0;
   let failures = 0;
   let rateLimitWaits = 0;
 
   while (true) {
-    attempt++;
+    const attempt = failures + 1;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -160,15 +159,25 @@ async function callProviderWithRetry(
     } catch (error: unknown) {
       const retryAfterMs = rateLimitRetryAfterMs(error);
 
-      if (retryAfterMs !== null && rateLimitWaits < AI_RATE_LIMIT_RETRIES) {
-        rateLimitWaits++;
-        const waitMs = Math.min(retryAfterMs, AI_MAX_RATE_LIMIT_WAIT_MS);
+      // Rate limits do not consume the normal retry budget: while the server
+      // asks for a short wait (a per-minute burst) we wait and call the same
+      // provider again.
+      if (retryAfterMs !== null) {
+        if (retryAfterMs <= AI_MAX_RATE_LIMIT_WAIT_MS && rateLimitWaits < AI_RATE_LIMIT_RETRIES) {
+          rateLimitWaits++;
+          log.warn(
+            `⏳ ${label}: ${provider} rate limited — waiting ${Math.round(retryAfterMs / 1000)}s before retrying ` +
+              `(${rateLimitWaits}/${AI_RATE_LIMIT_RETRIES})...`,
+          );
+          await sleep(retryAfterMs);
+          continue;
+        }
+
+        // Waiting hours is not worth the run's time budget.
         log.warn(
-          `⏳ ${label}: ${provider} rate limited — waiting ${Math.round(waitMs / 1000)}s before retrying ` +
-            `(${rateLimitWaits}/${AI_RATE_LIMIT_RETRIES})...`,
+          `⚠️ ${label}: ${provider} quota exhausted (asked for ${Math.round(retryAfterMs / 1000)}s) — failing over.`,
         );
-        await sleep(waitMs);
-        continue;
+        throw error;
       }
 
       failures++;

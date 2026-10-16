@@ -32,8 +32,13 @@ const AI_RETRIES = 3;
  * waiting and retrying the same provider beats dropping to the fallback.
  */
 const AI_RATE_LIMIT_RETRIES = 2;
-/** Upper bound on a single rate-limit wait, so a bogus hint cannot stall a run. */
-const AI_MAX_RATE_LIMIT_WAIT_MS = 65_000;
+/**
+ * Longest rate-limit wait worth honouring. A larger `retryDelay` is not a
+ * momentary per-minute burst but quota exhaustion (an hour/day-scale reset),
+ * where waiting would only burn the run's time budget — so the caller fails
+ * over to the next provider immediately instead.
+ */
+const AI_MAX_RATE_LIMIT_WAIT_MS = 60_000;
 /** Wait used when a 429 arrives without a usable `retryDelay`. */
 const AI_RATE_LIMIT_DEFAULT_WAIT_MS = 30_000;
 

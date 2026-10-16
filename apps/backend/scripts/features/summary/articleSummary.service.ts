@@ -226,7 +226,9 @@ async function runBackfillArticleSummaries(options: BackfillOptions = {}): Promi
     return stats;
   }
 
-  logger.info(`🧠 Generating summaries for ${unique.length} article(s)...`);
+  logger.info(
+    `🧠 Generating summaries for ${unique.length} article(s) — gemini=${MODEL} · groq=${getGroqModel()}...`,
+  );
   const deadline = Date.now() + maxDurationMs;
 
   for (let i = 0; i < unique.length; i += BACKFILL_CONCURRENCY) {

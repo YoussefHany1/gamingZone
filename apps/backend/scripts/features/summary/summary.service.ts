@@ -313,6 +313,7 @@ async function sendSummaryNotification(): Promise<void> {
 
 async function runGenerateWeeklySummary() {
   try {
+    logger.info(`📰 Weekly summary — gemini=${WEEKLY_GEMINI_MODEL} · groq=${getGroqModel()}`);
     logger.info('Fetching news from the last 7 days...');
 
     const { sevenDaysAgo, documents } = await fetchLastWeekNewsTitles();

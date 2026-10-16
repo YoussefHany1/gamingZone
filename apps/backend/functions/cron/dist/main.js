@@ -107017,7 +107017,7 @@ var DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b";
 var AI_TIMEOUT_MS = 25e3;
 var AI_RETRIES = 3;
 var AI_RATE_LIMIT_RETRIES = 2;
-var AI_MAX_RATE_LIMIT_WAIT_MS = 65e3;
+var AI_MAX_RATE_LIMIT_WAIT_MS = 6e4;
 var AI_RATE_LIMIT_DEFAULT_WAIT_MS = 3e4;
 function resolveAiProviders(keys) {
   const override = keys.override ?? null;
@@ -114415,11 +114415,10 @@ async function callGroq(options, keys, fetchImpl, signal) {
 }
 async function callProviderWithRetry(provider, options, keys, fetchImpl, log, sleep3, retries, timeoutMs, backoffBaseMs) {
   const label = options.label ?? "AI request";
-  let attempt = 0;
   let failures = 0;
   let rateLimitWaits = 0;
   while (true) {
-    attempt++;
+    const attempt = failures + 1;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -114427,14 +114426,19 @@ async function callProviderWithRetry(provider, options, keys, fetchImpl, log, sl
       return provider === "gemini" ? await callGemini(options, keys, fetchImpl, controller.signal) : await callGroq(options, keys, fetchImpl, controller.signal);
     } catch (error) {
       const retryAfterMs = rateLimitRetryAfterMs(error);
-      if (retryAfterMs !== null && rateLimitWaits < AI_RATE_LIMIT_RETRIES) {
-        rateLimitWaits++;
-        const waitMs = Math.min(retryAfterMs, AI_MAX_RATE_LIMIT_WAIT_MS);
+      if (retryAfterMs !== null) {
+        if (retryAfterMs <= AI_MAX_RATE_LIMIT_WAIT_MS && rateLimitWaits < AI_RATE_LIMIT_RETRIES) {
+          rateLimitWaits++;
+          log.warn(
+            `\u23F3 ${label}: ${provider} rate limited \u2014 waiting ${Math.round(retryAfterMs / 1e3)}s before retrying (${rateLimitWaits}/${AI_RATE_LIMIT_RETRIES})...`
+          );
+          await sleep3(retryAfterMs);
+          continue;
+        }
         log.warn(
-          `\u23F3 ${label}: ${provider} rate limited \u2014 waiting ${Math.round(waitMs / 1e3)}s before retrying (${rateLimitWaits}/${AI_RATE_LIMIT_RETRIES})...`
+          `\u26A0\uFE0F ${label}: ${provider} quota exhausted (asked for ${Math.round(retryAfterMs / 1e3)}s) \u2014 failing over.`
         );
-        await sleep3(waitMs);
-        continue;
+        throw error;
       }
       failures++;
       if (failures >= retries) throw error;
@@ -114710,6 +114714,7 @@ async function sendSummaryNotification() {
 }
 async function runGenerateWeeklySummary() {
   try {
+    logger.info(`\u{1F4F0} Weekly summary \u2014 gemini=${WEEKLY_GEMINI_MODEL} \xB7 groq=${getGroqModel()}`);
     logger.info("Fetching news from the last 7 days...");
     const { sevenDaysAgo, documents } = await fetchLastWeekNewsTitles();
     if (!documents.length) {
@@ -115032,7 +115037,9 @@ async function runBackfillArticleSummaries(options = {}) {
     logger.info("\u{1F4A4} No articles pending an AI summary.");
     return stats;
   }
-  logger.info(`\u{1F9E0} Generating summaries for ${unique.length} article(s)...`);
+  logger.info(
+    `\u{1F9E0} Generating summaries for ${unique.length} article(s) \u2014 gemini=${MODEL} \xB7 groq=${getGroqModel()}...`
+  );
   const deadline = Date.now() + maxDurationMs;
   for (let i = 0; i < unique.length; i += BACKFILL_CONCURRENCY) {
     if (Date.now() >= deadline) {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import {
+  AI_MAX_RATE_LIMIT_WAIT_MS,
   AI_RATE_LIMIT_DEFAULT_WAIT_MS,
   AiRateLimitError,
   DEFAULT_GROQ_MODEL,
@@ -204,7 +205,20 @@ describe('Gemini rate-limit handling', () => {
     },
   };
 
-  const quotaResponse = () => jsonResponse(quotaPayload, false, 429);
+  const quotaResponseWith = (retryDelay: string) =>
+    jsonResponse(
+      {
+        error: {
+          code: 429,
+          status: 'RESOURCE_EXHAUSTED',
+          message: 'Quota exceeded',
+          details: [{ '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay }],
+        },
+      },
+      false,
+      429,
+    );
+  const quotaResponse = () => quotaResponseWith('23s');
   const geminiOkResponse = () =>
     jsonResponse({ candidates: [{ content: { parts: [{ text: '{"en":"ok"}' }] } }] });
   const groqOkResponse = () =>
@@ -301,6 +315,67 @@ describe('Gemini rate-limit handling', () => {
     expect(result).toEqual({ provider: 'groq', text: '{"en":"groq"}' });
     // Two honoured waits, then the fallback — no zero-delay exponential retries.
     expect(sleeps).toEqual([23_000, 23_000]);
+  });
+
+  it('fails over immediately when the wait means quota exhaustion, not a burst', async () => {
+    const sleeps: number[] = [];
+    let geminiCalls = 0;
+
+    const fetchImpl = (async (url: string) => {
+      if (!isGeminiCall(url)) return groqOkResponse();
+      geminiCalls++;
+      return quotaResponseWith('3600s');
+    }) as unknown as typeof fetch;
+
+    const result = await generateAiText(baseOptions, bothKeys, {
+      fetchImpl,
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+      log: noopLog,
+    });
+
+    // An hour-long reset cannot be waited out: one attempt, no sleeping, and
+    // straight to the fallback instead of burning the run's time budget.
+    expect(result.provider).toBe('groq');
+    expect(geminiCalls).toBe(1);
+    expect(sleeps).toEqual([]);
+  });
+
+  it('honours the wait at the burst threshold and fails over past it', async () => {
+    const runWith = async (retryDelay: string) => {
+      const sleeps: number[] = [];
+      let geminiCalls = 0;
+
+      const fetchImpl = (async (url: string) => {
+        if (!isGeminiCall(url)) return groqOkResponse();
+        geminiCalls++;
+        return geminiCalls === 1 ? quotaResponseWith(retryDelay) : geminiOkResponse();
+      }) as unknown as typeof fetch;
+
+      const result = await generateAiText(baseOptions, bothKeys, {
+        fetchImpl,
+        sleep: async (ms) => {
+          sleeps.push(ms);
+        },
+        log: noopLog,
+      });
+
+      return { provider: result.provider, sleeps, geminiCalls };
+    };
+
+    const thresholdSeconds = AI_MAX_RATE_LIMIT_WAIT_MS / 1000;
+
+    await expect(runWith(`${thresholdSeconds}s`)).resolves.toEqual({
+      provider: 'gemini',
+      sleeps: [AI_MAX_RATE_LIMIT_WAIT_MS],
+      geminiCalls: 2,
+    });
+    await expect(runWith(`${thresholdSeconds + 1}s`)).resolves.toEqual({
+      provider: 'groq',
+      sleeps: [],
+      geminiCalls: 1,
+    });
   });
 
   it('uses the Retry-After header when the body has no retryDelay', async () => {
