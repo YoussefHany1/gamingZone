@@ -93,6 +93,25 @@ const PUPPETEER_LAUNCH_ARGS = [
   '--window-size=1920,1080',
 ];
 
+/**
+ * Longest HTML handed to JSDOM. Article pages normally weigh a few hundred KB;
+ * anything an order of magnitude larger is advertising/script weight, and the
+ * DOM JSDOM builds from it costs far more memory than the 512 MB runtime can
+ * spare. Head metadata (OG tags, JSON-LD) sits at the top of the document, so
+ * truncating still leaves the enrichment useful.
+ */
+const MAX_ARTICLE_HTML_CHARS = 1_000_000;
+
+/** Clips oversized article HTML, warning once per page. */
+function boundArticleHtml(html: string, url: string): string {
+  if (html.length <= MAX_ARTICLE_HTML_CHARS) return html;
+
+  logger.warn(
+    `      ⚠️ Article HTML for ${url} is ${Math.round(html.length / 1024)}KB — truncating to ${MAX_ARTICLE_HTML_CHARS / 1024}KB before parsing.`,
+  );
+  return html.slice(0, MAX_ARTICLE_HTML_CHARS);
+}
+
 async function extractDescriptionFromDoc(document: Document): Promise<string | null> {
   try {
     const { Readability } = await import('@mozilla/readability');
@@ -269,7 +288,7 @@ async function fetchArticleData(url: string) {
     }
 
     const { JSDOM } = await import('jsdom');
-    const dom = new JSDOM(body, { url });
+    const dom = new JSDOM(boundArticleHtml(body, url), { url });
     let selectedImage: string | null = null;
     let fullDescription: string | null = null;
 
@@ -474,4 +493,4 @@ async function fetchFeed(
   }
 }
 
-export { fetchFeed, fetchArticleData };
+export { fetchFeed, fetchArticleData, boundArticleHtml, MAX_ARTICLE_HTML_CHARS };

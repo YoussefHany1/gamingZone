@@ -113373,6 +113373,14 @@ var PUPPETEER_LAUNCH_ARGS = [
   "--disable-gpu",
   "--window-size=1920,1080"
 ];
+var MAX_ARTICLE_HTML_CHARS = 1e6;
+function boundArticleHtml(html, url2) {
+  if (html.length <= MAX_ARTICLE_HTML_CHARS) return html;
+  logger.warn(
+    `      \u26A0\uFE0F Article HTML for ${url2} is ${Math.round(html.length / 1024)}KB \u2014 truncating to ${MAX_ARTICLE_HTML_CHARS / 1024}KB before parsing.`
+  );
+  return html.slice(0, MAX_ARTICLE_HTML_CHARS);
+}
 async function extractDescriptionFromDoc(document2) {
   try {
     const { Readability } = await import("@mozilla/readability");
@@ -113526,7 +113534,7 @@ async function fetchArticleData(url2) {
       return fetchArticleDataWithPuppeteer(url2);
     }
     const { JSDOM } = await import("jsdom");
-    const dom = new JSDOM(body, { url: url2 });
+    const dom = new JSDOM(boundArticleHtml(body, url2), { url: url2 });
     let selectedImage = null;
     let fullDescription = null;
     try {
@@ -113704,6 +113712,7 @@ if (firebaseState.enabled) {
 } else if (firebaseState.error) {
   logger.warn(`\u26A0\uFE0F Firebase error: ${firebaseState.error}`);
 }
+var DEFAULT_ARTICLE_BATCH_SIZE = 3;
 function createMemorySampler() {
   let peakRss = process.memoryUsage().rss;
   let peakHeap = process.memoryUsage().heapUsed;
@@ -113773,7 +113782,22 @@ function serializePubDate(value) {
   if (!date || Number.isNaN(date.getTime())) return null;
   return date.toISOString();
 }
+async function articleExists(item) {
+  const ids = [item.docId, item.legacyDocId].filter((id) => Boolean(id));
+  for (const id of ids) {
+    try {
+      await databases.getDocument(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_ARTICLES, id);
+      return true;
+    } catch (error) {
+      if (getErrorCode(error) === 404) continue;
+      logger.warn(`      \u26A0\uFE0F Existence check failed for ${id}: ${getErrorMessage(error)}`);
+      return false;
+    }
+  }
+  return false;
+}
 async function createArticle(sourceData, item) {
+  if (await articleExists(item)) return "skipped";
   let fullDescription = null;
   logger.info(`      \u{1F4C4} Fetching Article Data for: "${item.title.substring(0, 20)}..."`);
   try {
@@ -113927,8 +113951,9 @@ async function processSource(sourceData, summary, options = {}) {
       return;
     }
     const createdItems = [];
+    let skipped = 0;
     if (newItems.length > 0) {
-      const BATCH_SIZE = options.articleBatchSize ?? 10;
+      const BATCH_SIZE = options.articleBatchSize ?? DEFAULT_ARTICLE_BATCH_SIZE;
       for (let i = 0; i < newItems.length; i += BATCH_SIZE) {
         const chunk = newItems.slice(i, i + BATCH_SIZE);
         const results = await Promise.allSettled(
@@ -113937,6 +113962,11 @@ async function processSource(sourceData, summary, options = {}) {
         results.forEach((result, index) => {
           const item = chunk[index];
           if (result.status === "fulfilled") {
+            if (result.value === "skipped") {
+              skipped++;
+              confirmedDocIds.add(item.docId);
+              return;
+            }
             if (result.value === "created" || result.value === "exists") {
               confirmedDocIds.add(item.docId);
             }
@@ -113947,6 +113977,11 @@ async function processSource(sourceData, summary, options = {}) {
           logger.error(`      \u274C Save failed for ${item.title}: ${message}`);
           summary.errors.push({ name, msg: message });
         });
+      }
+      if (skipped > 0) {
+        logger.info(
+          `      \u{1F4A4} Already stored, no page fetch: ${skipped} of ${newItems.length} candidate(s).`
+        );
       }
     }
     const confirmedItems = items.filter((item) => item.docId && confirmedDocIds.has(item.docId));

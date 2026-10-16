@@ -35,6 +35,13 @@ if (firebaseState.enabled) {
 }
 
 /**
+ * New articles downloaded and parsed per source. Deliberately low: every
+ * article costs a full page fetch plus a JSDOM + Readability parse, and the
+ * Appwrite runtime only has 512 MB, so this is the main memory lever.
+ */
+const DEFAULT_ARTICLE_BATCH_SIZE = 3;
+
+/**
  * Optional knobs. Every field defaults to the original behaviour, so the
  * scheduled tick is unaffected; they exist so a single deployed build can be
  * bisected via the request body while diagnosing a hard failure (a run that
@@ -49,7 +56,7 @@ export interface RunFetchRssOptions {
   fetchOnly?: boolean;
   /** Sources processed concurrently (default 3). */
   concurrency?: number;
-  /** Articles created concurrently within one source (default 10). */
+  /** Articles created concurrently within one source (default `DEFAULT_ARTICLE_BATCH_SIZE`). */
   articleBatchSize?: number;
   /** Send FCM notifications for new articles (default true). */
   notify?: boolean;
@@ -104,7 +111,7 @@ interface SourceData {
   raw: Record<string, unknown>;
 }
 
-type SaveResult = 'created' | 'exists' | 'failed';
+type SaveResult = 'created' | 'exists' | 'skipped' | 'failed';
 
 function getErrorCode(error: unknown): unknown {
   if (error && typeof error === 'object' && 'code' in error) {
@@ -166,7 +173,34 @@ function serializePubDate(value: Date | string | null | undefined): string | nul
   return date.toISOString();
 }
 
+/**
+ * True when the article is already stored. Consulted *before* the page fetch:
+ * feeds regularly return more items than `recentIds` remembers (it caches the
+ * newest 100), so without this check the same articles are re-downloaded and
+ * re-parsed on every single run until the write is rejected with a 409. That
+ * wasted work grows as feeds grow and is what pushed the run into OOM.
+ */
+async function articleExists(item: NormalizedArticle): Promise<boolean> {
+  const ids = [item.docId, item.legacyDocId].filter((id): id is string => Boolean(id));
+
+  for (const id of ids) {
+    try {
+      await databases.getDocument(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_ARTICLES, id);
+      return true;
+    } catch (error: unknown) {
+      if (getErrorCode(error) === 404) continue;
+      // Fail open: an unexpected lookup error must never drop a new article.
+      logger.warn(`      ⚠️ Existence check failed for ${id}: ${getErrorMessage(error)}`);
+      return false;
+    }
+  }
+
+  return false;
+}
+
 async function createArticle(sourceData: SourceData, item: NormalizedArticle): Promise<SaveResult> {
+  if (await articleExists(item)) return 'skipped';
+
   let fullDescription: string | null = null;
 
   logger.info(`      📄 Fetching Article Data for: "${item.title.substring(0, 20)}..."`);
@@ -349,9 +383,10 @@ async function processSource(
     }
 
     const createdItems: NormalizedArticle[] = [];
+    let skipped = 0;
 
     if (newItems.length > 0) {
-      const BATCH_SIZE = options.articleBatchSize ?? 10;
+      const BATCH_SIZE = options.articleBatchSize ?? DEFAULT_ARTICLE_BATCH_SIZE;
       for (let i = 0; i < newItems.length; i += BATCH_SIZE) {
         const chunk = newItems.slice(i, i + BATCH_SIZE);
         const results = await Promise.allSettled(
@@ -361,6 +396,11 @@ async function processSource(
         results.forEach((result, index) => {
           const item = chunk[index];
           if (result.status === 'fulfilled') {
+            if (result.value === 'skipped') {
+              skipped++;
+              confirmedDocIds.add(item.docId as string);
+              return;
+            }
             if (result.value === 'created' || result.value === 'exists') {
               confirmedDocIds.add(item.docId as string);
             }
@@ -372,6 +412,12 @@ async function processSource(
           logger.error(`      ❌ Save failed for ${item.title}: ${message}`);
           summary.errors.push({ name, msg: message });
         });
+      }
+
+      if (skipped > 0) {
+        logger.info(
+          `      💤 Already stored, no page fetch: ${skipped} of ${newItems.length} candidate(s).`,
+        );
       }
     }
 
@@ -476,4 +522,6 @@ async function runFetchRss(options: RunFetchRssOptions = {}): Promise<RssSummary
   return summary;
 }
 
-export { runFetchRss };
+// `createArticle` is exported for tests only: it is the single place that
+// decides whether an article needs downloading.
+export { runFetchRss, createArticle, DEFAULT_ARTICLE_BATCH_SIZE };
