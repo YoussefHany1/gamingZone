@@ -63,11 +63,25 @@ const MAX_DESCRIPTION_CHARS = 1_500;
 
 // Backfill sizing — bounded so a slow Gemini run stays well inside the
 // Appwrite function's 900s timeout (30 articles / concurrency 3 ≈ 450s worst
-// case, on top of which the wall-clock deadline is a hard stop).
+// case, on top of which the wall-clock deadline is a hard stop). Pacing adds a
+// floor of 30 / BACKFILL_MAX_ARTICLES_PER_MINUTE = 150s, which is below the
+// worst case above, so the effective budget is unchanged.
 const BACKFILL_NEWEST = 20;
 const BACKFILL_OLDEST = 10;
 const BACKFILL_CONCURRENCY = 3;
 const MAX_BACKFILL_MS = 600_000;
+
+/**
+ * Gemini meters requests per minute (one request per article), so a large
+ * pending queue can trip a 429 even when every single request succeeds. The
+ * backfill paces itself against this ceiling instead — see `pacingDelayMs`.
+ *
+ * The bottom of the 12–14/min band is deliberate: batches are dispatched
+ * concurrently (`BACKFILL_CONCURRENCY`), and 12/min is the highest ceiling whose
+ * batch interval (15s for 3 articles) still keeps *every* sliding 60s window at
+ * or below the ceiling. Aiming higher lets a window catch an extra burst.
+ */
+const BACKFILL_MAX_ARTICLES_PER_MINUTE = 12;
 
 interface SummarizableArticle {
   $id: string;
@@ -165,6 +179,23 @@ function parseSummaries(rawText: string): SummaryMap {
 }
 
 /**
+ * How long to wait after a batch of `batchSize` articles that took `elapsedMs`
+ * so the long-run rate stays at or below `maxPerMinute`. Returns `0` when the
+ * batch was already slower than the target rate, so a slow model is never
+ * slowed further.
+ */
+function pacingDelayMs(batchSize: number, elapsedMs: number, maxPerMinute: number): number {
+  if (!Number.isFinite(batchSize) || !Number.isFinite(maxPerMinute)) return 0;
+  if (batchSize <= 0 || maxPerMinute <= 0) return 0;
+
+  const intervalMs = (batchSize / maxPerMinute) * 60_000;
+  const spentMs = Number.isFinite(elapsedMs) && elapsedMs > 0 ? elapsedMs : 0;
+  // `ceil`, not `round`: rounding the wait down would nudge the rate back over
+  // the ceiling this function exists to respect.
+  return Math.max(0, Math.ceil(intervalMs - spentMs));
+}
+
+/**
  * Coerces an optional queue-size override into a usable non-negative integer.
  * `undefined`, non-finite (`NaN`/`Infinity`) and negative values fall back to
  * `fallback`; `0` is preserved as the explicit "skip this queue" signal;
@@ -246,7 +277,9 @@ export {
   BACKFILL_NEWEST,
   BACKFILL_OLDEST,
   BACKFILL_CONCURRENCY,
+  BACKFILL_MAX_ARTICLES_PER_MINUTE,
   MAX_BACKFILL_MS,
+  pacingDelayMs,
   toPromptText,
   buildPrompt,
   cleanSummary,

@@ -1,10 +1,16 @@
 import { describe, it, expect } from 'vitest';
 
 import {
+  AI_RATE_LIMIT_DEFAULT_WAIT_MS,
+  AiRateLimitError,
   DEFAULT_GROQ_MODEL,
   buildGroqRequestBody,
   extractGeminiText,
   extractGroqText,
+  geminiRetryDelayMs,
+  isGeminiRateLimit,
+  parseRetryDelayMs,
+  rateLimitRetryAfterMs,
   resolveAiProviders,
 } from './ai.shared';
 import { generateAiText } from './ai';
@@ -182,5 +188,146 @@ describe('generateAiText fallback', () => {
         { sleep: noSleep, log: noopLog },
       ),
     ).rejects.toThrow(/No AI provider is configured/);
+  });
+});
+
+describe('Gemini rate-limit handling', () => {
+  const quotaPayload = {
+    error: {
+      code: 429,
+      status: 'RESOURCE_EXHAUSTED',
+      message: 'Quota exceeded',
+      details: [
+        { '@type': 'type.googleapis.com/google.rpc.Help', links: [] },
+        { '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '23s' },
+      ],
+    },
+  };
+
+  const quotaResponse = () => jsonResponse(quotaPayload, false, 429);
+  const geminiOkResponse = () =>
+    jsonResponse({ candidates: [{ content: { parts: [{ text: '{"en":"ok"}' }] } }] });
+  const groqOkResponse = () =>
+    jsonResponse({ choices: [{ message: { content: '{"en":"groq"}' } }] });
+
+  const isGeminiCall = (url: string) => url.includes('generativelanguage.googleapis.com');
+
+  it('parses RetryInfo retryDelay durations', () => {
+    expect(geminiRetryDelayMs(quotaPayload)).toBe(23_000);
+    expect(parseRetryDelayMs('1.5s')).toBe(1_500);
+    // A bare number is ambiguous (milliseconds? seconds?) so it is rejected.
+    expect(parseRetryDelayMs('23')).toBeNull();
+    expect(parseRetryDelayMs(23)).toBeNull();
+    expect(parseRetryDelayMs('0s')).toBeNull();
+    expect(parseRetryDelayMs(null)).toBeNull();
+    expect(geminiRetryDelayMs({ error: { details: [] } })).toBeNull();
+    expect(geminiRetryDelayMs({ error: { message: 'not a quota error' } })).toBeNull();
+  });
+
+  it('recognises a rate limit from the status code or the payload', () => {
+    expect(isGeminiRateLimit(429, {})).toBe(true);
+    expect(isGeminiRateLimit(200, quotaPayload)).toBe(true);
+    expect(isGeminiRateLimit(500, { error: { message: 'down' } })).toBe(false);
+  });
+
+  it('round-trips the requested wait through the error type', () => {
+    expect(rateLimitRetryAfterMs(new AiRateLimitError('limited', 5_000))).toBe(5_000);
+    expect(rateLimitRetryAfterMs(new Error('other'))).toBeNull();
+    expect(rateLimitRetryAfterMs(undefined)).toBeNull();
+  });
+
+  it('waits for the retryDelay and retries Gemini instead of falling back to Groq', async () => {
+    const sleeps: number[] = [];
+    const calls: string[] = [];
+    let geminiCalls = 0;
+
+    const fetchImpl = (async (url: string) => {
+      calls.push(url);
+      if (!isGeminiCall(url)) return groqOkResponse();
+      geminiCalls++;
+      return geminiCalls === 1 ? quotaResponse() : geminiOkResponse();
+    }) as unknown as typeof fetch;
+
+    const result = await generateAiText(baseOptions, bothKeys, {
+      fetchImpl,
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+      log: noopLog,
+    });
+
+    expect(result).toEqual({ provider: 'gemini', text: '{"en":"ok"}' });
+    expect(sleeps).toEqual([23_000]);
+    expect(calls.every(isGeminiCall)).toBe(true);
+  });
+
+  it('waits the conservative default when a 429 carries no retryDelay', async () => {
+    const sleeps: number[] = [];
+    let geminiCalls = 0;
+
+    const fetchImpl = (async (url: string) => {
+      if (!isGeminiCall(url)) return groqOkResponse();
+      geminiCalls++;
+      return geminiCalls === 1
+        ? jsonResponse({ error: { code: 429, message: 'quota' } }, false, 429)
+        : geminiOkResponse();
+    }) as unknown as typeof fetch;
+
+    const result = await generateAiText(baseOptions, bothKeys, {
+      fetchImpl,
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+      log: noopLog,
+    });
+
+    expect(result.provider).toBe('gemini');
+    expect(sleeps).toEqual([AI_RATE_LIMIT_DEFAULT_WAIT_MS]);
+  });
+
+  it('falls back to Groq only once the rate-limit retries are exhausted', async () => {
+    const sleeps: number[] = [];
+    const fetchImpl = (async (url: string) =>
+      isGeminiCall(url) ? quotaResponse() : groqOkResponse()) as unknown as typeof fetch;
+
+    const result = await generateAiText(baseOptions, bothKeys, {
+      fetchImpl,
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+      log: noopLog,
+    });
+
+    expect(result).toEqual({ provider: 'groq', text: '{"en":"groq"}' });
+    // Two honoured waits, then the fallback — no zero-delay exponential retries.
+    expect(sleeps).toEqual([23_000, 23_000]);
+  });
+
+  it('uses the Retry-After header when the body has no retryDelay', async () => {
+    const sleeps: number[] = [];
+    let geminiCalls = 0;
+
+    const fetchImpl = (async (url: string) => {
+      if (!isGeminiCall(url)) return groqOkResponse();
+      geminiCalls++;
+      if (geminiCalls > 1) return geminiOkResponse();
+      return {
+        ok: false,
+        status: 429,
+        headers: { get: (name: string) => (name === 'retry-after' ? '7' : null) },
+        json: async () => ({ error: { code: 429, status: 'RESOURCE_EXHAUSTED' } }),
+      } as unknown as Response;
+    }) as unknown as typeof fetch;
+
+    const result = await generateAiText(baseOptions, bothKeys, {
+      fetchImpl,
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+      log: noopLog,
+    });
+
+    expect(result.provider).toBe('gemini');
+    expect(sleeps).toEqual([7_000]);
   });
 });

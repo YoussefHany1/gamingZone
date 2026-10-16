@@ -1,14 +1,22 @@
 import { getErrorMessage } from './errors';
 
 import {
+  AI_MAX_RATE_LIMIT_WAIT_MS,
+  AI_RATE_LIMIT_DEFAULT_WAIT_MS,
+  AI_RATE_LIMIT_RETRIES,
   AI_RETRIES,
   AI_TIMEOUT_MS,
+  AiRateLimitError,
   GEMINI_BASE_URL,
   GROQ_CHAT_COMPLETIONS_URL,
   buildGeminiRequestBody,
   buildGroqRequestBody,
   extractGeminiText,
   extractGroqText,
+  geminiRetryDelayMs,
+  headerRetryDelayMs,
+  isGeminiRateLimit,
+  rateLimitRetryAfterMs,
   resolveAiProviders,
 } from './ai.shared';
 import type { AiProvider, AiProviderKeys } from './ai.shared';
@@ -67,7 +75,29 @@ async function callGemini(
     },
   );
 
-  return extractGeminiText(await response.json());
+  const data: unknown = await response.json().catch(() => undefined);
+
+  // A per-minute quota is not a terminal failure: Google reports exactly how
+  // long the caller should wait, so surface that wait instead of letting the
+  // caller treat the call as failed and drop to the Groq fallback.
+  if (isGeminiRateLimit(response.status, data)) {
+    const retryAfterMs =
+      geminiRetryDelayMs(data) ??
+      headerRetryDelayMs(response.headers) ??
+      AI_RATE_LIMIT_DEFAULT_WAIT_MS;
+    throw new AiRateLimitError(
+      `Gemini rate limited (HTTP ${response.status})${data ? `: ${JSON.stringify(data).slice(0, 200)}` : ''}`,
+      retryAfterMs,
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      `Gemini API error: HTTP ${response.status} ${JSON.stringify(data ?? null).slice(0, 200)}`,
+    );
+  }
+
+  return extractGeminiText(data);
 }
 
 async function callGroq(
@@ -96,6 +126,10 @@ async function callGroq(
 /**
  * Calls one provider, retrying transient failures with exponential backoff.
  * Aborts a hung request after `timeoutMs`.
+ *
+ * A rate limit (`retryDelay`) is handled separately: the server's own wait is
+ * honoured and the attempt does not count against `retries`, so a throttled
+ * Gemini call is retried rather than immediately handing over to Groq.
  */
 async function callProviderWithRetry(
   provider: AiProvider,
@@ -110,6 +144,8 @@ async function callProviderWithRetry(
 ): Promise<string> {
   const label = options.label ?? 'AI request';
   let attempt = 0;
+  let failures = 0;
+  let rateLimitWaits = 0;
 
   while (true) {
     attempt++;
@@ -122,8 +158,22 @@ async function callProviderWithRetry(
         ? await callGemini(options, keys, fetchImpl, controller.signal)
         : await callGroq(options, keys, fetchImpl, controller.signal);
     } catch (error: unknown) {
-      if (attempt >= retries) throw error;
-      const backoff = backoffBaseMs * 2 ** attempt;
+      const retryAfterMs = rateLimitRetryAfterMs(error);
+
+      if (retryAfterMs !== null && rateLimitWaits < AI_RATE_LIMIT_RETRIES) {
+        rateLimitWaits++;
+        const waitMs = Math.min(retryAfterMs, AI_MAX_RATE_LIMIT_WAIT_MS);
+        log.warn(
+          `⏳ ${label}: ${provider} rate limited — waiting ${Math.round(waitMs / 1000)}s before retrying ` +
+            `(${rateLimitWaits}/${AI_RATE_LIMIT_RETRIES})...`,
+        );
+        await sleep(waitMs);
+        continue;
+      }
+
+      failures++;
+      if (failures >= retries) throw error;
+      const backoff = backoffBaseMs * 2 ** failures;
       log.warn(`⚠️ ${label}: ${provider} attempt ${attempt} failed: ${getErrorMessage(error)}`);
       await sleep(backoff);
     } finally {

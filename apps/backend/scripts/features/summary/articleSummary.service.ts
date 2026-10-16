@@ -15,6 +15,7 @@ import { generateAiText } from '../../lib/ai';
 
 import {
   BACKFILL_CONCURRENCY,
+  BACKFILL_MAX_ARTICLES_PER_MINUTE,
   BACKFILL_NEWEST,
   BACKFILL_OLDEST,
   LANGUAGE_TO_ATTRIBUTE,
@@ -26,6 +27,7 @@ import {
   buildPendingQueueQuery,
   buildPrompt,
   cleanSummary,
+  pacingDelayMs,
   parseSummaries,
   pendingSummaryFilters,
   sanitizeQueueLimit,
@@ -38,6 +40,10 @@ const DATABASE_ID = env.APPWRITE_DATABASE_ID;
 const ARTICLES_COLLECTION_ID = env.ARTICLES_COLLECTION_ID;
 
 const databases = createAppwriteDatabases();
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export interface BackfillStats {
   processed: number;
@@ -236,6 +242,7 @@ async function runBackfillArticleSummaries(options: BackfillOptions = {}): Promi
     }
 
     const batch = unique.slice(i, i + BACKFILL_CONCURRENCY);
+    const batchStartedAt = Date.now();
     const results = await Promise.allSettled(
       batch.map((doc) => enrichArticleWithSummaries(doc as unknown as SummarizableArticle)),
     );
@@ -253,6 +260,33 @@ async function runBackfillArticleSummaries(options: BackfillOptions = {}): Promi
         }
       }
     });
+
+    // Pace the next batch so the long-run rate never exceeds Gemini's per-minute
+    // quota (one request per article). Skipped after the final batch, and when
+    // the wait would only push us through the deadline.
+    const isLastBatch = i + BACKFILL_CONCURRENCY >= unique.length;
+    if (!isLastBatch) {
+      const delayMs = pacingDelayMs(
+        batch.length,
+        Date.now() - batchStartedAt,
+        BACKFILL_MAX_ARTICLES_PER_MINUTE,
+      );
+
+      if (delayMs > 0) {
+        if (Date.now() + delayMs >= deadline) {
+          logger.warn(
+            `⏱️ No time left to pace the next summary batch within ${maxDurationMs / 1000}s; remaining articles deferred.`,
+          );
+          stats.complete = false;
+          break;
+        }
+
+        logger.info(
+          `⏳ Pacing summaries: waiting ${(delayMs / 1000).toFixed(1)}s to stay under ${BACKFILL_MAX_ARTICLES_PER_MINUTE}/min...`,
+        );
+        await sleep(delayMs);
+      }
+    }
   }
 
   logger.info(

@@ -34,9 +34,66 @@ if (firebaseState.enabled) {
   logger.warn(`⚠️ Firebase error: ${firebaseState.error}`);
 }
 
+/**
+ * Optional knobs. Every field defaults to the original behaviour, so the
+ * scheduled tick is unaffected; they exist so a single deployed build can be
+ * bisected via the request body while diagnosing a hard failure (a run that
+ * dies too early to write logs still returns its summary when it survives).
+ */
+export interface RunFetchRssOptions {
+  /** Process at most this many sources. */
+  maxSources?: number;
+  /** Skip the first N sources (pairs with maxSources to slice a range). */
+  offset?: number;
+  /** Fetch + normalize feeds only: no article fetches, no writes, no pushes. */
+  fetchOnly?: boolean;
+  /** Sources processed concurrently (default 3). */
+  concurrency?: number;
+  /** Articles created concurrently within one source (default 10). */
+  articleBatchSize?: number;
+  /** Send FCM notifications for new articles (default true). */
+  notify?: boolean;
+  /** Delete articles beyond MAX_STORED_NEWS (default true). */
+  cleanup?: boolean;
+}
+
 interface RssSummary {
   notificationsSent: number;
   errors: { name: string; msg: string }[];
+  sourcesProcessed: number;
+  newArticles: number;
+  peakRssMb: number;
+  peakHeapMb: number;
+}
+
+/**
+ * Samples process memory on a timer so the peak is reported even though the
+ * heavy work happens inside awaited promises. Kept short on purpose: a hard
+ * kill leaves no chance to read memory after the fact.
+ */
+function createMemorySampler(): { stop: () => { peakRssMb: number; peakHeapMb: number } } {
+  let peakRss = process.memoryUsage().rss;
+  let peakHeap = process.memoryUsage().heapUsed;
+
+  const timer = setInterval(() => {
+    const usage = process.memoryUsage();
+    if (usage.rss > peakRss) peakRss = usage.rss;
+    if (usage.heapUsed > peakHeap) peakHeap = usage.heapUsed;
+  }, 1000);
+  timer.unref();
+
+  return {
+    stop: () => {
+      clearInterval(timer);
+      const usage = process.memoryUsage();
+      if (usage.rss > peakRss) peakRss = usage.rss;
+      if (usage.heapUsed > peakHeap) peakHeap = usage.heapUsed;
+      return {
+        peakRssMb: Math.round(peakRss / 1048576),
+        peakHeapMb: Math.round(peakHeap / 1048576),
+      };
+    },
+  };
 }
 
 interface SourceData {
@@ -210,7 +267,11 @@ async function cleanupOldArticles(siteName: string, category: string): Promise<v
   }
 }
 
-async function processSource(sourceData: SourceData, summary: RssSummary): Promise<void> {
+async function processSource(
+  sourceData: SourceData,
+  summary: RssSummary,
+  options: RunFetchRssOptions = {},
+): Promise<void> {
   const { rssUrl, category, name, docId, raw } = sourceData;
   const topicName = `${safeId(category)}_${safeId(name)}`;
 
@@ -280,10 +341,17 @@ async function processSource(sourceData: SourceData, summary: RssSummary): Promi
         `   ⚠️ WARNING: All items have same docId! Sample: ${JSON.stringify(items[0]).substring(0, 200)}`,
       );
     }
+
+    if (options.fetchOnly) {
+      summary.newArticles += newItems.length;
+      logger.info('   🔬 fetchOnly: skipping article writes, notifications and cleanup.');
+      return;
+    }
+
     const createdItems: NormalizedArticle[] = [];
 
     if (newItems.length > 0) {
-      const BATCH_SIZE = 10;
+      const BATCH_SIZE = options.articleBatchSize ?? 10;
       for (let i = 0; i < newItems.length; i += BATCH_SIZE) {
         const chunk = newItems.slice(i, i + BATCH_SIZE);
         const results = await Promise.allSettled(
@@ -331,33 +399,49 @@ async function processSource(sourceData: SourceData, summary: RssSummary): Promi
       ...(fetched.lastModified ? { lastModified: fetched.lastModified } : {}),
     });
 
+    summary.newArticles += createdItems.length;
+
     if (createdItems.length > 0) {
       logger.info(`   🚀 Saved and queued ${createdItems.length} new articles.`);
-      await sendNotifications(
-        createdItems.map((item) => ({ ...item, topicName })),
-        summary,
-      );
+      if (options.notify !== false) {
+        await sendNotifications(
+          createdItems.map((item) => ({ ...item, topicName })),
+          summary,
+        );
+      }
     } else {
       logger.info('   💤 No new articles persisted.');
     }
 
-    await cleanupOldArticles(name, category);
+    if (options.cleanup !== false) {
+      await cleanupOldArticles(name, category);
+    }
   } catch (error: unknown) {
     logger.error(`❌ Error in ${name}: ${getErrorMessage(error)}`);
     summary.errors.push({ name, msg: getErrorMessage(error) });
+  } finally {
+    summary.sourcesProcessed++;
   }
 }
 
-async function runFetchRss(): Promise<RssSummary> {
+async function runFetchRss(options: RunFetchRssOptions = {}): Promise<RssSummary> {
   logger.info('🚀 Starting Unified Fetcher (API & RSS)...');
-  const summary: RssSummary = { notificationsSent: 0, errors: [] };
+  const summary: RssSummary = {
+    notificationsSent: 0,
+    errors: [],
+    sourcesProcessed: 0,
+    newArticles: 0,
+    peakRssMb: 0,
+    peakHeapMb: 0,
+  };
+  const sampler = createMemorySampler();
 
   try {
     const res = await databases.listDocuments(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_RSS, [
       Query.limit(1000),
     ]);
 
-    const sources: SourceData[] = res.documents.map((doc) => ({
+    const allSources: SourceData[] = res.documents.map((doc) => ({
       docId: doc.$id,
       rssUrl: doc.rssUrl,
       name: doc.name,
@@ -365,19 +449,29 @@ async function runFetchRss(): Promise<RssSummary> {
       raw: doc as unknown as Record<string, unknown>,
     }));
 
-    logger.info(`Found ${sources.length} sources.`);
+    const offset = Math.max(0, options.offset ?? 0);
+    const take = options.maxSources ?? allSources.length - offset;
+    const sources = allSources.slice(offset, offset + Math.max(0, take));
+    const concurrency = Math.max(1, options.concurrency ?? CONFIG.MAX_CONCURRENCY);
 
-    for (let i = 0; i < sources.length; i += CONFIG.MAX_CONCURRENCY) {
-      const chunk = sources.slice(i, i + CONFIG.MAX_CONCURRENCY);
-      await Promise.all(chunk.map((source) => processSource(source, summary)));
+    logger.info(
+      `Found ${allSources.length} sources. Running ${sources.length} (offset ${offset}) at concurrency ${concurrency}` +
+        `${options.fetchOnly ? ' [fetchOnly]' : ''}${options.notify === false ? ' [no-notify]' : ''}.`,
+    );
+
+    for (let i = 0; i < sources.length; i += concurrency) {
+      const chunk = sources.slice(i, i + concurrency);
+      await Promise.all(chunk.map((source) => processSource(source, summary, options)));
     }
   } catch (error: unknown) {
     logger.error(error, 'Fatal Error');
     throw error;
+  } finally {
+    Object.assign(summary, sampler.stop());
   }
 
   logger.info(
-    `\n--- Done. Sent: ${summary.notificationsSent}, Errors: ${summary.errors.length} ---`,
+    `\n--- Done. Sent: ${summary.notificationsSent}, New: ${summary.newArticles}, Errors: ${summary.errors.length}, Peak RSS: ${summary.peakRssMb}MB / heap ${summary.peakHeapMb}MB ---`,
   );
   return summary;
 }

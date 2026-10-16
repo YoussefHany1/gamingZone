@@ -26,6 +26,16 @@ const DEFAULT_GROQ_MODEL = 'openai/gpt-oss-120b';
 
 const AI_TIMEOUT_MS = 25_000;
 const AI_RETRIES = 3;
+/**
+ * Extra attempts granted on top of `retries` when a provider explicitly asks us
+ * to slow down (HTTP 429 + `retryDelay`). A per-minute quota is temporary, so
+ * waiting and retrying the same provider beats dropping to the fallback.
+ */
+const AI_RATE_LIMIT_RETRIES = 2;
+/** Upper bound on a single rate-limit wait, so a bogus hint cannot stall a run. */
+const AI_MAX_RATE_LIMIT_WAIT_MS = 65_000;
+/** Wait used when a 429 arrives without a usable `retryDelay`. */
+const AI_RATE_LIMIT_DEFAULT_WAIT_MS = 30_000;
 
 interface AiProviderKeys {
   geminiKey: string | null;
@@ -117,6 +127,79 @@ function extractGroqText(data: unknown): string {
   return text;
 }
 
+/**
+ * A provider rate-limit failure (Gemini HTTP 429 / `RESOURCE_EXHAUSTED`).
+ * Carries the wait the server asked for so the retry loop can honour it
+ * instead of treating the call as terminal and switching providers.
+ */
+class AiRateLimitError extends Error {
+  readonly retryAfterMs: number;
+
+  constructor(message: string, retryAfterMs: number) {
+    super(message);
+    this.name = 'AiRateLimitError';
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
+/**
+ * Wait requested by a rate-limit error, or `null` for any other failure.
+ *
+ * Duck-typed as well as `instanceof`-checked: a bundler can inline this module
+ * into more than one chunk, which would break a pure `instanceof` test.
+ */
+function rateLimitRetryAfterMs(error: unknown): number | null {
+  if (error instanceof AiRateLimitError) return error.retryAfterMs;
+  if (typeof error === 'object' && error !== null) {
+    const record = error as { name?: unknown; retryAfterMs?: unknown };
+    if (record.name === 'AiRateLimitError' && typeof record.retryAfterMs === 'number') {
+      return record.retryAfterMs;
+    }
+  }
+  return null;
+}
+
+/**
+ * Parses a Google `RetryInfo.retryDelay` duration string (e.g. `"23s"`,
+ * `"1.5s"`) into milliseconds. Anything else yields `null`.
+ */
+function parseRetryDelayMs(value: unknown): number | null {
+  if (typeof value !== 'string') return null;
+  const match = /^(\d+(?:\.\d+)?)s$/i.exec(value.trim());
+  if (!match) return null;
+  const seconds = Number(match[1]);
+  return Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds * 1000) : null;
+}
+
+/** `retryDelay` from a Gemini error payload's `RetryInfo` detail, if present. */
+function geminiRetryDelayMs(data: unknown): number | null {
+  const error = (data as { error?: { details?: unknown } } | undefined)?.error;
+  if (!error || !Array.isArray(error.details)) return null;
+
+  for (const detail of error.details) {
+    const delay = parseRetryDelayMs((detail as { retryDelay?: unknown } | null)?.retryDelay);
+    if (delay !== null) return delay;
+  }
+  return null;
+}
+
+/** True when a Gemini response is a quota/rate-limit rejection. */
+function isGeminiRateLimit(status: number, data: unknown): boolean {
+  if (status === 429) return true;
+  const error = (data as { error?: { code?: unknown; status?: unknown } } | undefined)?.error;
+  return error?.code === 429 || error?.status === 'RESOURCE_EXHAUSTED';
+}
+
+/** `Retry-After` (seconds) when a provider sends the hint as a header instead. */
+function headerRetryDelayMs(
+  headers: { get?: (name: string) => string | null } | undefined,
+): number | null {
+  const raw = headers?.get?.('retry-after');
+  if (!raw) return null;
+  const seconds = Number(raw.trim());
+  return Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds * 1000) : null;
+}
+
 export {
   AI_PROVIDERS,
   GEMINI_BASE_URL,
@@ -124,6 +207,15 @@ export {
   DEFAULT_GROQ_MODEL,
   AI_TIMEOUT_MS,
   AI_RETRIES,
+  AI_RATE_LIMIT_RETRIES,
+  AI_MAX_RATE_LIMIT_WAIT_MS,
+  AI_RATE_LIMIT_DEFAULT_WAIT_MS,
+  AiRateLimitError,
+  rateLimitRetryAfterMs,
+  parseRetryDelayMs,
+  geminiRetryDelayMs,
+  isGeminiRateLimit,
+  headerRetryDelayMs,
   resolveAiProviders,
   buildGeminiRequestBody,
   buildGroqRequestBody,

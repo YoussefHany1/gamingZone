@@ -1,6 +1,7 @@
 import type { AppwriteContext } from '../../_shared/runner';
 
 import { runFetchRss } from '../../../scripts/features/rss/rss.service';
+import type { RunFetchRssOptions } from '../../../scripts/features/rss/rss.service';
 import {
   runFetchFreeGames,
   teardownFreeGamesService,
@@ -20,19 +21,53 @@ import { getErrorMessage } from '../../../scripts/lib/errors';
 // three cadences. Hourly (not */5) keeps the full 69-source RSS sync inside
 // Appwrite's free 100 GB-hours/month compute allowance. A manual /curl
 // trigger can still run one job by name via a JSON body.
-const JOBS: Record<string, () => Promise<unknown>> = {
-  rss: runFetchRss,
-  'article-summaries': runBackfillArticleSummaries,
+type JobOptions = RunFetchRssOptions;
+
+const JOBS: Record<string, (options: JobOptions) => Promise<unknown>> = {
+  rss: (options) => runFetchRss(options),
+  'article-summaries': () => runBackfillArticleSummaries(),
   'free-games': async () => {
     await runFetchFreeGames();
     await teardownFreeGamesService();
   },
-  'weekly-summary': runGenerateWeeklySummary,
+  'weekly-summary': () => runGenerateWeeklySummary(),
   'game-releases': async () => {
     await runCheckGameReleases();
     await teardownGameReleasesService();
   },
 };
+
+// Registered at module load so a failure deep inside a job is surfaced instead
+// of silently killing the process. Appwrite reports a hard death as a generic
+// 500 with no logs, which is exactly the signal we are trying to capture.
+type AppwriteLogFn = (...args: unknown[]) => void;
+let appwriteError: AppwriteLogFn | null = null;
+
+function reportFatal(kind: string, cause: unknown): void {
+  const message =
+    cause instanceof Error ? `${cause.name}: ${cause.message}\n${cause.stack ?? ''}` : String(cause);
+  // stderr may survive even when the platform drops structured logs.
+  console.error(`cron: ${kind}: ${message}`);
+  try {
+    appwriteError?.(`cron: ${kind}: ${message}`);
+  } catch {
+    // Diagnostics must never take down the process.
+  }
+}
+
+process.on('uncaughtException', (cause) => reportFatal('uncaughtException', cause));
+process.on('unhandledRejection', (cause) => reportFatal('unhandledRejection', cause));
+
+function optionsFromBody(body: string): JobOptions {
+  try {
+    const parsed = JSON.parse(body) as { options?: unknown };
+    const options = parsed.options;
+    if (options && typeof options === 'object') return options as JobOptions;
+  } catch {
+    // jobsFromBody already rejects unparseable bodies.
+  }
+  return {};
+}
 
 function jobsFromScheduledTick(now: Date): string[] {
   // RSS sync and the article-summary backfill both run every tick. The summary
@@ -80,9 +115,11 @@ function jobsFromBody(body: string): string[] | null {
 
 export default async ({ req, res, log, error }: AppwriteContext) => {
   setAppwriteLogger(log, error);
+  appwriteError = error;
   const startedAt = Date.now();
   const now = new Date();
   const hasBody = typeof req.body === 'string' && req.body.trim().length > 0;
+  const options = hasBody ? optionsFromBody(req.body as string) : {};
 
   try {
     let jobs: string[];
@@ -110,7 +147,7 @@ export default async ({ req, res, log, error }: AppwriteContext) => {
     for (const job of jobs) {
       const jobStartedAt = Date.now();
       try {
-        const result = await JOBS[job]();
+        const result = await JOBS[job](options);
         const ms = Date.now() - jobStartedAt;
         log(`cron: job '${job}' finished in ${ms}ms`);
         results.push({ job, ok: true, ms, result: result ?? null });
@@ -124,7 +161,12 @@ export default async ({ req, res, log, error }: AppwriteContext) => {
 
     log(`cron: finished in ${Date.now() - startedAt}ms`);
     return res.json({ ok: allOk, function: 'cron', jobs: results }, allOk ? 200 : 500);
+  } catch (cause) {
+    const message = getErrorMessage(cause);
+    error(`cron: unhandled failure: ${message}`);
+    return res.json({ ok: false, function: 'cron', error: message }, 500);
   } finally {
+    appwriteError = null;
     setAppwriteLogger(null, null);
   }
 };

@@ -8,7 +8,9 @@ import {
   PER_LANGUAGE_MAX_CHARS,
   BACKFILL_NEWEST,
   BACKFILL_OLDEST,
+  BACKFILL_MAX_ARTICLES_PER_MINUTE,
   cleanSummary,
+  pacingDelayMs,
   parseSummaries,
   sanitizeQueueLimit,
   buildPendingQueueQuery,
@@ -195,6 +197,52 @@ describe('backfill queue limits', () => {
       order: 'asc',
       limit: BACKFILL_OLDEST,
     });
+  });
+});
+
+describe('pacingDelayMs', () => {
+  it('waits out the remainder of a fast batch to hit the target rate', () => {
+    // 3 articles at 13/min must be ~13.85s apart; a 2s batch waits the rest.
+    expect(pacingDelayMs(3, 2_000, 13)).toBe(11_847);
+    expect(pacingDelayMs(3, 0, 13)).toBe(13_847);
+  });
+
+  it('never slows a batch that was already slower than the target rate', () => {
+    expect(pacingDelayMs(3, 20_000, 13)).toBe(0);
+    expect(pacingDelayMs(3, 60_000, 13)).toBe(0);
+  });
+
+  it('keeps the long-run rate at or below the ceiling when batches are instant', () => {
+    const batchSize = 3;
+    const delayMs = pacingDelayMs(batchSize, 0, BACKFILL_MAX_ARTICLES_PER_MINUTE);
+    const articlesPerMinute = (batchSize / delayMs) * 60_000;
+
+    expect(articlesPerMinute).toBeLessThanOrEqual(BACKFILL_MAX_ARTICLES_PER_MINUTE);
+    expect(BACKFILL_MAX_ARTICLES_PER_MINUTE).toBeGreaterThanOrEqual(12);
+    expect(BACKFILL_MAX_ARTICLES_PER_MINUTE).toBeLessThanOrEqual(14);
+  });
+
+  it('never lets a sliding 60s window exceed the ceiling', () => {
+    // The quota is a rolling window, not a fixed one, so a burst at the window
+    // boundary must not push the count over the ceiling.
+    const batchSize = 3;
+    const delayMs = pacingDelayMs(batchSize, 0, BACKFILL_MAX_ARTICLES_PER_MINUTE);
+    const batchStarts = Array.from({ length: 12 }, (_, index) => index * delayMs);
+
+    for (const windowStart of batchStarts) {
+      const inWindow = batchStarts.filter(
+        (start) => start >= windowStart && start < windowStart + 60_000,
+      );
+      expect(inWindow.length * batchSize).toBeLessThanOrEqual(BACKFILL_MAX_ARTICLES_PER_MINUTE);
+    }
+  });
+
+  it('returns 0 for degenerate input instead of NaN/Infinity', () => {
+    expect(pacingDelayMs(0, 100, 13)).toBe(0);
+    expect(pacingDelayMs(3, 100, 0)).toBe(0);
+    expect(pacingDelayMs(Number.NaN, 100, 13)).toBe(0);
+    expect(pacingDelayMs(3, Number.POSITIVE_INFINITY, 13)).toBe(13_847);
+    expect(pacingDelayMs(3, Number.NEGATIVE_INFINITY, 13)).toBe(13_847);
   });
 });
 

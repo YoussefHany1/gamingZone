@@ -107016,6 +107016,9 @@ var GROQ_CHAT_COMPLETIONS_URL = "https://api.groq.com/openai/v1/chat/completions
 var DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b";
 var AI_TIMEOUT_MS = 25e3;
 var AI_RETRIES = 3;
+var AI_RATE_LIMIT_RETRIES = 2;
+var AI_MAX_RATE_LIMIT_WAIT_MS = 65e3;
+var AI_RATE_LIMIT_DEFAULT_WAIT_MS = 3e4;
 function resolveAiProviders(keys) {
   const override = keys.override ?? null;
   if (override === "gemini") return keys.geminiKey ? ["gemini"] : [];
@@ -107067,6 +107070,51 @@ function extractGroqText(data) {
     throw new Error(`Groq returned no text: ${JSON.stringify(data).slice(0, 200)}`);
   }
   return text;
+}
+var AiRateLimitError = class extends Error {
+  retryAfterMs;
+  constructor(message, retryAfterMs) {
+    super(message);
+    this.name = "AiRateLimitError";
+    this.retryAfterMs = retryAfterMs;
+  }
+};
+function rateLimitRetryAfterMs(error) {
+  if (error instanceof AiRateLimitError) return error.retryAfterMs;
+  if (typeof error === "object" && error !== null) {
+    const record = error;
+    if (record.name === "AiRateLimitError" && typeof record.retryAfterMs === "number") {
+      return record.retryAfterMs;
+    }
+  }
+  return null;
+}
+function parseRetryDelayMs(value) {
+  if (typeof value !== "string") return null;
+  const match = /^(\d+(?:\.\d+)?)s$/i.exec(value.trim());
+  if (!match) return null;
+  const seconds = Number(match[1]);
+  return Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds * 1e3) : null;
+}
+function geminiRetryDelayMs(data) {
+  const error = data?.error;
+  if (!error || !Array.isArray(error.details)) return null;
+  for (const detail of error.details) {
+    const delay2 = parseRetryDelayMs(detail?.retryDelay);
+    if (delay2 !== null) return delay2;
+  }
+  return null;
+}
+function isGeminiRateLimit(status, data) {
+  if (status === 429) return true;
+  const error = data?.error;
+  return error?.code === 429 || error?.status === "RESOURCE_EXHAUSTED";
+}
+function headerRetryDelayMs(headers) {
+  const raw = headers?.get?.("retry-after");
+  if (!raw) return null;
+  const seconds = Number(raw.trim());
+  return Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds * 1e3) : null;
 }
 
 // scripts/lib/config.ts
@@ -113656,6 +113704,28 @@ if (firebaseState.enabled) {
 } else if (firebaseState.error) {
   logger.warn(`\u26A0\uFE0F Firebase error: ${firebaseState.error}`);
 }
+function createMemorySampler() {
+  let peakRss = process.memoryUsage().rss;
+  let peakHeap = process.memoryUsage().heapUsed;
+  const timer = setInterval(() => {
+    const usage = process.memoryUsage();
+    if (usage.rss > peakRss) peakRss = usage.rss;
+    if (usage.heapUsed > peakHeap) peakHeap = usage.heapUsed;
+  }, 1e3);
+  timer.unref();
+  return {
+    stop: () => {
+      clearInterval(timer);
+      const usage = process.memoryUsage();
+      if (usage.rss > peakRss) peakRss = usage.rss;
+      if (usage.heapUsed > peakHeap) peakHeap = usage.heapUsed;
+      return {
+        peakRssMb: Math.round(peakRss / 1048576),
+        peakHeapMb: Math.round(peakHeap / 1048576)
+      };
+    }
+  };
+}
 function getErrorCode(error) {
   if (error && typeof error === "object" && "code" in error) {
     return error.code;
@@ -113793,7 +113863,7 @@ async function cleanupOldArticles(siteName, category) {
     logger.error(`      \u26A0\uFE0F Cleanup failed: ${getErrorMessage(error)}`);
   }
 }
-async function processSource(sourceData, summary) {
+async function processSource(sourceData, summary, options = {}) {
   const { rssUrl, category, name, docId, raw } = sourceData;
   const topicName = `${safeId(category)}_${safeId(name)}`;
   try {
@@ -113851,9 +113921,14 @@ async function processSource(sourceData, summary) {
         `   \u26A0\uFE0F WARNING: All items have same docId! Sample: ${JSON.stringify(items[0]).substring(0, 200)}`
       );
     }
+    if (options.fetchOnly) {
+      summary.newArticles += newItems.length;
+      logger.info("   \u{1F52C} fetchOnly: skipping article writes, notifications and cleanup.");
+      return;
+    }
     const createdItems = [];
     if (newItems.length > 0) {
-      const BATCH_SIZE = 10;
+      const BATCH_SIZE = options.articleBatchSize ?? 10;
       for (let i = 0; i < newItems.length; i += BATCH_SIZE) {
         const chunk = newItems.slice(i, i + BATCH_SIZE);
         const results = await Promise.allSettled(
@@ -113892,47 +113967,70 @@ async function processSource(sourceData, summary) {
       ...fetched.etag ? { lastEtag: fetched.etag } : {},
       ...fetched.lastModified ? { lastModified: fetched.lastModified } : {}
     });
+    summary.newArticles += createdItems.length;
     if (createdItems.length > 0) {
       logger.info(`   \u{1F680} Saved and queued ${createdItems.length} new articles.`);
-      await sendNotifications(
-        createdItems.map((item) => ({ ...item, topicName })),
-        summary
-      );
+      if (options.notify !== false) {
+        await sendNotifications(
+          createdItems.map((item) => ({ ...item, topicName })),
+          summary
+        );
+      }
     } else {
       logger.info("   \u{1F4A4} No new articles persisted.");
     }
-    await cleanupOldArticles(name, category);
+    if (options.cleanup !== false) {
+      await cleanupOldArticles(name, category);
+    }
   } catch (error) {
     logger.error(`\u274C Error in ${name}: ${getErrorMessage(error)}`);
     summary.errors.push({ name, msg: getErrorMessage(error) });
+  } finally {
+    summary.sourcesProcessed++;
   }
 }
-async function runFetchRss() {
+async function runFetchRss(options = {}) {
   logger.info("\u{1F680} Starting Unified Fetcher (API & RSS)...");
-  const summary = { notificationsSent: 0, errors: [] };
+  const summary = {
+    notificationsSent: 0,
+    errors: [],
+    sourcesProcessed: 0,
+    newArticles: 0,
+    peakRssMb: 0,
+    peakHeapMb: 0
+  };
+  const sampler = createMemorySampler();
   try {
     const res = await databases.listDocuments(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_RSS, [
       import_node_appwrite2.Query.limit(1e3)
     ]);
-    const sources = res.documents.map((doc) => ({
+    const allSources = res.documents.map((doc) => ({
       docId: doc.$id,
       rssUrl: doc.rssUrl,
       name: doc.name,
       category: doc.category,
       raw: doc
     }));
-    logger.info(`Found ${sources.length} sources.`);
-    for (let i = 0; i < sources.length; i += CONFIG.MAX_CONCURRENCY) {
-      const chunk = sources.slice(i, i + CONFIG.MAX_CONCURRENCY);
-      await Promise.all(chunk.map((source) => processSource(source, summary)));
+    const offset = Math.max(0, options.offset ?? 0);
+    const take = options.maxSources ?? allSources.length - offset;
+    const sources = allSources.slice(offset, offset + Math.max(0, take));
+    const concurrency = Math.max(1, options.concurrency ?? CONFIG.MAX_CONCURRENCY);
+    logger.info(
+      `Found ${allSources.length} sources. Running ${sources.length} (offset ${offset}) at concurrency ${concurrency}${options.fetchOnly ? " [fetchOnly]" : ""}${options.notify === false ? " [no-notify]" : ""}.`
+    );
+    for (let i = 0; i < sources.length; i += concurrency) {
+      const chunk = sources.slice(i, i + concurrency);
+      await Promise.all(chunk.map((source) => processSource(source, summary, options)));
     }
   } catch (error) {
     logger.error(error, "Fatal Error");
     throw error;
+  } finally {
+    Object.assign(summary, sampler.stop());
   }
   logger.info(
     `
---- Done. Sent: ${summary.notificationsSent}, Errors: ${summary.errors.length} ---`
+--- Done. Sent: ${summary.notificationsSent}, New: ${summary.newArticles}, Errors: ${summary.errors.length}, Peak RSS: ${summary.peakRssMb}MB / heap ${summary.peakHeapMb}MB ---`
   );
   return summary;
 }
@@ -114285,7 +114383,20 @@ async function callGemini(options, keys, fetchImpl, signal) {
       )
     }
   );
-  return extractGeminiText(await response.json());
+  const data = await response.json().catch(() => void 0);
+  if (isGeminiRateLimit(response.status, data)) {
+    const retryAfterMs = geminiRetryDelayMs(data) ?? headerRetryDelayMs(response.headers) ?? AI_RATE_LIMIT_DEFAULT_WAIT_MS;
+    throw new AiRateLimitError(
+      `Gemini rate limited (HTTP ${response.status})${data ? `: ${JSON.stringify(data).slice(0, 200)}` : ""}`,
+      retryAfterMs
+    );
+  }
+  if (!response.ok) {
+    throw new Error(
+      `Gemini API error: HTTP ${response.status} ${JSON.stringify(data ?? null).slice(0, 200)}`
+    );
+  }
+  return extractGeminiText(data);
 }
 async function callGroq(options, keys, fetchImpl, signal) {
   if (!keys.groqKey) throw new Error("GROQ_API_KEY is not set.");
@@ -114302,9 +114413,11 @@ async function callGroq(options, keys, fetchImpl, signal) {
   });
   return extractGroqText(await response.json());
 }
-async function callProviderWithRetry(provider, options, keys, fetchImpl, log, sleep2, retries, timeoutMs, backoffBaseMs) {
+async function callProviderWithRetry(provider, options, keys, fetchImpl, log, sleep3, retries, timeoutMs, backoffBaseMs) {
   const label = options.label ?? "AI request";
   let attempt = 0;
+  let failures = 0;
+  let rateLimitWaits = 0;
   while (true) {
     attempt++;
     const controller = new AbortController();
@@ -114313,10 +114426,21 @@ async function callProviderWithRetry(provider, options, keys, fetchImpl, log, sl
       log.info(`\u{1F916} ${label}: trying ${provider} (attempt ${attempt}/${retries})...`);
       return provider === "gemini" ? await callGemini(options, keys, fetchImpl, controller.signal) : await callGroq(options, keys, fetchImpl, controller.signal);
     } catch (error) {
-      if (attempt >= retries) throw error;
-      const backoff = backoffBaseMs * 2 ** attempt;
+      const retryAfterMs = rateLimitRetryAfterMs(error);
+      if (retryAfterMs !== null && rateLimitWaits < AI_RATE_LIMIT_RETRIES) {
+        rateLimitWaits++;
+        const waitMs = Math.min(retryAfterMs, AI_MAX_RATE_LIMIT_WAIT_MS);
+        log.warn(
+          `\u23F3 ${label}: ${provider} rate limited \u2014 waiting ${Math.round(waitMs / 1e3)}s before retrying (${rateLimitWaits}/${AI_RATE_LIMIT_RETRIES})...`
+        );
+        await sleep3(waitMs);
+        continue;
+      }
+      failures++;
+      if (failures >= retries) throw error;
+      const backoff = backoffBaseMs * 2 ** failures;
       log.warn(`\u26A0\uFE0F ${label}: ${provider} attempt ${attempt} failed: ${getErrorMessage(error)}`);
-      await sleep2(backoff);
+      await sleep3(backoff);
     } finally {
       clearTimeout(timer);
     }
@@ -114325,7 +114449,7 @@ async function callProviderWithRetry(provider, options, keys, fetchImpl, log, sl
 async function generateAiText(options, keys, deps = {}) {
   const fetchImpl = deps.fetchImpl ?? fetch;
   const log = deps.log ?? NOOP_LOG;
-  const sleep2 = deps.sleep ?? ((ms) => new Promise((resolve2) => setTimeout(resolve2, ms)));
+  const sleep3 = deps.sleep ?? ((ms) => new Promise((resolve2) => setTimeout(resolve2, ms)));
   const retries = Math.max(1, options.retries ?? AI_RETRIES);
   const timeoutMs = options.timeoutMs ?? AI_TIMEOUT_MS;
   const backoffBaseMs = deps.backoffBaseMs ?? 1e3;
@@ -114347,7 +114471,7 @@ async function generateAiText(options, keys, deps = {}) {
         keys,
         fetchImpl,
         log,
-        sleep2,
+        sleep3,
         retries,
         timeoutMs,
         backoffBaseMs
@@ -114701,6 +114825,7 @@ var BACKFILL_NEWEST = 20;
 var BACKFILL_OLDEST = 10;
 var BACKFILL_CONCURRENCY = 3;
 var MAX_BACKFILL_MS = 6e5;
+var BACKFILL_MAX_ARTICLES_PER_MINUTE = 12;
 function toPromptText(value) {
   if (!value) return "";
   return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, MAX_DESCRIPTION_CHARS);
@@ -114760,6 +114885,13 @@ function parseSummaries(rawText) {
   }
   return summaries;
 }
+function pacingDelayMs(batchSize, elapsedMs, maxPerMinute) {
+  if (!Number.isFinite(batchSize) || !Number.isFinite(maxPerMinute)) return 0;
+  if (batchSize <= 0 || maxPerMinute <= 0) return 0;
+  const intervalMs = batchSize / maxPerMinute * 6e4;
+  const spentMs = Number.isFinite(elapsedMs) && elapsedMs > 0 ? elapsedMs : 0;
+  return Math.max(0, Math.ceil(intervalMs - spentMs));
+}
 function sanitizeQueueLimit(value, fallback) {
   if (value === void 0 || !Number.isFinite(value)) return fallback;
   const floored = Math.floor(value);
@@ -114781,6 +114913,9 @@ loadBackendEnv();
 var DATABASE_ID2 = env.APPWRITE_DATABASE_ID;
 var ARTICLES_COLLECTION_ID = env.ARTICLES_COLLECTION_ID;
 var databases4 = createAppwriteDatabases();
+function sleep2(ms) {
+  return new Promise((resolve2) => setTimeout(resolve2, ms));
+}
 async function generateSummaries(prompt) {
   const { provider, text } = await generateAiText(
     {
@@ -114908,6 +115043,7 @@ async function runBackfillArticleSummaries(options = {}) {
       break;
     }
     const batch = unique.slice(i, i + BACKFILL_CONCURRENCY);
+    const batchStartedAt = Date.now();
     const results = await Promise.allSettled(
       batch.map((doc) => enrichArticleWithSummaries(doc))
     );
@@ -114924,6 +115060,27 @@ async function runBackfillArticleSummaries(options = {}) {
         }
       }
     });
+    const isLastBatch = i + BACKFILL_CONCURRENCY >= unique.length;
+    if (!isLastBatch) {
+      const delayMs = pacingDelayMs(
+        batch.length,
+        Date.now() - batchStartedAt,
+        BACKFILL_MAX_ARTICLES_PER_MINUTE
+      );
+      if (delayMs > 0) {
+        if (Date.now() + delayMs >= deadline) {
+          logger.warn(
+            `\u23F1\uFE0F No time left to pace the next summary batch within ${maxDurationMs / 1e3}s; remaining articles deferred.`
+          );
+          stats.complete = false;
+          break;
+        }
+        logger.info(
+          `\u23F3 Pacing summaries: waiting ${(delayMs / 1e3).toFixed(1)}s to stay under ${BACKFILL_MAX_ARTICLES_PER_MINUTE}/min...`
+        );
+        await sleep2(delayMs);
+      }
+    }
   }
   logger.info(
     `\u{1F9E0} Summary backfill done \u2014 processed: ${stats.processed}, complete: ${stats.succeeded}, incomplete: ${stats.failed}`
@@ -115035,18 +115192,39 @@ async function teardownGameReleasesService() {
 
 // functions/cron/src/main.ts
 var JOBS = {
-  rss: runFetchRss,
-  "article-summaries": runBackfillArticleSummaries,
+  rss: (options) => runFetchRss(options),
+  "article-summaries": () => runBackfillArticleSummaries(),
   "free-games": async () => {
     await runFetchFreeGames();
     await teardownFreeGamesService();
   },
-  "weekly-summary": runGenerateWeeklySummary,
+  "weekly-summary": () => runGenerateWeeklySummary(),
   "game-releases": async () => {
     await runCheckGameReleases();
     await teardownGameReleasesService();
   }
 };
+var appwriteError2 = null;
+function reportFatal(kind, cause) {
+  const message = cause instanceof Error ? `${cause.name}: ${cause.message}
+${cause.stack ?? ""}` : String(cause);
+  console.error(`cron: ${kind}: ${message}`);
+  try {
+    appwriteError2?.(`cron: ${kind}: ${message}`);
+  } catch {
+  }
+}
+process.on("uncaughtException", (cause) => reportFatal("uncaughtException", cause));
+process.on("unhandledRejection", (cause) => reportFatal("unhandledRejection", cause));
+function optionsFromBody(body) {
+  try {
+    const parsed2 = JSON.parse(body);
+    const options = parsed2.options;
+    if (options && typeof options === "object") return options;
+  } catch {
+  }
+  return {};
+}
 function jobsFromScheduledTick(now) {
   const jobs = ["rss", "article-summaries"];
   if (now.getUTCMinutes() === 0) {
@@ -115073,9 +115251,11 @@ function jobsFromBody(body) {
 }
 var main_default = async ({ req, res, log, error }) => {
   setAppwriteLogger(log, error);
+  appwriteError2 = error;
   const startedAt = Date.now();
   const now = /* @__PURE__ */ new Date();
   const hasBody = typeof req.body === "string" && req.body.trim().length > 0;
+  const options = hasBody ? optionsFromBody(req.body) : {};
   try {
     let jobs;
     if (hasBody) {
@@ -115099,7 +115279,7 @@ var main_default = async ({ req, res, log, error }) => {
     for (const job of jobs) {
       const jobStartedAt = Date.now();
       try {
-        const result = await JOBS[job]();
+        const result = await JOBS[job](options);
         const ms = Date.now() - jobStartedAt;
         log(`cron: job '${job}' finished in ${ms}ms`);
         results.push({ job, ok: true, ms, result: result ?? null });
@@ -115112,7 +115292,12 @@ var main_default = async ({ req, res, log, error }) => {
     }
     log(`cron: finished in ${Date.now() - startedAt}ms`);
     return res.json({ ok: allOk, function: "cron", jobs: results }, allOk ? 200 : 500);
+  } catch (cause) {
+    const message = getErrorMessage(cause);
+    error(`cron: unhandled failure: ${message}`);
+    return res.json({ ok: false, function: "cron", error: message }, 500);
   } finally {
+    appwriteError2 = null;
     setAppwriteLogger(null, null);
   }
 };
