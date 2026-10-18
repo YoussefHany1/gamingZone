@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { buildStorePrices, fetchCheapSharkDeals } from "@/src/services/api/cheapSharkApi";
 import { fetchPsnPrice } from "@/src/services/api/psnApi";
 import { fetchSteamPrice } from "@/src/services/api/steamPriceApi";
+import { fetchEpicPrice } from "@/src/services/api/epicApi";
 import { fetchGogPrice } from "@/src/services/api/gogApi";
 import { fetchXboxPrice } from "@/src/services/api/xboxApi";
 import { fetchNintendoPrice } from "@/src/services/api/nintendoApi";
@@ -119,6 +120,11 @@ export function useGameStorePrices(
         types: [13],
         priority: PRICE_PRIORITY.DIRECT,
         run: async () => single(await fetchSteamPrice(websites)),
+      },
+      {
+        types: [16],
+        priority: PRICE_PRIORITY.DIRECT,
+        run: async () => single(await fetchEpicPrice(gameName, websites)),
       },
       {
         types: [17],
