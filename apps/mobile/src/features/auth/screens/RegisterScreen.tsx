@@ -1,676 +1,169 @@
-import React, { useState, useMemo, useCallback, memo, useEffect } from "react";
+import React, { memo } from "react";
 import CustomText from "@/src/components/CustomText";
 import CustomTextInput from "@/src/components/CustomTextInput";
-import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ToastAndroid,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  Modal,
-} from "react-native";
-import { Image, ImageBackground } from "expo-image";
-import auth from "@react-native-firebase/auth";
-import firestore from "@react-native-firebase/firestore";
-import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
-import { LinearGradient } from "expo-linear-gradient";
-import { GoogleIcon } from "@/src/components/icons/BrandIcons";
+import CustomPicker from "@/src/components/CustomPicker";
+import { View, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { ImageBackground } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import Constants from "expo-constants";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import CustomPicker from "@/src/components/CustomPicker";
-import { getLocales } from "expo-localization";
-import countries from "i18n-iso-countries";
-import enLang from "i18n-iso-countries/langs/en.json";
-import arLang from "i18n-iso-countries/langs/ar.json";
-import esLang from "i18n-iso-countries/langs/es.json";
-import frLang from "i18n-iso-countries/langs/fr.json";
-import hiLang from "i18n-iso-countries/langs/hi.json";
-import ptLang from "i18n-iso-countries/langs/pt.json";
+import AuthLogo from "../components/AuthLogo";
+import AuthPrimaryButton from "../components/AuthPrimaryButton";
+import AuthGoogleButton from "../components/AuthGoogleButton";
+import AuthOutlineButton from "../components/AuthOutlineButton";
+import AuthGuestButton from "../components/AuthGuestButton";
+import VerifyEmailModal from "../components/VerifyEmailModal";
+import { useRegisterForm } from "../hooks/useRegisterForm";
+import type { AuthScreenProps, Gender } from "../types";
 
-countries.registerLocale(enLang);
-countries.registerLocale(arLang);
-countries.registerLocale(esLang);
-countries.registerLocale(frLang);
-countries.registerLocale(hiLang);
-countries.registerLocale(ptLang);
+const RegisterScreen: React.FC<AuthScreenProps<"Register">> = memo(
+  ({ navigation }) => {
+    const { t } = useTranslation();
+    const colors = useThemeColors();
+    const form = useRegisterForm({ navigation });
 
-type RootStackParamList = {
-  Login: undefined;
-  Register: undefined;
-  MainApp: undefined;
-};
+    const styles = useThemeStyles((c) => ({
+      background: {
+        flex: 1,
+        width: "100%",
+        height: "100%",
+        backgroundColor: c.background,
+      },
+      container: { flex: 1, justifyContent: "center", paddingHorizontal: 20 },
+      keyboardView: { flex: 1 },
+      scrollContent: { flexGrow: 1, justifyContent: "center" },
+      title: {
+        fontSize: 28,
+        fontWeight: "bold",
+        color: c.text,
+        textAlign: "center",
+        marginBottom: 20,
+      },
+      inputContainer: { marginBottom: 25 },
+      input: {
+        color: c.text,
+        backgroundColor: c.surface,
+        fontSize: 14,
+        padding: 15,
+        borderRadius: 5,
+        marginBottom: 10,
+      },
+      createAccountButton: { marginTop: 35 },
+    }));
 
-type RegisterScreenNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  "Register"
->;
-
-interface RegisterScreenProps {
-  navigation: RegisterScreenNavigationProp;
-}
-
-type Gender = "male" | "female";
-
-interface PickerOption {
-  label: string;
-  value: string;
-}
-
-// Countries excluded from the picker
-const EXCLUDED_COUNTRIES = ["IL"] as const;
-
-// Setup
-
-const { GOOGLE_WEB_CLIENT_ID } = Constants.expoConfig?.extra ?? {};
-GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
-
-// main
-
-const SignupScreen: React.FC<RegisterScreenProps> = memo(({ navigation }) => {
-  const { t, i18n } = useTranslation();
-
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [name, setName] = useState<string>("");
-  const [country, setCountry] = useState<string>("");
-  const [gender, setGender] = useState<Gender>("male");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [verifyModalVisible, setVerifyModalVisible] = useState<boolean>(false);
-  const [verificationEmail, setVerificationEmail] = useState<string>("");
-  const [isResending, setIsResending] = useState<boolean>(false);
-  const [isChecking, setIsChecking] = useState<boolean>(false);
-  const colors = useThemeColors();
-
-  const styles = useThemeStyles((c) => ({
-    background: {
-      flex: 1,
-      width: "100%",
-      height: "100%",
-      backgroundColor: c.background,
-    },
-    container: { flex: 1, justifyContent: "center", paddingHorizontal: 20 },
-    keyboardView: { flex: 1 },
-    scrollContent: { flexGrow: 1, justifyContent: "center" },
-    logo: { width: 220, height: 220, alignSelf: "center" },
-    title: {
-      fontSize: 28,
-      fontWeight: "bold",
-      color: c.text,
-      textAlign: "center",
-      marginBottom: 20,
-    },
-    inputContainer: { marginBottom: 25 },
-    input: {
-      color: c.text,
-      backgroundColor: c.surface,
-      fontSize: 14,
-      padding: 15,
-      borderRadius: 5,
-      marginBottom: 10,
-    },
-    button: {
-      backgroundColor: c.accent,
-      padding: 15,
-      borderRadius: 12,
-      alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "center",
-      marginBottom: 15,
-    },
-    buttonDisabled: {
-      opacity: 0.6,
-    },
-    googleButtonWrapper: { justifyContent: "center" },
-    gradient: {
-      padding: 15,
-      borderRadius: 12,
-      alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "center",
-    },
-    buttonText: {
-      color: c.onAccent,
-      fontSize: 18,
-      fontWeight: "bold",
-      textAlign: "center",
-    },
-    // Sits on the fixed Google brand gradient, identical in both themes.
-    brandButtonText: {
-      color: "#ffffff",
-      fontSize: 18,
-      fontWeight: "bold",
-      textAlign: "center",
-    },
-    newAccButton: {
-      borderWidth: 2,
-      borderColor: c.accent,
-      padding: 15,
-      borderRadius: 12,
-      justifyContent: "center",
-      alignItems: "center",
-      marginTop: 35,
-    },
-    guestButton: { marginVertical: 15, padding: 10, alignItems: "center" },
-    guestButtonText: {
-      color: c.textMuted,
-      fontSize: 16,
-      textDecorationLine: "underline",
-    },
-    verifyModalContainer: {
-      flex: 1,
-      justifyContent: "center",
-      backgroundColor: c.overlay,
-      paddingHorizontal: 24,
-    },
-    verifyModalContent: {
-      backgroundColor: c.background,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: c.accentBorder,
-      padding: 20,
-    },
-    verifyModalTitle: {
-      color: c.text,
-      fontSize: 20,
-      fontWeight: "bold",
-      textAlign: "center",
-      marginBottom: 12,
-    },
-    verifyModalText: {
-      color: c.text,
-      fontSize: 15,
-      textAlign: "center",
-      marginBottom: 10,
-    },
-    verifyModalNote: {
-      color: c.textSubtle,
-      fontSize: 13,
-      textAlign: "center",
-      lineHeight: 18,
-      marginBottom: 18,
-    },
-    verifyModalActions: {
-      gap: 10,
-    },
-    verifyPrimaryBtn: {
-      backgroundColor: c.accent,
-      padding: 14,
-      borderRadius: 10,
-      alignItems: "center",
-    },
-    verifySecondaryBtn: {
-      borderWidth: 2,
-      borderColor: c.accent,
-      padding: 14,
-      borderRadius: 10,
-      alignItems: "center",
-    },
-    verifyPrimaryBtnText: {
-      color: c.onAccent,
-      fontSize: 16,
-      fontWeight: "bold",
-    },
-    verifySecondaryBtnText: {
-      color: c.text,
-      fontSize: 16,
-      fontWeight: "bold",
-    },
-    verifySkipText: {
-      color: c.textMuted,
-      fontSize: 14,
-      textAlign: "center",
-      textDecorationLine: "underline",
-      paddingVertical: 6,
-    },
-  }));
-
-  useEffect(() => {
-    const fetchCountryByIP = async () => {
-      try {
-        const response = await fetch("https://get.geojs.io/v1/ip/country.json");
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.country) {
-            setCountry(data.country);
-            return;
-          }
-        }
-      } catch (error) {
-        console.warn("Failed to get country by IP", error);
-      }
-      // Fallback to device locale
-      setCountry(getLocales()[0]?.regionCode ?? "");
-    };
-
-    fetchCountryByIP();
-  }, []);
-
-  // Derived data
-
-  /** Rebuild the country list only when the app language changes */
-  const countriesList = useMemo<PickerOption[]>(() => {
-    const langCode = i18n.language.startsWith("ar")
-      ? "ar"
-      : i18n.language.startsWith("es")
-        ? "es"
-        : i18n.language.startsWith("fr")
-          ? "fr"
-          : i18n.language.startsWith("hi")
-            ? "hi"
-            : i18n.language.startsWith("pt")
-              ? "pt"
-              : "en";
-    const countriesObj = countries.getNames(langCode, { select: "official" });
-
-    return Object.entries(countriesObj)
-      .filter(([code]) => !EXCLUDED_COUNTRIES.includes(code as never))
-      .map(([code, label]) => ({ label, value: code }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [i18n.language]);
-
-  const genderOptions = useMemo<PickerOption[]>(
-    () => [
-      { label: t("auth.register.male") || "Male", value: "male" },
-      { label: t("auth.register.female") || "Female", value: "female" },
-    ],
-    [t],
-  );
-
-  // password Validation
-
-  /** Returns an error message string, or null if the password is valid */
-  const validatePassword = useCallback(
-    (pass: string): string | null => {
-      if (pass.length < 8 || !/[a-z]/.test(pass) || !/[0-9]/.test(pass)) {
-        return t("auth.validation.passwordRequirements");
-      }
-      return null;
-    },
-    [t],
-  );
-
-  // Email / Password sign-up handler
-
-  const handleSignup = useCallback(async (): Promise<void> => {
-    if (!email || !password || !name) {
-      ToastAndroid.show(
-        `${t("common.error")}: ${t("auth.register.emptyFields")}`,
-        ToastAndroid.LONG,
-      );
-      return;
-    }
-
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      Alert.alert(t("auth.validation.passwordTitle"), passwordError);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const { user } = await auth().createUserWithEmailAndPassword(email, password);
-
-      await user.updateProfile({ displayName: name });
-
-      // Send email verification
-      try {
-        await user.sendEmailVerification();
-      } catch (e) {
-        console.warn("Failed to send verification email:", e);
-      }
-
-      // Store additional user profile data in Firestore
-      await firestore().collection("users").doc(user.uid).set({
-        uid: user.uid,
-        displayName: name,
-        email,
-        country,
-        gender,
-        photoURL: null,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-        platform: "",
-        dob: "",
-      });
-
-      // Ask the user to verify their email. This is optional — the modal
-      // offers a "Continue" action that enters the app without verifying.
-      setVerificationEmail(email);
-      setVerifyModalVisible(true);
-    } catch (error) {
-      console.error("Sign up failed:", error);
-      const err = error as { code?: string };
-      let msg = t("auth.errors.general");
-
-      if (err.code === "auth/email-already-in-use") {
-        msg = t("auth.errors.emailAlreadyInUse");
-      } else if (err.code === "auth/weak-password") {
-        msg = t("auth.errors.weakPassword");
-      } else if (err.code === "auth/invalid-email") {
-        msg = t("auth.errors.invalidEmail");
-      }
-
-      ToastAndroid.show(msg, ToastAndroid.LONG);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [email, password, name, country, gender, t, validatePassword]);
-
-  // Resend the verification email
-  const handleResendVerification = useCallback(async (): Promise<void> => {
-    if (isResending) return;
-    setIsResending(true);
-    try {
-      await auth().currentUser?.sendEmailVerification();
-      ToastAndroid.show(t("auth.verificationEmailSent"), ToastAndroid.LONG);
-    } catch (error) {
-      console.error("Failed to resend verification email:", error);
-      const code = (error as { code?: string }).code;
-      ToastAndroid.show(
-        code === "auth/too-many-requests"
-          ? t("auth.verifyPrompt.tooManyRequests")
-          : t("auth.verifyPrompt.resendError"),
-        ToastAndroid.LONG,
-      );
-    } finally {
-      setIsResending(false);
-    }
-  }, [isResending, t]);
-
-  // Refresh the account and check whether the email is verified now
-  const handleCheckVerified = useCallback(async (): Promise<void> => {
-    if (isChecking) return;
-    setIsChecking(true);
-    try {
-      await auth().currentUser?.reload();
-      if (auth().currentUser?.emailVerified) {
-        ToastAndroid.show(t("auth.verifyPrompt.verifiedSuccess"), ToastAndroid.LONG);
-        setVerifyModalVisible(false);
-        navigation.replace("MainApp");
-      } else {
-        ToastAndroid.show(t("auth.verifyPrompt.notVerifiedYet"), ToastAndroid.LONG);
-      }
-    } catch (error) {
-      console.error("Failed to refresh verification status:", error);
-      ToastAndroid.show(t("auth.verifyPrompt.notVerifiedYet"), ToastAndroid.LONG);
-    } finally {
-      setIsChecking(false);
-    }
-  }, [isChecking, navigation, t]);
-
-  // Continue into the app without verifying (verification is optional)
-  const handleSkipVerification = useCallback((): void => {
-    setVerifyModalVisible(false);
-    navigation.replace("MainApp");
-  }, [navigation]);
-
-  // Google Sign-Up handler
-
-  const onGoogleButtonPress = useCallback(async (): Promise<void> => {
-    if (isLoading) return;
-    setIsLoading(true);
-    try {
-      await GoogleSignin.hasPlayServices();
-      const userInfoResponse = await GoogleSignin.signIn();
-      const idToken = userInfoResponse.data?.idToken;
-
-      if (!idToken) {
-        console.error(
-          "Google sign-up error: idToken missing in response.",
-          JSON.stringify(userInfoResponse),
-        );
-        ToastAndroid.show(t("auth.idTokenError"), ToastAndroid.LONG);
-        return;
-      }
-
-      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      await auth().signInWithCredential(googleCredential);
-      navigation.replace("MainApp");
-    } catch (error) {
-      console.error("Google sign-up error:", error);
-      if ((error as { code?: string }).code === statusCodes.SIGN_IN_CANCELLED) {
-        // User cancelled — no action required
-      } else {
-        ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isLoading, navigation, t]);
-
-  // Anonymous / Guest login handler
-
-  const handleAnonymousLogin = useCallback(async (): Promise<void> => {
-    if (isLoading) return;
-    setIsLoading(true);
-    try {
-      await auth().signInAnonymously();
-      navigation.replace("MainApp");
-    } catch (error) {
-      console.error("Anonymous login failed", error);
-      ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isLoading, navigation, t]);
-
-  const handleNavigateToLogin = useCallback(() => {
-    navigation.navigate("Login");
-  }, [navigation]);
-
-  return (
-    <ImageBackground
-      source={require("@/assets/background.webp")}
-      style={styles.background}
-      contentFit="cover"
-      cachePolicy="memory-disk"
-    >
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+    return (
+      <ImageBackground
+        source={require("@/assets/background.webp")}
+        style={styles.background}
+        contentFit="cover"
+        cachePolicy="memory-disk"
       >
-        <SafeAreaView style={styles.container}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.scrollContent}
-          >
-            <Image
-              source={require("@/assets/logo.webp")}
-              style={styles.logo}
-              contentFit="cover"
-              transition={500}
-              cachePolicy="memory-disk"
-              allowDownscaling={true}
-            />
-
-            <CustomText style={styles.title}>{t("auth.register.title")}</CustomText>
-
-            <View style={styles.inputContainer}>
-              <CustomTextInput
-                style={styles.input}
-                placeholder={t("auth.register.namePlaceholder")}
-                value={name}
-                onChangeText={setName}
-                placeholderTextColor={colors.textSubtle}
-              />
-              <CustomTextInput
-                style={styles.input}
-                placeholder={t("auth.emailPlaceholder")}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholderTextColor={colors.textSubtle}
-              />
-
-              <CustomPicker
-                options={genderOptions}
-                selectedValue={gender}
-                onValueChange={(val) => setGender(val as Gender)}
-                placeholder={t("auth.register.genderPlaceholder") || "Select Gender"}
-              />
-              <CustomPicker
-                options={countriesList}
-                selectedValue={country}
-                onValueChange={setCountry}
-                placeholder={t("auth.register.countryPlaceholder") || "Select Country"}
-              />
-
-              <CustomTextInput
-                style={styles.input}
-                placeholder={t("auth.passwordPlaceholder")}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholderTextColor={colors.textSubtle}
-              />
-            </View>
-
-            {/* Email sign-up button */}
-            <TouchableOpacity
-              style={[styles.button, isLoading && styles.buttonDisabled]}
-              onPress={handleSignup}
-              disabled={isLoading}
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <SafeAreaView style={styles.container}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.scrollContent}
             >
-              {isLoading ? (
-                <ActivityIndicator color={colors.onAccent} size="small" />
-              ) : (
-                <CustomText style={styles.buttonText}>
-                  {t("auth.register.signUpButton")}
-                </CustomText>
-              )}
-            </TouchableOpacity>
+              <AuthLogo />
 
-            {/* Google sign-up button */}
-            <TouchableOpacity
-              onPress={onGoogleButtonPress}
-              style={[styles.googleButtonWrapper, isLoading && styles.buttonDisabled]}
-              disabled={isLoading}
-            >
-              <LinearGradient
-                colors={["#10574b", "#3174f1", "#e92d18", "#c38d0c"]}
-                style={styles.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#ffffff" size="small" />
-                ) : (
-                  <>
-                    <GoogleIcon size={28} />
-                    <CustomText style={styles.brandButtonText}>
-                      {" "}
-                      {t("auth.register.googleSignUp")}
-                    </CustomText>
-                  </>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-
-            {/* Already have an account button */}
-            <TouchableOpacity
-              style={[styles.newAccButton, isLoading && styles.buttonDisabled]}
-              onPress={handleNavigateToLogin}
-              disabled={isLoading}
-            >
-              <CustomText style={styles.buttonText}>
-                {t("auth.register.haveAnAccount")}
+              <CustomText style={styles.title}>
+                {t("auth.register.title")}
               </CustomText>
-            </TouchableOpacity>
 
-            {/* Continue as guest button */}
-            <TouchableOpacity
-              onPress={handleAnonymousLogin}
-              style={[styles.guestButton, isLoading && styles.buttonDisabled]}
-              disabled={isLoading}
-            >
-              <CustomText style={styles.guestButtonText}>
-                {t("auth.guest") || "Continue as Guest"}
-              </CustomText>
-            </TouchableOpacity>
-          </ScrollView>
-        </SafeAreaView>
-      </KeyboardAvoidingView>
+              <View style={styles.inputContainer}>
+                <CustomTextInput
+                  style={styles.input}
+                  placeholder={t("auth.register.namePlaceholder")}
+                  value={form.name}
+                  onChangeText={form.setName}
+                  placeholderTextColor={colors.textSubtle}
+                />
+                <CustomTextInput
+                  style={styles.input}
+                  placeholder={t("auth.emailPlaceholder")}
+                  value={form.email}
+                  onChangeText={form.setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  placeholderTextColor={colors.textSubtle}
+                />
 
-      <Modal
-        visible={verifyModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={handleSkipVerification}
-      >
-        <View style={styles.verifyModalContainer}>
-          <View style={styles.verifyModalContent}>
-            <CustomText style={styles.verifyModalTitle}>
-              {t("auth.verifyPrompt.title")}
-            </CustomText>
-            <CustomText style={styles.verifyModalText}>
-              {t("auth.verifyPrompt.message", { email: verificationEmail })}
-            </CustomText>
-            <CustomText style={styles.verifyModalNote}>
-              {t("auth.verifyPrompt.optionalNote")}
-            </CustomText>
+                <CustomPicker
+                  options={form.genderOptions}
+                  selectedValue={form.gender}
+                  onValueChange={(val) => form.setGender(val as Gender)}
+                  placeholder={
+                    t("auth.register.genderPlaceholder") || "Select Gender"
+                  }
+                />
+                <CustomPicker
+                  options={form.countriesList}
+                  selectedValue={form.country}
+                  onValueChange={form.setCountry}
+                  placeholder={
+                    t("auth.register.countryPlaceholder") || "Select Country"
+                  }
+                />
 
-            <View style={styles.verifyModalActions}>
-              <TouchableOpacity
-                style={[
-                  styles.verifyPrimaryBtn,
-                  (isChecking || isResending) && styles.buttonDisabled,
-                ]}
-                onPress={handleCheckVerified}
-                disabled={isChecking || isResending}
-              >
-                {isChecking ? (
-                  <ActivityIndicator color={colors.onAccent} size="small" />
-                ) : (
-                  <CustomText style={styles.verifyPrimaryBtnText}>
-                    {t("auth.verifyPrompt.iveVerified")}
-                  </CustomText>
-                )}
-              </TouchableOpacity>
+                <CustomTextInput
+                  style={styles.input}
+                  placeholder={t("auth.passwordPlaceholder")}
+                  value={form.password}
+                  onChangeText={form.setPassword}
+                  secureTextEntry
+                  placeholderTextColor={colors.textSubtle}
+                />
+              </View>
 
-              <TouchableOpacity
-                style={[
-                  styles.verifySecondaryBtn,
-                  (isResending || isChecking) && styles.buttonDisabled,
-                ]}
-                onPress={handleResendVerification}
-                disabled={isResending || isChecking}
-              >
-                {isResending ? (
-                  <ActivityIndicator color={colors.text} size="small" />
-                ) : (
-                  <CustomText style={styles.verifySecondaryBtnText}>
-                    {t("auth.verifyPrompt.resend")}
-                  </CustomText>
-                )}
-              </TouchableOpacity>
+              <AuthPrimaryButton
+                label={t("auth.register.signUpButton")}
+                onPress={form.handleSignup}
+                loading={form.isLoading}
+                disabled={form.isLoading}
+              />
 
-              <TouchableOpacity
-                onPress={handleSkipVerification}
-                disabled={isChecking || isResending}
-              >
-                <CustomText style={styles.verifySkipText}>
-                  {t("auth.verifyPrompt.continue")}
-                </CustomText>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </ImageBackground>
-  );
-});
+              <AuthGoogleButton
+                label={t("auth.register.googleSignUp")}
+                onPress={form.handleGooglePress}
+                loading={form.isLoading}
+                disabled={form.isLoading}
+              />
 
-SignupScreen.displayName = "SignupScreen";
+              <AuthOutlineButton
+                label={t("auth.register.haveAnAccount")}
+                onPress={form.handleNavigateToLogin}
+                disabled={form.isLoading}
+                containerStyle={styles.createAccountButton}
+              />
 
-export default SignupScreen;
+              <AuthGuestButton
+                label={t("auth.guest") || "Continue as Guest"}
+                onPress={form.handleAnonymousLogin}
+                disabled={form.isLoading}
+              />
+            </ScrollView>
+          </SafeAreaView>
+        </KeyboardAvoidingView>
 
-// Styles
+        <VerifyEmailModal
+          visible={form.verify.visible}
+          email={form.verify.email}
+          isChecking={form.verify.isChecking}
+          isResending={form.verify.isResending}
+          onCheckVerified={form.verify.handleCheckVerified}
+          onResend={form.verify.handleResend}
+          onSkip={form.verify.handleSkip}
+        />
+      </ImageBackground>
+    );
+  },
+);
+
+RegisterScreen.displayName = "RegisterScreen";
+
+export default RegisterScreen;

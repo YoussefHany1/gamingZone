@@ -1,10 +1,11 @@
 import React, { useCallback, useMemo } from "react";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import { View, TouchableOpacity, ToastAndroid } from "react-native";
-import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import { GestureScrollView } from "@/src/components/GestureScrollView";
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
-import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
+import type { ListRenderItemInfo } from "@shopify/flash-list";
+import { FlashList } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { Bell, BellOff } from "lucide-react-native";
@@ -20,6 +21,7 @@ import type { AnticipatedCardProps } from "../../types";
 import type { Game } from "@/src/types/sharedTypes";
 import ErrorState from "@/src/components/ErrorState";
 import { fetchMostAnticipatedGames } from "@/src/services/api/igdbApi";
+import { logger } from "@/src/lib/logger";
 
 const CARD_WIDTH = 160;
 const STORAGE_KEY = "MOST_ANTICIPATED_CACHE";
@@ -248,7 +250,7 @@ function MostAnticipated(): React.ReactElement {
           ToastAndroid.SHORT,
         );
       } catch (e) {
-        console.error("Toggle notification error:", e);
+        logger.error("Toggle notification error:", e);
         ToastAndroid.show(t("error"), ToastAndroid.SHORT);
       }
     },
@@ -291,7 +293,7 @@ function MostAnticipated(): React.ReactElement {
         />
       </View>
       <FlashList
-        renderScrollComponent={GHScrollView as any}
+        renderScrollComponent={GestureScrollView}
         data={gamesToShow}
         extraData={preferences}
         horizontal

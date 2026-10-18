@@ -10,7 +10,11 @@
     "start": "npm --prefix apps/mobile start",
     "android": "npm --prefix apps/mobile run android",
     "ios": "npm --prefix apps/mobile run ios",
-    "web": "npm --prefix apps/mobile run web"
+    "web": "npm --prefix apps/mobile run web",
+    "type-check": "npm run type-check -w packages/core && npm run type-check -w packages/utils && npm run type-check -w apps/mobile && npm run type-check -w apps/web && npm run check:scripts -w apps/backend",
+    "lint": "npm run lint -w apps/mobile",
+    "lint:all": "npm run lint -w apps/mobile && npm run lint -w apps/web && npm run lint -w apps/backend",
+    "test": "npm test -w packages/utils && npm test -w apps/mobile && npm test -w apps/backend"
   },
   "overrides": {
     "react-native": "0.86.3",

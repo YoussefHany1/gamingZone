@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect, useCallback, useMemo } from "react";
+import React, { memo, useState, useCallback, useMemo } from "react";
 import CustomText from "@/src/components/CustomText";
 import {
   View,
@@ -8,8 +8,7 @@ import {
   ScrollView,
   ToastAndroid,
 } from "react-native";
-import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
-import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
+import AdSlot from "@/src/components/AdSlot";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
@@ -21,8 +20,6 @@ import Constants from "expo-constants";
 import { openLink } from "@/src/lib/browser";
 import { useNotificationPreferences } from "@/src/hooks/useNotificationPreferences";
 import useCachedData from "@/src/hooks/useCachedData";
-import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
-import { adUnitId } from "@/src/constants/config";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import Loading from "@/src/Loading";
@@ -61,6 +58,7 @@ const safeId = (input: string): string => {
 //  NewsItem
 
 import type { NewsItemProps } from "../types";
+import { logger } from "@/src/lib/logger";
 
 const NewsItem = memo<NewsItemProps>(({ item, lang }) => {
   const styles = useThemeStyles((c) => ({
@@ -270,7 +268,7 @@ const NewsSection = memo<NewsSectionProps>(
             );
           }
         } catch (error) {
-          console.error("[NewsSection] Error adding RSS source:", error);
+          logger.error("[NewsSection] Error adding RSS source:", error);
           ToastAndroid.showWithGravity(
             "Could not enable notifications for this source. Please check your connection.",
             ToastAndroid.SHORT,
@@ -365,27 +363,14 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
       textDecorationLine: "underline",
     },
     ad: {
-      alignItems: "center",
-      width: "100%",
       marginBottom: 38,
-    },
-    adText: {
-      color: c.text,
-      marginBottom: 10,
     },
   }));
   const currentGame = route.params?.gameName ?? "";
   const legacyApiUrl = route.params?.apiUrl ?? "";
   const sourceLink = route.params?.source ?? "";
 
-  const [showAds, setShowAds] = useState<boolean>(false);
-  const adsEnabled = useAdsEnabled();
   const { t } = useTranslation();
-
-  useEffect(() => {
-    const task = runAfterInteractions(() => setShowAds(true));
-    return () => task.cancel();
-  }, []);
 
   const handleOpenSource = useCallback(() => {
     if (sourceLink) openLink(sourceLink);
@@ -403,12 +388,10 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
           rssUrl={legacyApiUrl}
         />
 
-        {showAds && adsEnabled && (
-          <View style={styles.ad}>
-            <CustomText style={styles.adText}>{t("common.ad")}</CustomText>
-            <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
-          </View>
-        )}
+        {/* Wrapped because this slot only spaces below the banner. */}
+        <View style={styles.ad}>
+          <AdSlot marginVertical={0} />
+        </View>
 
         {sourceLink && (
           <TouchableOpacity onPress={handleOpenSource} style={{ marginBottom: 10 }}>
@@ -430,5 +413,6 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
     </SafeAreaView>
   );
 });
+GameNewsScreen.displayName = "GameNewsScreen";
 
 export default GameNewsScreen;

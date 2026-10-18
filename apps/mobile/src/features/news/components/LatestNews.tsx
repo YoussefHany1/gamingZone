@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
-import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
+import type { ListRenderItemInfo } from "@shopify/flash-list";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { NativeAdComponent } from "@/src/components/NativeAd";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
@@ -475,7 +476,7 @@ function LatestNews({
       const pageNumbers: number[] = [];
       const maxButtons = 5;
       let startPage = Math.max(1, currentPage - 2);
-      let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+      const endPage = Math.min(totalPages, startPage + maxButtons - 1);
 
       if (endPage - startPage + 1 < maxButtons) {
         startPage = Math.max(1, endPage - maxButtons + 1);
@@ -603,6 +604,8 @@ function LatestNews({
     showFooter,
     t,
     handlePageChange,
+    styles,
+    colors.text,
   ]);
 
   const onRefresh = useCallback(async (): Promise<void> => {

@@ -1,12 +1,13 @@
 import { useState, useCallback, useMemo, memo } from "react";
+import type {
+  ViewStyle} from "react-native";
 import {
   View,
   Text,
   Modal,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
-  ViewStyle,
+  ScrollView
 } from "react-native";
 import { Check, ChevronDown, X } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

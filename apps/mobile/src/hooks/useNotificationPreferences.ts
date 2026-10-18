@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { ToastAndroid } from "react-native";
 import auth from "@react-native-firebase/auth";
-import NotificationService, {
+import type {
   NotificationPreferences,
 } from "@/src/services/notificationService";
+import NotificationService from "@/src/services/notificationService";
+import { logger } from "@/src/lib/logger";
 
 // Loads, caches, and toggles a user's notification topic preferences.
 // Uses an in-memory module-level cache so repeated hook mounts within the
@@ -56,7 +58,7 @@ export const useNotificationPreferences = (): UseNotificationPreferencesResult =
         globalPreferencesCache = prefs ?? {};
         setPreferences(globalPreferencesCache);
       } catch (error) {
-        console.error("[useNotificationPreferences] Load error:", error);
+        logger.error("[useNotificationPreferences] Load error:", error);
       } finally {
         if (!cancelled) setLoadingPreferences(false);
       }
@@ -93,7 +95,7 @@ export const useNotificationPreferences = (): UseNotificationPreferencesResult =
           nextValue,
         );
       } catch (error) {
-        console.error("[useNotificationPreferences] Failed to save preference:", error);
+        logger.error("[useNotificationPreferences] Failed to save preference:", error);
         // Roll back both the cache and local state.
         const rolledBack: NotificationPreferences = {
           ...(globalPreferencesCache ?? {}),

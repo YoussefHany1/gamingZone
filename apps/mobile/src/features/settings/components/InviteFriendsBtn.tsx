@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from "react";
-import { View, TouchableOpacity, Share, StyleSheet } from "react-native";
+import { View, TouchableOpacity, Share } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { Share2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";

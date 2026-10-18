@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import firestore from "@react-native-firebase/firestore";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import type { FirestoreUser } from "@/src/features/settings/types";
+import { logger } from "@/src/lib/logger";
 
 export function useIsAdmin(): boolean {
   const user = useAuthStore((state) => state.user);
@@ -26,7 +27,7 @@ export function useIsAdmin(): boolean {
         );
       })
       .catch((err) => {
-        console.error("[useIsAdmin] Failed to fetch user doc:", err);
+        logger.error("[useIsAdmin] Failed to fetch user doc:", err);
         if (isMounted) setIsAdmin(false);
       });
 

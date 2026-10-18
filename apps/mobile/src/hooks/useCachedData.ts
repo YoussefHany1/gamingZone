@@ -6,6 +6,7 @@ import {
   storageGetTimestamp,
   storageSetTimestamp,
 } from "../lib/storage";
+import { logger } from "@/src/lib/logger";
 
 // ---------------------------------------------------------------------------
 // NetInfo cache — shared across all useCachedData instances.
@@ -231,7 +232,7 @@ export default function useCachedData<T>(
         storageSetTimestamp(timestampKey, Date.now()); // synchronous write
       } catch (err) {
         if (signal?.aborted) return;
-        console.error(`[useCachedData] Error for key "${key}":`, err);
+        logger.error(`[useCachedData] Error for key "${key}":`, err);
         safeSet(setError, err instanceof Error ? err : new Error(String(err)));
       } finally {
         if (!signal?.aborted) {

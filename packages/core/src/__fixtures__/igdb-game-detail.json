@@ -1,0 +1,60 @@
+{
+  "id": 1245620,
+  "name": "Elden Ring",
+  "summary": "Rise, Tarnished, and be guided by grace to brandish the power of the Elden Ring.",
+  "cover": { "image_id": "co4jni" },
+  "total_rating": 95.42,
+  "total_rating_count": 4211,
+  "release_dates": [{ "human": "Feb 25, 2022" }],
+  "first_release_date": 1645747200,
+  "platforms": [
+    { "id": 6, "name": "PC (Microsoft Windows)", "abbreviation": "PC" },
+    { "id": 167, "name": "PlayStation 5", "abbreviation": "PS5" }
+  ],
+  "genres": [
+    { "id": 12, "name": "Role-playing (RPG)" },
+    { "id": 31, "name": "Adventure" }
+  ],
+  "game_modes": [{ "id": 1, "name": "Single player" }],
+  "age_ratings": [{ "organization": 3, "rating_category": 4 }],
+  "involved_companies": [
+    {
+      "id": 1,
+      "developer": true,
+      "publisher": false,
+      "company": { "id": 1439, "name": "FromSoftware" }
+    },
+    {
+      "id": 2,
+      "developer": false,
+      "publisher": true,
+      "company": { "id": 1427, "name": "Bandai Namco Entertainment" }
+    }
+  ],
+  "game_engines": [{ "id": 308, "name": "Proprietary Engine" }],
+  "videos": [{ "video_id": "E3Huy2cdih0", "name": "Gameplay Trailer" }],
+  "screenshots": [{ "id": "abc123", "image_id": "sc1" }, { "image_id": "sc2" }],
+  "language_supports": [
+    { "language": { "name": "English" }, "language_support_type": { "name": "Audio" } },
+    { "language": { "name": "English" }, "language_support_type": { "name": "Subtitles" } },
+    { "language": { "name": "Arabic" }, "language_support_type": { "name": "Interface" } }
+  ],
+  "game_time_to_beats": { "hastily": 21000, "normally": 33000, "completely": 70000 },
+  "websites": [
+    {
+      "id": 1,
+      "type": 13,
+      "url": "https://store.steampowered.com/app/1245620/ELDEN_RING/"
+    }
+  ],
+  "collections": [
+    {
+      "games": [
+        { "id": 1170, "name": "Dark Souls", "cover": { "image_id": "co1" } }
+      ]
+    }
+  ],
+  "similar_games": [
+    { "id": 11133, "name": "Dark Souls III", "cover": { "image_id": "co2" } }
+  ]
+}

@@ -21,7 +21,7 @@ import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { adUnitId } from "@/src/constants/config";
 import useCachedData from "@/src/hooks/useCachedData";
-import { Game } from "@/src/types/sharedTypes";
+import type { Game } from "@/src/types/sharedTypes";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import YoutubePlayer from "react-native-youtube-iframe";
 import { fetchLatestTrailers } from "@/src/services/api/igdbApi";

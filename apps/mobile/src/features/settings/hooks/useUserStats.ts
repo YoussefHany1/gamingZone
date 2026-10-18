@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import firestore from "@react-native-firebase/firestore";
 import { storageGet, storageSet } from "@/src/lib/storage";
 import type { GameEntry } from "@/src/features/lists/types";
+import { logger } from "@/src/lib/logger";
 
 export interface UserStats {
   counts: {
@@ -69,7 +70,7 @@ export function useUserStats(uid: string) {
       const listsSnap = await userRef.collection("lists").get();
       listIds = listsSnap.docs.map((d) => d.id);
     } catch (error) {
-      console.error("[useUserStats] Error reading list docs:", error);
+      logger.error("[useUserStats] Error reading list docs:", error);
     }
 
     // Fall back to the default lists if the lists subcollection read failed.
@@ -121,7 +122,7 @@ export function useUserStats(uid: string) {
             }
           }
         } catch (error) {
-          console.error(`[useUserStats] Error reading list "${listId}":`, error);
+          logger.error(`[useUserStats] Error reading list "${listId}":`, error);
         }
       }),
     );
@@ -140,7 +141,7 @@ export function useUserStats(uid: string) {
       result.averageRating =
         result.ratedCount > 0 ? Math.round((sum / result.ratedCount) * 10) / 10 : null;
     } catch (error) {
-      console.error("[useUserStats] Error reading ratings:", error);
+      logger.error("[useUserStats] Error reading ratings:", error);
     }
 
     result.counts.totalUnique = seen.size;

@@ -160,11 +160,22 @@ export interface Game {
   total_rating?: number;
   first_release_date?: number;
   game_type?: number;
+  /**
+   * IGDB category id. 0 is a base game; anything else is a DLC, expansion,
+   * bundle or pack. Rails that should only show playable base games filter on
+   * this rather than casting the game to `any`.
+   */
+  category?: number;
   platforms?: GamePlatform[];
   genres?: GameGenre[];
   hypes?: number;
   videos?: Video[];
   screenshots?: Screenshot[];
+  /**
+   * Populated by the batched ids endpoint, which the recommendation engine uses
+   * to walk from the games a user plays to games they might like.
+   */
+  similar_games?: GameBrief[];
 }
 
 export interface GamePlatform {

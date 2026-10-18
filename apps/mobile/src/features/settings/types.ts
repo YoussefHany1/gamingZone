@@ -54,3 +54,6 @@ export type IgdbGame = {
 export type SteamWishlistResponse = {
   appIds?: number[];
 };
+
+/** The kind of feedback a user can submit from the contact screen. */
+export type FeedbackType = "suggestion" | "problem" | "other";

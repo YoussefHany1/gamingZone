@@ -3,7 +3,8 @@ import { igdbImageUrl } from "@gaming-zone/utils";
 import { View, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
-import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
+import type { ListRenderItemInfo } from "@shopify/flash-list";
+import { FlashList } from "@shopify/flash-list";
 import { ArrowLeft, ArrowRight } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -222,15 +223,34 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
   const safeFilters = `${filters?.year ?? ""}_${filters?.genre ?? ""}_${filters?.platform ?? ""}_${filters?.sort ?? ""}`;
   const STORAGE_KEY = `GAMES_SEARCH_${safeQuery}_${safeFilters}`;
 
+  // The parent rebuilds `filters` on every render, so depend on its fields: a
+  // new-but-equal object would otherwise recreate the fetcher below and change
+  // the cache-key dependencies on every render. Rebuilding the object from its
+  // four fields is exact — `GameFilters` has no other members.
+  const { year, genre, platform, sort } = filters ?? {};
+  const hasFilters = filters !== undefined;
+  const activeFilters = useMemo<GameFilters | undefined>(
+    () =>
+      hasFilters
+        ? {
+            year: year ?? null,
+            genre: genre ?? null,
+            platform: platform ?? null,
+            sort: sort ?? null,
+          }
+        : undefined,
+    [hasFilters, year, genre, platform, sort],
+  );
+
   const fetchGames = useCallback(
-    () => fetchSearchResults(query, filters),
-    [query, filters?.year, filters?.genre, filters?.platform, filters?.sort],
+    () => fetchSearchResults(query, activeFilters),
+    [query, activeFilters],
   );
 
   const { data, isLoading, isRefetching, error, refetch } = useCachedData<Game[]>(
     STORAGE_KEY,
     fetchGames,
-    [query, filters?.year, filters?.genre, filters?.platform, filters?.sort],
+    [query, activeFilters],
   );
 
   // Page 1 base list (served from cache + revalidated). Additional pages are
@@ -267,7 +287,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     const nextPage = page + 1;
     setIsLoadingMore(true);
     try {
-      const next = await fetchSearchResults(query, filters, nextPage);
+      const next = await fetchSearchResults(query, activeFilters, nextPage);
       const seen = new Set([...baseGames, ...extraRef.current].map((g) => g.id));
       const uniqueNext = next.filter((g) => !seen.has(g.id));
       setExtraGames([...extraRef.current, ...uniqueNext]);
@@ -278,7 +298,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMore, page, query, filters, baseGames]);
+  }, [isLoadingMore, hasMore, page, query, activeFilters, baseGames]);
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<Game>) => (
@@ -286,7 +306,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
         <GameCard item={item} />
       </View>
     ),
-    [],
+    [styles],
   );
 
   const renderBackButton = useCallback(() => {
@@ -315,7 +335,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
         <SkeletonGameCard />
       </View>
     ),
-    [],
+    [styles],
   );
 
   const skeletonData = useMemo(

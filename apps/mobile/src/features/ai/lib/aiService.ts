@@ -1,6 +1,7 @@
 import firestore from "@react-native-firebase/firestore";
 import auth from "@react-native-firebase/auth";
-import { ChatMessage } from "../types";
+import type { ChatMessage } from "../types";
+import { logger } from "@/src/lib/logger";
 
 // Ensure EXPO_PUBLIC keys are defined in your .env
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY?.replace(/^"|"$/g, "");
@@ -50,7 +51,7 @@ async function getUserGamesContext(): Promise<string> {
 
     return context;
   } catch (error) {
-    console.error("Error fetching context:", error);
+    logger.error("Error fetching context:", error);
     return "";
   }
 }
@@ -134,16 +135,16 @@ ${gamesContext}`,
 
   // Strategy: Gemini -> Groq
   try {
-    console.log("Attempting Gemini...");
+    logger.debug("Attempting Gemini...");
     const text = await callGemini(payload);
     return { text, model: "Gemini" };
   } catch (errGemini) {
-    console.warn("Gemini failed, trying Groq...", errGemini);
+    logger.warn("Gemini failed, trying Groq...", errGemini);
     try {
       const text = await callGroq(payload);
       return { text, model: "Groq Llama-3" };
     } catch (errGroq) {
-      console.error("All AI providers failed.", errGroq);
+      logger.error("All AI providers failed.", errGroq);
       throw new Error("All AI providers are currently unavailable.");
     }
   }

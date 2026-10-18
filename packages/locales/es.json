@@ -219,6 +219,7 @@
     "details": {
       "readFullArticle": "Leer el artículo completo",
       "noDescription": "No hay ninguna descripción disponible.",
+      "summaryTitle": "Resumen con IA",
       "shareShortenError": "Se produjo un error. Por favor, inténtalo de nuevo más tarde.",
       "shareMessage": "Encontré un artículo interesante en Gaming Zone\nÉchale un vistazo: "
     },
@@ -624,6 +625,8 @@
       "emptyText": "Tu lista está vacía",
       "emptySubText": "Añade los juegos que quieras.",
       "findButton": "Encuentra tu juego",
+      "viewList": "Vista de lista",
+      "viewGrid": "Vista de cuadrícula",
       "viewOnly": "Estás viendo una lista de solo lectura que se ha compartido contigo.",
       "messages": {
         "loadError": "Tuvimos un problema al cargar tu lista. Por favor, inténtalo de nuevo más tarde",

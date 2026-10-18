@@ -1,79 +1,93 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, ScrollView, ToastAndroid } from "react-native";
-import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
-import firestore from "@react-native-firebase/firestore";
+import { ToastAndroid } from "react-native";
+import type { RefObject } from "react";
+import type { ScrollView } from "react-native";
 import { useTranslation } from "react-i18next";
-import useCachedData from "@/src/hooks/useCachedData";
-import { storageGet } from "@/src/lib/storage";
-import { useScrollDirection } from "@/src/hooks/useScrollDirection";
-import { useAuthStore } from "@/src/store/useAuthStore";
+import type { TFunction } from "i18next";
 import { useShallow } from "zustand/react/shallow";
-import type { GameData, LangRow, PcRequirements, StorePrice } from "../types";
-import {
-  fetchSteamRequirements,
-  extractSteamAppId,
-  getAgeRatingInfo,
-} from "../components/gameDetails/utils";
+import { useScrollDirection } from "@/src/hooks/useScrollDirection";
+import type { UseScrollDirectionResult } from "@/src/hooks/useScrollDirection";
+import { useAuthStore } from "@/src/store/useAuthStore";
 import { formatLanguageRows, formatPlayTime } from "@gaming-zone/utils";
-import { fetchGameById } from "@/src/services/api/igdbApi";
-import { fetchCheapSharkDeals, buildStorePrices } from "@/src/services/api/cheapSharkApi";
-import { fetchPsnPrice } from "@/src/services/api/psnApi";
-import { withTrace } from "@/src/services/performanceService";
+import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import { getAgeRatingInfo } from "../components/gameDetails/utils";
+import type { GameListEntry } from "../components/gameDetails/types";
+import type {
+  AgeRatingInfo,
+  GameData,
+  GameItem,
+  LangRow,
+  PcRequirements,
+  StorePrice,
+  UseGameDetailsProps,
+} from "../types";
+import { useCurrentGameId } from "./useCurrentGameId";
+import { useGameContentReady } from "./useGameContentReady";
+import { useGameData } from "./useGameData";
+import { useGamePcRequirements } from "./useGamePcRequirements";
+import { useGameRating } from "./useGameRating";
+import { useGameStorePrices } from "./useGameStorePrices";
 
-import type { UseGameDetailsProps } from "../types";
+/** Everything the game details screen renders. */
+export type GameDetailsView = {
+  game: GameData | null;
+  loading: boolean;
+  error: Error | null;
+  refetch: (forceRefresh?: boolean) => Promise<void>;
+  isReady: boolean;
+  currentId: number | string;
+  currentLang: string;
+  scrollRef: RefObject<ScrollView | null>;
+  user: FirebaseAuthTypes.User | null;
+  rating: number;
+  showListModal: boolean;
+  ageRating: AgeRatingInfo | null;
+  languageList: LangRow[];
+  pcRequirements: PcRequirements | null;
+  pcReqLoading: boolean;
+  storePrices: StorePrice[] | null;
+  storePricesLoading: boolean;
+  main: number | null;
+  mainExtra: number | null;
+  completionist: number | null;
+  gameDataForList: GameListEntry | null;
+  seriesGames: GameItem[];
+  similarGames: GameItem[];
+  t: TFunction;
+  onScroll: UseScrollDirectionResult["onScroll"];
+  handleRateGame: (newRating: number) => Promise<void>;
+  handleGoBack: () => void;
+  handleAddToList: () => void;
+  handleCloseModal: () => void;
+  handleNavigateToGame: (id: number) => void;
+};
 
-export const useGameDetails = ({ initialGameID, navigation }: UseGameDetailsProps) => {
-  const [currentId, setCurrentId] = useState<number | string>(initialGameID);
+/**
+ * Owns what the game details screen needs: the loaded IGDB payload, the values
+ * derived from it, the user's rating, the Steam/PC-store lookups, and the
+ * screen's own interactions (list modal, back navigation, switching games in
+ * place).
+ *
+ * Each of those is a single-purpose hook in this folder; all this hook does is
+ * wire them together and turn `game` into the view model the section components
+ * take.
+ */
+export const useGameDetails = ({
+  initialGameID,
+  navigation,
+}: UseGameDetailsProps): GameDetailsView => {
+  const { currentId, setCurrentId } = useCurrentGameId(initialGameID);
+  const isReady = useGameContentReady(initialGameID);
   const scrollRef = useRef<ScrollView>(null);
-  const mountedRef = useRef<boolean>(true);
-
-  // Start ready immediately if cached data exists — no skeleton on repeat visits.
-  // Only defer rendering (via InteractionManager) on the very first load when
-  // there is no cache, to avoid jank during the navigation animation.
-  const [isReady, setIsReady] = useState<boolean>(() => {
-    if (!initialGameID) return false;
-    return storageGet<unknown>(`GAME_DETAILS_CACHE_${initialGameID}`) !== null;
-  });
-  const [showListModal, setShowListModal] = useState<boolean>(false);
-  const [rating, setRating] = useState<number>(0);
-  const [pcRequirements, setPcRequirements] = useState<PcRequirements | null>(null);
-  const [pcReqLoading, setPcReqLoading] = useState<boolean>(false);
-  const [storePrices, setStorePrices] = useState<StorePrice[] | null>(null);
-  const [storePricesLoading, setStorePricesLoading] = useState<boolean>(false);
-
-  // ── Centralised auth — no duplicate listener ──────────────────────────────
+  const { onScroll } = useScrollDirection();
+  const { t, i18n } = useTranslation();
   const user = useAuthStore(useShallow((s) => s.user));
 
-  const { t, i18n } = useTranslation();
-  const currentLang = i18n.language;
-  const { onScroll } = useScrollDirection();
+  const { game, loading, error, refetch } = useGameData(currentId);
 
-  useEffect(() => {
-    if (isReady) return; // Already ready from cache
-    const task = runAfterInteractions(() => {
-      setIsReady(true);
-    });
-    return () => task.cancel();
-  }, [isReady]);
-
-  // Data fetching
-  const cacheKey = currentId ? `GAME_DETAILS_CACHE_${currentId}` : "";
-
-  const fetchGameData = useCallback(async (): Promise<GameData> => {
-    if (!currentId) throw new Error("No game ID provided");
-    return withTrace("game_details_load", () => fetchGameById(currentId));
-  }, [currentId]);
-
-  const {
-    data: game,
-    isLoading: loading,
-    error,
-    refetch,
-  } = useCachedData<GameData>(cacheKey, fetchGameData, [currentId]);
-
-  // Derived values
+  // ── Derived from the loaded game ─────────────────────────────────────────
   const ageRating = useMemo(
-    () => (game ? getAgeRatingInfo(game.age_ratings) : null),
+    () => getAgeRatingInfo(game?.age_ratings),
     [game?.age_ratings],
   );
 
@@ -92,7 +106,11 @@ export const useGameDetails = ({ initialGameID, navigation }: UseGameDetailsProp
     [game?.game_time_to_beats],
   );
 
-  const gameDataForList = useMemo(() => {
+  /**
+   * The compact entry written into a user's list when they rate the game. Lists
+   * store a snapshot, not the full IGDB payload.
+   */
+  const gameDataForList = useMemo<GameListEntry | null>(() => {
     if (!game) return null;
     return {
       id: game.id,
@@ -102,187 +120,28 @@ export const useGameDetails = ({ initialGameID, navigation }: UseGameDetailsProp
     };
   }, [game]);
 
-  const handleRateGame = useCallback(
-    async (newRating: number) => {
-      if (!user || user.isAnonymous) {
-        Alert.alert(t("common.error"), t("common.loginRequired"));
-        return;
-      }
-      if (!game) return;
-
-      const gameData = gameDataForList;
-      if (!gameData) return;
-
-      const ratingRef = firestore()
-        .collection("users")
-        .doc(user.uid)
-        .collection("ratings")
-        .doc(String(currentId));
-
-      const ratedGameRef = firestore()
-        .collection("users")
-        .doc(user.uid)
-        .collection("lists")
-        .doc("rated")
-        .collection("games")
-        .doc(String(currentId));
-
-      try {
-        if (newRating === 0) {
-          await ratingRef.delete();
-          await ratedGameRef.delete();
-        } else {
-          await firestore()
-            .collection("users")
-            .doc(user.uid)
-            .collection("lists")
-            .doc("rated")
-            .set(
-              {
-                name: "Rated",
-                type: "default",
-                createdAt: firestore.FieldValue.serverTimestamp(),
-              },
-              { merge: true },
-            );
-
-          await ratingRef.set({
-            rating: newRating,
-            updatedAt: firestore.FieldValue.serverTimestamp(),
-          });
-          await ratedGameRef.set({
-            ...gameData,
-            rating: newRating,
-            ratedAt: firestore.FieldValue.serverTimestamp(),
-          });
-        }
-
-        // Sync with other lists
-        const listsRef = firestore()
-          .collection("users")
-          .doc(user.uid)
-          .collection("lists");
-        const listsSnap = await listsRef.get();
-        for (const listDoc of listsSnap.docs) {
-          if (listDoc.id === "rated") continue;
-          const gRef = listDoc.ref.collection("games").doc(String(currentId));
-          const gSnap = await gRef.get();
-          if (gSnap && gSnap.exists()) {
-            try {
-              if (newRating === 0) {
-                await gRef.update({ rating: firestore.FieldValue.delete() });
-              } else {
-                await gRef.update({ rating: newRating });
-              }
-            } catch (updateErr) {
-              console.log(
-                `[GameDetailsScreen] Stale cache update handled for list ${listDoc.id}`,
-              );
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Error rating game:", e);
-        ToastAndroid.show(
-          t("games.details.ratingFailed") ??
-            "Couldn't save your rating. Please try again.",
-          ToastAndroid.LONG,
-        );
-      }
-    },
-    [user, currentId, game, gameDataForList, t],
-  );
-
   const seriesGames = useMemo(
     () => game?.collections?.[0]?.games ?? [],
     [game?.collections],
   );
 
-  const similarGames = useMemo(() => game?.similar_games ?? [], [game?.similar_games]);
+  const similarGames = useMemo(
+    () => game?.similar_games ?? [],
+    [game?.similar_games],
+  );
 
-  // Effects
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  // ── Loaded independently of the main payload ─────────────────────────────
+  const { rating, rateGame } = useGameRating(currentId, gameDataForList);
+  const { pcRequirements, pcReqLoading } = useGamePcRequirements(game?.websites);
+  const { storePrices, storePricesLoading } = useGameStorePrices(
+    game?.name,
+    game?.websites,
+  );
 
-  // Auth state is now read from useAuthStore — no local listener needed.
+  // ── Screen interactions ──────────────────────────────────────────────────
+  const [showListModal, setShowListModal] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (!user || user.isAnonymous) {
-      setRating(0);
-      return;
-    }
-    const ratingRef = firestore()
-      .collection("users")
-      .doc(user.uid)
-      .collection("ratings")
-      .doc(String(currentId));
-
-    const unsub = ratingRef.onSnapshot(
-      (doc) => {
-        if (doc && doc.exists()) {
-          setRating(doc.data()?.rating ?? 0);
-        } else {
-          setRating(0);
-        }
-      },
-      (error) => {
-        console.error("[GameDetailsScreen] Rating snapshot error:", error);
-      },
-    );
-
-    return unsub;
-  }, [user, currentId]);
-
-  useEffect(() => {
-    if (initialGameID && initialGameID !== currentId) {
-      setCurrentId(initialGameID);
-    }
-  }, [initialGameID]);
-
-  useEffect(() => {
-    setPcRequirements(null);
-    const appId = extractSteamAppId(game?.websites);
-    if (!appId) return;
-    let cancelled = false;
-    setPcReqLoading(true);
-    fetchSteamRequirements(appId).then((result) => {
-      if (!cancelled) {
-        setPcRequirements(result);
-        setPcReqLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [game?.websites]);
-
-  useEffect(() => {
-    setStorePrices(null);
-    if (!game?.name) return;
-    let cancelled = false;
-    setStorePricesLoading(true);
-
-    // Run CheapShark (PC stores) and PSN in parallel
-    Promise.all([
-      fetchCheapSharkDeals(game.name),
-      fetchPsnPrice(game.name, game.websites),
-    ]).then(([deals, psnPrice]) => {
-      if (!cancelled) {
-        const pcPrices = buildStorePrices(game.name, game.websites, deals);
-        const allPrices = psnPrice ? [...pcPrices, psnPrice] : pcPrices;
-        setStorePrices(allPrices);
-        setStorePricesLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [game?.name, game?.websites]);
-
+  // Opening the screen — or switching game in place — starts at the top.
   useEffect(() => {
     if (game && !loading) {
       setTimeout(() => {
@@ -295,7 +154,6 @@ export const useGameDetails = ({ initialGameID, navigation }: UseGameDetailsProp
     }
   }, [game, loading]);
 
-  // Handlers
   const handleGoBack = useCallback(() => navigation.goBack(), [navigation]);
 
   const handleAddToList = useCallback(() => {
@@ -310,7 +168,11 @@ export const useGameDetails = ({ initialGameID, navigation }: UseGameDetailsProp
   }, [user, t]);
 
   const handleCloseModal = useCallback(() => setShowListModal(false), []);
-  const handleNavigateToGame = useCallback((id: number) => setCurrentId(id), []);
+
+  const handleNavigateToGame = useCallback(
+    (id: number) => setCurrentId(id),
+    [setCurrentId],
+  );
 
   return {
     game,
@@ -319,7 +181,7 @@ export const useGameDetails = ({ initialGameID, navigation }: UseGameDetailsProp
     refetch,
     isReady,
     currentId,
-    currentLang,
+    currentLang: i18n.language,
     scrollRef,
     user,
     rating,
@@ -338,7 +200,7 @@ export const useGameDetails = ({ initialGameID, navigation }: UseGameDetailsProp
     similarGames,
     t,
     onScroll,
-    handleRateGame,
+    handleRateGame: rateGame,
     handleGoBack,
     handleAddToList,
     handleCloseModal,

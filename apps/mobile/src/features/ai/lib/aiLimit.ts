@@ -1,6 +1,7 @@
 import firestore from "@react-native-firebase/firestore";
 import auth from "@react-native-firebase/auth";
-import { AILimitData } from "../types";
+import type { AILimitData } from "../types";
+import { logger } from "@/src/lib/logger";
 
 export const MAX_MESSAGES_PER_DAY = 20;
 
@@ -26,7 +27,7 @@ export const checkAILimit = async (): Promise<boolean> => {
 
     return aiUsage.count < MAX_MESSAGES_PER_DAY;
   } catch (error) {
-    console.error("Error checking AI limit:", error);
+    logger.error("Error checking AI limit:", error);
     return false; // Safely fail check if network is completely off and no cache
   }
 };
@@ -53,7 +54,7 @@ export const incrementAILimit = async (): Promise<void> => {
 
     await docRef.set({ aiUsage: { date: today, count } }, { merge: true });
   } catch (error) {
-    console.error("Error incrementing AI limit:", error);
+    logger.error("Error incrementing AI limit:", error);
   }
 };
 
@@ -77,7 +78,7 @@ export const getRemainingAILimit = async (): Promise<number> => {
 
     return Math.max(0, MAX_MESSAGES_PER_DAY - aiUsage.count);
   } catch (error) {
-    console.error("Error getting AI limit:", error);
+    logger.error("Error getting AI limit:", error);
     return 0;
   }
 };

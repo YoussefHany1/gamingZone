@@ -1,10 +1,11 @@
 import { useEffect } from "react";
+import type {
+  SharedValue} from "react-native-reanimated";
 import {
   useSharedValue,
   withRepeat,
   withTiming,
-  withSequence,
-  SharedValue,
+  withSequence
 } from "react-native-reanimated";
 
 /**

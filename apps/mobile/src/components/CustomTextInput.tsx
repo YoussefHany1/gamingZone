@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import { TextInput, TextInputProps, TextStyle } from "react-native";
+import type { TextInputProps, TextStyle } from "react-native";
+import { TextInput } from "react-native";
 import { resolveFontStyle, containsArabic } from "../utils/fontUtils";
 
 /**

@@ -218,6 +218,7 @@
     "details": {
       "readFullArticle": "Read the full article",
       "noDescription": "No description available here",
+      "summaryTitle": "AI Summary",
       "shareShortenError": "There was an error, Please try again later.",
       "shareMessage": "found an interesting article via Gaming Zone App\nCheck it out: "
     },
@@ -590,6 +591,8 @@
         "loadError": "We encountered a problem loading your list. Please try again later",
         "removeError": "An error occurred while trying to remove the game"
       },
+      "viewList": "List view",
+      "viewGrid": "Grid view",
       "viewOnly": "Viewing a read-only list shared with you."
     },
     "contact": {

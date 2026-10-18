@@ -1,11 +1,12 @@
 import CustomText from "@/src/components/CustomText";
+import type {
+  SectionListData} from "react-native";
 import {
   View,
   TouchableOpacity,
   Modal,
   SectionList,
-  ToastAndroid,
-  SectionListData,
+  ToastAndroid
 } from "react-native";
 import { Image } from "expo-image";
 import { Check, ChevronDown } from "lucide-react-native";
@@ -133,7 +134,12 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   const category = props.category.toLowerCase();
-  const websites: RssFeedSource[] = props.websites ?? [];
+  // Memoised: the `?? []` fallback is a fresh array each render, which would
+  // otherwise invalidate the `sections` memo below on every render.
+  const websites: RssFeedSource[] = useMemo(
+    () => props.websites ?? [],
+    [props.websites],
+  );
   const selectedItem = props.value;
 
   // Build section list grouped by language, ordered by current app locale
@@ -163,7 +169,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
     }
 
     return result;
-  }, [websites, i18n.language]);
+  }, [websites, i18n.language, t]);
 
   const handleToggleNotification = async (): Promise<void> => {
     const state = await NetInfo.fetch();

@@ -9,8 +9,6 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useSharedStyles } from "./shared";
 import type { GameHorizontalScrollProps } from "../../types";
 
-const IMAGE_NOT_FOUND = require("@/assets/image-not-found.webp");
-
 /** Returns the IGDB small cover URL for a given image_id. */
 const coverUrl = (imageId: string) => igdbImageUrl(imageId, "cover_small");
 
@@ -28,7 +26,11 @@ const HorizontalGameCard: React.FC<{
         <Image
           recyclingKey={game.cover?.image_id ?? ""}
           style={styles.coverImage}
-          source={game.cover?.image_id ? coverUrl(game.cover.image_id) : IMAGE_NOT_FOUND}
+          source={
+            game.cover?.image_id
+              ? coverUrl(game.cover.image_id)
+              : require("@/assets/image-not-found.webp")
+          }
           contentFit="cover"
           transition={500}
           cachePolicy="memory-disk"

@@ -1,4 +1,5 @@
-import { StyleSheet, TextStyle } from "react-native";
+import type { TextStyle } from "react-native";
+import { StyleSheet } from "react-native";
 
 // Compiled once at module load — zero overhead on every call
 const ARABIC_REGEX =

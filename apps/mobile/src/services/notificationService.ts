@@ -10,6 +10,7 @@ import firestore, {
 } from "@react-native-firebase/firestore";
 import type { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
 import * as Notifications from "expo-notifications";
+import { logger } from "@/src/lib/logger";
 
 declare const globalThis: { RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS: boolean };
 globalThis.RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS = true;
@@ -91,7 +92,7 @@ class NotificationService {
       }
       return true;
     } catch (error) {
-      console.error(`${ERRORS.FCM_FAIL} ${action} ${topicName}`, error);
+      logger.error(`${ERRORS.FCM_FAIL} ${action} ${topicName}`, error);
       return false;
     }
   }
@@ -114,7 +115,7 @@ class NotificationService {
     enabled: boolean,
   ): Promise<void> {
     if (!userId) {
-      console.warn(ERRORS.MISSING_PARAMS);
+      logger.warn(ERRORS.MISSING_PARAMS);
       return;
     }
 
@@ -202,7 +203,7 @@ class NotificationService {
         },
       );
     } catch (error) {
-      console.error("❌ Failed to toggle preference:", error);
+      logger.error("❌ Failed to toggle preference:", error);
     }
   }
 
@@ -224,7 +225,7 @@ class NotificationService {
 
       return Math.max(0, Math.floor(data.enabledCount));
     } catch (error) {
-      console.error("❌ Failed to fetch source enabled count:", error);
+      logger.error("❌ Failed to fetch source enabled count:", error);
       return 0;
     }
   }
@@ -251,7 +252,7 @@ class NotificationService {
 
       return preferences;
     } catch (error) {
-      console.error("❌ Failed to fetch preferences:", error);
+      logger.error("❌ Failed to fetch preferences:", error);
       return {};
     }
   }
@@ -261,7 +262,7 @@ class NotificationService {
     userId: string,
     preferences: NotificationPreferences,
   ): Promise<void> {
-    console.log("🔄 Starting Bulk Sync...");
+    logger.debug("🔄 Starting Bulk Sync...");
 
     const operations: Promise<boolean>[] = Object.entries(preferences).map(
       ([topic, enabled]) =>
@@ -272,16 +273,16 @@ class NotificationService {
 
     const failures = results.filter((r) => r.status === "rejected");
     if (failures.length > 0) {
-      console.warn(`⚠️ ${failures.length} sync operations failed.`);
+      logger.warn(`⚠️ ${failures.length} sync operations failed.`);
     } else {
-      console.log("✅ Bulk Sync Completed Successfully");
+      logger.debug("✅ Bulk Sync Completed Successfully");
     }
   }
 
   // Save FCM token to Firestore for the user
   static async saveFCMToken(userId: string, fcmToken: string): Promise<void> {
     if (!userId || !fcmToken) {
-      console.warn(ERRORS.MISSING_PARAMS);
+      logger.warn(ERRORS.MISSING_PARAMS);
       return;
     }
 
@@ -294,9 +295,9 @@ class NotificationService {
       };
 
       await setDoc(userRef, data, { merge: true });
-      console.log("✅ FCM Token Synced");
+      logger.debug("✅ FCM Token Synced");
     } catch (error) {
-      console.error("❌ Token Sync Error:", error);
+      logger.error("❌ Token Sync Error:", error);
     }
   }
 
@@ -326,7 +327,7 @@ class NotificationService {
         identifier: "test_notification",
       });
     } catch (error) {
-      console.error("❌ Local Notification Failed:", error);
+      logger.error("❌ Local Notification Failed:", error);
     }
   }
 }

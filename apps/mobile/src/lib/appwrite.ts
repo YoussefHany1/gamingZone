@@ -1,5 +1,6 @@
 import { Client, Databases } from "react-native-appwrite";
 import Constants from "expo-constants";
+import { logger } from "@/src/lib/logger";
 
 // --------------------------------------------------------------------------
 // Patch WebSocket to prevent "INVALID_STATE_ERR" crashes in React Native
@@ -12,10 +13,10 @@ if (typeof WebSocket !== "undefined") {
       try {
         originalSend.call(this, data as any);
       } catch (e) {
-        console.warn("[WebSocket Patch] Caught send error:", e);
+        logger.warn("[WebSocket Patch] Caught send error:", e);
       }
     } else {
-      console.warn(
+      logger.warn(
         `[WebSocket Patch] Ignored send because readyState is ${this.readyState} (not OPEN)`,
       );
     }
@@ -37,7 +38,7 @@ const APPWRITE_PROJECT: string = extra?.APPWRITE_PROJECT ?? "";
 const APPWRITE_ENDPOINT: string = "https://fra.cloud.appwrite.io/v1";
 
 if (!APPWRITE_PROJECT) {
-  console.warn(
+  logger.warn(
     "[Appwrite] APPWRITE_PROJECT is not set. Check your app.config.ts extra values.",
   );
 }

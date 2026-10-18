@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import { Text, TextProps, TextStyle } from "react-native";
+import type { TextProps, TextStyle } from "react-native";
+import { Text } from "react-native";
 import { resolveFontStyle, containsArabic } from "../utils/fontUtils";
 
 /** Recursively extracts plain text from React children for language detection. */

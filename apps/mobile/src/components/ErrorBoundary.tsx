@@ -1,4 +1,5 @@
-import React, { Component, ReactNode } from "react";
+import type { ReactNode } from "react";
+import React, { Component } from "react";
 import { View, TouchableOpacity } from "react-native";
 import crashlytics from "@react-native-firebase/crashlytics";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -151,7 +152,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
-    // Report to Crashlytics — non-fatal so the session continues
+    // Reports straight to Crashlytics rather than through `lib/logger`: this *is*
+    // the crash boundary, and the section label plus the component stack below are
+    // the context that makes the report actionable — a generic logger call would
+    // drop both. Non-fatal, so the session continues.
     crashlytics().log(
       `[ErrorBoundary] section="${this.props.sectionLabel ?? "unknown"}" — ${error.message}`,
     );

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, memo } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, ViewStyle } from "react-native";
+import type { ViewStyle } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import {
   NativeAd,
@@ -13,8 +14,9 @@ import { nativeAdUnitId } from "../constants/config";
 import { useAdsEnabled } from "../hooks/useAdsEnabled";
 import { t } from "i18next";
 import CustomText from "./CustomText";
+import { logger } from "@/src/lib/logger";
 
-export type NativeAdVariant = "game" | "news";
+export type NativeAdVariant = "game" | "news" | "grid";
 
 interface NativeAdComponentProps {
   style?: ViewStyle;
@@ -169,6 +171,74 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
         marginTop: 5,
         overflow: "hidden",
       },
+      // "grid" variant — a 3:4 poster-shaped ad box that fills a single grid
+      // cell, mirroring GamePosterItem so it sits naturally in the poster wall.
+      gridAdWrapper: {
+        width: "100%",
+        aspectRatio: 3 / 4,
+        borderRadius: 10,
+        overflow: "hidden",
+        backgroundColor: c.surface,
+        borderWidth: 1,
+        borderColor: c.border,
+      },
+      gridAdInner: {
+        flex: 1,
+      },
+      gridAdImage: {
+        flex: 1,
+        backgroundColor: c.accentSurface,
+      },
+      gridAdImageFallback: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: c.accentSurface,
+      },
+      gridAdFallbackIcon: {
+        width: 60,
+        height: 60,
+        borderRadius: 12,
+      },
+      gridAdInfo: {
+        paddingHorizontal: 6,
+        paddingVertical: 5,
+        backgroundColor: c.accentSurface,
+      },
+      gridAdHeadline: {
+        color: c.text,
+        fontSize: 11,
+        fontWeight: "bold",
+      },
+      gridAdInfoRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginTop: 4,
+      },
+      gridAdCta: {
+        backgroundColor: c.accent,
+        color: c.onAccent,
+        fontSize: 10,
+        fontWeight: "bold",
+        borderRadius: 6,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        overflow: "hidden",
+      },
+      gridAdBadge: {
+        position: "absolute",
+        top: 6,
+        right: 6,
+        color: c.textMuted,
+        backgroundColor: c.overlay,
+        borderRadius: 4,
+        paddingHorizontal: 5,
+        paddingVertical: 2,
+        fontSize: 9,
+        fontWeight: "bold",
+        zIndex: 10,
+        overflow: "hidden",
+      },
     }));
 
     const [ad, setAd] = useState<NativeAd | null>(null);
@@ -197,7 +267,7 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
           }
         })
         .catch((err) => {
-          console.error("[NativeAd] Failed to load native ad:", err);
+          logger.error("[NativeAd] Failed to load native ad:", err);
           if (isMounted) {
             setError(true);
             setLoading(false);
@@ -217,6 +287,15 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
     }
 
     if (loading) {
+      if (variant === "grid") {
+        return (
+          <View style={[styles.gridAdWrapper, style]}>
+            <View style={styles.gridAdImageFallback}>
+              <ActivityIndicator size="small" color={colors.accentText} />
+            </View>
+          </View>
+        );
+      }
       return (
         <View
           style={[
@@ -231,6 +310,61 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
 
     if (error || !ad) {
       return null;
+    }
+
+    if (variant === "grid") {
+      const image = ad.images?.[0];
+      return (
+        <View style={[styles.gridAdWrapper, style]}>
+          <NativeAdView nativeAd={ad} style={styles.gridAdInner}>
+            {image ? (
+              <NativeAsset assetType={NativeAssetType.IMAGE}>
+                <Image
+                  source={{ uri: image.url }}
+                  style={styles.gridAdImage}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  recyclingKey={image.url}
+                />
+              </NativeAsset>
+            ) : (
+              <View style={styles.gridAdImageFallback}>
+                {ad.icon ? (
+                  <NativeAsset assetType={NativeAssetType.ICON}>
+                    <Image
+                      source={{ uri: ad.icon.url }}
+                      style={styles.gridAdFallbackIcon}
+                      contentFit="contain"
+                      cachePolicy="memory-disk"
+                      recyclingKey={ad.icon.url}
+                    />
+                  </NativeAsset>
+                ) : null}
+              </View>
+            )}
+
+            <CustomText style={styles.gridAdBadge}>{t("common.ad")}</CustomText>
+
+            <View style={styles.gridAdInfo}>
+
+              <NativeAsset assetType={NativeAssetType.HEADLINE}>
+                <CustomText style={styles.gridAdHeadline} numberOfLines={2}>
+                  {ad.headline}
+                </CustomText>
+              </NativeAsset>
+              <View style={styles.gridAdInfoRow}>
+                {ad.callToAction ? (
+                  <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
+                    <CustomText style={styles.gridAdCta}>
+                      {ad.callToAction}
+                    </CustomText>
+                  </NativeAsset>
+                ) : null}
+              </View>
+            </View>
+          </NativeAdView>
+        </View>
+      );
     }
 
     if (variant === "news") {

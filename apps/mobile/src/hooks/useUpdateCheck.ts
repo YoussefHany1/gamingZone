@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Alert, Linking } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { storage } from "../lib/storage";
 import Constants from "expo-constants";
 import { useTranslation } from "react-i18next";
+import { logger } from "@/src/lib/logger";
 
 // Checks once per app version whether a newer build is on the Play Store.
 // If one exists, shows a one-time dismissible Alert with an "Update Now" action.
@@ -86,6 +87,11 @@ async function fetchLatestVersion(): Promise<string | null> {
 
 const useUpdateCheck = (): void => {
   const { t } = useTranslation();
+  // This check runs at most once per app version, so it must not re-run when
+  // the app language changes. The ref keeps the alert in the current language
+  // without adding `t` to the (intentionally empty) dependency list.
+  const tRef = useRef(t);
+  tRef.current = t;
 
   useEffect(() => {
     const checkForUpdate = async (): Promise<void> => {
@@ -104,19 +110,19 @@ const useUpdateCheck = (): void => {
         storage.set(storageKey, "true");
 
         Alert.alert(
-          t("common.updateAlert.title"),
-          t("common.updateAlert.message"),
+          tRef.current("common.updateAlert.title"),
+          tRef.current("common.updateAlert.message"),
           [
-            { text: t("common.updateAlert.later"), style: "cancel" },
+            { text: tRef.current("common.updateAlert.later"), style: "cancel" },
             {
-              text: t("common.updateAlert.updateNow"),
+              text: tRef.current("common.updateAlert.updateNow"),
               onPress: () => Linking.openURL(PLAY_STORE_URL),
             },
           ],
           { cancelable: true },
         );
       } catch (error) {
-        console.warn("[useUpdateCheck] Error checking for update:", error);
+        logger.warn("[useUpdateCheck] Error checking for update:", error);
       }
     };
 

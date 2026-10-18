@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typegen": "next typegen",
+    "type-check": "next typegen && tsc --noEmit",
     "postinstall": "node -e \"const fs=require('fs'),p=require('path');['debug','picocolors'].forEach(d=>{const t=p.resolve(__dirname,'node_modules',d),s=p.resolve(__dirname,'../../node_modules',d);if(!fs.existsSync(t)&&fs.existsSync(s)){fs.mkdirSync(p.dirname(t),{recursive:true});fs.symlinkSync(s,t,'junction');console.log('Linked',d)}});\""
   },
   "dependencies": {
@@ -46,7 +48,7 @@
     "lightningcss": "^1.32.0",
     "picocolors": "^1.1.1",
     "tailwindcss": "^4",
-    "typescript": "^5",
+    "typescript": "5.9.3",
     "vite": "^8.3.1",
     "wrangler": "^4.138.0"
   },

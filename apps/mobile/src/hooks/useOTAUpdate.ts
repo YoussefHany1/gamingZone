@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import * as Updates from "expo-updates";
+import { logger } from "@/src/lib/logger";
 
 export type OTAUpdateState =
   | { status: "idle" }
@@ -69,7 +70,7 @@ const useOTAUpdate = (): OTAUpdateState => {
       await Updates.reloadAsync();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown update error";
-      if (__DEV__) console.warn("[useOTAUpdate] error:", message);
+      if (__DEV__) logger.warn("[useOTAUpdate] error:", message);
       setUpdateState({ status: "error", message });
     }
   }, []);

@@ -1,6 +1,8 @@
 import React from "react";
-import { StyleSheet, ViewStyle } from "react-native";
-import Animated, { useAnimatedStyle } from "react-native-reanimated";
+import type { ViewStyle } from "react-native";
+import { StyleSheet } from "react-native";
+import type { useAnimatedStyle } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 
 interface ShimmerProps {

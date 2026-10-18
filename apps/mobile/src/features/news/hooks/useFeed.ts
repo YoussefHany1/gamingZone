@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useCallback, useRef } from "react";
-import { Query, Models } from "react-native-appwrite";
+import type { Models } from "react-native-appwrite";
+import { Query } from "react-native-appwrite";
 import { databases, client } from "@/src/lib/appwrite";
 import { APPWRITE_DATABASE_ID } from "@/src/lib/config";
 import useCachedData from "@/src/hooks/useCachedData";
+import { logger } from "@/src/lib/logger";
 
 // Fetches and caches a paginated article feed, then keeps it live via
 // Appwrite Realtime subscriptions for page 1.
@@ -82,7 +84,7 @@ function invokeUnsubscribe(subscription: unknown): void {
     }
   } catch (err) {
     // Swallow INVALID_STATE_ERR thrown when the WebSocket is already closed.
-    console.warn("[useFeed] Error during Realtime unsubscribe:", err);
+    logger.warn("[useFeed] Error during Realtime unsubscribe:", err);
   }
 }
 
@@ -158,7 +160,10 @@ export default function useFeed(
     enabled,
   );
 
-  const articles = data?.articles ?? [];
+  // Memoised so `articles` keeps its identity between renders — the `[]`
+  // fallback would otherwise be a fresh array each render, re-running the
+  // ref-sync effect below and invalidating every consumer memo that reads it.
+  const articles = useMemo(() => data?.articles ?? [], [data?.articles]);
   const total = data?.total ?? 0;
 
   // Stable refs so the Realtime callback can read the latest values without
@@ -205,7 +210,7 @@ export default function useFeed(
         setData({ articles: updated, total: totalRef.current + 1 });
       });
     } catch (err) {
-      console.warn("[useFeed] Error during Realtime subscribe:", err);
+      logger.warn("[useFeed] Error during Realtime subscribe:", err);
     }
 
     return () => invokeUnsubscribe(subscription);

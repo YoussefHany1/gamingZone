@@ -11,7 +11,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { useIsDark, useThemeColors } from "@/src/hooks/useTheme";
-import type { ShimmerPlaceholderProps } from "../types";
+import type { ShimmerPlaceholderProps, UserGamesViewMode } from "../types";
 
 const { width } = Dimensions.get("window");
 
@@ -31,7 +31,7 @@ const ShimmerPlaceholder = React.memo<ShimmerPlaceholderProps>(({ style }) => {
       -1,
       false,
     );
-  }, []);
+  }, [translateX]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
@@ -92,21 +92,54 @@ const SkeletonItem = React.memo(() => {
 SkeletonItem.displayName = "SkeletonItem";
 
 // ---------------------------------------------------------------------------
+// PosterSkeletonItem — a 3:4 poster placeholder for the grid view
+// ---------------------------------------------------------------------------
+
+const PosterSkeletonItem = React.memo(() => (
+  <View style={staticStyles.posterCell}>
+    <ShimmerPlaceholder style={staticStyles.poster} />
+  </View>
+));
+
+PosterSkeletonItem.displayName = "PosterSkeletonItem";
+
+// ---------------------------------------------------------------------------
 // Main — UserGamesSkeleton
 // ---------------------------------------------------------------------------
 
 const DUMMY_COUNT = 4;
 const DUMMY_DATA = Array.from({ length: DUMMY_COUNT }, (_, i) => i);
 
-const UserGamesSkeleton: React.FC = () => (
+// Grid mode uses a 3-column wall, so the placeholders mirror the poster cells.
+const GRID_COUNT = 9;
+const GRID_DATA = Array.from({ length: GRID_COUNT }, (_, i) => i);
+
+type UserGamesSkeletonProps = {
+  viewMode?: UserGamesViewMode;
+};
+
+const UserGamesSkeleton: React.FC<UserGamesSkeletonProps> = ({
+  viewMode = "list",
+}) => (
   <SafeAreaView style={{ flex: 1 }} edges={["left", "right"]}>
-    <FlashList
-      data={DUMMY_DATA}
-      keyExtractor={(item) => item.toString()}
-      renderItem={() => <SkeletonItem />}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
-      showsVerticalScrollIndicator={false}
-    />
+    {viewMode === "grid" ? (
+      <FlashList
+        data={GRID_DATA}
+        keyExtractor={(item) => item.toString()}
+        numColumns={3}
+        renderItem={() => <PosterSkeletonItem />}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
+      />
+    ) : (
+      <FlashList
+        data={DUMMY_DATA}
+        keyExtractor={(item) => item.toString()}
+        renderItem={() => <SkeletonItem />}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
+      />
+    )}
   </SafeAreaView>
 );
 
@@ -136,6 +169,15 @@ const staticStyles = StyleSheet.create({
     marginTop: 24,
     padding: 10,
     alignItems: "center",
+  },
+  posterCell: {
+    paddingHorizontal: 4,
+    marginBottom: 16,
+  },
+  poster: {
+    width: "100%",
+    aspectRatio: 3 / 4,
+    borderRadius: 10,
   },
   skeletonImage: {
     width: 80,

@@ -43,7 +43,9 @@ export const usePulseAnimation = (
       -1,
       true,
     );
-  }, []);
+    // The shared value is stable; this only re-runs when a caller passes new
+    // bounds, which is exactly when the loop should be rebuilt.
+  }, [opacity, min, max]);
 
   return useAnimatedStyle(() => ({ opacity: opacity.value }));
 };
@@ -62,7 +64,7 @@ export const useShimmerSweep = (): ReturnType<typeof useAnimatedStyle> => {
       -1,
       false,
     );
-  }, []);
+  }, [translateX]);
 
   return useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],

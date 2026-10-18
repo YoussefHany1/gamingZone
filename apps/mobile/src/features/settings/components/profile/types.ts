@@ -1,0 +1,36 @@
+import type { ComponentType } from "react";
+import type { GameEntry } from "@/src/features/lists/types";
+import type { UserStats } from "../../hooks/useUserStats";
+
+export type StatTileProps = {
+  icon: ComponentType<{ size?: number; color?: string }>;
+  label: string;
+  value: string;
+  /** Playtime spans the grid rather than sitting in one of its two columns. */
+  wide?: boolean;
+};
+
+export type RateCardProps = {
+  entry: GameEntry;
+};
+
+export type ProfileHeaderCardProps = {
+  displayName: string;
+  photoURL: string;
+  memberSince: string | null;
+  platform: string;
+  country: string;
+};
+
+export type ProfileStatsGridProps = {
+  stats: UserStats | null;
+};
+
+export type ProfileEmptyLibraryCardProps = {
+  onBrowse: () => void;
+};
+
+export type ProfileActionsProps = {
+  onEditProfile: () => void;
+  onMyLists: () => void;
+};

@@ -1,10 +1,11 @@
-import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import { GestureScrollView } from "@/src/components/GestureScrollView";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import React, { useCallback, useMemo } from "react";
 import CustomText from "@/src/components/CustomText";
 import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
 import { Image } from "expo-image";
-import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
+import type { ListRenderItemInfo } from "@shopify/flash-list";
+import { FlashList } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -206,7 +207,7 @@ function ComingSoonGames(): React.ReactElement {
         />
       </View>
       <FlashList
-        renderScrollComponent={GHScrollView as any}
+        renderScrollComponent={GestureScrollView}
         data={gamesToShow}
         horizontal
         showsHorizontalScrollIndicator={false}

@@ -25,6 +25,7 @@ import type {
 } from "@/src/features/settings/types";
 import CustomTextInput from "@/src/components/CustomTextInput";
 import { SERVER_URL } from "@/src/constants/config";
+import { logger } from "@/src/lib/logger";
 
 export type SteamLinkModalProps = Props;
 
@@ -99,7 +100,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
 
     // 3. Check if URL contains /id/vanityname
     let vanity = trimmed;
-    const idMatch = trimmed.match(/id\/([^\/?#]+)/);
+    const idMatch = trimmed.match(/id\/([^/?#]+)/);
     if (idMatch && idMatch[1]) {
       vanity = idMatch[1];
     } else {
@@ -144,12 +145,12 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
     setLoading(true);
 
     try {
-      console.log("==> Steam Sync Started");
+      logger.debug("==> Steam Sync Started");
 
       // 1. Resolve ID
-      console.log("==> Step 1: Resolving Steam ID:", steamInput.trim());
+      logger.debug("==> Step 1: Resolving Steam ID:", steamInput.trim());
       const steamId = await resolveSteamId(steamInput.trim());
-      console.log("==> Step 1 Result:", steamId);
+      logger.debug("==> Step 1 Result:", steamId);
       if (!steamId) {
         ToastAndroid.show(
           t("settings.profile.steam.errors.resolveFailed") || "Could not find user",
@@ -160,13 +161,13 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
       }
 
       // 2. Fetch Owned Games
-      console.log("==> Step 2: Fetching Owned Games for ID:", steamId);
+      logger.debug("==> Step 2: Fetching Owned Games for ID:", steamId);
       const urlWithNoCache = `${SERVER_URL}/steam/owned-games?steamid=${steamId}&_t=${Date.now()}`;
 
       let ownedData;
       try {
         const ownedResp = await axios.get(urlWithNoCache);
-        console.log("==> Step 2 STATUS:", ownedResp.status);
+        logger.debug("==> Step 2 STATUS:", ownedResp.status);
         ownedData = ownedResp.data;
       } catch (err: any) {
         if (err.response && err.response.status === 403) {
@@ -177,7 +178,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
           setLoading(false);
           return;
         }
-        console.error(
+        logger.error(
           "==> Full Error:",
           JSON.stringify({
             message: err.message,
@@ -189,16 +190,16 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
         throw new Error("Failed to fetch games: " + err.message);
       }
 
-      console.log("==> Step 2 Result Length:", ownedData.games?.length);
+      logger.debug("==> Step 2 Result Length:", ownedData.games?.length);
       const rawGames: SteamGame[] = ownedData.games || [];
 
       // Steam sync now imports played games only.
       const gamesToProcess = rawGames.filter((g) => g.playtime_forever > 0);
-      console.log("==> Step 2 Processable:", gamesToProcess.length);
+      logger.debug("==> Step 2 Processable:", gamesToProcess.length);
 
       // 3. Map to IGDB in Batches via Backend
       const appIdsToMap = gamesToProcess.map((g) => g.appid);
-      console.log(
+      logger.debug(
         "==> Step 3: Fetching IGDB mappings for AppIDs amount:",
         appIdsToMap.length,
       );
@@ -213,18 +214,18 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
               headers: { "Content-Type": "application/json" },
             },
           );
-          console.log("==> Step 3 STATUS:", mapResp.status);
+          logger.debug("==> Step 3 STATUS:", mapResp.status);
           mappedGames = mapResp.data;
         } catch (err: any) {
           throw new Error("Failed IGDB map: " + err.message);
         }
       }
 
-      console.log("==> Step 3 Result Length:", mappedGames?.length);
-      console.log("==> Sample IGDB game:", JSON.stringify(mappedGames?.[0]));
-      console.log("==> Sample Steam game:", JSON.stringify(gamesToProcess?.[0]));
+      logger.debug("==> Step 3 Result Length:", mappedGames?.length);
+      logger.debug("==> Sample IGDB game:", JSON.stringify(mappedGames?.[0]));
+      logger.debug("==> Sample Steam game:", JSON.stringify(gamesToProcess?.[0]));
       // 4. Fetch wishlist AppIDs
-      console.log("==> Step 4: Fetching Steam wishlist for ID:", steamId);
+      logger.debug("==> Step 4: Fetching Steam wishlist for ID:", steamId);
       let wishlistAppIds: number[] = [];
       try {
         const wishlistResp = await axios.get<SteamWishlistResponse>(
@@ -234,7 +235,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
           ? wishlistResp.data.appIds
           : [];
       } catch (err: any) {
-        console.error("==> Wishlist fetch error:", err?.message || err);
+        logger.error("==> Wishlist fetch error:", err?.message || err);
       }
 
       const playedAppIdSet = new Set(gamesToProcess.map((g) => Number(g.appid)));
@@ -249,7 +250,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
       // 5. Map wishlist appIds to IGDB
       let wishlistMappedGames: IgdbGame[] = [];
       if (uniqueWishlistAppIds.length > 0) {
-        console.log(
+        logger.debug(
           "==> Step 5: Fetching IGDB mappings for wishlist amount:",
           uniqueWishlistAppIds.length,
         );
@@ -263,12 +264,12 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
             ? wishlistMapResp.data
             : [];
         } catch (err: any) {
-          console.error("==> Wishlist IGDB map error:", err?.message || err);
+          logger.error("==> Wishlist IGDB map error:", err?.message || err);
         }
       }
 
       // 6. Group by lists and Batch write to Firestore
-      console.log("==> Step 6: Writing to Firestore...");
+      logger.debug("==> Step 6: Writing to Firestore...");
       const db = firestore();
       const listsRef = db.collection("users").doc(uid).collection("lists");
 
@@ -391,7 +392,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
       cleanInput();
       onClose();
     } catch (e) {
-      console.error(e);
+      logger.error("[SteamLinkModal] Steam import failed", e);
       ToastAndroid.show(
         t("settings.profile.steam.errors.fetchFailed") || "Sync failed",
         ToastAndroid.LONG,

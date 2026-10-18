@@ -1,16 +1,16 @@
 import React, { useCallback } from "react";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import { View, TouchableOpacity } from "react-native";
-import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import { GestureScrollView } from "@/src/components/GestureScrollView";
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
-import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
+import { FlashList } from "@shopify/flash-list";
+import type { ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import { LinearGradient } from "expo-linear-gradient";
 import SkeletonPopular from "../../skeleton/gamesScreen/SkeletonPopular";
-import ErrorState from "@/src/components/ErrorState";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type { Game } from "@/src/types/sharedTypes";
@@ -21,7 +21,12 @@ import { useRecommendedGames } from "../../hooks/useRecommendedGames";
 const CARD_WIDTH = 165;
 const CARD_HEIGHT = 300;
 const CARD_MARGIN = 5;
-const SKELETON_DATA = Array.from({ length: 5 }, (_, i) => ({ id: i }) as any);
+type SkeletonRailItem = { id: number };
+
+/** Placeholder rows for the loading rail — the skeleton ignores the item itself. */
+const SKELETON_DATA: SkeletonRailItem[] = Array.from({ length: 5 }, (_, index) => ({
+  id: index,
+}));
 
 type RecommendedCardProps = {
   item: Game;
@@ -145,7 +150,8 @@ RecommendedCard.displayName = "RecommendedCard";
 // Main
 
 function RecommendedGames(): React.ReactElement | null {
-  const styles = useThemeStyles((c) => ({
+  // Every rule below is theme-independent, so the factory needs no palette.
+  const styles = useThemeStyles(() => ({
     headerContainer: {
       flexDirection: "row",
       alignItems: "center",
@@ -188,7 +194,7 @@ function RecommendedGames(): React.ReactElement | null {
 
       {loading && (
         <FlashList
-          renderScrollComponent={GHScrollView as any}
+          renderScrollComponent={GestureScrollView}
           data={SKELETON_DATA}
           horizontal
           renderItem={renderSkeletonItem}
@@ -199,7 +205,7 @@ function RecommendedGames(): React.ReactElement | null {
 
       {!loading && recommendedGames && recommendedGames.length > 0 && (
         <FlashList
-          renderScrollComponent={GHScrollView as any}
+          renderScrollComponent={GestureScrollView}
           data={recommendedGames}
           horizontal
           keyExtractor={(item) => String(item.id)}

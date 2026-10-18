@@ -16,9 +16,10 @@ import firestore from "@react-native-firebase/firestore";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useTranslation } from "react-i18next";
-import { UserList } from "@/src/types/sharedTypes";
+import type { UserList } from "@/src/types/sharedTypes";
 import { useAuthUser } from "@/src/hooks/useAuthUser";
 import type { ListSelectionModalProps } from "../../types";
+import { logger } from "@/src/lib/logger";
 
 const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
   ({ visible, onClose, gameId, gameData }) => {
@@ -155,7 +156,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
         fetchedGameIdRef.current === String(gameId) &&
         cachedListsRef.current.length > 0
       ) {
-        console.log("[ListSelectionModal] Restoring from ref cache for gameId:", gameId);
+        logger.debug("[ListSelectionModal] Restoring from ref cache for gameId:", gameId);
         const restored = cachedListsRef.current.map((l) => ({
           ...l,
           isChecked: checkedStateRef.current.get(l.id) ?? false,
@@ -196,7 +197,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
             return;
           }
 
-          console.log(
+          logger.debug(
             "[ListSelectionModal] First fetch for gameId:",
             gameId,
             "type:",
@@ -210,7 +211,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
               .collection("games")
               .limit(5)
               .get();
-            console.log(
+            logger.debug(
               `[ListSelectionModal] Docs in "${list.id}/games":`,
               gamesSnap.docs.map((d) => d.id),
             );
@@ -226,12 +227,12 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                   .limit(1)
                   .get();
                 const exists = !snap.empty;
-                console.log(
+                logger.debug(
                   `[ListSelectionModal] List "${list.id}" -> exists: ${exists}`,
                 );
                 return { ...list, isChecked: exists };
               } catch (err) {
-                console.error(
+                logger.error(
                   `[ListSelectionModal] Error checking list "${list.id}":`,
                   err,
                 );
@@ -250,7 +251,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
           setLists(checkedLists);
           setLoading(false);
         } catch (error) {
-          console.error("[ListSelectionModal] Error fetching lists:", error);
+          logger.error("[ListSelectionModal] Error fetching lists:", error);
           if (isMounted) setLoading(false);
         }
       };
@@ -260,7 +261,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
       return () => {
         isMounted = false;
       };
-    }, [visible, gameId]);
+    }, [visible, gameId, user]);
 
     const toggleList = useCallback(
       async (listId: string): Promise<void> => {
@@ -300,7 +301,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
             await gameRef.delete();
           }
         } catch (error) {
-          console.error("Error toggling list:", error);
+          logger.error("Error toggling list:", error);
           // Revert on failure
           const revertLists = lists.map((l, i) =>
             i === targetListIndex ? { ...l, isChecked: currentStatus } : l,
@@ -310,7 +311,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
           cachedListsRef.current = revertLists;
         }
       },
-      [lists, gameId, gameData],
+      [lists, gameId, gameData, user],
     );
 
     const handleCreateList = useCallback(async (): Promise<void> => {
@@ -366,7 +367,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
         setNewListName("");
         setIsCreating(false);
       } catch (error) {
-        console.error("Error creating list:", error);
+        logger.error("Error creating list:", error);
         ToastAndroid.show(t("userLists.errors.couldNotCreateList"), ToastAndroid.LONG);
       } finally {
         setCreatingLoading(false);

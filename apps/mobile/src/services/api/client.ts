@@ -6,7 +6,8 @@
  * - Unified timeout policy
  * - Request/response interceptors for logging and error normalisation
  */
-import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from "axios";
+import type { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from "axios";
+import axios from "axios";
 import { SERVER_URL } from "@/src/constants/config";
 
 // ─── Instance ─────────────────────────────────────────────────────────────────

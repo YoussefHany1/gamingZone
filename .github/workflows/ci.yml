@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    env:
+      # apps/backend depends on puppeteer, which downloads Chromium during
+      # install. CI never launches a browser, so skip that download.
+      PUPPETEER_SKIP_DOWNLOAD: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Matches the version the app is developed on locally.
+          node-version: "24"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # ── apps/mobile ────────────────────────────────────────────────────────
+      - name: Typecheck (mobile)
+        run: npm run type-check -w apps/mobile
+
+      # Ratchet: fail if the warning count grows beyond the committed baseline
+      # (201). Lower this number as warnings are fixed — never raise it without
+      # a deliberate decision in review.
+      - name: Lint (mobile)
+        run: npm run lint -w apps/mobile -- --max-warnings 201
+
+      - name: Theme-token guard (mobile)
+        run: npm run check:theme -w apps/mobile
+
+      # ── apps/web ───────────────────────────────────────────────────────────
+      # `next typegen` generates `.next/types` (git-ignored) so the typecheck is
+      # reproducible on a clean checkout.
+      - name: Typecheck (web)
+        run: npm run type-check -w apps/web
+
+      # ── apps/backend ───────────────────────────────────────────────────────
+      - name: Typecheck (backend)
+        run: npm run check:scripts -w apps/backend
+
+      - name: Test (backend)
+        run: npm test -w apps/backend
+
+      # ── packages ───────────────────────────────────────────────────────────
+      # apps/mobile used to re-declare the shared models; fail if it does again.
+      - name: Typecheck (packages/core — shared-model contract tests)
+        run: npm run type-check -w packages/core
+
+      - name: Shared-model drift guard (mobile)
+        run: npm run check:models -w apps/mobile
+
+      - name: Test (packages/utils)
+        run: npm test -w packages/utils
+
+      - name: Test (mobile)
+        run: npm test -w apps/mobile
+
+      # ── Known-broken lint (non-blocking) ───────────────────────────────────
+      # `@typescript-eslint` v8 (latest published) peers `typescript >=4.8.4
+      # <6.1.0`, but this workspace hoists typescript@7.0.2 (declared by
+      # apps/backend). Typed linting therefore crashes with
+      #   TypeError: Cannot read properties of undefined (reading 'Cjs')
+      # in @typescript-eslint/typescript-estree. apps/web inherits the mismatch
+      # through hoisting even though it declares typescript ^5.
+      # See docs/adr/0002-lint-toolchain.md. These become blocking once the peer
+      # conflict is resolved.
+      - name: Lint (web) — non-blocking, see docs/adr/0002
+        continue-on-error: true
+        run: npm run lint -w apps/web
+
+      - name: Lint (backend) — non-blocking, see docs/adr/0002
+        continue-on-error: true
+        run: npm run lint -w apps/backend

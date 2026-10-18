@@ -1,245 +1,28 @@
-import React, { useState, useEffect, useRef, useCallback, memo } from "react";
-import CustomText from "@/src/components/CustomText";
-import CustomTextInput from "@/src/components/CustomTextInput";
-import { StyleSheet, View, TouchableOpacity } from "react-native";
-import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
-import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
-import { FlashList } from "@shopify/flash-list";
+import React from "react";
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
-import { BannerAd, BannerAdSize } from "@/src/components/AdBanner";
-import { CircleX, Search, SlidersHorizontal } from "lucide-react-native";
-import SkeletonFreeGames from "../skeleton/gamesScreen/SkeletonFreeGames";
-import SkeletonNewsItem from "@/src/features/news/skeleton/SkeletonNewsItem";
-import FreeGames from "../components/gamesScreen/FreeGames";
-import GamesList from "../components/gamesScreen/GamesList";
-// import GamesNews from "../components/gamesScreen/GamesNews";
-import ComingSoon from "../components/gamesScreen/ComingSoon";
-import MostAnticipated from "../components/gamesScreen/MostAnticipated";
-import RecentlyReleased from "../components/gamesScreen/RecentlyReleased";
-import TopRated from "../components/gamesScreen/TopRated";
-import NostalgiaCorner from "../components/gamesScreen/NostalgiaCorner";
-import SteamTopSellers from "../components/gamesScreen/SteamTopSellers";
-import Popular from "../components/gamesScreen/Popular";
-import RecommendedGames from "../components/gamesScreen/RecommendedGames";
-import TrendingPlatformSection from "../components/gamesScreen/TrendingPlatformSection";
-import FilterModal from "../components/gamesScreen/FilterModal";
-import SearchAutocomplete from "../components/gamesScreen/SearchAutocomplete";
-import type { FeedItemConfig } from "../types";
-import { adUnitId } from "@/src/constants/config";
-import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import { LinearGradient } from "expo-linear-gradient";
+import FilterModal from "../components/gamesScreen/FilterModal";
+import GamesFeed from "../components/gamesScreen/GamesFeed";
+import GamesList from "../components/gamesScreen/GamesList";
+import GamesLoadingSkeleton from "../components/gamesScreen/GamesLoadingSkeleton";
+import GamesSearchHeader from "../components/gamesScreen/GamesSearchHeader";
 import { useGames } from "../hooks/useGames";
-import RandomGameButton from "../components/gamesScreen/RandomGameButton";
-
-// Feed items that are pure static components (no props/state); defined outside
-// the component so the array reference never changes between renders.
-const STATIC_FEED_ITEMS: FeedItemConfig[] = [
-  { id: "header", type: "COMPONENT" },
-  { id: "free_games", type: "COMPONENT" },
-  { id: "recommended", type: "COMPONENT" },
-  { id: "news", type: "COMPONENT" },
-  { id: "ad_1", type: "AD" },
-  { id: "popular", type: "COMPONENT" },
-  { id: "trending_platform", type: "COMPONENT" },
-  { id: "ad_2", type: "AD" },
-  { id: "anticipated", type: "COMPONENT" },
-  { id: "steam_top_sellers", type: "COMPONENT" },
-  { id: "ad_3", type: "AD" },
-  { id: "recently_released", type: "COMPONENT" },
-  { id: "coming_soon", type: "COMPONENT" },
-  { id: "ad_4", type: "AD" },
-  { id: "nostalgia", type: "COMPONENT" },
-  { id: "top_rated", type: "COMPONENT" },
-];
-
-// Ad Container — owns its own showAds state so it never triggers a list re-render
-const AdContainer = memo(() => {
-  const styles = useThemeStyles((c) => ({
-    adContainer: {
-      alignItems: "center",
-      width: "100%",
-      marginVertical: 20,
-    },
-    adLabel: {
-      color: c.text,
-      marginBottom: 10,
-    },
-  }));
-
-  const { t } = useTranslation();
-  const adsEnabled = useAdsEnabled();
-  const [showAds, setShowAds] = useState(false);
-  useEffect(() => {
-    const task = runAfterInteractions(() => setShowAds(true));
-    return () => task.cancel();
-  }, []);
-  if (!showAds || !adsEnabled) return null;
-  return (
-    <View style={styles.adContainer}>
-      <CustomText style={styles.adLabel}>{t("common.ad")}</CustomText>
-      <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />
-    </View>
-  );
-});
-AdContainer.displayName = "AdContainer";
-
-// ─── DeferredSection ──────────────────────────────────────────────────────────
-// Placeholder height used while a section is waiting to mount, so the list
-// measurements stay stable (same trick as HomeScreen's DeferredNewsSection).
-const DEFERRED_PLACEHOLDER_HEIGHT = 340;
 
 /**
- * Mounts children only after `delay` ms. Each deferred section is given a
- * different delay so their network fetches and expo-image loads never fire at
- * the same time — this caps the cold-start network/image burst that otherwise
- * spawns dozens of OkHttp threads and starves the main thread (Crashlytics ANR
- * "nativeFinishInputEvent").
+ * Browse screen: a search/filter header on top of either the loading skeleton,
+ * the search/filter results, or the browsable feed of static game sections.
  */
-const DeferredSection = memo(function DeferredSection({
-  delay,
-  children,
-}: {
-  delay: number;
-  children: React.ReactElement;
-}) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), delay);
-    return () => clearTimeout(timer);
-  }, [delay]);
-
-  if (!mounted) {
-    return <View style={{ height: DEFERRED_PLACEHOLDER_HEIGHT }} />;
-  }
-
-  return children;
-});
-DeferredSection.displayName = "DeferredSection";
-
-// Stable memoized section wrappers — defined at module scope so their
-// references never change, which lets renderItem remain dep-free.
-const FreeGamesSection = memo(() => <FreeGames />);
-const RecommendedSection = memo(() => <RecommendedGames />);
-// const GamesNewsSection = memo(() => <GamesNews />);
-const PopularSection = memo(() => <Popular />);
-const SteamSection = memo(() => <SteamTopSellers />);
-const TrendingSection = memo(() => <TrendingPlatformSection />);
-const ReleasedSection = memo(() => <RecentlyReleased />);
-const ComingSoonSection = memo(() => <ComingSoon />);
-const AnticipatedSection = memo(() => <MostAnticipated />);
-const NostalgiaSection = memo(() => <NostalgiaCorner />);
-const TopRatedSection = memo(() => <TopRated />);
-FreeGamesSection.displayName = "FreeGamesSection";
-RecommendedSection.displayName = "RecommendedSection";
-// GamesNewsSection.displayName = "GamesNewsSection";
-PopularSection.displayName = "PopularSection";
-SteamSection.displayName = "SteamSection";
-TrendingSection.displayName = "TrendingSection";
-TrendingPlatformSection.displayName = "TrendingPlatformSection";
-ReleasedSection.displayName = "ReleasedSection";
-ComingSoonSection.displayName = "ComingSoonSection";
-AnticipatedSection.displayName = "AnticipatedSection";
-NostalgiaSection.displayName = "NostalgiaSection";
-TopRatedSection.displayName = "TopRatedSection";
-
-// main
 function GamesScreen(): React.ReactElement {
-  const colors = useThemeColors();
   const styles = useThemeStyles((c) => ({
     container: {
       flex: 1,
       backgroundColor: c.background,
     },
-    searchSection: {
-      zIndex: 100,
-      marginHorizontal: 16,
-      marginTop: 10,
-      marginBottom: 20,
-    },
-    searchRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 10,
-    },
-    autocompleteWrapper: {
-      position: "relative",
-      marginTop: 6,
-    },
-    searchBarContainer: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: c.surface,
-      paddingHorizontal: 15,
-      paddingBottom: 2,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-    searchIcon: {
-      marginRight: 8,
-    },
-    searchInput: {
-      flex: 1,
-      color: c.text,
-      fontSize: 16,
-    },
-    filterBtn: {
-      width: 44,
-      height: 44,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: c.border,
-      backgroundColor: c.surface,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    filterBtnActive: {
-      backgroundColor: c.accent,
-      borderColor: c.accent,
-    },
-    filterBadge: {
-      position: "absolute",
-      top: -4,
-      right: -4,
-      backgroundColor: c.danger,
-      borderRadius: 8,
-      minWidth: 16,
-      height: 16,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: 3,
-    },
-    filterBadgeText: {
-      color: "#ffffff",
-      fontSize: 10,
-      fontWeight: "700",
-    },
-    header: {
-      padding: 8,
-      borderRadius: 12,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      elevation: 5,
-      shadowColor: c.textMuted,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 5,
-      marginHorizontal: 50,
-    },
-    headerText: {
-      color: c.text,
-      fontSize: 24,
-      fontWeight: "bold",
-      textAlign: "center",
-    },
+    flex: { flex: 1 },
   }));
+
   const {
-    t,
     searchQuery,
     filterVisible,
     filters,
@@ -260,173 +43,26 @@ function GamesScreen(): React.ReactElement {
     openFilter,
     closeFilter,
   } = useGames();
-  // Keep a ref so renderFeedItem can read t() without it being a dep
-  const tRef = useRef(t);
-  tRef.current = t;
-
-  // renderFeedItem is fully stable (empty deps). It reads t() via tRef at
-  // call-time. Each memoized section wrapper is defined at module scope so
-  // its reference never changes.
-  //
-  // Sections below the fold are wrapped in DeferredSection with staggered
-  // delays so their fetches and image loads don't all fire at once on cold
-  // start (see DeferredSection comment).
-  const renderFeedItem = useCallback(
-    ({ item }: { item: FeedItemConfig }) => {
-      if (item.type === "AD") return <AdContainer />;
-      switch (item.id) {
-        case "header":
-          return (
-            <LinearGradient
-              colors={[colors.textMuted, colors.accent]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.header}
-            >
-              <CustomText style={styles.headerText}>
-                {tRef.current("games.header")}
-              </CustomText>
-            </LinearGradient>
-          );
-        case "free_games":
-          return <FreeGamesSection />;
-        case "recommended":
-          return (
-            <DeferredSection delay={600}>
-              <RecommendedSection />
-            </DeferredSection>
-          );
-        // case "news":
-        //   return (
-        //     <DeferredSection delay={300}>
-        //       <GamesNewsSection />
-        //     </DeferredSection>
-        //   );
-        case "popular":
-          return (
-            <DeferredSection delay={900}>
-              <PopularSection />
-            </DeferredSection>
-          );
-        case "steam_top_sellers":
-          return (
-            <DeferredSection delay={1800}>
-              <SteamSection />
-            </DeferredSection>
-          );
-        case "trending_platform":
-          return (
-            <DeferredSection delay={1200}>
-              <TrendingSection />
-            </DeferredSection>
-          );
-        case "recently_released":
-          return (
-            <DeferredSection delay={2100}>
-              <ReleasedSection />
-            </DeferredSection>
-          );
-        case "coming_soon":
-          return (
-            <DeferredSection delay={2400}>
-              <ComingSoonSection />
-            </DeferredSection>
-          );
-        case "anticipated":
-          return (
-            <DeferredSection delay={1500}>
-              <AnticipatedSection />
-            </DeferredSection>
-          );
-        case "nostalgia":
-          return (
-            <DeferredSection delay={2700}>
-              <NostalgiaSection />
-            </DeferredSection>
-          );
-        case "top_rated":
-          return (
-            <DeferredSection delay={3000}>
-              <TopRatedSection />
-            </DeferredSection>
-          );
-        default:
-          return null;
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      {/* Search bar + filter button row + autocomplete overlay */}
-      <View style={styles.searchSection}>
-        <View style={styles.searchRow}>
-          <View style={styles.searchBarContainer}>
-            <Search size={18} color={colors.textSubtle} style={styles.searchIcon} />
-            <CustomTextInput
-              style={styles.searchInput}
-              placeholder={t("games.searchPlaceholder")}
-              placeholderTextColor={colors.textSubtle}
-              value={searchQuery}
-              onChangeText={handleSearchTextChange}
-              onSubmitEditing={handleSubmitSearch}
-              onFocus={handleSearchFocus}
-              onBlur={handleSearchBlur}
-              returnKeyType="search"
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity
-                onPress={handleClearSearch}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <CircleX size={24} color="#ccc" />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Random game suggestion button */}
-          <RandomGameButton />
-
-          {/* Filter button */}
-          <TouchableOpacity
-            style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
-            onPress={openFilter}
-            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-          >
-            <SlidersHorizontal
-              size={20}
-              color={activeFilterCount > 0 ? colors.text : colors.textMuted}
-            />
-            {activeFilterCount > 0 && (
-              <View style={styles.filterBadge}>
-                <CustomText style={styles.filterBadgeText}>
-                  {activeFilterCount}
-                </CustomText>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Autocomplete dropdown — absolutely positioned below the search row */}
-        <View style={styles.autocompleteWrapper}>
-          <SearchAutocomplete
-            query={searchQuery}
-            visible={showAutocomplete}
-            onSelect={handleAutocompleteSelect}
-          />
-        </View>
-      </View>
+      <GamesSearchHeader
+        searchQuery={searchQuery}
+        showAutocomplete={showAutocomplete}
+        activeFilterCount={activeFilterCount}
+        onChangeText={handleSearchTextChange}
+        onSubmit={handleSubmitSearch}
+        onFocus={handleSearchFocus}
+        onBlur={handleSearchBlur}
+        onClear={handleClearSearch}
+        onSelectSuggestion={handleAutocompleteSelect}
+        onOpenFilter={openFilter}
+      />
 
       {!isReady ? (
-        <View style={{ flex: 1, padding: 16 }}>
-          <SkeletonFreeGames />
-          <View style={{ height: 20 }} />
-          <SkeletonNewsItem />
-        </View>
+        <GamesLoadingSkeleton />
       ) : showResults ? (
-        <View style={{ flex: 1 }}>
+        <View style={styles.flex}>
           <GamesList
             query={effectiveQuery || undefined}
             filters={filters}
@@ -434,18 +70,8 @@ function GamesScreen(): React.ReactElement {
           />
         </View>
       ) : (
-        <View style={{ flex: 1 }}>
-          <FlashList
-            data={STATIC_FEED_ITEMS}
-            renderItem={renderFeedItem}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            onScroll={onScroll}
-            scrollEventThrottle={16}
-            getItemType={(item) => (item.type === "AD" ? "AD" : item.id)}
-            contentContainerStyle={{ paddingBottom: 90 }}
-          />
+        <View style={styles.flex}>
+          <GamesFeed onScroll={onScroll} />
         </View>
       )}
 

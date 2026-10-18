@@ -5,17 +5,17 @@ import { storage } from "./lib/storage";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import type {
+  NavigationContainerRef,
+  Theme,
+  LinkingOptions} from "@react-navigation/native";
 import {
   NavigationContainer,
   DefaultTheme,
   DarkTheme,
-  NavigationContainerRef,
-  Theme,
-  getStateFromPath,
-  LinkingOptions,
+  getStateFromPath
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import analytics from "@react-native-firebase/analytics";
 import * as SplashScreen from "expo-splash-screen";
@@ -38,6 +38,7 @@ import { MainAppTabs, AuthStack } from "./navigation/AppNavigator";
 import OnboardingScreen from "./features/onboarding/screens/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import OfflineBanner from "./components/OfflineBanner";
+import { logger } from "@/src/lib/logger";
 
 // Types
 export type RootStackParamList = {
@@ -53,17 +54,6 @@ globalThis.RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS = true;
 
 // Navigator
 const Stack = createNativeStackNavigator<RootStackParamList>();
-
-// QueryClient
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5,
-      gcTime: 1000 * 60 * 30,
-      retry: 2,
-    },
-  },
-});
 
 // Theme
 // Built per-scheme (not at module scope) so a preference change re-renders
@@ -160,7 +150,7 @@ const linking: LinkingOptions<any> = {
             }
           }
         } catch (e) {
-          if (__DEV__) console.warn("[DeepLink] lists param mapping error:", e);
+          if (__DEV__) logger.warn("[DeepLink] lists param mapping error:", e);
         }
       }
       return state;
@@ -247,7 +237,7 @@ function App(): React.ReactElement | null {
             try {
               await Updates.reloadAsync();
             } catch (e) {
-              console.warn("Failed to reload", e);
+              logger.warn("Failed to reload", e);
             }
           }, 300);
           return;
@@ -259,7 +249,7 @@ function App(): React.ReactElement | null {
             try {
               await Updates.reloadAsync();
             } catch (e) {
-              console.warn("Failed to reload", e);
+              logger.warn("Failed to reload", e);
             }
           }, 300);
           return;
@@ -282,7 +272,7 @@ function App(): React.ReactElement | null {
       // Adding a small delay ensures the Activity's drawing phase is fully ready.
       const timer = setTimeout(() => {
         SplashScreen.hideAsync().catch((e) => {
-          if (__DEV__) console.warn("[SplashScreen] hideAsync failed:", e);
+          if (__DEV__) logger.warn("[SplashScreen] hideAsync failed:", e);
         });
       }, 50);
       return () => clearTimeout(timer);
@@ -352,31 +342,29 @@ function App(): React.ReactElement | null {
 
   return (
     <ErrorBoundary sectionLabel="Root">
-      <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider>
-          <GestureHandlerRootView style={styles.container}>
-            <StatusBar style={isDark ? "light" : "dark"} />
-            <OfflineBanner />
+      <SafeAreaProvider>
+        <GestureHandlerRootView style={styles.container}>
+          <StatusBar style={isDark ? "light" : "dark"} />
+          <OfflineBanner />
 
-            <NavigationContainer
-              ref={navigationRef}
-              theme={navTheme}
-              linking={linking}
-              onReady={handleNavigationReady}
-              onStateChange={handleStateChange}
+          <NavigationContainer
+            ref={navigationRef}
+            theme={navTheme}
+            linking={linking}
+            onReady={handleNavigationReady}
+            onStateChange={handleStateChange}
+          >
+            {/* التعديل: إزالة الـ Suspense المحيط بـ الـ Navigator لعدم الحاجة إليه الآن */}
+            <Stack.Navigator
+              id="root"
+              screenOptions={{ headerShown: false, freezeOnBlur: true }}
             >
-              {/* التعديل: إزالة الـ Suspense المحيط بـ الـ Navigator لعدم الحاجة إليه الآن */}
-              <Stack.Navigator
-                id="root"
-                screenOptions={{ headerShown: false, freezeOnBlur: true }}
-              >
-                <Stack.Screen name="MainApp" component={MainAppTabs} />
-                <Stack.Screen name="Auth" component={AuthStack} />
-              </Stack.Navigator>
-            </NavigationContainer>
-          </GestureHandlerRootView>
-        </SafeAreaProvider>
-      </QueryClientProvider>
+              <Stack.Screen name="MainApp" component={MainAppTabs} />
+              <Stack.Screen name="Auth" component={AuthStack} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
     </ErrorBoundary>
   );
 }

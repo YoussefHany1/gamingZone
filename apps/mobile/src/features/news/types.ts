@@ -1,4 +1,4 @@
-import { RssFeedMap } from "@/src/hooks/useRssFeeds";
+import type { RssFeedMap } from "@/src/hooks/useRssFeeds";
 import type { Article } from "@gaming-zone/core";
 
 export type { Article } from "@gaming-zone/core";

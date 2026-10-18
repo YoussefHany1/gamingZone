@@ -1,4 +1,4 @@
-import type { AgeRating, AgeRatingInfo } from "../../types";
+import type { AgeRating, AgeRatingInfo, GameData } from "../../types";
 import { useThemeStore } from "@/src/store/useThemeStore";
 import { AGE_RATING_MAP } from "@gaming-zone/utils";
 import type { ComponentType } from "react";
@@ -59,17 +59,16 @@ export function getRatingColorCode(ratingCategory: number): string {
   return useThemeStore.getState().colors.accent;
 }
 
+// ── Rating colours ──────────────────────────────────────────────────────────
+
 /**
- * Returns a two-colour gradient tuple for a game's aggregate rating (0–10 scale).
- * Designed for use with LinearGradient in card badges/circles.
+ * The aggregate-rating gradient moved to `src/constants/ratingColors.ts`
+ * (Phase 4; docs/known-gaps.md §6) so card variants beside this screen can
+ * share it. Re-exported here — both for this file's existing consumers and
+ * for the still-present legacy section files — until those deletions land
+ * in their follow-up PRs.
  */
-export function getRatingGradient(rating: number): [string, string] {
-  if (rating <= 2) return ["#8B0000", "#B22222"]; // very poor
-  if (rating <= 4) return ["#FF4C4C", "#FF6B6B"]; // poor
-  if (rating <= 6) return ["#FF8C00", "#FFA500"]; // average
-  if (rating <= 8) return ["#7CB342", "#8BC34A"]; // good
-  return ["#2E7D32", "#4CAF50"]; // excellent
-}
+export { getRatingGradient } from "@/src/constants/ratingColors";
 
 /** Selects the most suitable age rating to display (ESRB preferred, PEGI fallback). */
 export function getAgeRatingInfo(ratings?: AgeRating[]): AgeRatingInfo | null {
@@ -86,4 +85,27 @@ export function getAgeRatingInfo(ratings?: AgeRating[]): AgeRatingInfo | null {
     label: AGE_RATING_MAP[selected.rating_category] ?? "?",
     color: getRatingColorCode(selected.rating_category),
   };
+}
+
+/**
+ * True when a game has not released yet.
+ *
+ * - `first_release_date` present → strictly in the future.
+ * - `first_release_date` missing but `release_dates` exist → TBD upcoming title.
+ * - Otherwise (no release info at all) → false.
+ */
+export function isUpcomingGame(game?: GameData | null): boolean {
+  if (!game) return false;
+
+  const nowInSeconds = Math.floor(Date.now() / 1000);
+
+  if (typeof game.first_release_date === "number") {
+    return game.first_release_date > nowInSeconds;
+  }
+
+  if (Array.isArray(game.release_dates) && game.release_dates.length > 0) {
+    return true;
+  }
+
+  return false;
 }

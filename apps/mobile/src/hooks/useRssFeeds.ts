@@ -1,5 +1,6 @@
 import { useCallback } from "react";
-import { Query, Models } from "react-native-appwrite";
+import type { Models } from "react-native-appwrite";
+import { Query } from "react-native-appwrite";
 import { databases } from "../lib/appwrite";
 import { APPWRITE_DATABASE_ID } from "../lib/config";
 import useCachedData from "./useCachedData";

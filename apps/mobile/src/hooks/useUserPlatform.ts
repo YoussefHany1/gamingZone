@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import firestore from "@react-native-firebase/firestore";
 import { useAuthStore } from "../store/useAuthStore";
+import { logger } from "@/src/lib/logger";
 
 /** Platforms the app currently supports as an account preference. */
 export const USER_PLATFORMS = [
@@ -56,7 +57,7 @@ export function useUserPlatform(): { platform: UserPlatform | null; loading: boo
         setPlatform(isUserPlatform(value) ? (value.toLowerCase() as UserPlatform) : null);
       })
       .catch((error) => {
-        console.error("[useUserPlatform] Error loading user platform:", error);
+        logger.error("[useUserPlatform] Error loading user platform:", error);
         if (mounted) setPlatform(null);
       })
       .finally(() => {

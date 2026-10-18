@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
-import { AppState, AppStateStatus } from "react-native";
-import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import type { AppStateStatus } from "react-native";
+import { AppState } from "react-native";
+import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import auth from "@react-native-firebase/auth";
 import analytics from "@react-native-firebase/analytics";
 
 interface AuthState {

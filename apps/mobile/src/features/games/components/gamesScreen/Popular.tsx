@@ -1,10 +1,11 @@
 import React, { useCallback } from "react";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import { View, TouchableOpacity } from "react-native";
-import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import { GestureScrollView } from "@/src/components/GestureScrollView";
 import CustomText from "@/src/components/CustomText";
 import { Image } from "expo-image";
-import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
+import type { ListRenderItemInfo } from "@shopify/flash-list";
+import { FlashList } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
@@ -213,7 +214,7 @@ function PopularGames(): React.ReactElement {
 
       {isActuallyLoading && (
         <FlashList
-          renderScrollComponent={GHScrollView as any}
+          renderScrollComponent={GestureScrollView}
           data={SKELETON_DATA}
           horizontal
           renderItem={renderSkeletonItem}
@@ -230,7 +231,7 @@ function PopularGames(): React.ReactElement {
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
         <FlashList
-          renderScrollComponent={GHScrollView as any}
+          renderScrollComponent={GestureScrollView}
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}

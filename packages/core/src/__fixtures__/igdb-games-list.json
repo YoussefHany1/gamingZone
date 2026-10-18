@@ -1,0 +1,22 @@
+[
+  {
+    "id": 113112,
+    "name": "Hades",
+    "cover": { "image_id": "co1" },
+    "total_rating": 93.01,
+    "first_release_date": 1597968000,
+    "game_type": 0,
+    "platforms": [
+      { "name": "PC (Microsoft Windows)", "abbreviation": "PC" },
+      { "name": "Nintendo Switch" }
+    ],
+    "genres": [{ "name": "Role-playing (RPG)" }, { "name": "Indie" }],
+    "hypes": 421,
+    "videos": [{ "video_id": "abc123" }],
+    "screenshots": [{ "image_id": "sc1" }]
+  },
+  {
+    "id": 112211,
+    "name": "Celeste"
+  }
+]

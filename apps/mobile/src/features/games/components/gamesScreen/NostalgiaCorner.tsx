@@ -1,11 +1,13 @@
-import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import { GestureScrollView } from "@/src/components/GestureScrollView";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import React, { useCallback } from "react";
 import CustomText from "@/src/components/CustomText";
 import { View, TouchableOpacity, Dimensions } from "react-native";
 import { Image } from "expo-image";
-import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
+import type { ListRenderItemInfo } from "@shopify/flash-list";
+import { FlashList } from "@shopify/flash-list";
+import type { NavigationProp } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import ErrorState from "@/src/components/ErrorState";
 import { LinearGradient } from "expo-linear-gradient";
@@ -385,7 +387,7 @@ export default function NostalgiaCorner(): React.ReactElement {
       {/* Skeleton while loading with no cached data */}
       {isActuallyLoading && (
         <FlashList
-          renderScrollComponent={GHScrollView as any}
+          renderScrollComponent={GestureScrollView}
           data={SKELETON_DATA}
           horizontal
           keyExtractor={(item) => String(item.id)}
@@ -403,7 +405,7 @@ export default function NostalgiaCorner(): React.ReactElement {
 
       {!error && Array.isArray(gamesToShow) && !isActuallyLoading && (
         <FlashList
-          renderScrollComponent={GHScrollView as any}
+          renderScrollComponent={GestureScrollView}
           data={gamesToShow}
           horizontal
           keyExtractor={(item) => String(item.id)}

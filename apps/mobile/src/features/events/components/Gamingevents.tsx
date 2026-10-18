@@ -1,8 +1,9 @@
-import { ScrollView as GHScrollView } from "react-native-gesture-handler";
+import { GestureScrollView } from "@/src/components/GestureScrollView";
 import React, { useCallback, useRef, memo } from "react";
 import CustomText from "@/src/components/CustomText";
 import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
-import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
+import type { ListRenderItemInfo } from "@shopify/flash-list";
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -300,7 +301,7 @@ function GamingEvents(): React.ReactElement | null {
 
       {isActuallyLoading && (
         <FlashList
-          renderScrollComponent={GHScrollView as any}
+          renderScrollComponent={GestureScrollView}
           data={SKELETON_DATA}
           horizontal
           keyExtractor={keyExtractorSkeleton}
@@ -318,7 +319,7 @@ function GamingEvents(): React.ReactElement | null {
 
       {!error && (
         <FlashList
-          renderScrollComponent={GHScrollView as any}
+          renderScrollComponent={GestureScrollView}
           data={eventsToShow}
           horizontal
           keyExtractor={keyExtractorEvents}

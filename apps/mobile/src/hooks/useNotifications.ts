@@ -7,6 +7,7 @@ import * as Notifications from "expo-notifications";
 import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import NotificationService from "@/src/services/notificationService";
 import { DARK_COLORS } from "../constants/colors";
+import { logger } from "@/src/lib/logger";
 
 /**
  * Handles all FCM setup for the authenticated user:
@@ -155,7 +156,7 @@ const useNotifications = (user: FirebaseAuthTypes.User | null | undefined): void
                 trigger: null,
               });
             } catch (err) {
-              console.error(
+              logger.error(
                 "[useNotifications] Failed to present foreground notification:",
                 err,
               );
@@ -170,7 +171,7 @@ const useNotifications = (user: FirebaseAuthTypes.User | null | undefined): void
           await NotificationService.saveFCMToken(user.uid, newToken);
         });
       } catch (error) {
-        console.error("[useNotifications] FCM setup error:", error);
+        logger.error("[useNotifications] FCM setup error:", error);
       }
     };
 

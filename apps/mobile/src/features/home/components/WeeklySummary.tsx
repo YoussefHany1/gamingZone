@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState, memo } from "react";
 import CustomText from "@/src/components/CustomText";
+import type {
+  LayoutChangeEvent} from "react-native";
 import {
   View,
   TouchableOpacity,
-  LayoutChangeEvent,
   Platform,
   ToastAndroid,
 } from "react-native";
@@ -28,7 +29,8 @@ import type { ThemeColors } from "@/src/constants/colors";
 import Constants from "expo-constants";
 import useCachedData from "@/src/hooks/useCachedData";
 import { storageGet, storageSet } from "@/src/lib/storage";
-import { WeeklySummaryDoc } from "../types";
+import type { WeeklySummaryDoc } from "../types";
+import { logger } from "@/src/lib/logger";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -126,7 +128,7 @@ const showSummaryNotification = async (title: string, body: string): Promise<voi
       trigger: null,
     });
   } catch (error) {
-    console.error("[WeeklySummary] Failed to show notification:", error);
+    logger.error("[WeeklySummary] Failed to show notification:", error);
   }
 };
 

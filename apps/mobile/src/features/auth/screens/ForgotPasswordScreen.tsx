@@ -1,171 +1,101 @@
-import React, { useState, useCallback, memo } from "react";
+import React, { memo } from "react";
 import CustomText from "@/src/components/CustomText";
 import CustomTextInput from "@/src/components/CustomTextInput";
-import {
-  TouchableOpacity,
-  ToastAndroid,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
-import { Image, ImageBackground } from "expo-image";
-import auth from "@react-native-firebase/auth";
+import { KeyboardAvoidingView, Platform } from "react-native";
+import { ImageBackground } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import AuthLogo from "../components/AuthLogo";
+import AuthPrimaryButton from "../components/AuthPrimaryButton";
+import AuthOutlineButton from "../components/AuthOutlineButton";
+import { useForgotPasswordForm } from "../hooks/useForgotPasswordForm";
+import type { AuthScreenProps } from "../types";
 
-// Types
-type AuthStackParamList = {
-  ForgotPassword: undefined;
-  Login: undefined;
-};
-type Props = NativeStackScreenProps<AuthStackParamList, "ForgotPassword">;
+const ForgotPasswordScreen: React.FC<AuthScreenProps<"ForgotPassword">> = memo(
+  ({ navigation }) => {
+    const { t } = useTranslation();
+    const colors = useThemeColors();
+    const { email, setEmail, loading, handleResetPassword, handleGoBack } =
+      useForgotPasswordForm({ navigation });
 
-// main
-const ForgotPasswordScreen = memo(({ navigation }: Props) => {
-  const { t } = useTranslation();
-  const [email, setEmail] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const colors = useThemeColors();
+    const styles = useThemeStyles((c) => ({
+      background: {
+        flex: 1,
+        width: "100%",
+        height: "100%",
+        backgroundColor: c.background,
+      },
+      keyboardView: { flex: 1 },
+      container: { flex: 1, justifyContent: "center", padding: 20 },
+      title: {
+        fontSize: 22,
+        fontWeight: "bold",
+        color: c.text,
+        textAlign: "center",
+        marginBottom: 20,
+      },
+      input: {
+        color: c.text,
+        backgroundColor: c.surface,
+        padding: 15,
+        borderRadius: 5,
+        marginBottom: 25,
+      },
+      sendButton: {
+        marginBottom: 20,
+        marginHorizontal: 10,
+      },
+    }));
 
-  const styles = useThemeStyles((c) => ({
-    background: {
-      flex: 1,
-      width: "100%",
-      height: "100%",
-      backgroundColor: c.background,
-    },
-    container: { flex: 1, justifyContent: "center", padding: 20 },
-    logo: { width: 250, height: 250, alignSelf: "center" },
-    title: {
-      fontSize: 22,
-      fontWeight: "bold",
-      color: c.text,
-      textAlign: "center",
-      marginBottom: 20,
-    },
-    input: {
-      color: c.text,
-      backgroundColor: c.surface,
-      padding: 15,
-      borderRadius: 5,
-      marginBottom: 25,
-    },
-    button: {
-      backgroundColor: c.accent,
-      padding: 15,
-      borderRadius: 12,
-      alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "center",
-      marginBottom: 20,
-      marginHorizontal: 10,
-    },
-    buttonText: {
-      color: c.onAccent,
-      fontSize: 18,
-      fontWeight: "bold",
-      textAlign: "center",
-    },
-    backButton: {
-      borderWidth: 2,
-      borderColor: c.accent,
-      padding: 15,
-      borderRadius: 12,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-  }));
-
-  const handleResetPassword = useCallback(async (): Promise<void> => {
-    if (!email) {
-      ToastAndroid.show(t("auth.forgotPassword.emptyEmail"), ToastAndroid.LONG);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Note: we intentionally do NOT pre-check with fetchSignInMethodsForEmail here,
-      // since Firebase's Email Enumeration Protection makes it return an empty array
-      // for every address (existing or not), which would falsely report "no account".
-      // sendPasswordResetEmail itself resolves successfully even for unknown emails
-      // (to prevent account enumeration), so existing accounts always receive the link.
-      await auth().sendPasswordResetEmail(email);
-      ToastAndroid.show(t("auth.forgotPassword.successTitle"), ToastAndroid.LONG);
-      navigation.goBack();
-    } catch (error: unknown) {
-      console.error("[ForgotPasswordScreen] Reset error:", error);
-      const code = (error as { code?: string }).code;
-      const key =
-        code === "auth/user-not-found"
-          ? "auth.forgotPassword.errors.userNotFound"
-          : "auth.forgotPassword.errors.general";
-      ToastAndroid.show(t(key), ToastAndroid.LONG);
-    } finally {
-      setLoading(false);
-    }
-  }, [email, navigation, t]);
-
-  const handleGoBack = useCallback(() => {
-    navigation.goBack();
-  }, [navigation]);
-
-  return (
-    <ImageBackground
-      source={require("@/assets/background.webp")}
-      style={styles.background}
-      contentFit="cover"
-      cachePolicy="memory-disk"
-    >
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "android" ? "height" : "padding"}
+    return (
+      <ImageBackground
+        source={require("@/assets/background.webp")}
+        style={styles.background}
+        contentFit="cover"
+        cachePolicy="memory-disk"
       >
-        <SafeAreaView style={styles.container}>
-          {/* Logo */}
-          <Image
-            source={require("@/assets/logo.webp")}
-            style={styles.logo}
-            contentFit="cover"
-            transition={500}
-            cachePolicy="memory-disk"
-            allowDownscaling
-          />
-          {/* Title */}
-          <CustomText style={styles.title}>{t("auth.forgotPassword.title")}</CustomText>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === "android" ? "height" : "padding"}
+        >
+          <SafeAreaView style={styles.container}>
+            <AuthLogo size={250} />
 
-          {/* Email Input */}
-          <CustomTextInput
-            style={styles.input}
-            placeholder={t("auth.emailPlaceholder")}
-            placeholderTextColor={colors.textSubtle}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          {/* Send Button */}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleResetPassword}
-            disabled={loading}
-          >
-            <CustomText style={styles.buttonText}>
-              {t("auth.forgotPassword.sendButton")}
+            <CustomText style={styles.title}>
+              {t("auth.forgotPassword.title")}
             </CustomText>
-          </TouchableOpacity>
-          {/* Back Button */}
-          <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-            <CustomText style={styles.buttonText}>
-              {t("auth.forgotPassword.backToLogin")}
-            </CustomText>
-          </TouchableOpacity>
-        </SafeAreaView>
-      </KeyboardAvoidingView>
-    </ImageBackground>
-  );
-});
+
+            <CustomTextInput
+              style={styles.input}
+              placeholder={t("auth.emailPlaceholder")}
+              placeholderTextColor={colors.textSubtle}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            <AuthPrimaryButton
+              label={t("auth.forgotPassword.sendButton")}
+              onPress={handleResetPassword}
+              loading={loading}
+              disabled={loading}
+              containerStyle={styles.sendButton}
+            />
+
+            <AuthOutlineButton
+              label={t("auth.forgotPassword.backToLogin")}
+              onPress={handleGoBack}
+            />
+          </SafeAreaView>
+        </KeyboardAvoidingView>
+      </ImageBackground>
+    );
+  },
+);
 
 ForgotPasswordScreen.displayName = "ForgotPasswordScreen";
+
 export default ForgotPasswordScreen;

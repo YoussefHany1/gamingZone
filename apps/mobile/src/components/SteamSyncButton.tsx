@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import {
-  View,
-  TouchableOpacity,
+import type {
   StyleProp,
   ViewStyle,
-  TextStyle,
+  TextStyle} from "react-native";
+import {
+  View,
+  TouchableOpacity
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { SteamIcon } from "@/src/components/icons/StoreIcons";

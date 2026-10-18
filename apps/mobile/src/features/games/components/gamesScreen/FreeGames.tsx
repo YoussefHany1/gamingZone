@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { View, TouchableOpacity, ToastAndroid } from "react-native";
 import { Image } from "expo-image";
-import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
+import type { ListRenderItemInfo } from "@shopify/flash-list";
+import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { Bell, BellOff, Gift } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -19,17 +20,18 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useThemeStore } from "@/src/store/useThemeStore";
 import useCachedData from "@/src/hooks/useCachedData";
 import { useCountdown } from "@/src/hooks/useCountdown";
-import {
+import type {
   FreeGameItem,
   TimeUnitProps,
   CountdownTimerProps,
   FreeGameCardProps,
 } from "../../types";
-import { CountdownResult } from "@/src/types/sharedTypes";
+import type { CountdownResult } from "@/src/types/sharedTypes";
 import ErrorState from "@/src/components/ErrorState";
 import SectionTitle from "@/src/components/SectionTitle";
 import CustomText from "@/src/components/CustomText";
 import { SteamIcon, GogIcon, EpicGamesIcon } from "@/src/components/icons/StoreIcons";
+import { logger } from "@/src/lib/logger";
 const STORAGE_KEY = "GAMES_CACHE_FREE_GAMES";
 
 // Constants
@@ -40,7 +42,6 @@ const NOTIF_SOURCE = "alerts";
 const FREE_GAMES_CACHE_KEY = "FREE_GAMES_APPWRITE_CACHE";
 const CARD_HEIGHT = 300;
 const ESTIMATED_CARD_WIDTH = 185;
-const SKELETON_COUNT = 3;
 
 const dbId = Constants.expoConfig?.extra?.APPWRITE_DATABASE_ID as string;
 
@@ -408,7 +409,7 @@ function FreeGames(): React.ReactElement {
         const topicName = NotificationService.getTopicName(NOTIF_CATEGORY, NOTIF_SOURCE);
         if (isMounted) setNotifEnabled(prefs[topicName] === true);
       } catch (e) {
-        console.log("Error reading notification pref from Firestore", e);
+        logger.debug("Error reading notification pref from Firestore", e);
       }
     };
 
@@ -441,7 +442,7 @@ function FreeGames(): React.ReactElement {
         ToastAndroid.LONG,
       );
     } catch (err) {
-      console.error("Toggle notifications error:", err);
+      logger.error("Toggle notifications error:", err);
       setNotifEnabled(!newStatus); // Revert on failure
       ToastAndroid.show(t("error"), ToastAndroid.LONG);
     }
@@ -457,7 +458,7 @@ function FreeGames(): React.ReactElement {
         store: item.store ?? "epic",
       });
     } catch (analyticsError) {
-      console.log("Analytics error:", analyticsError);
+      logger.debug("Analytics error:", analyticsError);
     }
 
     if (item.url) {
@@ -476,12 +477,6 @@ function FreeGames(): React.ReactElement {
   );
 
   const keyExtractor = useCallback((item: FreeGameItem) => item.id, []);
-
-  const skeletonData = useMemo(
-    () => Array.from({ length: SKELETON_COUNT }, (_, i) => ({ id: i }) as any),
-    [],
-  );
-  const renderSkeletonItem = useCallback(() => <SkeletonFreeGames />, []);
 
   return (
     <View>
@@ -503,13 +498,9 @@ function FreeGames(): React.ReactElement {
 
       {/* Skeleton — shown on first load before any data arrives */}
       {isInitialLoading && (
-        <FlashList
-          data={skeletonData}
-          horizontal
-          keyExtractor={(item) => String(item.id)}
-          renderItem={renderSkeletonItem}
-          showsHorizontalScrollIndicator={false}
-        />
+        <View style={styles.listContent}>
+          <SkeletonFreeGames />
+        </View>
       )}
 
       {/* Error state */}

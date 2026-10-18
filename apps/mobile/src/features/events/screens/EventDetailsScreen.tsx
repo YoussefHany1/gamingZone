@@ -1,452 +1,91 @@
-import { ScrollView as GHScrollView } from "react-native-gesture-handler";
-import React, { useCallback, useMemo, memo, useEffect, useRef } from "react";
-import CustomText from "@/src/components/CustomText";
-import { View, StyleSheet, ScrollView, TouchableOpacity, Animated } from "react-native";
-import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
-import { FlashList } from "@shopify/flash-list";
-import { Image } from "expo-image";
-import { ArrowLeft, Calendar, CirclePlay, Flag, Radio } from "lucide-react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
-import { useTranslation } from "react-i18next";
-import { useThemeColors } from "@/src/hooks/useTheme";
+import React, { memo, useMemo } from "react";
+import { View, Animated, ScrollView } from "react-native";
+import {
+  useNavigation,
+  useRoute,
+  type RouteProp,
+} from "@react-navigation/native";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import { useCountdown } from "@/src/hooks/useCountdown";
-import { formatEventDate, getEventStatus, igdbImageUrl } from "@gaming-zone/utils";
-import type { EventStatus } from "@gaming-zone/utils";
+import EventHero from "../components/EventHero";
+import EventDates from "../components/EventDates";
+import EventCountdown from "../components/EventCountdown";
+import EventStreamButton from "../components/EventStreamButton";
+import EventDescription from "../components/EventDescription";
+import EventNetworks from "../components/EventNetworks";
+import EventVideosSection from "../components/EventVideosSection";
+import EventFeaturedGamesSection from "../components/EventFeaturedGamesSection";
+import { useEventDetails } from "../hooks/useEventDetails";
+import { useContentFadeIn } from "../hooks/useContentFadeIn";
 import type { EventDetailsParamList } from "../types";
-import type { GamingEvent } from "@/src/types/sharedTypes";
-import { openLink } from "@/src/lib/browser";
-import { CountdownResult } from "@/src/types/sharedTypes";
 
-// Components
-import SectionTitle from "@/src/components/SectionTitle";
-import GameCard from "../components/GameCard";
-import VideoCard from "../components/VideoCard";
-import NetworkButton from "../components/NetworkButton";
-import CountdownBox from "../components/CountdownBox";
-
-//  Main Screen
 const EventDetailsScreen = memo((): React.ReactElement => {
-  const colors = useThemeColors();
+  const navigation = useNavigation();
+  const route = useRoute<RouteProp<EventDetailsParamList, "EventDetailsScreen">>();
   const styles = useThemeStyles((c) => ({
     screen: {
       flex: 1,
       backgroundColor: c.background,
       marginBottom: 52,
     },
-    // Hero
-    hero: {
-      width: "100%",
-      height: HERO_HEIGHT,
-      justifyContent: "flex-end",
-      padding: 20,
-    },
-    backBtn: {
-      position: "absolute",
-      top: 44,
-      left: 16,
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: c.scrim,
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 10,
-    },
-    heroBadgeRow: {
-      flexDirection: "row",
-      marginBottom: 8,
-      gap: 8,
-    },
-    heroTitle: {
-      color: c.text,
-      fontSize: 26,
-      fontWeight: "bold",
-      lineHeight: 34,
-      textShadowColor: "rgba(0,0,0,0.6)",
-      textShadowOffset: { width: 0, height: 2 },
-      textShadowRadius: 6,
-    },
-    // Badges
-    liveBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: 12,
-      paddingVertical: 5,
-      borderRadius: 10,
-      gap: 5,
-    },
-    liveDot: {
-      width: 6,
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: c.text,
-    },
-    liveText: {
-      color: c.text,
-      fontSize: 11,
-      fontWeight: "bold",
-      textTransform: "uppercase",
-    },
-    upcomingBadge: {
-      backgroundColor: c.accentSurface,
-      paddingHorizontal: 12,
-      paddingVertical: 5,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: c.textMuted,
-    },
-    upcomingText: { color: c.text, fontSize: 11, fontWeight: "bold" },
-    endedBadge: {
-      backgroundColor: "#44444480",
-      paddingHorizontal: 12,
-      paddingVertical: 5,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: c.textSubtle,
-    },
-    endedText: { color: c.textSubtle, fontSize: 11, fontWeight: "bold" },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    // Scroll
     scroll: { flex: 1 },
     scrollContent: { paddingTop: 16, paddingHorizontal: 18 },
-    // Dates row
-    datesRow: {
-      gap: 10,
-      marginBottom: 8,
-    },
-    dateBlock: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 10,
-      backgroundColor: c.accentSurface,
-      borderRadius: 12,
-      padding: 12,
-      borderWidth: 1,
-      borderColor: c.accentBorder,
-    },
-    dateBlockLabel: {
-      color: c.textMuted,
-      fontSize: 11,
-      fontWeight: "600",
-      textTransform: "uppercase",
-      letterSpacing: 0.5,
-    },
-    dateBlockValue: {
-      color: c.text,
-      fontSize: 13,
-      fontWeight: "500",
-      marginTop: 2,
-    },
-    // Section
-    section: { marginTop: 24 },
-    countdownRow: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      justifyContent: "center",
-      gap: 6,
-    },
-    countdownSep: {
-      color: c.textMuted,
-      fontSize: 26,
-      fontWeight: "bold",
-      marginTop: 14,
-    },
-    // Stream button
-    streamBtnWrap: { marginTop: 20 },
-    streamBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 10,
-      paddingVertical: 14,
-      borderRadius: 14,
-      elevation: 4,
-      shadowColor: c.danger,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.4,
-      shadowRadius: 6,
-    },
-    streamBtnText: {
-      color: c.text,
-      fontSize: 16,
-      fontWeight: "bold",
-      letterSpacing: 0.5,
-    },
-    // Description
-    description: {
-      color: "#b7becb",
-      fontSize: 15,
-      lineHeight: 24,
-      textAlign: "left",
-      direction: "ltr",
-    },
-    // Networks
-    networksWrap: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 10,
-    },
+    spacer: { height: 40 },
   }));
 
-  const navigation = useNavigation();
-  const route = useRoute<RouteProp<EventDetailsParamList, "EventDetailsScreen">>();
-  const { t, i18n } = useTranslation();
+  const contentOpacity = useContentFadeIn();
+  const animatedStyle = useMemo(() => ({ opacity: contentOpacity }), [contentOpacity]);
 
-  const contentOpacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const interactionTask = runAfterInteractions(() => {
-      Animated.timing(contentOpacity, {
-        toValue: 1,
-        duration: 280,
-        useNativeDriver: true,
-      }).start();
-    });
-    return () => interactionTask.cancel();
-  }, [contentOpacity]);
-
-  const event: GamingEvent = route.params.event;
-  const status: EventStatus = useMemo(
-    () => getEventStatus(event.start_time, event.end_time),
-    [event.start_time, event.end_time],
-  );
-
-  const timeUntil = useCountdown(
-    status === "upcoming" ? event.start_time : null,
-  ) as CountdownResult | null;
-
-  const handleGoBack = useCallback(() => navigation.goBack(), [navigation]);
-
-  const handleStream = useCallback(() => {
-    if (event.live_stream_url) {
-      openLink(event.live_stream_url);
-    }
-  }, [event.live_stream_url]);
-
-  const logoUri = event.event_logo
-    ? igdbImageUrl(event.event_logo.image_id, "screenshot_big")
-    : null;
-
-  const startDateStr = useMemo(
-    () => formatEventDate(event.start_time, i18n.language),
-    [event.start_time, i18n.language],
-  );
-  const endDateStr = useMemo(
-    () => formatEventDate(event.end_time, i18n.language),
-    [event.end_time, i18n.language],
-  );
-
-  const streamBtnColors: [string, string] =
-    status === "live"
-      ? [colors.danger, colors.danger + "20"]
-      : [colors.accent, colors.textMuted];
+  const event = route.params.event;
+  const {
+    status,
+    timeUntil,
+    logoUri,
+    startDateStr,
+    endDateStr,
+    handleGoBack,
+    handleStream,
+  } = useEventDetails({ event, navigation });
 
   return (
     <View style={styles.screen}>
-      {/* â”€â”€ Hero â”€â”€ */}
-      <View style={styles.hero}>
-        {logoUri ? (
-          <Image
-            recyclingKey={event.event_logo?.image_id ?? "hero"}
-            source={logoUri}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-          />
-        ) : (
-          <Image
-            source={require("@/assets/image-not-found.webp")}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-          />
-        )}
-        <LinearGradient
-          colors={[colors.scrimSoft, colors.scrimSolid]}
-          style={StyleSheet.absoluteFill}
-        />
+      <EventHero event={event} status={status} logoUri={logoUri} onBack={handleGoBack} />
 
-        {/* Back button */}
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={handleGoBack}
-          activeOpacity={0.8}
-        >
-          <ArrowLeft size={24} color={colors.text} />
-        </TouchableOpacity>
-
-        {/* Status badge */}
-        <View style={styles.heroBadgeRow}>
-          {status === "live" && (
-            <LinearGradient
-              colors={[colors.danger, colors.danger]}
-              style={styles.liveBadge}
-            >
-              <View style={styles.liveDot} />
-              <CustomText style={styles.liveText}>
-                {t("home.gamingEvents.live")}
-              </CustomText>
-            </LinearGradient>
-          )}
-          {status === "upcoming" && (
-            <View style={styles.upcomingBadge}>
-              <CustomText style={styles.upcomingText}>
-                {t("home.gamingEvents.upcoming")}
-              </CustomText>
-            </View>
-          )}
-          {status === "ended" && (
-            <View style={styles.endedBadge}>
-              <CustomText style={styles.endedText}>Ended</CustomText>
-            </View>
-          )}
-        </View>
-
-        <CustomText style={styles.heroTitle}>{event.name}</CustomText>
-      </View>
-
-      {/* ── Scrollable content ── */}
-      <Animated.View style={[styles.scroll, { opacity: contentOpacity }]}>
+      <Animated.View style={[styles.scroll, animatedStyle]}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Dates */}
-          <View style={styles.datesRow}>
-            <View style={styles.dateBlock}>
-              <View collapsable={false}>
-                <Calendar size={18} color={colors.accent} />
-              </View>
-              <View>
-                <CustomText style={styles.dateBlockLabel}>Starts</CustomText>
-                <CustomText style={styles.dateBlockValue}>{startDateStr}</CustomText>
-              </View>
-            </View>
-            <View style={styles.dateBlock}>
-              <View collapsable={false}>
-                <Flag size={18} color={colors.accent} />
-              </View>
-              <View>
-                <CustomText style={styles.dateBlockLabel}>Ends</CustomText>
-                <CustomText style={styles.dateBlockValue}>{endDateStr}</CustomText>
-              </View>
-            </View>
-          </View>
+          <EventDates startDateStr={startDateStr} endDateStr={endDateStr} />
 
-          {/* Countdown */}
-          {timeUntil && (
-            <View style={styles.section}>
-              <SectionTitle title={t("events.startsIn") || "Starts In"} />
-              <View style={styles.countdownRow}>
-                <CountdownBox value={timeUntil.days} label="Days" />
-                <CustomText style={styles.countdownSep}>:</CustomText>
-                <CountdownBox value={timeUntil.hours} label="Hours" />
-                <CustomText style={styles.countdownSep}>:</CustomText>
-                <CountdownBox value={timeUntil.minutes} label="Min" />
-                <CustomText style={styles.countdownSep}>:</CustomText>
-                <CountdownBox value={timeUntil.seconds} label="Sec" />
-              </View>
-            </View>
-          )}
+          {timeUntil && <EventCountdown timeUntil={timeUntil} />}
 
-          {/* Watch / Stream Button */}
           {event.live_stream_url && (
-            <TouchableOpacity
-              onPress={handleStream}
-              activeOpacity={0.85}
-              style={styles.streamBtnWrap}
-            >
-              <LinearGradient
-                colors={streamBtnColors}
-                style={styles.streamBtn}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                {status === "live" ? (
-                  <View collapsable={false}>
-                    <Radio size={22} color={colors.text} />
-                  </View>
-                ) : (
-                  <View collapsable={false}>
-                    <CirclePlay size={22} color={colors.text} />
-                  </View>
-                )}
-                <CustomText style={styles.streamBtnText}>
-                  {status === "live"
-                    ? t("home.gamingEvents.watchNowButton")
-                    : t("home.gamingEvents.detailsButton")}
-                </CustomText>
-              </LinearGradient>
-            </TouchableOpacity>
+            <EventStreamButton status={status} onPress={handleStream} />
           )}
 
-          {/* Description */}
           {event.description ? (
-            <View style={styles.section}>
-              <SectionTitle title={t("events.about") || "About"} />
-              <CustomText style={styles.description}>{event.description}</CustomText>
-            </View>
+            <EventDescription description={event.description} />
           ) : null}
 
-          {/* Social / Links */}
           {event.event_networks && event.event_networks.length > 0 && (
-            <View style={styles.section}>
-              <SectionTitle title={t("events.links") || "Links & Social"} />
-              <View style={styles.networksWrap}>
-                {event.event_networks.map((net, i) => (
-                  <NetworkButton key={i} network={net} />
-                ))}
-              </View>
-            </View>
+            <EventNetworks networks={event.event_networks} />
           )}
 
-          {/* Videos */}
           {event.videos && event.videos.length > 0 && (
-            <View style={styles.section}>
-              <SectionTitle title="Videos" />
-              <FlashList
-                renderScrollComponent={GHScrollView as any}
-                data={event.videos}
-                horizontal
-                keyExtractor={(v) => v.video_id}
-                renderItem={({ item }) => <VideoCard video={item} />}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 4 }}
-                scrollEnabled
-              />
-            </View>
+            <EventVideosSection videos={event.videos} />
           )}
 
-          {/* â”€â”€ Featured Games â”€â”€ */}
           {event.games && event.games.length > 0 && (
-            <View style={styles.section}>
-              <SectionTitle title={t("events.featuredGames") || "Featured Games"} />
-              <FlashList
-                renderScrollComponent={GHScrollView as any}
-                data={event.games}
-                horizontal
-                keyExtractor={(g) => String(g.id)}
-                renderItem={({ item }) => <GameCard game={item} />}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 4 }}
-                scrollEnabled
-              />
-            </View>
+            <EventFeaturedGamesSection games={event.games} />
           )}
 
-          <View style={{ height: 40 }} />
+          <View style={styles.spacer} />
         </ScrollView>
       </Animated.View>
     </View>
   );
 });
-EventDetailsScreen.displayName = "EventDetailsScreen";
-export default EventDetailsScreen;
 
-//  Styles
-const HERO_HEIGHT = 280;
+EventDetailsScreen.displayName = "EventDetailsScreen";
+
+export default EventDetailsScreen;

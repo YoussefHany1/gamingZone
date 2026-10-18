@@ -1,5 +1,6 @@
 import { Alert, Linking } from "react-native";
 import { useThemeStore } from "../store/useThemeStore";
+import { logger } from "@/src/lib/logger";
 
 /**
  * Opens a URL in an in-app browser with customized aesthetics matching the app theme.
@@ -27,6 +28,10 @@ export async function openLink(url: string): Promise<void> {
 
   // Attempt to load and use expo-web-browser dynamically to avoid load-time crashes
   try {
+    // Deliberately dynamic: a top-level `import` of expo-web-browser is
+    // evaluated at module load and crashes the app on builds where the native
+    // module is absent.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const WebBrowser = require("expo-web-browser");
     if (WebBrowser && typeof WebBrowser.openBrowserAsync === "function") {
       // This is an imperative call outside the React tree, so read the
@@ -45,7 +50,7 @@ export async function openLink(url: string): Promise<void> {
       return;
     }
   } catch (error) {
-    console.warn(
+    logger.warn(
       "[Browser] ExpoWebBrowser native module is missing or failed to load. Falling back to Linking.openURL.",
       error,
     );

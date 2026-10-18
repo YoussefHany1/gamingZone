@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Keyboard } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
-import { useTranslation } from "react-i18next";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import type { GameFilters } from "../types";
 
@@ -16,7 +15,6 @@ function countActiveFilters(f: GameFilters): number {
 }
 
 export function useGames() {
-  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [submittedQuery, setSubmittedQuery] = useState<string>("");
   const [filterVisible, setFilterVisible] = useState<boolean>(false);
@@ -103,7 +101,6 @@ export function useGames() {
   const showAutocomplete = searchFocused && searchQuery.trim().length >= 2;
 
   return {
-    t,
     searchQuery,
     filterVisible,
     filters,

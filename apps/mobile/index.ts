@@ -12,6 +12,7 @@ import { enableScreens } from "react-native-screens";
 enableScreens(true);
 
 import App from "./src/App";
+import { logger } from "@/src/lib/logger";
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -53,7 +54,7 @@ messaging().setBackgroundMessageHandler(
       // console.log("📨 Processing background notification:", { title, body });
       // console.log("✅ Background notification processed");
     } catch (error) {
-      console.error("❌ Error handling background message:", error);
+      logger.error("❌ Error handling background message:", error);
     }
   },
 );

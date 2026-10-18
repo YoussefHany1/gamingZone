@@ -1,5 +1,9 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import CustomText from "@/src/components/CustomText";
+import type {
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  ScrollView} from "react-native";
 import {
   View,
   StyleSheet,
@@ -8,24 +12,22 @@ import {
   Modal,
   StatusBar,
   Animated,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-  ScrollView,
   ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import { ChevronLeft, ChevronRight, Images, X } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import {
-  GestureHandlerRootView,
-  PinchGestureHandler,
-  PanGestureHandler,
-  State,
+import type {
   PinchGestureHandlerGestureEvent,
   PanGestureHandlerGestureEvent,
   HandlerStateChangeEvent,
   PinchGestureHandlerEventPayload,
-  PanGestureHandlerEventPayload,
+  PanGestureHandlerEventPayload} from "react-native-gesture-handler";
+import {
+  GestureHandlerRootView,
+  PinchGestureHandler,
+  PanGestureHandler,
+  State
 } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";

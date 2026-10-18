@@ -1,378 +1,106 @@
-import React, { useState, useEffect, useRef, useCallback, memo } from "react";
-import { igdbImageUrl } from "@gaming-zone/utils";
-import CustomText from "@/src/components/CustomText";
-import {
-  View,
-  TouchableOpacity,
-  Alert,
-  ToastAndroid,
-  RefreshControl,
-  Share,
-} from "react-native";
-import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
+import React, { useCallback, useEffect } from "react";
+import { View, TouchableOpacity, Share, RefreshControl } from "react-native";
 import { FlashList } from "@shopify/flash-list";
-import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Bookmark, CirclePlus, Pencil, Share2, Star, Trash2 } from "lucide-react-native";
-import auth from "@react-native-firebase/auth";
-import firestore from "@react-native-firebase/firestore";
-import { NativeAdComponent } from "@/src/components/NativeAd";
-import CustomTextInput from "@/src/components/CustomTextInput";
-import UserGamesSkeleton from "../skeleton/SkeletonUserGames";
-import { storageGet, storageSet } from "@/src/lib/storage";
-import NetInfo from "@react-native-community/netinfo";
+import { CirclePlus, Share2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import SteamSyncButton from "@/src/components/SteamSyncButton";
-import type { GameItemProps, StackParamList, GameEntry, Props, UserList } from "../types";
+import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
+import UserGamesSkeleton from "../skeleton/SkeletonUserGames";
+import GameItem from "../components/userGames/GameItem";
+import GamePosterItem from "../components/userGames/GamePosterItem";
+import UserGamesNativeAd from "../components/userGames/UserGamesNativeAd";
+import GamesListHeader from "../components/userGames/GamesListHeader";
+import EmptyGamesList from "../components/userGames/EmptyGamesList";
+import { useUserGames } from "../hooks/useUserGames";
+import { useListEditing } from "../hooks/useListEditing";
+import { useGameMutations } from "../hooks/useGameMutations";
+import { useViewModePreference } from "../hooks/useViewModePreference";
+import { useUserGamesRows } from "../hooks/useUserGamesRows";
+import { useDeferredMount } from "../hooks/useDeferredMount";
+import { useListDisplayName } from "../hooks/useListDisplayName";
+import type { Props, UserGamesRow } from "../types";
+import { logger } from "@/src/lib/logger";
 
-const DEFAULT_LIST_IDS = ["played", "wantToPlay", "playing", "rated"];
-
-const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
-  const navigation = useNavigation<NativeStackNavigationProp<StackParamList>>();
-  const colors = useThemeColors();
-
-  const styles = useThemeStyles((c) => ({
-    gameItemContainer: {
-      flexDirection: "row",
-      backgroundColor: c.surface,
-      borderRadius: 12,
-      marginTop: 24,
-      padding: 10,
-      alignItems: "center",
-    },
-    gameImage: {
-      width: 80,
-      height: 105,
-      borderRadius: 8,
-    },
-    gameInfo: {
-      flex: 1,
-      marginLeft: 12,
-    },
-    gameName: {
-      color: c.text,
-      fontSize: 18,
-      fontWeight: "600",
-    },
-    gameReleaseDate: {
-      color: c.textSubtle,
-      fontSize: 14,
-      marginTop: 4,
-    },
-    ratingRow: {
-      flexDirection: "row",
-      marginTop: 4,
-    },
-    removeButton: {
-      padding: 8,
-      marginLeft: 8,
-    },
-  }));
-
-  const coverUrl = game.cover_image_id
-    ? {
-        uri: igdbImageUrl(game.cover_image_id, "cover_small"),
-      }
-    : require("@/assets/image-not-found.webp");
-
-  const handlePress = useCallback(
-    () => navigation.navigate("GameDetails", { gameID: game.id }),
-    [game.id, navigation],
-  );
-
-  const handleRemove = useCallback(
-    () => onRemove && onRemove(game.id, game.name),
-    [game.id, game.name, onRemove],
-  );
-
-  return (
-    <TouchableOpacity style={styles.gameItemContainer} onPress={handlePress}>
-      <Image
-        recyclingKey={String(game.cover_image_id ?? "")}
-        source={coverUrl}
-        style={styles.gameImage}
-        contentFit="cover"
-        transition={500}
-        cachePolicy="memory-disk"
-        allowDownscaling
-      />
-      <View style={styles.gameInfo}>
-        <CustomText style={styles.gameName} numberOfLines={2}>
-          {game.name}
-        </CustomText>
-        <CustomText style={styles.gameReleaseDate}>
-          {String(game.release_date ?? "")}
-        </CustomText>
-        <View style={styles.ratingRow}>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <TouchableOpacity
-              key={star}
-              onPress={() => onRate && onRate(game.id, game.rating === star ? 0 : star)}
-              disabled={!onRate}
-              activeOpacity={0.7}
-              style={{ paddingRight: 4, paddingVertical: 4 }}
-            >
-              <Star
-                size={18}
-                color={star <= (game.rating ?? 0) ? "#ffc107" : colors.textMuted}
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-      {onRemove && (
-        <TouchableOpacity style={styles.removeButton} onPress={handleRemove}>
-          <Trash2 size={24} color="#FF6347" />
-        </TouchableOpacity>
-      )}
-    </TouchableOpacity>
-  );
-});
-GameItem.displayName = "GameItem";
-
-// main
 const UserGamesScreen = ({ route, navigation }: Props) => {
   const { listId, listName, ownerId } = route.params;
-  const [games, setGames] = useState<GameEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [showAds, setShowAds] = useState<boolean>(false);
-  const [isReady, setIsReady] = useState<boolean>(false);
-  const [listMeta, setListMeta] = useState<UserList | null>(null);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [draftTitle, setDraftTitle] = useState<string>("");
-  const [draftDescription, setDraftDescription] = useState<string>("");
-  const [isSaving, setIsSaving] = useState<boolean>(false);
+
+  const { t } = useTranslation();
   const colors = useThemeColors();
+  const { onScroll } = useScrollDirection();
+  const adsEnabled = useAdsEnabled();
+  // Deferred until after the first paint: gates the skeleton → list swap and
+  // whether ads start loading.
+  const isReady = useDeferredMount();
+  const getDisplayName = useListDisplayName();
+  const { viewMode, setViewMode } = useViewModePreference();
+
   const styles = useThemeStyles((c) => ({
     container: {
       flex: 1,
       backgroundColor: c.background,
       direction: "ltr",
     },
-    emptyContainer: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      paddingTop: 100,
-    },
-    viewOnlyBanner: {
-      marginTop: 16,
-      backgroundColor: "rgba(255, 196, 87, 0.15)",
-      borderColor: "rgba(255, 196, 87, 0.45)",
-      borderWidth: 1,
-      borderRadius: 8,
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-    },
-    viewOnlyText: {
-      color: "#ffc457",
-      fontSize: 13,
-      textAlign: "center",
-      fontWeight: "600",
-    },
-    listHeader: {
-      marginTop: 16,
-    },
-    headerCard: {
-      backgroundColor: c.surface,
-      borderRadius: 12,
-      padding: 16,
-    },
-    headerRow: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    headerTitle: {
-      color: c.text,
-      fontSize: 22,
-      fontWeight: "bold",
-    },
-    headerDescription: {
-      color: c.textSubtle,
-      fontSize: 14,
-      marginTop: 6,
-      lineHeight: 20,
-    },
-    fieldLabel: {
-      color: c.textSubtle,
-      fontSize: 13,
-      fontWeight: "600",
-      marginBottom: 6,
-      marginTop: 8,
-    },
-    headerInput: {
-      backgroundColor: c.background,
-      padding: 10,
-      borderRadius: 8,
-      color: c.text,
-    },
-    headerInputMultiline: {
-      minHeight: 80,
-      textAlignVertical: "top",
-    },
-    editActions: {
-      flexDirection: "row",
-      justifyContent: "flex-end",
-      alignItems: "center",
-      gap: 12,
-      marginTop: 16,
-    },
-    cancelBtn: {
-      paddingVertical: 10,
-      paddingHorizontal: 16,
-    },
-    cancelBtnText: {
-      color: c.text,
-      fontWeight: "bold",
-      fontSize: 16,
-    },
-    saveBtn: {
-      backgroundColor: c.accent,
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 8,
-    },
-    saveBtnDisabled: {
-      opacity: 0.6,
-    },
-    saveBtnText: {
-      color: c.onAccent,
-      fontWeight: "bold",
-      fontSize: 16,
-    },
-    emptyText: {
-      color: c.text,
-      fontSize: 24,
-      fontWeight: "bold",
-      marginTop: 16,
-    },
-    emptySubText: {
-      color: c.textSubtle,
-      fontSize: 16,
-      textAlign: "center",
-      marginTop: 8,
-      paddingHorizontal: 20,
-    },
-    emptyActionsContainer: {
-      width: "100%",
-      paddingHorizontal: 40,
-      marginTop: 28,
-      alignItems: "center",
-      gap: 12,
-    },
-    steamSyncBtn: {
-      borderRadius: 16,
-      width: "100%",
-    },
-    findGameButton: {
-      backgroundColor: c.accent,
-      padding: 10,
-      borderRadius: 16,
-      width: "100%",
-    },
-    findGameText: {
-      color: c.onAccent,
-      fontSize: 18,
-      fontWeight: "600",
-      textAlign: "center",
-    },
-    gameItemContainer: {
-      flexDirection: "row",
-      backgroundColor: c.surface,
-      borderRadius: 12,
-      marginTop: 24,
-      padding: 10,
-      alignItems: "center",
-    },
-    gameImage: {
-      width: 80,
-      height: 105,
-      borderRadius: 8,
-    },
-    gameInfo: {
-      flex: 1,
-      marginLeft: 12,
-    },
-    gameName: {
-      color: c.text,
-      fontSize: 18,
-      fontWeight: "600",
-    },
-    ratingRow: {
-      flexDirection: "row",
-      marginTop: 4,
-    },
-    gameReleaseDate: {
-      color: c.textSubtle,
-      fontSize: 14,
-      marginTop: 4,
-    },
-    removeButton: {
-      padding: 8,
-      marginLeft: 8,
-    },
-    ad: {
-      alignItems: "center",
-      width: "100%",
-      marginVertical: 55,
-    },
-    adText: {
-      color: c.text,
-      marginBottom: 10,
-    },
   }));
 
-  const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [refreshKey, setRefreshKey] = useState<number>(0);
-  const mountedRef = useRef<boolean>(true);
-  const savingRef = useRef<boolean>(false);
-  const { t } = useTranslation();
-  const { onScroll } = useScrollDirection();
-  const currentUser = auth().currentUser;
+  const {
+    games,
+    setGames,
+    setListMeta,
+    loading,
+    refreshing,
+    refresh,
+    isSharedList,
+    targetUserId,
+    cacheKey,
+    canEdit,
+    isSignedIn,
+    displayTitle,
+    displayDescription,
+  } = useUserGames({ listId, listName, ownerId });
 
-  const isSharedList = ownerId && (!currentUser || ownerId !== currentUser.uid);
-  const targetUserId = isSharedList ? ownerId : currentUser ? currentUser.uid : null;
-  const CACHE_KEY = targetUserId ? `USER_GAMES_${targetUserId}_LIST_${listId}` : null;
-
-  // Title / description shown in the screen header.
-  const displayTitle = listMeta?.name ?? listName;
-  const displayDescription = listMeta?.description ?? "";
-  // Default lists (Playing/Played/Want to Play/Rated) keep their fixed,
-  // localized titles. Anything else is a user-created custom list.
-  const isCustomList = listMeta?.type
-    ? listMeta.type === "custom"
-    : !DEFAULT_LIST_IDS.includes(listId);
-  // Only the signed-in owner of a custom list can edit title/description/games.
-  const canEdit = Boolean(
-    !isSharedList && isCustomList && currentUser && !currentUser.isAnonymous,
-  );
-
-  // List name i18n
-  const getDisplayName = useCallback(
-    (name: string): string => {
-      const map: Record<string, string> = {
-        Playing: t("games.details.listStatus.playing"),
-        Played: t("games.details.listStatus.played"),
-        "Want to Play": t("games.details.listStatus.wantToPlay"),
-        Rated: t("games.details.listStatus.rated"),
-      };
-      return map[name] ?? name;
+  // Title / description editing (owner of a custom list only)
+  const handleSaved = useCallback(
+    (name: string, description: string) => {
+      setListMeta((prev) => ({
+        id: listId,
+        name,
+        description,
+        type: prev?.type ?? "custom",
+      }));
     },
-    [t],
+    [listId, setListMeta],
   );
 
-  // Handlers
-  const handleRefresh = useCallback((): void => {
-    setRefreshing(true);
-    // Bumping refreshKey re-runs the snapshot effect, forcing a fresh
-    // Firestore read that supersedes the cached data.
-    setRefreshKey((k) => k + 1);
-  }, []);
+  const {
+    isEditing,
+    draftTitle,
+    draftDescription,
+    isSaving,
+    setDraftTitle,
+    setDraftDescription,
+    startEdit,
+    cancelEdit,
+    saveEdit,
+  } = useListEditing({
+    listId,
+    targetUserId,
+    canEdit,
+    displayTitle,
+    displayDescription,
+    onSaved: handleSaved,
+  });
+
+  const { removeGame, rateGame } = useGameMutations({
+    games,
+    setGames,
+    listId,
+    targetUserId,
+    cacheKey,
+    isSharedList,
+  });
 
   const handleShare = useCallback(async () => {
     try {
@@ -388,73 +116,11 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
         url: shareUrl,
       });
     } catch (error) {
-      console.error("[UserGamesScreen] Share error:", error);
+      logger.error("[UserGamesScreen] Share error:", error);
     }
   }, [listId, targetUserId, displayTitle, getDisplayName, t]);
 
-  // Title / description editing (owner of a custom list only)
-  const handleStartEdit = useCallback((): void => {
-    setDraftTitle(displayTitle);
-    setDraftDescription(displayDescription);
-    setIsEditing(true);
-  }, [displayTitle, displayDescription]);
-
-  const handleCancelEdit = useCallback((): void => {
-    setIsEditing(false);
-    setDraftTitle("");
-    setDraftDescription("");
-  }, []);
-
-  const handleSaveEdit = useCallback(async (): Promise<void> => {
-    // Hard guard against double submits (state may be stale in the closure).
-    if (savingRef.current || !canEdit || !targetUserId) return;
-
-    const trimmedTitle = draftTitle.trim();
-    if (!trimmedTitle) {
-      ToastAndroid.show(
-        t("userLists.list.titleRequired"),
-        ToastAndroid.LONG,
-      );
-      return;
-    }
-
-    savingRef.current = true;
-    setIsSaving(true);
-    try {
-      const description = draftDescription.trim();
-      await firestore()
-        .collection("users")
-        .doc(targetUserId)
-        .collection("lists")
-        .doc(listId)
-        .update({ name: trimmedTitle, description });
-
-      setListMeta((prev) => ({
-        id: listId,
-        name: trimmedTitle,
-        description,
-        type: prev?.type ?? "custom",
-      }));
-      setIsEditing(false);
-      ToastAndroid.show(t("userLists.list.saved"), ToastAndroid.SHORT);
-    } catch (error) {
-      console.error("[UserGamesScreen] Update list error:", error);
-      ToastAndroid.show(t("userLists.list.saveError"), ToastAndroid.LONG);
-    } finally {
-      savingRef.current = false;
-      setIsSaving(false);
-    }
-  }, [canEdit, targetUserId, listId, draftTitle, draftDescription, t]);
-
-  // Effects
-  useEffect(() => {
-    const task = runAfterInteractions(() => {
-      setShowAds(true);
-      setIsReady(true);
-    });
-    return () => task.cancel();
-  }, []);
-
+  // Header: title + share/add buttons
   useEffect(() => {
     navigation.setOptions({
       title: getDisplayName(displayTitle),
@@ -490,418 +156,94 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
     colors.text,
   ]);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    if (!targetUserId) {
-      setLoading(false);
-      return;
-    }
+  // Interleave inline ad slots between games (every AD_INTERVAL) for both view
+  // modes. The renderer decides how each slot looks: a poster-sized ad box in
+  // grid view, or the standard full-width row in list view.
+  const { rows, getItemType } = useUserGamesRows({
+    games,
+    showAds: isReady,
+    adsEnabled,
+  });
 
-    let unsubscribe: () => void = () => {};
-    let unsubscribeList: () => void = () => {};
-
-    const init = async (): Promise<void> => {
-      try {
-        if (CACHE_KEY) {
-          // MMKV read is synchronous â€” no await needed
-          const parsed = storageGet<GameEntry[]>(CACHE_KEY);
-          if (parsed && parsed.length > 0 && mountedRef.current) {
-            setGames(parsed);
-            setLoading(false);
-          }
-        }
-      } catch (e) {
-        console.error("[UserGamesScreen] Cache read failed", e);
+  // Render item — one root element per row (game or ad) in either view mode.
+  const renderItem = useCallback(
+    ({ item }: { item: UserGamesRow }) => {
+      if (item.type === "ad") {
+        return <UserGamesNativeAd viewMode={viewMode} />;
       }
 
-      const netState = await NetInfo.fetch();
-      if (!netState.isConnected && mountedRef.current) {
-        setLoading(false);
-      }
-
-      // Avoid creating subscriptions after the screen has unmounted (the
-      // cleanup would otherwise have already run and miss them).
-      if (!mountedRef.current) return;
-
-      // List document (title + description). Readable by any authenticated
-      // user so shared lists show their title/description; only the owner can
-      // write it.
-      unsubscribeList = firestore()
-        .collection("users")
-        .doc(targetUserId)
-        .collection("lists")
-        .doc(listId)
-        .onSnapshot(
-          (snap) => {
-            if (!mountedRef.current || !snap.exists()) return;
-            setListMeta({
-              id: snap.id,
-              ...(snap.data() as Omit<UserList, "id">),
-            });
-          },
-          (error) => {
-            console.error("[UserGamesScreen] List doc snapshot error:", error);
-          },
+      if (viewMode === "grid") {
+        return (
+          <GamePosterItem
+            game={item.game}
+            onRemove={isSharedList ? undefined : removeGame}
+          />
         );
-
-      const colRef = firestore()
-        .collection("users")
-        .doc(targetUserId)
-        .collection("lists")
-        .doc(listId)
-        .collection("games");
-
-      unsubscribe = colRef.onSnapshot(
-        (snap) => {
-          if (!mountedRef.current) return;
-          const list: GameEntry[] = snap.docs.map((d) => ({
-            ...(d.data() as GameEntry),
-            id: d.id,
-          }));
-          setGames(list);
-          setLoading(false);
-          setRefreshing(false);
-          if (CACHE_KEY) {
-            // Synchronous MMKV write â€” won't block the snapshot callback
-            storageSet(CACHE_KEY, list);
-          }
-        },
-        (error) => {
-          console.error("[UserGamesScreen] Snapshot error:", error);
-          if (mountedRef.current) {
-            setLoading(false);
-            setRefreshing(false);
-          }
-          if (games.length === 0)
-            ToastAndroid.show(
-              t("settings.userGames.messages.loadError"),
-              ToastAndroid.LONG,
-            );
-        },
-      );
-    };
-
-    init();
-    return () => {
-      mountedRef.current = false;
-      unsubscribe();
-      unsubscribeList();
-    };
-  }, [targetUserId, listId, CACHE_KEY, refreshKey]);
-
-  const handleRemoveGame = useCallback(
-    (gameId: string | number, gameName: string): void => {
-      if (isSharedList || !targetUserId || !CACHE_KEY) return;
-      Alert.alert(
-        t("userLists.actions.confirmDeleteTitle"),
-        t("userLists.actions.confirmDeleteMessage", { gameName }),
-        [
-          { text: t("common.cancel"), style: "cancel" },
-          {
-            text: t("common.remove"),
-            style: "destructive",
-            onPress: async () => {
-              const gameIdStr = String(gameId);
-              const oldGames = [...games];
-              const newGames = games.filter((g) => String(g.id) !== gameIdStr);
-              setGames(newGames);
-              storageSet(CACHE_KEY, newGames);
-              try {
-                await firestore()
-                  .collection("users")
-                  .doc(targetUserId)
-                  .collection("lists")
-                  .doc(listId)
-                  .collection("games")
-                  .doc(gameIdStr)
-                  .delete();
-
-                if (listId === "rated") {
-                  // Delete rating document
-                  await firestore()
-                    .collection("users")
-                    .doc(targetUserId)
-                    .collection("ratings")
-                    .doc(gameIdStr)
-                    .delete();
-
-                  // Sync rating field in other lists
-                  const listsRef = firestore()
-                    .collection("users")
-                    .doc(targetUserId)
-                    .collection("lists");
-                  const listsSnap = await listsRef.get();
-                  for (const listDoc of listsSnap.docs) {
-                    if (listDoc.id === "rated") continue;
-                    const gRef = listDoc.ref.collection("games").doc(gameIdStr);
-                    const gSnap = await gRef.get();
-                    if (gSnap && gSnap.exists()) {
-                      try {
-                        await gRef.update({
-                          rating: firestore.FieldValue.delete(),
-                        });
-                      } catch (updateErr) {
-                        console.log(
-                          `[UserGamesScreen] Stale cache update handled for list ${listDoc.id}`,
-                        );
-                      }
-                    }
-                  }
-                }
-              } catch {
-                setGames(oldGames);
-                storageSet(CACHE_KEY, oldGames);
-                ToastAndroid.show(
-                  t("settings.userGames.messages.removeError"),
-                  ToastAndroid.LONG,
-                );
-              }
-            },
-          },
-        ],
-      );
-    },
-    [isSharedList, targetUserId, CACHE_KEY, games, listId, t],
-  );
-
-  const handleRateGame = useCallback(
-    async (gameId: string | number, newRating: number) => {
-      if (!currentUser || currentUser.isAnonymous) return;
-      const game = games.find((g) => String(g.id) === String(gameId));
-      if (!game) return;
-
-      const gameIdStr = String(gameId);
-      const ratingRef = firestore()
-        .collection("users")
-        .doc(currentUser.uid)
-        .collection("ratings")
-        .doc(gameIdStr);
-
-      const ratedGameRef = firestore()
-        .collection("users")
-        .doc(currentUser.uid)
-        .collection("lists")
-        .doc("rated")
-        .collection("games")
-        .doc(gameIdStr);
-
-      try {
-        if (newRating === 0) {
-          await ratingRef.delete();
-          await ratedGameRef.delete();
-        } else {
-          await firestore()
-            .collection("users")
-            .doc(currentUser.uid)
-            .collection("lists")
-            .doc("rated")
-            .set(
-              {
-                name: "Rated",
-                type: "default",
-                createdAt: firestore.FieldValue.serverTimestamp(),
-              },
-              { merge: true },
-            );
-
-          await ratingRef.set({
-            rating: newRating,
-            updatedAt: firestore.FieldValue.serverTimestamp(),
-          });
-          await ratedGameRef.set({
-            id: game.id,
-            name: game.name,
-            cover_image_id: game.cover_image_id ?? null,
-            release_date: game.release_date ?? "N/A",
-            rating: newRating,
-            ratedAt: firestore.FieldValue.serverTimestamp(),
-          });
-        }
-
-        // Sync rating field in any other lists containing this game
-        const listsRef = firestore()
-          .collection("users")
-          .doc(currentUser.uid)
-          .collection("lists");
-        const listsSnap = await listsRef.get();
-        for (const listDoc of listsSnap.docs) {
-          if (listDoc.id === "rated") continue;
-          const gRef = listDoc.ref.collection("games").doc(gameIdStr);
-          const gSnap = await gRef.get();
-          if (gSnap && gSnap.exists()) {
-            try {
-              if (newRating === 0) {
-                await gRef.update({ rating: firestore.FieldValue.delete() });
-              } else {
-                await gRef.update({ rating: newRating });
-              }
-            } catch (updateErr) {
-              console.log(
-                `[UserGamesScreen] Stale cache update handled for list ${listDoc.id}`,
-              );
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Error rating game inside list:", e);
       }
+
+      return (
+        <GameItem
+          game={item.game}
+          onRemove={isSharedList ? undefined : removeGame}
+          onRate={isSharedList ? undefined : rateGame}
+        />
+      );
     },
-    [currentUser, games],
+    [viewMode, removeGame, rateGame, isSharedList],
   );
 
   // Empty list
   const renderEmptyList = useCallback(() => {
-    const emptySubText =
-      listId === "rated"
-        ? (t("userLists.empty.ratedSub") ??
-          "Rate and review the games you have played here.")
-        : t("settings.userGames.emptySubText");
-
-    const isDefaultGameList = ["playing", "played", "wantToPlay"].includes(listId);
+    const isDefaultGameList = ["playing", "played", "wantToPlay"].includes(
+      listId,
+    );
     const showSteamSync =
-      !isSharedList &&
-      isDefaultGameList &&
-      Boolean(currentUser && !currentUser.isAnonymous);
+      !isSharedList && isDefaultGameList && isSignedIn;
 
     return (
-      <View style={styles.emptyContainer}>
-        <Bookmark size={80} color={colors.accent} />
-        <CustomText style={styles.emptyText}>
-          {t("settings.userGames.emptyText")}
-        </CustomText>
-        <CustomText style={styles.emptySubText}>{emptySubText}</CustomText>
-        {!isSharedList && (
-          <View style={styles.emptyActionsContainer}>
-            {showSteamSync && (
-              <SteamSyncButton style={styles.steamSyncBtn} />
-            )}
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Games")}
-              style={styles.findGameButton}
-            >
-              <CustomText style={styles.findGameText}>
-                {t("settings.userGames.findButton")}
-              </CustomText>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+      <EmptyGamesList
+        listId={listId}
+        isSharedList={Boolean(isSharedList)}
+        showSteamSync={showSteamSync}
+        onFindGame={() => navigation.navigate("Games")}
+      />
     );
-  }, [t, navigation, isSharedList, listId, currentUser, colors.accent, styles]);
-
-  // Render item
-  const renderItem = useCallback(
-    ({ item, index }: { item: GameEntry; index: number }) => {
-      const showAd =
-        showAds &&
-        ((index + 1) % 4 === 0 || (games.length < 4 && index === games.length - 1));
-
-      return (
-        <>
-          <GameItem
-            game={item}
-            onRemove={isSharedList ? undefined : handleRemoveGame}
-            onRate={isSharedList ? undefined : handleRateGame}
-          />
-          {showAd && <NativeAdComponent />}
-        </>
-      );
-    },
-    [showAds, games.length, handleRemoveGame, handleRateGame, isSharedList],
-  );
+  }, [listId, isSharedList, isSignedIn, navigation]);
 
   // Header: title + description (editable by the list owner)
   const listHeader = (
-    <View style={styles.listHeader}>
-      <View style={styles.headerCard}>
-        {isEditing ? (
-          <>
-            <CustomText style={styles.fieldLabel}>
-              {t("userLists.list.titleLabel")}
-            </CustomText>
-            <CustomTextInput
-              style={styles.headerInput}
-              value={draftTitle}
-              onChangeText={setDraftTitle}
-              placeholder={t("userLists.list.titlePlaceholder")}
-              placeholderTextColor={colors.textSubtle}
-              maxLength={60}
-              editable={!isSaving}
-            />
-            <CustomText style={styles.fieldLabel}>
-              {t("userLists.list.descriptionLabel")}
-            </CustomText>
-            <CustomTextInput
-              style={[styles.headerInput, styles.headerInputMultiline]}
-              value={draftDescription}
-              onChangeText={setDraftDescription}
-              placeholder={t("userLists.list.descriptionPlaceholder")}
-              placeholderTextColor={colors.textSubtle}
-              multiline
-              maxLength={300}
-              editable={!isSaving}
-            />
-            <View style={styles.editActions}>
-              <TouchableOpacity
-                onPress={handleCancelEdit}
-                style={styles.cancelBtn}
-                disabled={isSaving}
-              >
-                <CustomText style={styles.cancelBtnText}>
-                  {t("common.cancel")}
-                </CustomText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleSaveEdit}
-                style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}
-                disabled={isSaving}
-              >
-                <CustomText style={styles.saveBtnText}>
-                  {t("common.saveChanges")}
-                </CustomText>
-              </TouchableOpacity>
-            </View>
-          </>
-        ) : (
-          <TouchableOpacity
-            style={styles.headerRow}
-            activeOpacity={canEdit ? 0.7 : 1}
-            disabled={!canEdit}
-            onPress={handleStartEdit}
-          >
-            <View style={{ flex: 1 }}>
-              <CustomText style={styles.headerTitle}>
-                {getDisplayName(displayTitle)}
-              </CustomText>
-              {displayDescription ? (
-                <CustomText style={styles.headerDescription}>
-                  {displayDescription}
-                </CustomText>
-              ) : null}
-            </View>
-            {canEdit && <Pencil size={20} color={colors.accent} />}
-          </TouchableOpacity>
-        )}
-      </View>
-      {isSharedList ? (
-        <View style={styles.viewOnlyBanner}>
-          <CustomText style={styles.viewOnlyText}>
-            {t("settings.userGames.viewOnly")}
-          </CustomText>
-        </View>
-      ) : null}
-    </View>
+    <GamesListHeader
+      title={getDisplayName(displayTitle)}
+      description={displayDescription}
+      canEdit={canEdit}
+      isEditing={isEditing}
+      draftTitle={draftTitle}
+      draftDescription={draftDescription}
+      isSaving={isSaving}
+      isSharedList={Boolean(isSharedList)}
+      showViewToggle={games.length > 0}
+      viewMode={viewMode}
+      onChangeDraftTitle={setDraftTitle}
+      onChangeDraftDescription={setDraftDescription}
+      onStartEdit={startEdit}
+      onCancelEdit={cancelEdit}
+      onSaveEdit={saveEdit}
+      onChangeView={setViewMode}
+    />
   );
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
       {!isReady || (loading && games.length === 0) ? (
-        <UserGamesSkeleton />
+        <UserGamesSkeleton viewMode={viewMode} />
       ) : (
         <FlashList
-          data={games}
-          keyExtractor={(item) => String(item.id)}
+          key={viewMode}
+          data={rows}
+          numColumns={viewMode === "grid" ? 3 : 1}
+          keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          getItemType={getItemType}
           ListEmptyComponent={renderEmptyList}
           ListHeaderComponent={listHeader}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 90 }}
@@ -910,7 +252,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={handleRefresh}
+              onRefresh={refresh}
               tintColor={colors.accentText}
               colors={[colors.accentText]}
             />

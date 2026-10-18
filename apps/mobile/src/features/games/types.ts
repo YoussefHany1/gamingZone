@@ -1,35 +1,27 @@
-import { Game } from "@/src/types/sharedTypes";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { StyleProp, ViewStyle } from "react-native";
-import { Models } from "react-native-appwrite";
-import { SharedValue } from "react-native-reanimated";
+import type { Game } from "@/src/types/sharedTypes";
+import type {
+  Engine,
+  FreeGame,
+  GameItem,
+  GameMode,
+  Genre,
+  InvolvedCompany,
+  LangRow,
+  NewsGame,
+  PcRequirements,
+  Platform,
+  Screenshot,
+  Video,
+  Website,
+} from "@gaming-zone/core";
+import type { NativeStackNavigationProp, NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { StyleProp, ViewStyle } from "react-native";
+import type { Models } from "react-native-appwrite";
+import type { SharedValue } from "react-native-reanimated";
 
-export type GameCover = {
-  image_id: string;
-};
-
-export type GamePlatform = {
-  name: string;
-  abbreviation?: string;
-};
-
-export type GameGenre = {
-  name: string;
-};
-
-export type FreeGame = {
-  id: string;
-  title: string;
-  image?: string | undefined;
-  slug?: string | undefined;
-  store?: "steam" | "epic" | string | undefined;
-  url?: string | undefined;
-  description?: string | undefined;
-  type: "current" | "next" | string;
-  startDate?: string | number | undefined;
-  endDate?: string | number | undefined;
-  igdb_game_id?: number | undefined;
-};
+// The IGDB shapes are re-exported from @gaming-zone/core — see the export
+// block below. Never re-declare one locally: `npm run check:models` fails the
+// build if you do.
 
 // â”€â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -48,88 +40,36 @@ export type GamesStackParamList = {
 
 // â”€â”€â”€ IGDB raw shapes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-export type AgeRating = {
-  organization: number;
-  rating_category: number;
-};
-
-export type Platform = {
-  name: string;
-  id: number;
-  abbreviation?: string;
-};
-export type Genre = { id: number; name: string };
-export type GameMode = { id: number; name: string };
-export type Company = { id: number; name: string };
-export type Engine = { id: number; name: string };
-export type Video = { video_id?: string; name?: string };
-export type Screenshot = { id?: string; image_id: string };
-export type Cover = { image_id?: string };
-export type Website = { id: number; type: number; url: string };
-export type Language = { name: string };
-export type LangSupportType = { name: string };
-
-export type LanguageSupport = {
-  language: Language;
-  language_support_type: LangSupportType;
-};
-
-/** All time values are in hours, sourced from HowLongToBeat via IGDB. */
-export type GameTimeToBeat = {
-  hastily?: number;
-  normally?: number;
-  completely?: number;
-};
-
-export type InvolvedCompany = {
-  id: number;
-  developer: boolean;
-  publisher: boolean;
-  company: Company;
-};
-
-export type GameData = {
-  id: number;
-  name: string;
-  summary?: string;
-  cover?: Cover;
-  total_rating?: number;
-  total_rating_count?: number;
-  release_dates?: { human?: string }[];
-  /** Unix timestamp in seconds */
-  first_release_date?: number;
-  platforms?: Platform[];
-  genres?: Genre[];
-  game_modes?: GameMode[];
-  age_ratings?: AgeRating[];
-  involved_companies?: InvolvedCompany[];
-  game_engines?: Engine[];
-  videos?: Video[];
-  screenshots?: Screenshot[];
-  language_supports?: LanguageSupport[];
-  game_time_to_beats?: GameTimeToBeat;
-  websites?: Website[];
-  collections?: { games?: { id: number; name: string; cover?: Cover }[] }[];
-  similar_games?: { id: number; name: string; cover?: Cover }[];
-};
+export type {
+  AgeRating,
+  Company,
+  Cover,
+  Engine,
+  FreeGame,
+  GameData,
+  GameGenre,
+  GameItem,
+  GameMode,
+  GamePlatform,
+  GameTimeToBeat,
+  Genre,
+  InvolvedCompany,
+  LangRow,
+  LangSupportType,
+  Language,
+  LanguageSupport,
+  NewsGame,
+  PcRequirements,
+  Platform,
+  Screenshot,
+  SpecRow,
+  Video,
+  Website,
+} from "@gaming-zone/core";
 
 // â”€â”€â”€ Derived / UI shapes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type AgeRatingInfo = { label: string; color: string };
-
-export type LangRow = {
-  name: string;
-  Audio: boolean;
-  Subtitles: boolean;
-  Interface: boolean;
-};
-
-export type SpecRow = { label: string; value: string };
-
-export type PcRequirements = {
-  minimum: SpecRow[];
-  recommended: SpecRow[];
-};
 
 // â”€â”€â”€ Component Props â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -166,12 +106,6 @@ export type GameDetailsMetaProps = {
   totalRating?: number | undefined;
   totalRatingCount?: number | undefined;
   ageRating: AgeRatingInfo | null;
-};
-
-export type GameItem = {
-  id: number;
-  name: string;
-  cover?: Cover;
 };
 
 export type GameHorizontalScrollProps = {
@@ -308,14 +242,6 @@ export type GamesListProps = {
   onBack?: (() => void) | undefined;
 };
 
-export type NewsGame = {
-  id: string;
-  name: string;
-  image: string;
-  apiUrl: string;
-  source?: string;
-};
-
 export type NewsGameCardProps = {
   item: NewsGame;
   onPress: (name: string, apiUrl: string, source?: string) => void;
@@ -390,7 +316,7 @@ export type NewsItemProps = {
 
 export type UseGameDetailsProps = {
   initialGameID: number | string;
-  navigation: import("@react-navigation/native-stack").NativeStackNavigationProp<
+  navigation: NativeStackNavigationProp<
     GamesStackParamList,
     "GameDetails"
   >;

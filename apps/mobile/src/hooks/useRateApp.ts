@@ -3,6 +3,7 @@ import { AppState } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import * as StoreReview from "expo-store-review";
 import { storage } from "../lib/storage";
+import { logger } from "@/src/lib/logger";
 
 // Prompts the user for a Play Store / App Store review once, after the app
 // has been installed for at least DAYS_BEFORE_RATING days.
@@ -72,7 +73,7 @@ const useRateApp = (): void => {
         // actually submitted a review (the OS may silently suppress the dialog).
         storage.set(RATE_KEY, "true");
       } catch (error) {
-        console.warn("[useRateApp] Error checking rating eligibility:", error);
+        logger.warn("[useRateApp] Error checking rating eligibility:", error);
       }
     };
 

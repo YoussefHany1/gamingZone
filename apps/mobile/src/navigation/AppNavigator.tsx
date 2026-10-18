@@ -50,6 +50,7 @@ import {
   ForgotPasswordScreen,
 } from "@/src/features/auth";
 import type { GamingEvent } from "@/src/types/sharedTypes";
+import { logger } from "@/src/lib/logger";
 
 // Navigator Param Lists
 
@@ -356,7 +357,7 @@ export const MainAppTabs = memo(() => {
     const requestPermission = async (): Promise<void> => {
       const { status } = await Notifications.requestPermissionsAsync();
       if (__DEV__) {
-        console.log(
+        logger.debug(
           status === "granted"
             ? "[Notifications] Permission granted."
             : "[Notifications] Permission denied.",

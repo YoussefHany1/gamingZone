@@ -219,6 +219,7 @@
     "details": {
       "readFullArticle": "Ler o artigo completo",
       "noDescription": "Não existe uma descrição disponível.",
+      "summaryTitle": "Resumo com IA",
       "shareShortenError": "Ocorreu um erro. Tente novamente mais tarde.",
       "shareMessage": "Encontrei um artigo interessante na aplicação Gaming Zone\nVeja aqui: "
     },
@@ -624,6 +625,8 @@
       "emptyText": "A sua lista está vazia",
       "emptySubText": "Adicione os jogos que quiser.",
       "findButton": "Encontrar o seu jogo",
+      "viewList": "Vista de lista",
+      "viewGrid": "Vista de grelha",
       "viewOnly": "Está a visualizar uma lista partilhada consigo apenas para leitura.",
       "messages": {
         "loadError": "Ocorreu um problema ao carregar a sua lista. Tente novamente mais tarde.",

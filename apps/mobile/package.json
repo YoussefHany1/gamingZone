@@ -12,6 +12,8 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "type-check": "tsc --noEmit",
+    "test": "vitest run src",
+    "check:models": "tsx scripts/check-shared-models.ts",
     "eas-build-pre-install": "bash ./scripts/inject-google-services.sh",
     "eas-build-post-install": "bash ./scripts/inject-google-services.sh",
     "postinstall": "node ./scripts/apply-patches.cjs",
@@ -21,7 +23,6 @@
     "@gaming-zone/core": "*",
     "@gaming-zone/locales": "*",
     "@gaming-zone/utils": "*",
-    "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/datetimepicker": "9.1.0",
     "@react-native-community/netinfo": "12.0.1",
     "@react-native-firebase/analytics": "^23.8.6",
@@ -36,12 +37,10 @@
     "@react-navigation/native": "^7.3.16",
     "@react-navigation/native-stack": "^7.18.8",
     "@shopify/flash-list": "2.0.2",
-    "@tanstack/react-query": "^5.90.10",
     "axios": "^1.13.2",
     "date-fns": "^4.4.0",
     "dotenv": "^17.2.3",
     "expo": "~57.0.17",
-    "expo-blur": "~57.0.2",
     "expo-build-properties": "~57.0.2",
     "expo-constants": "~57.0.13",
     "expo-dev-client": "~57.0.16",
@@ -97,7 +96,8 @@
     "prettier": "^3.0.0",
     "react-refresh": "^0.18.0",
     "tsx": "^4.19.2",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.10"
   },
   "private": true
 }

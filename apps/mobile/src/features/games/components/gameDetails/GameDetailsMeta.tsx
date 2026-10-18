@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type { GameDetailsMetaProps } from "../../types";
-import { getRatingGradient } from "./utils";
+import { getRatingGradient } from "@/src/constants/ratingColors";
 import { LinearGradient } from "expo-linear-gradient";
 
 // ─── i18n locale mapping ──────────────────────────────────────────────────────
