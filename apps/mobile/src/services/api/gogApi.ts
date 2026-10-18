@@ -47,31 +47,41 @@ function parseAmount(raw: string | number | undefined): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
+/** Titles that aren't the base game — never chosen by fuzzy matches. */
+const NON_GAME_TITLE = /(demo|sound ?track|bonus|dlc|expansion|artbook|wallpaper|converter)/;
+
 /**
- * Ranks catalog hits against the game title: exact normalised title beats a
- * title prefix, which beats "every significant word present".
+ * Ranks catalog hits against the game title: exact normalised titles first,
+ * then title prefixes, then "every significant word present". Demos,
+ * soundtracks and other non-game entries only ever win an exact match, and
+ * entries matching nothing are discarded — a wrong price is worse than none.
  */
-function pickBestProduct(gameName: string, products: GogProduct[]): GogProduct | null {
-  if (!products.length) return null;
+function rankProducts(gameName: string, products: GogProduct[]): GogProduct[] {
+  if (!products.length) return [];
 
   const normalized = normalizeGameTitle(gameName);
+  const isExact = (p: GogProduct) => normalizeGameTitle(p.title) === normalized;
 
-  const exact = products.find((p) => normalizeGameTitle(p.title) === normalized);
-  if (exact) return exact;
+  const exact = products.filter(isExact);
+  const rest = products.filter(
+    (p) => !isExact(p) && !NON_GAME_TITLE.test(p.title.toLowerCase()),
+  );
 
-  const startsWith = products.find((p) => normalizeGameTitle(p.title).startsWith(normalized));
-  if (startsWith) return startsWith;
+  const startsWith = rest.filter((p) => {
+    const title = normalizeGameTitle(p.title);
+    return title.startsWith(normalized) || normalized.startsWith(title);
+  });
 
   const words = normalized.split(" ").filter((w) => w.length > 2);
-  if (words.length) {
-    const wordMatch = products.find((p) => {
-      const title = normalizeGameTitle(p.title);
-      return words.every((w) => title.includes(w));
-    });
-    if (wordMatch) return wordMatch;
-  }
+  const wordMatch = words.length
+    ? rest.filter((p) => {
+        if (startsWith.includes(p)) return false;
+        const title = normalizeGameTitle(p.title);
+        return words.every((w) => title.includes(w));
+      })
+    : [];
 
-  return products[0] ?? null;
+  return [...exact, ...startsWith, ...wordMatch];
 }
 
 // ─── Main export ───────────────────────────────────────────────────────────────
@@ -100,32 +110,42 @@ export async function fetchGogPrice(
       timeout: 8000,
     });
 
-    const best = pickBestProduct(gameName, response.data?.products ?? []);
-    if (!best?.price) return null;
+    const normalized = normalizeGameTitle(gameName);
 
-    const salePrice = parseAmount(best.price.finalMoney?.amount);
-    if (salePrice === null) return null;
+    for (const best of rankProducts(gameName, response.data?.products ?? [])) {
+      if (!best.price) continue;
 
-    // The row renders "$" — refuse results the locale didn't pin to USD.
-    if (best.price.finalMoney?.currency && best.price.finalMoney.currency !== "USD") {
-      return null;
+      const salePrice = parseAmount(best.price.finalMoney?.amount);
+      if (salePrice === null) continue;
+
+      // The row renders "$" — refuse results the locale didn't pin to USD.
+      if (best.price.finalMoney?.currency && best.price.finalMoney.currency !== "USD") {
+        continue;
+      }
+      // "Free" only for an exact title match — GOG's fuzzy catalog search
+      // happily returns free demos for games it doesn't actually carry.
+      if (salePrice === 0 && normalizeGameTitle(best.title) !== normalized) {
+        continue;
+      }
+
+      const normalPrice = parseAmount(best.price.baseMoney?.amount) ?? salePrice;
+
+      const gogWebsite = websites?.find((w) => w.type === GOG_IGDB_TYPE);
+
+      return {
+        type: GOG_IGDB_TYPE,
+        salePrice,
+        normalPrice,
+        isOnSale: normalPrice > salePrice,
+        url:
+          best.storeLink ??
+          gogWebsite?.url ??
+          (best.slug || best.id ? `https://www.gog.com/en/game/${best.slug ?? best.id}` : null) ??
+          "https://www.gog.com/",
+      };
     }
 
-    const normalPrice = parseAmount(best.price.baseMoney?.amount) ?? salePrice;
-
-    const gogWebsite = websites?.find((w) => w.type === GOG_IGDB_TYPE);
-
-    return {
-      type: GOG_IGDB_TYPE,
-      salePrice,
-      normalPrice,
-      isOnSale: normalPrice > salePrice,
-      url:
-        best.storeLink ??
-        gogWebsite?.url ??
-        (best.slug || best.id ? `https://www.gog.com/en/game/${best.slug ?? best.id}` : null) ??
-        "https://www.gog.com/",
-    };
+    return null;
   } catch {
     return null;
   }

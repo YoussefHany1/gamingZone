@@ -9,8 +9,13 @@ import { useSharedStyles } from "./shared";
 import type { GameStoresProps, StorePrice, Website } from "../../types";
 import { openLink } from "@/src/lib/browser";
 
-/** `0` is the standardised "free game" price — never render "$0.00". */
-const formatPrice = (price: number) => (price > 0 ? `$${price.toFixed(2)}` : "Free");
+/**
+ * `0` is the standardised "free game" price — never render "$0.00".
+ * Non-finite values (upstream garbage) render nothing: an error must
+ * never look like a free game.
+ */
+const formatPrice = (price: number): string | null =>
+  Number.isFinite(price) ? (price > 0 ? `$${price.toFixed(2)}` : "Free") : null;
 
 const StorePriceInfo: React.FC<{
   price?: StorePrice | undefined;
@@ -52,17 +57,21 @@ const StorePriceInfo: React.FC<{
   }
   if (!price) return null;
 
+  const saleText = formatPrice(price.salePrice);
+  if (!saleText) return null;
+  const normalText = price.isOnSale ? formatPrice(price.normalPrice) : null;
+
   return (
     <View style={styles.priceContainer}>
       <CustomText
         style={price.isOnSale ? styles.salePrice : styles.price}
         numberOfLines={1}
       >
-        {formatPrice(price.salePrice)}
+        {saleText}
       </CustomText>
-      {price.isOnSale ? (
+      {normalText ? (
         <CustomText style={styles.normalPrice} numberOfLines={1}>
-          {formatPrice(price.normalPrice)}
+          {normalText}
         </CustomText>
       ) : null}
     </View>

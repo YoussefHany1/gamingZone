@@ -48,24 +48,26 @@ function parsePrice(raw: string | null | undefined): number | null {
 /**
  * The backend already ranks its candidates; re-check the normalised title
  * because IGDB names can differ in punctuation, then trust its first pick.
+ * `trusted` is true when the title itself matched (exact or prefix) — a
+ * free price is only believable from a confident match.
  */
 function pickBestResult(
   gameName: string,
   results: XboxSearchResult[],
-): XboxSearchResult | null {
+): { result: XboxSearchResult; trusted: boolean } | null {
   if (!results.length) return null;
 
   const normalized = normalizeGameTitle(gameName);
 
   const exact = results.find((r) => r.name && normalizeGameTitle(r.name) === normalized);
-  if (exact) return exact;
+  if (exact) return { result: exact, trusted: true };
 
   const startsWith = results.find(
     (r) => r.name && normalizeGameTitle(r.name).startsWith(normalized),
   );
-  if (startsWith) return startsWith;
+  if (startsWith) return { result: startsWith, trusted: true };
 
-  return results[0] ?? null;
+  return results[0] ? { result: results[0], trusted: false } : null;
 }
 
 // ─── Main export ───────────────────────────────────────────────────────────────
@@ -91,10 +93,13 @@ export async function fetchXboxPrice(
 
     const best = pickBestResult(gameName, response.data?.results ?? []);
 
-    const salePrice = parsePrice(best?.price);
+    const salePrice = parsePrice(best?.result.price);
     if (salePrice === null) return null;
+    // "Free" only when the title confidently matched — a bare first result
+    // at $0 is more likely a wrong product than the real game.
+    if (salePrice === 0 && !best?.trusted) return null;
 
-    const normalPrice = parsePrice(best?.originalPrice) ?? salePrice;
+    const normalPrice = parsePrice(best?.result.originalPrice) ?? salePrice;
     const xboxWebsite = websites?.find((w) => w.type === XBOX_IGDB_TYPE);
 
     return {
@@ -102,7 +107,7 @@ export async function fetchXboxPrice(
       salePrice,
       normalPrice,
       isOnSale: normalPrice > salePrice,
-      url: best?.url ?? xboxWebsite?.url ?? "https://www.xbox.com/en-US/games",
+      url: best?.result.url ?? xboxWebsite?.url ?? "https://www.xbox.com/en-US/games",
     };
   } catch {
     return null;

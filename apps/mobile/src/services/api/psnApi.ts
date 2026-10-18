@@ -53,32 +53,33 @@ function parsePsnPrice(raw: string | null | undefined): number | null {
 
 /**
  * Picks the best PSN result for the given game name.
- * Tries an exact normalised-title match first, then falls back to the
- * first result that contains all significant words of the game name.
+ * Tries an exact normalised-title match first, then progressively looser
+ * title matches. `trusted` is true when one of those title matches won —
+ * a bare first result is only a relevance guess.
  */
 function pickBestResult(
   gameName: string,
   results: PsnSearchResult[],
-): PsnSearchResult | null {
+): { result: PsnSearchResult; trusted: boolean } | null {
   if (!results.length) return null;
 
   const normalized = normalizeGameTitle(gameName);
 
   // 1. Exact normalised match
   const exact = results.find((r) => r.name && normalizeGameTitle(r.name) === normalized);
-  if (exact) return exact;
+  if (exact) return { result: exact, trusted: true };
 
   // 2. Starts-with match (handles subtitles)
   const startsWith = results.find(
     (r) => r.name && normalizeGameTitle(r.name).startsWith(normalized),
   );
-  if (startsWith) return startsWith;
+  if (startsWith) return { result: startsWith, trusted: true };
 
   // 3. Includes full normalised name (handles prefixes e.g. Marvel's)
   const includesMatch = results.find(
     (r) => r.name && normalizeGameTitle(r.name).includes(normalized),
   );
-  if (includesMatch) return includesMatch;
+  if (includesMatch) return { result: includesMatch, trusted: true };
 
   // 4. All significant words present
   const words = normalized.split(" ").filter((w) => w.length > 2);
@@ -88,11 +89,11 @@ function pickBestResult(
       const rNorm = normalizeGameTitle(r.name);
       return words.every((w) => rNorm.includes(w));
     });
-    if (wordMatch) return wordMatch;
+    if (wordMatch) return { result: wordMatch, trusted: true };
   }
 
-  // 5. Fall back to highest-relevance result
-  return results[0] ?? null;
+  // 5. Fall back to highest-relevance result (untrusted)
+  return results[0] ? { result: results[0], trusted: false } : null;
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────
@@ -124,15 +125,18 @@ export async function fetchPsnPrice(
     const best = pickBestResult(gameName, results);
     if (!best) return null;
 
-    const salePrice = parsePsnPrice(best.price);
+    const salePrice = parsePsnPrice(best.result.price);
     if (salePrice === null) return null; // "Free", unavailable, etc.
+    // "Free" only when the title confidently matched — a bare first result
+    // at $0 is more likely a demo or DLC than the real game.
+    if (salePrice === 0 && !best.trusted) return null;
 
-    const normalPrice = parsePsnPrice(best.originalPrice) ?? salePrice;
-    const isOnSale = best.isOnSale && normalPrice > salePrice;
+    const normalPrice = parsePsnPrice(best.result.originalPrice) ?? salePrice;
+    const isOnSale = best.result.isOnSale && normalPrice > salePrice;
 
     // Prefer the direct PSN product URL, fall back to the site's own URL
     const psnWebsite = websites?.find((w) => w.type === PSN_IGDB_TYPE);
-    const url = best.url ?? psnWebsite?.url ?? "https://store.playstation.com";
+    const url = best.result.url ?? psnWebsite?.url ?? "https://store.playstation.com";
 
     return {
       type: PSN_IGDB_TYPE,

@@ -55,9 +55,7 @@ const SEARCH_QUERY = `
       searchStore(keywords: $keywords, category: $category, count: $count, start: $start, country: $country, locale: $locale) {
         elements {
           title
-          productId
           productSlug
-          productType
           catalogNs { mappings { pageSlug } }
           offerMappings { pageSlug }
           price(country: $country) {
@@ -95,31 +93,33 @@ async function searchEpicCatalog(keywords: string, category: string): Promise<Ep
 }
 
 /**
- * Ranks catalog hits against the game title: exact normalised title beats a
- * title prefix, which beats "every significant word present".
+ * Ranks catalog hits against the game title: exact normalised titles first,
+ * then title prefixes, then "every significant word present". Candidates
+ * that match nothing are discarded — a wrong price is worse than no price.
  */
-function pickBestElement(gameName: string, elements: EpicElement[]): EpicElement | null {
-  if (!elements.length) return null;
-
+function rankElements(gameName: string, elements: EpicElement[]): EpicElement[] {
   const normalized = normalizeGameTitle(gameName);
   const withTitles = elements.filter((e) => e.title);
 
-  const exact = withTitles.find((e) => normalizeGameTitle(e.title!) === normalized);
-  if (exact) return exact;
+  const isExact = (e: EpicElement) => normalizeGameTitle(e.title!) === normalized;
+  const exact = withTitles.filter(isExact);
 
-  const startsWith = withTitles.find((e) => normalizeGameTitle(e.title!).startsWith(normalized));
-  if (startsWith) return startsWith;
+  const prefix = withTitles.filter((e) => {
+    if (isExact(e)) return false;
+    const title = normalizeGameTitle(e.title!);
+    return title.startsWith(normalized) || normalized.startsWith(title);
+  });
 
   const words = normalized.split(" ").filter((w) => w.length > 2);
-  if (words.length) {
-    const wordMatch = withTitles.find((e) => {
-      const title = normalizeGameTitle(e.title!);
-      return words.every((w) => title.includes(w));
-    });
-    if (wordMatch) return wordMatch;
-  }
+  const wordMatch = words.length
+    ? withTitles.filter((e) => {
+        if (isExact(e)) return false;
+        const title = normalizeGameTitle(e.title!);
+        return !title.startsWith(normalized) && words.every((w) => title.includes(w));
+      })
+    : [];
 
-  return elements[0] ?? null;
+  return [...exact, ...prefix, ...wordMatch];
 }
 
 /** Best store-page slug for an element: offer mapping, catalog mapping, then productSlug. */
@@ -154,32 +154,42 @@ export async function fetchEpicPrice(
       elements = await searchEpicCatalog(gameName, "games");
     }
 
-    const best = pickBestElement(gameName, elements);
-    const totalPrice = best?.price?.totalPrice;
-    if (!best || typeof totalPrice?.discountPrice !== "number") return null;
+    const normalized = normalizeGameTitle(gameName);
 
-    // The row renders "$" — refuse results the locale didn't pin to USD.
-    if (totalPrice.currencyCode && totalPrice.currencyCode !== "USD") return null;
+    for (const element of rankElements(gameName, elements)) {
+      const totalPrice = element.price?.totalPrice;
+      if (typeof totalPrice?.discountPrice !== "number") continue;
+      // The row renders "$" — refuse results the locale didn't pin to USD.
+      if (totalPrice.currencyCode && totalPrice.currencyCode !== "USD") continue;
 
-    const salePrice = totalPrice.discountPrice / 100;
-    const normalPrice =
-      typeof totalPrice.originalPrice === "number"
-        ? totalPrice.originalPrice / 100
-        : salePrice;
+      const salePrice = totalPrice.discountPrice / 100;
+      // "Free" only when the store says *this exact title* is free — a
+      // fuzzy match's $0 is far more likely a demo or unrelated app.
+      if (salePrice === 0 && normalizeGameTitle(element.title ?? "") !== normalized) {
+        continue;
+      }
 
-    const pageSlug = extractPageSlug(best);
-    const epicWebsite = websites?.find((w) => w.type === EPIC_IGDB_TYPE);
+      const normalPrice =
+        typeof totalPrice.originalPrice === "number"
+          ? totalPrice.originalPrice / 100
+          : salePrice;
 
-    return {
-      type: EPIC_IGDB_TYPE,
-      salePrice,
-      normalPrice,
-      isOnSale: normalPrice > salePrice,
-      url: pageSlug
-        ? `https://store.epicgames.com/en-US/p/${pageSlug}`
-        : epicWebsite?.url ??
-          `https://store.epicgames.com/en-US/search?q=${encodeURIComponent(gameName)}`,
-    };
+      const pageSlug = extractPageSlug(element);
+      const epicWebsite = websites?.find((w) => w.type === EPIC_IGDB_TYPE);
+
+      return {
+        type: EPIC_IGDB_TYPE,
+        salePrice,
+        normalPrice,
+        isOnSale: normalPrice > salePrice,
+        url: pageSlug
+          ? `https://store.epicgames.com/en-US/p/${pageSlug}`
+          : epicWebsite?.url ??
+            `https://store.epicgames.com/en-US/search?q=${encodeURIComponent(gameName)}`,
+      };
+    }
+
+    return null;
   } catch {
     return null;
   }

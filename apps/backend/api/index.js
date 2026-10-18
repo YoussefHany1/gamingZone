@@ -1320,18 +1320,38 @@ app.get('/nintendo/search', cacheMiddleware(3600), asyncRoute(async (req, res) =
   if (query && (!nsuid || !jsonLdPrice)) {
     const hits = await searchNintendoIndex(query);
     const normalizedQuery = normalizeStoreTitle(query);
-    const hit =
-      hits.find((h) => normalizeStoreTitle(h?.title ?? h?.name) === normalizedQuery) ??
-      hits[0] ??
-      null;
+    const significantWords = normalizedQuery.split(' ').filter((w) => w.length > 3);
+
+    // Exact title first, then prefix, then all-significant-words. Anything
+    // matching nothing is discarded — a wrong price is worse than none.
+    const matches = hits
+      .map((h) => {
+        const title = normalizeStoreTitle(h?.title ?? h?.name);
+        if (!title) return null;
+        if (title === normalizedQuery) return { h, exact: true };
+        if (title.startsWith(normalizedQuery) || normalizedQuery.startsWith(title)) {
+          return { h, exact: false };
+        }
+        if (significantWords.length && significantWords.every((w) => title.includes(w))) {
+          return { h, exact: false };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    const match = matches.find((m) => m.exact) ?? matches[0] ?? null;
+    const hit = match?.h ?? null;
     if (hit) {
       // NSUID shape: 14 digits starting with 7, scanned out of the raw
       // hit because the index schema is not under our control.
       const hitNsuid = JSON.stringify(hit).match(/7\d{13}/);
       nsuid = nsuid ?? (hitNsuid ? hitNsuid[0] : null);
 
-      // US prices in major units (index is en-us).
+      // US prices in major units (index is en-us). A $0 price only counts
+      // for an exact title match — free-to-start demos must not win a
+      // fuzzy match and render as a free game.
       const hitPrice = hit.price;
+      const hitIsExact = Boolean(match?.exact);
       if (typeof hitPrice?.finalPrice === 'number') {
         const current =
           typeof hitPrice.salePrice === 'number' ? hitPrice.salePrice : hitPrice.finalPrice;
@@ -1339,11 +1359,13 @@ app.get('/nintendo/search', cacheMiddleware(3600), asyncRoute(async (req, res) =
           typeof hitPrice.regPrice === 'number' && hitPrice.regPrice > current
             ? hitPrice.regPrice
             : null;
-        algoliaPrice = {
-          price: current.toFixed(2),
-          originalPrice: original !== null ? original.toFixed(2) : null,
-          isOnSale: original !== null,
-        };
+        if (current > 0 || hitIsExact) {
+          algoliaPrice = {
+            price: current.toFixed(2),
+            originalPrice: original !== null ? original.toFixed(2) : null,
+            isOnSale: original !== null,
+          };
+        }
       }
 
       const hitUrl = typeof hit.url === 'string' ? hit.url : null;

@@ -121,14 +121,32 @@ export function buildStorePrices(
   }
 
   const prices: StorePrice[] = [];
+  const normalized = normalizeGameTitle(gameName);
+  const steamAppId = extractSteamAppId(websites);
+
   for (const [igdbType, typeDeals] of byIgdbType) {
     const best = pickBestDeal(typeDeals);
     if (!best) continue;
+
+    const salePrice = Number(best.salePrice);
+    const normalPrice = Number(best.normalPrice);
+    // Malformed deal strings must never surface as a price (or as "$0").
+    if (!Number.isFinite(salePrice) || !Number.isFinite(normalPrice)) continue;
+
+    // CheapShark mirrors free promotions and giveaways; a $0 listing only
+    // counts when the deal is confidently this exact game, not a fuzzy hit.
+    const trustedMatch =
+      normalizeGameTitle(best.title) === normalized ||
+      (best.steamAppID != null &&
+        steamAppId != null &&
+        String(best.steamAppID) === String(steamAppId));
+    if (salePrice === 0 && !trustedMatch) continue;
+
     prices.push({
       type: igdbType,
-      salePrice: Number(best.salePrice),
-      normalPrice: Number(best.normalPrice),
-      isOnSale: best.isOnSale === "1",
+      salePrice,
+      normalPrice,
+      isOnSale: best.isOnSale === "1" && normalPrice > salePrice,
       url: `https://www.cheapshark.com/deals?dealID=${best.dealID}`,
     });
   }
