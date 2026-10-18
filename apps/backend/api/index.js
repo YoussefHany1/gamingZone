@@ -1420,6 +1420,68 @@ app.get('/nintendo/search', cacheMiddleware(3600), asyncRoute(async (req, res) =
   });
 }));
 
+// ======= GOOGLE PLAY INTEGRATION =======
+// Google serves the Play Store app page fully server-rendered with a
+// structured-data price meta tag, so a server-side scrape with browser
+// headers reads the US price reliably. No search fallback: the IGDB
+// website URL is the authoritative link to the game's own app listing.
+
+/** Browser-like headers for Play Store page fetches. */
+const GOOGLE_PLAY_HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  'Accept-Language': 'en-US,en;q=0.9',
+};
+
+/**
+ * Extracts the app price from a Play Store page's structured-data meta
+ * tag (`<meta itemprop="price" content="$6.99">`; free apps use "0").
+ * Returns a plain decimal string, or null when no price is present.
+ */
+const extractPlayPrice = (html) => {
+  const tag = html.match(/<meta[^>]*itemprop="price"[^>]*>/)?.[0];
+  if (!tag) return null;
+  const content = tag.match(/content="([^"]*)"/)?.[1];
+  if (content == null) return null;
+  if (content === '0') return '0.00';
+  const paid = content.match(/^\$([0-9]+(?:\.[0-9]{1,2})?)$/);
+  return paid ? Number(paid[1]).toFixed(2) : null;
+};
+
+app.get('/play/search', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const { url } = req.query;
+
+  if (!url || typeof url !== 'string' || !/^https:\/\/play\.google\.com\//.test(url)) {
+    throw new AppError('url parameter must be a play.google.com app URL', 400);
+  }
+
+  let packageId;
+  try {
+    packageId = new URL(url).searchParams.get('id');
+  } catch {
+    throw new AppError('url parameter is not a valid URL', 400);
+  }
+  if (!packageId || !/^[A-Za-z0-9._]+$/.test(packageId)) {
+    throw new AppError('url is missing a valid app package id', 400);
+  }
+
+  // hl/gl pin the listing (and its currency) to the US store.
+  const appUrl = `https://play.google.com/store/apps/details?id=${encodeURIComponent(packageId)}&hl=en_US&gl=US`;
+  const pageResponse = await fetch(appUrl, { headers: GOOGLE_PLAY_HEADERS });
+
+  if (pageResponse.status === 404) {
+    // Delisted or region-removed app — the store tile still shows from the
+    // IGDB website; it just has no live price.
+    return res.json({ packageId, price: null, url: appUrl });
+  }
+  if (!pageResponse.ok) {
+    throw new AppError(`Google Play responded with status ${pageResponse.status}`, 502);
+  }
+
+  const html = await pageResponse.text();
+  res.json({ packageId, price: extractPlayPrice(html), url: appUrl });
+}));
+
 // invalid route handler (404)
 app.get('*', (req, res) => {
   res.redirect('https://play.google.com/store/apps/details?id=com.yh.gamingzone');

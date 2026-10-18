@@ -97,17 +97,24 @@ function buildStoreEntries(
   websites: Website[] | undefined,
   prices: StorePrice[] | undefined,
 ): StoreEntry[] {
+  // IGDB lists the App Store twice — an "iTunes" entry (type 10) and an
+  // "App Store" entry (type 11) for the same app. Collapse them into the
+  // one canonical type so a single Apple tile is rendered.
+  const canonicalType = (type: number) => (type === 11 ? 10 : type);
+
   const siteUrlByType = new Map<number, string>();
   for (const site of websites ?? []) {
-    if (STORE_ICONS[site.type] && !siteUrlByType.has(site.type)) {
-      siteUrlByType.set(site.type, site.url);
+    const type = canonicalType(site.type);
+    if (STORE_ICONS[type] && !siteUrlByType.has(type)) {
+      siteUrlByType.set(type, site.url);
     }
   }
 
   const priceByType = new Map<number, StorePrice>();
   for (const price of prices ?? []) {
-    if (STORE_ICONS[price.type] && !priceByType.has(price.type)) {
-      priceByType.set(price.type, price);
+    const type = canonicalType(price.type);
+    if (STORE_ICONS[type] && !priceByType.has(type)) {
+      priceByType.set(type, price);
     }
   }
 

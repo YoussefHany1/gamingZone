@@ -6,13 +6,15 @@ import { fetchEpicPrice } from "@/src/services/api/epicApi";
 import { fetchGogPrice } from "@/src/services/api/gogApi";
 import { fetchXboxPrice } from "@/src/services/api/xboxApi";
 import { fetchNintendoPrice } from "@/src/services/api/nintendoApi";
+import { fetchGooglePlayPrice } from "@/src/services/api/googlePlayApi";
+import { fetchAppStorePrice } from "@/src/services/api/appStoreApi";
 import { logger } from "@/src/lib/logger";
 import type { StorePrice, Website } from "../types";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 /** IGDB website types looked up for live prices. */
-const STORE_TYPES = [13, 16, 17, 22, 23, 24] as const;
+const STORE_TYPES = [13, 16, 17, 22, 23, 24, 12, 10] as const;
 
 /**
  * Relative trust of each lookup when two sources report the same store:
@@ -51,8 +53,8 @@ function initialLoading(): Record<number, boolean> {
 
 /**
  * Current prices for the game, looked up across PC stores (CheapShark,
- * Steam, GOG), the PlayStation Store, the Microsoft Store and the
- * Nintendo eShop.
+ * Steam, Epic, GOG), the PlayStation Store, the Microsoft Store, the
+ * Nintendo eShop, Google Play and the App Store.
  *
  * Every lookup is an independent task: one store timing out no longer
  * hides the prices that did arrive, and each store tile owns its own
@@ -145,6 +147,16 @@ export function useGameStorePrices(
         types: [24],
         priority: PRICE_PRIORITY.DIRECT,
         run: async () => single(await fetchNintendoPrice(gameName, websites)),
+      },
+      {
+        types: [12],
+        priority: PRICE_PRIORITY.DIRECT,
+        run: async () => single(await fetchGooglePlayPrice(websites)),
+      },
+      {
+        types: [10],
+        priority: PRICE_PRIORITY.DIRECT,
+        run: async () => single(await fetchAppStorePrice(websites)),
       },
     ];
 
