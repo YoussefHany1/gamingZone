@@ -1192,10 +1192,18 @@ const NINTENDO_ALGOLIA_APP_ID = 'U3B6GR4UA3';
 const NINTENDO_ALGOLIA_API_KEY = 'a29c6927638bfd8cee23993e51e721c9';
 const NINTENDO_ALGOLIA_INDEX = 'store_all_products_en_us';
 
+/** Browser-like headers; Nintendo's edge rejects header-less serverless fetches. */
+const NINTENDO_PAGE_HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9',
+};
+
 /** Fetches live prices for a Nintendo NSUID from the eShop price API (USD). */
 const fetchNintendoPrices = async (nsuid, country) => {
   const priceUrl = `https://ec.nintendo.com/v1/price?country=${encodeURIComponent(country)}&lang=en&ids=${encodeURIComponent(nsuid)}`;
-  const priceResponse = await fetch(priceUrl);
+  const priceResponse = await fetch(priceUrl, { headers: NINTENDO_PAGE_HEADERS });
   if (!priceResponse.ok) return null;
   const priceData = await priceResponse.json();
   const entry = priceData?.prices?.[0];
@@ -1217,17 +1225,20 @@ const fetchNintendoPrices = async (nsuid, country) => {
 /** Pulls the NSUID out of a Nintendo store product page (image paths / embedded state). */
 const extractNintendoNsuid = (html) => {
   const match =
-    html.match(/\/store\/software\/switch\/(\d{13,14})\//) ||
+    // CDN image paths like /store/software/switch/<nsuid>/ (or /v/software/switch/…).
+    html.match(/\/software\/switch\/(\d{13,14})\//) ||
     html.match(/"nsuid"\s*:\s*"?(\d{13,14})/);
   return match ? match[1] : null;
 };
 
 /** Pulls the JSON-LD offers price out of a Nintendo store product page. */
 const extractNintendoJsonLdPrice = (html) => {
-  const blocks = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g) ?? [];
+  // Tag carries extra attributes in practice (e.g. data-next-head="").
+  const blocks =
+    html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g) ?? [];
   for (const block of blocks) {
     const json = block
-      .replace(/^<script type="application\/ld\+json">/, '')
+      .replace(/^<script[^>]*>/, '')
       .replace(/<\/script>$/, '');
     try {
       const parsed = JSON.parse(json);
@@ -1242,6 +1253,39 @@ const extractNintendoJsonLdPrice = (html) => {
   return null;
 };
 
+/**
+ * Searches Nintendo's public store index (Algolia). The keys are public /
+ * search-only and occasionally rotate, and the DSN host can be unreachable
+ * from some serverless regions — the plain host is tried as a fallback.
+ * Returns the raw hits (possibly empty).
+ */
+const searchNintendoIndex = async (searchQuery) => {
+  const hosts = [
+    `${NINTENDO_ALGOLIA_APP_ID}-dsn.algolia.net`,
+    `${NINTENDO_ALGOLIA_APP_ID}.algolia.net`,
+  ];
+  for (const host of hosts) {
+    try {
+      const response = await fetch(`https://${host}/1/indexes/${NINTENDO_ALGOLIA_INDEX}/query`, {
+        method: 'POST',
+        headers: {
+          'X-Algolia-API-Key': NINTENDO_ALGOLIA_API_KEY,
+          'X-Algolia-Application-Id': NINTENDO_ALGOLIA_APP_ID,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: searchQuery, hitsPerPage: 10 }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data?.hits)) return data.hits;
+      }
+    } catch (error) {
+      console.warn(`Nintendo store index search failed on ${host}:`, error?.message);
+    }
+  }
+  return [];
+};
+
 app.get('/nintendo/search', cacheMiddleware(3600), asyncRoute(async (req, res) => {
   const { query, url, country = 'US' } = req.query;
 
@@ -1252,12 +1296,13 @@ app.get('/nintendo/search', cacheMiddleware(3600), asyncRoute(async (req, res) =
   let nsuid = null;
   let pageUrl = null;
   let jsonLdPrice = null;
+  let algoliaPrice = null;
 
   // Path 1: the game's own Nintendo product page (from IGDB's websites list).
   // Host check guards against fetching arbitrary caller-supplied URLs.
   if (url && /^https:\/\/(www\.)?nintendo\.com\//.test(url) && /\/store\/products\//.test(url)) {
     try {
-      const pageResponse = await fetch(url);
+      const pageResponse = await fetch(url, { headers: NINTENDO_PAGE_HEADERS });
       if (pageResponse.ok) {
         const html = await pageResponse.text();
         nsuid = extractNintendoNsuid(html);
@@ -1270,45 +1315,43 @@ app.get('/nintendo/search', cacheMiddleware(3600), asyncRoute(async (req, res) =
   }
 
   // Path 2: title search via the public store index (also covers games IGDB
-  // has no Nintendo website for). The Algolia keys are public/search-only
-  // and occasionally rotate — an empty or failed search just means no price.
-  if (!nsuid) {
-    try {
-      const searchResponse = await fetch(
-        `https://${NINTENDO_ALGOLIA_APP_ID}-dsn.algolia.net/1/indexes/${NINTENDO_ALGOLIA_INDEX}/query`,
-        {
-          method: 'POST',
-          headers: {
-            'X-Algolia-API-Key': NINTENDO_ALGOLIA_API_KEY,
-            'X-Algolia-Application-Id': NINTENDO_ALGOLIA_APP_ID,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ query, hitsPerPage: 10 }),
-        },
-      );
-      if (searchResponse.ok) {
-        const searchData = await searchResponse.json();
-        const hits = searchData?.hits ?? [];
-        const normalizedQuery = normalizeStoreTitle(query);
-        const hit =
-          hits.find((h) => normalizeStoreTitle(h?.title ?? h?.name) === normalizedQuery) ??
-          hits[0] ??
-          null;
-        if (hit) {
-          // NSUID shape: 14 digits starting with 7, scanned out of the raw
-          // hit because the index schema is not under our control.
-          const hitNsuid = JSON.stringify(hit).match(/7\d{13}/);
-          nsuid = hitNsuid ? hitNsuid[0] : null;
-          const hitUrl = typeof hit.url === 'string' ? hit.url : null;
-          if (hitUrl && !pageUrl) {
-            pageUrl = hitUrl.startsWith('/')
-              ? `https://www.nintendo.com${hitUrl}`
-              : (/^https:\/\/(www\.)?nintendo\.com\//.test(hitUrl) ? hitUrl : null);
-          }
-        }
+  // has no Nintendo website for). The index carries US prices of its own, so
+  // it doubles as a price source when the eShop price API is unreachable.
+  if (query && (!nsuid || !jsonLdPrice)) {
+    const hits = await searchNintendoIndex(query);
+    const normalizedQuery = normalizeStoreTitle(query);
+    const hit =
+      hits.find((h) => normalizeStoreTitle(h?.title ?? h?.name) === normalizedQuery) ??
+      hits[0] ??
+      null;
+    if (hit) {
+      // NSUID shape: 14 digits starting with 7, scanned out of the raw
+      // hit because the index schema is not under our control.
+      const hitNsuid = JSON.stringify(hit).match(/7\d{13}/);
+      nsuid = nsuid ?? (hitNsuid ? hitNsuid[0] : null);
+
+      // US prices in major units (index is en-us).
+      const hitPrice = hit.price;
+      if (typeof hitPrice?.finalPrice === 'number') {
+        const current =
+          typeof hitPrice.salePrice === 'number' ? hitPrice.salePrice : hitPrice.finalPrice;
+        const original =
+          typeof hitPrice.regPrice === 'number' && hitPrice.regPrice > current
+            ? hitPrice.regPrice
+            : null;
+        algoliaPrice = {
+          price: current.toFixed(2),
+          originalPrice: original !== null ? original.toFixed(2) : null,
+          isOnSale: original !== null,
+        };
       }
-    } catch (error) {
-      console.warn('Nintendo store index search failed:', error?.message);
+
+      const hitUrl = typeof hit.url === 'string' ? hit.url : null;
+      if (hitUrl && !pageUrl) {
+        pageUrl = hitUrl.startsWith('/')
+          ? `https://www.nintendo.com${hitUrl}`
+          : (/^https:\/\/(www\.)?nintendo\.com\//.test(hitUrl) ? hitUrl : null);
+      }
     }
   }
 
@@ -1321,7 +1364,12 @@ app.get('/nintendo/search', cacheMiddleware(3600), asyncRoute(async (req, res) =
     }
   }
 
-  // Last resort: the JSON-LD price embedded in the product page itself.
+  // Fallback 1: the store index's own US price snapshot.
+  if (!result && algoliaPrice) {
+    result = algoliaPrice;
+  }
+
+  // Fallback 2: the JSON-LD price embedded in the product page itself.
   if (!result && jsonLdPrice) {
     result = {
       price: jsonLdPrice.amount.toFixed(2),
