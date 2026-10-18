@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import CustomText from "@/src/components/CustomText";
 import type { AccentId, Appearance } from "@/src/constants/theme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import { useThemeStore } from "@/src/store/useThemeStore";
 import AccentSwatchRow from "../components/theme/AccentSwatchRow";
 import AppearanceTileStrip from "../components/theme/AppearanceTileStrip";
@@ -14,15 +15,17 @@ import { useAppearancePalettes } from "../hooks/useAppearancePalettes";
 
 const ThemeScreen = memo((): React.ReactElement => {
   const { t } = useTranslation();
+  const bottomInset = useBottomInset();
 
-  const styles = useThemeStyles((c) => ({
-    container: {
-      flex: 1,
-      backgroundColor: c.background,
-    },
-    content: {
-      paddingBottom: 70,
-    },
+  const styles = useThemeStyles(
+    (c) => ({
+      container: {
+        flex: 1,
+        backgroundColor: c.background,
+      },
+      content: {
+        paddingBottom: bottomInset,
+      },
     themeName: {
       fontSize: 17,
       fontWeight: "700",
@@ -41,7 +44,9 @@ const ThemeScreen = memo((): React.ReactElement => {
       marginHorizontal: INSET,
       marginTop: 28,
     },
-  }));
+    }),
+    [bottomInset],
+  );
 
   const appearance = useThemeStore((state) => state.appearance);
   const accent = useThemeStore((state) => state.accent);

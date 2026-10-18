@@ -18,11 +18,20 @@ export function useUserLists(): {
   createList: (name: string, description: string) => Promise<boolean>;
   isCreating: boolean;
   deleteList: (listId: string, listName: string) => void;
+  /** Last snapshot error message, or null while healthy. */
+  error: string | null;
+  /** True while a pull-to-refresh re-subscription is in flight. */
+  refreshing: boolean;
+  refresh: () => void;
 } {
   const { user, isAnonymous } = useAuthUser();
   const { t } = useTranslation();
   const [lists, setLists] = useState<UserList[]>([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  // Changed by `refresh` to force the snapshot subscription below to restart.
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!user || isAnonymous) return;
@@ -88,14 +97,25 @@ export function useUserLists(): {
           return aTime - bTime || a.name.localeCompare(b.name);
         });
         setLists(parsed);
+        setError(null);
+        setRefreshing(false);
       },
       (error) => {
         logger.error("[useUserLists] onSnapshot error:", error);
+        // The screen's FlashList previously rendered a blank page with no way
+        // to distinguish "no lists" from a failed subscription — surface it.
+        setError(t("common.dataLoadError"));
+        setRefreshing(false);
       },
     );
 
     return () => unsub();
-  }, [user, isAnonymous]);
+  }, [user, isAnonymous, refreshKey, t]);
+
+  const refresh = useCallback((): void => {
+    setRefreshing(true);
+    setRefreshKey((k) => k + 1);
+  }, []);
 
   const createList = useCallback(
     async (name: string, description: string): Promise<boolean> => {
@@ -179,5 +199,13 @@ export function useUserLists(): {
     [user, t],
   );
 
-  return { lists, createList, isCreating, deleteList };
+  return {
+    lists,
+    createList,
+    isCreating,
+    deleteList,
+    error,
+    refreshing,
+    refresh,
+  };
 }

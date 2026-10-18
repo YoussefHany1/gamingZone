@@ -3,16 +3,21 @@ import { ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useDeferredReady } from "@/src/hooks/useDeferredReady";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import AdSlot from "@/src/components/AdSlot";
 import LanguageOptionRow from "../components/language/LanguageOptionRow";
 import { useChangeLanguage } from "../hooks/useChangeLanguage";
 import { LANGUAGE_CODES, LANGUAGE_LABELS } from "../lib/languages";
 
 const LanguageSelect = memo((): React.ReactElement => {
-  const styles = useThemeStyles((c) => ({
-    safe: { flex: 1, backgroundColor: c.background },
-    container: { padding: 40, paddingBottom: 90 },
-  }));
+  const bottomInset = useBottomInset();
+  const styles = useThemeStyles(
+    (c) => ({
+      safe: { flex: 1, backgroundColor: c.background },
+      container: { padding: 40, paddingBottom: bottomInset },
+    }),
+    [bottomInset],
+  );
 
   const isReady = useDeferredReady();
   const { currentLanguage, changeLanguage } = useChangeLanguage();

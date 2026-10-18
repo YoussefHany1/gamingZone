@@ -22,6 +22,7 @@ import ErrorState from "@/src/components/ErrorState";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import { useNavigation } from "@react-navigation/native";
 import { getArticleSummary } from "@gaming-zone/utils";
 import type { Article, NewsItemProps, LatestNewsProps, RssFeedSource } from "../types";
@@ -252,6 +253,7 @@ function LatestNews({
   const listRef = useRef<any>(null);
   const { onScroll } = useScrollDirection();
   const colors = useThemeColors();
+  const bottomInset = useBottomInset();
 
   const styles = useThemeStyles((c) => ({
     container: {},
@@ -421,9 +423,19 @@ function LatestNews({
       return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
     });
 
-    return typeof limit === "number" && !enablePagination
-      ? sorted.slice(0, limit)
-      : sorted;
+    const sliced =
+      typeof limit === "number" && !enablePagination ? sorted.slice(0, limit) : sorted;
+
+    // Feed pages can overlap across fetches — dedupe by $id so the list keys
+    // stay unique and stable (FlashList recycles by key; duplicated keys cause
+    // visual glitches and lost scroll position).
+    const seen = new Set<string>();
+    return sliced.filter((item) => {
+      const key = item.$id;
+      if (key == null || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }, [articles, limit, enablePagination]);
 
   // Navigate to the article detail screen
@@ -651,7 +663,7 @@ function LatestNews({
         ) : (
           <View>
             {listData.map((item, index) => (
-              <Fragment key={item.$id ? `${item.$id}-${index}` : index.toString()}>
+              <Fragment key={item.$id}>
                 {renderItem({ item, index } as any)}
               </Fragment>
             ))}
@@ -668,9 +680,7 @@ function LatestNews({
         ref={listRef}
         data={listData}
         renderItem={renderItem}
-        keyExtractor={(item, index) =>
-          item.$id ? `${item.$id}-${index}` : index.toString()
-        }
+        keyExtractor={(item) => item.$id}
         ListHeaderComponent={headerComponent}
         ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}
@@ -685,8 +695,8 @@ function LatestNews({
         }
         contentContainerStyle={
           listData.length === 0
-            ? { flexGrow: 1, paddingBottom: 90 }
-            : { paddingBottom: 90 }
+            ? { flexGrow: 1, paddingBottom: bottomInset }
+            : { paddingBottom: bottomInset }
         }
         ListEmptyComponent={renderEmptyComponent}
       />

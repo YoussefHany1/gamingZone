@@ -10,10 +10,12 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { Gamepad2, House, Newspaper, Settings } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
+import CustomText from "@/src/components/CustomText";
 import { useTabBarStore } from "../store/useTabBarStore";
 import { useIsDark, useThemeColors } from "@/src/hooks/useTheme";
 import { mix, withAlpha } from "@/src/constants/colorUtils";
@@ -65,17 +67,18 @@ const TAB_SPRING_CONFIG = { stiffness: 140, damping: 15, mass: 0.8 };
 const isRTL = I18nManager.isRTL;
 const rtlMultiplier = isRTL ? -1 : 1;
 
-// ── Per-tab animated icon ────────────────────────────────────────────────────
+// ── Per-tab animated icon + label ────────────────────────────────────────────
 const TabIcon = memo(function TabIcon({
   route,
+  label,
   isFocused,
-  tabWidth,
   onPress,
   palette,
 }: {
   route: TabRoute;
+  /** Localized label from the navigator's `tabBarLabel`, shown when focused. */
+  label: string;
   isFocused: boolean;
-  tabWidth: number;
   onPress: () => void;
   palette: TabPalette;
 }) {
@@ -83,9 +86,26 @@ const TabIcon = memo(function TabIcon({
   const iconColor = isFocused ? palette.iconActive : palette.iconInactive;
   const iconScale = isFocused ? 1.18 : 1;
 
+  // The label fades/slides in only for the focused tab, so the bar stays
+  // minimal while still naming the active destination (screen readers hear
+  // the name too, via accessibilityLabel).
+  const labelOpacity = useSharedValue(isFocused ? 1 : 0);
+  const labelTranslateY = useSharedValue(isFocused ? 0 : 4);
+
+  useEffect(() => {
+    labelOpacity.value = withTiming(isFocused ? 1 : 0, { duration: 180 });
+    labelTranslateY.value = withTiming(isFocused ? 0 : 4, { duration: 180 });
+  }, [isFocused, labelOpacity, labelTranslateY]);
+
+  const labelAnimStyle = useAnimatedStyle(() => ({
+    opacity: labelOpacity.value,
+    transform: [{ translateY: labelTranslateY.value }],
+  }));
+
   return (
     <TouchableOpacity
-      accessibilityRole="button"
+      accessibilityRole="tab"
+      accessibilityLabel={label}
       accessibilityState={isFocused ? { selected: true } : {}}
       onPress={onPress}
       activeOpacity={0.75}
@@ -94,14 +114,20 @@ const TabIcon = memo(function TabIcon({
       <View collapsable={false} style={{ transform: [{ scale: iconScale }] }}>
         <Icon size={23} color={iconColor} accessible={false} />
       </View>
-      {isFocused && (
-        <View
-          style={[
-            styles.activeDot,
-            { left: (tabWidth - 4) / 2, backgroundColor: palette.iconActive },
-          ]}
-        />
-      )}
+      {/* Always occupies its row so icon positions never shift, invisible when
+          unfocused. The old active dot is superseded by this label. */}
+      <Animated.View
+        style={[styles.tabLabel, labelAnimStyle]}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <CustomText
+          style={[styles.tabLabelText, { color: palette.iconActive }]}
+          numberOfLines={1}
+        >
+          {label}
+        </CustomText>
+      </Animated.View>
     </TouchableOpacity>
   );
 });
@@ -109,6 +135,12 @@ TabIcon.displayName = "TabIcon";
 
 // ── Main tab bar ─────────────────────────────────────────────────────────────
 import type { MaterialTopTabBarProps } from "@react-navigation/material-top-tabs";
+
+/** Fixed bar height — the bar itself and `useBottomInset` both read this. */
+export const TAB_BAR_HEIGHT = 64;
+
+/** Fixed label row so unfocused (invisible) labels still keep icons centered. */
+const LABEL_ROW_HEIGHT = 12;
 
 const LiquidGlassTabBar = memo(
   ({ state, descriptors, navigation }: MaterialTopTabBarProps) => {
@@ -178,6 +210,12 @@ const LiquidGlassTabBar = memo(
 
           {state.routes.map((route: { key: string; name: string }, index: number) => {
             const isFocused = state.index === index;
+            const descriptor = descriptors[route.key];
+            const labelOption = descriptor?.options.tabBarLabel;
+            const label =
+              typeof labelOption === "function"
+                ? ""
+                : (labelOption ?? descriptor?.options.title ?? route.name);
             const onPress = () => {
               const event = navigation.emit({
                 type: "tabPress",
@@ -193,8 +231,8 @@ const LiquidGlassTabBar = memo(
               <TabIcon
                 key={route.key}
                 route={route.name as TabRoute}
+                label={label}
                 isFocused={isFocused}
-                tabWidth={tabWidth}
                 onPress={onPress}
                 palette={palette}
               />
@@ -220,7 +258,7 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: "row",
     width: "100%",
-    height: 64,
+    height: TAB_BAR_HEIGHT,
     borderTopEndRadius: 34,
     borderTopStartRadius: 34,
     overflow: "hidden",
@@ -247,11 +285,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     zIndex: 1,
   },
-  activeDot: {
-    position: "absolute",
-    bottom: 8,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+  tabLabel: {
+    height: LABEL_ROW_HEIGHT,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 1,
+  },
+  tabLabelText: {
+    fontSize: 10,
+    fontWeight: "600",
+    letterSpacing: 0.2,
   },
 });

@@ -38,7 +38,13 @@
       "d": "j",
       "h": "h",
       "m": "min"
-    }
+    },
+    "back": "Retour",
+    "pullToRefresh": "Tirez vers le bas pour réessayer",
+    "clearSearch": "Effacer la recherche",
+    "selectAnOption": "Sélectionnez une option",
+    "somethingWentWrong": "Une erreur est survenue",
+    "contactSupport": "Contacter le support"
   },
   "auth": {
     "emailPlaceholder": "E-mail",
@@ -496,6 +502,10 @@
       "couldNotCreateList": "Impossible de créer la liste. Veuillez réessayer plus tard",
       "listAlreadyExists": "Une liste avec ce nom existe déjà",
       "couldNotDeleteList": "Impossible de supprimer la liste. Veuillez réessayer plus tard."
+    },
+    "noListsCreated": {
+      "title": "Pas encore de listes",
+      "message": "Créez votre première liste pour organiser vos jeux"
     }
   },
   "settings": {
@@ -672,6 +682,15 @@
       "browseGames": "Parcourir les jeux",
       "editProfile": "Modifier le profil",
       "myLists": "Mes listes"
+    },
+    "admin": {
+      "dashboard": "Tableau de bord admin",
+      "channel": "Canal : {{value}}",
+      "runtimeVersion": "Version du runtime : {{value}}",
+      "updateId": "ID de mise à jour : {{value}}",
+      "appConfigVersion": "Version de la configuration : {{value}}",
+      "notDefined": "Non défini",
+      "runningNativeBuild": "Build natif en cours"
     }
   },
   "aiChat": {
@@ -686,7 +705,8 @@
       "bestAdventure": "Quels sont les meilleurs jeux d'aventure ?",
       "coopGames": "Suggère des jeux coopératifs à jouer avec des amis",
       "newReleases": "Quels sont les derniers jeux sortis ce mois-ci ?"
-    }
+    },
+    "send": "Envoyer le message"
   },
   "appAdvertisement": {
     "titlePrefix": "Téléchargez",
@@ -719,5 +739,11 @@
         "description": "Restez informé grâce aux alertes instantanées sur les nouveaux jeux gratuits et les actualités."
       }
     ]
+  },
+  "lists": {
+    "addGame": "Ajouter un jeu"
+  },
+  "notifications": {
+    "newsChannelName": "Notifications d'actualités"
   }
 }

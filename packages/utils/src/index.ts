@@ -89,26 +89,117 @@ export function parseSpecHtml(html: string): SpecRow[] {
   return rows;
 }
 
-/** Fetches PC system requirements for a Steam app from the Steam API. */
-export async function fetchSteamRequirements(
-  appId: string,
-): Promise<PcRequirements | null> {
+/** `price_overview` fragment of Steam's appdetails payload. Amounts are in cents (request pinned to `cc=US`, so USD). */
+export type SteamPriceOverview = {
+  currency: string;
+  /** Price in cents before any discount. */
+  initial: number;
+  /** Price in cents after any discount. */
+  final: number;
+  /** Discount percentage Steam displays (0 when not discounted). */
+  discountPercent: number;
+};
+
+/** Trimmed subset of Steam's appdetails payload shared by the requirements + price consumers. */
+export type SteamAppDetails = {
+  /** Null when Steam returns no `pc_requirements` for the app. */
+  pcRequirements: PcRequirements | null;
+  /** Null when Steam omits `price_overview` and the app isn't free. */
+  priceOverview: SteamPriceOverview | null;
+  /** True when Steam reports the app as free (`is_free`). */
+  isFree: boolean;
+};
+
+/** Oldest appdetails results evicted once the shared cache outgrows this size. */
+const STEAM_DETAILS_CACHE_LIMIT = 32;
+/** How long one app's appdetails result is reused between consumers. */
+const STEAM_DETAILS_TTL_MS = 5 * 60_000;
+
+const steamDetailsCache = new Map<
+  string,
+  { promise: Promise<SteamAppDetails>; expiresAt: number }
+>();
+
+async function fetchSteamAppDetailsUncached(appId: string): Promise<SteamAppDetails> {
   try {
+    // cc=US pins the currency so `price_overview` always matches the "$"
+    // rendering used by the stores row (the web app, which shares this call
+    // for requirements, does not display prices).
     const res = await axios.get(
-      `https://store.steampowered.com/api/appdetails?appids=${appId}`,
+      `https://store.steampowered.com/api/appdetails?appids=${appId}&cc=US`,
       { timeout: 8000 },
     );
     const data = res.data?.[appId];
-    if (!data?.success || !data?.data?.pc_requirements) return null;
+    if (!data?.success || !data?.data) {
+      return { pcRequirements: null, priceOverview: null, isFree: false };
+    }
 
-    const { minimum, recommended } = data.data.pc_requirements;
+    const { pc_requirements: pcRequirements, price_overview: overview, is_free: isFree } =
+      data.data;
+
     return {
-      minimum: minimum ? parseSpecHtml(minimum) : [],
-      recommended: recommended ? parseSpecHtml(recommended) : [],
+      pcRequirements: pcRequirements
+        ? {
+            minimum: pcRequirements.minimum ? parseSpecHtml(pcRequirements.minimum) : [],
+            recommended: pcRequirements.recommended
+              ? parseSpecHtml(pcRequirements.recommended)
+              : [],
+          }
+        : null,
+      priceOverview: overview
+        ? {
+            currency: String(overview.currency ?? ""),
+            initial: Number(overview.initial ?? 0),
+            final: Number(overview.final ?? 0),
+            discountPercent: Number(overview.discount_percent ?? 0),
+          }
+        : null,
+      isFree: Boolean(isFree),
     };
   } catch {
-    return null;
+    return { pcRequirements: null, priceOverview: null, isFree: false };
   }
+}
+
+/**
+ * Fetches Steam's appdetails for a Steam app, deduplicated through a
+ * module-level cache: the PC-requirements hook and the store-price lookup
+ * share a single request instead of issuing one each.
+ *
+ * Never rejects — failed lookups resolve to all-null fields and are evicted
+ * from the cache so the next consumer retries.
+ */
+export function fetchSteamAppDetails(appId: string): Promise<SteamAppDetails> {
+  const cached = steamDetailsCache.get(appId);
+  const now = Date.now();
+  if (cached && cached.expiresAt > now) return cached.promise;
+
+  const promise = fetchSteamAppDetailsUncached(appId);
+  steamDetailsCache.set(appId, { promise, expiresAt: now + STEAM_DETAILS_TTL_MS });
+
+  // Bound memory: evict the oldest entry (unless it's the one just added).
+  if (steamDetailsCache.size > STEAM_DETAILS_CACHE_LIMIT) {
+    const oldestKey = steamDetailsCache.keys().next().value;
+    if (oldestKey !== undefined && oldestKey !== appId) steamDetailsCache.delete(oldestKey);
+  }
+  // Empty results (fetch failed, app not found) are retried on next access
+  // instead of being cached for the full TTL.
+  promise.then((details) => {
+    const isEmpty = !details.pcRequirements && !details.priceOverview && !details.isFree;
+    if (isEmpty && steamDetailsCache.get(appId)?.promise === promise) {
+      steamDetailsCache.delete(appId);
+    }
+  });
+
+  return promise;
+}
+
+/** Fetches PC system requirements for a Steam app. Thin back-compat wrapper over `fetchSteamAppDetails`. */
+export async function fetchSteamRequirements(
+  appId: string,
+): Promise<PcRequirements | null> {
+  const details = await fetchSteamAppDetails(appId);
+  return details.pcRequirements;
 }
 
 // ---------------------------------------------------------------------------

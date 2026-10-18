@@ -1075,6 +1075,281 @@ app.get('/psn/search', cacheMiddleware(3600), asyncRoute(async (req, res) => {
   res.json({ query, country, results });
 }));
 
+// ======= XBOX / MICROSOFT STORE INTEGRATION =======
+
+/** Lowercased title with trademarks and punctuation stripped, for fuzzy store matching. */
+const normalizeStoreTitle = (title) =>
+  String(title ?? '')
+    .toLowerCase()
+    .replace(/[™®©]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+/**
+ * Ranks DisplayCatalog autosuggest hits against the game title:
+ * exact title > title prefix > title contains; "Game" products beat
+ * DLC/apps; language packs never win.
+ */
+const pickBestXboxProduct = (candidates, normalizedQuery) => {
+  let best = null;
+  let bestScore = 0;
+  for (const product of candidates) {
+    if (/language pack/i.test(product.Title)) continue;
+    const title = normalizeStoreTitle(product.Title);
+    let score = 0;
+    if (title === normalizedQuery) score = 100;
+    else if (title.startsWith(normalizedQuery)) score = 80;
+    else if (title.includes(normalizedQuery)) score = 60;
+    if (score === 0) continue;
+    if (product.Type === 'Game') score += 10;
+    if (score > bestScore) {
+      bestScore = score;
+      best = product;
+    }
+  }
+  return best;
+};
+
+// Search the Microsoft Store (Xbox) for a game's price.
+// Usage: GET /xbox/search?query=Halo Infinite&market=US
+app.get('/xbox/search', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const { query, market = 'US' } = req.query;
+
+  if (!query) {
+    throw new AppError('query parameter is required', 400);
+  }
+
+  // DisplayCatalog autosuggest finds the store product ID for the title.
+  const suggestUrl = `https://displaycatalog.mp.microsoft.com/v7.0/productFamilies/autosuggest?market=${encodeURIComponent(market)}&languages=en-us&query=${encodeURIComponent(query)}&topProducts=10&productFamilyNames=Games,Apps&platformdependencyname=Windows.Xbox`;
+  const suggestResponse = await fetch(suggestUrl);
+  if (!suggestResponse.ok) {
+    throw new AppError(`Xbox autosuggest request failed with status ${suggestResponse.status}`, 502);
+  }
+  const suggestData = await suggestResponse.json();
+
+  // Flatten Results[].Products[] into a ranked candidate list.
+  const candidates = [];
+  for (const result of suggestData?.Results ?? []) {
+    for (const product of result?.Products ?? []) {
+      if (product?.ProductId && product?.Title) {
+        candidates.push(product);
+      }
+    }
+  }
+  const best = pickBestXboxProduct(candidates, normalizeStoreTitle(query));
+  if (!best) {
+    return res.json({ query, market, results: [] });
+  }
+
+  // The Details payload is hundreds of KB; only the price block is kept.
+  const productUrl = `https://displaycatalog.mp.microsoft.com/v7.0/products?bigIds=${encodeURIComponent(best.ProductId)}&market=${encodeURIComponent(market)}&languages=en-us&fieldsTemplate=Details&actionFilter=Browse`;
+  const productResponse = await fetch(productUrl);
+  if (!productResponse.ok) {
+    throw new AppError(`Xbox product lookup failed with status ${productResponse.status}`, 502);
+  }
+  const productData = await productResponse.json();
+
+  const product = productData?.Products?.[0];
+  const availabilities = (product?.DisplaySkuAvailabilities ?? []).flatMap(
+    (sku) => sku?.Availabilities ?? [],
+  );
+  // Prices are major units (59.99). ListPrice is what the buyer pays;
+  // MSRP stays at the pre-discount level during sales.
+  const price = availabilities
+    .map((availability) => availability?.OrderManagementData?.Price)
+    .find((p) => p && typeof p.ListPrice === 'number');
+
+  if (!price) {
+    return res.json({ query, market, results: [] });
+  }
+
+  const listPrice = Number(price.ListPrice);
+  const msrp = typeof price.MSRP === 'number' ? Number(price.MSRP) : null;
+  const isOnSale = msrp !== null && listPrice < msrp;
+
+  res.json({
+    query,
+    market,
+    results: [{
+      name: product?.LocalizedProperties?.[0]?.ProductTitle ?? best.Title ?? null,
+      price: listPrice.toFixed(2),
+      originalPrice: isOnSale ? msrp.toFixed(2) : null,
+      isOnSale,
+      url: `https://apps.microsoft.com/detail/${best.ProductId}`,
+    }],
+  });
+}));
+
+// ======= NINTENDO STORE INTEGRATION =======
+
+// Nintendo exposes no official pricing API, so this endpoint assembles one:
+// 1. When the caller passes the game's IGDB Nintendo product URL, the page
+//    itself supplies the NSUID (image paths) plus a JSON-LD fallback price.
+// 2. Otherwise the public store index is searched by title for the NSUID.
+// The NSUID then unlocks the (unofficial) eShop price API.
+// Usage: GET /nintendo/search?query=Zelda&url=https://www.nintendo.com/us/store/products/...&country=US
+const NINTENDO_ALGOLIA_APP_ID = 'U3B6GR4UA3';
+const NINTENDO_ALGOLIA_API_KEY = 'a29c6927638bfd8cee23993e51e721c9';
+const NINTENDO_ALGOLIA_INDEX = 'store_all_products_en_us';
+
+/** Fetches live prices for a Nintendo NSUID from the eShop price API (USD). */
+const fetchNintendoPrices = async (nsuid, country) => {
+  const priceUrl = `https://ec.nintendo.com/v1/price?country=${encodeURIComponent(country)}&lang=en&ids=${encodeURIComponent(nsuid)}`;
+  const priceResponse = await fetch(priceUrl);
+  if (!priceResponse.ok) return null;
+  const priceData = await priceResponse.json();
+  const entry = priceData?.prices?.[0];
+  const regular = entry?.regular_price;
+  const discount = entry?.discount_price;
+  if (!regular?.amount) return null;
+
+  const regularAmount = Number(regular.amount);
+  const saleAmount = discount?.amount ? Number(discount.amount) : null;
+  const isOnSale = saleAmount !== null && saleAmount < regularAmount;
+
+  return {
+    price: (isOnSale ? saleAmount : regularAmount).toFixed(2),
+    originalPrice: isOnSale ? regularAmount.toFixed(2) : null,
+    isOnSale,
+  };
+};
+
+/** Pulls the NSUID out of a Nintendo store product page (image paths / embedded state). */
+const extractNintendoNsuid = (html) => {
+  const match =
+    html.match(/\/store\/software\/switch\/(\d{13,14})\//) ||
+    html.match(/"nsuid"\s*:\s*"?(\d{13,14})/);
+  return match ? match[1] : null;
+};
+
+/** Pulls the JSON-LD offers price out of a Nintendo store product page. */
+const extractNintendoJsonLdPrice = (html) => {
+  const blocks = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g) ?? [];
+  for (const block of blocks) {
+    const json = block
+      .replace(/^<script type="application\/ld\+json">/, '')
+      .replace(/<\/script>$/, '');
+    try {
+      const parsed = JSON.parse(json);
+      const source = Array.isArray(parsed) ? parsed[0] : parsed;
+      const offers = source?.offers;
+      const amount = Number(offers?.price);
+      if (offers?.priceCurrency === 'USD' && Number.isFinite(amount)) {
+        return { amount, url: typeof offers.url === 'string' ? offers.url : null };
+      }
+    } catch { /* skip malformed blocks */ }
+  }
+  return null;
+};
+
+app.get('/nintendo/search', cacheMiddleware(3600), asyncRoute(async (req, res) => {
+  const { query, url, country = 'US' } = req.query;
+
+  if (!query && !url) {
+    throw new AppError('query or url parameter is required', 400);
+  }
+
+  let nsuid = null;
+  let pageUrl = null;
+  let jsonLdPrice = null;
+
+  // Path 1: the game's own Nintendo product page (from IGDB's websites list).
+  // Host check guards against fetching arbitrary caller-supplied URLs.
+  if (url && /^https:\/\/(www\.)?nintendo\.com\//.test(url) && /\/store\/products\//.test(url)) {
+    try {
+      const pageResponse = await fetch(url);
+      if (pageResponse.ok) {
+        const html = await pageResponse.text();
+        nsuid = extractNintendoNsuid(html);
+        jsonLdPrice = extractNintendoJsonLdPrice(html);
+        pageUrl = url;
+      }
+    } catch (error) {
+      console.warn('Nintendo product page fetch failed:', error?.message);
+    }
+  }
+
+  // Path 2: title search via the public store index (also covers games IGDB
+  // has no Nintendo website for). The Algolia keys are public/search-only
+  // and occasionally rotate — an empty or failed search just means no price.
+  if (!nsuid) {
+    try {
+      const searchResponse = await fetch(
+        `https://${NINTENDO_ALGOLIA_APP_ID}-dsn.algolia.net/1/indexes/${NINTENDO_ALGOLIA_INDEX}/query`,
+        {
+          method: 'POST',
+          headers: {
+            'X-Algolia-API-Key': NINTENDO_ALGOLIA_API_KEY,
+            'X-Algolia-Application-Id': NINTENDO_ALGOLIA_APP_ID,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query, hitsPerPage: 10 }),
+        },
+      );
+      if (searchResponse.ok) {
+        const searchData = await searchResponse.json();
+        const hits = searchData?.hits ?? [];
+        const normalizedQuery = normalizeStoreTitle(query);
+        const hit =
+          hits.find((h) => normalizeStoreTitle(h?.title ?? h?.name) === normalizedQuery) ??
+          hits[0] ??
+          null;
+        if (hit) {
+          // NSUID shape: 14 digits starting with 7, scanned out of the raw
+          // hit because the index schema is not under our control.
+          const hitNsuid = JSON.stringify(hit).match(/7\d{13}/);
+          nsuid = hitNsuid ? hitNsuid[0] : null;
+          const hitUrl = typeof hit.url === 'string' ? hit.url : null;
+          if (hitUrl && !pageUrl) {
+            pageUrl = hitUrl.startsWith('/')
+              ? `https://www.nintendo.com${hitUrl}`
+              : (/^https:\/\/(www\.)?nintendo\.com\//.test(hitUrl) ? hitUrl : null);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Nintendo store index search failed:', error?.message);
+    }
+  }
+
+  let result = null;
+  if (nsuid) {
+    try {
+      result = await fetchNintendoPrices(nsuid, country);
+    } catch (error) {
+      console.warn('Nintendo eShop price lookup failed:', error?.message);
+    }
+  }
+
+  // Last resort: the JSON-LD price embedded in the product page itself.
+  if (!result && jsonLdPrice) {
+    result = {
+      price: jsonLdPrice.amount.toFixed(2),
+      originalPrice: null,
+      isOnSale: false,
+    };
+    if (!pageUrl && jsonLdPrice.url) {
+      pageUrl = jsonLdPrice.url.startsWith('/')
+        ? `https://www.nintendo.com${jsonLdPrice.url}`
+        : jsonLdPrice.url;
+    }
+  }
+
+  res.json({
+    query: query ?? null,
+    country,
+    results: result
+      ? [{
+          name: query ?? null,
+          price: result.price,
+          originalPrice: result.originalPrice,
+          isOnSale: result.isOnSale,
+          url: pageUrl,
+        }]
+      : [],
+  });
+}));
+
 // invalid route handler (404)
 app.get('*', (req, res) => {
   res.redirect('https://play.google.com/store/apps/details?id=com.yh.gamingzone');

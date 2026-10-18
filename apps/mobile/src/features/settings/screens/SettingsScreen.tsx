@@ -5,6 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import SettingsMenuList from "../components/settings/SettingsMenuList";
 import SettingsSignOutButton from "../components/settings/SettingsSignOutButton";
@@ -14,16 +15,20 @@ import { useSignOut } from "../hooks/useSignOut";
 import type { SettingsNavProp } from "../types";
 
 const SettingsScreen = memo((): React.ReactElement => {
-  const styles = useThemeStyles((c) => ({
-    container: {
-      flex: 1,
-      backgroundColor: c.background,
-      paddingHorizontal: 16,
-    },
-    scrollContent: {
-      paddingBottom: 90,
-    },
-  }));
+  const bottomInset = useBottomInset();
+  const styles = useThemeStyles(
+    (c) => ({
+      container: {
+        flex: 1,
+        backgroundColor: c.background,
+        paddingHorizontal: 16,
+      },
+      scrollContent: {
+        paddingBottom: bottomInset,
+      },
+    }),
+    [bottomInset],
+  );
 
   const navigation = useNavigation<SettingsNavProp>();
   const { t, i18n } = useTranslation();

@@ -85,7 +85,7 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
       justifyContent: "center",
     },
     headerCellLabel: {
-      color: "#9f9f9f",
+      color: c.textMuted,
       marginTop: 2,
     },
     tableRow: {
@@ -93,11 +93,11 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
       paddingVertical: 12,
       alignItems: "center",
       borderBottomWidth: 0.5,
-      borderBottomColor: "rgba(81, 105, 150, 0.3)",
+      borderBottomColor: c.border,
     },
     langCell: {
       flex: 2,
-      color: "#cfcfcf",
+      color: c.text,
       fontSize: 15,
       fontWeight: "500",
       marginLeft: 8,

@@ -9,10 +9,10 @@ import type { EventDescriptionProps } from "../types";
 /** "About" section with the event's description text. */
 const EventDescription: React.FC<EventDescriptionProps> = ({ description }) => {
   const { t } = useTranslation();
-  const styles = useThemeStyles(() => ({
+  const styles = useThemeStyles((c) => ({
     section: { marginTop: 24 },
     description: {
-      color: "#b7becb",
+      color: c.textMuted,
       fontSize: 15,
       lineHeight: 24,
       textAlign: "left" as const,

@@ -22,6 +22,7 @@ import { useNotificationPreferences } from "@/src/hooks/useNotificationPreferenc
 import useCachedData from "@/src/hooks/useCachedData";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import Loading from "@/src/Loading";
 import ErrorState from "@/src/components/ErrorState";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -300,8 +301,8 @@ const NewsSection = memo<NewsSectionProps>(
             <CustomText style={styles.categoryTitle}>{title}</CustomText>
           </View>
           <Switch
-            trackColor={{ false: "#3e3e3e", true: colors.textMuted }}
-            thumbColor={colors.text}
+            trackColor={{ false: colors.backgroundDeep, true: colors.accent }}
+            thumbColor={isEnabled ? colors.onAccent : colors.textMuted}
             onValueChange={handleToggleSwitch}
             value={isEnabled}
             disabled={loadingPreferences}
@@ -352,20 +353,28 @@ NewsSection.displayName = "NewsSection";
 // main
 
 const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
-  const styles = useThemeStyles((c) => ({
-    screen: {
-      flex: 1,
-      backgroundColor: c.background,
-    },
-    sourceText: {
-      color: c.textMuted,
-      textAlign: "center",
-      textDecorationLine: "underline",
-    },
-    ad: {
-      marginBottom: 38,
-    },
-  }));
+  const bottomInset = useBottomInset();
+  const styles = useThemeStyles(
+    (c) => ({
+      screen: {
+        flex: 1,
+        backgroundColor: c.background,
+      },
+      sourceText: {
+        color: c.textMuted,
+        textAlign: "center",
+        textDecorationLine: "underline",
+      },
+      ad: {
+        marginBottom: 38,
+      },
+      scroll: {
+        paddingHorizontal: 16,
+        paddingBottom: bottomInset,
+      },
+    }),
+    [bottomInset],
+  );
   const currentGame = route.params?.gameName ?? "";
   const legacyApiUrl = route.params?.apiUrl ?? "";
   const sourceLink = route.params?.source ?? "";
@@ -378,7 +387,7 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
 
   return (
     <SafeAreaView style={styles.screen} edges={["left", "right"]}>
-      <ScrollView style={{ paddingHorizontal: 16, marginBottom: 100 }}>
+      <ScrollView style={styles.scroll}>
         <NewsSection
           gameName={currentGame}
           title="English News"

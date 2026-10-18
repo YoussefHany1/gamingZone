@@ -90,7 +90,7 @@ const GameHowLongToBeat: React.FC<GameHowLongToBeatProps> = ({
       textAlign: "center",
     },
     hoursLabel: {
-      color: "#9f9f9f",
+      color: c.textMuted,
     },
   }));
 

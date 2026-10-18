@@ -4,8 +4,10 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { ArrowLeft } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
+import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useFloatingTopInset } from "@/src/hooks/useBottomInset";
 import EventStatusBadge from "./EventStatusBadge";
 import type { EventHeroProps } from "../types";
 
@@ -14,16 +16,19 @@ const HERO_HEIGHT = 280;
 /** Event hero: cover art, scrim gradient, back button, status badge, title. */
 const EventHero: React.FC<EventHeroProps> = ({ event, status, logoUri, onBack }) => {
   const colors = useThemeColors();
-  const styles = useThemeStyles((c) => ({
-    hero: {
-      width: "100%",
-      height: HERO_HEIGHT,
-      justifyContent: "flex-end",
-      padding: 20,
-    },
-    backBtn: {
-      position: "absolute",
-      top: 44,
+  const { t } = useTranslation();
+  const topInset = useFloatingTopInset(10);
+  const styles = useThemeStyles(
+    (c) => ({
+      hero: {
+        width: "100%",
+        height: HERO_HEIGHT,
+        justifyContent: "flex-end",
+        padding: 20,
+      },
+      backBtn: {
+        position: "absolute",
+        top: topInset,
       left: 16,
       width: 40,
       height: 40,
@@ -47,7 +52,9 @@ const EventHero: React.FC<EventHeroProps> = ({ event, status, logoUri, onBack })
       textShadowOffset: { width: 0, height: 2 },
       textShadowRadius: 6,
     },
-  }));
+    }),
+    [topInset],
+  );
 
   return (
     <View style={styles.hero}>
@@ -71,8 +78,14 @@ const EventHero: React.FC<EventHeroProps> = ({ event, status, logoUri, onBack })
         style={StyleSheet.absoluteFill}
       />
 
-      <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.8}>
-        <ArrowLeft size={24} color={colors.text} />
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={onBack}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={t("common.back")}
+      >
+        <ArrowLeft size={24} color={colors.text} accessible={false} />
       </TouchableOpacity>
 
       <View style={styles.heroBadgeRow}>

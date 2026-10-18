@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { Alert } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -6,6 +6,9 @@ import { sendChatMessage } from "../lib/aiService";
 import { checkAILimit, getRemainingAILimit, incrementAILimit } from "../lib/aiLimit";
 import type { ChatMessage } from "../types";
 import { logger } from "@/src/lib/logger";
+
+/** Monotonic id source for chat entries (stable FlashList keys). */
+const makeLocalId = (counter: { n: number }): string => `msg-${++counter.n}`;
 
 export type UseAIChatResult = {
   /** Full message history, including any system entries. */
@@ -25,16 +28,34 @@ export type UseAIChatResult = {
  */
 export function useAIChat(): UseAIChatResult {
   const { t } = useTranslation();
+  // The welcome-message effect reads t through a ref so it can run once and
+  // only refresh the placeholder while the conversation is still empty —
+  // previously a language change mid-conversation erased the whole history.
+  const tRef = useRef(t);
+  tRef.current = t;
+  const localIdCounter = useRef({ n: 0 });
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
-    // Initial welcome message
-    setMessages([{ role: "assistant", content: t("aiChat.placeholder") }]);
-    getRemainingAILimit().then(setRemaining);
+    // Welcome message — only seeded while the conversation is empty.
+    setMessages((prev) => {
+      if (prev.length > 0) return prev;
+      return [
+        {
+          role: "assistant",
+          content: tRef.current("aiChat.placeholder"),
+          localId: makeLocalId(localIdCounter.current),
+        },
+      ];
+    });
   }, [t]);
+
+  useEffect(() => {
+    getRemainingAILimit().then(setRemaining);
+  }, []);
 
   const handleSend = useCallback(async () => {
     if (!input.trim() || isLoading) return;
@@ -46,7 +67,12 @@ export function useAIChat(): UseAIChatResult {
       return;
     }
 
-    const userMsg: ChatMessage = { role: "user", content: input.trim() };
+    const userMsg: ChatMessage = {
+      role: "user",
+      content: input.trim(),
+      localId: makeLocalId(localIdCounter.current),
+    };
+    const sentText = userMsg.content;
     const newChat = [...messages, userMsg];
     setMessages(newChat);
     setInput("");
@@ -63,11 +89,20 @@ export function useAIChat(): UseAIChatResult {
 
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: reply.text, model: reply.model },
+        {
+          role: "assistant",
+          content: reply.text,
+          model: reply.model,
+          localId: makeLocalId(localIdCounter.current),
+        },
       ]);
     } catch (error) {
       logger.error("[useAIChat] Failed to send message", error);
       Alert.alert(t("common.error"), t("aiChat.error"));
+      // Retry affordance: drop the orphaned user bubble (its reply never
+      // arrived) and hand the draft back so "Send" re-fires it unchanged.
+      setMessages((prev) => prev.filter((m) => m.localId !== userMsg.localId));
+      setInput(sentText);
     } finally {
       setIsLoading(false);
     }

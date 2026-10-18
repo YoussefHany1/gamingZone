@@ -104,14 +104,14 @@ const PosterGameCard = React.memo<PosterGameCardProps>(
       statValue: { color: c.textMuted, fontSize: 12, fontWeight: "bold" },
       platformsContainer: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
       platformChip: {
-        backgroundColor: "rgba(81, 105, 150, 0.3)",
+        backgroundColor: c.accentSurface,
         paddingHorizontal: 5,
         paddingVertical: 1,
         borderRadius: 10,
         borderWidth: 1,
         borderColor: c.accentText,
       },
-      platformText: { color: "#9CB4DD", fontSize: 10, fontWeight: "600" },
+      platformText: { color: c.textMuted, fontSize: 10, fontWeight: "600" },
     }));
 
     const navigation = useNavigation<NativeStackNavigationProp<GamesStackParamList>>();

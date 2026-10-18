@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import React, { Component } from "react";
 import { View, TouchableOpacity } from "react-native";
 import crashlytics from "@react-native-firebase/crashlytics";
+import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import CustomText from "./CustomText";
@@ -45,6 +46,7 @@ function ErrorFallback({
   onContact: () => void;
 }): ReactNode {
   const colors = useThemeColors();
+  const { t } = useTranslation();
 
   const styles = useThemeStyles((c) => ({
     container: {
@@ -101,26 +103,28 @@ function ErrorFallback({
           <Path d="M116,136V104a12,12,0,0,1,24,0v32a12,12,0,0,1-24,0Zm124.23242,77.979a27.71154,27.71154,0,0,1-24.25586,14.01319H40.02344A28.00034,28.00034,0,0,1,15.79,185.96582L103.7666,33.97314v.00049a27.99988,27.99988,0,0,1,48.4668,0L240.21,185.96533A27.71359,27.71359,0,0,1,240.23242,213.979Zm-20.79394-15.99072L131.46191,45.99609a4.00012,4.00012,0,0,0-6.92382,0h0L36.56152,197.98828a4.0004,4.0004,0,0,0,3.46192,6.00391H215.97656a4.0004,4.0004,0,0,0,3.46192-6.00391ZM128,160a16,16,0,1,0,16,16A16.00016,16.00016,0,0,0,128,160Z" />
         </Svg>
       </View>
-      <CustomText style={styles.title}>Something went wrong</CustomText>
+      <CustomText style={styles.title}>{t("common.somethingWentWrong")}</CustomText>
 
       <View style={styles.buttonsContainer}>
         <TouchableOpacity
           style={styles.button}
           onPress={onRetry}
           activeOpacity={0.8}
-          accessibilityLabel="Retry"
+          accessibilityLabel={t("common.retryButton")}
           accessibilityRole="button"
         >
-          <CustomText style={styles.buttonText}>Try again</CustomText>
+          <CustomText style={styles.buttonText}>{t("common.retryButton")}</CustomText>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.button, styles.contactButton]}
           onPress={onContact}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.contactSupport")}
         >
           <CustomText style={[styles.buttonText, styles.contactButtonText]}>
-            Contact Support
+            {t("common.contactSupport")}
           </CustomText>
         </TouchableOpacity>
       </View>

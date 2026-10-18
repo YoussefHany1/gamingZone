@@ -1,7 +1,8 @@
 import React, { useCallback } from "react";
-import { ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { ScrollView, KeyboardAvoidingView } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import ContactEmailField from "../components/contact/ContactEmailField";
 import ContactSubmitButton from "../components/contact/ContactSubmitButton";
 import FeedbackMessageField from "../components/contact/FeedbackMessageField";
@@ -12,10 +13,14 @@ type RootStackParamList = { ContactScreen: undefined };
 type Props = NativeStackScreenProps<RootStackParamList, "ContactScreen">;
 
 const ContactScreen = ({ navigation }: Props): React.ReactElement => {
-  const styles = useThemeStyles((c) => ({
-    container: { flex: 1, backgroundColor: c.background, paddingBottom: 90 },
-    scrollContent: { padding: 20 },
-  }));
+  const bottomInset = useBottomInset();
+  const styles = useThemeStyles(
+    (c) => ({
+      container: { flex: 1, backgroundColor: c.background, paddingBottom: bottomInset },
+      scrollContent: { padding: 20 },
+    }),
+    [bottomInset],
+  );
 
   // The error boundary renders this screen outside the navigator with a stub
   // `navigation`, so the screen keeps taking it as a prop rather than reading
@@ -27,7 +32,7 @@ const ContactScreen = ({ navigation }: Props): React.ReactElement => {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior="height"
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>

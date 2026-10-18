@@ -9,11 +9,12 @@ import Animated, {
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { MessagesSquare } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { withAlpha } from "@/src/constants/colorUtils";
 import type { AIChatFabProps } from "./types";
 
-const FAB_GRADIENT: [string, string] = ["rgba(12,26,51,0.72)", "rgba(0,0,28,0.90)"];
 const GRADIENT_START = { x: 0, y: 0 };
 const GRADIENT_END = { x: 1, y: 1 };
 
@@ -27,6 +28,14 @@ const PULSE_DURATION = 1600;
  */
 const AIChatFab = memo(function AIChatFab({ onPress }: AIChatFabProps) {
   const colors = useThemeColors();
+  const { t } = useTranslation();
+  // Accent-tinted glass instead of the old fixed navy gradient — the button
+  // followed the accent everywhere else, so this keeps it consistent (and
+  // readable) across every theme style and appearance.
+  const fabGradient: [string, string] = [
+    withAlpha(colors.accent, 0.55),
+    withAlpha(colors.accentText, 0.8),
+  ];
   const styles = useThemeStyles((c) => ({
     fabWrapper: {
       position: "absolute",
@@ -83,10 +92,12 @@ const AIChatFab = memo(function AIChatFab({ onPress }: AIChatFabProps) {
         style={styles.fabGlass}
         onPress={onPress}
         activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={t("aiChat.title")}
       >
         <View style={[StyleSheet.absoluteFill, styles.fabBaseFill]} />
         <LinearGradient
-          colors={FAB_GRADIENT}
+          colors={fabGradient}
           start={GRADIENT_START}
           end={GRADIENT_END}
           style={StyleSheet.absoluteFill}

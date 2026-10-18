@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useState } from "react";
 import CustomText from "@/src/components/CustomText";
-import { Modal, View, TouchableOpacity, ScrollView, Platform } from "react-native";
+import { Modal, View, TouchableOpacity, ScrollView } from "react-native";
 import { X } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -151,6 +151,7 @@ FilterSection.displayName = "FilterSection";
 
 function FilterModal({ visible, filters, onApply, onClose }: FilterModalProps) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
 
   const styles = useThemeStyles((c) => ({
     backdrop: {
@@ -163,7 +164,7 @@ function FilterModal({ visible, filters, onApply, onClose }: FilterModalProps) {
       borderTopRightRadius: 24,
       paddingTop: 12,
       paddingHorizontal: 20,
-      paddingBottom: Platform.OS === "ios" ? 34 : 20,
+      paddingBottom: 26,
       maxHeight: "75%",
     },
     handle: {
@@ -273,8 +274,10 @@ function FilterModal({ visible, filters, onApply, onClose }: FilterModalProps) {
           <TouchableOpacity
             onPress={onClose}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={t("common.close")}
           >
-            <X size={22} color="#ccc" />
+            <X size={22} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
 

@@ -58,8 +58,8 @@ const AlertToggleCard = memo(
           <Switch
             value={enabled}
             onValueChange={onToggle}
-            trackColor={{ false: "#3e3e3e", true: colors.textMuted }}
-            thumbColor={enabled ? colors.text : "#f4f3f4"}
+            trackColor={{ false: colors.backgroundDeep, true: colors.accent }}
+            thumbColor={enabled ? colors.onAccent : colors.textMuted}
             style={styles.categorySwitch}
           />
         </View>

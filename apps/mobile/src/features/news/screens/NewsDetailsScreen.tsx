@@ -5,6 +5,7 @@ import CustomText from "@/src/components/CustomText";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import AdSlot from "@/src/components/AdSlot";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import NewsArticleImage from "../components/newsDetails/NewsArticleImage";
 import NewsArticleMeta from "../components/newsDetails/NewsArticleMeta";
 import NewsDescription from "../components/newsDetails/NewsDescription";
@@ -22,17 +23,19 @@ import { useShareArticle } from "../hooks/useShareArticle";
  */
 const NewsDetails = memo((): React.ReactElement => {
   const navigation = useNavigation();
-  const styles = useThemeStyles((c) => ({
-    modalContainer: {
-      flex: 1,
-    },
-    container: {
-      flex: 1,
-    },
-    content: {
-      padding: 15,
-      paddingBottom: 90,
-    },
+  const bottomInset = useBottomInset();
+  const styles = useThemeStyles(
+    (c) => ({
+      modalContainer: {
+        flex: 1,
+      },
+      container: {
+        flex: 1,
+      },
+      content: {
+        padding: 15,
+        paddingBottom: bottomInset,
+      },
     title: {
       fontSize: 22,
       fontWeight: "bold",
@@ -40,7 +43,9 @@ const NewsDetails = memo((): React.ReactElement => {
       lineHeight: 32,
       textAlign: "center",
     },
-  }));
+    }),
+    [bottomInset],
+  );
 
   const { onScroll } = useScrollDirection();
 

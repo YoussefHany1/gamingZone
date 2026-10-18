@@ -47,8 +47,8 @@ const AdminAdsToggle = memo(() => {
       <Switch
         value={adsEnabled}
         onValueChange={setAdsEnabled}
-        trackColor={{ false: "#3e3e3e", true: colors.textMuted }}
-        thumbColor={adsEnabled ? colors.text : "#f4f3f4"}
+        trackColor={{ false: colors.backgroundDeep, true: colors.accent }}
+        thumbColor={adsEnabled ? colors.onAccent : colors.textMuted}
       />
     </View>
   );

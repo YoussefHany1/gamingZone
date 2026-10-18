@@ -1,15 +1,16 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import { View, TouchableOpacity, ActivityIndicator } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import { STORE_ICONS } from "./utils";
+import { STORE_FALLBACK_URL, STORE_ICONS, STORE_ORDER } from "./utils";
 import { useSharedStyles } from "./shared";
-import type { GameStoresProps, StorePrice } from "../../types";
+import type { GameStoresProps, StorePrice, Website } from "../../types";
 import { openLink } from "@/src/lib/browser";
 
-const formatPrice = (price: number) => `$${price.toFixed(2)}`;
+/** `0` is the standardised "free game" price — never render "$0.00". */
+const formatPrice = (price: number) => (price > 0 ? `$${price.toFixed(2)}` : "Free");
 
 const StorePriceInfo: React.FC<{
   price?: StorePrice | undefined;
@@ -68,6 +69,62 @@ const StorePriceInfo: React.FC<{
   );
 };
 
+/** One store tile: the union of IGDB store websites and priced stores. */
+type StoreEntry = {
+  /** Stable React key (one tile per IGDB website type). */
+  key: string;
+  type: number;
+  url: string;
+  price: StorePrice | undefined;
+};
+
+/**
+ * Builds the store tiles: every store the game links to on IGDB plus every
+ * store a price was found for, even when IGDB has no website entry for it.
+ * Ordered by `STORE_ORDER`; the tile links to the live price URL first, then
+ * the IGDB website, then the store root.
+ */
+function buildStoreEntries(
+  websites: Website[] | undefined,
+  prices: StorePrice[] | undefined,
+): StoreEntry[] {
+  const siteUrlByType = new Map<number, string>();
+  for (const site of websites ?? []) {
+    if (STORE_ICONS[site.type] && !siteUrlByType.has(site.type)) {
+      siteUrlByType.set(site.type, site.url);
+    }
+  }
+
+  const priceByType = new Map<number, StorePrice>();
+  for (const price of prices ?? []) {
+    if (STORE_ICONS[price.type] && !priceByType.has(price.type)) {
+      priceByType.set(price.type, price);
+    }
+  }
+
+  const types = [...new Set([...siteUrlByType.keys(), ...priceByType.keys()])].sort(
+    (a, b) => {
+      const orderA = STORE_ORDER.indexOf(a);
+      const orderB = STORE_ORDER.indexOf(b);
+      return (
+        (orderA === -1 ? STORE_ORDER.length : orderA) -
+        (orderB === -1 ? STORE_ORDER.length : orderB)
+      );
+    },
+  );
+
+  return types.map((type) => ({
+    key: String(type),
+    type,
+    price: priceByType.get(type),
+    url:
+      priceByType.get(type)?.url ??
+      siteUrlByType.get(type) ??
+      STORE_FALLBACK_URL[type] ??
+      "",
+  }));
+}
+
 const GameStores: React.FC<GameStoresProps> = ({ websites, prices, pricesLoading }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -94,8 +151,8 @@ const GameStores: React.FC<GameStoresProps> = ({ websites, prices, pricesLoading
     },
   }));
 
-  const storeWebsites = websites?.filter((site) => STORE_ICONS[site.type]);
-  if (!storeWebsites?.length) return null;
+  const storeEntries = useMemo(() => buildStoreEntries(websites, prices), [websites, prices]);
+  if (!storeEntries.length) return null;
 
   return (
     <>
@@ -103,21 +160,24 @@ const GameStores: React.FC<GameStoresProps> = ({ websites, prices, pricesLoading
         {t("games.details.availableStores")}
       </CustomText>
       <View style={styles.storesContainer}>
-        {storeWebsites.map((site) => {
-          const Icon = STORE_ICONS[site.type];
-          if (!Icon) return null;
-          const price = prices?.find((p) => p.type === site.type);
+        {storeEntries.map((entry) => {
+          const Icon = STORE_ICONS[entry.type];
+          if (!Icon || !entry.url) return null;
           return (
             <TouchableOpacity
-              key={site.id}
+              key={entry.key}
               style={styles.storeButton}
-              onPress={() => openLink(price?.url ?? site.url)}
-              accessibilityLabel={site.url}
+              onPress={() => openLink(entry.url)}
+              accessibilityLabel={entry.url}
               accessibilityRole="link"
               accessibilityHint={t("games.details.openStoreHint")}
             >
               <Icon size={34} fill={colors.text} />
-              <StorePriceInfo price={price} loading={pricesLoading} />
+              {/* Spin only while this store's own lookup is still running. */}
+              <StorePriceInfo
+                price={entry.price}
+                loading={!entry.price && Boolean(pricesLoading?.[entry.type])}
+              />
             </TouchableOpacity>
           );
         })}

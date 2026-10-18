@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import UserGamesSkeleton from "../skeleton/SkeletonUserGames";
 import GameItem from "../components/userGames/GameItem";
@@ -24,12 +25,18 @@ import { useListDisplayName } from "../hooks/useListDisplayName";
 import type { Props, UserGamesRow } from "../types";
 import { logger } from "@/src/lib/logger";
 
+// Header-button layout (module-level so the setOptions effect stays stable).
+const headerButtonsRow = { flexDirection: "row", alignItems: "center" } as const;
+const headerButtonPadding = { padding: 6 } as const;
+const headerButtonSpacing = { marginRight: 12, padding: 6 } as const;
+
 const UserGamesScreen = ({ route, navigation }: Props) => {
   const { listId, listName, ownerId } = route.params;
 
   const { t } = useTranslation();
   const colors = useThemeColors();
   const { onScroll } = useScrollDirection();
+  const bottomInset = useBottomInset();
   const adsEnabled = useAdsEnabled();
   // Deferred until after the first paint: gates the skeleton → list swap and
   // whether ads start loading.
@@ -125,11 +132,13 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
     navigation.setOptions({
       title: getDisplayName(displayTitle),
       headerRight: () => (
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View style={headerButtonsRow}>
           {targetUserId && games.length > 0 ? (
             <TouchableOpacity
               onPress={handleShare}
-              style={{ marginRight: 12, padding: 6 }}
+              style={headerButtonSpacing}
+              accessibilityRole="button"
+              accessibilityLabel={t("common.share")}
             >
               <Share2 size={24} color={colors.text} />
             </TouchableOpacity>
@@ -137,7 +146,9 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
           {!isSharedList && (
             <TouchableOpacity
               onPress={() => navigation.getParent()?.navigate("Games")}
-              style={{ padding: 6 }}
+              style={headerButtonPadding}
+              accessibilityRole="button"
+              accessibilityLabel={t("lists.addGame")}
             >
               <CirclePlus size={28} color={colors.text} />
             </TouchableOpacity>
@@ -154,6 +165,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
     targetUserId,
     games.length,
     colors.text,
+    t,
   ]);
 
   // Interleave inline ad slots between games (every AD_INTERVAL) for both view
@@ -246,7 +258,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
           getItemType={getItemType}
           ListEmptyComponent={renderEmptyList}
           ListHeaderComponent={listHeader}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 90 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: bottomInset }}
           onScroll={onScroll}
           scrollEventThrottle={16}
           refreshControl={

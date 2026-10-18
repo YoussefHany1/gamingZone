@@ -5,6 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import AIChatFab from "../components/homeScreen/AIChatFab";
 import HomeSections from "../components/homeScreen/HomeSections";
@@ -19,13 +20,17 @@ function HomeScreen(): React.ReactElement {
   const navigation =
     useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const colors = useThemeColors();
-  const styles = useThemeStyles((c) => ({
-    container: {
-      flex: 1,
-      backgroundColor: c.background,
-    },
-    scrollContent: { paddingBottom: 90 },
-  }));
+  const bottomInset = useBottomInset();
+  const styles = useThemeStyles(
+    (c) => ({
+      container: {
+        flex: 1,
+        backgroundColor: c.background,
+      },
+      scrollContent: { paddingBottom: bottomInset },
+    }),
+    [bottomInset],
+  );
 
   const { onScroll } = useScrollDirection();
   const { refreshing, refreshToken, handleRefresh } = useHomeRefresh();

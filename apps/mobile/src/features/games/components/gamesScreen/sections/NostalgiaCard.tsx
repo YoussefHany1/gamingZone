@@ -277,9 +277,10 @@ const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
 
   return (
     <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.85}>
-      {/* Vintage dark background */}
+      {/* Vintage dark background — anchored to the active scheme so light
+          themes get a dark-neutral poster instead of a stranded navy band. */}
       <LinearGradient
-        colors={[colors.background, "#172a4a", "#1a3052"]}
+        colors={[colors.background, "rgba(0, 0, 0, 0.85)", "rgba(0, 0, 0, 0.92)"]}
         style={styles.paperBackground}
       />
 

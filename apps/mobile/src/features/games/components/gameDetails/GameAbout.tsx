@@ -2,19 +2,21 @@ import React, { memo } from "react";
 import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
+import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useSharedStyles } from "./shared";
 import type { GameAboutProps } from "../../types";
-
-const SUMMARY_STYLE = {
-  color: "#c1c1c1",
-  fontSize: 16,
-  marginTop: 5,
-  direction: "ltr" as const,
-} as const;
 
 const GameAbout: React.FC<GameAboutProps> = ({ summary }) => {
   const { t } = useTranslation();
   const sharedStyles = useSharedStyles();
+  const styles = useThemeStyles((c) => ({
+    summary: {
+      color: c.textMuted,
+      fontSize: 16,
+      marginTop: 5,
+      direction: "ltr" as const,
+    },
+  }));
 
   if (!summary) return null;
 
@@ -23,7 +25,7 @@ const GameAbout: React.FC<GameAboutProps> = ({ summary }) => {
       <CustomText style={sharedStyles.sectionHeader}>
         {t("games.details.about")}
       </CustomText>
-      <CustomText style={SUMMARY_STYLE}>{summary}</CustomText>
+      <CustomText style={styles.summary}>{summary}</CustomText>
     </View>
   );
 };

@@ -7,7 +7,7 @@
  */
 import axios from "axios";
 import { extractSteamAppId, normalizeGameTitle } from "@gaming-zone/utils";
-import type { Website } from "@/src/features/games/types";
+import type { StorePrice, Website } from "@/src/features/games/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,19 +23,6 @@ export interface CheapSharkDeal {
   dealID: string;
   metacriticScore?: string;
 }
-
-export type StorePrice = {
-  /** IGDB website type that aligns with the CheapShark store. */
-  type: number;
-  /** Current (sale) price in USD. */
-  salePrice: number;
-  /** Regular price in USD. */
-  normalPrice: number;
-  /** True when the game is currently discounted. */
-  isOnSale: boolean;
-  /** CheapShark deal page URL for the current offer. */
-  url: string;
-};
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -69,9 +56,15 @@ function pickBestDeal(deals: CheapSharkDeal[]): CheapSharkDeal | null {
 /**
  * Matches CheapShark deals to a specific IGDB game.
  *
- * Matching is done in two passes:
+ * Matching is done in three passes, most reliable first:
  * 1. Steam App ID match — most reliable when the game has a Steam website.
- * 2. Normalised title match — fallback used when no Steam App ID exists.
+ * 2. Normalised title match.
+ * 3. Every significant word of the game title appears in the deal's name
+ *    (handles renamed editions such as "… — Remastered").
+ *
+ * A game that matches none of the passes gets **no price** rather than the
+ * first deal CheapShark happened to return — a wrong price is worse than a
+ * missing one.
  */
 export function matchCheapSharkDeals(
   gameName: string,
@@ -95,15 +88,16 @@ export function matchCheapSharkDeals(
   );
   if (titleMatches.length) return titleMatches;
 
-  // Favour deals whose internal name shares the base game title.
-  const baseWords = normalizedName.split(" ");
-  const partialMatches = deals.filter((deal) => {
-    const internal = normalizeGameTitle(deal.internalName);
-    return baseWords.some((word) => word.length > 3 && internal.includes(word));
-  });
-  if (partialMatches.length) return partialMatches;
+  // Require *every* significant word of the title in the deal name — a
+  // single shared word ("Wild", "Storm", …) would cross-match unrelated games.
+  const significantWords = normalizedName.split(" ").filter((word) => word.length > 3);
+  if (!significantWords.length) return [];
 
-  return deals.slice(0, 1);
+  return deals.filter((deal) => {
+    const internal = normalizeGameTitle(deal.internalName);
+    const title = normalizeGameTitle(deal.title);
+    return significantWords.every((word) => internal.includes(word) || title.includes(word));
+  });
 }
 
 /**

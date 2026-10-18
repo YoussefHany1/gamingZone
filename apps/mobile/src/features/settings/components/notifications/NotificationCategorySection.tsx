@@ -160,8 +160,8 @@ const NotificationCategorySection = memo(
                         onValueChange={() => {
                           void onToggleSource(category, source.name);
                         }}
-                        trackColor={{ false: "#3e3e3e", true: colors.textMuted }}
-                        thumbColor={isEnabled ? colors.text : "#f4f3f4"}
+                        trackColor={{ false: colors.backgroundDeep, true: colors.accent }}
+                        thumbColor={isEnabled ? colors.onAccent : colors.textMuted}
                       />
                     </View>
                   );

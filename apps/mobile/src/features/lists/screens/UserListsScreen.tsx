@@ -1,11 +1,14 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { TouchableOpacity } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { RefreshControl, TouchableOpacity, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CirclePlus } from "lucide-react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
+import CustomText from "@/src/components/CustomText";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import { useAuthUser } from "@/src/hooks/useAuthUser";
 import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
@@ -30,9 +33,40 @@ type Props = NativeStackScreenProps<StackParamList, "UserListsScreen">;
 
 const UserListsScreen = ({ navigation }: Props) => {
   const { user, isAnonymous } = useAuthUser();
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useThemeStyles((c) => ({
     container: { flex: 1, backgroundColor: c.background },
+    emptyState: {
+      alignItems: "center" as const,
+      paddingHorizontal: 32,
+      marginTop: 56,
+    },
+    emptyTitle: {
+      color: c.text,
+      fontSize: 18,
+      fontWeight: "600" as const,
+      textAlign: "center" as const,
+      marginBottom: 8,
+    },
+    emptyMessage: {
+      color: c.textMuted,
+      fontSize: 14,
+      textAlign: "center" as const,
+      marginBottom: 20,
+      lineHeight: 20,
+    },
+    emptyButton: {
+      backgroundColor: c.accent,
+      borderRadius: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+    },
+    emptyButtonText: {
+      color: c.onAccent,
+      fontSize: 15,
+      fontWeight: "600" as const,
+    },
   }));
 
   const adsEnabled = useAdsEnabled();
@@ -41,7 +75,9 @@ const UserListsScreen = ({ navigation }: Props) => {
   const isReady = useDeferredMount();
   const getDisplayName = useListDisplayName();
   const { onScroll } = useScrollDirection();
-  const { lists, createList, isCreating, deleteList } = useUserLists();
+  const bottomInset = useBottomInset();
+  const { lists, createList, isCreating, deleteList, error, refreshing, refresh } =
+    useUserLists();
 
   // Create-list modal draft (owned here so the parent can clear/close it).
   const [isModalVisible, setModalVisible] = useState<boolean>(false);
@@ -105,6 +141,46 @@ const UserListsScreen = ({ navigation }: Props) => {
     [isReady, adsEnabled, lists.length, getDisplayName, deleteList, navigation],
   );
 
+  // The FlashList must not blank-screen: a failed snapshot subscription shows
+  // an error state, an authenticated user with nothing yet gets an empty state.
+  const renderListEmpty = useMemo(() => {
+    if (error) {
+      return (
+        <View style={styles.emptyState}>
+          <CustomText style={styles.emptyTitle}>
+            {t("common.dataLoadError")}
+          </CustomText>
+          <CustomText style={styles.emptyMessage}>
+            {t("common.pullToRefresh")}
+          </CustomText>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.emptyState}>
+        <CustomText style={styles.emptyTitle}>
+          {t("userLists.noListsCreated.title")}
+        </CustomText>
+        <CustomText style={styles.emptyMessage}>
+          {t("userLists.noListsCreated.message")}
+        </CustomText>
+        <TouchableOpacity
+          style={styles.emptyButton}
+          onPress={() => setModalVisible(true)}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={t("userLists.actions.createNewList")}
+        >
+          <CustomText style={styles.emptyButtonText}>
+            {t("userLists.actions.createNewList")}
+          </CustomText>
+        </TouchableOpacity>
+      </View>
+    );
+    // modalVisible is intentionally omitted: the button's onPress opens the
+    // modal, but its visibility never changes what these nodes render.
+  }, [error, styles, t]);
+
   if (isAnonymous || !user) {
     return (
       <SafeAreaView style={styles.container} edges={["right", "left"]}>
@@ -122,9 +198,18 @@ const UserListsScreen = ({ navigation }: Props) => {
           data={lists}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
-          contentContainerStyle={{ paddingTop: 15, paddingBottom: 90 }}
+          ListEmptyComponent={renderListEmpty}
+          contentContainerStyle={{ paddingTop: 15, paddingBottom: bottomInset }}
           onScroll={onScroll}
           scrollEventThrottle={16}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={refresh}
+              tintColor={colors.accent}
+              colors={[colors.accent]}
+            />
+          }
         />
       )}
       <CreateListModal

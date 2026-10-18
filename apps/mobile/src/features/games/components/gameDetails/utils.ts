@@ -41,6 +41,28 @@ export const STORE_ICONS: Record<
   10: AppleIcon,
 };
 
+/**
+ * Preferred display order for store tiles; icon-bearing types not listed
+ * here are appended after these, in discovery order.
+ */
+export const STORE_ORDER = [13, 16, 17, 22, 23, 24, 12, 10];
+
+/**
+ * Store-root fallback URLs, one per icon-bearing type. Every real tile is
+ * built from a website or a price (both carry their own link), so these
+ * only ever apply as a last-resort guard.
+ */
+export const STORE_FALLBACK_URL: Record<number, string> = {
+  13: "https://store.steampowered.com/",
+  16: "https://store.epicgames.com/",
+  17: "https://www.gog.com/",
+  22: "https://www.xbox.com/en-US/games",
+  23: "https://store.playstation.com/",
+  24: "https://www.nintendo.com/us/store/all-games/",
+  12: "https://play.google.com/store/games",
+  10: "https://apps.apple.com/us/charts/iphone",
+};
+
 // ── Color utilities ─────────────────────────────────────────────────────────
 
 /**

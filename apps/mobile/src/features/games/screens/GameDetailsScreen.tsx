@@ -19,13 +19,29 @@ const GameDetails = ({ route, navigation }: Props) => {
     },
   }));
 
-  const { gameID: initialGameID, claimUrl, store = "" } = route.params;
+  // The stack's param list allows `undefined` (deep links, programmatic
+  // navigate without params). Destructuring directly would throw, so guards
+  // first and degrade to an error screen.
+  const { gameID: initialGameID, claimUrl, store = "" } = route.params ?? {};
 
   const details = useGameDetails({ initialGameID, navigation });
   const { isSubscribed, handleToggleNotification } = useGameReleaseNotification({
     gameId: details.currentId,
     user: details.user,
   });
+
+  // Missing gameID — nothing to load; show the error state instead of crashing.
+  if (initialGameID === undefined) {
+    return (
+      <SafeAreaView edges={["right", "left"]} style={styles.container}>
+        <GameDetailsHeader onBack={details.handleGoBack} />
+        <ErrorState
+          message={t("common.dataLoadError")}
+          showContactButton={false}
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView edges={["right", "left"]} style={styles.container}>

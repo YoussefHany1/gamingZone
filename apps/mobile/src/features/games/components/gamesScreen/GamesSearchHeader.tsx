@@ -118,8 +118,13 @@ const GamesSearchHeader: React.FC<GamesSearchHeaderProps> = ({
             returnKeyType="search"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={onClear} hitSlop={CLEAR_HIT_SLOP}>
-              <CircleX size={24} color="#ccc" />
+            <TouchableOpacity
+              onPress={onClear}
+              hitSlop={CLEAR_HIT_SLOP}
+              accessibilityRole="button"
+              accessibilityLabel={t("common.clearSearch")}
+            >
+              <CircleX size={24} color={colors.textSubtle} />
             </TouchableOpacity>
           )}
         </View>

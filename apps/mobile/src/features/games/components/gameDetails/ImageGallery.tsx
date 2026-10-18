@@ -32,6 +32,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useFloatingTopInset } from "@/src/hooks/useBottomInset";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -337,8 +338,10 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
   const [fullScreenVisible, setFullScreenVisible] = useState(false);
   const [fullScreenIndex, setFullScreenIndex] = useState(0);
   const colors = useThemeColors();
+  const topInset = useFloatingTopInset(38);
 
-  const styles = useThemeStyles((c) => ({
+  const styles = useThemeStyles(
+    (c) => ({
     container: { width: "100%", height: 350, position: "relative" },
     scrollView: { width: "100%", height: "100%" },
     placeholder: {
@@ -396,7 +399,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
     paginationDotActive: { backgroundColor: "#ffffff", width: 20 },
     counter: {
       position: "absolute",
-      top: 50,
+      top: topInset,
       right: 20,
       backgroundColor: c.overlay,
       paddingHorizontal: 10,
@@ -421,7 +424,9 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
       borderRadius: 20,
     },
     fullScreenCounterText: { color: "#ffffff", fontSize: 16, fontWeight: "bold" },
-  }));
+    }),
+    [topInset],
+  );
   const scrollViewRef = useRef<ScrollView>(null);
   const { i18n } = useTranslation();
   const isRtl = i18n.language === "ar";
@@ -547,7 +552,12 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
         <GestureHandlerRootView style={{ flex: 1 }}>
           <View style={fullScreenStyles.fullScreenContainer}>
             {/* Top controls */}
-            <View style={fullScreenStyles.topControls}>
+            <View
+              style={[
+                fullScreenStyles.topControls,
+                { top: (StatusBar.currentHeight ?? 40) + 10 },
+              ]}
+            >
               <TouchableOpacity
                 style={fullScreenStyles.closeButton}
                 onPress={closeFullScreen}
@@ -596,12 +606,12 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
 export default ImageGalleryAdvanced;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-// Fullscreen/zoom geometry: no palette dependency, so it stays static.
+// Fullscreen/zoom geometry: no palette dependency, so it stays static. The
+// only token applied at render time is the status-bar inset for `topControls`.
 const fullScreenStyles = StyleSheet.create({
   fullScreenContainer: { flex: 1, backgroundColor: "#000000" },
   topControls: {
     position: "absolute",
-    top: 40,
     left: 0,
     right: 0,
     flexDirection: "row",

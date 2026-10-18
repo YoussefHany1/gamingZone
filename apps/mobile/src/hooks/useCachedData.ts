@@ -28,11 +28,25 @@ async function getNetworkStatus(): Promise<{ isConnected: boolean | null }> {
 
 // ---------------------------------------------------------------------------
 // Lightweight data-equality check.
-// For arrays we compare length + the $id of the FIRST and LAST elements,
-// which is enough to detect new content at either end (appends, prepends,
-// removals and end reorders) without serialising the entire payload.
+//
+// Arrays are compared by their id sequence in order — that catches appends,
+// prepends, removals and ANY reorder (the old first/last-element heuristic
+// treated mid-list mutations as "unchanged" and silently kept stale content).
+// When the id sequence matches, a full serialised comparison runs as the last
+// word so an in-place field update is still detected. Lists fed to this hook
+// are small (bounded per-game sections), so the stringify cost only applies
+// once per completed fetch, not per frame.
 // Falls back to JSON.stringify only for non-array objects.
 // ---------------------------------------------------------------------------
+function itemKey(value: unknown, index: number): string {
+  if (value != null && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    if ("$id" in record && record.$id !== undefined) return String(record.$id);
+    if ("id" in record && record.id !== undefined) return String(record.id);
+  }
+  return `index:${index}`;
+}
+
 function isDataEqual<T>(a: T | null, b: T | null): boolean {
   if (a === b) return true;
   if (a == null || b == null) return false;
@@ -40,20 +54,11 @@ function isDataEqual<T>(a: T | null, b: T | null): boolean {
     if (a.length !== b.length) return false;
     if (a.length === 0) return true;
 
-    const headA = a[0] as Record<string, unknown> | undefined;
-    const headB = b[0] as Record<string, unknown> | undefined;
-    if (headA?.$id !== undefined) {
-      if (headA.$id !== (headB as Record<string, unknown> | undefined)?.$id) return false;
-    } else if (JSON.stringify(headA) !== JSON.stringify(headB)) {
-      return false;
+    for (let i = 0; i < a.length; i++) {
+      if (itemKey(a[i], i) !== itemKey(b[i], i)) return false;
     }
-
-    const tailA = a[a.length - 1] as Record<string, unknown> | undefined;
-    const tailB = b[b.length - 1] as Record<string, unknown> | undefined;
-    if (tailA?.$id !== undefined) {
-      return tailA.$id === (tailB as Record<string, unknown> | undefined)?.$id;
-    }
-    return JSON.stringify(tailA) === JSON.stringify(tailB);
+    // Identical shape — verify the payloads so an in-place update is caught.
+    return JSON.stringify(a) === JSON.stringify(b);
   }
   return JSON.stringify(a) === JSON.stringify(b);
 }
@@ -77,11 +82,23 @@ function isDataEqual<T>(a: T | null, b: T | null): boolean {
 // Types
 // ---------------------------------------------------------------------------
 
+export type CacheErrorKind = "none" | "offline" | "server";
+
 export interface CachedDataResult<T> {
   data: T | null;
   isLoading: boolean;
   isRefetching: boolean;
   error: Error | null;
+  /**
+   * Machine-readable failure class, additive on top of `error`:
+   *  - "none"    — no failure (or recovery from one)
+   *  - "offline" — the last attempt ran without connectivity (no fetch made)
+   *  - "server"  — the fetch itself threw
+   *
+   * Existing consumers can keep treating `error` as "anything went wrong";
+   * screens that want to show a network-specific message read this instead.
+   */
+  errorKind: CacheErrorKind;
   refetch: (forceRefresh?: boolean) => Promise<void>;
   setData: (newData: T) => Promise<void>;
 }
@@ -155,6 +172,7 @@ export default function useCachedData<T>(
   );
   const [isRefetching, setIsRefetching] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [errorKind, setErrorKind] = useState<CacheErrorKind>("none");
 
   // Holds the latest in-memory copy so the Realtime callback and TTL check
   // can read it without triggering re-renders.
@@ -180,6 +198,7 @@ export default function useCachedData<T>(
 
       safeSet(setIsRefetching, true);
       safeSet(setError, null);
+      safeSet(setErrorKind, "none");
 
       try {
         // 1. Serve cached data synchronously.
@@ -209,8 +228,15 @@ export default function useCachedData<T>(
         }
 
         // 3. Bail out early when the device is offline.
+        //    This is NOT a server failure: report it through `errorKind` so
+        //    screens can show a network-specific message, while `error` stays
+        //    null for consumers that gate on the old shape alone.
         const { isConnected } = await getNetworkStatus();
         if (!isConnected) {
+          logger.warn(
+            `[useCachedData] Skipping fetch for key "${key}" — device offline`,
+          );
+          safeSet(setErrorKind, "offline");
           safeSet(setIsLoading, false);
           safeSet(setIsRefetching, false);
           return;
@@ -234,6 +260,7 @@ export default function useCachedData<T>(
         if (signal?.aborted) return;
         logger.error(`[useCachedData] Error for key "${key}":`, err);
         safeSet(setError, err instanceof Error ? err : new Error(String(err)));
+        safeSet(setErrorKind, "server");
       } finally {
         if (!signal?.aborted) {
           setIsLoading(false);
@@ -276,6 +303,7 @@ export default function useCachedData<T>(
     isLoading,
     isRefetching,
     error,
+    errorKind,
     refetch: loadData,
     setData: updateLocalData,
   };

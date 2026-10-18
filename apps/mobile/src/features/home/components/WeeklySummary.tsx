@@ -21,6 +21,7 @@ import Loading from "@/src/Loading";
 import { databases } from "@/src/lib/appwrite";
 import { Query } from "react-native-appwrite";
 import { useTranslation } from "react-i18next";
+import i18n from "@/src/i18n";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useNotificationPreferences } from "@/src/hooks/useNotificationPreferences";
@@ -107,8 +108,9 @@ const showSummaryNotification = async (title: string, body: string): Promise<voi
     if (status !== "granted") return;
 
     if (Platform.OS === "android") {
+      // Read via the shared i18n instance: this helper runs outside React.
       await Notifications.setNotificationChannelAsync(NEWS_CHANNEL_ID, {
-        name: "News Notifications",
+        name: i18n.t("notifications.newsChannelName"),
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,

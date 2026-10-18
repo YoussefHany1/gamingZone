@@ -8,7 +8,7 @@
  */
 import apiClient from "./client";
 import { normalizeGameTitle } from "@gaming-zone/utils";
-import type { Website } from "@/src/features/games/types";
+import type { StorePrice, Website } from "@/src/features/games/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -100,23 +100,19 @@ function pickBestResult(
 /**
  * Fetches the PlayStation Store price for a game via our backend proxy.
  *
- * Returns a `StorePrice`-compatible object keyed to IGDB type 23
- * (PlayStation Store), or `null` when no price can be determined.
+ * Sony does not expose a public pricing API, so this hits our own
+ * `/psn/search` endpoint which queries the PSN internal search API
+ * and returns structured JSON.
+ *
+ * Returns a `StorePrice` keyed to IGDB type 23 (PlayStation Store), or
+ * `null` when no price can be determined.
  */
 export async function fetchPsnPrice(
   gameName: string,
   websites: Website[] | undefined,
   country = "US",
-): Promise<{
-  type: number;
-  salePrice: number;
-  normalPrice: number;
-  isOnSale: boolean;
-  url: string;
-} | null> {
-  // Only fetch if the game has a PlayStation Store website
-  const hasPsn = websites?.some((w) => w.type === PSN_IGDB_TYPE);
-  if (!hasPsn || !gameName) return null;
+): Promise<StorePrice | null> {
+  if (!gameName) return null;
 
   try {
     const response = await apiClient.get<PsnSearchResponse>("/psn/search", {

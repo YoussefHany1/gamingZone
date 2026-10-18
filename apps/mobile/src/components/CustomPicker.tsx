@@ -12,6 +12,7 @@ import {
 import { Check, ChevronDown, X } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomText from "./CustomText";
+import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
@@ -28,15 +29,12 @@ type CustomPickerProps = {
 };
 
 const CustomPicker: React.FC<CustomPickerProps> = memo(
-  ({
-    options,
-    selectedValue,
-    onValueChange,
-    placeholder = "Select an option",
-    containerStyle,
-  }) => {
+  ({ options, selectedValue, onValueChange, placeholder, containerStyle }) => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
+    const { t } = useTranslation();
     const colors = useThemeColors();
+    // Default stays out of the destructuring: it needs the active language.
+    const resolvedPlaceholder = placeholder ?? t("common.selectAnOption");
 
     const styles = useThemeStyles((c) => ({
       container: {
@@ -113,8 +111,9 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
 
     const selectedLabel: string = useMemo(
       () =>
-        filteredOptions.find((opt) => opt.value === selectedValue)?.label ?? placeholder,
-      [filteredOptions, selectedValue, placeholder],
+        filteredOptions.find((opt) => opt.value === selectedValue)?.label ??
+        resolvedPlaceholder,
+      [filteredOptions, selectedValue, resolvedPlaceholder],
     );
 
     const handleSelect = useCallback(
@@ -158,7 +157,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
             {/* Sheet content — lives above the overlay so touches work */}
             <SafeAreaView style={styles.modalContent} edges={["bottom"]}>
               <View style={styles.modalHeader}>
-                <CustomText style={styles.modalTitle}>{placeholder}</CustomText>
+                <CustomText style={styles.modalTitle}>{resolvedPlaceholder}</CustomText>
                 <TouchableOpacity onPress={() => setModalVisible(false)}>
                   <X size={24} color={colors.accent} />
                 </TouchableOpacity>

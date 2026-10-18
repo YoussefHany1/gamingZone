@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import { View, StyleSheet } from "react-native";
 import * as Updates from "expo-updates";
+import { useTranslation } from "react-i18next";
 import appConfig from "@/app.json";
 import CustomText from "@/src/components/CustomText";
 
@@ -13,17 +14,31 @@ const PANEL_BACKGROUND = "gold";
 const PANEL_TEXT = "#3a2c00";
 
 const AdminDashboardPanel = memo((): React.ReactElement => {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.panel}>
-      <CustomText style={styles.heading}>Admin Dashboard</CustomText>
+      <CustomText style={styles.heading}>{t("settings.admin.dashboard")}</CustomText>
       <CustomText style={styles.heading}>
-        Channel: {Updates.channel ?? "Not Defined"}
+        {t("settings.admin.channel", {
+          value: Updates.channel ?? t("settings.admin.notDefined"),
+        })}
       </CustomText>
       <CustomText style={styles.heading}>
-        Runtime Version: {Updates.runtimeVersion ?? "Not Defined"}
+        {t("settings.admin.runtimeVersion", {
+          value: Updates.runtimeVersion ?? t("settings.admin.notDefined"),
+        })}
       </CustomText>
-      <CustomText>Update ID: {Updates.updateId ?? "Running Native Build"}</CustomText>
-      <CustomText>App Config Version: {appConfig.expo.version}</CustomText>
+      <CustomText>
+        {t("settings.admin.updateId", {
+          value: Updates.updateId ?? t("settings.admin.runningNativeBuild"),
+        })}
+      </CustomText>
+      <CustomText>
+        {t("settings.admin.appConfigVersion", {
+          value: appConfig.expo.version,
+        })}
+      </CustomText>
     </View>
   );
 });

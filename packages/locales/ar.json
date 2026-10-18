@@ -38,7 +38,13 @@
       "title": "تحديث جديد متاح",
       "subtitle": "جارٍ تنزيل التحسينات...",
       "footer": "يُرجى الانتظار، سيُعاد تشغيل التطبيق تلقائياً"
-    }
+    },
+    "back": "رجوع",
+    "pullToRefresh": "اسحب لأسفل للمحاولة مرة أخرى",
+    "clearSearch": "مسح البحث",
+    "selectAnOption": "اختر خياراً",
+    "somethingWentWrong": "حدث خطأ ما",
+    "contactSupport": "الدعم"
   },
   "auth": {
     "emailPlaceholder": "البريد الإلكتروني",
@@ -498,6 +504,10 @@
       "couldNotCreateList": "تعذر إنشاء القائمة. يرجى المحاولة مرة أخرى لاحقاً.",
       "listAlreadyExists": "يوجد قائمة بهذا الاسم بالفعل.",
       "couldNotDeleteList": "تعذر حذف القائمة. يرجى المحاولة مرة أخرى لاحقاً."
+    },
+    "noListsCreated": {
+      "title": "لا توجد قوائم بعد",
+      "message": "أنشئ قائمتك الأولى لتنظيم ألعابك"
     }
   },
   "settings": {
@@ -674,6 +684,15 @@
       "confirmMessage": "هل أنت متأكد أنك تريد تسجيل الخروج؟",
       "errorTitle": "خطأ",
       "errorMessage": "حدث خطأ أثناء تسجيل الخروج. يرجى المحاولة مرة أخرى."
+    },
+    "admin": {
+      "dashboard": "لوحة المسؤول",
+      "channel": "القناة: {{value}}",
+      "runtimeVersion": "إصدار وقت التشغيل: {{value}}",
+      "updateId": "معرّف التحديث: {{value}}",
+      "appConfigVersion": "إصدار إعدادات التطبيق: {{value}}",
+      "notDefined": "غير محدد",
+      "runningNativeBuild": "يعمل بنسخة أصلية"
     }
   },
   "aiChat": {
@@ -688,7 +707,8 @@
       "bestAdventure": "ما هي أفضل ألعاب المغامرات؟",
       "coopGames": "اقترح ألعاب تعاونية للعب مع الأصدقاء",
       "newReleases": "ما هي أحدث الألعاب الصادرة هذا الشهر؟"
-    }
+    },
+    "send": "إرسال الرسالة"
   },
   "appAdvertisement": {
     "titlePrefix": "حمل تطبيق",
@@ -721,5 +741,11 @@
         "description": "ابق على اطلاع دائم بأحدث الأخبار والألعاب المجانية فور صدورها."
       }
     ]
+  },
+  "lists": {
+    "addGame": "إضافة لعبة"
+  },
+  "notifications": {
+    "newsChannelName": "إشعارات الأخبار"
   }
 }

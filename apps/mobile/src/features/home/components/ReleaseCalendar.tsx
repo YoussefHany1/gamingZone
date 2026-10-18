@@ -269,7 +269,9 @@ const DayGameRow = memo<DayGameRowProps>(({ game }) => {
       backgroundColor: c.surface,
       borderColor: c.accent,
     },
-    // Release state is a status signal, so it keeps fixed semantic colors.
+    // Release state is a status signal, so the "live" green stays fixed (a
+    // semantic color, not a palette surface); "soon" follows the accent so it
+    // stays legible in every theme.
     statusPillLive: {
       backgroundColor: "#6FD08C26",
       borderColor: "#6FD08C80",
@@ -283,7 +285,7 @@ const DayGameRow = memo<DayGameRowProps>(({ game }) => {
       fontWeight: "700",
     },
     statusTextSoon: {
-      color: "#9CB4DD",
+      color: c.accentText,
     },
     statusTextLive: {
       color: "#6FD08C",

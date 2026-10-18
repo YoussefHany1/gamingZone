@@ -22,17 +22,20 @@ const CARD_MARGIN = 6;
 
 const STEAM_BLUE = "#9CB4DD";
 const STEAM_CARD_BG = "#172a4a";
+// Fixed foregrounds for text sitting on the fixed navy card (see comment above).
+const STEAM_TEXT = "#c7d5e0";
+const STEAM_TEXT_STRONG = "#f0f6fb";
+const STEAM_TEXT_DIM = "#8aa4c4";
 
 const getReviewLabel = (rating: number): { label: string; color: string } => {
-  // Read imperatively: this helper is module-level, but it is called during
-  // render so it always observes the palette active for that render.
-  const { colors } = useThemeStore.getState();
-  const STEAM_BLUE_DIM = colors.accentText;
+  // The card keeps a fixed Steam-navy surface (intentional branding), so its
+  // foreground colors are fixed light-on-navy too — theme tokens would flip
+  // dark in light mode and vanish against the navy.
   if (rating >= 9) return { label: "Overwhelmingly +", color: STEAM_BLUE };
   if (rating >= 8) return { label: "Very Positive", color: STEAM_BLUE };
   if (rating >= 7) return { label: "Mostly Positive", color: STEAM_BLUE };
-  if (rating >= 5) return { label: "Mixed", color: STEAM_BLUE_DIM };
-  return { label: "Mostly Negative", color: STEAM_BLUE_DIM };
+  if (rating >= 5) return { label: "Mixed", color: STEAM_TEXT_DIM };
+  return { label: "Mostly Negative", color: STEAM_TEXT_DIM };
 };
 
 /**
@@ -101,7 +104,7 @@ const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(({ item, index 
       marginRight: 1,
     },
     rankNumber: {
-      color: c.text,
+      color: STEAM_TEXT_STRONG,
       fontSize: 18,
       fontWeight: "800",
       lineHeight: 20,
@@ -129,7 +132,7 @@ const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(({ item, index 
       gap: 5,
     },
     gameTitle: {
-      color: "#c7d5e0",
+      color: STEAM_TEXT,
       fontSize: 15,
       fontWeight: "700",
       lineHeight: 17,
@@ -176,7 +179,7 @@ const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(({ item, index 
 
         {/* Bottom gradient */}
         <LinearGradient
-          colors={["transparent", colors.backgroundDeep]}
+          colors={["transparent", STEAM_CARD_BG]}
           style={styles.coverGradient}
         />
 

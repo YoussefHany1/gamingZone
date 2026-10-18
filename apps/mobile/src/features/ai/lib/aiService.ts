@@ -1,6 +1,6 @@
 import firestore from "@react-native-firebase/firestore";
 import auth from "@react-native-firebase/auth";
-import type { ChatMessage } from "../types";
+import type { ChatMessage } from "@gaming-zone/core";
 import { logger } from "@/src/lib/logger";
 
 // Ensure EXPO_PUBLIC keys are defined in your .env

@@ -121,6 +121,8 @@ const GamesListHeader = ({
       paddingHorizontal: 12,
     },
     viewOnlyText: {
+      // Warm amber banner: a semantic "read-only" warning color, fixed so the
+      // translucent banner + border above stay in sync with it.
       color: "#ffc457",
       fontSize: 13,
       textAlign: "center",

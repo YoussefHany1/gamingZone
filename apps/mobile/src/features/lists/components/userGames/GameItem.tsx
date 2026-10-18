@@ -109,7 +109,7 @@ const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
       </View>
       {onRemove && (
         <TouchableOpacity style={styles.removeButton} onPress={handleRemove}>
-          <Trash2 size={24} color="#FF6347" />
+          <Trash2 size={24} color={colors.danger} />
         </TouchableOpacity>
       )}
     </TouchableOpacity>

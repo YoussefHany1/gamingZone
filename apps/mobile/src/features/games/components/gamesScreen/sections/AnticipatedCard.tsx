@@ -60,7 +60,7 @@ const AnticipatedCard = React.memo<AnticipatedCardProps>(
         left: 0,
         right: 0,
         height: 2,
-        backgroundColor: "#7f8c8d",
+        backgroundColor: c.border,
         zIndex: -1,
       },
       timelineDate: {

@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import { View } from "react-native";
 import { Calendar, Flag } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -8,6 +9,7 @@ import type { EventDatesProps } from "../types";
 
 /** Start / End date blocks. */
 const EventDates: React.FC<EventDatesProps> = ({ startDateStr, endDateStr }) => {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useThemeStyles((c) => ({
     datesRow: {
@@ -46,7 +48,7 @@ const EventDates: React.FC<EventDatesProps> = ({ startDateStr, endDateStr }) => 
           <Calendar size={18} color={colors.accent} />
         </View>
         <View>
-          <CustomText style={styles.dateBlockLabel}>Starts</CustomText>
+          <CustomText style={styles.dateBlockLabel}>{t("events.starts")}</CustomText>
           <CustomText style={styles.dateBlockValue}>{startDateStr}</CustomText>
         </View>
       </View>
@@ -55,7 +57,7 @@ const EventDates: React.FC<EventDatesProps> = ({ startDateStr, endDateStr }) => 
           <Flag size={18} color={colors.accent} />
         </View>
         <View>
-          <CustomText style={styles.dateBlockLabel}>Ends</CustomText>
+          <CustomText style={styles.dateBlockLabel}>{t("events.ends")}</CustomText>
           <CustomText style={styles.dateBlockValue}>{endDateStr}</CustomText>
         </View>
       </View>

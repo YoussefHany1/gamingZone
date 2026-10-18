@@ -7,6 +7,7 @@ import ErrorState from "@/src/components/ErrorState";
 import SteamLinkModal from "@/src/components/SteamLinkModal";
 import { useDeferredReady } from "@/src/hooks/useDeferredReady";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import AvatarPickerModal from "../components/AvatarPickerModal";
 import AdSlot from "@/src/components/AdSlot";
@@ -58,8 +59,10 @@ function EditProfileScreen(): React.ReactElement {
   const [showAvatarPicker, setShowAvatarPicker] = useState<boolean>(false);
   const [showSteamModal, setShowSteamModal] = useState<boolean>(false);
 
-  const styles = useThemeStyles((c) => ({
-    container: { flex: 1, backgroundColor: c.background, paddingBottom: 90 },
+  const bottomInset = useBottomInset();
+  const styles = useThemeStyles(
+    (c) => ({
+      container: { flex: 1, backgroundColor: c.background, paddingBottom: bottomInset },
     subContainer: { padding: 20 },
     saveBtn: {
       backgroundColor: c.accent,
@@ -74,7 +77,9 @@ function EditProfileScreen(): React.ReactElement {
       fontSize: 18,
       fontWeight: "600",
     },
-  }));
+    }),
+    [bottomInset],
+  );
 
   const openAvatarPicker = useCallback((): void => setShowAvatarPicker(true), []);
   const closeAvatarPicker = useCallback((): void => setShowAvatarPicker(false), []);

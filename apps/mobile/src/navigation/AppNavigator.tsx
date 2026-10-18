@@ -273,6 +273,8 @@ const SettingsStack = memo(() => {
             <TouchableOpacity
               onPress={() => nav.getParent()?.navigate("Games")}
               style={{ marginRight: 4, padding: 6 }}
+              accessibilityRole="button"
+              accessibilityLabel={t("lists.addGame")}
             >
               <CirclePlus size={28} color={colors.text} />
             </TouchableOpacity>

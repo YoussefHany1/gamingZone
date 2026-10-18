@@ -13,6 +13,7 @@ import SkeletonGameCard from "../../skeleton/gamesScreen/SkeletonGameCard";
 import ErrorState from "@/src/components/ErrorState";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import useCachedData from "@/src/hooks/useCachedData";
 import type { GameCardProps, GamesListProps, GameFilters } from "../../types";
 import type { Game } from "@/src/types/sharedTypes";
@@ -125,7 +126,12 @@ const GameCard = React.memo<GameCardProps>(({ item }) => {
   }, [navigation, item.id]);
 
   return (
-    <TouchableOpacity style={styles.gameCard} onPress={handlePress}>
+    <TouchableOpacity
+      style={styles.gameCard}
+      onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={item.name}
+    >
       <Image
         source={
           item.cover
@@ -159,12 +165,14 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
   const { t } = useTranslation();
   const { onScroll } = useScrollDirection();
   const colors = useThemeColors();
+  const bottomInset = useBottomInset();
 
-  const styles = useThemeStyles((c) => ({
-    listContent: {
-      paddingHorizontal: 4,
-      paddingBottom: 20,
-    },
+  const styles = useThemeStyles(
+    (c) => ({
+      listContent: {
+        paddingHorizontal: 4,
+        paddingBottom: bottomInset,
+      },
     cardWrapper: {
       width: "48%",
     },
@@ -217,7 +225,9 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
       fontSize: 16,
       fontWeight: "bold",
     },
-  }));
+    }),
+    [bottomInset],
+  );
 
   const safeQuery = (query ?? "all").replace(/\s/g, "_");
   const safeFilters = `${filters?.year ?? ""}_${filters?.genre ?? ""}_${filters?.platform ?? ""}_${filters?.sort ?? ""}`;
@@ -247,11 +257,8 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     [query, activeFilters],
   );
 
-  const { data, isLoading, isRefetching, error, refetch } = useCachedData<Game[]>(
-    STORAGE_KEY,
-    fetchGames,
-    [query, activeFilters],
-  );
+  const { data, isLoading, isRefetching, error, errorKind, refetch } =
+    useCachedData<Game[]>(STORAGE_KEY, fetchGames, [query, activeFilters]);
 
   // Page 1 base list (served from cache + revalidated). Additional pages are
   // appended into extraGames so the cache stays a single-page snapshot.
@@ -312,11 +319,17 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
   const renderBackButton = useCallback(() => {
     if (!onBack) return null;
     return (
-      <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.7}>
-        <ArrowLeft size={20} color={colors.text} />
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={onBack}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={t("common.back")}
+      >
+        <ArrowLeft size={20} color={colors.onAccent} accessible={false} />
       </TouchableOpacity>
     );
-  }, [onBack, styles, colors.text]);
+  }, [onBack, styles, colors.onAccent, t]);
 
   const handleRefresh = useCallback(() => refetch(true), [refetch]);
 
@@ -358,9 +371,11 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
             style={styles.nextBtn}
             onPress={handleLoadMore}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t("games.list.next")}
           >
             <CustomText style={styles.nextText}>{t("games.list.next")}</CustomText>
-            <ArrowRight size={20} color={colors.text} />
+            <ArrowRight size={20} color={colors.onAccent} accessible={false} />
           </TouchableOpacity>
         )}
       </View>
@@ -370,7 +385,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     isLoadingMore,
     handleLoadMore,
     colors.accent,
-    colors.text,
+    colors.onAccent,
     t,
     styles,
   ]);
@@ -392,7 +407,19 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
   }
 
   if (error || !Array.isArray(games)) {
-    return <ErrorState message={t("games.list.serverError")} />;
+    // No cached payload + no connectivity reads as "offline", not a server
+    // failure. A retry while still offline would fail identically, so that
+    // state gets a network-specific message without the contact button.
+    const isOfflineStale =
+      !error && errorKind === "offline" && games.length === 0;
+    return (
+      <ErrorState
+        message={
+          isOfflineStale ? t("common.noInternet") : t("games.list.serverError")
+        }
+        showContactButton={!isOfflineStale}
+      />
+    );
   }
 
   if (games.length === 0) {

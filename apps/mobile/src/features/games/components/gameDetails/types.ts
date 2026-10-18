@@ -47,7 +47,7 @@ export type GameDetailsContentProps = {
   pcRequirements: PcRequirements | null;
   pcReqLoading: boolean;
   storePrices: StorePrice[] | null;
-  storePricesLoading: boolean;
+  storePricesLoading: Record<number, boolean>;
   main: number | null;
   mainExtra: number | null;
   completionist: number | null;

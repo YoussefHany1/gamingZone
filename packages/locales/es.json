@@ -38,7 +38,13 @@
       "d": "días",
       "h": "horas",
       "m": "minutos"
-    }
+    },
+    "back": "Atrás",
+    "pullToRefresh": "Desliza hacia abajo para volver a intentarlo",
+    "clearSearch": "Borrar búsqueda",
+    "selectAnOption": "Selecciona una opción",
+    "somethingWentWrong": "Algo salió mal",
+    "contactSupport": "Contactar soporte"
   },
   "auth": {
     "emailPlaceholder": "Correo electrónico",
@@ -496,6 +502,10 @@
       "couldNotCreateList": "No se pudo crear la lista. Por favor, inténtalo de nuevo más tarde",
       "listAlreadyExists": "Ya existe una lista con este nombre",
       "couldNotDeleteList": "No se pudo eliminar la lista. Por favor, inténtalo de nuevo más tarde."
+    },
+    "noListsCreated": {
+      "title": "Aún no hay listas",
+      "message": "Crea tu primera lista para organizar tus juegos"
     }
   },
   "settings": {
@@ -672,6 +682,15 @@
       "browseGames": "Explorar juegos",
       "editProfile": "Editar perfil",
       "myLists": "Mis listas"
+    },
+    "admin": {
+      "dashboard": "Panel de administración",
+      "channel": "Canal: {{value}}",
+      "runtimeVersion": "Versión del runtime: {{value}}",
+      "updateId": "ID de actualización: {{value}}",
+      "appConfigVersion": "Versión de configuración: {{value}}",
+      "notDefined": "No definido",
+      "runningNativeBuild": "Ejecutando compilación nativa"
     }
   },
   "aiChat": {
@@ -686,7 +705,8 @@
       "bestAdventure": "¿Cuáles son los mejores juegos de aventura?",
       "coopGames": "Sugiere juegos cooperativos para jugar con amigos",
       "newReleases": "¿Cuáles son los últimos juegos lanzados este mes?"
-    }
+    },
+    "send": "Enviar mensaje"
   },
   "appAdvertisement": {
     "titlePrefix": "Descarga",
@@ -719,5 +739,11 @@
         "description": "Mantente al día con alertas instantáneas sobre nuevos juegos gratis y noticias."
       }
     ]
+  },
+  "lists": {
+    "addGame": "Añadir un juego"
+  },
+  "notifications": {
+    "newsChannelName": "Notificaciones de noticias"
   }
 }

@@ -70,7 +70,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
       borderRadius: 16,
       padding: 20,
       borderWidth: 1,
-      borderColor: "#333",
+      borderColor: c.border,
     },
     modalTitle: {
       color: c.text,
@@ -84,9 +84,10 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
       justifyContent: "space-between",
       alignItems: "center",
       paddingVertical: 15,
-      borderBottomWidth: 1,
+      borderWidth: 0,
       padding: 10,
-      borderBottomColor: "#333",
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
     },
     modalItemSelected: {
       backgroundColor: c.accentBorder,

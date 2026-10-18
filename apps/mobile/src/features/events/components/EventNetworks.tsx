@@ -22,8 +22,11 @@ const EventNetworks: React.FC<EventNetworksProps> = ({ networks }) => {
     <View style={styles.section}>
       <SectionTitle title={t("events.links") || "Links & Social"} />
       <View style={styles.networksWrap}>
-        {networks.map((net, i) => (
-          <NetworkButton key={i} network={net} />
+        {networks.map((net) => (
+          <NetworkButton
+            key={`${net.network_type}-${net.url}`}
+            network={net}
+          />
         ))}
       </View>
     </View>

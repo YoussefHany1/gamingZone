@@ -38,7 +38,13 @@
       "d": "d",
       "h": "h",
       "m": "m"
-    }
+    },
+    "back": "Voltar",
+    "pullToRefresh": "Puxe para baixo para tentar novamente",
+    "clearSearch": "Limpar pesquisa",
+    "selectAnOption": "Selecione uma opção",
+    "somethingWentWrong": "Algo correu mal",
+    "contactSupport": "Contactar o suporte"
   },
   "auth": {
     "emailPlaceholder": "E-mail",
@@ -496,6 +502,10 @@
       "couldNotCreateList": "Não foi possível criar a lista. Tente novamente mais tarde.",
       "listAlreadyExists": "Já existe uma lista com este nome",
       "couldNotDeleteList": "Não foi possível eliminar a lista. Tente novamente mais tarde."
+    },
+    "noListsCreated": {
+      "title": "Ainda sem listas",
+      "message": "Crie a sua primeira lista para organizar os seus jogos"
     }
   },
   "settings": {
@@ -672,6 +682,15 @@
       "browseGames": "Explorar jogos",
       "editProfile": "Editar perfil",
       "myLists": "As minhas listas"
+    },
+    "admin": {
+      "dashboard": "Painel de administração",
+      "channel": "Canal: {{value}}",
+      "runtimeVersion": "Versão do runtime: {{value}}",
+      "updateId": "ID da atualização: {{value}}",
+      "appConfigVersion": "Versão da configuração: {{value}}",
+      "notDefined": "Não definido",
+      "runningNativeBuild": "A executar build nativo"
     }
   },
   "aiChat": {
@@ -686,7 +705,8 @@
       "bestAdventure": "Quais são os melhores jogos de aventura?",
       "coopGames": "Sugerir jogos cooperativos para jogar com amigos",
       "newReleases": "Quais são os jogos lançados mais recentemente este mês?"
-    }
+    },
+    "send": "Enviar mensagem"
   },
   "appAdvertisement": {
     "titlePrefix": "Transfira já a aplicação",
@@ -719,5 +739,11 @@
         "description": "Mantenha-se atualizado com alertas instantâneos para novos jogos grátis e notícias."
       }
     ]
+  },
+  "lists": {
+    "addGame": "Adicionar um jogo"
+  },
+  "notifications": {
+    "newsChannelName": "Notificações de notícias"
   }
 }

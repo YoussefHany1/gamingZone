@@ -1,6 +1,7 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import { View, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import ImageGallerySkeleton from "../../skeleton/gameDetails/ImageGallerySkeleton";
 import GameDetailsMetaSkeleton from "../../skeleton/gameDetails/GameDetailsMetaSkeleton";
 import GameStoresSkeleton from "../../skeleton/gameDetails/GameStoresSkeleton";
@@ -28,11 +29,11 @@ import AdSlot from "@/src/components/AdSlot";
 import { isUpcomingGame } from "./utils";
 import type { GameDetailsContentProps } from "./types";
 
-// Static layout styles — these do not depend on the active theme.
+// Static layout styles — these do not depend on the active theme. The bottom
+// padding is supplied at render time from the floating tab bar inset.
 const styles = StyleSheet.create({
   content: {
     padding: 15,
-    paddingBottom: 40,
   },
   gallery: {
     zIndex: 100,
@@ -75,13 +76,18 @@ const GameDetailsContent: React.FC<GameDetailsContentProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
+  const bottomInset = useBottomInset();
+  const contentStyle = useMemo(
+    () => [styles.content, { paddingBottom: bottomInset }],
+    [bottomInset],
+  );
 
   // First cold load — no cache, still deferring the full render.
   if (!isReady) {
     return (
       <View>
         <ImageGallerySkeleton />
-        <View style={styles.content}>
+        <View style={contentStyle}>
           <GameDetailsMetaSkeleton />
           <GameStoresSkeleton />
           <GameAboutSkeleton />
@@ -112,7 +118,7 @@ const GameDetailsContent: React.FC<GameDetailsContentProps> = ({
         />
       )}
 
-      <View style={styles.content}>
+      <View style={contentStyle}>
         {/* Title, platforms, rating, age rating */}
         {loading ? (
           <GameDetailsMetaSkeleton />

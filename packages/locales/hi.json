@@ -38,7 +38,13 @@
       "d": "दि",
       "h": "घं",
       "m": "मि"
-    }
+    },
+    "back": "वापस",
+    "pullToRefresh": "पुनः प्रयास के लिए नीचे खींचें",
+    "clearSearch": "सर्च साफ़ करें",
+    "selectAnOption": "एक विकल्प चुनें",
+    "somethingWentWrong": "कुछ गलत हो गया",
+    "contactSupport": "सहायता से संपर्क करें"
   },
   "auth": {
     "emailPlaceholder": "ईमेल",
@@ -496,6 +502,10 @@
       "couldNotCreateList": "सूची नहीं बनाई जा सकी। कृपया बाद में फिर से कोशिश करें",
       "listAlreadyExists": "इस नाम से पहले से ही एक सूची मौजूद है",
       "couldNotDeleteList": "सूची हटाई नहीं जा सकी। कृपया बाद में फिर से कोशिश करें।"
+    },
+    "noListsCreated": {
+      "title": "अभी कोई सूची नहीं",
+      "message": "अपने गेम व्यवस्थित करने के लिए अपनी पहली सूची बनाएं"
     }
   },
   "settings": {
@@ -672,6 +682,15 @@
       "browseGames": "खेल ब्राउज़ करें",
       "editProfile": "प्रोफ़ाइल संपादित करें",
       "myLists": "मेरी सूचियाँ"
+    },
+    "admin": {
+      "dashboard": "एडमिन डैशबोर्ड",
+      "channel": "चैनल: {{value}}",
+      "runtimeVersion": "रनटाइम संस्करण: {{value}}",
+      "updateId": "अपडेट आईडी: {{value}}",
+      "appConfigVersion": "ऐप कॉन्फ़िग संस्करण: {{value}}",
+      "notDefined": "परिभाषित नहीं",
+      "runningNativeBuild": "नेटिव बिल्ड चल रहा है"
     }
   },
   "aiChat": {
@@ -686,7 +705,8 @@
       "bestAdventure": "सबसे अच्छे एडवेंचर गेम्स कौन से हैं?",
       "coopGames": "दोस्तों के साथ खेलने के लिए को-ऑप गेम्स सुझाएं",
       "newReleases": "इस महीने रिलीज़ हुए नवीनतम गेम्स कौन से हैं?"
-    }
+    },
+    "send": "संदेश भेजें"
   },
   "appAdvertisement": {
     "titlePrefix": "डाउनलोड करें",
@@ -719,5 +739,11 @@
         "description": "नए मुफ्त गेम्स और समाचारों के लिए तुरंत अलर्ट के साथ अपडेट रहें।"
       }
     ]
+  },
+  "lists": {
+    "addGame": "एक गेम जोड़ें"
+  },
+  "notifications": {
+    "newsChannelName": "समाचार सूचनाएं"
   }
 }

@@ -6,6 +6,7 @@ import {
   type RouteProp,
 } from "@react-navigation/native";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import EventHero from "../components/EventHero";
 import EventDates from "../components/EventDates";
 import EventCountdown from "../components/EventCountdown";
@@ -21,16 +22,23 @@ import type { EventDetailsParamList } from "../types";
 const EventDetailsScreen = memo((): React.ReactElement => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<EventDetailsParamList, "EventDetailsScreen">>();
-  const styles = useThemeStyles((c) => ({
-    screen: {
-      flex: 1,
-      backgroundColor: c.background,
-      marginBottom: 52,
-    },
-    scroll: { flex: 1 },
-    scrollContent: { paddingTop: 16, paddingHorizontal: 18 },
-    spacer: { height: 40 },
-  }));
+  const bottomInset = useBottomInset();
+  const styles = useThemeStyles(
+    (c) => ({
+      screen: {
+        flex: 1,
+        backgroundColor: c.background,
+      },
+      scroll: { flex: 1 },
+      scrollContent: {
+        paddingTop: 16,
+        paddingHorizontal: 18,
+        paddingBottom: bottomInset,
+      },
+      spacer: { height: 40 },
+    }),
+    [bottomInset],
+  );
 
   const contentOpacity = useContentFadeIn();
   const animatedStyle = useMemo(() => ({ opacity: contentOpacity }), [contentOpacity]);

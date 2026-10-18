@@ -3,6 +3,7 @@ import { StyleSheet } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useTranslation } from "react-i18next";
 import AdSlot from "@/src/components/AdSlot";
+import { useBottomInset } from "@/src/hooks/useBottomInset";
 import DeferredSection from "./DeferredSection";
 import FreeGames from "./sections/FreeGames";
 import RecommendedGames from "./sections/RecommendedGames";
@@ -37,7 +38,7 @@ const STATIC_FEED_ITEMS: FeedItemConfig[] = [
 ];
 
 const staticStyles = StyleSheet.create({
-  listContent: { paddingBottom: 90 },
+  listContent: { flexGrow: 1 },
 });
 
 // Stable memoized section wrappers — defined at module scope so their
@@ -70,6 +71,7 @@ TopRatedSection.displayName = "TopRatedSection";
  */
 const GamesFeed: React.FC<GamesFeedProps> = ({ onScroll }) => {
   const { t } = useTranslation();
+  const bottomInset = useBottomInset();
 
   // Keep a ref so renderFeedItem can read t() without it being a dep.
   const tRef = useRef(t);
@@ -152,7 +154,7 @@ const GamesFeed: React.FC<GamesFeedProps> = ({ onScroll }) => {
       onScroll={onScroll}
       scrollEventThrottle={16}
       getItemType={(item) => (item.type === "AD" ? "AD" : item.id)}
-      contentContainerStyle={staticStyles.listContent}
+      contentContainerStyle={[staticStyles.listContent, { paddingBottom: bottomInset }]}
     />
   );
 };

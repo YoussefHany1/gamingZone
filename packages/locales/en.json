@@ -38,7 +38,13 @@
       "title": "New Update Available",
       "subtitle": "We're downloading improvements for you...",
       "footer": "Please wait, the app will restart automatically"
-    }
+    },
+    "back": "Back",
+    "pullToRefresh": "Pull down to try again",
+    "clearSearch": "Clear search",
+    "selectAnOption": "Select an option",
+    "somethingWentWrong": "Something went wrong",
+    "contactSupport": "Contact Support"
   },
   "auth": {
     "emailPlaceholder": "Email",
@@ -496,6 +502,10 @@
       "couldNotCreateList": "Could not create list. Please try again later",
       "listAlreadyExists": "A list with this name already exists",
       "couldNotDeleteList": "Could not delete the list. Please try again later."
+    },
+    "noListsCreated": {
+      "title": "No lists yet",
+      "message": "Create your first list to organize your games"
     }
   },
   "settings": {
@@ -672,6 +682,15 @@
       "confirmMessage": "Are you sure you want to log out?",
       "errorTitle": "Error",
       "errorMessage": "An error occurred while logging out. Please try again."
+    },
+    "admin": {
+      "dashboard": "Admin Dashboard",
+      "channel": "Channel: {{value}}",
+      "runtimeVersion": "Runtime Version: {{value}}",
+      "updateId": "Update ID: {{value}}",
+      "appConfigVersion": "App Config Version: {{value}}",
+      "notDefined": "Not Defined",
+      "runningNativeBuild": "Running Native Build"
     }
   },
   "aiChat": {
@@ -686,7 +705,8 @@
       "bestAdventure": "What are the best adventure games?",
       "coopGames": "Suggest co-op games to play with friends",
       "newReleases": "What are the latest games released this month?"
-    }
+    },
+    "send": "Send message"
   },
   "appAdvertisement": {
     "titlePrefix": "Download",
@@ -719,5 +739,11 @@
         "description": "Stay updated with instant alerts for new free games, and news."
       }
     ]
+  },
+  "lists": {
+    "addGame": "Add a game"
+  },
+  "notifications": {
+    "newsChannelName": "News Notifications"
   }
 }

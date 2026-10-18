@@ -37,7 +37,7 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps> = ({
       backgroundColor: c.accent,
     },
     tabText: {
-      color: "#9f9f9f",
+      color: c.textMuted,
       fontSize: 14,
       fontWeight: "600",
     },
@@ -48,14 +48,14 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps> = ({
       borderRadius: 12,
       overflow: "hidden",
       borderWidth: 1,
-      borderColor: "rgba(81,105,150,0.4)",
+      borderColor: c.border,
       direction: "ltr",
     },
     specRow: {
       paddingHorizontal: 14,
       paddingVertical: 10,
       borderBottomWidth: 0.5,
-      borderBottomColor: "rgba(81,105,150,0.25)",
+      borderBottomColor: c.border,
     },
     specLabel: {
       color: c.accentText,
@@ -66,7 +66,7 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps> = ({
       marginBottom: 2,
     },
     specValue: {
-      color: "#cfcfcf",
+      color: c.text,
       fontSize: 14,
       fontWeight: "500",
       flexWrap: "wrap",

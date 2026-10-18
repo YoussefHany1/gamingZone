@@ -5,6 +5,7 @@ import auth from "@react-native-firebase/auth";
 import type { FirebaseMessagingTypes } from "@react-native-firebase/messaging";
 import * as Notifications from "expo-notifications";
 import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import { useTranslation } from "react-i18next";
 import NotificationService from "@/src/services/notificationService";
 import { DARK_COLORS } from "../constants/colors";
 import { logger } from "@/src/lib/logger";
@@ -24,8 +25,21 @@ import { logger } from "@/src/lib/logger";
 
 const NEWS_CHANNEL_ID = "news_notifications" as const;
 
-const NEWS_CHANNEL: Notifications.NotificationChannelInput = {
-  name: "News Notifications",
+/**
+ * Channel *id* is fixed at module scope, but the display name follows the
+ * active language — Android updates an existing channel's name when it is
+ * re-submitted with the same id, so a language switch refreshes the label.
+ */
+function useNewsChannelName(): string {
+  const { t } = useTranslation();
+  return t("notifications.newsChannelName");
+}
+
+// `name` is omitted from the base: it is supplied per-call from i18n.
+const NEWS_CHANNEL_BASE: Omit<
+  Notifications.NotificationChannelInput,
+  "name"
+> = {
   importance: Notifications.AndroidImportance.MAX,
   vibrationPattern: [0, 250, 250, 250],
   // Brand color for the LED — intentionally not themed, since the channel is
@@ -66,6 +80,8 @@ function extractImageUrl(
 // ---------------------------------------------------------------------------
 
 const useNotifications = (user: FirebaseAuthTypes.User | null | undefined): void => {
+  const newsChannelName = useNewsChannelName();
+
   useEffect(() => {
     if (!user) return;
 
@@ -93,7 +109,10 @@ const useNotifications = (user: FirebaseAuthTypes.User | null | undefined): void
     const setup = async (): Promise<void> => {
       try {
         // Ensure the Android notification channel exists before doing anything else.
-        await Notifications.setNotificationChannelAsync(NEWS_CHANNEL_ID, NEWS_CHANNEL);
+        await Notifications.setNotificationChannelAsync(NEWS_CHANNEL_ID, {
+          ...NEWS_CHANNEL_BASE,
+          name: newsChannelName,
+        });
 
         if (!isGuest) {
           const authStatus = await messaging().requestPermission();
@@ -187,7 +206,9 @@ const useNotifications = (user: FirebaseAuthTypes.User | null | undefined): void
       unsubscribeOnMessage?.();
       unsubscribeTokenRefresh?.();
     };
-  }, [user]);
+    // newsChannelName re-runs setup so the OS channel display name follows a
+    // language change (Android applies the new name to the existing channel).
+  }, [user, newsChannelName]);
 };
 
 export default useNotifications;

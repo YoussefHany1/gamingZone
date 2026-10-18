@@ -74,8 +74,11 @@ const ChatInputBar: React.FC<ChatInputBarProps> = ({
         style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}
         onPress={onSend}
         disabled={!canSend}
+        accessibilityRole="button"
+        accessibilityLabel={t("aiChat.send")}
+        accessibilityState={{ disabled: !canSend }}
       >
-        <Send size={24} color={colors.onAccent} />
+        <Send size={24} color={colors.onAccent} accessible={false} />
       </TouchableOpacity>
     </View>
   );
