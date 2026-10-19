@@ -102874,6 +102874,7 @@ __export(main_exports, {
   default: () => main_default
 });
 module.exports = __toCommonJS(main_exports);
+var import_node_v8 = require("node:v8");
 
 // scripts/lib/logger.ts
 var import_pino = __toESM(require("pino"));
@@ -114839,8 +114840,25 @@ var JOBS = {
   "game-releases": async () => {
     await runCheckGameReleases();
     await teardownGameReleasesService();
-  }
+  },
+  diagnostics: () => Promise.resolve(collectDiagnostics())
 };
+function collectDiagnostics() {
+  const usage = process.memoryUsage();
+  const toMb = (bytes) => Math.round(bytes / 1048576);
+  return {
+    node: process.version,
+    nodeOptions: process.env.NODE_OPTIONS ?? null,
+    execArgv: process.execArgv,
+    heapSizeLimitMb: toMb((0, import_node_v8.getHeapStatistics)().heap_size_limit),
+    memory: {
+      rssMb: toMb(usage.rss),
+      heapUsedMb: toMb(usage.heapUsed),
+      heapTotalMb: toMb(usage.heapTotal),
+      externalMb: toMb(usage.external)
+    }
+  };
+}
 var appwriteError2 = null;
 function reportFatal(kind, cause) {
   const message = cause instanceof Error ? `${cause.name}: ${cause.message}

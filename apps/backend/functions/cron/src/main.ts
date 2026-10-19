@@ -1,5 +1,7 @@
 import type { AppwriteContext } from '../../_shared/runner';
 
+import { getHeapStatistics } from 'node:v8';
+
 import { runFetchRss } from '../../../scripts/features/rss/rss.service';
 import type { RunFetchRssOptions } from '../../../scripts/features/rss/rss.service';
 import {
@@ -35,7 +37,36 @@ const JOBS: Record<string, (options: JobOptions) => Promise<unknown>> = {
     await runCheckGameReleases();
     await teardownGameReleasesService();
   },
+  diagnostics: () => Promise.resolve(collectDiagnostics()),
 };
+
+/**
+ * Reports the memory budget the process actually booted with.
+ *
+ * This exists because the runtime kills the container past 512 MB and only then
+ * says so as a bare `500 general_unknown` with no logs. `heapSizeLimitMb`
+ * confirms whether the `NODE_OPTIONS` variable (`--max-old-space-size=256`)
+ * reached Node, since V8 reads that flag during startup: if it shows the
+ * default multi-GB limit instead, the platform is not passing the variable
+ * through and the fix has to move into the bundle.
+ */
+function collectDiagnostics() {
+  const usage = process.memoryUsage();
+  const toMb = (bytes: number) => Math.round(bytes / 1048576);
+
+  return {
+    node: process.version,
+    nodeOptions: process.env.NODE_OPTIONS ?? null,
+    execArgv: process.execArgv,
+    heapSizeLimitMb: toMb(getHeapStatistics().heap_size_limit),
+    memory: {
+      rssMb: toMb(usage.rss),
+      heapUsedMb: toMb(usage.heapUsed),
+      heapTotalMb: toMb(usage.heapTotal),
+      externalMb: toMb(usage.external),
+    },
+  };
+}
 
 // Registered at module load so a failure deep inside a job is surfaced instead
 // of silently killing the process. Appwrite reports a hard death as a generic
@@ -45,7 +76,9 @@ let appwriteError: AppwriteLogFn | null = null;
 
 function reportFatal(kind: string, cause: unknown): void {
   const message =
-    cause instanceof Error ? `${cause.name}: ${cause.message}\n${cause.stack ?? ''}` : String(cause);
+    cause instanceof Error
+      ? `${cause.name}: ${cause.message}\n${cause.stack ?? ''}`
+      : String(cause);
   // stderr may survive even when the platform drops structured logs.
   console.error(`cron: ${kind}: ${message}`);
   try {
@@ -102,7 +135,8 @@ function jobsFromBody(body: string): string[] | null {
   }
 
   const raw =
-    typeof parsed === 'object' && parsed !== null &&
+    typeof parsed === 'object' &&
+    parsed !== null &&
     Array.isArray((parsed as { jobs?: unknown }).jobs)
       ? (parsed as { jobs: unknown[] }).jobs
       : typeof parsed === 'object' && parsed !== null && 'job' in parsed
@@ -130,7 +164,11 @@ export default async ({ req, res, log, error }: AppwriteContext) => {
       }
       if (requested.length === 0) {
         return res.json(
-          { ok: false, function: 'cron', error: `No known job. Known jobs: ${Object.keys(JOBS).join(', ')}` },
+          {
+            ok: false,
+            function: 'cron',
+            error: `No known job. Known jobs: ${Object.keys(JOBS).join(', ')}`,
+          },
           400,
         );
       }
@@ -141,7 +179,8 @@ export default async ({ req, res, log, error }: AppwriteContext) => {
 
     log(`cron: running [${jobs.join(', ')}] at ${now.toISOString()}`);
 
-    const results: { job: string; ok: boolean; ms: number; result?: unknown; error?: string }[] = [];
+    const results: { job: string; ok: boolean; ms: number; result?: unknown; error?: string }[] =
+      [];
     let allOk = true;
 
     for (const job of jobs) {

@@ -96,7 +96,7 @@ Code is deployed by Appwrite's GitHub integration — no CI workflow:
 
 1. `cd apps/backend` and make sure `.env` has the values below (or provide them as environment variables).
 2. `npm install --legacy-peer-deps` (installs `esbuild`; approve its install script if npm blocks postinstall scripts).
-3. Run `npm run functions:deploy` to create/update the function and sync its 14 variables.
+3. Run `npm run functions:deploy` to create/update the function and sync its 15 variables.
 4. Connect the function to Git as described above, and create the initial deployment from Git.
 5. Confirm in your Appwrite console: Functions → **`gamingZone`** → Settings shows `enabled`, an hourly `interval`, and a **Timeout of 900**; Deployments/Executions shows runs. If you still have the old `rss-fetch`, `free-games-fetch`, `weekly-summary`, or `cron-job` functions, delete them in the console (they were replaced by this single function).
 
@@ -136,9 +136,34 @@ FREE_GAMES_COLLECTION_ID free_games            (default)
 SUMMARIES_COLLECTION_ID weekly_summaries       (default)
 TWITCH_CLIENT_ID        <twitch app client id>
 TWITCH_CLIENT_SECRET    <twitch app client secret>
+NODE_OPTIONS            --max-old-space-size=256  (default; see "Memory ceiling")
 ```
 
 Collection IDs fall back to the defaults above if omitted.
+
+## Memory ceiling
+
+The runtime is `s-0.5vcpu-512mb`, and the RSS job parses article pages with JSDOM. V8's
+default old-space limit is sized well above the container, so its heap (and therefore RSS)
+balloons past 512 MB before it feels pressure to collect — Node then never returns those
+pages to the OS, so RSS stays at that high-water mark. Symptom: a tick dies mid-run and
+Appwrite reports a bare `500 general_unknown` with **empty** logs and `errors` (Appwrite only
+delivers logs when an execution finishes, so a killed container looks completely silent),
+and the console "Create execution" button fails the same way because an empty body runs the
+scheduled set (`rss` + `article-summaries`).
+
+Measured on the identical 100-article workload:
+
+| configuration                           | peak RSS    | heap   |
+| --------------------------------------- | ----------- | ------ |
+| default V8 heap limit                   | 950-1070 MB | 736 MB |
+| `NODE_OPTIONS=--max-old-space-size=256` | 384-445 MB  | 272 MB |
+
+The post-GC live set is only ~120 MB, so the cap has ~2x headroom over what the job actually
+retains. It has to be set at process start: `v8.setFlagsFromString` from inside the bundle
+does **not** work (V8 reads the limit during startup), so it is synced as a function variable
+by `npm run functions:deploy`. The job logs its own `Peak RSS: <n>MB / heap <n>MB` line on
+every successful run, which is the number to watch.
 
 ## Manual trigger
 
@@ -152,7 +177,11 @@ curl -X POST "https://<region>.cloud.appwrite.io/v1/functions/6ac81314002e085236
   -d '{"async":true,"method":"POST","path":"/","body":"{\"job\":\"free-games\"}"}'
 ```
 
-Valid job names: `rss`, `article-summaries`, `free-games`, `weekly-summary`. Drop `"async":true` to wait for the result synchronously (only for short runs / debugging).
+Valid job names: `rss`, `article-summaries`, `free-games`, `weekly-summary`, `game-releases`, `diagnostics`. Drop `"async":true` to wait for the result synchronously (only for short runs / debugging).
+
+`diagnostics` is the cheap one (no network, no DB): it returns the Node version, the
+effective `NODE_OPTIONS`, `process.execArgv`, the V8 `heapSizeLimitMb` and current memory, so
+you can check the memory budget without running a full tick.
 
 ## Known constraint: Puppeteer (and bundling)
 
