@@ -29,15 +29,20 @@ Notes:
 apps/backend/
   functions/
     _shared/runner.ts                  # Appwrite handler context types
-    cron/            package.json · src/main.ts · dist/main.js (committed)
+    cron/            package.json · src/main.ts + src/worker.ts · dist/main.js + dist/worker.js (committed)
   scripts/functions/
     config.mjs         # function entry (id, dir, name, interval), required variables, retired duplicates
     esbuild.config.mjs # shared bundle options (externals, target, banner)
-    build.mjs          # esbuild-bundles the function into its dist/main.js (local build)
+    build.mjs          # esbuild-bundles both entry points into dist/ (local build)
     build-function.mjs # same build, as the function's own package.json "build" script
     deploy.mjs         # create/update function config + sync variables (one-time setup)
 appwrite.json                        # Appwrite CLI spec (uses $APPWRITE_PROJECT_ID / $APPWRITE_ENDPOINT)
 ```
+
+`src/main.ts` is the entrypoint and `src/worker.ts` is the heap-capped child it spawns (see
+[Memory ceiling](#memory-ceiling)); both are emitted into `dist/`, which is what the
+Git-connected deploy activates. Adding a job means adding it to `worker.ts` and to the
+`JOB_NAMES` list in `main.ts`.
 
 ## Article summaries (schema + backfill)
 
@@ -136,34 +141,58 @@ FREE_GAMES_COLLECTION_ID free_games            (default)
 SUMMARIES_COLLECTION_ID weekly_summaries       (default)
 TWITCH_CLIENT_ID        <twitch app client id>
 TWITCH_CLIENT_SECRET    <twitch app client secret>
-NODE_OPTIONS            --max-old-space-size=256  (default; see "Memory ceiling")
 ```
 
 Collection IDs fall back to the defaults above if omitted.
 
 ## Memory ceiling
 
-The runtime is `s-0.5vcpu-512mb`, and the RSS job parses article pages with JSDOM. V8's
-default old-space limit is sized well above the container, so its heap (and therefore RSS)
-balloons past 512 MB before it feels pressure to collect — Node then never returns those
-pages to the OS, so RSS stays at that high-water mark. Symptom: a tick dies mid-run and
-Appwrite reports a bare `500 general_unknown` with **empty** logs and `errors` (Appwrite only
-delivers logs when an execution finishes, so a killed container looks completely silent),
-and the console "Create execution" button fails the same way because an empty body runs the
-scheduled set (`rss` + `article-summaries`).
+The runtime is `s-0.5vcpu-512mb`, and the RSS job parses article pages with JSDOM. Symptom
+when the container is killed: a tick dies mid-run and Appwrite reports a bare
+`500 general_unknown` with **empty** logs and `errors` (Appwrite only delivers logs when an
+execution finishes, so a killed container looks completely silent), and the console
+"Create execution" button fails the same way because an empty body runs the scheduled set
+(`rss` + `article-summaries`).
 
-Measured on the identical 100-article workload:
+**The cause is the platform's own V8 flag, not the job's concurrency.** Appwrite launches
+the entrypoint with an 8 GB heap limit inside the 512 MB container — the `diagnostics` job
+reports it directly:
 
-| configuration                           | peak RSS    | heap   |
-| --------------------------------------- | ----------- | ------ |
-| default V8 heap limit                   | 950-1070 MB | 736 MB |
-| `NODE_OPTIONS=--max-old-space-size=256` | 384-445 MB  | 272 MB |
+```
+execArgv:        ["--max_old_space_size=8192"]
+heapSizeLimitMb: 8195
+```
 
-The post-GC live set is only ~120 MB, so the cap has ~2x headroom over what the job actually
-retains. It has to be set at process start: `v8.setFlagsFromString` from inside the bundle
-does **not** work (V8 reads the limit during startup), so it is synced as a function variable
-by `npm run functions:deploy`. The job logs its own `Peak RSS: <n>MB / heap <n>MB` line on
-every successful run, which is the number to watch.
+Command-line flags beat `NODE_OPTIONS`, so that limit cannot be lowered from the environment
+(V8 reads it during startup, so `v8.setFlagsFromString` from inside the bundle does not work
+either — both verified). V8 therefore never feels pressure to collect, and RSS climbs to a
+high-water mark the OS never reclaims. Measured on an identical 100-article workload:
+
+| configuration                                  | peak RSS    | heap   |
+| ---------------------------------------------- | ----------- | ------ |
+| no cap (the platform's 8 GB limit)             | 950-1070 MB | 736 MB |
+| `--max-old-space-size=256` on the command line | 384-445 MB  | 272 MB |
+
+Capping concurrency instead does **not** work: allowing 1, 3 or 9 simultaneous parses moved
+the peak by only ~40 MB either way, because RSS is a high-water mark of allocation churn.
+The post-GC live set is only ~120 MB, so a 256 MB cap leaves ~2x headroom.
+
+So the jobs run in a child process whose argv we control, and the entrypoint stays thin:
+
+- `src/main.ts` → `dist/main.js` (~8 KB): schedules, responds, spawns. No service imports, so
+  the parent idles around 60 MB and leaves the child the rest of the budget.
+- `src/worker.ts` → `dist/worker.js` (~2.6 MB): every job, run as
+  `node --max-old-space-size=256 dist/worker.js <job> <resultFile>`.
+
+Parent + child share the single 512 MB cgroup, which is why the split matters: with the heavy
+imports in the parent the tree peaked at 527 MB (over the limit), and at 397 MB once the
+parent was thinned — ~115 MB of headroom.
+
+The worker reports the result through a temp file rather than stdout, since dotenv and pino
+write banners to stdout regardless of the installed logger. If the child dies anyway, the
+parent reports `job '<name>' died without a result (exit code N)` instead of the platform's
+silent 500 — a visible failure either way. Each successful RSS run still logs its own
+`Peak RSS: <n>MB / heap <n>MB` line, which is the number to watch.
 
 ## Manual trigger
 

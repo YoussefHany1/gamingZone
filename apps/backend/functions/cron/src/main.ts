@@ -1,54 +1,147 @@
+// Entrypoint for the single gamingZone Appwrite function.
+//
+// One Appwrite function, one native schedule ("0 * * * *" = hourly, UTC). Every
+// tick runs against the server clock; free-games and weekly-summary fire only
+// when their time window matches, so a single cron slot covers all three
+// cadences. Hourly (not */5) keeps the full 69-source RSS sync inside
+// Appwrite's free 100 GB-hours/month compute allowance. A manual /curl trigger
+// can still run one job by name via a JSON body.
+//
+// This file is deliberately thin: it schedules and it spawns. The jobs
+// themselves live in worker.ts, which is run as a child process with a bounded
+// heap (see HEAP_CAPPED_JOBS) because Appwrite launches this entrypoint with
+// `--max_old_space_size=8192` inside a 512 MB container — a command-line flag
+// that overrides NODE_OPTIONS and cannot be lowered from inside the process.
+// Keeping the service imports (jsdom, firebase-admin, got-scraping, ...) out of
+// this file is what leaves room for the child: parent + child share the one
+// 512 MB budget.
 import type { AppwriteContext } from '../../_shared/runner';
 
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { getHeapStatistics } from 'node:v8';
 
-import { runFetchRss } from '../../../scripts/features/rss/rss.service';
-import type { RunFetchRssOptions } from '../../../scripts/features/rss/rss.service';
-import {
-  runFetchFreeGames,
-  teardownFreeGamesService,
-} from '../../../scripts/features/freeGames/freeGames.service';
-import { runGenerateWeeklySummary } from '../../../scripts/features/summary/summary.service';
-import { runBackfillArticleSummaries } from '../../../scripts/features/summary/articleSummary.service';
-import {
-  runCheckGameReleases,
-  teardownGameReleasesService,
-} from '../../../scripts/features/gameReleases/gameReleases.service';
-import { setAppwriteLogger } from '../../../scripts/lib/logger';
 import { getErrorMessage } from '../../../scripts/lib/errors';
 
-// One Appwrite function, one native schedule ("0 * * * *" = hourly, UTC).
-// Every tick runs against the server clock; free-games and weekly-summary
-// fire only when their time window matches, so a single cron slot covers all
-// three cadences. Hourly (not */5) keeps the full 69-source RSS sync inside
-// Appwrite's free 100 GB-hours/month compute allowance. A manual /curl
-// trigger can still run one job by name via a JSON body.
-type JobOptions = RunFetchRssOptions;
+type JobOptions = Record<string, unknown>;
 
-const JOBS: Record<string, (options: JobOptions) => Promise<unknown>> = {
-  rss: (options) => runFetchRss(options),
-  'article-summaries': () => runBackfillArticleSummaries(),
-  'free-games': async () => {
-    await runFetchFreeGames();
-    await teardownFreeGamesService();
-  },
-  'weekly-summary': () => runGenerateWeeklySummary(),
-  'game-releases': async () => {
-    await runCheckGameReleases();
-    await teardownGameReleasesService();
-  },
-  diagnostics: () => Promise.resolve(collectDiagnostics()),
-};
+/** Every job the worker knows how to run. Kept in sync with worker.ts. */
+const JOB_NAMES = [
+  'rss',
+  'article-summaries',
+  'free-games',
+  'weekly-summary',
+  'game-releases',
+  'diagnostics',
+] as const;
+
+/**
+ * Old-space cap for the job child process, in MB.
+ *
+ * The RSS job parses article pages with JSDOM. V8's default old-space limit
+ * follows the host's RAM, not the container's, so with Appwrite's own
+ * `--max_old_space_size=8192` the heap ballooned before V8 felt pressure to
+ * collect: the same script peaked at 950-1070 MB of RSS versus 384-445 MB when
+ * the heap is capped at 256 MB, and the post-GC live set is only ~120 MB. Past
+ * 512 MB the container is killed and Appwrite reports a bare
+ * `500 general_unknown` with no logs, so every job runs in a child whose argv
+ * we control.
+ */
+const CHILD_HEAP_MB = 256;
+
+/** How long a job may run before the child is killed. Matches the function timeout. */
+const CHILD_TIMEOUT_MS = 900_000;
+
+/**
+ * Runs one job in a child Node process with a bounded heap, and returns its
+ * result. Logs stream to stderr, which this process inherits so Appwrite still
+ * captures them.
+ */
+function runJobInChild(job: string, options: JobOptions): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const resultFile = path.join(
+      os.tmpdir(),
+      `gamingzone-${job}-${process.pid}-${Date.now()}.json`,
+    );
+    const workerPath = path.join(__dirname, 'worker.js');
+
+    const child = spawn(
+      process.execPath,
+      [`--max-old-space-size=${CHILD_HEAP_MB}`, workerPath, job, resultFile],
+      { stdio: ['pipe', 'ignore', 'inherit'], env: process.env },
+    );
+
+    const cleanup = () => {
+      try {
+        fs.unlinkSync(resultFile);
+      } catch {
+        // Already gone, or never written.
+      }
+    };
+
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      reject(new Error(`job '${job}' exceeded ${CHILD_TIMEOUT_MS / 1000}s and was killed`));
+    }, CHILD_TIMEOUT_MS);
+
+    child.on('error', (cause) => {
+      clearTimeout(timer);
+      cleanup();
+      reject(cause);
+    });
+
+    child.on('close', (code, signal) => {
+      clearTimeout(timer);
+
+      let output: string | null = null;
+      try {
+        output = fs.readFileSync(resultFile, 'utf8');
+      } catch {
+        // No result file: the child died before writing one.
+      }
+      cleanup();
+
+      if (output === null) {
+        const how = signal ? `signal ${signal}` : `exit code ${code}`;
+        // The classic signature here is a kill for exceeding the container's
+        // 512 MB, which otherwise reports no logs at all.
+        reject(new Error(`job '${job}' died without a result (${how})`));
+        return;
+      }
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(output);
+      } catch {
+        reject(new Error(`job '${job}' produced unparseable output: ${output.slice(0, 300)}`));
+        return;
+      }
+
+      if (code !== 0) {
+        const message =
+          typeof parsed === 'object' && parsed !== null && 'error' in parsed
+            ? String((parsed as { error: unknown }).error)
+            : `exit code ${code}`;
+        reject(new Error(message));
+        return;
+      }
+
+      resolve(parsed);
+    });
+
+    child.stdin.end(JSON.stringify({ options }));
+  });
+}
 
 /**
  * Reports the memory budget the process actually booted with.
  *
  * This exists because the runtime kills the container past 512 MB and only then
  * says so as a bare `500 general_unknown` with no logs. `heapSizeLimitMb`
- * confirms whether the `NODE_OPTIONS` variable (`--max-old-space-size=256`)
- * reached Node, since V8 reads that flag during startup: if it shows the
- * default multi-GB limit instead, the platform is not passing the variable
- * through and the fix has to move into the bundle.
+ * shows the limit Appwrite's own command-line flag produced, which is why the
+ * jobs run in a child that sets its own.
  */
 function collectDiagnostics() {
   const usage = process.memoryUsage();
@@ -59,6 +152,7 @@ function collectDiagnostics() {
     nodeOptions: process.env.NODE_OPTIONS ?? null,
     execArgv: process.execArgv,
     heapSizeLimitMb: toMb(getHeapStatistics().heap_size_limit),
+    childHeapMb: CHILD_HEAP_MB,
     memory: {
       rssMb: toMb(usage.rss),
       heapUsedMb: toMb(usage.heapUsed),
@@ -143,12 +237,14 @@ function jobsFromBody(body: string): string[] | null {
         ? [(parsed as { job: unknown }).job]
         : [];
 
-  const jobs = raw.filter((job): job is string => typeof job === 'string' && job in JOBS);
+  const jobs = raw.filter(
+    (job): job is string =>
+      typeof job === 'string' && (JOB_NAMES as readonly string[]).includes(job),
+  );
   return [...new Set(jobs)];
 }
 
 export default async ({ req, res, log, error }: AppwriteContext) => {
-  setAppwriteLogger(log, error);
   appwriteError = error;
   const startedAt = Date.now();
   const now = new Date();
@@ -167,7 +263,7 @@ export default async ({ req, res, log, error }: AppwriteContext) => {
           {
             ok: false,
             function: 'cron',
-            error: `No known job. Known jobs: ${Object.keys(JOBS).join(', ')}`,
+            error: `No known job. Known jobs: ${JOB_NAMES.join(', ')}`,
           },
           400,
         );
@@ -186,7 +282,8 @@ export default async ({ req, res, log, error }: AppwriteContext) => {
     for (const job of jobs) {
       const jobStartedAt = Date.now();
       try {
-        const result = await JOBS[job](options);
+        const result =
+          job === 'diagnostics' ? collectDiagnostics() : await runJobInChild(job, options);
         const ms = Date.now() - jobStartedAt;
         log(`cron: job '${job}' finished in ${ms}ms`);
         results.push({ job, ok: true, ms, result: result ?? null });
@@ -206,6 +303,5 @@ export default async ({ req, res, log, error }: AppwriteContext) => {
     return res.json({ ok: false, function: 'cron', error: message }, 500);
   } finally {
     appwriteError = null;
-    setAppwriteLogger(null, null);
   }
 };

@@ -25,4 +25,15 @@ for (const fn of FUNCTIONS) {
   });
 
   console.log(`✓ Built ${path.relative(process.cwd(), outfile)}`);
+
+  // main.ts spawns worker.js as a child process with its own heap cap, so it is
+  // a second entry point in the same dist folder rather than a separate build.
+  const workerOut = path.join(path.dirname(outfile), 'worker.js');
+  await build({
+    entryPoints: [path.join(fnDir, 'src', 'worker.ts')],
+    outfile: workerOut,
+    ...esbuildOptions,
+  });
+
+  console.log(`✓ Built ${path.relative(process.cwd(), workerOut)}`);
 }

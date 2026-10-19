@@ -29,3 +29,14 @@ await build({
 });
 
 console.log(`✓ Built ${outfile}`);
+
+// main.ts spawns worker.js as a child process with its own heap cap, so it is a
+// second entry point in the same dist folder rather than a separate build.
+const workerOut = path.join(path.dirname(outfile), 'worker.js');
+await build({
+  entryPoints: [path.join(cwd, 'src', 'worker.ts')],
+  outfile: workerOut,
+  ...esbuildOptions,
+});
+
+console.log(`✓ Built ${workerOut}`);

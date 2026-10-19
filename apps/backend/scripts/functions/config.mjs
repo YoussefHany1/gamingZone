@@ -75,9 +75,6 @@ export const REQUIRED_VARS = [
   'SUMMARIES_COLLECTION_ID',
   'TWITCH_CLIENT_ID',
   'TWITCH_CLIENT_SECRET',
-  // Runtime tuning, not app config: bounds V8's heap so RSS stays inside the
-  // 512 MB runtime (see VAR_DEFAULTS).
-  'NODE_OPTIONS',
 ];
 
 // Collection IDs fall back to the same defaults used by config.ts.
@@ -88,15 +85,14 @@ export const VAR_DEFAULTS = {
   SUMMARIES_COLLECTION_ID: 'weekly_summaries',
   // Must match DEFAULT_GROQ_MODEL in scripts/lib/ai.shared.ts.
   GROQ_MODEL: 'openai/gpt-oss-120b',
-  // Keeps V8 collecting before its heap outgrows the 512 MB runtime.
-  //
-  // The RSS job parses article pages with JSDOM. V8 sizes its default old-space
-  // limit well above the container's memory, so neither the live set nor any
-  // concurrency knob bounds RSS — a run with 100 new articles reached 950-1070
-  // MB of RSS (heap 736 MB) with 350-400 MB of it uncollected garbage, and was
-  // killed at 512 MB with a bare `500 general_unknown` and no logs. Capping old
-  // space at 256 MB keeps the identical workload at 384-445 MB peak RSS
-  // (measured, 3 runs), while the post-GC live set stays around 120 MB, so
-  // there is ~2x headroom over what the job actually retains.
-  NODE_OPTIONS: '--max-old-space-size=256',
 };
+
+// Variables that a deploy should DELETE if they exist on the function.
+//
+// `NODE_OPTIONS` was synced here in an attempt to bound the job's heap, which
+// turned out to be impossible from the environment: Appwrite launches the
+// entrypoint with its own `--max_old_space_size=8192` and command-line flags
+// beat NODE_OPTIONS (see functions/README.md → "Memory ceiling"). The cap now
+// lives in the child process the entrypoint spawns, so the variable is dead
+// weight and is removed on the next deploy.
+export const OBSOLETE_VARS = ['NODE_OPTIONS'];

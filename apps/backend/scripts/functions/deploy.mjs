@@ -15,6 +15,7 @@ import {
   TIMEOUT,
   REQUIRED_VARS,
   VAR_DEFAULTS,
+  OBSOLETE_VARS,
   RETIRED_FUNCTIONS,
 } from './config.mjs';
 
@@ -222,7 +223,7 @@ async function deployCode(functionId, fnDir) {
 async function syncVariables(functionId) {
   let existing;
   try {
-    existing = await functions.listVariables(functionId);
+    existing = await functions.listVariables({ functionId });
   } catch {
     existing = { variables: [] };
   }
@@ -242,13 +243,26 @@ async function syncVariables(functionId) {
         if (current.value === value) {
           continue;
         }
-        await functions.updateVariable(functionId, current.$id, key, value);
+        await functions.updateVariable({ functionId, variableId: current.$id, key, value });
       } else {
-        await functions.createVariable(functionId, key, value);
+        await functions.createVariable({ functionId, key, value });
       }
       synced += 1;
     } catch (error) {
       console.error(`❌ Failed to sync variable "${key}" on ${functionId}: ${error.message}`);
+    }
+  }
+
+  // Retired variables that are no longer part of the function's contract.
+  for (const key of OBSOLETE_VARS) {
+    const current = byKey.get(key);
+    if (!current) continue;
+
+    try {
+      await functions.deleteVariable({ functionId, variableId: current.$id });
+      console.log(`🧹 Removed obsolete variable "${key}" from ${functionId}.`);
+    } catch (error) {
+      console.error(`❌ Failed to remove variable "${key}" on ${functionId}: ${error.message}`);
     }
   }
 
