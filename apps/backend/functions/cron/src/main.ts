@@ -56,10 +56,19 @@ const CHILD_TIMEOUT_MS = 900_000;
 
 /**
  * Runs one job in a child Node process with a bounded heap, and returns its
- * result. Logs stream to stderr, which this process inherits so Appwrite still
- * captures them.
+ * result.
+ *
+ * The child cannot report through stdout (dotenv/pino banners) or stderr
+ * (Appwrite drops a child's stderr), so it writes an envelope to a temp file and
+ * this function replays its log lines through `log()`. That is what keeps the
+ * RSS job's `Peak RSS` line — the memory telemetry for this whole arrangement —
+ * visible in the execution logs.
  */
-function runJobInChild(job: string, options: JobOptions): Promise<unknown> {
+function runJobInChild(
+  job: string,
+  options: JobOptions,
+  log: (...args: unknown[]) => void,
+): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const resultFile = path.join(
       os.tmpdir(),
@@ -70,7 +79,7 @@ function runJobInChild(job: string, options: JobOptions): Promise<unknown> {
     const child = spawn(
       process.execPath,
       [`--max-old-space-size=${CHILD_HEAP_MB}`, workerPath, job, resultFile],
-      { stdio: ['pipe', 'ignore', 'inherit'], env: process.env },
+      { stdio: ['pipe', 'ignore', 'ignore'], env: process.env },
     );
 
     const cleanup = () => {
@@ -119,16 +128,24 @@ function runJobInChild(job: string, options: JobOptions): Promise<unknown> {
         return;
       }
 
-      if (code !== 0) {
-        const message =
-          typeof parsed === 'object' && parsed !== null && 'error' in parsed
-            ? String((parsed as { error: unknown }).error)
-            : `exit code ${code}`;
+      const envelope = (typeof parsed === 'object' && parsed !== null ? parsed : {}) as {
+        ok?: boolean;
+        result?: unknown;
+        error?: unknown;
+        logs?: unknown;
+      };
+
+      for (const line of Array.isArray(envelope.logs) ? envelope.logs : []) {
+        log(typeof line === 'string' ? line : String(line));
+      }
+
+      if (code !== 0 || envelope.ok === false) {
+        const message = envelope.error !== undefined ? String(envelope.error) : `exit code ${code}`;
         reject(new Error(message));
         return;
       }
 
-      resolve(parsed);
+      resolve(envelope.result ?? null);
     });
 
     child.stdin.end(JSON.stringify({ options }));
@@ -283,7 +300,7 @@ export default async ({ req, res, log, error }: AppwriteContext) => {
       const jobStartedAt = Date.now();
       try {
         const result =
-          job === 'diagnostics' ? collectDiagnostics() : await runJobInChild(job, options);
+          job === 'diagnostics' ? collectDiagnostics() : await runJobInChild(job, options, log);
         const ms = Date.now() - jobStartedAt;
         log(`cron: job '${job}' finished in ${ms}ms`);
         results.push({ job, ok: true, ms, result: result ?? null });

@@ -114844,6 +114844,7 @@ var JOBS = {
   }
 };
 var JOB_NAMES = Object.keys(JOBS);
+var MAX_LOG_LINES = 400;
 function readStdin() {
   return new Promise((resolve2) => {
     const chunks = [];
@@ -114860,25 +114861,51 @@ function parseOptions(raw) {
   }
   return {};
 }
+function formatLogArg(arg) {
+  if (typeof arg === "string") return arg;
+  if (arg instanceof Error) return arg.stack ?? arg.message;
+  try {
+    return JSON.stringify(arg);
+  } catch {
+    return String(arg);
+  }
+}
 async function main() {
   const [job, resultFile] = process.argv.slice(2);
+  const logs = [];
+  setAppwriteLogger(
+    (...args) => {
+      const line = args.map(formatLogArg).join(" ");
+      if (logs.length < MAX_LOG_LINES) logs.push(line);
+      console.error(line);
+    },
+    (...args) => {
+      const line = args.map(formatLogArg).join(" ");
+      if (logs.length < MAX_LOG_LINES) logs.push(line);
+      console.error(line);
+    }
+  );
+  const writeEnvelope = (envelope) => {
+    try {
+      import_node_fs.default.writeFileSync(resultFile, JSON.stringify(envelope));
+    } catch {
+    }
+  };
   if (!job || !(job in JOBS)) {
-    console.error(`cron-worker: unknown job '${job ?? ""}'. Known jobs: ${JOB_NAMES.join(", ")}`);
+    const message = `unknown job '${job ?? ""}'. Known jobs: ${JOB_NAMES.join(", ")}`;
+    console.error(`cron-worker: ${message}`);
+    writeEnvelope({ ok: false, error: message, logs });
     process.exit(2);
   }
   const options = parseOptions(await readStdin());
-  setAppwriteLogger(console.error, console.error);
   try {
     const result = await JOBS[job](options);
-    import_node_fs.default.writeFileSync(resultFile, JSON.stringify(result ?? null));
+    writeEnvelope({ ok: true, result: result ?? null, logs });
     process.exit(0);
   } catch (cause) {
     const message = getErrorMessage(cause);
     console.error(`cron-worker: job '${job}' failed: ${message}`);
-    try {
-      import_node_fs.default.writeFileSync(resultFile, JSON.stringify({ error: message }));
-    } catch {
-    }
+    writeEnvelope({ ok: false, error: message, logs });
     process.exit(1);
   }
 }

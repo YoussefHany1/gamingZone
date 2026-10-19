@@ -56,7 +56,7 @@ var JOB_NAMES = [
 ];
 var CHILD_HEAP_MB = 256;
 var CHILD_TIMEOUT_MS = 9e5;
-function runJobInChild(job, options) {
+function runJobInChild(job, options, log) {
   return new Promise((resolve, reject) => {
     const resultFile = import_node_path.default.join(
       import_node_os.default.tmpdir(),
@@ -66,7 +66,7 @@ function runJobInChild(job, options) {
     const child = (0, import_node_child_process.spawn)(
       process.execPath,
       [`--max-old-space-size=${CHILD_HEAP_MB}`, workerPath, job, resultFile],
-      { stdio: ["pipe", "ignore", "inherit"], env: process.env }
+      { stdio: ["pipe", "ignore", "ignore"], env: process.env }
     );
     const cleanup = () => {
       try {
@@ -103,12 +103,16 @@ function runJobInChild(job, options) {
         reject(new Error(`job '${job}' produced unparseable output: ${output.slice(0, 300)}`));
         return;
       }
-      if (code !== 0) {
-        const message = typeof parsed === "object" && parsed !== null && "error" in parsed ? String(parsed.error) : `exit code ${code}`;
+      const envelope = typeof parsed === "object" && parsed !== null ? parsed : {};
+      for (const line of Array.isArray(envelope.logs) ? envelope.logs : []) {
+        log(typeof line === "string" ? line : String(line));
+      }
+      if (code !== 0 || envelope.ok === false) {
+        const message = envelope.error !== void 0 ? String(envelope.error) : `exit code ${code}`;
         reject(new Error(message));
         return;
       }
-      resolve(parsed);
+      resolve(envelope.result ?? null);
     });
     child.stdin.end(JSON.stringify({ options }));
   });
@@ -210,7 +214,7 @@ var main_default = async ({ req, res, log, error }) => {
     for (const job of jobs) {
       const jobStartedAt = Date.now();
       try {
-        const result = job === "diagnostics" ? collectDiagnostics() : await runJobInChild(job, options);
+        const result = job === "diagnostics" ? collectDiagnostics() : await runJobInChild(job, options, log);
         const ms = Date.now() - jobStartedAt;
         log(`cron: job '${job}' finished in ${ms}ms`);
         results.push({ job, ok: true, ms, result: result ?? null });

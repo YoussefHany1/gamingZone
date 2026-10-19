@@ -8,10 +8,15 @@
 // (no service imports) so parent + child fit in the container's memory.
 //
 // Protocol: `node worker.js <job> <resultFile>` with the job options as JSON on
-// stdin. The result is written to <resultFile> as JSON, logs go to stderr, and
-// the exit code signals success (0) or failure (non-zero). The result does NOT
-// go to stdout because dotenv and pino write banners there regardless of the
-// logger we install.
+// stdin. The result AND the job's log lines are written to <resultFile> as one
+// JSON envelope, and the exit code signals success (0) or failure (non-zero).
+//
+// Neither stream is used for the payload: stdout is unusable because dotenv and
+// pino write banners there regardless of the installed logger, and stderr is
+// dropped by Appwrite's log capture when it comes from a child process (only the
+// parent's structured `log()` calls are recorded). So the parent replays this
+// envelope's lines through `log()` to keep the job's output visible — including
+// the RSS job's own "Peak RSS" line, which is the memory telemetry for this fix.
 import fs from 'node:fs';
 
 import { runFetchRss } from '../../../scripts/features/rss/rss.service';
@@ -48,6 +53,16 @@ export const JOBS: Record<string, (options: JobOptions) => Promise<unknown>> = {
 
 export const JOB_NAMES = Object.keys(JOBS);
 
+/** Cap on replayed lines, so a chatty run cannot bloat the envelope. */
+const MAX_LOG_LINES = 400;
+
+interface WorkerEnvelope {
+  ok: boolean;
+  result?: unknown;
+  error?: string;
+  logs: string[];
+}
+
 function readStdin(): Promise<string> {
   return new Promise((resolve) => {
     const chunks: Buffer[] = [];
@@ -67,31 +82,60 @@ function parseOptions(raw: string): JobOptions {
   return {};
 }
 
+function formatLogArg(arg: unknown): string {
+  if (typeof arg === 'string') return arg;
+  if (arg instanceof Error) return arg.stack ?? arg.message;
+  try {
+    return JSON.stringify(arg);
+  } catch {
+    return String(arg);
+  }
+}
+
 async function main(): Promise<void> {
   const [job, resultFile] = process.argv.slice(2);
+
+  // Collect every log line the job emits, and keep stderr as a fallback mirror
+  // for crashes that happen before the envelope is written.
+  const logs: string[] = [];
+  setAppwriteLogger(
+    (...args: unknown[]) => {
+      const line = args.map(formatLogArg).join(' ');
+      if (logs.length < MAX_LOG_LINES) logs.push(line);
+      console.error(line);
+    },
+    (...args: unknown[]) => {
+      const line = args.map(formatLogArg).join(' ');
+      if (logs.length < MAX_LOG_LINES) logs.push(line);
+      console.error(line);
+    },
+  );
+
+  const writeEnvelope = (envelope: WorkerEnvelope): void => {
+    try {
+      fs.writeFileSync(resultFile, JSON.stringify(envelope));
+    } catch {
+      // A failed write must not mask the original outcome.
+    }
+  };
+
   if (!job || !(job in JOBS)) {
-    console.error(`cron-worker: unknown job '${job ?? ''}'. Known jobs: ${JOB_NAMES.join(', ')}`);
+    const message = `unknown job '${job ?? ''}'. Known jobs: ${JOB_NAMES.join(', ')}`;
+    console.error(`cron-worker: ${message}`);
+    writeEnvelope({ ok: false, error: message, logs });
     process.exit(2);
   }
 
   const options = parseOptions(await readStdin());
 
-  // The job's own logs go to stderr so they flow through to Appwrite's log
-  // capture via the parent's inherited stderr.
-  setAppwriteLogger(console.error, console.error);
-
   try {
     const result = await JOBS[job](options);
-    fs.writeFileSync(resultFile, JSON.stringify(result ?? null));
+    writeEnvelope({ ok: true, result: result ?? null, logs });
     process.exit(0);
   } catch (cause) {
     const message = getErrorMessage(cause);
     console.error(`cron-worker: job '${job}' failed: ${message}`);
-    try {
-      fs.writeFileSync(resultFile, JSON.stringify({ error: message }));
-    } catch {
-      // A failed write must not mask the original error.
-    }
+    writeEnvelope({ ok: false, error: message, logs });
     process.exit(1);
   }
 }

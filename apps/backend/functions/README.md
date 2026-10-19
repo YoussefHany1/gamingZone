@@ -188,11 +188,16 @@ Parent + child share the single 512 MB cgroup, which is why the split matters: w
 imports in the parent the tree peaked at 527 MB (over the limit), and at 397 MB once the
 parent was thinned — ~115 MB of headroom.
 
-The worker reports the result through a temp file rather than stdout, since dotenv and pino
-write banners to stdout regardless of the installed logger. If the child dies anyway, the
-parent reports `job '<name>' died without a result (exit code N)` instead of the platform's
-silent 500 — a visible failure either way. Each successful RSS run still logs its own
-`Peak RSS: <n>MB / heap <n>MB` line, which is the number to watch.
+The worker reports through a temp file, not a stream: stdout is unusable because dotenv and
+pino write banners there regardless of the installed logger, and **Appwrite drops a child
+process's stderr** (verified — only the parent's structured `log()` calls are recorded). So
+the worker writes one JSON envelope holding the result _and_ its log lines, and the parent
+replays those lines through `log()`. That keeps the RSS job's own
+`Peak RSS: <n>MB / heap <n>MB` line visible — the number to watch — which measured **242 MB**
+(heap 56 MB) on a 54-article run, against 466-522 MB before.
+
+If the child dies anyway, the parent reports `job '<name>' died without a result (exit code N)`
+instead of the platform's silent 500 — a visible failure either way.
 
 ## Manual trigger
 
