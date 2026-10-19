@@ -1,19 +1,22 @@
 # Appwrite Functions
 
-A **single** Appwrite function (`cron`) runs all three jobs inside Appwrite on one native schedule — keeping usage inside Appwrite's free tier (Appwrite allows one cron per function, so everything shares one `0 * * * *` hourly tick; hourly also keeps the full 69-source RSS sync inside the free 100 GB-hours/month compute allowance).
+A **single** Appwrite function runs all three jobs inside Appwrite on one native schedule — keeping usage inside Appwrite's free tier (Appwrite allows one cron per function, so everything shares one hourly tick; hourly also keeps the full 69-source RSS sync inside the free 100 GB-hours/month compute allowance).
+
+That function is **`gamingZone`** (Appwrite id `6ac81314002e085236df`) — the project's original function, and the one that holds the Git integration. Only the _local_ bundle directory keeps the name `cron` (`apps/backend/functions/cron`, also the cache dir shared with `scripts/`), so "cron" survives as a folder/log prefix while the Appwrite function is `gamingZone`. The second function (`cron` / "Game Jobs Cron") was merged into it, retired, and then deleted — see [One function only](#one-function-only).
 
 ## How the dispatcher schedules jobs
 
-Appwrite functions support exactly **one** cron schedule, so the function runs every hour and a time-based dispatcher (`src/main.ts`) fans out based on the UTC server clock:
+Appwrite functions support exactly **one** schedule, and on this server that field is `interval` (minutes — `60` = hourly). The legacy `schedule` cron string is empty and is not what fires the runs; `npm run functions:deploy` PUTs `interval` (node-appwrite 21 doesn't expose it) on every run. The function runs every hour and a time-based dispatcher (`src/main.ts`) fans out based on the UTC server clock:
 
-| job             | service                                   | when it runs                      |
-| --------------- | ----------------------------------------- | --------------------------------- |
-| `rss`           | `rss/rss.service.ts` (`runFetchRss`)      | every `0 * * * *` tick             |
-| `article-summaries` | `summary/articleSummary.service.ts` (`runBackfillArticleSummaries`) | every `0 * * * *` tick |
-| `free-games`    | `freeGames/freeGames.service.ts`          | top of every hour (UTC minute 0)  |
-| `weekly-summary`| `summary/summary.service.ts`              | Fridays 12:00 UTC (minute 0 tick) |
+| job                 | service                                                             | when it runs                      |
+| ------------------- | ------------------------------------------------------------------- | --------------------------------- |
+| `rss`               | `rss/rss.service.ts` (`runFetchRss`)                                | every hourly tick                 |
+| `article-summaries` | `summary/articleSummary.service.ts` (`runBackfillArticleSummaries`) | every hourly tick                 |
+| `free-games`        | `freeGames/freeGames.service.ts`                                    | top of every hour (UTC minute 0)  |
+| `weekly-summary`    | `summary/summary.service.ts`                                        | Fridays 12:00 UTC (minute 0 tick) |
 
 Notes:
+
 - `article-summaries` runs immediately after `rss` on every tick, so articles created in the same invocation are summarized within seconds — no AI work is added to the ingestion path. It generates a ≤3-line summary per supported app language (en/ar/es/fr/hi/pt-BR/pt-PT), newest-first, plus a bounded oldest-first slice so the backlog converges. Requires the `articles` collection to have the `summary_*` / `summaries_at` / `summaries_attempts` / `summaries_failed` attributes.
 - `weekly-summary` is **not** idempotent (it creates a new document each run), so it only fires on the single 12:00 Friday tick.
 - Jobs broadcast FCM topic pushes via `firebase-admin` (`FCM_SERVICE_ACCOUNT`): `rss` → `news_<category>_<source>`, `free-games` → `free_games_alerts`, `weekly-summary` → `weekly_summary_alerts`. Pushes are best-effort (a failure is logged, never thrown).
@@ -28,7 +31,7 @@ apps/backend/
     _shared/runner.ts                  # Appwrite handler context types
     cron/            package.json · src/main.ts · dist/main.js (committed)
   scripts/functions/
-    config.mjs         # single function entry: id, dir, name, schedule; required variables
+    config.mjs         # function entry (id, dir, name, interval), required variables, retired duplicates
     esbuild.config.mjs # shared bundle options (externals, target, banner)
     build.mjs          # esbuild-bundles the function into its dist/main.js (local build)
     build-function.mjs # same build, as the function's own package.json "build" script
@@ -83,7 +86,7 @@ npm run functions:build   # writes apps/backend/functions/cron/dist/main.js
 
 Code is deployed by Appwrite's GitHub integration — no CI workflow:
 
-1. Console → Functions → `cron` → Settings → Git: connect your GitHub account/repo, set **Branch** to `main`, **Root directory** to `apps/backend/functions/cron`, **Entrypoint** to `dist/main.js`, and **Build command** to `npm install`. Enable auto-deploy.
+1. Console → Functions → **`gamingZone`** → Settings → Git: connect your GitHub account/repo (already connected), with **Branch** `main`, **Root directory** `apps/backend/functions/cron`, **Entrypoint** `dist/main.js`, **Build command** `npm install`. Enable auto-deploy.
 2. On **Create/Deploy from Git**, Appwrite runs `npm install` and activates the committed `dist/main.js`.
 3. Thereafter, every push to `main` that changes files under that root directory rebuilds and redeploys the function automatically.
 
@@ -93,9 +96,28 @@ Code is deployed by Appwrite's GitHub integration — no CI workflow:
 
 1. `cd apps/backend` and make sure `.env` has the values below (or provide them as environment variables).
 2. `npm install --legacy-peer-deps` (installs `esbuild`; approve its install script if npm blocks postinstall scripts).
-3. Run `npm run functions:deploy` to create the function and sync its 10 variables.
+3. Run `npm run functions:deploy` to create/update the function and sync its 14 variables.
 4. Connect the function to Git as described above, and create the initial deployment from Git.
-5. Confirm in your Appwrite console: Functions → `cron` → Settings shows the `0 * * * *` schedule and a **Timeout of 900**; Deployments/Executions shows runs. If you already deployed the old `rss-fetch`, `free-games-fetch`, `weekly-summary`, or `cron-job` functions, delete them in the console (they are replaced by this single `cron` function).
+5. Confirm in your Appwrite console: Functions → **`gamingZone`** → Settings shows `enabled`, an hourly `interval`, and a **Timeout of 900**; Deployments/Executions shows runs. If you still have the old `rss-fetch`, `free-games-fetch`, `weekly-summary`, or `cron-job` functions, delete them in the console (they were replaced by this single function).
+
+## One function only
+
+Appwrite keeps firing a function's schedule even when the function is **disabled** in the console, and on this server the schedule lives in the `interval` field (minutes — `60` = hourly), not in the legacy `schedule` field the SDK writes. Switching a duplicate off therefore means writing `interval: 0` together with `enabled: false`.
+
+Both functions used to run this dispatcher hourly, racing each other on the live database:
+
+- **`gamingZone`** (`6ac81314002e085236df`) — the original deployment of this backend, and the one carrying the Git integration. **This is the survivor.**
+- **`cron`** ("Game Jobs Cron") — a second function the repo tooling created later. It was retired first (`interval: 0` + `enabled: false`, which is reversible and keeps its deployment history and variables) and then **deleted on 2026-10-19**, after the survivor had completed a verified scheduled tick with its variables already synced.
+
+`RETIRED_FUNCTIONS` in `scripts/functions/config.mjs` is the list the deploy switches off; it is intentionally empty now. If another duplicate ever appears, add its `{ id, name }` there and run:
+
+```sh
+cd apps/backend
+npm run functions:deploy -- --retired-only   # only retire listed duplicates; leaves `gamingZone` config/variables untouched
+npm run functions:deploy                     # the normal deploy enforces it too
+```
+
+Entries for functions that no longer exist are skipped, so a stale id can't break a deploy.
 
 Required function variables mirror `scripts/lib/config.ts`:
 
@@ -105,21 +127,25 @@ APPWRITE_PROJECT        <project id>
 APPWRITE_API_KEY        <server api key with functions + database scopes>
 APPWRITE_DATABASE_ID    <database id>
 GEMINI_API_KEY          <gemini key>
+GROQ_API_KEY            <groq key used as AI fallback>
+GROQ_MODEL              openai/gpt-oss-120b  (default)
 FCM_SERVICE_ACCOUNT     <minified firebase service account json>
 RSS_COLLECTION_ID       news_sources           (default)
 ARTICLES_COLLECTION_ID  articles               (default)
 FREE_GAMES_COLLECTION_ID free_games            (default)
 SUMMARIES_COLLECTION_ID weekly_summaries       (default)
+TWITCH_CLIENT_ID        <twitch app client id>
+TWITCH_CLIENT_SECRET    <twitch app client secret>
 ```
 
-Collection IDs fall back to the defaults above if omitted — only the first six are strictly required.
+Collection IDs fall back to the defaults above if omitted.
 
 ## Manual trigger
 
 The function runs all due jobs on its schedule; to run one specific job on demand:
 
 ```sh
-curl -X POST "https://<region>.cloud.appwrite.io/v1/functions/cron/executions" \
+curl -X POST "https://<region>.cloud.appwrite.io/v1/functions/6ac81314002e085236df/executions" \
   -H "X-Appwrite-Project: <project>" \
   -H "X-Appwrite-Key: <api key>" \
   -H "Content-Type: application/json" \

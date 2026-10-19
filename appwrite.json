@@ -3,8 +3,8 @@
   "endpoint": "$APPWRITE_ENDPOINT",
   "functions": [
     {
-      "$id": "cron",
-      "name": "Game Jobs Cron",
+      "$id": "6ac81314002e085236df",
+      "name": "gamingZone",
       "runtime": "node-22",
       "path": "apps/backend/functions/cron",
       "entrypoint": "dist/main.js",
@@ -13,7 +13,8 @@
       "logging": true,
       "enabled": true,
       "execute": [],
-      "schedule": "*/5 * * * *",
+      "schedule": "",
+      "interval": 60,
       "events": []
     }
   ]
