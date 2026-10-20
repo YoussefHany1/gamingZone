@@ -196,7 +196,7 @@ const GamesListHeader = ({
                 </CustomText>
               ) : null}
             </View>
-            {canEdit && <Pencil size={20} color={colors.accent} />}
+            {canEdit && <Pencil size={20} color={colors.accentText}/>}
           </TouchableOpacity>
         )}
       </View>

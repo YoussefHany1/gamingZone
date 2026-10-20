@@ -365,7 +365,7 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
     return (
       <View style={styles.footer}>
         {isLoadingMore ? (
-          <ActivityIndicator color={colors.accent} />
+          <ActivityIndicator color={colors.accentText}/>
         ) : (
           <TouchableOpacity
             style={styles.nextBtn}

@@ -59,7 +59,7 @@ const LanguageOptionRow = memo(
           <CustomText style={[styles.title, isRtl ? styles.titleRtl : styles.titleLtr]}>
             {label}
           </CustomText>
-          {isSelected && <Check size={24} color={colors.accent} />}
+          {isSelected && <Check size={24} color={colors.accentText}/>}
         </View>
       </TouchableOpacity>
     );

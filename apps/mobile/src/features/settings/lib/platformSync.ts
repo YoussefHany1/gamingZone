@@ -1,0 +1,467 @@
+/**
+ * platformSync — the shared pipeline behind linked-account library imports.
+ *
+ * Both the manual "Sync now" UI (LinkAccountModal) and the silent app-open
+ * auto-sync (useAppOpenSync) run the same flow through here:
+ *
+ *   resolve → fetch library → map to IGDB → batch-write to Firestore lists
+ *
+ * Platform adapters:
+ *  - Steam: backend-owned `/steam/*` endpoints (appids → IGDB by external id).
+ *  - PSN:   backend `/psn/sync` (played titles) + `/igdb/map-by-names` with a
+ *           server-side global name cache.
+ *
+ * Firestore shape written here is identical to the pre-existing Steam flow:
+ * users/{uid}/lists/{playing|played|wantToPlay}/games/{igdbId}, with a new
+ * `platformOrigin` stamp. Legacy docs have it `undefined`, which callers must
+ * treat as the implicit "steam" default.
+ *
+ * Import classification (matching the legacy Steam flow):
+ *  - Steam: playtime in the last 2 weeks → "playing", rest → "played".
+ *  - PSN:   touched within the last 21 days → "playing", rest → "played".
+ *  - Steam wishlist → "wantToPlay".
+ */
+import auth from "@react-native-firebase/auth";
+import firestore, {
+  type FirebaseFirestoreTypes,
+} from "@react-native-firebase/firestore";
+import i18n from "@/src/i18n";
+import { logger } from "@/src/lib/logger";
+import { storage } from "@/src/lib/storage";
+import {
+  fetchOwnedGames,
+  mapSteamAppsToIgdb,
+  fetchSteamWishlist,
+} from "@/src/services/api/steamApi";
+import { mapTitlesToIgdb, syncPsnTitles } from "@/src/services/api/linkedAccountsApi";
+import { normalizeGameTitle } from "@gaming-zone/utils";
+import type {
+  LinkedAccountPlatform,
+  SteamGame,
+} from "@/src/features/settings/types";
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+/** An account older than this is silently re-synced on app open. */
+export const SYNC_STALE_MS = 24 * 60 * 60 * 1000;
+const FIRESTORE_BATCH_LIMIT = 400; // < 500 safety margin
+/** A PSN title counts as "currently playing" if touched in the last 3 weeks. */
+const PSN_RECENT_DAYS = 21;
+const MMKV_SYNC_LOCK = "@linked_sync_running";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export type SyncOutcome = "ok" | "empty" | "private" | "error";
+
+export type PsnSyncOutcome = "ok" | "empty" | "reauth_required" | "error";
+
+/** One imported entry, ready for the Firestore writer. */
+interface ImportedGame {
+  id: number;
+  name: string;
+  cover_image_id: string | null;
+  release_date: string;
+  platformOrigin: LinkedAccountPlatform;
+  /** Steam only. */
+  steamPlaytimeForever?: number;
+  /** Recency marker stamped inside the recency window (Steam 14d / PSN 21d).
+   * Non-null → the writer lands the game in "playing" instead of "played". */
+  lastPlayedMs?: number | null;
+}
+
+// ─── Locking ─────────────────────────────────────────────────────────────────
+
+/**
+ * MMKV flag-lock so a manual sync and the app-open hook never run
+ * concurrently — overlapping Firestore batch commits duplicate work.
+ */
+export function isSyncLocked(): boolean {
+  return storage.getString(MMKV_SYNC_LOCK) === "1";
+}
+
+function lockSync(): void {
+  storage.set(MMKV_SYNC_LOCK, "1");
+}
+
+function unlockSync(): void {
+  storage.remove(MMKV_SYNC_LOCK);
+}
+
+/**
+ * Runs `fn` while holding the sync lock. Returns null (instead of queueing)
+ * when another sync is already running.
+ */
+async function withSyncLock<T>(fn: () => Promise<T>): Promise<T | null> {
+  if (isSyncLocked()) {
+    logger.debug("[platformSync] another sync already running — skipping");
+    return null;
+  }
+  lockSync();
+  try {
+    return await fn();
+  } finally {
+    unlockSync();
+  }
+}
+
+/** True when the import should land in the "playing" list.
+ *
+ * `lastPlayedMs` is only stamped by the adapters when the title was touched
+ * inside the platform's recency window (Steam: played in last 2 weeks;
+ * PSN: lastPlayed within 21 days) — null otherwise. Uniform decision here. */
+function isCurrentlyPlaying(game: ImportedGame): boolean {
+  return game.lastPlayedMs != null;
+}
+
+// ─── Firestore writer (shared by every platform) ─────────────────────────────
+
+/**
+ * Ensures the three default lists exist, then batch-writes every game into the
+ * right list with `merge: true` (re-imports never duplicate docs).
+ */
+async function writeImportedGames(games: ImportedGame[]): Promise<number> {
+  const uid = auth().currentUser?.uid;
+  if (!uid || games.length === 0) return 0;
+
+  const db = firestore();
+  const listsRef = db.collection("users").doc(uid).collection("lists");
+
+  // Ensure the default lists exist (same as the legacy modal).
+  const t = i18n.t.bind(i18n);
+  const defaults: Array<{ id: string; name: string }> = [
+    { id: "playing", name: t("games.details.listStatus.playing") },
+    { id: "played", name: t("games.details.listStatus.played") },
+    { id: "wantToPlay", name: t("games.details.listStatus.wantToPlay") },
+  ];
+  const ensureLists = db.batch();
+  for (const item of defaults) {
+    ensureLists.set(
+      listsRef.doc(item.id),
+      {
+        name: item.name,
+        type: "default",
+        createdAt: firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+  }
+  await ensureLists.commit();
+
+  let batch: FirebaseFirestoreTypes.WriteBatch = db.batch();
+  let opCount = 0;
+  let written = 0;
+
+  for (const game of games) {
+    const listId = isCurrentlyPlaying(game) ? "playing" : "played";
+    const docRef = listsRef.doc(listId).collection("games").doc(String(game.id));
+
+    batch.set(
+      docRef,
+      {
+        id: game.id,
+        name: game.name,
+        cover_image_id: game.cover_image_id,
+        release_date: game.release_date,
+        platformOrigin: game.platformOrigin,
+        ...(game.steamPlaytimeForever != null
+          ? { steamPlaytimeForever: game.steamPlaytimeForever }
+          : {}),
+        addedAt: firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    written++;
+    opCount++;
+
+    if (opCount >= FIRESTORE_BATCH_LIMIT) {
+      await batch.commit();
+      batch = db.batch();
+      opCount = 0;
+    }
+  }
+
+  if (opCount > 0) await batch.commit();
+  return written;
+}
+
+// ─── Steam adapter ───────────────────────────────────────────────────────────
+
+interface SteamOwnedPlaytime {
+  playtimeForever: number;
+  playtime2weeks: number;
+}
+
+type FetchOwnedOutcome =
+  | { status: "ok"; games: SteamGame[] }
+  | { status: "private" }
+  | { status: "error" };
+
+/** Thin wrapper giving syncSteamLibrary a stable, typed outcome. */
+async function fetchSteamOutcome(steamId: string): Promise<FetchOwnedOutcome> {
+  try {
+    const data = await fetchOwnedGames(steamId);
+    return { status: "ok", games: Array.isArray(data.games) ? data.games : [] };
+  } catch (error) {
+    const status = (error as unknown as { status?: number }).status;
+    if (Number(status) === 403) return { status: "private" };
+    // Fallback: the shared axios client discards statuses in its message.
+    if (String((error as Error).message ?? "").includes("403")) {
+      return { status: "private" };
+    }
+    return { status: "error" };
+  }
+}
+
+/**
+ * Full Steam sync for a resolved SteamID. Returns a SyncOutcome; never throws.
+ * Errors ARE returned (never thrown) so callers like silent auto-sync can
+ * branch on the outcome without try/catch noise.
+ */
+export async function syncSteamLibrary(steamId: string): Promise<SyncOutcome> {
+  const result = await withSyncLock(async (): Promise<SyncOutcome> => {
+    try {
+      if (!steamId) return "error";
+
+      // 1. Owned (played) games — filter to played only, like the modal did.
+      const owned = await fetchSteamOutcome(steamId);
+      if (owned.status === "private") return "private";
+      if (owned.status === "error") return "error";
+
+      const playedOnly = owned.games.filter((g) => g.playtime_forever > 0);
+      if (playedOnly.length === 0) return "empty";
+
+      // 2. IGDB mapping in batches via backend.
+      const mapped = await mapSteamAppsToIgdb(playedOnly.map((g) => g.appid));
+      const playtimeByAppId = new Map<number, SteamOwnedPlaytime>();
+      for (const g of playedOnly) {
+        playtimeByAppId.set(Number(g.appid), {
+          playtimeForever: g.playtime_forever,
+          playtime2weeks: g.playtime_2weeks ?? 0,
+        });
+      }
+
+      const games: ImportedGame[] = mapped.flatMap((game) => {
+        const appId = Number(
+          (game as unknown as { steam_appid?: number }).steam_appid ?? NaN,
+        );
+        const playtime = playtimeByAppId.get(appId);
+        if (!playtime) return [];
+        return [
+          {
+            id: game.id,
+            name: game.name,
+            cover_image_id: game.cover_image_id,
+            release_date: game.release_date,
+            platformOrigin: "steam" as const,
+            steamPlaytimeForever: playtime.playtimeForever,
+            // lastPlayedMs doubles as the "playing" marker for the writer
+            lastPlayedMs: playtime.playtime2weeks > 0 ? Date.now() : null,
+          } satisfies ImportedGame,
+        ];
+      });
+
+      // 3. Wishlist → wantToPlay.
+      const playedIds = new Set(
+        mapped.map((g) => Number((g as { steam_appid?: number }).steam_appid)),
+      );
+      let wishlistGames: ImportedGame[] = [];
+      try {
+        const wishlistAppIds = await fetchSteamWishlist(steamId);
+        const uniqueWishlistAppIds = Array.from(
+          new Set(
+            wishlistAppIds.filter((id) => Number.isFinite(id) && !playedIds.has(Number(id))),
+          ),
+        );
+        if (uniqueWishlistAppIds.length > 0) {
+          const mappedWishlist = await mapSteamAppsToIgdb(uniqueWishlistAppIds);
+          wishlistGames = mappedWishlist.map((game) => ({
+            id: game.id,
+            name: game.name,
+            cover_image_id: game.cover_image_id,
+            release_date: game.release_date,
+            platformOrigin: "steam",
+            lastPlayedMs: null,
+          }));
+        }
+      } catch (e) {
+        logger.warn("[platformSync] Steam wishlist import skipped:", e);
+      }
+
+      // 4. Writes.
+      const playingAndPlayed = await writeImportedGames(games);
+      // Wishlist items are appended to wantToPlay directly (same listsRef).
+      const wishlistWritten = await writeSteamWishlistGames(wishlistGames);
+
+      const total = playingAndPlayed + wishlistWritten;
+      if (total === 0) return "empty";
+
+      await markSynced("steam");
+      return "ok";
+    } catch (e) {
+      logger.error("[platformSync] Steam sync failed:", e);
+      return "error";
+    }
+  });
+
+  return result ?? "error"; // lock-busy behaves as a no-op error for callers
+}
+
+/**
+ * Wishlist items land in wantToPlay, not the played-driven lists.
+ */
+async function writeSteamWishlistGames(games: ImportedGame[]): Promise<number> {
+  const uid = auth().currentUser?.uid;
+  if (!uid || games.length === 0) return 0;
+
+  const db = firestore();
+  const gamesRef = db.collection("users").doc(uid).collection("lists").doc("wantToPlay").collection("games");
+
+  let batch: FirebaseFirestoreTypes.WriteBatch = db.batch();
+  let opCount = 0;
+  let written = 0;
+
+  for (const game of games) {
+    batch.set(
+      gamesRef.doc(String(game.id)),
+      {
+        id: game.id,
+        name: game.name,
+        cover_image_id: game.cover_image_id,
+        release_date: game.release_date,
+        platformOrigin: game.platformOrigin,
+        addedAt: firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+    written++;
+    opCount++;
+    if (opCount >= FIRESTORE_BATCH_LIMIT) {
+      await batch.commit();
+      batch = db.batch();
+      opCount = 0;
+    }
+  }
+  if (opCount > 0) await batch.commit();
+  return written;
+}
+
+// ─── PSN adapter ─────────────────────────────────────────────────────────────
+
+/**
+ * Full PSN sync: backend pulls played titles, IGDB name-map resolves them,
+ * the writer lands them in the lists. Reauth failures NEVER throw — the
+ * outcome tells the caller to show the reconnect UI instead.
+ */
+export async function syncPsnLibrary(): Promise<PsnSyncOutcome> {
+  const result = await withSyncLock(async (): Promise<PsnSyncOutcome> => {
+    try {
+      const response = await syncPsnTitles();
+      if (response.status === "reauth_required") return "reauth_required";
+      if (response.status !== "ok") return "error";
+
+      const titles = response.titles ?? [];
+      if (titles.length === 0) return "empty";
+
+      // Dedupe by normalized name: PSN regularly lists the SAME game again for
+      // a different platform version (PS4/PS5/PC).
+      const unique = new Map<string, PsnTitleShape>();
+      for (const title of titles) {
+        const key = normalizeGameTitle(title.name);
+        if (!key) continue;
+        const existing = unique.get(key);
+        if (!existing || lastPlayedMs(title) > lastPlayedMs(existing)) {
+          unique.set(key, title);
+        }
+      }
+      const uniqueTitles = Array.from(unique.values());
+      const uniqueNames = uniqueTitles.map((t) => t.name);
+
+      // IGDB map-by-names (server-side cache; pace + 429 handled server-side).
+      const mapped = await mapTitlesToIgdb(uniqueNames);
+      if (mapped.length === 0) return "empty";
+
+      const byTitle = new Map(mapped.map((r) => [normalizeGameTitle(r.title), r.game]));
+      const games: ImportedGame[] = [];
+      for (const [key, title] of unique.entries()) {
+        const game = byTitle.get(key);
+        if (!game) continue; // unmatched → negative-cached server-side, skipped here
+        const playedMs = lastPlayedMs(title);
+        games.push({
+          id: game.id,
+          name: game.name,
+          cover_image_id: game.cover_image_id,
+          release_date: game.release_date,
+          platformOrigin: "psn",
+          // Only recently-touched titles get the marker → they land in "playing".
+          lastPlayedMs:
+            playedMs > 0 && Date.now() - playedMs < PSN_RECENT_DAYS * 24 * 60 * 60 * 1000
+              ? playedMs
+              : null,
+        });
+      }
+      if (games.length === 0) return "empty";
+
+      const written = await writeImportedGames(games);
+      if (written === 0) return "empty";
+
+      await markSynced("psn");
+      return "ok";
+    } catch (e) {
+      logger.error("[platformSync] PSN sync failed:", e);
+      return "error";
+    }
+  });
+
+  return result ?? "error";
+}
+
+interface PsnTitleShape {
+  name: string;
+  lastPlayedDateTime: string | null;
+}
+
+function lastPlayedMs(title: PsnTitleShape): number {
+  if (!title.lastPlayedDateTime) return -1;
+  const ms = Date.parse(title.lastPlayedDateTime);
+  return Number.isFinite(ms) ? ms : -1;
+}
+
+// ─── Linked-account helpers ──────────────────────────────────────────────────
+
+/** Writes lastSyncedAt under the user's linkedAccounts doc (rules: owner-only). */
+export async function markSynced(platform: LinkedAccountPlatform): Promise<void> {
+  try {
+    const uid = auth().currentUser?.uid;
+    if (!uid) return;
+    await firestore().collection("users").doc(uid).collection("linkedAccounts").doc(platform).set(
+      { platform, lastSyncedAt: Date.now() },
+      { merge: true },
+    );
+  } catch (e) {
+    logger.warn("[platformSync] markSynced failed:", e);
+  }
+}
+
+/** Flips the account to "unlinked" (artifacts in lists are kept). */
+export async function unlinkAccount(platform: LinkedAccountPlatform): Promise<void> {
+  try {
+    const uid = auth().currentUser?.uid;
+    if (!uid) return;
+    await firestore().collection("users").doc(uid).collection("linkedAccounts").doc(platform).set(
+      { platform, status: "unlinked" },
+      { merge: true },
+    );
+  } catch (e) {
+    logger.warn("[platformSync] unlinkAccount failed:", e);
+  }
+}
+
+/**
+ * True when `Date.now() - lastSyncedMs` exceeds the staleness window.
+ * NOTE the subtraction direction — easy to invert by mistake.
+ */
+export function isAccountStale(lastSyncedMs: number | null | undefined): boolean {
+  if (lastSyncedMs == null) return true; // never synced
+  return Date.now() - lastSyncedMs > SYNC_STALE_MS;
+}

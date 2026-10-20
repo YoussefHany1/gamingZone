@@ -2,18 +2,12 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { unixDaysAgo, unixDaysFromNow, unixMonthsAgo, unixNow, unixYearsAgo } from './time.js';
+import { AppError, callIgdb, getAppToken, asyncRoute } from './igdbClient.js';
+import { registerLinkedAccountRoutes } from './linkedAccounts.js';
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
-const CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
-
-if (!CLIENT_ID || !CLIENT_SECRET) {
-  console.error('TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET must be set in environment.');
-  process.exit(1);
-}
 
 const cacheMiddleware = (duration) => (req, res, next) => {
   if (req.method === 'GET') {
@@ -22,103 +16,9 @@ const cacheMiddleware = (duration) => (req, res, next) => {
   next();
 };
 
-/**
- * Error carrying an HTTP status. 4xx statuses surface `err.message` to the
- * client (expected, user-fixable); 5xx are collapsed to a generic message.
- */
-class AppError extends Error {
-  constructor(message, status = 500) {
-    super(message);
-    this.status = status;
-  }
-}
-
-/** Wraps an async route handler; rejections flow to the central error handler. */
-const asyncRoute = (fn) => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch(next);
-};
-
 // NOTE: the central error handler (app.use with 4 params) is registered at the
 // bottom of this file — Express only reaches error middleware positioned after
 // the route that rejected. See near `app.get('*')`.
-
-let cachedToken = null;
-
-async function getAppToken() {
-  if (cachedToken && cachedToken.expiresAt > Date.now() + 10000) {
-    return cachedToken.token;
-  }
-  const params = new URLSearchParams({
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-    grant_type: 'client_credentials',
-  });
-
-  try {
-    const res = await fetch(`https://id.twitch.tv/oauth2/token`, {
-      method: 'POST',
-      body: params,
-    });
-    if (!res.ok) throw new Error('Failed to get token: ' + res.statusText);
-    const data = await res.json();
-    cachedToken = {
-      token: data.access_token,
-      expiresAt: Date.now() + data.expires_in * 1000,
-    };
-    return cachedToken.token;
-  } catch (error) {
-    console.error('Error getting app token:', error);
-    throw error;
-  }
-}
-
-async function callIgdb(apiEndpoint, queryBody) {
-  try {
-    const token = await getAppToken();
-
-    const res = await fetch(`https://api.igdb.com/v4/${apiEndpoint}`, {
-      method: 'POST',
-      headers: {
-        'Client-ID': CLIENT_ID,
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'text/plain',
-        Accept: 'application/json',
-      },
-      body: queryBody,
-    });
-
-    const text = await res.text();
-
-    if (!res.ok) {
-      console.error('IGDB returned non-OK status:', res.status, res.statusText);
-      console.error('IGDB response body:', text);
-      throw new AppError(`IGDB API Error: ${res.status} ${res.statusText}`, 502);
-    }
-
-    // Attempt to parse JSON, with error handling
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (err) {
-      console.error('Failed to parse IGDB JSON response:', err);
-      console.error('Raw body:', text);
-      throw new AppError('Failed to parse IGDB JSON response', 502);
-    }
-
-    // Adjust cover URLs
-    if (!Array.isArray(data)) return data;
-    return data.map((game) => {
-      if (game.cover && game.cover.url) {
-        game.cover.url = `https:${game.cover.url.replace('t_thumb', 't_cover_big')}`;
-      }
-      return game;
-    });
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    console.error('Error calling IGDB:', error);
-    throw new AppError('Failed to reach IGDB', 502);
-  }
-}
 //  Endpoints
 
 const BASE_QUERY_FIELDS =
@@ -1481,6 +1381,9 @@ app.get('/play/search', cacheMiddleware(3600), asyncRoute(async (req, res) => {
   const html = await pageResponse.text();
   res.json({ packageId, price: extractPlayPrice(html), url: appUrl });
 }));
+
+// Linked accounts (Steam OpenID + PSN library import + IGDB name mapping)
+registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgdb });
 
 // invalid route handler (404)
 app.get('*', (req, res) => {

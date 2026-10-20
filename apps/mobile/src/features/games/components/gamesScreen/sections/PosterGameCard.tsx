@@ -147,7 +147,7 @@ const PosterGameCard = React.memo<PosterGameCardProps>(
             {rating > 0 && (
               <View style={styles.statItem}>
                 {statIconVariant === "star" ? (
-                  <Star size={12} color={colors.accent} />
+                  <Star size={12} color={colors.accentText}/>
                 ) : (
                   <CustomText style={styles.statIcon}>⭐</CustomText>
                 )}

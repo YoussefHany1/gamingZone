@@ -2,16 +2,12 @@ import { logger } from '../../lib/logger';
 import * as sdk from 'node-appwrite';
 
 import { loadBackendEnv } from '../../lib/env';
-import {
-  env,
-  getAiProviderOverride,
-  getGeminiKey,
-  getGroqKey,
-  getGroqModel,
-} from '../../lib/config';
+import { env, getAiProviderConfig, getCerebrasModels, getGroqModels } from '../../lib/config';
 import { createAppwriteDatabases } from '../../lib/appwrite';
 import { getErrorMessage } from '../../lib/errors';
-import { generateAiText } from '../../lib/ai';
+import { createAiRuntime } from '../../lib/ai';
+import type { AiRuntime } from '../../lib/ai';
+import { formatAiChain } from '../../lib/ai.shared';
 
 import {
   BACKFILL_CONCURRENCY,
@@ -22,8 +18,8 @@ import {
   LANGUAGE_TO_JSON_KEY,
   MAX_ATTEMPTS,
   MAX_BACKFILL_MS,
-  MODEL,
   SUMMARY_LANGUAGES,
+  articleSummaryChain,
   buildPendingQueueQuery,
   buildPrompt,
   cleanSummary,
@@ -62,34 +58,29 @@ export interface BackfillOptions {
 }
 
 /**
- * Generates the 7-language summary JSON, trying Gemini first and falling back
- * to Groq (see `lib/ai`). Returns the parsed map; validation/cleaning happens in
+ * Generates the 7-language summary JSON via the model fallback chain (see
+ * `lib/ai`). Returns the parsed map; validation/cleaning happens in
  * `parseSummaries`, so a partial response is still usable.
+ *
+ * The per-task chain (flash-lite first) comes from `articleSummaryChain`, so
+ * this high-volume job keeps its cheap-primary cost profile regardless of the
+ * shared `AI_CHAIN`/default chain.
  */
-async function generateSummaries(prompt: string): Promise<SummaryMap> {
-  const { provider, text } = await generateAiText(
-    {
-      prompt,
-      label: 'article summary',
-      geminiModel: MODEL,
-      geminiSchema: {
-        type: 'OBJECT',
-        properties: Object.fromEntries(
-          Object.values(LANGUAGE_TO_JSON_KEY).map((key) => [key, { type: 'STRING' }]),
-        ),
-      },
-      groqModel: getGroqModel(),
-      temperature: 0.4,
+async function generateSummaries(prompt: string, ai: AiRuntime): Promise<SummaryMap> {
+  const { provider, model, text } = await ai.generate({
+    prompt,
+    label: 'article summary',
+    chain: articleSummaryChain(getGroqModels(), getCerebrasModels()),
+    geminiSchema: {
+      type: 'OBJECT',
+      properties: Object.fromEntries(
+        Object.values(LANGUAGE_TO_JSON_KEY).map((key) => [key, { type: 'STRING' }]),
+      ),
     },
-    {
-      geminiKey: getGeminiKey(),
-      groqKey: getGroqKey(),
-      override: getAiProviderOverride(),
-    },
-    { log: logger },
-  );
+    temperature: 0.4,
+  });
 
-  logger.info(`🤖 Article summary generated via ${provider}.`);
+  logger.info(`🤖 Article summary generated via ${provider}/${model}.`);
   return parseSummaries(text);
 }
 /**
@@ -100,7 +91,10 @@ async function generateSummaries(prompt: string): Promise<SummaryMap> {
  * (`summaries_failed`) are deliberately distinct states so a failed article is
  * never mistaken for a summarized one. Never throws.
  */
-async function enrichArticleWithSummaries(article: SummarizableArticle): Promise<boolean> {
+async function enrichArticleWithSummaries(
+  article: SummarizableArticle,
+  ai: AiRuntime,
+): Promise<boolean> {
   const attempts = (article.summaries_attempts ?? 0) + 1;
 
   try {
@@ -112,7 +106,7 @@ async function enrichArticleWithSummaries(article: SummarizableArticle): Promise
   }
 
   try {
-    const summaries = await generateSummaries(buildPrompt(article));
+    const summaries = await generateSummaries(buildPrompt(article), ai);
 
     const payload: Record<string, unknown> = { summaries_attempts: attempts };
     let found = 0;
@@ -202,6 +196,12 @@ async function runBackfillArticleSummaries(options: BackfillOptions = {}): Promi
   const oldestLimit = sanitizeQueueLimit(options.oldest, BACKFILL_OLDEST);
   const maxDurationMs = options.maxDurationMs ?? MAX_BACKFILL_MS;
 
+  // One runtime per run: the backfill makes hundreds of AI calls below, and
+  // all of them share the memory of quota-exhausted models (a model that
+  // failed over on quota is skipped on every later call instead of costing
+  // one wasted 429 round-trip per article).
+  const ai = createAiRuntime(getAiProviderConfig(), { log: logger });
+
   let newest: sdk.Models.Document[] = [];
   let oldest: sdk.Models.Document[] = [];
 
@@ -227,7 +227,7 @@ async function runBackfillArticleSummaries(options: BackfillOptions = {}): Promi
   }
 
   logger.info(
-    `🧠 Generating summaries for ${unique.length} article(s) — gemini=${MODEL} · groq=${getGroqModel()}...`,
+    `🧠 Generating summaries for ${unique.length} article(s) — chain: ${formatAiChain(articleSummaryChain(getGroqModels(), getCerebrasModels()))}...`,
   );
   const deadline = Date.now() + maxDurationMs;
 
@@ -246,7 +246,7 @@ async function runBackfillArticleSummaries(options: BackfillOptions = {}): Promi
     const batch = unique.slice(i, i + BACKFILL_CONCURRENCY);
     const batchStartedAt = Date.now();
     const results = await Promise.allSettled(
-      batch.map((doc) => enrichArticleWithSummaries(doc as unknown as SummarizableArticle)),
+      batch.map((doc) => enrichArticleWithSummaries(doc as unknown as SummarizableArticle, ai)),
     );
 
     results.forEach((result, index) => {

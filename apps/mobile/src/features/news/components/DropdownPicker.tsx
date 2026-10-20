@@ -301,7 +301,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                     </CustomText>
                   </View>
                   {selectedItem?.name === item.name && (
-                    <Check size={24} color={colors.accent} />
+                    <Check size={24} color={colors.accentText}/>
                   )}
                 </TouchableOpacity>
               )}

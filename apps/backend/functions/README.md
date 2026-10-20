@@ -134,6 +134,13 @@ APPWRITE_DATABASE_ID    <database id>
 GEMINI_API_KEY          <gemini key>
 GROQ_API_KEY            <groq key used as AI fallback>
 GROQ_MODEL              openai/gpt-oss-120b  (default)
+GROQ_MODELS             (optional) Groq fallback order, comma-separated
+                        (default: openai/gpt-oss-120b,openai/gpt-oss-20b; generative models only)
+CEREBRAS_API_KEY        <cerebras key used as final AI fallback>
+CEREBRAS_MODELS         (optional) Cerebras fallback order, comma-separated
+                        (default: gpt-oss-120b,qwen-3.8-27b; generative models only)
+AI_CHAIN                (optional) model fallback chain for AI jobs; default:
+                        gemini/gemini-2.5-flash,gemini/gemini-3.1-flash-lite,groq/openai/gpt-oss-120b,groq/openai/gpt-oss-20b
 FCM_SERVICE_ACCOUNT     <minified firebase service account json>
 RSS_COLLECTION_ID       news_sources           (default)
 ARTICLES_COLLECTION_ID  articles               (default)

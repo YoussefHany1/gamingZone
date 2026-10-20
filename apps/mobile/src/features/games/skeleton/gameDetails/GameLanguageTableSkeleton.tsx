@@ -61,14 +61,14 @@ const GameLanguageTableSkeleton: React.FC = () => {
       {/* Column headers — fully static */}
       <View style={styles.tableHeader}>
         <View style={styles.langHeaderCell}>
-          <Languages size={18} color={colors.accent} />
+          <Languages size={18} color={colors.accentText}/>
           <CustomText style={styles.headerLabel}>
             {t("games.details.languages.Language")}
           </CustomText>
         </View>
         {COLUMN_HEADERS.map(({ icon: Icon, key }) => (
           <View key={key} style={styles.iconHeaderCell}>
-            <Icon size={18} color={colors.accent} />
+            <Icon size={18} color={colors.accentText}/>
             <CustomText style={styles.headerLabel}>
               {t(`games.details.languages.${key}`)}
             </CustomText>

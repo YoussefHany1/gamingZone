@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import ErrorState from "@/src/components/ErrorState";
-import SteamLinkModal from "@/src/components/SteamLinkModal";
+import LinkAccountModal from "@/src/components/LinkAccountModal";
 import { useDeferredReady } from "@/src/hooks/useDeferredReady";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useBottomInset } from "@/src/hooks/useBottomInset";
@@ -19,7 +19,7 @@ import ProfileDobField from "../components/editProfile/ProfileDobField";
 import ProfileGenderSelector from "../components/editProfile/ProfileGenderSelector";
 import ProfileNameField from "../components/editProfile/ProfileNameField";
 import ProfilePlatformSelector from "../components/editProfile/ProfilePlatformSelector";
-import SteamSyncButton from "../components/editProfile/SteamSyncButton";
+import LinkedAccountsButton from "../components/editProfile/LinkedAccountsButton";
 import { useCountryList } from "@/src/hooks/useCountryList";
 import { useEditProfileForm } from "../hooks/useEditProfileForm";
 import { useEmailVerification } from "../hooks/useEmailVerification";
@@ -57,7 +57,7 @@ function EditProfileScreen(): React.ReactElement {
     useEmailVerification(currentUser);
 
   const [showAvatarPicker, setShowAvatarPicker] = useState<boolean>(false);
-  const [showSteamModal, setShowSteamModal] = useState<boolean>(false);
+  const [showLinkModal, setShowLinkModal] = useState<boolean>(false);
 
   const bottomInset = useBottomInset();
   const styles = useThemeStyles(
@@ -97,8 +97,8 @@ function EditProfileScreen(): React.ReactElement {
     void pickImage();
   }, [pickImage]);
 
-  const openSteamModal = useCallback((): void => setShowSteamModal(true), []);
-  const closeSteamModal = useCallback((): void => setShowSteamModal(false), []);
+  const openLinkModal = useCallback((): void => setShowLinkModal(true), []);
+  const closeLinkModal = useCallback((): void => setShowLinkModal(false), []);
 
   if (!currentUser) {
     return <ErrorState message={t("common.loginRequired")} showContactButton={false} />;
@@ -140,7 +140,7 @@ function EditProfileScreen(): React.ReactElement {
 
           <AdSlot visible={isReady} marginVertical={30} />
 
-          <SteamSyncButton onPress={openSteamModal} />
+          <LinkedAccountsButton onPress={openLinkModal} />
 
           <TouchableOpacity onPress={save} style={styles.saveBtn}>
             <CustomText style={styles.saveText}>{t("common.saveChanges")}</CustomText>
@@ -150,7 +150,7 @@ function EditProfileScreen(): React.ReactElement {
         </ScrollView>
       )}
 
-      <SteamLinkModal visible={showSteamModal} onClose={closeSteamModal} />
+      <LinkAccountModal visible={showLinkModal} onClose={closeLinkModal} />
 
       <AvatarPickerModal
         visible={showAvatarPicker}

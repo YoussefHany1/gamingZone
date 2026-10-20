@@ -123,9 +123,9 @@ const NotificationCategorySection = memo(
         >
           <View style={styles.categoryHeaderLeft}>
             {isExpanded ? (
-              <ChevronDown size={20} color={colors.accent} style={styles.chevronIcon} />
+              <ChevronDown size={20} color={colors.accentText}style={styles.chevronIcon} />
             ) : (
-              <ChevronRight size={20} color={colors.accent} style={styles.chevronIcon} />
+              <ChevronRight size={20} color={colors.accentText}style={styles.chevronIcon} />
             )}
             <CustomText style={styles.categoryTitle}>{title}</CustomText>
             <CustomText style={styles.sourceCount}>({sources.length})</CustomText>

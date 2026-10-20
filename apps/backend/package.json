@@ -7,6 +7,7 @@
     "summary:weekly": "tsx ./scripts/jobs/weeklySummary.job.ts",
     "summary:articles": "tsx ./scripts/jobs/articleSummaries.job.ts",
     "summary:articles:status": "tsx ./scripts/jobs/articleSummaryStatus.job.ts",
+    "ai:models": "tsx ./scripts/jobs/aiModels.job.ts",
     "migrate:article-summaries": "tsx ./scripts/migrateArticleSummaryAttributes.ts",
     "admin:claim": "tsx ./scripts/setAdminClaim.ts",
     "check:scripts": "tsc --noEmit",

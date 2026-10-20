@@ -147,7 +147,7 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
       {/* Table header */}
       <View style={styles.tableHeader}>
         <View style={styles.langHeaderCell}>
-          <Languages size={18} color={colors.accent} />
+          <Languages size={18} color={colors.accentText} />
           <CustomText style={styles.headerCellLabel}>
             {t("games.details.languages.Language")}
           </CustomText>
@@ -157,7 +157,7 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
           const Icon = COLUMN_ICONS[key];
           return (
             <View key={key} style={styles.iconHeaderCell}>
-              <Icon size={18} color={colors.accent} />
+              <Icon size={18} color={colors.accentText} />
               <CustomText style={styles.headerCellLabel}>
                 {t(COLUMN_I18N_KEYS[key])}
               </CustomText>
@@ -196,7 +196,7 @@ const GameLanguageTable: React.FC<GameLanguageTableProps> = ({ languageList }) =
                       <Check size={12} color={colors.onAccent} strokeWidth={2.8} />
                     </View>
                   ) : (
-                    <CircleCheck size={20} color={colors.accent} />
+                    <CircleCheck size={20} color={colors.accentText} />
                   ))}
               </View>
             ))}

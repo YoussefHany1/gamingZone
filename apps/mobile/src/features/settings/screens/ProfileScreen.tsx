@@ -47,6 +47,7 @@ const ProfileScreen = React.memo((): React.ReactElement => {
     },
     content: {
       padding: 20,
+      paddingBottom:60
     },
     coversRow: {
       flexDirection: "row",
@@ -87,7 +88,7 @@ const ProfileScreen = React.memo((): React.ReactElement => {
 
             <SectionTitle title={t("settings.profileShowcase.statsSection")} />
             <ProfileStatsGrid stats={stats} />
-
+<AdSlot visible={isReady} marginVertical={22} />
             {(stats?.highestRated.length ?? 0) > 0 && (
               <>
                 <SectionTitle title={t("settings.profileShowcase.highestRated")} />
@@ -110,7 +111,6 @@ const ProfileScreen = React.memo((): React.ReactElement => {
               onMyLists={() => navigation.navigate("UserListsScreen")}
             />
 
-            <AdSlot visible={isReady} marginVertical={22} />
           </>
         )}
       </ScrollView>

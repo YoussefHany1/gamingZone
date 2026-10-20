@@ -60,6 +60,8 @@ export const FUNCTIONS = [
 export const RETIRED_FUNCTIONS = [];
 
 // Mirrors scripts/lib/config.ts — every job reads the same variables.
+// Unset values are skipped with a warning (not fatal), so optional entries
+// (model lists, the extra provider key) can live here harmlessly.
 export const REQUIRED_VARS = [
   'APPWRITE_ENDPOINT',
   'APPWRITE_PROJECT',
@@ -68,6 +70,9 @@ export const REQUIRED_VARS = [
   'GEMINI_API_KEY',
   'GROQ_API_KEY',
   'GROQ_MODEL',
+  'GROQ_MODELS',
+  'CEREBRAS_API_KEY',
+  'CEREBRAS_MODELS',
   'FCM_SERVICE_ACCOUNT',
   'RSS_COLLECTION_ID',
   'ARTICLES_COLLECTION_ID',

@@ -7,19 +7,28 @@ import {
   AI_RETRIES,
   AI_TIMEOUT_MS,
   AiRateLimitError,
+  CEREBRAS_CHAT_COMPLETIONS_URL,
+  DEFAULT_CEREBRAS_MODELS,
+  DEFAULT_GROQ_MODELS,
   GEMINI_BASE_URL,
   GROQ_CHAT_COMPLETIONS_URL,
+  buildChatCompletionsRequestBody,
   buildGeminiRequestBody,
-  buildGroqRequestBody,
+  extractChatCompletionsText,
   extractGeminiText,
-  extractGroqText,
   geminiRetryDelayMs,
   headerRetryDelayMs,
   isGeminiRateLimit,
   rateLimitRetryAfterMs,
-  resolveAiProviders,
+  resolveAiModels,
 } from './ai.shared';
-import type { AiProvider, AiProviderKeys } from './ai.shared';
+import type {
+  AiModel,
+  AiProvider,
+  AiProviderConfig,
+  AiProviderKeys,
+  AiTextResult,
+} from './ai.shared';
 
 /**
  * Minimal logger surface so this module stays free of `pino` (and therefore
@@ -32,12 +41,14 @@ interface AiLog {
 
 interface AiCallOptions {
   prompt: string;
-  /** Gemini model id, e.g. `gemini-3.1-flash-lite`. */
-  geminiModel: string;
-  /** Gemini structured-output schema (Groq uses JSON mode instead). */
+  /**
+   * Gemini structured-output schema. A TOP-LEVEL option shared by every
+   * `gemini/*` entry in the chain (Groq uses JSON mode instead) — chain entries
+   * are pure routing (`provider` + `model`) and carry no schema.
+   */
   geminiSchema: Record<string, unknown>;
-  /** Groq model id, e.g. `llama-3.3-70b-versatile`. */
-  groqModel: string;
+  /** Per-task chain override — beats the `AI_CHAIN` env and the default chain. */
+  chain?: AiModel[];
   /** Short label used in logs, e.g. `article summary`. */
   label?: string;
   temperature?: number;
@@ -55,7 +66,11 @@ interface AiDeps {
 
 const NOOP_LOG: AiLog = { info: () => {}, warn: () => {} };
 
+/** Canonical id used in logs and the sticky-exhausted set: `provider/model`. */
+const modelId = (model: AiModel): string => `${model.provider}/${model.model}`;
+
 async function callGemini(
+  model: AiModel,
   options: AiCallOptions,
   keys: AiProviderKeys,
   fetchImpl: typeof fetch,
@@ -64,7 +79,7 @@ async function callGemini(
   if (!keys.geminiKey) throw new Error('GEMINI_API_KEY is not set.');
 
   const response = await fetchImpl(
-    `${GEMINI_BASE_URL}/${options.geminiModel}:generateContent?key=${keys.geminiKey}`,
+    `${GEMINI_BASE_URL}/${model.model}:generateContent?key=${keys.geminiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -79,7 +94,7 @@ async function callGemini(
 
   // A per-minute quota is not a terminal failure: Google reports exactly how
   // long the caller should wait, so surface that wait instead of letting the
-  // caller treat the call as failed and drop to the Groq fallback.
+  // caller treat the call as failed and drop to the next model in the chain.
   if (isGeminiRateLimit(response.status, data)) {
     const retryAfterMs =
       geminiRetryDelayMs(data) ??
@@ -93,46 +108,104 @@ async function callGemini(
 
   if (!response.ok) {
     throw new Error(
-      `Gemini API error: HTTP ${response.status} ${JSON.stringify(data ?? null).slice(0, 200)}`,
+      `Gemini API error (${model.model}): HTTP ${response.status} ${JSON.stringify(data ?? null).slice(0, 200)}`,
     );
   }
 
   return extractGeminiText(data);
 }
 
-async function callGroq(
+/** OpenAI-compatible JSON-mode request shared by Groq and Cerebras. */
+async function callChatCompletionsProvider(
+  provider: 'Groq' | 'Cerebras',
+  url: string,
+  model: AiModel,
   options: AiCallOptions,
   keys: AiProviderKeys,
   fetchImpl: typeof fetch,
   signal: AbortSignal,
 ): Promise<string> {
-  if (!keys.groqKey) throw new Error('GROQ_API_KEY is not set.');
+  const apiKey = provider === 'Groq' ? keys.groqKey : keys.cerebrasKey;
+  if (!apiKey) throw new Error(`${provider.toUpperCase()}_API_KEY is not set.`);
 
-  const response = await fetchImpl(GROQ_CHAT_COMPLETIONS_URL, {
+  const response = await fetchImpl(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${keys.groqKey}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     signal,
     body: JSON.stringify(
-      buildGroqRequestBody(options.groqModel, options.prompt, options.temperature),
+      buildChatCompletionsRequestBody(model.model, options.prompt, options.temperature),
     ),
   });
 
-  return extractGroqText(await response.json());
+  return extractChatCompletionsText(provider, await response.json());
 }
 
+async function callGroq(
+  model: AiModel,
+  options: AiCallOptions,
+  keys: AiProviderKeys,
+  fetchImpl: typeof fetch,
+  signal: AbortSignal,
+): Promise<string> {
+  return callChatCompletionsProvider(
+    'Groq',
+    GROQ_CHAT_COMPLETIONS_URL,
+    model,
+    options,
+    keys,
+    fetchImpl,
+    signal,
+  );
+}
+
+async function callCerebras(
+  model: AiModel,
+  options: AiCallOptions,
+  keys: AiProviderKeys,
+  fetchImpl: typeof fetch,
+  signal: AbortSignal,
+): Promise<string> {
+  return callChatCompletionsProvider(
+    'Cerebras',
+    CEREBRAS_CHAT_COMPLETIONS_URL,
+    model,
+    options,
+    keys,
+    fetchImpl,
+    signal,
+  );
+}
+
+/** Adapter per provider — all share the same call signature. */
+const callByProvider: Record<
+  AiProvider,
+  (
+    model: AiModel,
+    options: AiCallOptions,
+    keys: AiProviderKeys,
+    fetchImpl: typeof fetch,
+    signal: AbortSignal,
+  ) => Promise<string>
+> = {
+  gemini: callGemini,
+  groq: callGroq,
+  cerebras: callCerebras,
+};
+
 /**
- * Calls one provider, retrying transient failures with exponential backoff.
+ * Calls one model, retrying transient failures with exponential backoff.
  * Aborts a hung request after `timeoutMs`.
  *
  * A rate limit (`retryDelay`) is handled separately: the server's own wait is
  * honoured and the attempt does not count against `retries`, so a throttled
- * Gemini call is retried rather than immediately handing over to Groq.
+ * Gemini call is retried rather than immediately handing over to the next
+ * model in the chain.
  */
-async function callProviderWithRetry(
-  provider: AiProvider,
+async function callModelWithRetry(
+  model: AiModel,
   options: AiCallOptions,
   keys: AiProviderKeys,
   fetchImpl: typeof fetch,
@@ -152,21 +225,19 @@ async function callProviderWithRetry(
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      log.info(`🤖 ${label}: trying ${provider} (attempt ${attempt}/${retries})...`);
-      return provider === 'gemini'
-        ? await callGemini(options, keys, fetchImpl, controller.signal)
-        : await callGroq(options, keys, fetchImpl, controller.signal);
+      log.info(`🤖 ${label}: trying ${modelId(model)} (attempt ${attempt}/${retries})...`);
+      return await callByProvider[model.provider](model, options, keys, fetchImpl, controller.signal);
     } catch (error: unknown) {
       const retryAfterMs = rateLimitRetryAfterMs(error);
 
       // Rate limits do not consume the normal retry budget: while the server
       // asks for a short wait (a per-minute burst) we wait and call the same
-      // provider again.
+      // model again.
       if (retryAfterMs !== null) {
         if (retryAfterMs <= AI_MAX_RATE_LIMIT_WAIT_MS && rateLimitWaits < AI_RATE_LIMIT_RETRIES) {
           rateLimitWaits++;
           log.warn(
-            `⏳ ${label}: ${provider} rate limited — waiting ${Math.round(retryAfterMs / 1000)}s before retrying ` +
+            `⏳ ${label}: ${modelId(model)} rate limited — waiting ${Math.round(retryAfterMs / 1000)}s before retrying ` +
               `(${rateLimitWaits}/${AI_RATE_LIMIT_RETRIES})...`,
           );
           await sleep(retryAfterMs);
@@ -175,7 +246,7 @@ async function callProviderWithRetry(
 
         // Waiting hours is not worth the run's time budget.
         log.warn(
-          `⚠️ ${label}: ${provider} quota exhausted (asked for ${Math.round(retryAfterMs / 1000)}s) — failing over.`,
+          `⚠️ ${label}: ${modelId(model)} quota exhausted (asked for ${Math.round(retryAfterMs / 1000)}s) — failing over.`,
         );
         throw error;
       }
@@ -183,7 +254,7 @@ async function callProviderWithRetry(
       failures++;
       if (failures >= retries) throw error;
       const backoff = backoffBaseMs * 2 ** failures;
-      log.warn(`⚠️ ${label}: ${provider} attempt ${attempt} failed: ${getErrorMessage(error)}`);
+      log.warn(`⚠️ ${label}: ${modelId(model)} attempt ${attempt} failed: ${getErrorMessage(error)}`);
       await sleep(backoff);
     } finally {
       clearTimeout(timer);
@@ -191,60 +262,146 @@ async function callProviderWithRetry(
   }
 }
 
+interface NormalizedDeps {
+  fetchImpl: typeof fetch;
+  log: AiLog;
+  sleep: (ms: number) => Promise<void>;
+  backoffBaseMs: number;
+}
+
+function normalizeDeps(deps: AiDeps): NormalizedDeps {
+  return {
+    fetchImpl: deps.fetchImpl ?? fetch,
+    log: deps.log ?? NOOP_LOG,
+    sleep: deps.sleep ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms))),
+    backoffBaseMs: deps.backoffBaseMs ?? 1_000,
+  };
+}
+
 /**
- * Generates JSON text using the first configured provider that succeeds:
- * Gemini, then Groq. Returns the raw text plus the provider that produced it —
- * parsing/validation is the caller's job.
- *
- * Throws only when no provider is configured or every configured provider
- * fails (the last error is surfaced).
+ * Resolves the effective chain for one call: per-task `chain` > `AI_CHAIN` env
+ * > default chain, filtered to configured provider keys (can throw on a
+ * malformed `AI_CHAIN` — that must fail loudly, not silently shrink).
  */
-async function generateAiText(
+function resolveModels(chain: AiModel[] | undefined, keys: AiProviderConfig): AiModel[] {
+  return resolveAiModels(
+    { chain: chain ?? null, chainEnv: keys.chainEnv ?? null, override: keys.override ?? null },
+    { geminiKey: keys.geminiKey, groqKey: keys.groqKey, cerebrasKey: keys.cerebrasKey },
+    keys.groqModels ?? DEFAULT_GROQ_MODELS,
+    keys.cerebrasModels ?? DEFAULT_CEREBRAS_MODELS,
+  );
+}
+
+function assertModelsAvailable(models: AiModel[]): void {
+  if (models.length === 0) {
+    throw new Error(
+      'No AI provider is configured — set GEMINI_API_KEY and/or GROQ_API_KEY (or fix AI_CHAIN).',
+    );
+  }
+}
+
+/**
+ * Walks the chain until one model succeeds. A model whose failure is a
+ * quota-family error (429 / `RESOURCE_EXHAUSTED`, burst or exhausted
+ * rate-limit retries) is added to `exhausted` so a sticky runtime skips it on
+ * later calls; transient failures (timeouts, 5xx after full retries) do NOT
+ * demote a model.
+ */
+async function runChain(
+  models: AiModel[],
   options: AiCallOptions,
-  keys: AiProviderKeys,
-  deps: AiDeps = {},
-): Promise<{ provider: AiProvider; text: string }> {
-  const fetchImpl = deps.fetchImpl ?? fetch;
-  const log = deps.log ?? NOOP_LOG;
-  const sleep = deps.sleep ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
+  keys: AiProviderConfig,
+  deps: NormalizedDeps,
+  exhausted: Set<string>,
+): Promise<AiTextResult> {
+  const label = options.label ?? 'AI request';
   const retries = Math.max(1, options.retries ?? AI_RETRIES);
   const timeoutMs = options.timeoutMs ?? AI_TIMEOUT_MS;
-  const backoffBaseMs = deps.backoffBaseMs ?? 1_000;
-  const label = options.label ?? 'AI request';
-
-  const providers = resolveAiProviders({
-    geminiKey: keys.geminiKey,
-    groqKey: keys.groqKey,
-    override: keys.override ?? null,
-  });
-
-  if (providers.length === 0) {
-    throw new Error('No AI provider is configured — set GEMINI_API_KEY and/or GROQ_API_KEY.');
-  }
-
   let lastError: unknown;
-  for (const provider of providers) {
+
+  for (const model of models) {
+    if (exhausted.has(modelId(model))) {
+      deps.log.info(`⏭️ Skipping ${modelId(model)} (quota exhausted earlier in this run)`);
+      continue;
+    }
+
     try {
-      const text = await callProviderWithRetry(
-        provider,
+      const text = await callModelWithRetry(
+        model,
         options,
         keys,
-        fetchImpl,
-        log,
-        sleep,
+        deps.fetchImpl,
+        deps.log,
+        deps.sleep,
         retries,
         timeoutMs,
-        backoffBaseMs,
+        deps.backoffBaseMs,
       );
-      return { provider, text };
+      return { provider: model.provider, model: model.model, text };
     } catch (error: unknown) {
       lastError = error;
-      log.warn(`⚠️ ${label}: ${provider} failed: ${getErrorMessage(error)}`);
+      deps.log.warn(`⚠️ ${label}: ${modelId(model)} failed: ${getErrorMessage(error)}`);
+      if (rateLimitRetryAfterMs(error) !== null) exhausted.add(modelId(model));
     }
   }
 
-  throw new Error(`All AI providers failed for ${label}: ${getErrorMessage(lastError)}`);
+  if (lastError === undefined) {
+    throw new Error(
+      `Every model in the chain is quota-exhausted for this run (${label}) — ` +
+        'add a model to AI_CHAIN or wait for the quota to reset.',
+    );
+  }
+  throw new Error(`All AI models failed for ${label}: ${getErrorMessage(lastError)}`);
 }
 
-export { generateAiText };
-export type { AiCallOptions, AiDeps, AiLog };
+/**
+ * Generates JSON text using the first model in the chain that succeeds.
+ * Stateless one-shot: no memory between calls. See `createAiRuntime` for the
+ * run-scoped variant that remembers quota-exhausted models.
+ *
+ * Returns the raw text plus the provider/model that produced it — parsing and
+ * validation are the caller's job. Throws only when nothing is configured or
+ * every configured model fails (the last error is surfaced).
+ */
+async function generateAiText(
+  options: AiCallOptions,
+  keys: AiProviderConfig,
+  deps: AiDeps = {},
+): Promise<AiTextResult> {
+  const models = resolveModels(options.chain, keys);
+  assertModelsAvailable(models);
+  return runChain(models, options, keys, normalizeDeps(deps), new Set());
+}
+
+/**
+ * A run-scoped AI entrypoint: every `generate` call shares one memory of
+ * quota-exhausted models. Create ONE runtime per job run (in
+ * `runGenerateWeeklySummary`, `runBackfillArticleSummaries`, …) and thread it
+ * through every AI call, so a model that failed over on quota is not retried
+ * on the next call — an article backfill makes hundreds of calls and must not
+ * pay one wasted 429 round-trip per call.
+ */
+interface AiRuntime {
+  generate(options: AiCallOptions): Promise<AiTextResult>;
+}
+
+function createAiRuntime(keys: AiProviderConfig, deps: AiDeps = {}): AiRuntime {
+  // Fail fast at job start when nothing is usable: chain availability depends
+  // only on which provider keys are configured, so this check covers any
+  // per-call chain too. Also surfaces a malformed `AI_CHAIN` immediately.
+  assertModelsAvailable(resolveModels(undefined, keys));
+
+  const normalized = normalizeDeps(deps);
+  const exhausted = new Set<string>();
+
+  return {
+    generate(options: AiCallOptions): Promise<AiTextResult> {
+      const models = resolveModels(options.chain, keys);
+      assertModelsAvailable(models);
+      return runChain(models, options, keys, normalized, exhausted);
+    },
+  };
+}
+
+export { generateAiText, createAiRuntime };
+export type { AiCallOptions, AiDeps, AiLog, AiRuntime };

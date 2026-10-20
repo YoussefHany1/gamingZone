@@ -45,7 +45,7 @@ const EventDates: React.FC<EventDatesProps> = ({ startDateStr, endDateStr }) => 
     <View style={styles.datesRow}>
       <View style={styles.dateBlock}>
         <View collapsable={false}>
-          <Calendar size={18} color={colors.accent} />
+          <Calendar size={18} color={colors.accentText} />
         </View>
         <View>
           <CustomText style={styles.dateBlockLabel}>{t("events.starts")}</CustomText>
@@ -54,7 +54,7 @@ const EventDates: React.FC<EventDatesProps> = ({ startDateStr, endDateStr }) => 
       </View>
       <View style={styles.dateBlock}>
         <View collapsable={false}>
-          <Flag size={18} color={colors.accent} />
+          <Flag size={18} color={colors.accentText} />
         </View>
         <View>
           <CustomText style={styles.dateBlockLabel}>{t("events.ends")}</CustomText>

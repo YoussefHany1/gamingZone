@@ -159,7 +159,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
               <View style={styles.modalHeader}>
                 <CustomText style={styles.modalTitle}>{resolvedPlaceholder}</CustomText>
                 <TouchableOpacity onPress={() => setModalVisible(false)}>
-                  <X size={24} color={colors.accent} />
+                  <X size={24} color={colors.accentText} />
                 </TouchableOpacity>
               </View>
 

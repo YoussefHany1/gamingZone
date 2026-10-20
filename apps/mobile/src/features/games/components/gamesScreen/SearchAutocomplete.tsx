@@ -187,7 +187,7 @@ export default function SearchAutocomplete({
     <Animated.View style={[styles.container, { opacity }]}>
       {loading && suggestions.length === 0 ? (
         <View style={styles.loaderWrap}>
-          <ActivityIndicator size="small" color={colors.accent} />
+          <ActivityIndicator size="small" color={colors.accentText}/>
         </View>
       ) : (
         <FlashList

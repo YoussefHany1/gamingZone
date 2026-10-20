@@ -69,9 +69,9 @@ const SettingsUserCard = memo(
         <CustomText style={styles.displayName}>{label}</CustomText>
         {!isGuest &&
           (isRtl ? (
-            <ChevronLeft size={24} color={colors.accent} />
+            <ChevronLeft size={24} color={colors.accentText} />
           ) : (
-            <ChevronRight size={24} color={colors.accent} />
+            <ChevronRight size={24} color={colors.accentText} />
           ))}
       </TouchableOpacity>
     );

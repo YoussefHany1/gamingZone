@@ -41,9 +41,9 @@ const UserListRow = memo<UserListRowProps>(
       <TouchableOpacity style={styles.listItem} onPress={onPress}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           {item.type === "default" ? (
-            <List size={24} color={colors.accent} />
+            <List size={24} color={colors.accentText}/>
           ) : (
-            <FolderOpen size={24} color={colors.accent} />
+            <FolderOpen size={24} color={colors.accentText}/>
           )}
           <CustomText style={styles.listName}>{displayName}</CustomText>
         </View>

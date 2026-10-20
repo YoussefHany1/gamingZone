@@ -344,7 +344,7 @@ const WeeklySummary = memo(function WeeklySummary() {
         {subscribed ? (
           <Bell size={16} color={colors.onAccent} />
         ) : (
-          <BellOff size={16} color={colors.accent} />
+          <BellOff size={16} color={colors.accentText}/>
         )}
         <CustomText
           style={[styles.subscribeText, subscribed && styles.subscribeTextActive]}

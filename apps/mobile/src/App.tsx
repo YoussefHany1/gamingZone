@@ -33,6 +33,7 @@ import UpdateScreen from "./components/UpdateScreen";
 import useNotifications from "./hooks/useNotifications";
 import useRateApp from "./hooks/useRateApp";
 import useUpdateCheck from "./hooks/useUpdateCheck";
+import useAppOpenSync from "./hooks/useAppOpenSync";
 import useOTAUpdate from "./hooks/useOTAUpdate";
 import { MainAppTabs, AuthStack } from "./navigation/AppNavigator";
 import OnboardingScreen from "./features/onboarding/screens/OnboardingScreen";
@@ -282,6 +283,7 @@ function App(): React.ReactElement | null {
   useNotifications(user);
   useRateApp();
   useUpdateCheck();
+  useAppOpenSync(user);
 
   const otaState = useOTAUpdate();
 

@@ -107012,22 +107012,63 @@ var coerce = {
 var NEVER = INVALID;
 
 // scripts/lib/ai.shared.ts
-var AI_PROVIDERS = ["gemini", "groq"];
+var KNOWN_AI_PROVIDERS = ["gemini", "groq", "cerebras"];
 var GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 var GROQ_CHAT_COMPLETIONS_URL = "https://api.groq.com/openai/v1/chat/completions";
+var CEREBRAS_CHAT_COMPLETIONS_URL = "https://api.cerebras.ai/v1/chat/completions";
 var DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b";
+var DEFAULT_GROQ_MODELS = [DEFAULT_GROQ_MODEL, "openai/gpt-oss-20b"];
+var DEFAULT_CEREBRAS_MODEL = "gpt-oss-120b";
+var DEFAULT_CEREBRAS_MODELS = [DEFAULT_CEREBRAS_MODEL, "qwen-3.8-27b"];
 var AI_TIMEOUT_MS = 25e3;
 var AI_RETRIES = 3;
 var AI_RATE_LIMIT_RETRIES = 2;
 var AI_MAX_RATE_LIMIT_WAIT_MS = 6e4;
 var AI_RATE_LIMIT_DEFAULT_WAIT_MS = 3e4;
-function resolveAiProviders(keys) {
-  const override = keys.override ?? null;
-  if (override === "gemini") return keys.geminiKey ? ["gemini"] : [];
-  if (override === "groq") return keys.groqKey ? ["groq"] : [];
-  return AI_PROVIDERS.filter(
-    (provider) => provider === "gemini" ? Boolean(keys.geminiKey) : Boolean(keys.groqKey)
-  );
+function defaultAiChain(groqModels = DEFAULT_GROQ_MODELS, cerebrasModels = DEFAULT_CEREBRAS_MODELS) {
+  return [
+    { provider: "gemini", model: "gemini-2.5-flash" },
+    { provider: "gemini", model: "gemini-3.1-flash-lite" },
+    ...groqModels.map((model) => ({ provider: "groq", model })),
+    ...cerebrasModels.map((model) => ({ provider: "cerebras", model }))
+  ];
+}
+function parseAiChainValue(value) {
+  const models = [];
+  for (const rawEntry of value.split(",")) {
+    const entry = rawEntry.trim();
+    if (!entry) continue;
+    const slashIndex = entry.indexOf("/");
+    if (slashIndex === -1) {
+      models.push({ provider: "gemini", model: entry });
+      continue;
+    }
+    const prefix = entry.slice(0, slashIndex);
+    const model = entry.slice(slashIndex + 1);
+    if (!KNOWN_AI_PROVIDERS.includes(prefix)) {
+      throw new Error(
+        `Invalid AI_CHAIN entry "${entry}" \u2014 unknown provider "${prefix}". Use a Gemini model id (e.g. gemini-2.5-flash) or <provider>/<model> with provider one of: ${KNOWN_AI_PROVIDERS.join(", ")}.`
+      );
+    }
+    if (!model) {
+      throw new Error(`Invalid AI_CHAIN entry "${entry}" \u2014 empty model id after "${prefix}/".`);
+    }
+    models.push({ provider: prefix, model });
+  }
+  return models;
+}
+function resolveAiModels(input, keys, defaultGroqModels = DEFAULT_GROQ_MODELS, defaultCerebrasModels = DEFAULT_CEREBRAS_MODELS) {
+  const requested = input.chain ?? (input.chainEnv ? parseAiChainValue(input.chainEnv) : defaultAiChain(defaultGroqModels, defaultCerebrasModels));
+  const hasKey = (model) => {
+    if (model.provider === "gemini") return Boolean(keys.geminiKey);
+    if (model.provider === "cerebras") return Boolean(keys.cerebrasKey);
+    return Boolean(keys.groqKey);
+  };
+  const usable = requested.filter(hasKey);
+  return input.override ? usable.filter((model) => model.provider === input.override) : usable;
+}
+function formatAiChain(models) {
+  return models.map((model) => `${model.provider}/${model.model}`).join(" \u2192 ");
 }
 function buildGeminiRequestBody(prompt, schema, temperature) {
   const generationConfig = {
@@ -107042,7 +107083,7 @@ function buildGeminiRequestBody(prompt, schema, temperature) {
     generationConfig
   };
 }
-function buildGroqRequestBody(model, prompt, temperature) {
+function buildChatCompletionsRequestBody(model, prompt, temperature) {
   const body = {
     model,
     messages: [{ role: "user", content: prompt }],
@@ -107062,14 +107103,14 @@ function extractGeminiText(data) {
   }
   return text;
 }
-function extractGroqText(data) {
+function extractChatCompletionsText(provider, data) {
   const payload = data;
   if (payload?.error) {
-    throw new Error(`Groq API error: ${JSON.stringify(payload.error)}`);
+    throw new Error(`${provider} API error: ${JSON.stringify(payload.error)}`);
   }
   const text = payload?.choices?.[0]?.message?.content;
   if (!text) {
-    throw new Error(`Groq returned no text: ${JSON.stringify(data).slice(0, 200)}`);
+    throw new Error(`${provider} returned no text: ${JSON.stringify(data).slice(0, 200)}`);
   }
   return text;
 }
@@ -107146,13 +107187,39 @@ function getGroqKey() {
   const value = process.env.GROQ_API_KEY?.trim();
   return value ? value : null;
 }
-function getGroqModel() {
-  const value = process.env.GROQ_MODEL?.trim();
-  return value ? value : DEFAULT_GROQ_MODEL;
+function getCerebrasKey() {
+  const value = process.env.CEREBRAS_API_KEY?.trim();
+  return value ? value : null;
+}
+function getCerebrasModels() {
+  const value = process.env.CEREBRAS_MODELS?.trim();
+  if (!value) return DEFAULT_CEREBRAS_MODELS;
+  const models = value.split(",").map((model) => model.trim()).filter(Boolean);
+  return models.length > 0 ? models : DEFAULT_CEREBRAS_MODELS;
+}
+function getGroqModels() {
+  const raw = process.env.GROQ_MODELS?.trim() || process.env.GROQ_MODEL?.trim() || "";
+  const models = raw.split(",").map((model) => model.trim()).filter(Boolean);
+  return models.length > 0 ? models : DEFAULT_GROQ_MODELS;
 }
 function getAiProviderOverride() {
   const value = process.env.AI_PROVIDER?.trim().toLowerCase();
   return value === "gemini" || value === "groq" ? value : null;
+}
+function getAiChainEnv() {
+  const value = process.env.AI_CHAIN?.trim();
+  return value ? value : null;
+}
+function getAiProviderConfig() {
+  return {
+    geminiKey: getGeminiKey(),
+    groqKey: getGroqKey(),
+    cerebrasKey: getCerebrasKey(),
+    groqModels: getGroqModels(),
+    cerebrasModels: getCerebrasModels(),
+    chainEnv: getAiChainEnv(),
+    override: getAiProviderOverride()
+  };
 }
 function requireFcmServiceAccount() {
   return process.env.FCM_SERVICE_ACCOUNT ?? null;
@@ -114002,10 +114069,11 @@ var sdk = __toESM(require("node-appwrite"));
 var NOOP_LOG = { info: () => {
 }, warn: () => {
 } };
-async function callGemini(options, keys, fetchImpl, signal) {
+var modelId = (model) => `${model.provider}/${model.model}`;
+async function callGemini(model, options, keys, fetchImpl, signal) {
   if (!keys.geminiKey) throw new Error("GEMINI_API_KEY is not set.");
   const response = await fetchImpl(
-    `${GEMINI_BASE_URL}/${options.geminiModel}:generateContent?key=${keys.geminiKey}`,
+    `${GEMINI_BASE_URL}/${model.model}:generateContent?key=${keys.geminiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -114025,27 +114093,55 @@ async function callGemini(options, keys, fetchImpl, signal) {
   }
   if (!response.ok) {
     throw new Error(
-      `Gemini API error: HTTP ${response.status} ${JSON.stringify(data ?? null).slice(0, 200)}`
+      `Gemini API error (${model.model}): HTTP ${response.status} ${JSON.stringify(data ?? null).slice(0, 200)}`
     );
   }
   return extractGeminiText(data);
 }
-async function callGroq(options, keys, fetchImpl, signal) {
-  if (!keys.groqKey) throw new Error("GROQ_API_KEY is not set.");
-  const response = await fetchImpl(GROQ_CHAT_COMPLETIONS_URL, {
+async function callChatCompletionsProvider(provider, url2, model, options, keys, fetchImpl, signal) {
+  const apiKey = provider === "Groq" ? keys.groqKey : keys.cerebrasKey;
+  if (!apiKey) throw new Error(`${provider.toUpperCase()}_API_KEY is not set.`);
+  const response = await fetchImpl(url2, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${keys.groqKey}`
+      Authorization: `Bearer ${apiKey}`
     },
     signal,
     body: JSON.stringify(
-      buildGroqRequestBody(options.groqModel, options.prompt, options.temperature)
+      buildChatCompletionsRequestBody(model.model, options.prompt, options.temperature)
     )
   });
-  return extractGroqText(await response.json());
+  return extractChatCompletionsText(provider, await response.json());
 }
-async function callProviderWithRetry(provider, options, keys, fetchImpl, log, sleep3, retries, timeoutMs, backoffBaseMs) {
+async function callGroq(model, options, keys, fetchImpl, signal) {
+  return callChatCompletionsProvider(
+    "Groq",
+    GROQ_CHAT_COMPLETIONS_URL,
+    model,
+    options,
+    keys,
+    fetchImpl,
+    signal
+  );
+}
+async function callCerebras(model, options, keys, fetchImpl, signal) {
+  return callChatCompletionsProvider(
+    "Cerebras",
+    CEREBRAS_CHAT_COMPLETIONS_URL,
+    model,
+    options,
+    keys,
+    fetchImpl,
+    signal
+  );
+}
+var callByProvider = {
+  gemini: callGemini,
+  groq: callGroq,
+  cerebras: callCerebras
+};
+async function callModelWithRetry(model, options, keys, fetchImpl, log, sleep3, retries, timeoutMs, backoffBaseMs) {
   const label = options.label ?? "AI request";
   let failures = 0;
   let rateLimitWaits = 0;
@@ -114054,71 +114150,104 @@ async function callProviderWithRetry(provider, options, keys, fetchImpl, log, sl
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      log.info(`\u{1F916} ${label}: trying ${provider} (attempt ${attempt}/${retries})...`);
-      return provider === "gemini" ? await callGemini(options, keys, fetchImpl, controller.signal) : await callGroq(options, keys, fetchImpl, controller.signal);
+      log.info(`\u{1F916} ${label}: trying ${modelId(model)} (attempt ${attempt}/${retries})...`);
+      return await callByProvider[model.provider](model, options, keys, fetchImpl, controller.signal);
     } catch (error) {
       const retryAfterMs = rateLimitRetryAfterMs(error);
       if (retryAfterMs !== null) {
         if (retryAfterMs <= AI_MAX_RATE_LIMIT_WAIT_MS && rateLimitWaits < AI_RATE_LIMIT_RETRIES) {
           rateLimitWaits++;
           log.warn(
-            `\u23F3 ${label}: ${provider} rate limited \u2014 waiting ${Math.round(retryAfterMs / 1e3)}s before retrying (${rateLimitWaits}/${AI_RATE_LIMIT_RETRIES})...`
+            `\u23F3 ${label}: ${modelId(model)} rate limited \u2014 waiting ${Math.round(retryAfterMs / 1e3)}s before retrying (${rateLimitWaits}/${AI_RATE_LIMIT_RETRIES})...`
           );
           await sleep3(retryAfterMs);
           continue;
         }
         log.warn(
-          `\u26A0\uFE0F ${label}: ${provider} quota exhausted (asked for ${Math.round(retryAfterMs / 1e3)}s) \u2014 failing over.`
+          `\u26A0\uFE0F ${label}: ${modelId(model)} quota exhausted (asked for ${Math.round(retryAfterMs / 1e3)}s) \u2014 failing over.`
         );
         throw error;
       }
       failures++;
       if (failures >= retries) throw error;
       const backoff = backoffBaseMs * 2 ** failures;
-      log.warn(`\u26A0\uFE0F ${label}: ${provider} attempt ${attempt} failed: ${getErrorMessage(error)}`);
+      log.warn(`\u26A0\uFE0F ${label}: ${modelId(model)} attempt ${attempt} failed: ${getErrorMessage(error)}`);
       await sleep3(backoff);
     } finally {
       clearTimeout(timer);
     }
   }
 }
-async function generateAiText(options, keys, deps = {}) {
-  const fetchImpl = deps.fetchImpl ?? fetch;
-  const log = deps.log ?? NOOP_LOG;
-  const sleep3 = deps.sleep ?? ((ms) => new Promise((resolve2) => setTimeout(resolve2, ms)));
+function normalizeDeps(deps) {
+  return {
+    fetchImpl: deps.fetchImpl ?? fetch,
+    log: deps.log ?? NOOP_LOG,
+    sleep: deps.sleep ?? ((ms) => new Promise((resolve2) => setTimeout(resolve2, ms))),
+    backoffBaseMs: deps.backoffBaseMs ?? 1e3
+  };
+}
+function resolveModels(chain, keys) {
+  return resolveAiModels(
+    { chain: chain ?? null, chainEnv: keys.chainEnv ?? null, override: keys.override ?? null },
+    { geminiKey: keys.geminiKey, groqKey: keys.groqKey, cerebrasKey: keys.cerebrasKey },
+    keys.groqModels ?? DEFAULT_GROQ_MODELS,
+    keys.cerebrasModels ?? DEFAULT_CEREBRAS_MODELS
+  );
+}
+function assertModelsAvailable(models) {
+  if (models.length === 0) {
+    throw new Error(
+      "No AI provider is configured \u2014 set GEMINI_API_KEY and/or GROQ_API_KEY (or fix AI_CHAIN)."
+    );
+  }
+}
+async function runChain(models, options, keys, deps, exhausted) {
+  const label = options.label ?? "AI request";
   const retries = Math.max(1, options.retries ?? AI_RETRIES);
   const timeoutMs = options.timeoutMs ?? AI_TIMEOUT_MS;
-  const backoffBaseMs = deps.backoffBaseMs ?? 1e3;
-  const label = options.label ?? "AI request";
-  const providers = resolveAiProviders({
-    geminiKey: keys.geminiKey,
-    groqKey: keys.groqKey,
-    override: keys.override ?? null
-  });
-  if (providers.length === 0) {
-    throw new Error("No AI provider is configured \u2014 set GEMINI_API_KEY and/or GROQ_API_KEY.");
-  }
   let lastError;
-  for (const provider of providers) {
+  for (const model of models) {
+    if (exhausted.has(modelId(model))) {
+      deps.log.info(`\u23ED\uFE0F Skipping ${modelId(model)} (quota exhausted earlier in this run)`);
+      continue;
+    }
     try {
-      const text = await callProviderWithRetry(
-        provider,
+      const text = await callModelWithRetry(
+        model,
         options,
         keys,
-        fetchImpl,
-        log,
-        sleep3,
+        deps.fetchImpl,
+        deps.log,
+        deps.sleep,
         retries,
         timeoutMs,
-        backoffBaseMs
+        deps.backoffBaseMs
       );
-      return { provider, text };
+      return { provider: model.provider, model: model.model, text };
     } catch (error) {
       lastError = error;
-      log.warn(`\u26A0\uFE0F ${label}: ${provider} failed: ${getErrorMessage(error)}`);
+      deps.log.warn(`\u26A0\uFE0F ${label}: ${modelId(model)} failed: ${getErrorMessage(error)}`);
+      if (rateLimitRetryAfterMs(error) !== null) exhausted.add(modelId(model));
     }
   }
-  throw new Error(`All AI providers failed for ${label}: ${getErrorMessage(lastError)}`);
+  if (lastError === void 0) {
+    throw new Error(
+      `Every model in the chain is quota-exhausted for this run (${label}) \u2014 add a model to AI_CHAIN or wait for the quota to reset.`
+    );
+  }
+  throw new Error(`All AI models failed for ${label}: ${getErrorMessage(lastError)}`);
+}
+function createAiRuntime(keys, deps = {}) {
+  assertModelsAvailable(resolveModels(void 0, keys));
+  const normalized = normalizeDeps(deps);
+  const exhausted = /* @__PURE__ */ new Set();
+  return {
+    generate(options) {
+      const models = resolveModels(options.chain, keys);
+      assertModelsAvailable(models);
+      return runChain(models, options, keys, normalized, exhausted);
+    }
+  };
 }
 
 // scripts/features/summary/summary.service.ts
@@ -114216,7 +114345,6 @@ function parseJsonSummary(rawText) {
   }
 }
 var delay = (ms) => new Promise((resolve2) => setTimeout(resolve2, ms));
-var WEEKLY_GEMINI_MODEL = "gemini-2.5-flash";
 var WEEKLY_GEMINI_SCHEMA = {
   type: "OBJECT",
   properties: {
@@ -114225,38 +114353,29 @@ var WEEKLY_GEMINI_SCHEMA = {
   },
   required: ["arabic", "english"]
 };
-async function callAiWithRetry(prompt, maxRetries = 3) {
-  const { provider, text } = await generateAiText(
-    {
-      prompt,
-      label: "weekly summary",
-      geminiModel: WEEKLY_GEMINI_MODEL,
-      geminiSchema: WEEKLY_GEMINI_SCHEMA,
-      groqModel: getGroqModel(),
-      retries: maxRetries,
-      // The weekly prompt is large (up to ~250 articles), so allow more time
-      // than the per-article default.
-      timeoutMs: 6e4
-    },
-    {
-      geminiKey: getGeminiKey(),
-      groqKey: getGroqKey(),
-      override: getAiProviderOverride()
-    },
-    { log: logger }
-  );
-  logger.info(`\u2705 Weekly summary generated via ${provider}.`);
+async function callAiWithRetry(prompt, ai, maxRetries = 3) {
+  const { provider, model, text } = await ai.generate({
+    prompt,
+    label: "weekly summary",
+    geminiSchema: WEEKLY_GEMINI_SCHEMA,
+    retries: maxRetries,
+    // The weekly prompt is large (up to ~250 articles), so allow more time
+    // than the per-article default.
+    timeoutMs: 6e4
+  });
+  logger.info(`\u2705 Weekly summary generated via ${provider}/${model}.`);
   return parseJsonSummary(text);
 }
-async function summarizeWithAi(newsText, opts = {
+async function summarizeWithAi(newsText, ai, opts = {
   isPartial: false
 }) {
   const prompt = opts.isPartial ? PARTIAL_SUMMARY_PROMPT(opts.batchIndex ?? 1, opts.totalBatches ?? 1, newsText) : SUMMARY_PROMPT(opts.startDate ?? "", opts.endDate ?? "", newsText);
-  return callAiWithRetry(prompt);
+  return callAiWithRetry(prompt, ai);
 }
-function mergeSummariesWithAi(startDate, endDate, arabicSummaries, englishSummaries) {
+function mergeSummariesWithAi(startDate, endDate, arabicSummaries, englishSummaries, ai) {
   return callAiWithRetry(
-    MERGE_SUMMARY_PROMPT(startDate, endDate, arabicSummaries, englishSummaries)
+    MERGE_SUMMARY_PROMPT(startDate, endDate, arabicSummaries, englishSummaries),
+    ai
   );
 }
 function getSevenDaysAgoIso() {
@@ -114346,7 +114465,9 @@ async function sendSummaryNotification() {
 }
 async function runGenerateWeeklySummary() {
   try {
-    logger.info(`\u{1F4F0} Weekly summary \u2014 gemini=${WEEKLY_GEMINI_MODEL} \xB7 groq=${getGroqModel()}`);
+    const providerConfig = getAiProviderConfig();
+    const ai = createAiRuntime(providerConfig, { log: logger });
+    logger.info(`\u{1F4F0} Weekly summary \u2014 chain: ${formatAiChain(resolveAiModels({}, providerConfig))}`);
     logger.info("Fetching news from the last 7 days...");
     const { sevenDaysAgo, documents } = await fetchLastWeekNewsTitles();
     if (!documents.length) {
@@ -114365,7 +114486,7 @@ async function runGenerateWeeklySummary() {
     if (documents.length <= CHUNK_SIZE) {
       const newsText = documents.map(formatDoc).join("\n");
       logger.info(`Sending all ${documents.length} articles in a single batch to AI...`);
-      jsonSummary = await summarizeWithAi(newsText, {
+      jsonSummary = await summarizeWithAi(newsText, ai, {
         isPartial: false,
         startDate: sevenDaysAgo,
         endDate
@@ -114382,7 +114503,7 @@ async function runGenerateWeeklySummary() {
         const chunk = chunks[i];
         const chunkText = chunk.map(formatDoc).join("\n");
         logger.info(`Processing chunk ${i + 1}/${chunks.length} (size: ${chunk.length})...`);
-        const summary = await summarizeWithAi(chunkText, {
+        const summary = await summarizeWithAi(chunkText, ai, {
           isPartial: true,
           batchIndex: i + 1,
           totalBatches: chunks.length
@@ -114402,7 +114523,8 @@ ${s.english}`).join("\n\n");
         sevenDaysAgo,
         endDate,
         arabicSummaries,
-        englishSummaries
+        englishSummaries,
+        ai
       );
       logger.info("\u2705 Weekly recap merged.");
     }
@@ -114455,7 +114577,14 @@ var PER_LANGUAGE_MAX_CHARS = {
   "pt-BR": 280,
   "pt-PT": 280
 };
-var MODEL = "gemini-3.1-flash-lite";
+function articleSummaryChain(groqModels, cerebrasModels) {
+  return [
+    { provider: "gemini", model: "gemini-3.1-flash-lite" },
+    { provider: "gemini", model: "gemini-2.5-flash" },
+    ...groqModels.map((model) => ({ provider: "groq", model })),
+    ...cerebrasModels.map((model) => ({ provider: "cerebras", model }))
+  ];
+}
 var MAX_ATTEMPTS = 3;
 var MAX_DESCRIPTION_CHARS = 1500;
 var BACKFILL_NEWEST = 20;
@@ -114553,32 +114682,23 @@ var databases4 = createAppwriteDatabases();
 function sleep2(ms) {
   return new Promise((resolve2) => setTimeout(resolve2, ms));
 }
-async function generateSummaries(prompt) {
-  const { provider, text } = await generateAiText(
-    {
-      prompt,
-      label: "article summary",
-      geminiModel: MODEL,
-      geminiSchema: {
-        type: "OBJECT",
-        properties: Object.fromEntries(
-          Object.values(LANGUAGE_TO_JSON_KEY).map((key) => [key, { type: "STRING" }])
-        )
-      },
-      groqModel: getGroqModel(),
-      temperature: 0.4
+async function generateSummaries(prompt, ai) {
+  const { provider, model, text } = await ai.generate({
+    prompt,
+    label: "article summary",
+    chain: articleSummaryChain(getGroqModels(), getCerebrasModels()),
+    geminiSchema: {
+      type: "OBJECT",
+      properties: Object.fromEntries(
+        Object.values(LANGUAGE_TO_JSON_KEY).map((key) => [key, { type: "STRING" }])
+      )
     },
-    {
-      geminiKey: getGeminiKey(),
-      groqKey: getGroqKey(),
-      override: getAiProviderOverride()
-    },
-    { log: logger }
-  );
-  logger.info(`\u{1F916} Article summary generated via ${provider}.`);
+    temperature: 0.4
+  });
+  logger.info(`\u{1F916} Article summary generated via ${provider}/${model}.`);
   return parseSummaries(text);
 }
-async function enrichArticleWithSummaries(article) {
+async function enrichArticleWithSummaries(article, ai) {
   const attempts = (article.summaries_attempts ?? 0) + 1;
   try {
     await databases4.updateDocument(DATABASE_ID2, ARTICLES_COLLECTION_ID, article.$id, {
@@ -114588,7 +114708,7 @@ async function enrichArticleWithSummaries(article) {
     logger.warn(`\u26A0\uFE0F Could not bump summary attempts for ${article.$id}: ${getErrorMessage(error)}`);
   }
   try {
-    const summaries = await generateSummaries(buildPrompt(article));
+    const summaries = await generateSummaries(buildPrompt(article), ai);
     const payload = { summaries_attempts: attempts };
     let found = 0;
     for (const language of SUMMARY_LANGUAGES) {
@@ -114652,6 +114772,7 @@ async function runBackfillArticleSummaries(options = {}) {
   const newestLimit = sanitizeQueueLimit(options.newest, BACKFILL_NEWEST);
   const oldestLimit = sanitizeQueueLimit(options.oldest, BACKFILL_OLDEST);
   const maxDurationMs = options.maxDurationMs ?? MAX_BACKFILL_MS;
+  const ai = createAiRuntime(getAiProviderConfig(), { log: logger });
   let newest = [];
   let oldest = [];
   try {
@@ -114670,7 +114791,7 @@ async function runBackfillArticleSummaries(options = {}) {
     return stats;
   }
   logger.info(
-    `\u{1F9E0} Generating summaries for ${unique.length} article(s) \u2014 gemini=${MODEL} \xB7 groq=${getGroqModel()}...`
+    `\u{1F9E0} Generating summaries for ${unique.length} article(s) \u2014 chain: ${formatAiChain(articleSummaryChain(getGroqModels(), getCerebrasModels()))}...`
   );
   const deadline = Date.now() + maxDurationMs;
   for (let i = 0; i < unique.length; i += BACKFILL_CONCURRENCY) {
@@ -114684,7 +114805,7 @@ async function runBackfillArticleSummaries(options = {}) {
     const batch = unique.slice(i, i + BACKFILL_CONCURRENCY);
     const batchStartedAt = Date.now();
     const results = await Promise.allSettled(
-      batch.map((doc) => enrichArticleWithSummaries(doc))
+      batch.map((doc) => enrichArticleWithSummaries(doc, ai))
     );
     results.forEach((result, index) => {
       stats.processed++;

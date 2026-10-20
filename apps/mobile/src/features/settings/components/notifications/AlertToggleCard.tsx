@@ -51,7 +51,7 @@ const AlertToggleCard = memo(
       <View style={styles.categorySection}>
         <View style={styles.categoryHeader}>
           <View style={styles.categoryHeaderLeft}>
-            <Icon size={24} color={colors.accent} style={styles.chevronIcon} />
+            <Icon size={24} color={colors.accentText}style={styles.chevronIcon} />
             <CustomText style={styles.categoryTitle}>{title}</CustomText>
           </View>
 

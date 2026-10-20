@@ -75,11 +75,11 @@ const SettingsMenuList = memo(
             >
               <View style={styles.menuItemLeft}>
                 {Icon && (
-                  <Icon size={20} color={colors.accent} style={styles.menuIcon} />
+                  <Icon size={20} color={colors.accentText} style={styles.menuIcon} />
                 )}
                 <CustomText style={styles.menuLabel}>{item.label}</CustomText>
               </View>
-              <TrailingIcon size={18} color={colors.accent} />
+              <TrailingIcon size={18} color={colors.accentText} />
             </TouchableOpacity>
           );
         })}

@@ -71,7 +71,7 @@ const EmptyGamesList = memo<EmptyGamesListProps>(
 
     return (
       <View style={styles.emptyContainer}>
-        <Bookmark size={80} color={colors.accent} />
+        <Bookmark size={80} color={colors.accentText}/>
         <CustomText style={styles.emptyText}>
           {t("settings.userGames.emptyText")}
         </CustomText>

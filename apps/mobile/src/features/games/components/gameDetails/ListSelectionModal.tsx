@@ -382,9 +382,9 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
           onPress={() => toggleList(item.id)}
         >
           {item.isChecked ? (
-            <SquareCheckBig size={24} color={colors.accent} />
+            <SquareCheckBig size={24} color={colors.accentText} />
           ) : (
-            <Square size={24} color={colors.accent} />
+            <Square size={24} color={colors.accentText} />
           )}
           <CustomText style={[styles.listName, item.isChecked && { fontWeight: "bold" }]}>
             {getDisplayName(item.name)}
@@ -416,7 +416,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
               </CustomText>
 
               {loading ? (
-                <ActivityIndicator size="large" color={colors.accent} />
+                <ActivityIndicator size="large" color={colors.accentText} />
               ) : (
                 <>
                   <ScrollView
@@ -492,7 +492,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                           }
                         }}
                       >
-                        <CirclePlus size={24} color={colors.accent} />
+                        <CirclePlus size={24} color={colors.accentText} />
                         <CustomText style={styles.addButtonText}>
                           {t("userLists.actions.createNewList")}
                         </CustomText>

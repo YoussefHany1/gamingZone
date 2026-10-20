@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { loadBackendEnv } from './env';
 import { logger } from './logger';
-import { DEFAULT_GROQ_MODEL } from './ai.shared';
-import type { AiProvider } from './ai.shared';
+import { DEFAULT_CEREBRAS_MODELS, DEFAULT_GROQ_MODELS } from './ai.shared';
+import type { AiProvider, AiProviderConfig } from './ai.shared';
 
 // Ensure the environment is loaded first
 loadBackendEnv();
@@ -53,16 +53,82 @@ export function getGroqKey(): string | null {
   return value ? value : null;
 }
 
-/** Groq model id; falls back to a sane generative default. */
+/**
+ * CEREBRAS_API_KEY — optional final-fallback provider key. `null` disables the
+ * Cerebras segment of the chain.
+ */
+export function getCerebrasKey(): string | null {
+  const value = process.env.CEREBRAS_API_KEY?.trim();
+  return value ? value : null;
+}
+
+/**
+ * Cerebras model ids in fallback order, from `CEREBRAS_MODELS` (comma-separated;
+ * Cerebras ids have no slashes). Generative models only.
+ */
+export function getCerebrasModels(): string[] {
+  const value = process.env.CEREBRAS_MODELS?.trim();
+  if (!value) return DEFAULT_CEREBRAS_MODELS;
+  const models = value
+    .split(',')
+    .map((model) => model.trim())
+    .filter(Boolean);
+  return models.length > 0 ? models : DEFAULT_CEREBRAS_MODELS;
+}
+
+/** Groq model id (first of `getGroqModels`, which always returns at least one). */
 export function getGroqModel(): string {
-  const value = process.env.GROQ_MODEL?.trim();
-  return value ? value : DEFAULT_GROQ_MODEL;
+  return getGroqModels()[0];
+}
+
+/**
+ * Groq model ids in fallback order, from `GROQ_MODELS` or `GROQ_MODEL` — both
+ * accept a comma-separated list (only the first slash splits; Groq ids contain
+ * slashes). Falls back to the generative defaults when neither is set.
+ */
+export function getGroqModels(): string[] {
+  const raw =
+    process.env.GROQ_MODELS?.trim() || process.env.GROQ_MODEL?.trim() || '';
+  const models = raw
+    .split(',')
+    .map((model) => model.trim())
+    .filter(Boolean);
+  return models.length > 0 ? models : DEFAULT_GROQ_MODELS;
 }
 
 /** `AI_PROVIDER=gemini|groq` forces a single provider (smoke tests / ops). */
 export function getAiProviderOverride(): AiProvider | null {
   const value = process.env.AI_PROVIDER?.trim().toLowerCase();
   return value === 'gemini' || value === 'groq' ? value : null;
+}
+
+/**
+ * Raw `AI_CHAIN` env value — a comma-separated model list that replaces the
+ * built-in fallback chain. A bare id is a Gemini model; `<provider>/<model>`
+ * picks another provider, where only the FIRST slash splits because Groq model
+ * ids themselves contain slashes (`groq/openai/gpt-oss-120b`). Parsed (and
+ * validated loudly) per call in `resolveAiModels`.
+ */
+export function getAiChainEnv(): string | null {
+  const value = process.env.AI_CHAIN?.trim();
+  return value ? value : null;
+}
+
+/**
+ * Everything the AI model chain needs, in one bag. Resolved lazily (instead of
+ * at module load) so a missing optional key fails just the job that needs it —
+ * the cron runner catches failures per job, so rss/free-games still run.
+ */
+export function getAiProviderConfig(): AiProviderConfig {
+  return {
+    geminiKey: getGeminiKey(),
+    groqKey: getGroqKey(),
+    cerebrasKey: getCerebrasKey(),
+    groqModels: getGroqModels(),
+    cerebrasModels: getCerebrasModels(),
+    chainEnv: getAiChainEnv(),
+    override: getAiProviderOverride(),
+  };
 }
 
 /**

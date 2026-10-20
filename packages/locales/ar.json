@@ -550,6 +550,42 @@
         "platform": "اختر منصتك"
       },
       "connectedApps": "التطبيقات المرتبطة",
+      "linking": {
+        "title": "مزامنة مكتبة الألعاب",
+        "description": "اربط حساباتك لاستيراد ألعابك إلى قوائمك تلقائياً.",
+        "steam": {
+          "signIn": "تسجيل الدخول عبر Steam",
+          "errorFailed": "فشل تسجيل الدخول إلى Steam"
+        },
+        "psn": {
+          "signIn": "تسجيل الدخول عبر PlayStation",
+          "reconnect": "إعادة الربط",
+          "reauthBanner": "انتهت صلاحية الجلسة — اضغط لإعادة الربط",
+          "reauthBannerFormal": "انتهت صلاحية جلسة PlayStation — أعد الربط لاستئناف المزامنة",
+          "reauthBannerGeneric": "انتهت صلاحية الاتصال — سجّل الدخول مرة أخرى",
+          "webviewTitle": "تسجيل الدخول على PlayStation.com",
+          "webviewHint": "سجّل الدخول إلى حساب PlayStation. سنلتقط رمز NPSSO تلقائياً ونغلق هذه النافذة.",
+          "manualEntry": "لصق الرمز يدوياً",
+          "manualTitle": "ربط PlayStation",
+          "manualInstructions": "افتح الصفحة أدناه وسجّل الدخول إذا لزم الأمر، ثم انسخ رمز NPSSO الظاهر فيه والصقه هنا.",
+          "openCookiePage": "فتح صفحة NPSSO",
+          "connect": "ربط",
+          "empty": "لا توجد ألعاب مُلعَب بها",
+          "errorInvalidNpsso": "تعذّر التحقق من رمز PSN"
+        },
+        "messages": {
+          "lastSynced": "آخر مزامنة",
+          "notLinked": "غير متصل",
+          "syncNow": "مزامنة الآن",
+          "synced": "تمت مزامنة المكتبة",
+          "syncFailed": "فشلت المزامنة",
+          "unlinked": "تم قطع الاتصال",
+          "empty": "لم يتم العثور على ألعاب"
+        },
+        "xbox": {
+          "comingSoon": "Xbox — قريباً"
+        }
+      },
       "steam": {
         "modal": {
           "title": "مزامنة مكتبة ستيم الخاصة بك",

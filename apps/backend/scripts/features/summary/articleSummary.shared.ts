@@ -10,6 +10,8 @@
 
 import { Query } from 'node-appwrite';
 
+import type { AiModel } from '../../lib/ai.shared';
+
 /** Every language the app's UI supports (`article` content is still only ar/en). */
 const SUMMARY_LANGUAGES = ['en', 'ar', 'es', 'fr', 'hi', 'pt-BR', 'pt-PT'] as const;
 type SummaryLanguage = (typeof SUMMARY_LANGUAGES)[number];
@@ -56,7 +58,23 @@ const PER_LANGUAGE_MAX_CHARS: Record<SummaryLanguage, number> = {
   'pt-PT': 280,
 };
 
-const MODEL = 'gemini-3.1-flash-lite';
+/**
+ * Per-article summaries are high-volume (one call per article), so the chain
+ * deliberately starts at the cheapest Gemini model and only touches the
+ * pricier `gemini-2.5-flash` when flash-lite fails — preserving the historic
+ * cost profile instead of inheriting the shared default chain's ordering.
+ * The Groq and Cerebras models are always last (different providers, true last
+ * resorts), each tried best-first.
+ */
+function articleSummaryChain(groqModels: string[], cerebrasModels: string[]): AiModel[] {
+  return [
+    { provider: 'gemini', model: 'gemini-3.1-flash-lite' },
+    { provider: 'gemini', model: 'gemini-2.5-flash' },
+    ...groqModels.map((model) => ({ provider: 'groq' as const, model })),
+    ...cerebrasModels.map((model) => ({ provider: 'cerebras' as const, model })),
+  ];
+}
+
 /** Attempts per article across backfill runs before it is marked failed. */
 const MAX_ATTEMPTS = 3;
 const MAX_DESCRIPTION_CHARS = 1_500;
@@ -271,7 +289,7 @@ export {
   JSON_KEY_TO_LANGUAGE,
   LANGUAGE_TO_ATTRIBUTE,
   PER_LANGUAGE_MAX_CHARS,
-  MODEL,
+  articleSummaryChain,
   MAX_ATTEMPTS,
   MAX_DESCRIPTION_CHARS,
   BACKFILL_NEWEST,

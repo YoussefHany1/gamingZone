@@ -2,17 +2,13 @@ import { logger } from '../../lib/logger';
 import * as sdk from 'node-appwrite';
 
 import { loadBackendEnv } from '../../lib/env';
-import {
-  env,
-  getAiProviderOverride,
-  getGeminiKey,
-  getGroqKey,
-  getGroqModel,
-} from '../../lib/config';
+import { env, getAiProviderConfig } from '../../lib/config';
 import { createAppwriteDatabases } from '../../lib/appwrite';
 import { initFirebaseAdmin } from '../../lib/firebaseAdmin';
 import { getErrorMessage } from '../../lib/errors';
-import { generateAiText } from '../../lib/ai';
+import { createAiRuntime } from '../../lib/ai';
+import type { AiRuntime } from '../../lib/ai';
+import { formatAiChain, resolveAiModels } from '../../lib/ai.shared';
 import { ANDROID_CHANNEL_ID, buildTopicPush, FCM_TOPIC, sendTopicPush } from '../../lib/fcm';
 
 loadBackendEnv();
@@ -136,7 +132,6 @@ function parseJsonSummary(rawText: string): SummaryResponse {
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const WEEKLY_GEMINI_MODEL = 'gemini-2.5-flash';
 const WEEKLY_GEMINI_SCHEMA = {
   type: 'OBJECT',
   properties: {
@@ -147,37 +142,36 @@ const WEEKLY_GEMINI_SCHEMA = {
 };
 
 /**
- * Generates the Arabic/English recap JSON via the provider chain (Gemini, then
- * the Groq fallback — see `lib/ai`). Each provider retries internally; throws
- * only when every configured provider fails.
+ * Generates the Arabic/English recap JSON via the model fallback chain
+ * (`gemini-2.5-flash` → `gemini-3.1-flash-lite` → Groq — see `lib/ai`). Each
+ * model retries internally; throws only when every configured model fails.
+ *
+ * `ai` is the run-scoped runtime created once in `runGenerateWeeklySummary` so
+ * a model that failed over on quota is skipped for every later chunk/merge
+ * call in the same run.
  */
-async function callAiWithRetry(prompt: string, maxRetries = 3): Promise<SummaryResponse> {
-  const { provider, text } = await generateAiText(
-    {
-      prompt,
-      label: 'weekly summary',
-      geminiModel: WEEKLY_GEMINI_MODEL,
-      geminiSchema: WEEKLY_GEMINI_SCHEMA,
-      groqModel: getGroqModel(),
-      retries: maxRetries,
-      // The weekly prompt is large (up to ~250 articles), so allow more time
-      // than the per-article default.
-      timeoutMs: 60_000,
-    },
-    {
-      geminiKey: getGeminiKey(),
-      groqKey: getGroqKey(),
-      override: getAiProviderOverride(),
-    },
-    { log: logger },
-  );
+async function callAiWithRetry(
+  prompt: string,
+  ai: AiRuntime,
+  maxRetries = 3,
+): Promise<SummaryResponse> {
+  const { provider, model, text } = await ai.generate({
+    prompt,
+    label: 'weekly summary',
+    geminiSchema: WEEKLY_GEMINI_SCHEMA,
+    retries: maxRetries,
+    // The weekly prompt is large (up to ~250 articles), so allow more time
+    // than the per-article default.
+    timeoutMs: 60_000,
+  });
 
-  logger.info(`✅ Weekly summary generated via ${provider}.`);
+  logger.info(`✅ Weekly summary generated via ${provider}/${model}.`);
   return parseJsonSummary(text);
 }
 
 async function summarizeWithAi(
   newsText: string,
+  ai: AiRuntime,
   opts: {
     isPartial: boolean;
     startDate?: string;
@@ -191,7 +185,7 @@ async function summarizeWithAi(
   const prompt = opts.isPartial
     ? PARTIAL_SUMMARY_PROMPT(opts.batchIndex ?? 1, opts.totalBatches ?? 1, newsText)
     : SUMMARY_PROMPT(opts.startDate ?? '', opts.endDate ?? '', newsText);
-  return callAiWithRetry(prompt);
+  return callAiWithRetry(prompt, ai);
 }
 
 function mergeSummariesWithAi(
@@ -199,9 +193,11 @@ function mergeSummariesWithAi(
   endDate: string,
   arabicSummaries: string,
   englishSummaries: string,
+  ai: AiRuntime,
 ): Promise<SummaryResponse> {
   return callAiWithRetry(
     MERGE_SUMMARY_PROMPT(startDate, endDate, arabicSummaries, englishSummaries),
+    ai,
   );
 }
 
@@ -313,7 +309,11 @@ async function sendSummaryNotification(): Promise<void> {
 
 async function runGenerateWeeklySummary() {
   try {
-    logger.info(`📰 Weekly summary — gemini=${WEEKLY_GEMINI_MODEL} · groq=${getGroqModel()}`);
+    // One runtime per run: every chunk + merge call below shares the memory of
+    // quota-exhausted models, so a dead primary is skipped after the first call.
+    const providerConfig = getAiProviderConfig();
+    const ai = createAiRuntime(providerConfig, { log: logger });
+    logger.info(`📰 Weekly summary — chain: ${formatAiChain(resolveAiModels({}, providerConfig))}`);
     logger.info('Fetching news from the last 7 days...');
 
     const { sevenDaysAgo, documents } = await fetchLastWeekNewsTitles();
@@ -338,7 +338,7 @@ async function runGenerateWeeklySummary() {
     if (documents.length <= CHUNK_SIZE) {
       const newsText = documents.map(formatDoc).join('\n');
       logger.info(`Sending all ${documents.length} articles in a single batch to AI...`);
-      jsonSummary = await summarizeWithAi(newsText, {
+      jsonSummary = await summarizeWithAi(newsText, ai, {
         isPartial: false,
         startDate: sevenDaysAgo,
         endDate,
@@ -358,7 +358,7 @@ async function runGenerateWeeklySummary() {
         const chunkText = chunk.map(formatDoc).join('\n');
         logger.info(`Processing chunk ${i + 1}/${chunks.length} (size: ${chunk.length})...`);
 
-        const summary = await summarizeWithAi(chunkText, {
+        const summary = await summarizeWithAi(chunkText, ai, {
           isPartial: true,
           batchIndex: i + 1,
           totalBatches: chunks.length,
@@ -384,6 +384,7 @@ async function runGenerateWeeklySummary() {
         endDate,
         arabicSummaries,
         englishSummaries,
+        ai,
       );
       logger.info('✅ Weekly recap merged.');
     }

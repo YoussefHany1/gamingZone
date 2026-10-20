@@ -100,7 +100,7 @@ export const DARK_COLORS: ThemeColors = Object.freeze({
   onAccent: "#ffffff",
 
   accent: "#516996",
-  accentText: "#7aa0e2",
+  accentText: "#779bdd",
   accentBorder: "rgba(119, 155, 221, 0.4)",
 
   border: "rgba(119, 155, 221, 0.25)",

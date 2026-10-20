@@ -34,7 +34,7 @@ const LoginRequiredView = memo(() => {
   return (
     <View style={styles.emptyContainer}>
       <CustomText style={styles.emptyText}>
-        <TriangleAlert size={182} color={colors.accent} />
+        <TriangleAlert size={182} color={colors.accentText}/>
         {"\n"}
         {t("common.loginRequired")}
       </CustomText>

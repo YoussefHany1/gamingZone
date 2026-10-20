@@ -1,10 +1,13 @@
 /**
  * Steam API endpoints proxied through the GamingZone backend.
  *
- * All Steam-related API calls live here so SteamLinkModal (and any future
- * Steam feature) can import clean, typed functions instead of raw axios calls.
+ * All Steam-related API calls live here so the platform sync service (and any
+ * future Steam feature) can import clean, typed functions instead of raw
+ * axios calls.
  */
 import apiClient from "./client";
+import axios from "axios";
+import { SERVER_URL } from "@/src/constants/config";
 import type {
   SteamGame,
   IgdbGame,
@@ -36,11 +39,13 @@ export async function resolveSteamVanityUrl(vanity: string): Promise<string | nu
 
 /**
  * Fetches the list of games owned by a Steam user.
- * Throws on a 403 response (private profile) so callers can handle it.
+ * Throws an error with `.status === 403` on a private profile so callers can
+ * handle it (the shared axios client flattens statuses, so this uses a direct
+ * request to keep the status intact).
  */
 export async function fetchOwnedGames(steamId: string): Promise<OwnedGamesResponse> {
-  const response = await apiClient.get<OwnedGamesResponse>(
-    `/steam/owned-games?steamid=${steamId}&_t=${Date.now()}`,
+  const response = await axios.get<OwnedGamesResponse>(
+    `${SERVER_URL}/steam/owned-games?steamid=${steamId}&_t=${Date.now()}`,
   );
   return response.data;
 }

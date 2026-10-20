@@ -299,7 +299,7 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = React.memo(
         />
         {loading && (
           <View style={styles.thumbnailLoaderOverlay} pointerEvents="none">
-            <ActivityIndicator size="small" color={colors.accent} />
+            <ActivityIndicator size="small" color={colors.accentText} />
           </View>
         )}
         {/* Side-gradient overlay — direction mirrors app locale */}

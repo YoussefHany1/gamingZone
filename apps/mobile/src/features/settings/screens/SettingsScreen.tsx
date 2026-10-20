@@ -46,7 +46,7 @@ const SettingsScreen = memo((): React.ReactElement => {
   }, [isGuest, navigation]);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "right", "left"]}>
+    <SafeAreaView style={styles.container} >
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
