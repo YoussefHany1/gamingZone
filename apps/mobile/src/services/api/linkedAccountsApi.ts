@@ -6,6 +6,7 @@
  * of raw axios calls.
  */
 import apiClient from "./client";
+import { logger } from "@/src/lib/logger";
 import type {
   IgdbNameMapResponse,
   PsnSyncResponse,
@@ -40,7 +41,23 @@ export async function fetchLinkState(
       timeout: 15_000,
     });
     return response.data ?? null;
-  } catch {
+  } catch (error: unknown) {
+    // Old deployments fall back to a Play-Store redirect for unknown routes —
+    // log the status/body shape so a bad deploy is instantly diagnosable.
+    const err = error as {
+      response?: { status?: number; data?: unknown };
+    };
+    const body = err?.response?.data;
+    logger.error(
+      "[linkedAccountsApi] /linked-accounts/state request failed",
+      err?.response?.status != null
+        ? new Error(
+            `HTTP ${err.response.status} — ${
+              typeof body === "string" ? body.slice(0, 120) : JSON.stringify(body)?.slice(0, 120)
+            }`,
+          )
+        : (error as Error),
+    );
     return null;
   }
 }
