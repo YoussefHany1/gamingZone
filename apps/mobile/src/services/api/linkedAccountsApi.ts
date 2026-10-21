@@ -7,17 +7,52 @@
  */
 import apiClient from "./client";
 import { logger } from "@/src/lib/logger";
+import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import type {
   IgdbNameMapResponse,
   PsnSyncResponse,
   LinkStateResponse,
 } from "@/src/features/settings/types";
 
+/**
+ * Waits for Firebase to restore the signed-in user. On a cold start (the app
+ * was launched by the Steam deep link) the session is restored
+ * asynchronously, and a request issued in that window would be rejected.
+ */
+function waitForAuthUser(authModule: {
+  (): FirebaseAuthTypes.Module;
+}): Promise<FirebaseAuthTypes.User | null> {
+  return new Promise((resolve) => {
+    let settled = false;
+    // Held in an object so the cleanup callback never touches a binding that
+    // is still in its temporal dead zone.
+    const cleanup: { unsubscribe?: () => void } = {};
+
+    const finish = (user: FirebaseAuthTypes.User | null) => {
+      if (settled) return;
+      settled = true;
+      resolve(user);
+    };
+
+    const timer = setTimeout(() => {
+      cleanup.unsubscribe?.();
+      finish(null);
+    }, 5000);
+
+    cleanup.unsubscribe = authModule().onAuthStateChanged((user) => {
+      if (!user) return;
+      clearTimeout(timer);
+      cleanup.unsubscribe?.();
+      finish(user);
+    });
+  });
+}
+
 /** Returns a valid, capped Firebase ID token for backend auth. */
 export async function getBackendIdToken(): Promise<string | null> {
   try {
     const { default: auth } = await import("@react-native-firebase/auth");
-    const user = auth().currentUser;
+    const user = auth().currentUser ?? (await waitForAuthUser(auth));
     if (!user) {
       logger.warn(
         "[linkedAccountsApi] getBackendIdToken: no auth().currentUser — user not signed in",
@@ -31,40 +66,44 @@ export async function getBackendIdToken(): Promise<string | null> {
   }
 }
 
+/** Result of a link-state request — the HTTP status is kept for diagnostics. */
+export type LinkStateResult =
+  | { ok: true; data: LinkStateResponse }
+  | { ok: false; status: number | null; message: string };
+
 /**
  * Fetches a signed linkage `state` (+ the platform-specific start URL) that
  * binds the next link attempt to the authenticated Firebase user for 10 min.
  */
-export async function fetchLinkState(
-  platform: "steam" | "psn",
-): Promise<LinkStateResponse | null> {
+export async function fetchLinkState(platform: "steam" | "psn"): Promise<LinkStateResult> {
   const idToken = await getBackendIdToken();
-  if (!idToken) return null;
+  if (!idToken) return { ok: false, status: null, message: "no auth session" };
   try {
     const response = await apiClient.get<LinkStateResponse>("/linked-accounts/state", {
       params: { platform },
       headers: { Authorization: `Bearer ${idToken}` },
       timeout: 15_000,
     });
-    return response.data ?? null;
+    return { ok: true, data: response.data };
   } catch (error: unknown) {
     // Old deployments fall back to a Play-Store redirect for unknown routes —
     // log the status/body shape so a bad deploy is instantly diagnosable.
-    const err = error as {
-      response?: { status?: number; data?: unknown };
-    };
-    const body = err?.response?.data;
+    const err = error as { status?: number; data?: unknown; message?: string };
+    const body = err?.data;
+    const status = typeof err?.status === "number" ? err.status : null;
     logger.error(
       "[linkedAccountsApi] /linked-accounts/state request failed",
-      err?.response?.status != null
-        ? new Error(
-            `HTTP ${err.response.status} — ${
-              typeof body === "string" ? body.slice(0, 120) : JSON.stringify(body)?.slice(0, 120)
-            }`,
-          )
-        : (error as Error),
+      new Error(
+        `HTTP ${status ?? "?"} — ${
+          typeof body === "string" ? body.slice(0, 120) : (JSON.stringify(body) ?? "").slice(0, 120)
+        }`,
+      ),
     );
-    return null;
+    return {
+      ok: false,
+      status,
+      message: err?.message ?? "state fetch failed",
+    };
   }
 }
 

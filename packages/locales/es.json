@@ -591,7 +591,9 @@
         "description": "Link your accounts to automatically import your games into your lists.",
         "steam": {
           "signIn": "Sign in with Steam",
-          "errorFailed": "Steam sign-in failed"
+          "errorFailed": "Steam sign-in failed",
+          "openBrowser": "Abrir en una pestaña del navegador en su lugar",
+          "browserHint": "Termina de iniciar sesión en tu navegador: sincronizamos tu biblioteca automáticamente después."
         },
         "psn": {
           "signIn": "Sign in with PlayStation",
@@ -607,7 +609,8 @@
           "openCookiePage": "Open NPSSO page",
           "connect": "Connect",
           "empty": "No played games found",
-          "errorInvalidNpsso": "Could not verify the PSN token"
+          "errorInvalidNpsso": "Could not verify the PSN token",
+          "openBrowser": "Continuar en una pestaña del navegador en su lugar"
         },
         "messages": {
           "lastSynced": "Last synced",
@@ -616,7 +619,8 @@
           "synced": "Library synced",
           "syncFailed": "Sync failed",
           "unlinked": "Disconnected",
-          "empty": "No games found"
+          "empty": "No games found",
+          "signInRequired": "Primero inicia sesión con Steam"
         },
         "xbox": {
           "comingSoon": "Xbox - Coming Soon"

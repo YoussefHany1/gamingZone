@@ -37,12 +37,24 @@ apiClient.interceptors.response.use(
       // The server responded with a status code outside 2xx
       const status = error.response.status;
       const message = `Server error ${status}: ${error.config?.url ?? "unknown endpoint"}`;
-      return Promise.reject(new Error(message));
+      // Keep the status/body on the rejected error: flattening them away made
+      // every failure indistinguishable (e.g. 401 vs 404 vs 500) for callers.
+      const normalized = new Error(message) as Error & {
+        status?: number;
+        data?: unknown;
+      };
+      normalized.status = status;
+      normalized.data = error.response.data;
+      return Promise.reject(normalized);
     }
 
     if (error.request) {
       // The request was made but no response was received (network issue)
-      return Promise.reject(new Error("Network error — check your connection."));
+      const networkError = new Error("Network error — check your connection.") as Error & {
+        status?: number;
+      };
+      networkError.status = 0;
+      return Promise.reject(networkError);
     }
 
     // Something else triggered the error

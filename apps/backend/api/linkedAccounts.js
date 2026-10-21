@@ -301,7 +301,7 @@ const sanitizeForSearch = (name) => String(name ?? '').replace(/[\\"\r\n]/g, ' '
  * One multiquery round for up to 10 titles. Returns a Map of
  * normalizedName → best IGDB game (or null).
  */
-async function resolveNamesViaIgdb(normalizedToOriginal, callIgdb, sleep) {
+async function resolveNamesViaIgdb(normalizedToOriginal, callIgdb) {
   const names = Array.from(normalizedToOriginal.keys()).slice(0, MULTIQUERY_CHUNK);
   const subqueries = names.map((name, idx) => {
     const original = normalizedToOriginal.get(name);
@@ -355,9 +355,8 @@ function pickBestCandidate(normalizedName, candidates) {
   );
   if (includes) return { game: toMappedGame(includes), trusted: true };
 
-  // Same normalized name with subtitle must not "include" fail badly — put a
-  // soft fallback: the top search result only counts as trusted when more
-  // candidates don't exist; otherwise treat as unmatched.
+  // Nothing above the trust threshold — the first search hit alone is never
+  // trusted. The caller negative-caches this title for a week instead.
   return null;
 }
 
@@ -370,6 +369,16 @@ function toMappedGame(g) {
     release_date: g.first_release_date
       ? new Date(g.first_release_date * 1000).getFullYear().toString()
       : '',
+  };
+}
+
+/** Secret-payload shape for a fresh PSN auth token round. */
+function psnSecretPayload(authTokens) {
+  return {
+    refreshTokenEnc: encryptSecret(authTokens.refreshToken),
+    refreshTokenExpiresAt: new Date(
+      Date.now() + (authTokens.refreshTokenExpiresIn ?? 0) * 1000,
+    ),
   };
 }
 
@@ -419,7 +428,12 @@ export function registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgd
         });
         startUrl = `https://steamcommunity.com/openid/login?${params.toString()}`;
       } else if (platform === 'psn') {
-        startUrl = 'https://ca.account.sony.com/api/v1/ssocookie';
+        // Same sign-in chain the mobile WebView uses: the ssocookie endpoint
+        // itself never renders a login form.
+        startUrl =
+          'https://web.np.playstation.com/api/session/v1/signin' +
+          '?redirect_uri=https%3A%2F%2Fio.playstation.com%2Fcentral%2Fauth%2Flogin' +
+          '%3FpostSignInURL%3Dhttps%253A%252F%252Fca.account.sony.com%252Fapi%252Fv1%252Fssocookie';
       }
 
       res.json({ state, startUrl });
@@ -464,7 +478,12 @@ export function registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgd
         status: 'active',
         lastSyncedAt: null,
       });
-      return res.redirect('gaming-zone://steam-link?status=success');
+      // The Steam ID travels with the redirect so the client can start the
+      // library sync immediately, even if its read of linkedAccounts/steam
+      // lags behind the write we just made.
+      return res.redirect(
+        `gaming-zone://steam-link?status=success&steamId=${encodeURIComponent(userSteamId)}`,
+      );
     }),
   );
 
@@ -501,8 +520,7 @@ export function registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgd
       const { accountId, onlineId } = parsePsnIdToken(authTokens.idToken);
 
       await setSecretDoc(req.authUid, 'psn', {
-        refreshTokenEnc: encryptSecret(authTokens.refreshToken),
-        refreshTokenExpiresAt: new Date(Date.now() + (authTokens.refreshTokenExpiresIn ?? 0) * 1000),
+        ...psnSecretPayload(authTokens),
         accountId: accountId || null,
       });
 
@@ -544,12 +562,7 @@ export function registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgd
       }
 
       if (authTokens?.refreshToken && authTokens.refreshToken !== refreshToken) {
-        await setSecretDoc(req.authUid, 'psn', {
-          refreshTokenEnc: encryptSecret(authTokens.refreshToken),
-          refreshTokenExpiresAt: new Date(
-            Date.now() + (authTokens.refreshTokenExpiresIn ?? 0) * 1000,
-          ),
-        });
+        await setSecretDoc(req.authUid, 'psn', psnSecretPayload(authTokens));
       }
 
       let played;
@@ -625,9 +638,14 @@ export function registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgd
         const chunk = new Map(chunkNames.map((n) => [n, pending.get(n)]));
 
         let resolved;
+        let chunkFailed = false;
         try {
-          resolved = await resolveNamesViaIgdb(chunk, callIgdb, sleep);
+          resolved = await resolveNamesViaIgdb(chunk, callIgdb);
         } catch {
+          // IGDB unreachable/4xx — report unmatched for THIS response but do
+          // NOT negative-cache: a transient outage must never poison the
+          // 7-day "no match" entries.
+          chunkFailed = true;
           resolved = new Map();
         }
 
@@ -649,15 +667,17 @@ export function registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgd
             });
           } else {
             results.set(normalized, null);
-            cacheWrites.push({
-              key: cacheKey(normalized),
-              data: {
-                title: original,
-                confidence: 0,
-                mappedAtMs: now,
-                expiresAtMs: now + NEGATIVE_TTL_MS,
-              },
-            });
+            if (!chunkFailed) {
+              cacheWrites.push({
+                key: cacheKey(normalized),
+                data: {
+                  title: original,
+                  confidence: 0,
+                  mappedAtMs: now,
+                  expiresAtMs: now + NEGATIVE_TTL_MS,
+                },
+              });
+            }
           }
           pending.delete(normalized);
         }

@@ -555,7 +555,9 @@
         "description": "اربط حساباتك لاستيراد ألعابك إلى قوائمك تلقائياً.",
         "steam": {
           "signIn": "تسجيل الدخول عبر Steam",
-          "errorFailed": "فشل تسجيل الدخول إلى Steam"
+          "errorFailed": "فشل تسجيل الدخول إلى Steam",
+          "openBrowser": "افتح في تبويب المتصفح بدلاً من ذلك",
+          "browserHint": "أكمل تسجيل الدخول في المتصفح — سنزامن مكتبتك تلقائياً بعد ذلك."
         },
         "psn": {
           "signIn": "تسجيل الدخول عبر PlayStation",
@@ -571,7 +573,8 @@
           "openCookiePage": "فتح صفحة NPSSO",
           "connect": "ربط",
           "empty": "لا توجد ألعاب مُلعَب بها",
-          "errorInvalidNpsso": "تعذّر التحقق من رمز PSN"
+          "errorInvalidNpsso": "تعذّر التحقق من رمز PSN",
+          "openBrowser": "المتابعة في تبويب المتصفح بدلاً من ذلك"
         },
         "messages": {
           "lastSynced": "آخر مزامنة",
@@ -580,7 +583,8 @@
           "synced": "تمت مزامنة المكتبة",
           "syncFailed": "فشلت المزامنة",
           "unlinked": "تم قطع الاتصال",
-          "empty": "لم يتم العثور على ألعاب"
+          "empty": "لم يتم العثور على ألعاب",
+          "signInRequired": "سجّل الدخول إلى Steam أولاً"
         },
         "xbox": {
           "comingSoon": "Xbox — قريباً"

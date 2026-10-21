@@ -10,6 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Linking,
+  useWindowDimensions,
+  ScrollView,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { useTranslation } from "react-i18next";
@@ -37,17 +39,21 @@ export type LinkAccountModalProps = {
   onClose: () => void;
 };
 
-type Panel = "choose" | "psnWebView" | "psnManual";
+type Panel = "choose" | "steamWebView" | "psnWebView" | "psnManual";
 
 const STEAM_REDIRECT = "gaming-zone://steam-link";
 /**
  * Sony's ssocookie endpoint NEVER shows a login form — without an active
  * PlayStation session it just dumps `{"error":"invalid_grant","error_code":20}`.
- * The WebView therefore starts on the store's real sign-in page (which supports
- * 2FA etc.) and we navigate to the ssocookie URL only on demand.
+ * (store.playstation.com's "pages/signin" route is also dead — it renders a 404.)
+ * The WebView therefore opens the session sign-in endpoint used by every PSN
+ * library tool: it lands on the real `my.account.sony.com` login form (2FA
+ * supported) and, post-login, bounces through to the ssocookie page where the
+ * injected probe reads the NPSSO automatically.
  */
 const PSN_COOKIE_URL = "https://ca.account.sony.com/api/v1/ssocookie";
-const PSN_SIGNIN_URL = "https://store.playstation.com/en-us/pages/signin";
+const PSN_SIGNIN_URL =
+  "https://web.np.playstation.com/api/session/v1/signin?redirect_uri=https%3A%2F%2Fio.playstation.com%2Fcentral%2Fauth%2Flogin%3FpostSignInURL%3Dhttps%253A%252F%252Fca.account.sony.com%252Fapi%252Fv1%252Fssocookie";
 
 /**
  * A real mobile-Chrome user agent â€” the default RN WebView agent string is a
@@ -109,17 +115,21 @@ function formatSyncDate(ts?: number | null): string {
 export default function LinkAccountModal({ visible, onClose }: LinkAccountModalProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
+  const window = useWindowDimensions();
 
   const [panel, setPanel] = useState<Panel>("choose");
   const [busy, setBusy] = useState(false);
   const [npssoInput, setNpssoInput] = useState("");
   const [psnSessionHint, setPsnSessionHint] = useState(false);
+  /** Steam OpenID start URL while the WebView flow is active. */
+  const [steamStartUrl, setSteamStartUrl] = useState<string | null>(null);
   const [steamAccount, setSteamAccount] = useState<LinkedAccount | null>(null);
   const [psnAccount, setPsnAccount] = useState<LinkedAccount | null>(null);
 
   const psnWebViewRef = useRef<WebView>(null);
-  /** Resolve callback for the Linking fallback after the Steam browser session. */
-  const steamReturnRef = useRef<((url: string | null) => void) | null>(null);
+  const steamWebViewRef = useRef<WebView>(null);
+  /** Guards the at-most-once handling of the Steam callback redirect. */
+  const steamCallbackLock = useRef(false);
 
   const styles = useThemeStyles((c) => ({
     overlay: {
@@ -130,6 +140,8 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
     },
     modalContent: {
       width: "92%",
+      // Tablets / wide screens: don't let the modal stretch edge to edge.
+      maxWidth: 640,
       backgroundColor: c.background,
       padding: 20,
       borderRadius: 16,
@@ -157,6 +169,13 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
       padding: 12,
       marginBottom: 8,
     },
+    rowSpinner: { marginRight: 6, marginLeft: 4 },
+    manualLink: { alignSelf: "center", padding: 6, marginBottom: 8 },
+    manualLinkText: {
+      color: c.textSubtle,
+      fontSize: 12,
+      textDecorationLine: "underline",
+    },
     rowIcon: { marginRight: 10 },
     rowTextWrap: { flex: 1 },
     rowName: { color: c.text, fontSize: 15, fontWeight: "600" },
@@ -178,15 +197,6 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
       borderColor: c.border,
     },
     secondaryBtnText: { color: c.text, fontWeight: "600", fontSize: 14 },
-    banner: {
-      backgroundColor: c.surface,
-      borderLeftWidth: 3,
-      borderLeftColor: "#e6a23c",
-      borderRadius: 8,
-      padding: 10,
-      marginBottom: 8,
-    },
-    bannerText: { color: c.text, fontSize: 13 },
     disabledBtn: {
       padding: 12,
       borderRadius: 10,
@@ -202,9 +212,15 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
       marginLeft: 8,
     },
     iconBtn: { padding: 8, marginLeft: 2 },
-    actionRow: { flexDirection: "row" },
-    actionRowPrimary: { flex: 1 },
-    webviewBox: { height: 320, borderRadius: 10, overflow: "hidden" },
+    webviewBox: {
+      height: Math.min(320, Math.round(window.height * 0.42)),
+      borderRadius: 10,
+      overflow: "hidden",
+    },
+    /** Shrinks to the modal height cap and becomes scrollable only when the
+     * panel content cannot fit (short panels stay exactly as tall as needed). */
+    panelScroll: { flexGrow: 0, flexShrink: 1 },
+    panelContent: { paddingBottom: 4 },
     mtSmall: { marginTop: 8 },
     mtMedium: { marginTop: 10 },
     mbMedium: { marginBottom: 12 },
@@ -229,8 +245,14 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
         .onSnapshot(
           (snap) => {
             const data = (snap.data() ?? null) as LinkedAccount | null;
-            if (platform === "steam") setSteamAccount(data?.steamId ? data : null);
-            else setPsnAccount(data ?? null);
+            // A doc keeps its identifiers after unlinking (status: "unlinked")
+            // — it must render as "not connected" from the user's view.
+            const connected = data != null && data.status !== "unlinked";
+            if (platform === "steam") {
+              setSteamAccount(connected && data?.steamId ? data : null);
+            } else {
+              setPsnAccount(connected && data?.onlineId ? data : null);
+            }
           },
           (error) => {
             // e.g. rules not deployed yet — degrade to "not connected".
@@ -248,27 +270,22 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
       setPanel("choose");
       setNpssoInput("");
       setBusy(false);
+      setSteamStartUrl(null);
+      setPsnSessionHint(false);
     }
   }, [visible]);
 
-  // â”€â”€ Deep-link fallback while the Steam session is external â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  useEffect(() => {
-    const sub = Linking.addEventListener("url", (event) => {
-      if (event.url?.startsWith(STEAM_REDIRECT)) {
-        steamReturnRef.current?.(event.url);
-        steamReturnRef.current = null;
-      }
-    });
-    return () => sub.remove();
-  }, []);
-
-  /** Waits for the backend-written doc (up to 30 s) so the UI reflects it. */
+  /**
+   * Waits for the backend-written doc so the UI reflects it. Never throws:
+   * a Firestore hiccup must not abort the sign-in flow — the caller falls
+   * back to the Steam ID carried by the callback URL.
+   */
   async function waitForMountedLinkedAccount(
     platform: LinkedAccountPlatform,
-    timeoutMs = 30_000,
-  ): Promise<void> {
+    timeoutMs = 15_000,
+  ): Promise<boolean> {
     const uid = auth().currentUser?.uid;
-    if (!uid) return;
+    if (!uid) return false;
     const deadline = Date.now() + timeoutMs;
     const ref = firestore()
       .collection("users")
@@ -276,116 +293,218 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
       .collection("linkedAccounts")
       .doc(platform);
     while (Date.now() < deadline) {
-      const snap = await ref.get();
-      // RNFB exposes exists() as a method (see other services).
-      if (snap.exists()) return;
+      try {
+        const snap = await ref.get();
+        // RNFB exposes exists() as a method (see other services).
+        if (snap.exists()) return true;
+      } catch (e) {
+        logger.warn(`[LinkAccountModal] linkedAccounts/${platform} read failed:`, e);
+        return false;
+      }
       await new Promise((r) => setTimeout(r, 1500));
     }
+    return false;
   }
 
-  const runSteamSync = useCallback(async (successText: string): Promise<void> => {
-    // The state snapshot can lag a fresh sign-in (doc written by the backend
-    // mid-flow), so fall back to a direct read.
-    let steamId = steamAccount?.steamId ?? "";
-    if (!steamId) {
-      const uid = auth().currentUser?.uid;
-      if (uid) {
-        const snap = await firestore()
-          .collection("users")
-          .doc(uid)
-          .collection("linkedAccounts")
-          .doc("steam")
-          .get();
-        steamId = ((snap.data() as LinkedAccount | undefined)?.steamId as string) ?? "";
+  const runSteamSync = useCallback(
+    async (successText: string, explicitSteamId?: string | null): Promise<void> => {
+      // Priority: the id carried by the OpenID callback → the live snapshot →
+      // a direct read (the snapshot can lag a fresh sign-in).
+      let steamId = explicitSteamId || steamAccount?.steamId || "";
+      if (!steamId) {
+        const uid = auth().currentUser?.uid;
+        if (uid) {
+          try {
+            const snap = await firestore()
+              .collection("users")
+              .doc(uid)
+              .collection("linkedAccounts")
+              .doc("steam")
+              .get();
+            const doc = snap.data() as LinkedAccount | undefined;
+            // Skip "unlinked"/reauth docs — they are not usable for syncing.
+            if (doc?.steamId && doc?.status !== "unlinked") {
+              steamId = doc.steamId;
+            }
+          } catch (e) {
+            logger.warn("[LinkAccountModal] could not read the linked Steam account:", e);
+          }
+        }
       }
-    }
-    if (!steamId) {
-      setBusy(false);
-      return;
-    }
-    const outcome = await syncSteamLibrary(steamId);
-    setBusy(false);
-    switch (outcome) {
-      case "ok":
-        ToastAndroid.show(successText, ToastAndroid.SHORT);
-        break;
-      case "private":
+      if (!steamId) {
+        setBusy(false);
+        // Never fail silently — the user must know what to do next.
         ToastAndroid.show(
-          t("settings.profile.steam.errors.privateProfile") || "Your Steam profile is private",
+          t("settings.profile.linking.messages.signInRequired") ||
+            "Sign in with Steam first",
           ToastAndroid.LONG,
         );
-        break;
-      case "empty":
-        ToastAndroid.show(
-          t("settings.profile.linking.messages.empty") || "No games found",
-          ToastAndroid.SHORT,
-        );
-        break;
-      default:
-        ToastAndroid.show(
-          t("settings.profile.linking.messages.syncFailed") || "Sync failed",
-          ToastAndroid.SHORT,
-        );
-    }
-  }, [steamAccount?.steamId, t]);
-
-  // â”€â”€ Steam: OpenID sign-in via browser session â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const openSteamSignIn = useCallback(async () => {
-    setBusy(true);
-    try {
-      const stateResponse = await fetchLinkState("steam");
-      if (!stateResponse?.startUrl) throw new Error("state fetch failed");
-
-      let dismissed = false;
-      try {
-        // Deliberately dynamic â€” see lib/browser.ts for the crash rationale.
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const WebBrowser = require("expo-web-browser");
-        const result = await WebBrowser.openAuthSessionAsync(
-          stateResponse.startUrl,
-          STEAM_REDIRECT,
-        );
-        dismissed = (result as { type?: string })?.type === "cancel";
-      } catch (browserError) {
-        logger.warn(
-          "[LinkAccountModal] openAuthSessionAsync unavailable â€” external browser fallback",
-          browserError,
-        );
-        await new Promise<string | null>((resolve) => {
-          // Resolve when the app is re-invoked through the deep link.
-          steamReturnRef.current = (url) => resolve(url);
-          Linking.openURL(stateResponse.startUrl).catch(() => resolve(null));
-          // Safety timeout: never hang the modal open for more than 5 min.
-          setTimeout(() => resolve(null), 5 * 60 * 1000);
-        });
-      }
-
-      if (dismissed) {
-        setBusy(false);
         return;
       }
+      const outcome = await syncSteamLibrary(steamId);
+      setBusy(false);
+      switch (outcome) {
+        case "ok":
+          ToastAndroid.show(successText, ToastAndroid.SHORT);
+          break;
+        case "private":
+          ToastAndroid.show(
+            t("settings.profile.steam.errors.privateProfile") || "Your Steam profile is private",
+            ToastAndroid.LONG,
+          );
+          break;
+        case "empty":
+          ToastAndroid.show(
+            t("settings.profile.linking.messages.empty") || "No games found",
+            ToastAndroid.SHORT,
+          );
+          break;
+        default:
+          ToastAndroid.show(
+            t("settings.profile.linking.messages.syncFailed") || "Sync failed",
+            ToastAndroid.SHORT,
+          );
+      }
+    },
+    [steamAccount?.steamId, t],
+  );
 
-      // The server wrote the linkedAccounts doc before redirecting back; give
-      // it a moment to appear via the onSnapshot subscription.
-      await waitForMountedLinkedAccount("steam");
-
-      await runSteamSync(t("settings.profile.linking.messages.synced") || "Library synced");
+  // â”€â”€ Steam: OpenID sign-in inside the WebView â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /** Opens the Steam OpenID login page as an in-app WebView panel. */
+  const openSteamSignIn = useCallback(async () => {
+    try {
+      const result = await fetchLinkState("steam");
+      if (!result.ok || !result.data?.startUrl) {
+        throw new Error(
+          result.ok ? "state fetch failed" : `state fetch failed (HTTP ${result.status ?? "?"})`,
+        );
+      }
+      steamCallbackLock.current = false;
+      setSteamStartUrl(result.data.startUrl);
+      setPanel("steamWebView");
     } catch (e) {
       logger.error("[LinkAccountModal] Steam sign-in failed", e);
       ToastAndroid.show(
         t("settings.profile.linking.steam.errorFailed") || "Steam sign-in failed",
         ToastAndroid.LONG,
       );
-      setBusy(false);
     }
-  }, [t, runSteamSync]);
+  }, [t]);
+
+  /**
+   * The backend callback 302-redirects to `gaming-zone://steam-link?...`.
+   * Inside the WebView that deep link never reaches the OS — we intercept it
+   * (onShouldStartLoadWithRequest / onNavigationStateChange), parse the
+   * outcome, and run the post-link library sync.
+   */
+  const handleSteamCallbackUrl = useCallback(
+    async (url: string): Promise<void> => {
+      if (steamCallbackLock.current) return;
+      steamCallbackLock.current = true;
+      setSteamStartUrl(null);
+      setPanel("choose");
+
+      const query = url.split("?")[1] ?? "";
+      const queryParam = (name: string) =>
+        new RegExp(`(?:^|&)${name}=([^&]*)`).exec(query)?.[1] ?? "";
+
+      try {
+        if (queryParam("status") === "success") {
+          // The server wrote the linkedAccounts doc before redirecting; give it
+          // a moment to appear via the onSnapshot subscription. The Steam ID
+          // in the callback lets the sync run even if that read fails.
+          setBusy(true);
+          await waitForMountedLinkedAccount("steam");
+          const steamIdParam = queryParam("steamId");
+          await runSteamSync(
+            t("settings.profile.linking.messages.synced") || "Library synced",
+            steamIdParam ? decodeURIComponent(steamIdParam) : null,
+          );
+          return;
+        }
+
+        logger.warn(
+          "[LinkAccountModal] Steam sign-in rejected:", queryParam("reason") || "unknown",
+        );
+        ToastAndroid.show(
+          t("settings.profile.linking.steam.errorFailed") || "Steam sign-in failed",
+          ToastAndroid.LONG,
+        );
+      } catch (e) {
+        logger.error("[LinkAccountModal] Steam callback handling failed:", e);
+        setBusy(false);
+        ToastAndroid.show(
+          t("settings.profile.linking.messages.syncFailed") || "Sync failed",
+          ToastAndroid.SHORT,
+        );
+      }
+    },
+    [runSteamSync, t],
+  );
+
+  /**
+   * Continues the OpenID sign-in in the system browser. The backend's
+   * `gaming-zone://steam-link` redirect is delivered as a deep link into the
+   * app and re-enters the exact same handler the WebView intercept uses.
+   */
+  const openSteamExternal = useCallback(async () => {
+    if (!steamStartUrl) return;
+    const url = steamStartUrl;
+    steamCallbackLock.current = false;
+    setSteamStartUrl(null);
+    setPanel("choose");
+    try {
+      await Linking.openURL(url);
+      ToastAndroid.show(
+        t("settings.profile.linking.steam.browserHint") ||
+          "Finish signing in in your browser - we sync automatically afterwards.",
+        ToastAndroid.LONG,
+      );
+    } catch (e) {
+      logger.warn("[LinkAccountModal] could not open external browser for Steam:", e);
+      ToastAndroid.show(
+        t("settings.profile.linking.steam.errorFailed") || "Steam sign-in failed",
+        ToastAndroid.LONG,
+      );
+    }
+  }, [steamStartUrl, t]);
+
+  /**
+   * Deep-link return path for the external browser-tab flow. The app is
+   * either already running (the "url" event) or cold-started by the link
+   * (getInitialURL) - both have to reach the same handler.
+   */
+  useEffect(() => {
+    const sub = Linking.addEventListener("url", (event) => {
+      if (event.url?.startsWith(STEAM_REDIRECT)) void handleSteamCallbackUrl(event.url);
+    });
+    Linking.getInitialURL()
+      .then((initial) => {
+        if (initial?.startsWith(STEAM_REDIRECT)) void handleSteamCallbackUrl(initial);
+      })
+      .catch(() => {
+        /* no launch URL - nothing to recover */
+      });
+    return () => sub.remove();
+  }, [handleSteamCallbackUrl]);
+
+  /**
+   * Continue the PSN sign-in in a browser tab, then paste the NPSSO token in
+   * the manual panel (the token capture needs our WebView).
+   */
+  const openPsnExternal = useCallback(async () => {
+    setPanel("psnManual");
+    try {
+      await Linking.openURL(PSN_SIGNIN_URL);
+    } catch (e) {
+      logger.warn("[LinkAccountModal] could not open external browser for PSN:", e);
+    }
+  }, []);
 
   const handleSteamSyncNow = useCallback(async () => {
     setBusy(true);
-    await runSteamSync(
-      t("settings.profile.linking.messages.synced") || "Library synced",
-    );
-    setBusy(false);
+    // `runSteamSync` clears `busy` in every branch.
+    await runSteamSync(t("settings.profile.linking.messages.synced") || "Library synced");
   }, [runSteamSync, t]);
 
   // â”€â”€ PSN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -509,6 +628,11 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
 
   const handleUnlink = useCallback(
     async (platform: LinkedAccountPlatform) => {
+      // Optimistic: flip the row to "not connected" immediately — the
+      // snapshot listener may take a round-trip, and the next snapshot event
+      // (carrying status "unlinked") maps back to the same cleared state.
+      if (platform === "steam") setSteamAccount(null);
+      else setPsnAccount(null);
       await unlinkAccount(platform);
       ToastAndroid.show(
         t("settings.profile.linking.messages.unlinked") || "Disconnected",
@@ -518,122 +642,72 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
     [t],
   );
 
+  /** Shared row renderer: tapping a connected row re-syncs; an unlinked or
+   * reauth-required row walks the user through the sign-in flow again. */
+  const renderPlatformRow = (
+    icon: React.ReactNode,
+    name: string,
+    meta: string,
+    onPress: () => void,
+    onRelink?: () => void,
+    onUnlink?: () => void,
+  ): React.ReactNode => (
+    <TouchableOpacity
+      style={styles.row}
+      onPress={onPress}
+      disabled={busy}
+      activeOpacity={0.7}
+    >
+      <View style={styles.rowIcon}>{icon}</View>
+      <View style={styles.rowTextWrap}>
+        <CustomText style={styles.rowName}>{name}</CustomText>
+        <CustomText style={styles.rowHint} numberOfLines={1}>
+          {meta}
+        </CustomText>
+      </View>
+      {busy && (
+        <ActivityIndicator size="small" color={colors.textSubtle} style={styles.rowSpinner} />
+      )}
+      {onRelink && !busy && (
+        <TouchableOpacity onPress={onRelink} style={styles.iconBtn}>
+          <Link2 size={20} color={colors.textSubtle} />
+        </TouchableOpacity>
+      )}
+      {onUnlink && !busy && (
+        <TouchableOpacity onPress={onUnlink} style={styles.iconBtn}>
+          <Link2Off size={20} color={colors.danger} />
+        </TouchableOpacity>
+      )}
+    </TouchableOpacity>
+  );
+
   // â”€â”€ Rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  const renderSteamRow = (): React.ReactNode => {
-    if (!steamAccount) {
-      return (
-        <TouchableOpacity style={styles.primaryBtn} onPress={openSteamSignIn} disabled={busy}>
-          {busy ? (
-            <ActivityIndicator color={colors.onAccent} />
-          ) : (
-            <CustomText style={styles.primaryBtnText}>
-              {t("settings.profile.linking.steam.signIn") || "Sign in with Steam"}
-            </CustomText>
-          )}
-        </TouchableOpacity>
-      );
-    }
-
-    const isReauth = steamAccount.status === "reauth_required";
-    return (
-      <>
-        {isReauth && (
-          <View style={styles.banner}>
-            <CustomText style={styles.bannerText}>
-              {t("settings.profile.linking.psn.reauthBannerGeneric") ||
-                "Connection expired â€” sign in again"}
-            </CustomText>
-          </View>
-        )}
-        <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={[styles.primaryBtn, styles.actionRowPrimary]}
-            onPress={handleSteamSyncNow}
-            disabled={busy}
-          >
-            {busy ? (
-              <ActivityIndicator color={colors.onAccent} />
-            ) : (
-              <CustomText style={styles.primaryBtnText}>
-                {t("settings.profile.linking.messages.syncNow") || "Sync now"}
-              </CustomText>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => handleUnlink("steam")}
-            style={styles.iconBtn}
-          >
-            <Link2Off size={22} color={colors.danger} />
-          </TouchableOpacity>
-        </View>
-      </>
-    );
-  };
-
-  const renderPsnRow = (): React.ReactNode => {
-    const isReauth = psnAccount?.status === "reauth_required";
-    if (!psnAccount?.onlineId || isReauth) {
-      return (
-        <>
-          <TouchableOpacity
-            style={styles.primaryBtn}
-            onPress={openPsnWebView}
-            disabled={busy}
-          >
-            <CustomText style={styles.primaryBtnText}>
-              {isReauth
-                ? t("settings.profile.linking.psn.reconnect") || "Reconnect"
-                : t("settings.profile.linking.psn.signIn") || "Sign in with PlayStation"}
-            </CustomText>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.secondaryBtn, styles.mtSmall]}
-            onPress={() => setPanel("psnManual")}
-            disabled={busy}
-          >
-            <CustomText style={styles.secondaryBtnText}>
-              {t("settings.profile.linking.psn.manualEntry") || "Paste token manually"}
-            </CustomText>
-          </TouchableOpacity>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={[styles.primaryBtn, styles.actionRowPrimary]}
-            onPress={handlePsnSyncNow}
-            disabled={busy}
-          >
-            {busy ? (
-              <ActivityIndicator color={colors.onAccent} />
-            ) : (
-              <CustomText style={styles.primaryBtnText}>
-                {t("settings.profile.linking.messages.syncNow") || "Sync now"}
-              </CustomText>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleUnlink("psn")} style={styles.iconBtn}>
-            <Link2Off size={22} color={colors.danger} />
-          </TouchableOpacity>
-        </View>
-      </>
-    );
-  };
+  // ── Choose panel ────────────────────────────────────────────────────────────
 
   const renderChoose = (): React.ReactNode => {
-    const steamMeta = steamAccount
-      ? `${t("settings.profile.linking.messages.lastSynced")}: ${formatSyncDate(steamAccount.lastSyncedAt)}`
-      : t("settings.profile.linking.messages.notLinked") || "Not connected";
-    const psnMeta =
-      psnAccount?.status === "reauth_required"
-        ? t("settings.profile.linking.psn.reauthBanner") || "Session expired â€” tap to reconnect"
-        : psnAccount?.onlineId
-          ? `${t("settings.profile.linking.messages.lastSynced")}: ${formatSyncDate(psnAccount.lastSyncedAt)}`
-          : t("settings.profile.linking.messages.notLinked") || "Not connected";
+    const metaFor = (account: LinkedAccount | null): string => {
+      if (!account) {
+        return t("settings.profile.linking.messages.notLinked") || "Not connected";
+      }
+      if (account.status === "reauth_required") {
+        return t("settings.profile.linking.psn.reauthBanner") || "Session expired â€” tap to reconnect";
+      }
+      return `${t("settings.profile.linking.messages.lastSynced")}: ${formatSyncDate(account.lastSyncedAt)}`;
+    };
+    const steamMeta = metaFor(steamAccount);
+    const psnMeta = metaFor(psnAccount?.onlineId ? psnAccount : null);
+
+    // Pressing a row runs the full pipeline for that platform: not linked or
+    // reauth-required → sign-in flow → link → auto-sync; connected → sync now.
+    const steamPress = () => {
+      if (!steamAccount || steamAccount.status === "reauth_required") void openSteamSignIn();
+      else void handleSteamSyncNow();
+    };
+    const psnPress = () => {
+      if (!psnAccount?.onlineId || psnAccount.status === "reauth_required") openPsnWebView();
+      else void handlePsnSyncNow();
+    };
 
     return (
       <>
@@ -645,40 +719,36 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
             "Link your accounts to automatically import your games into your lists."}
         </CustomText>
 
-        <View style={styles.row}>
-          <View style={styles.rowIcon}>
-            <SteamIcon size={26} fill={colors.text} />
-          </View>
-          <View style={styles.rowTextWrap}>
-            <CustomText style={styles.rowName}>Steam</CustomText>
-            <CustomText style={styles.rowHint}>{steamMeta}</CustomText>
-          </View>
-          {steamAccount && (
-            <TouchableOpacity onPress={openSteamSignIn} disabled={busy} style={styles.iconBtn}>
-              <Link2 size={20} color={colors.textSubtle} />
-            </TouchableOpacity>
-          )}
-        </View>
-        {renderSteamRow()}
+        {renderPlatformRow(
+          <SteamIcon size={26} fill={colors.text} />,
+          "Steam",
+          steamMeta,
+          steamPress,
+          // Re-authenticate without disconnecting (fresh OpenID session).
+          steamAccount ? () => void openSteamSignIn() : undefined,
+          steamAccount ? () => void handleUnlink("steam") : undefined,
+        )}
 
-        <View style={styles.row}>
-          <View style={styles.rowIcon}>
-            <PlayStationIcon size={26} fill={colors.text} />
-          </View>
-          <View style={styles.rowTextWrap}>
-            <CustomText style={styles.rowName}>
-              {psnAccount?.onlineId || "PlayStation Network"}
-            </CustomText>
-            <CustomText style={styles.rowHint}>{psnMeta}</CustomText>
-          </View>
-          {psnAccount?.onlineId && !psnAccount.status && (
-            <TouchableOpacity onPress={openPsnWebView} disabled={busy} style={styles.iconBtn}>
-              <Link2 size={20} color={colors.textSubtle} />
-            </TouchableOpacity>
-          )}
-        </View>
+        {renderPlatformRow(
+          <PlayStationIcon size={26} fill={colors.text} />,
+          psnAccount?.onlineId || "PlayStation Network",
+          psnMeta,
+          psnPress,
+          psnAccount?.onlineId ? openPsnWebView : undefined,
+          psnAccount?.onlineId ? () => void handleUnlink("psn") : undefined,
+        )}
 
-        {renderPsnRow()}
+        {/* NPSSO fallback kept reachable, but out of the main flow. */}
+        <TouchableOpacity
+          onPress={() => setPanel("psnManual")}
+          disabled={busy}
+          style={styles.manualLink}
+        >
+          <CustomText style={styles.manualLinkText}>
+            {t("settings.profile.linking.psn.manualEntry") ||
+              "Paste a PlayStation NPSSO token manually"}
+          </CustomText>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.disabledBtn} disabled>
           <Gamepad2 size={20} color={colors.textSubtle} />
@@ -689,6 +759,59 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
       </>
     );
   };
+
+  const renderSteamWebView = (): React.ReactNode => (
+    <>
+      <CustomText style={styles.title}>
+        {t("settings.profile.linking.steam.signIn") || "Sign in with Steam"}
+      </CustomText>
+      <CustomText style={styles.description}>
+        {t("settings.profile.linking.steam.webviewHint") ||
+          "Sign in with your Steam account above. Once Steam confirms, this window closes and your library syncs automatically."}
+      </CustomText>
+      <View style={styles.webviewBox}>
+        <WebView
+          ref={steamWebViewRef}
+          source={{ uri: steamStartUrl ?? "about:blank" }}
+          onShouldStartLoadWithRequest={(request) => {            // The backend's final redirect lands on our deep-link scheme —
+            // that never resolves inside a WebView, so intercept it here.
+            if (request.url.startsWith(STEAM_REDIRECT)) {
+              void handleSteamCallbackUrl(request.url);
+              return false;
+            }
+            return true;
+          }}
+          onNavigationStateChange={(navState) => {
+            if (navState.url.startsWith(STEAM_REDIRECT)) {
+              void handleSteamCallbackUrl(navState.url);
+            }
+          }}
+          javaScriptEnabled
+          domStorageEnabled
+          thirdPartyCookiesEnabled
+          startInLoadingState
+        />
+      </View>
+      <TouchableOpacity
+        style={[styles.secondaryBtn, styles.mtSmall]}
+        onPress={() => void openSteamExternal()}
+      >
+        <CustomText style={styles.secondaryBtnText}>
+          {t("settings.profile.linking.steam.openBrowser") || "Open in a browser tab instead"}
+        </CustomText>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.secondaryBtn, styles.mtSmall]}
+        onPress={() => {
+          steamCallbackLock.current = false;
+          setSteamStartUrl(null);
+          setPanel("choose");
+        }}
+      >
+        <CustomText style={styles.secondaryBtnText}>{t("common.back") || "Back"}</CustomText>
+      </TouchableOpacity>
+    </>
+  );
 
   const renderPsnWebView = (): React.ReactNode => (
     <>
@@ -727,6 +850,15 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
             {t("settings.profile.linking.psn.grabToken") || "Get NPSSO"}
           </CustomText>
         )}
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.secondaryBtn, styles.mtSmall]}
+        onPress={() => void openPsnExternal()}
+      >
+        <CustomText style={styles.secondaryBtnText}>
+          {t("settings.profile.linking.psn.openBrowser") ||
+            "Continue in a browser tab instead"}
+        </CustomText>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.secondaryBtn, styles.mtSmall]}
@@ -794,8 +926,26 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
     </>
   );
 
+  /** Android hardware back: step out of a sub-panel first, close modal last. */
+  const handleBackButton = useCallback(() => {
+    if (panel === "steamWebView") {
+      steamCallbackLock.current = false;
+      setSteamStartUrl(null);
+      setPanel("choose");
+    } else if (panel === "psnWebView" || panel === "psnManual") {
+      setPanel("choose");
+    } else {
+      onClose();
+    }
+  }, [panel, onClose]);
+
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={handleBackButton}
+    >
       <KeyboardAvoidingView
         style={styles.stretch}
         behavior={Platform.OS === "android" ? "height" : "padding"}
@@ -806,9 +956,20 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
               <X size={24} color={colors.text} />
             </TouchableOpacity>
 
-            {panel === "choose" && renderChoose()}
-            {panel === "psnWebView" && renderPsnWebView()}
-            {panel === "psnManual" && renderPsnManual()}
+            {/* Small screens: every panel is reachable by scrolling. The
+                nested-scroll flag lets the embedded sign-in WebViews and this
+                outer scroll cooperate instead of fighting for gestures. */}
+            <ScrollView
+              style={styles.panelScroll}
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.panelContent}
+            >
+              {panel === "choose" && renderChoose()}
+              {panel === "steamWebView" && steamStartUrl && renderSteamWebView()}
+              {panel === "psnWebView" && renderPsnWebView()}
+              {panel === "psnManual" && renderPsnManual()}
+            </ScrollView>
           </View>
         </View>
       </KeyboardAvoidingView>

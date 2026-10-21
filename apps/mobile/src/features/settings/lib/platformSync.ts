@@ -104,20 +104,116 @@ async function withSyncLock<T>(fn: () => Promise<T>): Promise<T | null> {
   }
 }
 
-/** True when the import should land in the "playing" list.
- *
- * `lastPlayedMs` is only stamped by the adapters when the title was touched
- * inside the platform's recency window (Steam: played in last 2 weeks;
- * PSN: lastPlayed within 21 days) — null otherwise. Uniform decision here. */
+/** Uniform decision: a recency-stamped title goes to "playing". */
 function isCurrentlyPlaying(game: ImportedGame): boolean {
   return game.lastPlayedMs != null;
 }
 
+/**
+ * Builds one import entry — every adapter constructs through here so the list
+ * writer keeps a single, stable doc shape per platform.
+ */
+function makeImportedGame(
+  platform: LinkedAccountPlatform,
+  game: {
+    id: number;
+    name: string;
+    cover_image_id: string | null;
+    release_date: string;
+  },
+  extra: {
+    steamPlaytimeForever?: number;
+    /** Touched inside the recency window → "playing" (else "played"). */
+    lastPlayedMs?: number | null;
+  } = {},
+): ImportedGame {
+  return {
+    ...game,
+    platformOrigin: platform,
+    lastPlayedMs: extra.lastPlayedMs ?? null,
+    ...(extra.steamPlaytimeForever != null
+      ? { steamPlaytimeForever: extra.steamPlaytimeForever }
+      : {}),
+  };
+}
+
 // ─── Firestore writer (shared by every platform) ─────────────────────────────
 
+/** Base doc fields written for every imported game (Steam- and PSN-shape
+ * compatible: lists render `cover_image_id`/`release_date` uniformly). */
+function importedDocFields(game: ImportedGame) {
+  return {
+    id: game.id,
+    name: game.name,
+    cover_image_id: game.cover_image_id,
+    release_date: game.release_date,
+    platformOrigin: game.platformOrigin,
+    ...(game.steamPlaytimeForever != null
+      ? { steamPlaytimeForever: game.steamPlaytimeForever }
+      : {}),
+    addedAt: firestore.FieldValue.serverTimestamp(),
+  };
+}
+
 /**
- * Ensures the three default lists exist, then batch-writes every game into the
- * right list with `merge: true` (re-imports never duplicate docs).
+ * Batch-writes games into the lists resolved by `resolveListId`, committing
+ * every FIRESTORE_BATCH_LIMIT ops. Returns the number of games written.
+ */
+async function batchWriteGames(
+  games: ImportedGame[],
+  resolveListId: (game: ImportedGame) => string,
+): Promise<number> {
+  const uid = auth().currentUser?.uid;
+  if (!uid || games.length === 0) return 0;
+
+  const db = firestore();
+  const listsRef = db.collection("users").doc(uid).collection("lists");
+
+  let batch: FirebaseFirestoreTypes.WriteBatch = db.batch();
+  let opCount = 0;
+  let written = 0;
+
+  for (const game of games) {
+    batch.set(
+      listsRef.doc(resolveListId(game)).collection("games").doc(String(game.id)),
+      importedDocFields(game),
+      { merge: true },
+    );
+
+    written++;
+    opCount++;
+
+    if (opCount >= FIRESTORE_BATCH_LIMIT) {
+      await batch.commit();
+      batch = db.batch();
+      opCount = 0;
+    }
+  }
+
+  if (opCount > 0) await batch.commit();
+  return written;
+}
+
+/** Shared linkedAccounts/{platform} doc patch (rules: owner-only fields). */
+async function updateLinkedAccountDoc(
+  platform: LinkedAccountPlatform,
+  data: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const uid = auth().currentUser?.uid;
+    if (!uid) return;
+    await firestore().collection("users").doc(uid).collection("linkedAccounts").doc(platform).set(
+      { platform, ...data },
+      { merge: true },
+    );
+  } catch (e) {
+    logger.warn(`[platformSync] linkedAccounts/${platform} update failed:`, e);
+  }
+}
+
+/**
+ * Ensures the three default lists exist, then writes every game into
+ * "playing"/"played" per its recency marker (re-imports never duplicate docs).
  */
 async function writeImportedGames(games: ImportedGame[]): Promise<number> {
   const uid = auth().currentUser?.uid;
@@ -147,42 +243,9 @@ async function writeImportedGames(games: ImportedGame[]): Promise<number> {
   }
   await ensureLists.commit();
 
-  let batch: FirebaseFirestoreTypes.WriteBatch = db.batch();
-  let opCount = 0;
-  let written = 0;
-
-  for (const game of games) {
-    const listId = isCurrentlyPlaying(game) ? "playing" : "played";
-    const docRef = listsRef.doc(listId).collection("games").doc(String(game.id));
-
-    batch.set(
-      docRef,
-      {
-        id: game.id,
-        name: game.name,
-        cover_image_id: game.cover_image_id,
-        release_date: game.release_date,
-        platformOrigin: game.platformOrigin,
-        ...(game.steamPlaytimeForever != null
-          ? { steamPlaytimeForever: game.steamPlaytimeForever }
-          : {}),
-        addedAt: firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
-
-    written++;
-    opCount++;
-
-    if (opCount >= FIRESTORE_BATCH_LIMIT) {
-      await batch.commit();
-      batch = db.batch();
-      opCount = 0;
-    }
-  }
-
-  if (opCount > 0) await batch.commit();
-  return written;
+  return batchWriteGames(games, (game) =>
+    isCurrentlyPlaying(game) ? "playing" : "played",
+  );
 }
 
 // ─── Steam adapter ───────────────────────────────────────────────────────────
@@ -248,16 +311,11 @@ export async function syncSteamLibrary(steamId: string): Promise<SyncOutcome> {
         const playtime = playtimeByAppId.get(appId);
         if (!playtime) return [];
         return [
-          {
-            id: game.id,
-            name: game.name,
-            cover_image_id: game.cover_image_id,
-            release_date: game.release_date,
-            platformOrigin: "steam" as const,
+          makeImportedGame("steam", game, {
             steamPlaytimeForever: playtime.playtimeForever,
-            // lastPlayedMs doubles as the "playing" marker for the writer
+            // doubles as the "playing" marker for the writer
             lastPlayedMs: playtime.playtime2weeks > 0 ? Date.now() : null,
-          } satisfies ImportedGame,
+          }),
         ];
       });
 
@@ -275,14 +333,7 @@ export async function syncSteamLibrary(steamId: string): Promise<SyncOutcome> {
         );
         if (uniqueWishlistAppIds.length > 0) {
           const mappedWishlist = await mapSteamAppsToIgdb(uniqueWishlistAppIds);
-          wishlistGames = mappedWishlist.map((game) => ({
-            id: game.id,
-            name: game.name,
-            cover_image_id: game.cover_image_id,
-            release_date: game.release_date,
-            platformOrigin: "steam",
-            lastPlayedMs: null,
-          }));
+          wishlistGames = mappedWishlist.map((game) => makeImportedGame("steam", game));
         }
       } catch (e) {
         logger.warn("[platformSync] Steam wishlist import skipped:", e);
@@ -311,39 +362,7 @@ export async function syncSteamLibrary(steamId: string): Promise<SyncOutcome> {
  * Wishlist items land in wantToPlay, not the played-driven lists.
  */
 async function writeSteamWishlistGames(games: ImportedGame[]): Promise<number> {
-  const uid = auth().currentUser?.uid;
-  if (!uid || games.length === 0) return 0;
-
-  const db = firestore();
-  const gamesRef = db.collection("users").doc(uid).collection("lists").doc("wantToPlay").collection("games");
-
-  let batch: FirebaseFirestoreTypes.WriteBatch = db.batch();
-  let opCount = 0;
-  let written = 0;
-
-  for (const game of games) {
-    batch.set(
-      gamesRef.doc(String(game.id)),
-      {
-        id: game.id,
-        name: game.name,
-        cover_image_id: game.cover_image_id,
-        release_date: game.release_date,
-        platformOrigin: game.platformOrigin,
-        addedAt: firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
-    written++;
-    opCount++;
-    if (opCount >= FIRESTORE_BATCH_LIMIT) {
-      await batch.commit();
-      batch = db.batch();
-      opCount = 0;
-    }
-  }
-  if (opCount > 0) await batch.commit();
-  return written;
+  return batchWriteGames(games, () => "wantToPlay");
 }
 
 // ─── PSN adapter ─────────────────────────────────────────────────────────────
@@ -387,18 +406,15 @@ export async function syncPsnLibrary(): Promise<PsnSyncOutcome> {
         const game = byTitle.get(key);
         if (!game) continue; // unmatched → negative-cached server-side, skipped here
         const playedMs = lastPlayedMs(title);
-        games.push({
-          id: game.id,
-          name: game.name,
-          cover_image_id: game.cover_image_id,
-          release_date: game.release_date,
-          platformOrigin: "psn",
-          // Only recently-touched titles get the marker → they land in "playing".
-          lastPlayedMs:
-            playedMs > 0 && Date.now() - playedMs < PSN_RECENT_DAYS * 24 * 60 * 60 * 1000
-              ? playedMs
-              : null,
-        });
+        games.push(
+          makeImportedGame("psn", game, {
+            // Only recently-touched titles get the marker → they land in "playing".
+            lastPlayedMs:
+              playedMs > 0 && Date.now() - playedMs < PSN_RECENT_DAYS * 24 * 60 * 60 * 1000
+                ? playedMs
+                : null,
+          }),
+        );
       }
       if (games.length === 0) return "empty";
 
@@ -431,30 +447,12 @@ function lastPlayedMs(title: PsnTitleShape): number {
 
 /** Writes lastSyncedAt under the user's linkedAccounts doc (rules: owner-only). */
 export async function markSynced(platform: LinkedAccountPlatform): Promise<void> {
-  try {
-    const uid = auth().currentUser?.uid;
-    if (!uid) return;
-    await firestore().collection("users").doc(uid).collection("linkedAccounts").doc(platform).set(
-      { platform, lastSyncedAt: Date.now() },
-      { merge: true },
-    );
-  } catch (e) {
-    logger.warn("[platformSync] markSynced failed:", e);
-  }
+  await updateLinkedAccountDoc(platform, { lastSyncedAt: Date.now() });
 }
 
 /** Flips the account to "unlinked" (artifacts in lists are kept). */
 export async function unlinkAccount(platform: LinkedAccountPlatform): Promise<void> {
-  try {
-    const uid = auth().currentUser?.uid;
-    if (!uid) return;
-    await firestore().collection("users").doc(uid).collection("linkedAccounts").doc(platform).set(
-      { platform, status: "unlinked" },
-      { merge: true },
-    );
-  } catch (e) {
-    logger.warn("[platformSync] unlinkAccount failed:", e);
-  }
+  await updateLinkedAccountDoc(platform, { status: "unlinked" });
 }
 
 /**

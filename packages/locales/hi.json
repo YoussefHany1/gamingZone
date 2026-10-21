@@ -591,7 +591,9 @@
         "description": "Link your accounts to automatically import your games into your lists.",
         "steam": {
           "signIn": "Sign in with Steam",
-          "errorFailed": "Steam sign-in failed"
+          "errorFailed": "Steam sign-in failed",
+          "openBrowser": "इसके बजाय ब्राउज़र टैब में खोलें",
+          "browserHint": "अपने ब्राउज़र में साइन-इन पूरा करें - हम आपकी लाइब्रेरी अपने आप सिंक कर देंगे।"
         },
         "psn": {
           "signIn": "Sign in with PlayStation",
@@ -607,7 +609,8 @@
           "openCookiePage": "Open NPSSO page",
           "connect": "Connect",
           "empty": "No played games found",
-          "errorInvalidNpsso": "Could not verify the PSN token"
+          "errorInvalidNpsso": "Could not verify the PSN token",
+          "openBrowser": "इसके बजाय ब्राउज़र टैब में जारी रखें"
         },
         "messages": {
           "lastSynced": "Last synced",
@@ -616,7 +619,8 @@
           "synced": "Library synced",
           "syncFailed": "Sync failed",
           "unlinked": "Disconnected",
-          "empty": "No games found"
+          "empty": "No games found",
+          "signInRequired": "पहले Steam में साइन-इन करें"
         },
         "xbox": {
           "comingSoon": "Xbox - Coming Soon"
