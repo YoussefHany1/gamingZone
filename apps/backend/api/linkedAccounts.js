@@ -30,7 +30,10 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import * as psnApi from 'psn-api';
-import { cert, initializeApp } from 'firebase-admin';
+// firebase-admin@14 moved `cert`/`initializeApp` out of the root package — the
+// canonical location in v13+ is the `firebase-admin/app` submodule (verified
+// working as named ESM imports under Node 22/24).
+import { cert, initializeApp } from 'firebase-admin/app';
 
 // ─── Firestore (admin) ───────────────────────────────────────────────────────
 
@@ -481,7 +484,15 @@ export function registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgd
         throw new AppError('Could not verify the PSN token. Is your NPSSO code valid?', 400);
       }
 
-      const authTokens = await psnApi.exchangeAccessCodeForAuthTokens(accessCode);
+      let authTokens;
+      try {
+        authTokens = await psnApi.exchangeAccessCodeForAuthTokens(accessCode);
+      } catch {
+        throw new AppError(
+          'Sony rejected the token exchange. Generate a fresh NPSSO code and link again.',
+          502,
+        );
+      }
       if (!authTokens?.refreshToken) {
         throw new AppError('PSN did not return a refresh token. Try again.', 502);
       }

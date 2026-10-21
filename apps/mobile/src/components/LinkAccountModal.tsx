@@ -40,7 +40,14 @@ export type LinkAccountModalProps = {
 type Panel = "choose" | "psnWebView" | "psnManual";
 
 const STEAM_REDIRECT = "gaming-zone://steam-link";
+/**
+ * Sony's ssocookie endpoint NEVER shows a login form — without an active
+ * PlayStation session it just dumps `{"error":"invalid_grant","error_code":20}`.
+ * The WebView therefore starts on the store's real sign-in page (which supports
+ * 2FA etc.) and we navigate to the ssocookie URL only on demand.
+ */
 const PSN_COOKIE_URL = "https://ca.account.sony.com/api/v1/ssocookie";
+const PSN_SIGNIN_URL = "https://store.playstation.com/en-us/pages/signin";
 
 /**
  * A real mobile-Chrome user agent â€” the default RN WebView agent string is a
@@ -50,10 +57,12 @@ const PSN_COOKIE_URL = "https://ca.account.sony.com/api/v1/ssocookie";
 const PSN_WEBVIEW_UA =
   "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
 
-/** Polls the ssocookie page until the JSON body reveals the NPSSO token. */
+/** Probes the current page for the ssocookie JSON (token or "not signed in"). */
 function psnInjectedJs(): string {
   return `
     (function () {
+      if (window.__gzonePsnProbe) return;
+      window.__gzonePsnProbe = true;
       var tries = 0;
       var read = function () {
         try {
@@ -61,13 +70,21 @@ function psnInjectedJs(): string {
           if (text.indexOf("npsso") !== -1) {
             var json = JSON.parse(text);
             if (json && json.npsso) {
+              window.__gzonePsnProbe = false;
               window.ReactNativeWebView.postMessage(
                 JSON.stringify({ type: "npsso", npsso: json.npsso })
               );
               return;
             }
           }
-          if (tries < 400) { tries++; setTimeout(read, 1500); }
+          if (text.indexOf("invalid_grant") !== -1) {
+            window.__gzonePsnProbe = false;
+            window.ReactNativeWebView.postMessage(
+              JSON.stringify({ type: "psn_session_error" })
+            );
+            return;
+          }
+          if (tries < 40) { tries++; setTimeout(read, 500); }
         } catch (e) { /* page may not be ready */ }
       };
       read();
@@ -96,6 +113,7 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
   const [panel, setPanel] = useState<Panel>("choose");
   const [busy, setBusy] = useState(false);
   const [npssoInput, setNpssoInput] = useState("");
+  const [psnSessionHint, setPsnSessionHint] = useState(false);
   const [steamAccount, setSteamAccount] = useState<LinkedAccount | null>(null);
   const [psnAccount, setPsnAccount] = useState<LinkedAccount | null>(null);
 
@@ -434,9 +452,20 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
           type?: string;
           npsso?: string;
         };
+        // We navigated to ssocookie without an active PlayStation session —
+        // that page shows the raw error JSON instead of a login form, so go
+        // back to sign-in and explain what to do.
+        if (payload?.type === "psn_session_error") {
+          setPsnSessionHint(true);
+          psnWebViewRef.current?.injectJavaScript(
+            `window.location.href = ${JSON.stringify(PSN_SIGNIN_URL)}; true;`,
+          );
+          return;
+        }
         if (payload?.type !== "npsso" || !payload.npsso) return;
         // Close the WebView immediately â€” the token must not linger there.
         setPanel("choose");
+        setPsnSessionHint(false);
         setBusy(true);
         await submitNpsso(payload.npsso);
       } catch {
@@ -445,6 +474,25 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
     },
     [submitNpsso],
   );
+
+  /** Opens the PSN sign-in WebView with a clean hint state. */
+  const openPsnWebView = useCallback(() => {
+    setPsnSessionHint(false);
+    setPanel("psnWebView");
+  }, []);
+
+  /** Re-probes after every navigation â€” injectedJavaScript only runs once. */
+  const handlePsnLoadEnd = useCallback(() => {
+    psnWebViewRef.current?.injectJavaScript(psnInjectedJs());
+  }, []);
+
+  /** Navigates the WebView to the ssocookie endpoint to collect the NPSSO. */
+  const handleGrabNpsso = useCallback(() => {
+    setPsnSessionHint(false);
+    psnWebViewRef.current?.injectJavaScript(
+      `window.location.href = ${JSON.stringify(PSN_COOKIE_URL)}; true;`,
+    );
+  }, []);
 
   const handlePsnSyncNow = useCallback(async () => {
     setBusy(true);
@@ -530,7 +578,7 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
         <>
           <TouchableOpacity
             style={styles.primaryBtn}
-            onPress={() => setPanel("psnWebView")}
+            onPress={openPsnWebView}
             disabled={busy}
           >
             <CustomText style={styles.primaryBtnText}>
@@ -624,7 +672,7 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
             <CustomText style={styles.rowHint}>{psnMeta}</CustomText>
           </View>
           {psnAccount?.onlineId && !psnAccount.status && (
-            <TouchableOpacity onPress={() => setPanel("psnWebView")} disabled={busy} style={styles.iconBtn}>
+            <TouchableOpacity onPress={openPsnWebView} disabled={busy} style={styles.iconBtn}>
               <Link2 size={20} color={colors.textSubtle} />
             </TouchableOpacity>
           )}
@@ -648,23 +696,40 @@ export default function LinkAccountModal({ visible, onClose }: LinkAccountModalP
         {t("settings.profile.linking.psn.webviewTitle") || "Sign in on PlayStation.com"}
       </CustomText>
       <CustomText style={styles.description}>
-        {t("settings.profile.linking.psn.webviewHint") ||
-          "Log into your PlayStation account. We pick up your NPSSO token automatically and close this window."}
+        {psnSessionHint
+          ? t("settings.profile.linking.psn.sessionHint") ||
+            "You are not signed in yet. Complete the sign-in above (including 2-factor verification), then tap “Get NPSSO”."
+          : t("settings.profile.linking.psn.webviewHint") ||
+            "Log into your PlayStation account above. Then tap “Get NPSSO” — we pick up your token automatically and close this window."}
       </CustomText>
       <View style={styles.webviewBox}>
         <WebView
           ref={psnWebViewRef}
-          source={{ uri: PSN_COOKIE_URL }}
+          source={{ uri: PSN_SIGNIN_URL }}
           userAgent={PSN_WEBVIEW_UA}
           onMessage={handlePsnMessage}
           injectedJavaScript={psnInjectedJs()}
+          onLoadEnd={handlePsnLoadEnd}
           javaScriptEnabled
           domStorageEnabled
           startInLoadingState
         />
       </View>
       <TouchableOpacity
-        style={[styles.secondaryBtn, styles.mtMedium]}
+        style={[styles.primaryBtn, styles.mtSmall]}
+        onPress={handleGrabNpsso}
+        disabled={busy}
+      >
+        {busy ? (
+          <ActivityIndicator color={colors.onAccent} />
+        ) : (
+          <CustomText style={styles.primaryBtnText}>
+            {t("settings.profile.linking.psn.grabToken") || "Get NPSSO"}
+          </CustomText>
+        )}
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.secondaryBtn, styles.mtSmall]}
         onPress={() => setPanel("psnManual")}
       >
         <CustomText style={styles.secondaryBtnText}>
