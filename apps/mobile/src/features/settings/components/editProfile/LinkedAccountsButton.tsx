@@ -12,8 +12,8 @@ import { logger } from "@/src/lib/logger";
 
 /**
  * "Connected Apps" entry point — opens LinkAccountModal where the user
- * sign-ins with Steam (OpenID) / PlayStation (NPSSO) and manages library
- * auto-imports. Xbox deliberately shows as "coming soon" inside the modal.
+ * sign-ins with Steam (OpenID) / PlayStation (NPSSO) / Xbox (Microsoft OAuth)
+ * and manages library auto-imports.
  *
  * Doubles as the Settings badge for auto-sync failures: when the backend
  * flags an account `reauth_required`, an amber dot appears here — auto-sync
@@ -48,7 +48,7 @@ const LinkedAccountsButton = memo(
         const values = Object.values(statuses);
         setHasReauth(values.length > 0 && values.some((status) => status === "reauth_required"));
       };
-      const subs = (["steam", "psn"] as const).map((platform) =>
+      const subs = (["steam", "psn", "xbox"] as const).map((platform) =>
         ref.doc(platform).onSnapshot(
           (snap) => {
             statuses[platform] = snap.data()?.status as string | undefined;

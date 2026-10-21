@@ -18,16 +18,22 @@ import { getSiteBaseUrl } from "@/lib/metadata";
 // Prerender popular game pages so they are served from the Vercel CDN instead
 // of running a function (IGDB proxy + Steam scrape) on every request.
 //
-// 24h is the sole freshness mechanism. Game data does drift (aggregate
-// ratings, release dates, store availability), but not enough to justify an
-// hourly re-render of every prerendered path — the IGDB proxy and Steam scrape
-// are the expensive part, and both upstream caches are long-lived.
+// 7 days is the sole freshness mechanism. Game data does drift (aggregate
+// ratings, release dates, store availability), but slowly — and 24h meant
+// every visited game id x 2 locales regenerated daily, forever. On Hobby this
+// was the widest fanout in the app (both Active CPU and ISR writes).
 //
 // Note this export is inert on its own. Next derives a route's revalidate from
 // the lowest TTL among the data-cache entries its render touches, so the
 // matching `revalidate` in @/features/gameDetails/services/api.ts must move in
-// step or this stays at 3600.
-export const revalidate = 86400;
+// step or this silently drops back to that lower value.
+//
+// Known cost, deliberate: fetchSteamRequirements is NOT in the data cache
+// (module-level 5-minute instance cache in @gaming-zone/utils), so every
+// regeneration still scrapes Steam live. It cannot shorten this window (it
+// mints no data-cache entry) and its output is stable, so it costs wall-clock
+// per regen but almost never an ISR write.
+export const revalidate = 604800;
 
 const PRERENDERED_GAME_LIMIT = 12;
 

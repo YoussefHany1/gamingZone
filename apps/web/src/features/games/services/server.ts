@@ -13,10 +13,10 @@ export const fetchLatestTrailers = cache(async (): Promise<Game[]> => {
     const res = await fetch(`${getServerApiUrl()}/latest-trailers`, {
       signal: controller.signal,
       // Cache in Vercel Data Cache. Kept in step with the home page's
-      // `revalidate` (1800) so a page regeneration and its underlying fetch do
+      // `revalidate` (3600) so a page regeneration and its underlying fetch do
       // not expire at different times. "events" is reused here because the
       // events workflow also refreshes trailers.
-      next: { revalidate: 1800, tags: ["events"] },
+      next: { revalidate: 3600, tags: ["events"] },
     });
 
     clearTimeout(timeoutId);

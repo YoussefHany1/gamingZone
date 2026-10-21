@@ -19,12 +19,12 @@ import type { Source } from "../types";
 // render touches, so a 5-minute TTL here silently drags the home page (and the
 // sitemap, which reads the same fetcher) down to 5 minutes — worse than the
 // 10-minute baseline this replaced. Keep these at or above the shortest window
-// of any page that reads them: 1800 matches the home page.
-const ARTICLES_TTL_SECONDS = 1800;
-const FEED_TTL_SECONDS = 1800; // /news is dynamic; TTL is a data-layer floor
-const SOURCES_TTL_SECONDS = 21600; // source registry changes rarely
+// of any page that reads them: 3600 matches the home page (and the sitemap).
+const ARTICLES_TTL_SECONDS = 3600;
+const FEED_TTL_SECONDS = 86400; // matches the /news/[category] page window
+const SOURCES_TTL_SECONDS = 604800; // source registry changes rarely
 const WEEKLY_SUMMARY_TTL_SECONDS = 3600;
-const ARTICLE_TTL_SECONDS = 21600; // article bodies are immutable once published
+const ARTICLE_TTL_SECONDS = 604800; // article bodies are immutable once published
 
 /**
  * The full category set, matching the `category` attribute on articles and on

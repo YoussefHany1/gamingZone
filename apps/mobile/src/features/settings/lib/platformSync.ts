@@ -10,6 +10,8 @@
  *  - Steam: backend-owned `/steam/*` endpoints (appids → IGDB by external id).
  *  - PSN:   backend `/psn/sync` (played titles) + `/igdb/map-by-names` with a
  *           server-side global name cache.
+ *  - Xbox:  backend `/xbox/sync` (recently played + achievement titles) using
+ *           the same server-side IGDB name cache.
  *
  * Firestore shape written here is identical to the pre-existing Steam flow:
  * users/{uid}/lists/{playing|played|wantToPlay}/games/{igdbId}, with a new
@@ -19,6 +21,7 @@
  * Import classification (matching the legacy Steam flow):
  *  - Steam: playtime in the last 2 weeks → "playing", rest → "played".
  *  - PSN:   touched within the last 21 days → "playing", rest → "played".
+ *  - Xbox:  played within the last 14 days → "playing", rest → "played".
  *  - Steam wishlist → "wantToPlay".
  */
 import auth from "@react-native-firebase/auth";
@@ -33,7 +36,7 @@ import {
   mapSteamAppsToIgdb,
   fetchSteamWishlist,
 } from "@/src/services/api/steamApi";
-import { mapTitlesToIgdb, syncPsnTitles } from "@/src/services/api/linkedAccountsApi";
+import { mapTitlesToIgdbChunked, syncPsnTitles, syncXboxTitles } from "@/src/services/api/linkedAccountsApi";
 import { normalizeGameTitle } from "@gaming-zone/utils";
 import type {
   LinkedAccountPlatform,
@@ -47,13 +50,20 @@ export const SYNC_STALE_MS = 24 * 60 * 60 * 1000;
 const FIRESTORE_BATCH_LIMIT = 400; // < 500 safety margin
 /** A PSN title counts as "currently playing" if touched in the last 3 weeks. */
 const PSN_RECENT_DAYS = 21;
+/** An Xbox title counts as "currently playing" if played in the last 2 weeks. */
+export const XBOX_RECENT_DAYS = 14;
 const MMKV_SYNC_LOCK = "@linked_sync_running";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type SyncOutcome = "ok" | "empty" | "private" | "error";
 
-export type PsnSyncOutcome = "ok" | "empty" | "reauth_required" | "error";
+/** Shared outcome shape for the serverside-token platforms (PSN, Xbox). */
+export type LinkSyncOutcome = "ok" | "empty" | "reauth_required" | "error";
+
+export type PsnSyncOutcome = LinkSyncOutcome;
+
+export type XboxSyncOutcome = LinkSyncOutcome;
 
 /** One imported entry, ready for the Firestore writer. */
 interface ImportedGame {
@@ -64,8 +74,9 @@ interface ImportedGame {
   platformOrigin: LinkedAccountPlatform;
   /** Steam only. */
   steamPlaytimeForever?: number;
-  /** Recency marker stamped inside the recency window (Steam 14d / PSN 21d).
-   * Non-null → the writer lands the game in "playing" instead of "played". */
+  /** Recency marker stamped inside the recency window (Steam 14d / PSN 21d /
+   * Xbox 14d). Non-null → the writer lands the game in "playing" instead of
+   * "played". */
   lastPlayedMs?: number | null;
 }
 
@@ -397,7 +408,7 @@ export async function syncPsnLibrary(): Promise<PsnSyncOutcome> {
       const uniqueNames = uniqueTitles.map((t) => t.name);
 
       // IGDB map-by-names (server-side cache; pace + 429 handled server-side).
-      const mapped = await mapTitlesToIgdb(uniqueNames);
+      const mapped = await mapTitlesToIgdbChunked(uniqueNames);
       if (mapped.length === 0) return "empty";
 
       const byTitle = new Map(mapped.map((r) => [normalizeGameTitle(r.title), r.game]));
@@ -441,6 +452,89 @@ function lastPlayedMs(title: PsnTitleShape): number {
   if (!title.lastPlayedDateTime) return -1;
   const ms = Date.parse(title.lastPlayedDateTime);
   return Number.isFinite(ms) ? ms : -1;
+}
+
+// ─── Xbox adapter ────────────────────────────────────────────────────────────
+
+interface XboxTitleShape {
+  name: string;
+  source: "recent" | "achievements";
+  lastPlayedDateTime: string | null;
+}
+
+function xboxLastPlayedMs(title: XboxTitleShape): number {
+  if (!title.lastPlayedDateTime) return -1;
+  const ms = Date.parse(title.lastPlayedDateTime);
+  return Number.isFinite(ms) ? ms : -1;
+}
+
+/**
+ * Full Xbox sync: the backend refreshes the Microsoft grant and returns the
+ * recently played titles plus the achievement titles that show real progress.
+ * IGDB name-mapping resolves them and the writer lands them in the lists.
+ *
+ * There is no purchase history and no playtime counter for modern Xbox, so
+ * only two buckets exist: "playing" (played within XBOX_RECENT_DAYS) and
+ * "played" (everything else). Reauth failures NEVER throw — the outcome tells
+ * the caller to show the reconnect UI instead.
+ */
+export async function syncXboxLibrary(): Promise<XboxSyncOutcome> {
+  const result = await withSyncLock(async (): Promise<XboxSyncOutcome> => {
+    try {
+      const response = await syncXboxTitles();
+      if (response.status === "reauth_required") return "reauth_required";
+      if (response.status !== "ok") return "error";
+
+      const titles = response.titles ?? [];
+      if (titles.length === 0) return "empty";
+
+      // Dedupe by normalized name: the same title can show up in both sources
+      // (recent play AND achievements). The entry carrying the play date wins.
+      const unique = new Map<string, XboxTitleShape>();
+      for (const title of titles) {
+        const key = normalizeGameTitle(title.name);
+        if (!key) continue;
+        const existing = unique.get(key);
+        if (!existing || xboxLastPlayedMs(title) > xboxLastPlayedMs(existing)) {
+          unique.set(key, title);
+        }
+      }
+      const uniqueTitles = Array.from(unique.values());
+      const uniqueNames = uniqueTitles.map((t) => t.name);
+
+      const mapped = await mapTitlesToIgdbChunked(uniqueNames);
+      if (mapped.length === 0) return "empty";
+
+      const byTitle = new Map(mapped.map((r) => [normalizeGameTitle(r.title), r.game]));
+      const games: ImportedGame[] = [];
+      for (const [key, title] of unique.entries()) {
+        const game = byTitle.get(key);
+        if (!game) continue; // unmatched → negative-cached server-side, skipped here
+        const playedMs = xboxLastPlayedMs(title);
+        games.push(
+          makeImportedGame("xbox", game, {
+            // Only titles played inside the window get the marker → "playing".
+            lastPlayedMs:
+              playedMs > 0 && Date.now() - playedMs < XBOX_RECENT_DAYS * 24 * 60 * 60 * 1000
+                ? playedMs
+                : null,
+          }),
+        );
+      }
+      if (games.length === 0) return "empty";
+
+      const written = await writeImportedGames(games);
+      if (written === 0) return "empty";
+
+      await markSynced("xbox");
+      return "ok";
+    } catch (e) {
+      logger.error("[platformSync] Xbox sync failed:", e);
+      return "error";
+    }
+  });
+
+  return result ?? "error";
 }
 
 // ─── Linked-account helpers ──────────────────────────────────────────────────

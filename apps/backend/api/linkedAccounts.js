@@ -19,6 +19,15 @@
  * for IGDB name-mapping; on an expired/invalid token the status on the linked
  * account flips to `reauth_required` instead of erroring the caller.
  *
+ * ── Xbox ─────────────────────────────────────────────────────────────────────
+ * A real Microsoft OAuth v2.0 sign-in (personal accounts only, `/consumers`
+ * tenant) with PKCE. The authorization code is exchanged server-side for an
+ * MSA refresh token, which is AES-256-GCM encrypted and stored like the PSN
+ * one. Every sync mints a fresh Xbox Live (XBL) + XSTS token from it, so the
+ * user signs in only once. There is no purchase history for modern Xbox, so
+ * the library is the recently played titles plus the achievement titles that
+ * show real progress (see `xboxClient.js`).
+ *
  * ── IGDB name mapping ────────────────────────────────────────────────────────
  * IGDB allows only 4 req/sec. Name → IGDB resolutions are therefore cached in
  * the `igdb_name_map` Firestore collection (shared across ALL users — a title
@@ -34,6 +43,17 @@ import * as psnApi from 'psn-api';
 // canonical location in v13+ is the `firebase-admin/app` submodule (verified
 // working as named ESM imports under Node 22/24).
 import { cert, initializeApp } from 'firebase-admin/app';
+import {
+  authenticateXbox,
+  buildAuthorizeUrl,
+  createPkce,
+  exchangeCodeForTokens,
+  fetchGamertag,
+  fetchXboxLibrary,
+  refreshMsaToken,
+  xboxConfig,
+  XboxError,
+} from './xboxClient.js';
 
 // ─── Firestore (admin) ───────────────────────────────────────────────────────
 
@@ -104,18 +124,24 @@ const linkSecret = () => process.env.SERVER_SECRET || process.env.RSS_SECRET || 
 const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 /**
- * state format: base64url("<uid>|<platform>|<expiresAt>") + "." + HMAC-SHA256
+ * state format: base64url("<uid>|<platform>|<expiresAt>[|<extra>]") + "." + HMAC-SHA256
  * Binds every link attempt to an authenticated Firebase user and a deadline.
+ *
+ * `extra` carries adapter-specific payload (the Xbox PKCE verifier) inside the
+ * signed blob — no server-side session is needed to finish the handshake.
  */
-function createLinkState(uid, platform) {
+function createLinkState(uid, platform, extra = '') {
   const expiresAt = Date.now() + STATE_TTL_MS;
-  const payload = `${uid}|${platform}|${expiresAt}`;
+  const payload = `${uid}|${platform}|${expiresAt}${extra ? `|${extra}` : ''}`;
   const body = Buffer.from(payload).toString('base64url');
   const sig = crypto.createHmac('sha256', linkSecret()).update(payload).digest('base64url');
   return `${body}.${sig}`;
 }
 
-/** Returns the verified UID, or null for a bad/expired/tampered state. */
+/**
+ * Returns `{ uid, extra }` for a good/untampered state, or null when the
+ * state is missing, expired, signed for another platform or forged.
+ */
 function verifyLinkState(state, platform) {
   if (!state || typeof state !== 'string' || !linkSecret()) return null;
   const separatorIdx = state.lastIndexOf('.');
@@ -130,11 +156,11 @@ function verifyLinkState(state, platform) {
     crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig));
   if (!sigOk) return null;
 
-  const [uid, platformInState, expiresAtRaw] = payload.split('|');
+  const [uid, platformInState, expiresAtRaw, ...rest] = payload.split('|');
   if (!uid || platformInState !== platform) return null;
   const expiresAt = Number(expiresAtRaw);
   if (!Number.isFinite(expiresAt) || expiresAt < Date.now()) return null;
-  return uid;
+  return { uid, extra: rest.join('|') };
 }
 
 // ─── Secret-at-rest: AES-256-GCM ─────────────────────────────────────────────
@@ -406,7 +432,7 @@ export function registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgd
     auth,
     asyncRoute(async (req, res) => {
       const platform = String(req.query.platform || '').toLowerCase();
-      const allowed = ['steam', 'psn'];
+      const allowed = ['steam', 'psn', 'xbox'];
       if (!allowed.includes(platform)) {
         throw new AppError(`platform must be one of: ${allowed.join(', ')}`, 400);
       }
@@ -434,6 +460,19 @@ export function registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgd
           'https://web.np.playstation.com/api/session/v1/signin' +
           '?redirect_uri=https%3A%2F%2Fio.playstation.com%2Fcentral%2Fauth%2Flogin' +
           '%3FpostSignInURL%3Dhttps%253A%252F%252Fca.account.sony.com%252Fapi%252Fv1%252Fssocookie';
+      } else if (platform === 'xbox') {
+        // The whole Xbox handshake lives on the backend: /xbox/authorize sends
+        // the user to Microsoft, /xbox/callback stores the tokens and deep
+        // links back into the app.
+        if (!xboxConfig().configured) {
+          // Answered directly (not thrown): the central error handler masks
+          // every 5xx message, and the client needs to know this is a missing
+          // server-side app registration, not a broken request.
+          return res
+            .status(503)
+            .json({ message: 'Xbox linking is not configured on this server' });
+        }
+        startUrl = `${baseUrlFrom(req)}/xbox/authorize?state=${encodeURIComponent(state)}`;
       }
 
       res.json({ state, startUrl });
@@ -446,10 +485,11 @@ export function registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgd
     '/steam/openid/callback',
     asyncRoute(async (req, res) => {
       const state = String(req.query.state || '');
-      const uid = verifyLinkState(state, 'steam');
-      if (!uid) {
+      const verified = verifyLinkState(state, 'steam');
+      if (!verified) {
         return res.redirect('gaming-zone://steam-link?status=error&reason=invalid_state');
       }
+      const uid = verified.uid;
 
       const userSteamId = extractSteamId(String(req.query['openid.claimed_id'] || ''));
       if (!userSteamId || String(req.query['openid.mode']) !== 'id_res') {
@@ -591,6 +631,166 @@ export function registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgd
     }),
   );
 
+  // ── Xbox link (Microsoft OAuth → Xbox Live) ───────────────────────────────
+
+  /**
+   * Step 1 of the handshake. The state that arrives here was signed for this
+   * user by /linked-accounts/state; we verify it and re-sign it with the PKCE
+   * verifier so the callback can finish the exchange statelessly.
+   */
+  app.get(
+    '/xbox/authorize',
+    asyncRoute(async (req, res) => {
+      const fail = (reason) =>
+        res.redirect(`gaming-zone://xbox-link?status=error&reason=${encodeURIComponent(reason)}`);
+
+      const state = String(req.query.state || '');
+      const verified = verifyLinkState(state, 'xbox');
+      if (!verified) return fail('invalid_state');
+
+      const { clientId } = xboxConfig();
+      if (!clientId) return fail('not_configured');
+
+      const { verifier, challenge } = createPkce();
+      const redirectUri = `${baseUrlFrom(req)}/xbox/callback`;
+      const signedState = createLinkState(verified.uid, 'xbox', verifier);
+      const authorizeUrl = buildAuthorizeUrl({
+        clientId,
+        redirectUri,
+        state: signedState,
+        codeChallenge: challenge,
+      });
+      return res.redirect(authorizeUrl);
+    }),
+  );
+
+  /**
+   * Step 2: Microsoft redirects back with the authorization code. We swap it
+   * for MSA tokens, walk the Xbox Live chain and store the refresh token
+   * encrypted. The app is woken up through the `gaming-zone://` deep link.
+   */
+  app.get(
+    '/xbox/callback',
+    asyncRoute(async (req, res) => {
+      const fail = (reason) =>
+        res.redirect(`gaming-zone://xbox-link?status=error&reason=${encodeURIComponent(reason)}`);
+
+      const state = String(req.query.state || '');
+      const verified = verifyLinkState(state, 'xbox');
+      if (!verified) return fail('invalid_state');
+
+      const oauthError = String(req.query.error || '');
+      if (oauthError) return fail(oauthError);
+
+      const code = String(req.query.code || '');
+      if (!code) return fail('missing_code');
+
+      try {
+        const redirectUri = `${baseUrlFrom(req)}/xbox/callback`;
+        const tokens = await exchangeCodeForTokens({
+          code,
+          codeVerifier: verified.extra,
+          redirectUri,
+        });
+        if (!tokens.refreshToken) {
+          // Without offline_access Microsoft hands back no refresh token, so
+          // the link could never be renewed.
+          return fail('no_refresh_token');
+        }
+
+        const session = await authenticateXbox(tokens.accessToken);
+        const gamertag = await fetchGamertag(session.xuid, session.authHeader);
+
+        await setSecretDoc(verified.uid, 'xbox', {
+          refreshTokenEnc: encryptSecret(tokens.refreshToken),
+          xuid: session.xuid,
+        });
+        await setLinkedAccount(verified.uid, 'xbox', {
+          xuid: session.xuid,
+          gamertag: gamertag || null,
+          status: 'active',
+          lastSyncedAt: null,
+        });
+
+        const params = new URLSearchParams({ status: 'success', xuid: session.xuid });
+        if (gamertag) params.set('gamertag', gamertag);
+        return res.redirect(`gaming-zone://xbox-link?${params.toString()}`);
+      } catch (err) {
+        const reason = err instanceof XboxError ? err.reason : 'auth_failed';
+        console.warn('Xbox callback failed:', reason, err?.message || err);
+        return fail(reason);
+      }
+    }),
+  );
+
+  // ── Xbox sync ─────────────────────────────────────────────────────────────
+
+  app.post(
+    '/xbox/sync',
+    auth,
+    asyncRoute(async (req, res) => {
+      if (!xboxConfig().configured) {
+        // Same wording as the state endpoint — the client shows a specific
+        // "not available right now" message instead of a generic failure.
+        return res
+          .status(503)
+          .json({ message: 'Xbox linking is not configured on this server' });
+      }
+
+      const secrets = await getSecretDoc(req.authUid, 'xbox');
+      const refreshBlob = secrets?.xbox?.refreshTokenEnc;
+      if (!refreshBlob) {
+        return res.json({ status: 'reauth_required' });
+      }
+      const refreshToken = decryptSecret(refreshBlob);
+      if (!refreshToken) {
+        await markXboxReauthRequired(req.authUid);
+        return res.json({ status: 'reauth_required' });
+      }
+
+      let tokens;
+      try {
+        tokens = await refreshMsaToken(refreshToken);
+      } catch (err) {
+        // A revoked/expired refresh token is terminal; a Microsoft outage is not.
+        if (!isTerminalAuthFailure(err)) throw err;
+        await markXboxReauthRequired(req.authUid);
+        return res.json({ status: 'reauth_required' });
+      }
+
+      if (tokens.refreshToken && tokens.refreshToken !== refreshToken) {
+        await setSecretDoc(req.authUid, 'xbox', {
+          refreshTokenEnc: encryptSecret(tokens.refreshToken),
+          xuid: secrets?.xbox?.xuid ?? null,
+        });
+      }
+
+      let session;
+      try {
+        session = await authenticateXbox(tokens.accessToken);
+      } catch (err) {
+        if (!isTerminalAuthFailure(err)) throw err;
+        await markXboxReauthRequired(req.authUid);
+        return res.json({ status: 'reauth_required' });
+      }
+
+      let titles;
+      try {
+        titles = await fetchXboxLibrary(session);
+      } catch (err) {
+        console.warn('Xbox library fetch failed:', err?.message || err);
+        throw new AppError('Could not read the Xbox library. Try again later.', 502);
+      }
+
+      await setLinkedAccount(req.authUid, 'xbox', {
+        status: 'active',
+        lastSyncedAt: new Date(),
+      });
+
+      res.json({ status: 'ok', titles });
+    }),
+  );
+
   // ── IGDB name mapping (with the shared global cache) ──────────────────────
 
   app.post(
@@ -708,6 +908,14 @@ export function registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgd
     }
   }
 
+  async function markXboxReauthRequired(uid) {
+    try {
+      await setLinkedAccount(uid, 'xbox', { status: 'reauth_required' });
+    } catch (err) {
+      console.warn('Failed to flag Xbox reauth_required:', err?.message || err);
+    }
+  }
+
   function entryToMapped(entry) {
     return {
       id: Number(entry.igdbId),
@@ -719,6 +927,22 @@ export function registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgd
 }
 
 // ─── Module-level helpers ────────────────────────────────────────────────────
+
+/**
+ * Is this Xbox failure terminal (the stored grant is dead) or transient
+ * (Microsoft hiccup)? Only terminal failures flip the link to
+ * `reauth_required` — a transient outage must never unlink a healthy account.
+ */
+function isTerminalAuthFailure(err) {
+  if (!(err instanceof XboxError)) return false;
+  if (err.kind === 'network' || err.kind === 'library') return false;
+  return (
+    err.reason === 'auth_failed' ||
+    err.reason === 'invalid_grant' ||
+    err.reason === 'no_xbox_profile' ||
+    err.reason === 'child_account'
+  );
+}
 
 /** "https://steamcommunity.com/openid/id/<17-digit-id>" → the id, or null. */
 function extractSteamId(claimedId) {

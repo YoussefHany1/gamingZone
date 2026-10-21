@@ -4,6 +4,7 @@ export { default as GameCountdown } from "./components/GameCountdown";
 export { default as GameRow } from "./components/GameRow";
 export { default as GameSearchAutocomplete } from "./components/GameSearchAutocomplete";
 export { default as GamesPageView } from "./components/GamesPageView";
+export { default as SearchResultsClient } from "./components/SearchResultsClient";
 
 export * from "./types";
 export * from "./utils";

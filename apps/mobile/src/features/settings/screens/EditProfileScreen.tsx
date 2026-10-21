@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import ErrorState from "@/src/components/ErrorState";
-import LinkAccountModal from "@/src/components/LinkAccountModal";
+import LinkAccountModal from "@/src/features/linking/components/LinkAccountModal";
 import { useDeferredReady } from "@/src/hooks/useDeferredReady";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useBottomInset } from "@/src/hooks/useBottomInset";

@@ -44,7 +44,8 @@
     "clearSearch": "Clear search",
     "selectAnOption": "Select an option",
     "somethingWentWrong": "Something went wrong",
-    "contactSupport": "Contact Support"
+    "contactSupport": "Contact Support",
+    "gamer": "Gamer"
   },
   "auth": {
     "emailPlaceholder": "Email",
@@ -105,7 +106,8 @@
       "passwordNumber": "Password must contain at least one number",
       "nameShort": "Name must be at least 2 characters",
       "genderRequired": "Please select your gender",
-      "countryRequired": "Please select your country"
+      "countryRequired": "Please select your country",
+      "tooManyRequests": "Too many attempts. Please try again later."
     },
     "validation": {
       "passwordTitle": "Inadequate Password",
@@ -138,6 +140,7 @@
       "settings": "Settings"
     },
     "titles": {
+      "home": "Home",
       "notificationSettings": "Notification Settings",
       "accountSettings": "Account Settings",
       "gamesList": "My Games List",
@@ -226,7 +229,8 @@
       "noDescription": "No description available here",
       "summaryTitle": "AI Summary",
       "shareShortenError": "There was an error, Please try again later.",
-      "shareMessage": "found an interesting article via Gaming Zone App\nCheck it out: "
+      "shareMessage": "found an interesting article via Gaming Zone App\nCheck it out: ",
+      "nodescription": "No description available"
     },
     "dropdown": {
       "selectSource": "Select a Source",
@@ -341,6 +345,7 @@
     },
     "details": {
       "availableStores": "Available at these stores",
+      "openStoreHint": "Opens the store page in your browser",
       "addToList": "Add to My List",
       "claimNow": "Get this game free on ",
       "rateThisGame": "Rate this Game",
@@ -417,7 +422,10 @@
       "notifyOnRelease": "Notify Me on Release",
       "notificationEnabled": "Release Notification Active",
       "subscribed": "You are subscribed to release notifications for this game",
-      "unsubscribed": "You have unsubscribed from release notifications for this game"
+      "unsubscribed": "You have unsubscribed from release notifications for this game",
+      "backToGames": "Back to Games",
+      "specifications": "Specifications",
+      "closePlayer": "Close player"
     },
     "filter": {
       "title": "Filter Games",
@@ -501,7 +509,14 @@
     "errors": {
       "couldNotCreateList": "Could not create list. Please try again later",
       "listAlreadyExists": "A list with this name already exists",
-      "couldNotDeleteList": "Could not delete the list. Please try again later."
+      "couldNotDeleteList": "Could not delete the list. Please try again later.",
+      "alreadyExists": "List already exists"
+    },
+    "success": {
+      "removed": "Game removed successfully",
+      "rated": "Game rated successfully",
+      "created": "List created successfully",
+      "deleted": "List deleted successfully"
     },
     "noListsCreated": {
       "title": "No lists yet",
@@ -553,6 +568,7 @@
         "description": "Link your accounts to automatically import your games into your lists.",
         "steam": {
           "signIn": "Sign in with Steam",
+          "webviewHint": "Sign in with your Steam account above. Once Steam confirms, this window closes and your library syncs automatically.",
           "errorFailed": "Steam sign-in failed",
           "openBrowser": "Open in a browser tab instead",
           "browserHint": "Finish signing in in your browser - we sync your library automatically afterwards."
@@ -565,6 +581,8 @@
           "reauthBannerGeneric": "Connection expired - sign in again",
           "webviewTitle": "Sign in on PlayStation.com",
           "webviewHint": "Log into your PlayStation account. We pick up your NPSSO token automatically and close this window.",
+          "sessionHint": "You are not signed in yet. Complete the sign-in above (including 2-step verification), then tap “Get NPSSO”.",
+          "grabToken": "Get NPSSO",
           "manualEntry": "Paste token manually",
           "manualTitle": "Connect PlayStation",
           "manualInstructions": "Open the page below, sign in if needed, copy the NPSSO token shown there, and paste it here.",
@@ -585,7 +603,19 @@
           "signInRequired": "Sign in with Steam first"
         },
         "xbox": {
-          "comingSoon": "Xbox - Coming Soon"
+          "signIn": "Sign in with Microsoft",
+          "webviewTitle": "Sign in with Microsoft",
+          "webviewHint": "Sign in with your Microsoft account above. We import the games you played recently and the ones you earned achievements in. Once Microsoft confirms, this window closes and your library syncs automatically.",
+          "openBrowser": "Open in a browser tab instead",
+          "browserHint": "Finish signing in in your browser - we sync your library automatically afterwards.",
+          "reauthBanner": "Session expired - tap to reconnect",
+          "reauthBannerFormal": "Xbox session expired - reconnect to resume syncing",
+          "empty": "No games found",
+          "errorFailed": "Xbox sign-in failed",
+          "notAvailable": "Xbox linking is not available right now",
+          "noXboxProfile": "This Microsoft account has no Xbox profile yet - create one at xbox.com and try again",
+          "childAccount": "This account belongs to a child - an adult has to add it to a Microsoft family first",
+          "accessDenied": "Sign-in was cancelled"
         }
       },
       "steam": {

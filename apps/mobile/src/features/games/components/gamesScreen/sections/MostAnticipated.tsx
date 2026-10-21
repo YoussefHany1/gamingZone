@@ -71,7 +71,7 @@ function MostAnticipated(): React.ReactElement {
         );
       } catch (e) {
         logger.error("Toggle notification error:", e);
-        ToastAndroid.show(t("error"), ToastAndroid.SHORT);
+        ToastAndroid.show(t("common.error"), ToastAndroid.SHORT);
       }
     },
     [userId, preferences, toggleSource, t],

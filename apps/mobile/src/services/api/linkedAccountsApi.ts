@@ -11,7 +11,9 @@ import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import type {
   IgdbNameMapResponse,
   PsnSyncResponse,
+  XboxSyncResponse,
   LinkStateResponse,
+  LinkedAccountPlatform,
 } from "@/src/features/settings/types";
 
 /**
@@ -75,7 +77,9 @@ export type LinkStateResult =
  * Fetches a signed linkage `state` (+ the platform-specific start URL) that
  * binds the next link attempt to the authenticated Firebase user for 10 min.
  */
-export async function fetchLinkState(platform: "steam" | "psn"): Promise<LinkStateResult> {
+export async function fetchLinkState(
+  platform: LinkedAccountPlatform,
+): Promise<LinkStateResult> {
   const idToken = await getBackendIdToken();
   if (!idToken) return { ok: false, status: null, message: "no auth session" };
   try {
@@ -157,8 +161,34 @@ export async function syncPsnTitles(): Promise<PsnSyncResponse> {
 }
 
 /**
- * Maps a list of (PSN) titles to IGDB games through the global server-side
- * name cache. Returns results aligned with the input order.
+ * Pulls the Xbox library (recently played + achievement titles). The backend
+ * refreshes the Microsoft token and walks the Xbox Live chain. `reauth_required`
+ * means the stored Microsoft grant is dead — the UI shows the reconnect badge,
+ * never an error toast.
+ */
+export async function syncXboxTitles(): Promise<XboxSyncResponse> {
+  const idToken = await getBackendIdToken();
+  if (!idToken) return { status: "error" };
+
+  try {
+    const response = await apiClient.post<XboxSyncResponse>(
+      "/xbox/sync",
+      {},
+      {
+        headers: { Authorization: `Bearer ${idToken}` },
+        timeout: 60_000,
+      },
+    );
+    return response.data?.status ? response.data : { status: "error" };
+  } catch {
+    return { status: "error" };
+  }
+}
+
+/**
+ * Maps a list of titles to IGDB games through the global server-side name
+ * cache. The endpoint accepts 200 titles per call, so longer lists are split
+ * into chunks and merged (results are aligned with the input order).
  */
 export async function mapTitlesToIgdb(
   titles: string[],
@@ -181,4 +211,24 @@ export async function mapTitlesToIgdb(
   } catch {
     return [];
   }
+}
+
+/** The server caps one name-map call at 200 titles. */
+const NAME_MAP_CHUNK_SIZE = 200;
+
+/**
+ * Same as `mapTitlesToIgdb` but splits long lists into server-sized chunks —
+ * a big Xbox library would otherwise be silently truncated.
+ */
+export async function mapTitlesToIgdbChunked(
+  titles: string[],
+): Promise<IgdbNameMapResponse["results"]> {
+  if (titles.length <= NAME_MAP_CHUNK_SIZE) return mapTitlesToIgdb(titles);
+
+  const merged: IgdbNameMapResponse["results"] = [];
+  for (let i = 0; i < titles.length; i += NAME_MAP_CHUNK_SIZE) {
+    const chunk = titles.slice(i, i + NAME_MAP_CHUNK_SIZE);
+    merged.push(...(await mapTitlesToIgdb(chunk)));
+  }
+  return merged;
 }

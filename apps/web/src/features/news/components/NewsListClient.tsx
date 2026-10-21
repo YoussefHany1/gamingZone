@@ -1,29 +1,127 @@
+"use client";
+
+import { useEffect, useState, useRef } from "react";
 import Link from "@/components/Link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { Newspaper, Calendar } from "lucide-react";
 import SourceDropdown from "./SourceDropdown";
 import TimeAgoClient from "./TimeAgoClient";
-import { Article } from "@/types";
+import { Source } from "../types";
 import { Card } from "@/components/ui/Card";
-import { getTranslations } from "@/i18n/server";
+import { createTranslator } from "@/i18n/translate";
 import { getArticleSummary } from "@gaming-zone/utils";
+import { Article } from "@/types";
+import { databases } from "@/lib/appwrite";
+import { Query } from "appwrite";
 
-interface NewsListProps {
+interface NewsListClientProps {
   currentCategory: string;
-  currentSource: string;
-  sources: { name: string; language: string; image?: string }[];
-  articles: Article[];
+  sources: Source[];
+  /** Locale-appropriate source selected server-side; "" when the registry is empty. */
+  defaultSource: string;
+  /** Article list already rendered on the server for `defaultSource`. */
+  initialArticles: Article[];
   locale?: string;
 }
 
-export default function NewsList({
+/**
+ * Mirrors the server-side fetch in isNewsCategorySlug's page: same limit, the
+ * same fields selected from Appwrite, etc. The server render covers the
+ * locale-default source; switching sources here goes straight to Appwrite from
+ * the browser, so no Vercel function is invoked — the page itself stays a
+ * static/ISR shell regardless of ?source=.
+ */
+const ARTICLE_FIELDS = [
+  "$id",
+  "title",
+  "description",
+  "thumbnail",
+  "pubDate",
+  "siteName",
+  "link",
+  "category",
+  "language",
+  "summary_en",
+  "summary_ar",
+  "summary_es",
+  "summary_fr",
+  "summary_hi",
+  "summary_pt_br",
+  "summary_pt_pt",
+];
+
+export default function NewsListClient({
   currentCategory,
-  currentSource,
   sources,
-  articles,
+  defaultSource,
+  initialArticles,
   locale = "ar",
-}: NewsListProps) {
-  const t = getTranslations(locale);
+}: NewsListClientProps) {
+  const t = createTranslator(locale);
+
+  const searchParams = useSearchParams();
+  // Sources are keyed by exact registry name; a junk ?source= degrades to the
+  // locale default instead of minting an empty feed (same contract the server
+  // page used to apply against searchParams).
+  const requestedSource = searchParams.get("source") || "";
+  const effectiveSource = sources.some((s) => s.name === requestedSource)
+    ? requestedSource
+    : defaultSource;
+
+  const [articles, setArticles] = useState<Article[]>(initialArticles);
+  const [currentSource, setCurrentSource] = useState(effectiveSource);
+  const [switching, setSwitching] = useState(false);
+
+  // Results fetched client-side per source, memoised so toggling back and
+  // forth does not re-hit Appwrite.
+  const fetchedRef = useRef<PageFromMap>(new Map());
+
+  useEffect(() => {
+    if (effectiveSource === currentSource) return;
+    if (!effectiveSource) return;
+
+    const cached = fetchedRef.current.get(effectiveSource);
+    if (cached) {
+      setArticles(cached);
+      setCurrentSource(effectiveSource);
+      return;
+    }
+
+    let isCancelled = false;
+    setSwitching(true);
+
+    async function fetchSourceFeed() {
+      try {
+        const DATABASE_ID =
+          process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "";
+        if (!DATABASE_ID) return;
+
+        const response = await databases.listDocuments(DATABASE_ID, "articles", [
+          Query.equal("siteName", effectiveSource),
+          Query.equal("category", currentCategory),
+          Query.orderDesc("pubDate"),
+          Query.limit(50),
+          Query.select(ARTICLE_FIELDS),
+        ]);
+
+        if (isCancelled) return;
+        const parsed = JSON.parse(JSON.stringify(response.documents)) as Article[];
+        fetchedRef.current.set(effectiveSource, parsed);
+        setArticles(parsed);
+        setCurrentSource(effectiveSource);
+      } catch (error) {
+        console.error("Error loading news source feed:", error);
+      } finally {
+        if (!isCancelled) setSwitching(false);
+      }
+    }
+
+    fetchSourceFeed();
+    return () => {
+      isCancelled = true;
+    };
+  }, [effectiveSource, currentSource, currentCategory]);
 
   // Dynamic label helpers
   const categoriesList = [
@@ -49,7 +147,9 @@ export default function NewsList({
             </div>
           </div>
 
-          {/* Dynamic Sources Custom Dropdown Menu */}
+          {/* Dynamic Sources Custom Dropdown Menu — pushes ?source= which this
+              component resolves against the registry (and fetches client-side
+              when it is not the locale default). */}
           {sources.length > 0 && (
             <SourceDropdown
               sources={sources}
@@ -60,12 +160,12 @@ export default function NewsList({
           )}
         </Card>
 
-        {/* Category Tabs */}
+        {/* Category Tabs — path segments now, so each tab is a prerendered page. */}
         <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar border-b border-white/5">
           {categoriesList.map((cat) => (
             <Link
               key={cat.id}
-              href={`/news?category=${cat.id}`}
+              href={`/news/${cat.id}`}
               className={`px-5 py-3 rounded-t-xl text-xs sm:text-sm font-extrabold capitalize transition-all border-b-2 shrink-0 ${
                 currentCategory === cat.id
                   ? "border-light-blue text-light-blue bg-light-blue/5"
@@ -84,7 +184,11 @@ export default function NewsList({
               "No articles available in this section yet."}
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div
+            className={`grid grid-cols-1 md:grid-cols-2 gap-6 transition-opacity duration-150 ${
+              switching ? "opacity-50 pointer-events-none" : "opacity-100"
+            }`}
+          >
             {articles.map((art) => {
               const thumbnail = art.thumbnail || "/assets/image-not-found.webp";
               const artLang =
@@ -150,3 +254,5 @@ export default function NewsList({
     </div>
   );
 }
+
+type PageFromMap = Map<string, Article[]>;

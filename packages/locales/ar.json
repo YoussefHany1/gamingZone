@@ -44,7 +44,8 @@
     "clearSearch": "مسح البحث",
     "selectAnOption": "اختر خياراً",
     "somethingWentWrong": "حدث خطأ ما",
-    "contactSupport": "الدعم"
+    "contactSupport": "الدعم",
+    "gamer": "لاعب"
   },
   "auth": {
     "emailPlaceholder": "البريد الإلكتروني",
@@ -70,14 +71,12 @@
       "genderPlaceholder": "الجنس",
       "male": "ذكر",
       "female": "أنثى",
-      "guest": "التسجيل لاحقاً",
       "haveAnAccount": "هل لديك حساب بالفعل؟",
       "success": "تم التسجيل بنجاح",
       "emptyFields": "يرجى ملء جميع الحقول المطلوبة."
     },
     "forgotPassword": {
       "title": "إعادة تعيين كلمة السر الخاصة بك",
-      "emailPlaceholder": "البريد الإلكتروني",
       "sendButton": "إرسال رابط إعادة تعيين كلمة المرور",
       "sending": "جارٍ التحميل...",
       "backToLogin": "العودة إلى تسجيل الدخول",
@@ -107,7 +106,8 @@
       "passwordNumber": "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل",
       "nameShort": "يجب أن يتكون الاسم من حرفين على الأقل",
       "genderRequired": "يرجى اختيار الجنس",
-      "countryRequired": "يرجى اختيار الدولة"
+      "countryRequired": "يرجى اختيار الدولة",
+      "tooManyRequests": "محاولات كثيرة. يرجى المحاولة مرة أخرى لاحقًا."
     },
     "validation": {
       "passwordTitle": "كلمة المرور غير كافية",
@@ -140,6 +140,7 @@
       "settings": "الإعدادات"
     },
     "titles": {
+      "home": "الرئيسية",
       "notificationSettings": "إعدادات الإشعارات",
       "accountSettings": "إعدادات الحساب",
       "gamesList": "قائمة ألعابي",
@@ -228,7 +229,8 @@
       "noDescription": "لا يوجد وصف متاح الأن",
       "summaryTitle": "ملخص الذكاء الاصطناعي",
       "shareShortenError": "حدث خطأ، يرجى المحاولة مرة أخرى لاحقاً.",
-      "shareMessage": "وجد مقالاً مثيراً عبر تطبيق Gaming Zone\nتفقده: "
+      "shareMessage": "وجد مقالاً مثيراً عبر تطبيق Gaming Zone\nتفقده: ",
+      "nodescription": "لا يوجد وصف متاح"
     },
     "dropdown": {
       "selectSource": "اختر مصدرًا",
@@ -343,6 +345,7 @@
     },
     "details": {
       "availableStores": "متاح في هذه المتاجر",
+      "openStoreHint": "يفتح صفحة المتجر في متصفحك",
       "addToList": "أضف إلى قائمتي",
       "claimNow": "احصل على هذه اللعبة مجاناً على ",
       "rateThisGame": "تقييم هذه اللعبة",
@@ -419,7 +422,10 @@
       "notifyOnRelease": "تنبيهي عند صدور اللعبة",
       "notificationEnabled": "تم تفعيل التنبيه عند الإصدار",
       "subscribed": "تم تفعيل التنبيه لصدور هذه اللعبة",
-      "unsubscribed": "تم إلغاء التنبيه لصدور هذه اللعبة"
+      "unsubscribed": "تم إلغاء التنبيه لصدور هذه اللعبة",
+      "backToGames": "العودة إلى الألعاب",
+      "specifications": "المواصفات",
+      "closePlayer": "إغلاق المشغّل"
     },
     "filter": {
       "title": "تصفية الألعاب",
@@ -503,7 +509,14 @@
     "errors": {
       "couldNotCreateList": "تعذر إنشاء القائمة. يرجى المحاولة مرة أخرى لاحقاً.",
       "listAlreadyExists": "يوجد قائمة بهذا الاسم بالفعل.",
-      "couldNotDeleteList": "تعذر حذف القائمة. يرجى المحاولة مرة أخرى لاحقاً."
+      "couldNotDeleteList": "تعذر حذف القائمة. يرجى المحاولة مرة أخرى لاحقاً.",
+      "alreadyExists": "توجد قائمة بهذا الاسم بالفعل"
+    },
+    "success": {
+      "removed": "تمت إزالة اللعبة بنجاح",
+      "rated": "تم تقييم اللعبة بنجاح",
+      "created": "تم إنشاء القائمة بنجاح",
+      "deleted": "تم حذف القائمة بنجاح"
     },
     "noListsCreated": {
       "title": "لا توجد قوائم بعد",
@@ -555,6 +568,7 @@
         "description": "اربط حساباتك لاستيراد ألعابك إلى قوائمك تلقائياً.",
         "steam": {
           "signIn": "تسجيل الدخول عبر Steam",
+          "webviewHint": "سجّل الدخول بحساب Steam أعلاه. بمجرد تأكيد Steam، تُغلق هذه النافذة وتتم مزامنة مكتبتك تلقائيًا.",
           "errorFailed": "فشل تسجيل الدخول إلى Steam",
           "openBrowser": "افتح في تبويب المتصفح بدلاً من ذلك",
           "browserHint": "أكمل تسجيل الدخول في المتصفح — سنزامن مكتبتك تلقائياً بعد ذلك."
@@ -567,6 +581,8 @@
           "reauthBannerGeneric": "انتهت صلاحية الاتصال — سجّل الدخول مرة أخرى",
           "webviewTitle": "تسجيل الدخول على PlayStation.com",
           "webviewHint": "سجّل الدخول إلى حساب PlayStation. سنلتقط رمز NPSSO تلقائياً ونغلق هذه النافذة.",
+          "sessionHint": "لم تسجّل الدخول بعد. أكمل تسجيل الدخول أعلاه (بما في ذلك التحقق بخطوتين)، ثم اضغط على «الحصول على NPSSO».",
+          "grabToken": "الحصول على NPSSO",
           "manualEntry": "لصق الرمز يدوياً",
           "manualTitle": "ربط PlayStation",
           "manualInstructions": "افتح الصفحة أدناه وسجّل الدخول إذا لزم الأمر، ثم انسخ رمز NPSSO الظاهر فيه والصقه هنا.",
@@ -587,7 +603,19 @@
           "signInRequired": "سجّل الدخول إلى Steam أولاً"
         },
         "xbox": {
-          "comingSoon": "Xbox — قريباً"
+          "signIn": "تسجيل الدخول باستخدام Microsoft",
+          "webviewTitle": "تسجيل الدخول باستخدام Microsoft",
+          "webviewHint": "سجّل الدخول بحساب Microsoft أعلاه. نقوم باستيراد الألعاب التي لعبتها مؤخرًا والألعاب التي حصلت فيها على إنجازات. بعد تأكيد Microsoft، تُغلق هذه النافذة وتتزامن مكتبتك تلقائيًا.",
+          "openBrowser": "الفتح في تبويب المتصفح",
+          "browserHint": "أكمل تسجيل الدخول في متصفحك — سنقوم بمزامنة مكتبتك تلقائيًا بعد ذلك.",
+          "reauthBanner": "انتهت الجلسة — اضغط لإعادة الاتصال",
+          "reauthBannerFormal": "انتهت جلسة Xbox — أعد الاتصال لاستئناف المزامنة",
+          "empty": "لم يتم العثور على ألعاب",
+          "errorFailed": "فشل تسجيل الدخول إلى Xbox",
+          "notAvailable": "ربط Xbox غير متاح حاليًا",
+          "noXboxProfile": "لا يوجد ملف Xbox لهذا الحساب بعد — أنشئ واحدًا على xbox.com ثم أعد المحاولة",
+          "childAccount": "هذا الحساب يخص طفلًا — يجب على شخص بالغ إضافته إلى عائلة Microsoft أولًا",
+          "accessDenied": "تم إلغاء تسجيل الدخول"
         }
       },
       "steam": {

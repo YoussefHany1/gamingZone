@@ -10,10 +10,12 @@ import { fetchLatestTrailers } from "@/features/games/services/server";
 import { createLocalizedMetadata } from "@/lib/metadata";
 
 // Home aggregates news, events and trailers, so it revalidates most often —
-// but at 30m rather than 10m. Only 2 paths (en + ar), so the absolute saving is
-// small; the 3x matters because the RSS workflow revalidates this path on
-// publish, which is what actually keeps it fresh between windows.
-export const revalidate = 1800;
+// 1h, in step with ARTICLES_TTL in @/features/news/services/api and the
+// trailers fetch in @/features/games/services/server (the route window is the
+// lowest TTL its render touches, so all three must move together). Only 2
+// paths (en + ar), so the absolute saving is modest; the bigger lever is that
+// the RSS workflow revalidates these paths through /api/revalidate on publish.
+export const revalidate = 3600;
 
 export const generateMetadata = createLocalizedMetadata({
   en: {

@@ -44,7 +44,8 @@
     "clearSearch": "सर्च साफ़ करें",
     "selectAnOption": "एक विकल्प चुनें",
     "somethingWentWrong": "कुछ गलत हो गया",
-    "contactSupport": "सहायता से संपर्क करें"
+    "contactSupport": "सहायता से संपर्क करें",
+    "gamer": "गेमर"
   },
   "auth": {
     "emailPlaceholder": "ईमेल",
@@ -123,6 +124,7 @@
       "nameShort": "नाम कम से कम 2 अक्षरों का होना चाहिए",
       "genderRequired": "कृपया अपना लिंग चुनें",
       "countryRequired": "कृपया अपना देश चुनें",
+      "tooManyRequests": "बहुत अधिक प्रयास। कृपया बाद में पुनः प्रयास करें।",
       "playServices": "Google Play सेवाएँ इस डिवाइस पर उपलब्ध नहीं हैं।"
     },
     "validation": {
@@ -138,6 +140,7 @@
       "settings": "सेटिंग्स"
     },
     "titles": {
+      "home": "होम",
       "notificationSettings": "सूचना सेटिंग्स",
       "accountSettings": "खाता सेटिंग्स",
       "gamesList": "मेरी गेम्स सूची",
@@ -227,7 +230,8 @@
       "noDescription": "यहां कोई विवरण उपलब्ध नहीं है",
       "summaryTitle": "AI सारांश",
       "shareShortenError": "एक त्रुटि हुई, कृपया बाद में फिर से कोशिश करें।",
-      "shareMessage": "मुझे Gaming Zone App पर एक दिलचस्प लेख मिला\nइसे देखें: "
+      "shareMessage": "मुझे Gaming Zone App पर एक दिलचस्प लेख मिला\nइसे देखें: ",
+      "nodescription": "कोई विवरण उपलब्ध नहीं है"
     },
     "dropdown": {
       "selectSource": "एक स्रोत चुनें",
@@ -341,6 +345,7 @@
     },
     "details": {
       "availableStores": "इन स्टोर्स पर उपलब्ध",
+      "openStoreHint": "आपके ब्राउज़र में स्टोर पेज खोलता है",
       "addToList": "मेरी सूची में जोड़ें",
       "claimNow": "इस गेम को यहां मुफ्त में प्राप्त करें ",
       "rateThisGame": "इस गेम को रेट करें",
@@ -417,7 +422,10 @@
       "notifyOnRelease": "रिलीज़ होने पर मुझे सूचित करें",
       "notificationEnabled": "रिलीज़ अधिसूचना सक्रिय",
       "subscribed": "आप इस गेम की रिलीज़ अधिसूचनाओं की सदस्यता ले चुके हैं",
-      "unsubscribed": "आपने इस गेम की रिलीज़ अधिसूचनाओं से सदस्यता समाप्त कर दी है"
+      "unsubscribed": "आपने इस गेम की रिलीज़ अधिसूचनाओं से सदस्यता समाप्त कर दी है",
+      "backToGames": "गेम्स पर वापस जाएँ",
+      "specifications": "विशिष्टताएँ",
+      "closePlayer": "प्लेयर बंद करें"
     },
     "filter": {
       "title": "गेम्स फ़िल्टर करें",
@@ -501,7 +509,14 @@
     "errors": {
       "couldNotCreateList": "सूची नहीं बनाई जा सकी। कृपया बाद में फिर से कोशिश करें",
       "listAlreadyExists": "इस नाम से पहले से ही एक सूची मौजूद है",
-      "couldNotDeleteList": "सूची हटाई नहीं जा सकी। कृपया बाद में फिर से कोशिश करें।"
+      "couldNotDeleteList": "सूची हटाई नहीं जा सकी। कृपया बाद में फिर से कोशिश करें।",
+      "alreadyExists": "इस नाम वाली सूची पहले से मौजूद है"
+    },
+    "success": {
+      "removed": "गेम सफलतापूर्वक हटाया गया",
+      "rated": "गेम को सफलतापूर्वक रेट किया गया",
+      "created": "सूची सफलतापूर्वक बनाई गई",
+      "deleted": "सूची सफलतापूर्वक हटाई गई"
     },
     "noListsCreated": {
       "title": "अभी कोई सूची नहीं",
@@ -587,43 +602,58 @@
       },
       "connectedApps": "कनेक्टेड ऐप्स",
       "linking": {
-        "title": "Sync Your Game Library",
-        "description": "Link your accounts to automatically import your games into your lists.",
+        "title": "अपनी गेम लाइब्रेरी सिंक करें",
+        "description": "अपने खाते लिंक करें ताकि आपके गेम स्वतः आपकी सूचियों में जुड़ जाएँ।",
         "steam": {
-          "signIn": "Sign in with Steam",
-          "errorFailed": "Steam sign-in failed",
+          "signIn": "Steam से साइन इन करें",
+          "webviewHint": "ऊपर अपने Steam खाते से साइन इन करें। Steam की पुष्टि होते ही यह विंडो बंद हो जाएगी और आपकी लाइब्रेरी अपने आप सिंक हो जाएगी।",
+          "errorFailed": "Steam साइन इन विफल रहा",
           "openBrowser": "इसके बजाय ब्राउज़र टैब में खोलें",
-          "browserHint": "अपने ब्राउज़र में साइन-इन पूरा करें - हम आपकी लाइब्रेरी अपने आप सिंक कर देंगे।"
+          "browserHint": "अपने ब्राउज़र में साइन इन पूरा करें — हम उसके बाद आपकी लाइब्रेरी अपने आप सिंक कर देंगे।"
         },
         "psn": {
-          "signIn": "Sign in with PlayStation",
-          "reconnect": "Reconnect",
-          "reauthBanner": "Session expired - tap to reconnect",
-          "reauthBannerFormal": "PlayStation session expired - reconnect to resume syncing",
-          "reauthBannerGeneric": "Connection expired - sign in again",
-          "webviewTitle": "Sign in on PlayStation.com",
-          "webviewHint": "Log into your PlayStation account. We pick up your NPSSO token automatically and close this window.",
-          "manualEntry": "Paste token manually",
-          "manualTitle": "Connect PlayStation",
-          "manualInstructions": "Open the page below, sign in if needed, copy the NPSSO token shown there, and paste it here.",
-          "openCookiePage": "Open NPSSO page",
-          "connect": "Connect",
-          "empty": "No played games found",
-          "errorInvalidNpsso": "Could not verify the PSN token",
+          "signIn": "PlayStation से साइन इन करें",
+          "reconnect": "फिर से कनेक्ट करें",
+          "reauthBanner": "सत्र समाप्त — फिर से कनेक्ट करने के लिए टैप करें",
+          "reauthBannerFormal": "PlayStation सत्र समाप्त — सिंक जारी रखने के लिए फिर से कनेक्ट करें",
+          "reauthBannerGeneric": "कनेक्शन समाप्त — फिर से साइन इन करें",
+          "webviewTitle": "PlayStation.com पर साइन इन करें",
+          "webviewHint": "अपने PlayStation खाते में लॉग इन करें। हम आपका NPSSO टोकन अपने आप ले लेते हैं और यह विंडो बंद कर देते हैं।",
+          "sessionHint": "आप अभी तक साइन इन नहीं हैं। ऊपर साइन इन पूरा करें (दो-चरणीय सत्यापन सहित), फिर “NPSSO प्राप्त करें” पर टैप करें।",
+          "grabToken": "NPSSO प्राप्त करें",
+          "manualEntry": "टोकन मैन्युअल रूप से पेस्ट करें",
+          "manualTitle": "PlayStation कनेक्ट करें",
+          "manualInstructions": "नीचे दिया गया पेज खोलें, ज़रूरत हो तो साइन इन करें, वहाँ दिख रहा NPSSO टोकन कॉपी करें और यहाँ पेस्ट करें।",
+          "openCookiePage": "NPSSO पेज खोलें",
+          "connect": "कनेक्ट करें",
+          "empty": "कोई खेला हुआ गेम नहीं मिला",
+          "errorInvalidNpsso": "PSN टोकन सत्यापित नहीं हो सका",
           "openBrowser": "इसके बजाय ब्राउज़र टैब में जारी रखें"
         },
         "messages": {
-          "lastSynced": "Last synced",
-          "notLinked": "Not connected",
-          "syncNow": "Sync now",
-          "synced": "Library synced",
-          "syncFailed": "Sync failed",
-          "unlinked": "Disconnected",
-          "empty": "No games found",
-          "signInRequired": "पहले Steam में साइन-इन करें"
+          "lastSynced": "अंतिम सिंक",
+          "notLinked": "कनेक्ट नहीं है",
+          "syncNow": "अभी सिंक करें",
+          "synced": "लाइब्रेरी सिंक हो गई",
+          "syncFailed": "सिंक विफल",
+          "unlinked": "डिस्कनेक्ट किया गया",
+          "empty": "कोई गेम नहीं मिला",
+          "signInRequired": "पहले Steam से साइन इन करें"
         },
         "xbox": {
-          "comingSoon": "Xbox - Coming Soon"
+          "signIn": "Microsoft से साइन इन करें",
+          "webviewTitle": "Microsoft से साइन इन करें",
+          "webviewHint": "ऊपर अपने Microsoft खाते से साइन इन करें। हम वे गेम इम्पोर्ट करते हैं जो आपने हाल में खेले और जिनमें आपने उपलब्धियाँ अर्जित कीं। Microsoft की पुष्टि के बाद यह विंडो बंद हो जाती है और आपकी लाइब्रेरी अपने आप सिंक हो जाती है।",
+          "openBrowser": "इसके बजाय ब्राउज़र टैब में खोलें",
+          "browserHint": "अपने ब्राउज़र में साइन इन पूरा करें — हम आपकी लाइब्रेरी अपने आप सिंक कर देंगे।",
+          "reauthBanner": "सत्र समाप्त — फिर से कनेक्ट करने के लिए टैप करें",
+          "reauthBannerFormal": "Xbox सत्र समाप्त — सिंक जारी रखने के लिए फिर से कनेक्ट करें",
+          "empty": "कोई गेम नहीं मिला",
+          "errorFailed": "Xbox से साइन इन विफल रहा",
+          "notAvailable": "Xbox लिंकिंग अभी उपलब्ध नहीं है",
+          "noXboxProfile": "इस Microsoft खाते में अभी Xbox प्रोफ़ाइल नहीं है — xbox.com पर बनाएँ और फिर कोशिश करें",
+          "childAccount": "यह खाता किसी बच्चे का है — पहले किसी वयस्क को इसे Microsoft परिवार में जोड़ना होगा",
+          "accessDenied": "साइन इन रद्द कर दिया गया"
         }
       },
       "steam": {

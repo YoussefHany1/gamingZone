@@ -121,7 +121,7 @@ function FreeGames(): React.ReactElement {
     } catch (err) {
       logger.error("Toggle notifications error:", err);
       setNotifEnabled(!newStatus); // Revert on failure
-      ToastAndroid.show(t("error"), ToastAndroid.LONG);
+      ToastAndroid.show(t("common.error"), ToastAndroid.LONG);
     }
   }, [userId, notifEnabled, t]);
 

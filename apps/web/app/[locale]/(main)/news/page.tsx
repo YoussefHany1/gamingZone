@@ -1,11 +1,5 @@
-import React from "react";
-import {
-  fetchNewsSources,
-  fetchNews,
-  clampCategory,
-  clampSourceName,
-  NewsList,
-} from "@/features/news";
+import { Suspense } from "react";
+import { NewsListClient, getNewsPageData } from "@/features/news";
 import { createLocalizedMetadata } from "@/lib/metadata";
 
 export const generateMetadata = createLocalizedMetadata({
@@ -22,59 +16,41 @@ export const generateMetadata = createLocalizedMetadata({
   },
 });
 
-// No `revalidate` export: this route reads `searchParams` below, so Next renders
-// it dynamically and any segment-level TTL would be inert. The previous
-// `revalidate = 600` looked like ISR protection but never applied — the cross
-// request caching here comes from the unstable_cache wrappers in
-// @/features/news, not from this route.
+/**
+ * Static shell (no `searchParams` reads, so no per-request render). This page
+ * IS the default "news" category — the same feed /news/news serves, kept at
+ * both URLs because every internal link ("back to news", footer, sitemap)
+ * points at /news and we do not pay a function invocation per visit to redirect.
+ *
+ * Legacy `?category=` deep links now land on the default feed; the category
+ * pages live at /news/<category> and nothing internal generates the old URLs.
+ *
+ * Source switching does not re-render this route: NewsListClient resolves
+ * ?source= in the browser. Route-derived revalidation comes from the data
+ * TTLs in @/features/news/services/api (min 86400 via FEED_TTL_SECONDS).
+ */
+export const revalidate = 86400;
 
 export default async function NewsPage(props: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ category?: string; source?: string }>;
 }) {
-  const searchParams = await props.searchParams;
   const { locale } = await props.params;
-// Clamp the untrusted query value before it reaches any fetcher, so the
-  // sources cache key and `news:sources:*` tag stay within the known set. An
-  // unknown category falls back to the default feed rather than erroring: this
-  // route is dynamic, and throwing here would turn a bad query string into a 500.
-  const currentCategory = clampCategory(searchParams.category);
+  const { sources, defaultSource, articles } = await getNewsPageData(
+    "news",
+    locale,
+  );
 
-  // 1. Fetch available sources dynamically
-  const sources = await fetchNewsSources(currentCategory);
-
-  // 2. Select default source based on locale
-  let defaultSource = "";
-  if (sources.length > 0) {
-    const preferredSources = sources
-      .filter((s) => locale === "ar" ? s.language === "ar" : s.language !== "ar")
-      .sort((a, b) => a.name.localeCompare(b.name, locale === "ar" ? "ar" : "en"));
-      
-    if (preferredSources.length > 0) {
-      defaultSource = preferredSources[0].name;
-    } else {
-      defaultSource = [...sources].sort((a, b) => a.name.localeCompare(b.name, "en"))[0].name;
-    }
-  }
-
-  // `?source=` is unvalidated, and it becomes both a cache key segment and a
-  // `news:source:<name>` tag. Check it against the registry we just fetched, so
-  // a junk value degrades to the locale default instead of minting a
-  // permanent, never-invalidated cache entry and an empty feed.
-  const requestedSource = clampSourceName(searchParams.source);
-  const currentSource =
-    requestedSource && sources.some((s) => s.name === requestedSource)
-      ? requestedSource
-      : defaultSource;
-  const articles = await fetchNews(currentCategory, currentSource);
-
+  // useSearchParams inside NewsListClient requires a Suspense boundary for the
+  // static prerender of this route.
   return (
-    <NewsList
-      locale={locale}
-      currentCategory={currentCategory}
-      currentSource={currentSource}
-      sources={sources}
-      articles={articles}
-    />
+    <Suspense fallback={null}>
+      <NewsListClient
+        currentCategory="news"
+        sources={sources}
+        defaultSource={defaultSource}
+        initialArticles={articles}
+        locale={locale}
+      />
+    </Suspense>
   );
 }

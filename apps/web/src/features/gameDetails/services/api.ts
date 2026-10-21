@@ -29,10 +29,17 @@ const GAME_ID_PATTERN = /^\d{1,10}$/;
  * cross-request via unstable_cache because this drives the IGDB proxy lookup
  * for every game page.
  *
- * TTL is 86400 to match the games/[id] segment `revalidate`. Next derives a
+ * TTL is 604800 to match the games/[id] segment `revalidate`. Next derives a
  * route's window from the lowest TTL among the data-cache entries its render
  * touches, so these two must move together. The long TTL is the freshness
  * mechanism; there is no on-demand invalidation of the "games" tag.
+ *
+ * The try/catch sits OUTSIDE unstable_cache on purpose: a caught error inside
+ * the cached closure would persist `null` for the full TTL, and at 7 days an
+ * IGDB outage would serve the not-found state for a week. Throwing inside the
+ * cached function stores nothing — the wrapper still returns null for the
+ * page's graceful not-found render, and a regeneration that fails leaves the
+ * previous ISR entry serving intact.
  */
 export const fetchGameDetails = cache(
   async (rawId: string): Promise<GameData | null> => {
@@ -42,21 +49,24 @@ export const fetchGameDetails = cache(
     // clamping inside would still create the entry for whatever was passed in.
     if (!GAME_ID_PATTERN.test(id)) return null;
 
-    return unstable_cache(
-      async () => {
-        try {
-          const res = await axios.get<GameData>(`${getServerApiUrl()}/game-details`, {
-            params: { id },
-            timeout: 8000,
-          });
+    try {
+      return await unstable_cache(
+        async () => {
+          const res = await axios.get<GameData>(
+            `${getServerApiUrl()}/game-details`,
+            {
+              params: { id },
+              timeout: 8000,
+            },
+          );
           return res.data;
-        } catch (error) {
-          console.error("Error fetching game details:", error);
-          return null;
-        }
-      },
-      ["game-details", id],
-      { revalidate: 86400, tags: ["games", `games:details:${id}`] },
-    )();
+        },
+        ["game-details", id],
+        { revalidate: 604800, tags: ["games", `games:details:${id}`] },
+      )();
+    } catch (error) {
+      console.error("Error fetching game details:", error);
+      return null;
+    }
   },
 );

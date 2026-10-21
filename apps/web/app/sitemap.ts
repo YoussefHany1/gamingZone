@@ -5,10 +5,10 @@ import { getSiteBaseUrl } from "@/lib/metadata";
 
 const NEWS_CATEGORIES = ["news", "reviews", "esports", "hardware"];
 
-// 30m, not 6h. Next derives a route's revalidate from the lowest TTL among the
+// 1h, not 6h. Next derives a route's revalidate from the lowest TTL among the
 // data-cache entries it reads, and this route shares fetchServerArticles with
 // the home page — so 21600 here would be capped at the news TTL regardless.
-// Declaring 1800 keeps the manifest honest instead of implying 6h.
+// Declaring 3600 keeps the manifest honest instead of implying 6h.
 //
 // The regeneration count below is not the cost: Vercel bills ISR writes in 8 KB
 // units of *changed* output, and a regeneration that reproduces the previous
@@ -16,7 +16,7 @@ const NEWS_CATEGORIES = ["news", "reviews", "esports", "hardware"];
 // stamp made every one of these 48 daily regenerations differ from the last and
 // turned them into guaranteed billed writes. Keep every field derived from
 // content or absent.
-export const revalidate = 1800;
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getSiteBaseUrl();
@@ -26,7 +26,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // No /events entry: only app/[locale]/(main)/events/[id] exists, so /events
   // 404s. Nothing in the UI links to it either — advertising it in the sitemap
   // just spent crawl budget on a 404.
-  const staticRoutes = ["", "/games", "/news"];
+  //
+  // /news is the "news" category page itself (static default feed), and the
+  // other three category pages live at path segments under /news/<category>.
+  // /news/news is deliberately absent: it duplicates /news byte-for-byte.
+  const staticRoutes = [
+    "",
+    "/games",
+    "/news",
+    "/news/reviews",
+    "/news/esports",
+    "/news/hardware",
+  ];
   const sitemapEntries: MetadataRoute.Sitemap = [];
 
   locales.forEach((locale) => {

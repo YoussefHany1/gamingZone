@@ -1,55 +1,96 @@
 import Link from "@/components/Link";
 import { Metadata } from "next";
+import { Suspense } from "react";
 
-import { getArticle, getNewsSource, NewsDetailsLayout } from "@/features/news";
+import {
+  getArticle,
+  getNewsSource,
+  NewsListClient,
+  NewsDetailsLayout,
+  getNewsPageData,
+  isNewsCategorySlug,
+  NEWS_CATEGORY_SLUGS,
+} from "@/features/news";
 import { fetchServerArticles } from "@/features/news/services/api";
 import { getTranslations } from "@/i18n/server";
 import { getSiteBaseUrl } from "@/lib/metadata";
 
-const NEWS_CATEGORIES = ["news", "reviews", "esports", "hardware"] as const;
-
-// Prerender the newest articles (from every category) so detail pages are
-// served from the Vercel CDN instead of running a function on every request.
+// Prerender the newest articles (from every category) plus every category page
+// so both are served from the Vercel CDN instead of running a function on every
+// request. Article ids are 36-char hex and the four category slugs are plain
+// words — they cannot collide — so one dynamic segment ([id], here effectively
+// "slug") serves both without breaking established /news/<id> links.
 //
-// Article bodies are immutable once published, so a long window is free
-// freshness-wise: new articles age into this set as the window lapses and the
-// next regeneration picks them up. Dropping the prerendered set from 24 to 12
-// also halves the ISR write surface (24 ids x 2 locales).
-export const revalidate = 21600; // 6h
+// Article bodies are immutable once published, so they tolerate the category
+// feed's shorter window comfortably: a daily regeneration that reproduces the
+// previous bytes is free on Vercel (no ISR write), it only pays CPU.
+export const revalidate = 86400;
 
 const PRERENDERED_ARTICLE_LIMIT = 12;
 
 export async function generateStaticParams() {
-  try {
-    // Only ids are needed, and ids are locale-independent, so one locale per
-    // category is enough. The previous LOCALES cross-product doubled the
-    // Appwrite queries at build time for identical output.
-    const results = await Promise.all(
-      NEWS_CATEGORIES.map((category) => fetchServerArticles(category, "en")),
-    );
-    const ids = [
-      ...new Set(results.flat().map((art) => art.$id)),
-    ].slice(0, PRERENDERED_ARTICLE_LIMIT);
-    return ids.map((id) => ({ id }));
-  } catch (error) {
-    // Never swallow this silently: returning [] degrades every article page to a
-    // cold dynamic render, which is an invocation on every request, not one per
-    // 6h. The 6h revalidate still recovers the page on the next regeneration.
+  // Category slugs are static constants; article ids come from Appwrite at
+  // build time and are locale-independent, so one locale per category is
+  // enough to collect ids. The previous LOCALES cross-product doubled the
+  // Appwrite queries for identical output.
+  const idParams = await Promise.all(
+    NEWS_CATEGORY_SLUGS.map(async (category) => {
+      try {
+        const articles = await fetchServerArticles(category, "en");
+        return articles.map((art) => art.$id);
+      } catch (error) {
+        console.error(`[news/[id]] generateStaticParams: ${category} failed:`, error);
+        return [];
+      }
+    }),
+  )
+    .then((lists) => lists.flat())
+    .catch(() => []);
+
+  const ids = [...new Set(idParams)].slice(0, PRERENDERED_ARTICLE_LIMIT);
+
+  if (ids.length === 0) {
+    // Never swallow this silently: with no prerendered paths every news hit is
+    // a cold dynamic render, which is an invocation on every request, not one
+    // per TTL window. The 24h revalidate still recovers each page on its next
+    // regeneration, and the category pages are still prerendered.
     console.error(
-      "[news/[id]] generateStaticParams failed — no article pages will be " +
-        "prerendered and every article hit will run a function:",
-      error,
+      "[news/[id]] generateStaticParams got no article ids — article pages " +
+        "will render on demand:",
     );
-    return [];
   }
+
+  return [
+    ...NEWS_CATEGORY_SLUGS.map((id) => ({ id })),
+    ...ids.map((id) => ({ id })),
+  ];
 }
 
-// 1. Dynamic OG Metadata Generator
+// Metadata and page render branch on the slug: a category word renders the
+// category feed (sources + default source, client resolves ?source=), anything
+// else is an article id.
 export async function generateMetadata(props: {
   params: Promise<{ id: string; locale: string }>;
 }): Promise<Metadata> {
   const params = await props.params;
   const { id, locale } = params;
+
+  if (isNewsCategorySlug(id)) {
+    const canonicalUrl = `${getSiteBaseUrl()}/${locale}/news/${id}`;
+    return locale === "en"
+      ? {
+          title: "Gaming Zone | Gaming News, Reviews & Esports",
+          description:
+            "Follow instant coverage of the latest gaming news, hardware, reviews, Esports, and more from the best global and regional sources.",
+          alternates: { canonical: canonicalUrl },
+        }
+      : {
+          title: "Gaming Zone | أخبار الألعاب، المراجعات والرياضات الإلكترونية",
+          description:
+            "تابع تغطية فورية لأحدث أخبار الألعاب، المراجعات، الهاردوير، بطولات الرياضات الإلكترونية Esports وأكثر من أفضل المصادر العربية والعالمية.",
+          alternates: { canonical: canonicalUrl },
+        };
+  }
 
   try {
     const art = await getArticle(id);
@@ -96,8 +137,8 @@ export async function generateMetadata(props: {
         description:
           art.description ||
           (locale === "en"
-            ? "News details from Gaming Zone."
-            : "تفاصيل الخبر من جيمنج زون."),
+            ? "Read the article on Gaming Zone."
+            : "اقرأ المقال على جيمنج زون."),
         images: [art.thumbnail || "/assets/cover2.png"],
       },
     };
@@ -112,12 +153,32 @@ export async function generateMetadata(props: {
   }
 }
 
-// 2. Server Component Page Render
-export default async function NewsDetailsPage(props: {
+// Server Component Page Render — category feed or article detail.
+export default async function NewsDetailsOrCategoryPage(props: {
   params: Promise<{ id: string; locale: string }>;
 }) {
   const params = await props.params;
   const { id, locale } = params;
+
+  if (isNewsCategorySlug(id)) {
+    const { sources, defaultSource, articles } = await getNewsPageData(
+      id,
+      locale,
+    );
+    // useSearchParams inside NewsListClient requires a Suspense boundary for
+    // the static prerender of this route.
+    return (
+      <Suspense fallback={null}>
+        <NewsListClient
+          currentCategory={id}
+          sources={sources}
+          defaultSource={defaultSource}
+          initialArticles={articles}
+          locale={locale}
+        />
+      </Suspense>
+    );
+  }
 
   const art = await getArticle(id);
 

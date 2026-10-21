@@ -58,7 +58,7 @@ export const useGameReleaseNotification = ({
       );
     } catch (e) {
       logger.error("Toggle notification error:", e);
-      ToastAndroid.show(t("error"), ToastAndroid.SHORT);
+      ToastAndroid.show(t("common.error"), ToastAndroid.SHORT);
     }
   }, [user, gameId, isSubscribed, toggleSource, t]);
 

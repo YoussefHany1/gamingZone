@@ -44,7 +44,8 @@
     "clearSearch": "Borrar búsqueda",
     "selectAnOption": "Selecciona una opción",
     "somethingWentWrong": "Algo salió mal",
-    "contactSupport": "Contactar soporte"
+    "contactSupport": "Contactar soporte",
+    "gamer": "Jugador"
   },
   "auth": {
     "emailPlaceholder": "Correo electrónico",
@@ -123,7 +124,8 @@
       "passwordNumber": "La contraseña debe contener al menos un número",
       "nameShort": "El nombre debe tener al menos 2 caracteres",
       "genderRequired": "Por favor, selecciona tu género",
-      "countryRequired": "Por favor, selecciona tu país"
+      "countryRequired": "Por favor, selecciona tu país",
+      "tooManyRequests": "Demasiados intentos. Inténtalo de nuevo más tarde."
     },
     "validation": {
       "passwordTitle": "Contraseña no válida",
@@ -138,6 +140,7 @@
       "settings": "Ajustes"
     },
     "titles": {
+      "home": "Inicio",
       "notificationSettings": "Configuración de notificaciones",
       "accountSettings": "Configuración de la cuenta",
       "gamesList": "Mi lista de juegos",
@@ -227,7 +230,8 @@
       "noDescription": "No hay ninguna descripción disponible.",
       "summaryTitle": "Resumen con IA",
       "shareShortenError": "Se produjo un error. Por favor, inténtalo de nuevo más tarde.",
-      "shareMessage": "Encontré un artículo interesante en Gaming Zone\nÉchale un vistazo: "
+      "shareMessage": "Encontré un artículo interesante en Gaming Zone\nÉchale un vistazo: ",
+      "nodescription": "No hay descripción disponible"
     },
     "dropdown": {
       "selectSource": "Selecciona una fuente",
@@ -341,6 +345,7 @@
     },
     "details": {
       "availableStores": "Disponible en estas tiendas",
+      "openStoreHint": "Abre la página de la tienda en tu navegador",
       "addToList": "Añadir a mi lista",
       "claimNow": "Consigue este juego gratis en ",
       "rateThisGame": "Calificar este juego",
@@ -417,7 +422,10 @@
       "notifyOnRelease": "Notificarme del lanzamiento",
       "notificationEnabled": "Notificación de lanzamiento activada",
       "subscribed": "Te has suscrito a las notificaciones de lanzamiento de este juego",
-      "unsubscribed": "Te has dado de baja de las notificaciones de lanzamiento de este juego"
+      "unsubscribed": "Te has dado de baja de las notificaciones de lanzamiento de este juego",
+      "backToGames": "Volver a los juegos",
+      "specifications": "Especificaciones",
+      "closePlayer": "Cerrar reproductor"
     },
     "filter": {
       "title": "Filtrar juegos",
@@ -501,7 +509,14 @@
     "errors": {
       "couldNotCreateList": "No se pudo crear la lista. Por favor, inténtalo de nuevo más tarde",
       "listAlreadyExists": "Ya existe una lista con este nombre",
-      "couldNotDeleteList": "No se pudo eliminar la lista. Por favor, inténtalo de nuevo más tarde."
+      "couldNotDeleteList": "No se pudo eliminar la lista. Por favor, inténtalo de nuevo más tarde.",
+      "alreadyExists": "Ya existe una lista con este nombre"
+    },
+    "success": {
+      "removed": "Juego eliminado correctamente",
+      "rated": "Juego valorado correctamente",
+      "created": "Lista creada correctamente",
+      "deleted": "Lista eliminada correctamente"
     },
     "noListsCreated": {
       "title": "Aún no hay listas",
@@ -587,43 +602,58 @@
       },
       "connectedApps": "Aplicaciones conectadas",
       "linking": {
-        "title": "Sync Your Game Library",
-        "description": "Link your accounts to automatically import your games into your lists.",
+        "title": "Sincroniza tu biblioteca de juegos",
+        "description": "Vincula tus cuentas para importar automáticamente tus juegos a tus listas.",
         "steam": {
-          "signIn": "Sign in with Steam",
-          "errorFailed": "Steam sign-in failed",
-          "openBrowser": "Abrir en una pestaña del navegador en su lugar",
-          "browserHint": "Termina de iniciar sesión en tu navegador: sincronizamos tu biblioteca automáticamente después."
+          "signIn": "Iniciar sesión con Steam",
+          "webviewHint": "Inicia sesión con tu cuenta de Steam arriba. Cuando Steam lo confirme, esta ventana se cerrará y tu biblioteca se sincronizará automáticamente.",
+          "errorFailed": "Error al iniciar sesión con Steam",
+          "openBrowser": "Abrir en una pestaña del navegador",
+          "browserHint": "Termina de iniciar sesión en tu navegador: sincronizaremos tu biblioteca automáticamente después."
         },
         "psn": {
-          "signIn": "Sign in with PlayStation",
-          "reconnect": "Reconnect",
-          "reauthBanner": "Session expired - tap to reconnect",
-          "reauthBannerFormal": "PlayStation session expired - reconnect to resume syncing",
-          "reauthBannerGeneric": "Connection expired - sign in again",
-          "webviewTitle": "Sign in on PlayStation.com",
-          "webviewHint": "Log into your PlayStation account. We pick up your NPSSO token automatically and close this window.",
-          "manualEntry": "Paste token manually",
-          "manualTitle": "Connect PlayStation",
-          "manualInstructions": "Open the page below, sign in if needed, copy the NPSSO token shown there, and paste it here.",
-          "openCookiePage": "Open NPSSO page",
-          "connect": "Connect",
-          "empty": "No played games found",
-          "errorInvalidNpsso": "Could not verify the PSN token",
-          "openBrowser": "Continuar en una pestaña del navegador en su lugar"
+          "signIn": "Iniciar sesión con PlayStation",
+          "reconnect": "Volver a conectar",
+          "reauthBanner": "Sesión caducada: toca para volver a conectar",
+          "reauthBannerFormal": "La sesión de PlayStation caducó: vuelve a conectar para reanudar la sincronización",
+          "reauthBannerGeneric": "Conexión caducada: inicia sesión de nuevo",
+          "webviewTitle": "Inicia sesión en PlayStation.com",
+          "webviewHint": "Inicia sesión en tu cuenta de PlayStation. Capturamos tu token NPSSO automáticamente y cerramos esta ventana.",
+          "sessionHint": "Todavía no has iniciado sesión. Completa el inicio de sesión de arriba (incluida la verificación en dos pasos) y luego pulsa «Obtener NPSSO».",
+          "grabToken": "Obtener NPSSO",
+          "manualEntry": "Pegar el token manualmente",
+          "manualTitle": "Conectar PlayStation",
+          "manualInstructions": "Abre la página de abajo, inicia sesión si hace falta, copia el token NPSSO que aparece y pégalo aquí.",
+          "openCookiePage": "Abrir la página NPSSO",
+          "connect": "Conectar",
+          "empty": "No se encontraron juegos jugados",
+          "errorInvalidNpsso": "No se pudo verificar el token de PSN",
+          "openBrowser": "Continuar en una pestaña del navegador"
         },
         "messages": {
-          "lastSynced": "Last synced",
-          "notLinked": "Not connected",
-          "syncNow": "Sync now",
-          "synced": "Library synced",
-          "syncFailed": "Sync failed",
-          "unlinked": "Disconnected",
-          "empty": "No games found",
+          "lastSynced": "Última sincronización",
+          "notLinked": "Sin conectar",
+          "syncNow": "Sincronizar ahora",
+          "synced": "Biblioteca sincronizada",
+          "syncFailed": "Error de sincronización",
+          "unlinked": "Desconectado",
+          "empty": "No se encontraron juegos",
           "signInRequired": "Primero inicia sesión con Steam"
         },
         "xbox": {
-          "comingSoon": "Xbox - Coming Soon"
+          "signIn": "Iniciar sesión con Microsoft",
+          "webviewTitle": "Iniciar sesión con Microsoft",
+          "webviewHint": "Inicia sesión con tu cuenta de Microsoft arriba. Importamos los juegos que jugaste recientemente y los que desbloqueaste logros. Cuando Microsoft lo confirme, esta ventana se cerrará y tu biblioteca se sincronizará automáticamente.",
+          "openBrowser": "Abrir en una pestaña del navegador",
+          "browserHint": "Termina de iniciar sesión en tu navegador: sincronizamos tu biblioteca automáticamente después.",
+          "reauthBanner": "La sesión ha caducado: toca para volver a conectar",
+          "reauthBannerFormal": "La sesión de Xbox ha caducado: vuelve a conectar para seguir sincronizando",
+          "empty": "No se han encontrado juegos",
+          "errorFailed": "Error al iniciar sesión con Xbox",
+          "notAvailable": "El enlace de Xbox no está disponible en este momento",
+          "noXboxProfile": "Esta cuenta de Microsoft todavía no tiene un perfil de Xbox: créalo en xbox.com e inténtalo de nuevo",
+          "childAccount": "Esta cuenta pertenece a un menor: un adulto debe añadirla antes a una familia de Microsoft",
+          "accessDenied": "Se ha cancelado el inicio de sesión"
         }
       },
       "steam": {
@@ -716,7 +746,7 @@
         "avgRating": "Calificación media",
         "playtime": "Tiempo de juego"
       },
-      "playtimeValue": "{{count}} hrs",
+      "playtimeValue": "{{count}} h",
       "highestRated": "Mejor valorados",
       "emptyLibrary": "Tu biblioteca está vacía — añade juegos para crear tus estadísticas.",
       "browseGames": "Explorar juegos",

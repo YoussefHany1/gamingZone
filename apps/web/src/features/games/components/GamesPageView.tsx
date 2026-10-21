@@ -1,5 +1,6 @@
 import Link from "@/components/Link";
 import Image from "next/image";
+import type { ReactNode } from "react";
 import {
   Gamepad2,
   Sliders,
@@ -37,6 +38,14 @@ export interface GamesPageViewProps {
   sort: string;
   page: number;
   isSearching: boolean;
+  /**
+   * Optional client-rendered results area, used by the /games/search route:
+   * the page is a static shell and the slot fetches search results in the
+   * browser (the route no longer reads searchParams server-side). When absent
+   * the original behaviour applies: isSearching drives the inline results
+   * section vs. the browse dashboard.
+   */
+  searchSlot?: ReactNode;
   searchResults: Game[];
   freeGames: FreeGame[];
   popular: Game[];
@@ -76,6 +85,7 @@ export default function GamesPageView(props: GamesPageViewProps) {
     page,
     isSearching,
     searchResults,
+    searchSlot,
     freeGames,
     popular,
     recentlyReleased,
@@ -237,7 +247,9 @@ export default function GamesPageView(props: GamesPageViewProps) {
         </form>
 
         {/* Content Area */}
-        {isSearching ? (
+        {searchSlot ? (
+          searchSlot
+        ) : isSearching ? (
           // 1. Search Results Section
           <section className="space-y-6">
             <h2 className="text-xl font-bold bg-linear-to-r from-white to-light-blue bg-clip-text text-transparent flex items-center gap-2">

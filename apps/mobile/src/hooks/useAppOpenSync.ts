@@ -17,6 +17,7 @@ import {
   isAccountStale,
   syncPsnLibrary,
   syncSteamLibrary,
+  syncXboxLibrary,
 } from "@/src/features/settings/lib/platformSync";
 import { logger } from "@/src/lib/logger";
 import type { LinkedAccount } from "@/src/features/settings/types";
@@ -34,13 +35,15 @@ export default function useAppOpenSync(user: { uid: string } | null): void {
     void (async (): Promise<void> => {
       try {
         const linkedRef = firestore().collection("users").doc(uid).collection("linkedAccounts");
-        const [steamSnap, psnSnap] = await Promise.all([
+        const [steamSnap, psnSnap, xboxSnap] = await Promise.all([
           linkedRef.doc("steam").get(),
           linkedRef.doc("psn").get(),
+          linkedRef.doc("xbox").get(),
         ]);
 
         const steamData = steamSnap.data() as LinkedAccount | undefined;
         const psnData = psnSnap.data() as LinkedAccount | undefined;
+        const xboxData = xboxSnap.data() as LinkedAccount | undefined;
 
         if (steamData?.status !== "unlinked" && steamData?.steamId) {
           const stale = isAccountStale(steamData.lastSyncedAt);
@@ -61,6 +64,17 @@ export default function useAppOpenSync(user: { uid: string } | null): void {
             const outcome = await syncPsnLibrary();
             if (__DEV__) {
               logger.debug("[useAppOpenSync] PSN auto-sync outcome:", outcome);
+            }
+          }
+        }
+
+        // Xbox runs last — it is the slowest adapter (Microsoft token refresh
+        // + Xbox Live handshake + two library calls).
+        if (xboxData && xboxData.status !== "unlinked" && xboxData.status !== "reauth_required") {
+          if (isAccountStale(xboxData.lastSyncedAt)) {
+            const outcome = await syncXboxLibrary();
+            if (__DEV__) {
+              logger.debug("[useAppOpenSync] Xbox auto-sync outcome:", outcome);
             }
           }
         }

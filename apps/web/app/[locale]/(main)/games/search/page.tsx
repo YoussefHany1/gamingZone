@@ -1,17 +1,7 @@
-import { GamesPageView, searchGames } from "@/features/games";
+import { Suspense } from "react";
+import { GamesPageView, SearchResultsClient } from "@/features/games";
 import { createLocalizedMetadata } from "@/lib/metadata";
 
-/**
- * Dynamic by design: this route reads `searchParams`, so Next renders it per
- * request and any `revalidate` export would be inert. This is the counterpart
- * to the static /[locale]/games browse page — search, filtering and pagination
- * were what previously forced that page dynamic and cost it a full ISR window.
- *
- * searchGames is deliberately uncached (see @/features/games/services/api). Its
- * key space is user-typed query text, so caching it would let anyone mint
- * permanent entries by typing, and IGDB search is cheap enough not to need a
- * cross-request cache.
- */
 export const generateMetadata = createLocalizedMetadata({
   path: "/games/search",
   en: {
@@ -34,51 +24,40 @@ export const generateMetadata = createLocalizedMetadata({
  * rather than /games, so any crawler that reaches it via a stale link
  * consolidates here instead of spreading across duplicates.
  */
+
+/**
+ * Static shell — this route no longer reads `searchParams`, so it is
+ * prerendered once and served from the CDN for every query-page permutation
+ * with zero function invocations. This was the single biggest Fluid Active-CPU
+ * line item: results used to SSR per request, with searchGames deliberately
+ * uncached (its key space is visitor-typed text, so caching would let anyone
+ * mint permanent entries).
+ *
+ * The client slot reads the query string in the browser and calls the IGDB
+ * proxy in @/features/games/services/api directly — secrets stay server-side
+ * and the wrapper already guards against junk input.
+ */
 export default async function GamesSearchPage(props: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{
-    query?: string;
-    genre?: string;
-    platform?: string;
-    sort?: string;
-    page?: string;
-  }>;
 }) {
-  const [{ locale }, searchParams] = await Promise.all([
-    props.params,
-    props.searchParams,
-  ]);
-
-  const query = searchParams.query || "";
-  const genre = searchParams.genre || "";
-  const platform = searchParams.platform || "";
-  const sort = searchParams.sort || "relevance";
-
-  // Clamp rather than trust: this becomes an upstream query param. parseInt
-  // returns NaN for junk, and an unbounded page number would ask IGDB for an
-  // arbitrarily deep slice.
-  const parsedPage = parseInt(searchParams.page || "1", 10);
-  const page = Number.isFinite(parsedPage) ? Math.min(Math.max(parsedPage, 1), 50) : 1;
-
-  // Only treat it as a search when something was actually narrowed by, matching
-  // the old `isSearching` check. A bare /games/search renders the same "no
-  // results" empty state rather than a full-catalogue dump.
-  const isSearching = query !== "" || genre !== "" || platform !== "";
-  const searchResults = isSearching
-    ? await searchGames(query, genre, platform, sort, page)
-    : [];
+  const { locale } = await props.params;
 
   return (
     <GamesPageView
       locale={locale}
       searchPath={`/${locale}/games/search`}
-      query={query}
-      genre={genre}
-      platform={platform}
-      sort={sort}
-      page={page}
-      isSearching={isSearching}
-      searchResults={searchResults}
+      query=""
+      genre=""
+      platform=""
+      sort=""
+      page={1}
+      isSearching={false}
+      searchResults={[]}
+      searchSlot={
+        <Suspense fallback={null}>
+          <SearchResultsClient locale={locale} searchPath={`/${locale}/games/search`} />
+        </Suspense>
+      }
       freeGames={[]}
       popular={[]}
       recentlyReleased={[]}
