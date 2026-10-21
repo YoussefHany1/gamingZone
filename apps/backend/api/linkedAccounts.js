@@ -231,7 +231,9 @@ function requireAuth(AppError) {
       const decoded = await admin.auth.verifyIdToken(token, true);
       req.authUid = decoded.uid;
       next();
-    } catch {
+    } catch (err) {
+      // Server-side visibility: a 401 needs to say WHY in the Vercel runtime logs.
+      console.warn("verifyIdToken failed:", err?.code ?? err?.message ?? err);
       return next(new AppError('Invalid or expired session token', 401));
     }
   };

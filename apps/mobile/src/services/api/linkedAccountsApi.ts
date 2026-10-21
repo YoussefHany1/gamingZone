@@ -18,9 +18,15 @@ export async function getBackendIdToken(): Promise<string | null> {
   try {
     const { default: auth } = await import("@react-native-firebase/auth");
     const user = auth().currentUser;
-    if (!user) return null;
+    if (!user) {
+      logger.warn(
+        "[linkedAccountsApi] getBackendIdToken: no auth().currentUser — user not signed in",
+      );
+      return null;
+    }
     return await user.getIdToken();
-  } catch {
+  } catch (error: unknown) {
+    logger.error("[linkedAccountsApi] getBackendIdToken failed", error as Error);
     return null;
   }
 }
