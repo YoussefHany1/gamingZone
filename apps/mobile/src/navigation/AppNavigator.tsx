@@ -42,6 +42,7 @@ import {
   ContactScreen,
 } from "@/src/features/settings";
 import { UserGamesScreen, UserListsScreen } from "@/src/features/lists";
+import { AchievementsScreen } from "@/src/features/gamification";
 import { AIChatScreen } from "@/src/features/ai";
 import { EventDetailsScreen } from "@/src/features/events";
 import {
@@ -84,6 +85,7 @@ export type SettingsStackParamList = {
   GameDetails: { gameID: number | string; claimUrl?: string; store?: string } | undefined;
   ContactScreen: undefined;
   UserListsScreen: undefined;
+  Achievements: undefined;
 };
 
 export type MainTabParamList = {
@@ -236,6 +238,7 @@ const SettingsStack = memo(() => {
       theme: { title: t("settings.theme.title") },
       contact: { title: t("settings.contact.title") },
       userLists: { title: t("navigation.titles.myLists") },
+      achievements: { title: t("gamification.achievementsTitle") },
     }),
     [t],
   );
@@ -305,6 +308,11 @@ const SettingsStack = memo(() => {
         name="UserListsScreen"
         component={UserListsScreen}
         options={screenTitles.userLists}
+      />
+      <SettingsStackNav.Screen
+        name="Achievements"
+        component={AchievementsScreen}
+        options={screenTitles.achievements}
       />
     </SettingsStackNav.Navigator>
   );

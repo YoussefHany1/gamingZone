@@ -19,7 +19,7 @@ export type SteamSignInPanelProps = {
   startUrl: string | null;
   onCallbackUrl: (url: string) => void;
   onOpenBrowser: () => void;
-  onBack: () => void;
+  onBack?: () => void;
 };
 
 function SteamSignInPanel({
@@ -72,12 +72,6 @@ function SteamSignInPanel({
         <CustomText style={styles.secondaryBtnText}>
           {t("settings.profile.linking.steam.openBrowser") || "Open in a browser tab instead"}
         </CustomText>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.secondaryBtn, styles.mtSmall]}
-        onPress={onBack}
-      >
-        <CustomText style={styles.secondaryBtnText}>{t("common.back") || "Back"}</CustomText>
       </TouchableOpacity>
     </>
   );

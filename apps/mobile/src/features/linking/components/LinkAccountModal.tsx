@@ -21,8 +21,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  I18nManager,
 } from "react-native";
-import { X } from "lucide-react-native";
+import { X, ArrowLeft, ArrowRight } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import { ErrorBoundary } from "@/src/components/ErrorBoundary";
@@ -101,10 +102,13 @@ export default function LinkAccountModal({
   visible,
   onClose,
 }: LinkAccountModalProps): React.ReactElement {
+  const { t, i18n } = useTranslation();
   const colors = useThemeColors();
+  const isRtl = i18n.language === "ar" || I18nManager.isRTL;
 
   const [panel, setPanel] = useState<LinkPanel>("choose");
   const [busy, setBusy] = useState(false);
+  const isSubPanel = panel !== "choose";
 
   const { steamAccount, psnAccount, xboxAccount, waitForMounted, unlink } =
     useLinkedAccounts(visible);
@@ -226,7 +230,19 @@ export default function LinkAccountModal({
       elevation: 5,
       maxHeight: "88%",
     },
-    closeBtn: { alignSelf: "flex-end" },
+    modalHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 10,
+    },
+    headerBtn: {
+      padding: 4,
+    },
+    headerBtnPlaceholder: {
+      width: 32,
+      height: 32,
+    },
     /** Shrinks to the modal height cap and becomes scrollable only when the
      * panel content cannot fit (short panels stay exactly as tall as needed). */
     panelScroll: { flexGrow: 0, flexShrink: 1 },
@@ -330,9 +346,35 @@ export default function LinkAccountModal({
       >
         <View style={styles.overlay}>
           <View style={styles.modalContent}>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <X size={24} color={colors.text} />
-            </TouchableOpacity>
+            <View style={styles.modalHeader}>
+              {isSubPanel ? (
+                <TouchableOpacity
+                  onPress={handleBackButton}
+                  style={styles.headerBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("common.back") || "Back"}
+                >
+                  {isRtl ? (
+                    <ArrowRight size={24} color={colors.text} />
+                  ) : (
+                    <ArrowLeft size={24} color={colors.text} />
+                  )}
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.headerBtnPlaceholder} />
+              )}
+
+              <TouchableOpacity
+                onPress={onClose}
+                style={styles.headerBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={t("common.close") || "Close"}
+              >
+                <X size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
 
             {/* Small screens: every panel is reachable by scrolling. The
                 nested-scroll flag lets the embedded sign-in WebViews and this

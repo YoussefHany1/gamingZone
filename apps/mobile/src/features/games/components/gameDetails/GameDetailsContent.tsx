@@ -1,6 +1,7 @@
 import React, { memo, useMemo } from "react";
 import { View, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
+import { XP_REWARDS } from "@gaming-zone/utils";
 import { useBottomInset } from "@/src/hooks/useBottomInset";
 import ImageGallerySkeleton from "../../skeleton/gameDetails/ImageGallerySkeleton";
 import GameDetailsMetaSkeleton from "../../skeleton/gameDetails/GameDetailsMetaSkeleton";
@@ -156,7 +157,12 @@ const GameDetailsContent: React.FC<GameDetailsContentProps> = ({
 
         {/* Rating Section */}
         {game && (
-          <GameRatingSection user={user} rating={rating} onRate={handleRateGame} />
+          <GameRatingSection
+            user={user}
+            rating={rating}
+            onRate={handleRateGame}
+            xpOnFirstRating={XP_REWARDS.first_rating}
+          />
         )}
 
         <ListSelectionModal

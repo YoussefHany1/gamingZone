@@ -58,6 +58,7 @@
       "forgotPassword": "पासवर्ड भूल गए?",
       "signInButton": "साइन इन करें",
       "googleSignIn": "Google से साइन इन करें",
+      "discordSignIn": "Discord से साइन इन करें",
       "createAccount": "नया खाता बनाएं",
       "success": "लॉगिन सफल हुआ",
       "failed": "लॉगिन विफल हुआ"
@@ -71,6 +72,7 @@
       "male": "पुरुष",
       "female": "महिला",
       "googleSignUp": "Google से साइन अप करें",
+      "discordSignUp": "Discord से साइन अप करें",
       "haveAnAccount": "पहले से खाता है?",
       "success": "साइन अप सफल हुआ",
       "emptyFields": "कृपया सभी आवश्यक फ़ील्ड भरें"
@@ -116,6 +118,8 @@
       "invalidEmail": "ईमेल पता अमान्य है",
       "weakPassword": "पासवर्ड बहुत कमज़ोर है",
       "googleSignIn": "Google साइन-इन विफल हुआ। कृपया फिर से कोशिश करें",
+      "discordSignIn": "Discord साइन-इन विफल रहा। कृपया पुनः प्रयास करें",
+      "discordNotConfigured": "Discord साइन-इन अभी उपलब्ध नहीं है।",
       "emailRequired": "ईमेल आवश्यक है",
       "emailInvalid": "कृपया एक मान्य ईमेल पता दर्ज करें",
       "passwordShort": "पासवर्ड बहुत छोटा है",
@@ -475,6 +479,78 @@
         "android": "Android",
         "ios": "iOS"
       }
+    }
+  },
+  "gamification": {
+    "level": "स्तर {{level}}",
+    "xpToNextLevel": "स्तर {{level}} तक {{xp}} XP",
+    "xpIntoLevel": "{{xp}} / {{xpTotal}} XP",
+    "totalXp": "कुल {{xp}} XP",
+    "xpAmount": "+{{xp}} XP",
+    "xpHint": "पहली समीक्षा के लिए +{{xp}} XP",
+    "xpReward": "+{{xp}} XP",
+    "loading": "आपका स्तर लोड हो रहा है…",
+    "achievementsTitle": "उपलब्धियाँ",
+    "xpBreakdownTitle": "आपके XP कहाँ से आए",
+    "achievements": {
+      "progress": "{{current}} / {{target}}",
+      "unlocked": "अनलॉक हो गया",
+      "firstReview": {
+        "name": "पहली समीक्षा",
+        "description": "अपना पहला गेम रेट करें।"
+      },
+      "reviewer": {
+        "name": "समीक्षक",
+        "description": "10 गेम रेट करें।"
+      },
+      "critic": {
+        "name": "समालोचक",
+        "description": "50 गेम रेट करें।"
+      },
+      "fiveStarFan": {
+        "name": "पाँच-सितारे प्रेमी",
+        "description": "10 गेम को पाँच सितारे दें।"
+      },
+      "completionist": {
+        "name": "पूर्णकर्ता",
+        "description": "25 गेम को खेला हुआ चिह्नित करें।"
+      },
+      "curator": {
+        "name": "संरक्षक",
+        "description": "अपनी सूचियों में 25 गेम ट्रैक करें।"
+      },
+      "collector": {
+        "name": "संग्रहकर्ता",
+        "description": "अपनी सूचियों में 100 गेम ट्रैक करें।"
+      },
+      "marathoner": {
+        "name": "मैराथनर",
+        "description": "50 घंटे का खेल समय दर्ज करें।"
+      }
+    },
+    "levelUp": {
+      "title": "स्तर {{level}}!",
+      "body": "आपने स्तर {{level}} तक पहुँच गए। जारी रखें!"
+    },
+    "tiers": {
+      "bronze": "कांस्य",
+      "silver": "रजत",
+      "gold": "स्वर्ण"
+    },
+    "xpSources": {
+      "firstRating": "पहली रेटिंग",
+      "fiveStar": "पाँच-सितारे रेटिंग",
+      "gamePlayed": "खेले हुए चिह्नित गेम",
+      "gameTracked": "सूचियों में ट्रैक किए गए गेम",
+      "achievements": "उपलब्धियाँ",
+      "retained": "पहले अर्जित"
+    },
+    "xpEarned": {
+      "firstRating": "पहली समीक्षा",
+      "fiveStar": "पाँच-सितारे रेटिंग",
+      "gamePlayed": "गेम खेला",
+      "gameTracked": "गेम ट्रैक किया",
+      "generic": "XP अर्जित"
     }
   },
   "userLists": {

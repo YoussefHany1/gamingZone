@@ -39,6 +39,7 @@ import { MainAppTabs, AuthStack } from "./navigation/AppNavigator";
 import OnboardingScreen from "./features/onboarding/screens/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import OfflineBanner from "./components/OfflineBanner";
+import GamificationOverlay from "./features/gamification/components/GamificationOverlay";
 import { logger } from "@/src/lib/logger";
 
 // Types
@@ -365,6 +366,9 @@ function App(): React.ReactElement | null {
               <Stack.Screen name="Auth" component={AuthStack} />
             </Stack.Navigator>
           </NavigationContainer>
+
+          {/* XP awards and level-ups are reported wherever the user happens to be. */}
+          <GamificationOverlay />
         </GestureHandlerRootView>
       </SafeAreaProvider>
     </ErrorBoundary>

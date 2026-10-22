@@ -18,9 +18,13 @@
  * the point of keeping them.
  */
 import type {
+  AchievementDefinition,
+  AchievementState,
   ArticleSummaryKey,
   CollectionGame,
   Cover,
+  GamificationState,
+  GamificationStats,
   Game,
   GameBrief,
   GameCover,
@@ -31,6 +35,8 @@ import type {
   SimilarGame,
   SummaryLanguage,
   WeeklySummaryDoc,
+  XpBreakdownEntry,
+  XpReason,
 } from "./index";
 import igdbGameDetail from "./__fixtures__/igdb-game-detail.json";
 import igdbGamesList from "./__fixtures__/igdb-games-list.json";
@@ -73,14 +79,75 @@ type _DetailFitsListCard = Expect<GameData extends Game ? true : false>;
 /** Article summary attributes are derived from the language union. */
 type _SummaryKeyCoversEnglish = Expect<Equal<ArticleSummaryKey extends string ? true : false, true>>;
 
+/** The XP reasons are a closed union — the app switches over them exhaustively. */
+type _XpReasonUnion = Expect<
+  Equal<
+    XpReason,
+    "first_rating" | "five_star_rating" | "game_played" | "game_tracked"
+  >
+>;
+
+/** The gamification counters are all plain numbers, never optional. */
+type _GamificationStatsAreNumbers = Expect<
+  Equal<
+    GamificationStats,
+    {
+      ratedCount: number;
+      fiveStarCount: number;
+      playedCount: number;
+      trackedCount: number;
+      playtimeHours: number;
+    }
+  >
+>;
+
+/** A badge definition keeps its metric, target and XP together. */
+type _AchievementDefinitionShape = Expect<
+  Equal<
+    AchievementDefinition["metric"],
+    "ratedCount" | "fiveStarCount" | "playedCount" | "trackedCount" | "playtimeHours"
+  >
+>;
+
+/** The derived state always carries every badge, locked or not. */
+type _AchievementStateHasTarget = Expect<
+  Equal<AchievementState["target"], number>
+>;
+
+/** A breakdown line names its source and carries a label key for i18n. */
+type _XpBreakdownEntryHasLabelKey = Expect<
+  Equal<XpBreakdownEntry["labelKey"], string>
+>;
+
+/** The gamification state exposes the level plus the progress through it. */
+type _GamificationStateHasProgress = Expect<
+  Equal<
+    Pick<GamificationState, "level" | "xpIntoLevel" | "xpToNextLevel" | "levelProgress">,
+    {
+      level: number;
+      xpIntoLevel: number;
+      xpToNextLevel: number;
+      levelProgress: number;
+    }
+  >
+>;
+
 // --- payload contract fixtures --------------------------------------------
 
 const detail: GameData = igdbGameDetail;
 const list: Game[] = igdbGamesList;
 const entry: GameEntry = { id: 1, name: "Hades", cover_image_id: null };
 const weekly: WeeklySummaryDoc = { $id: "1", $createdAt: "2026-01-01T00:00:00.000Z" };
+const gamificationStats: GamificationStats = {
+  ratedCount: 3,
+  fiveStarCount: 1,
+  playedCount: 2,
+  trackedCount: 4,
+  playtimeHours: 12.5,
+};
 
 void detail;
 void list;
 void entry;
 void weekly;
+void gamificationStats;

@@ -6,7 +6,6 @@
  * auto-sync; connected → sync now.
  */
 import React, { memo } from "react";
-import { TouchableOpacity } from "react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import PlatformRow from "@/src/features/linking/components/PlatformRow";
@@ -118,18 +117,6 @@ function ChoosePlatformPanel({
         onRelink={xboxAccount ? onXboxRelink : undefined}
         onUnlink={xboxAccount ? () => onUnlink("xbox") : undefined}
       />
-
-      {/* NPSSO fallback kept reachable, but out of the main flow. */}
-      <TouchableOpacity
-        onPress={onManualEntry}
-        disabled={busy}
-        style={styles.manualLink}
-      >
-        <CustomText style={styles.manualLinkText}>
-          {t("settings.profile.linking.psn.manualEntry") ||
-            "Paste a PlayStation NPSSO token manually"}
-        </CustomText>
-      </TouchableOpacity>
     </>
   );
 }

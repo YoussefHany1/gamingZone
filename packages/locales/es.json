@@ -58,6 +58,7 @@
       "forgotPassword": "¿Olvidaste tu contraseña?",
       "signInButton": "Iniciar sesión",
       "googleSignIn": "Iniciar sesión con Google",
+      "discordSignIn": "Iniciar sesión con Discord",
       "createAccount": "Crear una cuenta nueva",
       "success": "Inicio de sesión exitoso",
       "failed": "Error al iniciar sesión"
@@ -71,6 +72,7 @@
       "male": "Masculino",
       "female": "Femenino",
       "googleSignUp": "Registrarse con Google",
+      "discordSignUp": "Registrarse con Discord",
       "haveAnAccount": "¿Ya tienes una cuenta?",
       "success": "Registro exitoso",
       "emptyFields": "Por favor, completa todos los campos obligatorios"
@@ -116,6 +118,8 @@
       "invalidEmail": "La dirección de correo electrónico no es válida",
       "weakPassword": "La contraseña es demasiado débil",
       "googleSignIn": "No se pudo iniciar sesión con Google. Por favor, inténtalo de nuevo",
+      "discordSignIn": "No se pudo iniciar sesión con Discord. Por favor, inténtalo de nuevo",
+      "discordNotConfigured": "El inicio de sesión con Discord no está disponible en este momento.",
       "playServices": "Los servicios de Google Play no están disponibles en este dispositivo.",
       "emailRequired": "El correo electrónico es obligatorio",
       "emailInvalid": "Por favor, ingresa una dirección de correo electrónico válida",
@@ -475,6 +479,78 @@
         "android": "Android",
         "ios": "iOS"
       }
+    }
+  },
+  "gamification": {
+    "level": "Nivel {{level}}",
+    "xpToNextLevel": "{{xp}} XP para el nivel {{level}}",
+    "xpIntoLevel": "{{xp}} / {{xpTotal}} XP",
+    "totalXp": "{{xp}} XP en total",
+    "xpAmount": "+{{xp}} XP",
+    "xpHint": "+{{xp}} XP por tu primera reseña",
+    "xpReward": "+{{xp}} XP",
+    "loading": "Cargando tu nivel…",
+    "achievementsTitle": "Logros",
+    "xpBreakdownTitle": "De dónde vienen tus XP",
+    "achievements": {
+      "progress": "{{current}} / {{target}}",
+      "unlocked": "Desbloqueado",
+      "firstReview": {
+        "name": "Primera reseña",
+        "description": "Valora tu primer juego."
+      },
+      "reviewer": {
+        "name": "Reseñista",
+        "description": "Valora 10 juegos."
+      },
+      "critic": {
+        "name": "Crítico",
+        "description": "Valora 50 juegos."
+      },
+      "fiveStarFan": {
+        "name": "Fan de las cinco estrellas",
+        "description": "Da cinco estrellas a 10 juegos."
+      },
+      "completionist": {
+        "name": "Completista",
+        "description": "Marca 25 juegos como jugados."
+      },
+      "curator": {
+        "name": "Curador",
+        "description": "Sigue 25 juegos en tus listas."
+      },
+      "collector": {
+        "name": "Coleccionista",
+        "description": "Sigue 100 juegos en tus listas."
+      },
+      "marathoner": {
+        "name": "Maratonista",
+        "description": "Registra 50 horas de juego."
+      }
+    },
+    "levelUp": {
+      "title": "¡Nivel {{level}}!",
+      "body": "¡Has alcanzado el nivel {{level}}. Sigue así!"
+    },
+    "tiers": {
+      "bronze": "Bronce",
+      "silver": "Plata",
+      "gold": "Oro"
+    },
+    "xpSources": {
+      "firstRating": "Primeras valoraciones",
+      "fiveStar": "Valoraciones de cinco estrellas",
+      "gamePlayed": "Juegos marcados como jugados",
+      "gameTracked": "Juegos seguidos en tus listas",
+      "achievements": "Logros",
+      "retained": "Ganado anteriormente"
+    },
+    "xpEarned": {
+      "firstRating": "Primera reseña",
+      "fiveStar": "Valoración de cinco estrellas",
+      "gamePlayed": "Juego jugado",
+      "gameTracked": "Juego seguido",
+      "generic": "XP ganados"
     }
   },
   "userLists": {

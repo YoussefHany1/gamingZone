@@ -5,6 +5,7 @@ import firestore from "@react-native-firebase/firestore";
 import { useTranslation } from "react-i18next";
 import { useAuthErrorMessages } from "./useAuthErrorMessages";
 import { useGoogleAuth } from "./useGoogleAuth";
+import { useDiscordAuth } from "./useDiscordAuth";
 import { useAnonymousAuth } from "./useAnonymousAuth";
 import { useVerifyEmail } from "./useVerifyEmail";
 import type { UseVerifyEmailResult } from "./useVerifyEmail";
@@ -32,6 +33,7 @@ export type UseRegisterFormResult = {
   isLoading: boolean;
   handleSignup: () => Promise<void>;
   handleGooglePress: () => Promise<void>;
+  handleDiscordPress: () => Promise<void>;
   handleAnonymousLogin: () => Promise<void>;
   handleNavigateToLogin: () => void;
   /** State + handlers for the post-signup verification modal. */
@@ -138,6 +140,12 @@ export function useRegisterForm({
     onSuccess: goToApp,
   });
 
+  const handleDiscordPress = useDiscordAuth({
+    isLoading,
+    setLoading: setIsLoading,
+    onSuccess: goToApp,
+  });
+
   const handleAnonymousLogin = useAnonymousAuth({
     isLoading,
     setLoading: setIsLoading,
@@ -168,6 +176,7 @@ export function useRegisterForm({
     isLoading,
     handleSignup,
     handleGooglePress,
+    handleDiscordPress,
     handleAnonymousLogin,
     handleNavigateToLogin,
     verify,

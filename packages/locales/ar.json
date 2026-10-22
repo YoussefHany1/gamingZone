@@ -58,6 +58,7 @@
       "forgotPassword": "هل نسيت كلمة السر؟",
       "signInButton": "تسجيل الدخول",
       "googleSignIn": "تسجيل الدخول باستخدام جوجل",
+      "discordSignIn": "تسجيل الدخول باستخدام Discord",
       "createAccount": "إنشاء حساب جديد",
       "success": "تم تسجيل الدخول بنجاح",
       "failed": "فشل تسجيل الدخول"
@@ -66,6 +67,7 @@
       "title": "إنشاء حساب جديد",
       "signUpButton": "إنشاء حساب",
       "googleSignUp": "سجل باستخدام جوجل",
+      "discordSignUp": "إنشاء حساب باستخدام Discord",
       "namePlaceholder": "الاسم بالكامل",
       "countryPlaceholder": "اختر البلد",
       "genderPlaceholder": "الجنس",
@@ -98,6 +100,8 @@
       "invalidEmail": "البريد الإلكتروني المدخل غير صحيح.",
       "weakPassword": "كلمة المرور ضعيفة جداً.",
       "googleSignIn": "فشل تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.",
+      "discordSignIn": "فشل تسجيل الدخول باستخدام Discord. يرجى المحاولة مرة أخرى",
+      "discordNotConfigured": "تسجيل الدخول باستخدام Discord غير متاح حاليًا.",
       "playServices": "خدمات Google Play غير متوفرة على هذا الجهاز.",
       "emailRequired": "البريد الإلكتروني مطلوب",
       "emailInvalid": "يرجى إدخال بريد إلكتروني صحيح",
@@ -475,6 +479,78 @@
         "android": "أندرويد",
         "ios": "آي أو إس"
       }
+    }
+  },
+  "gamification": {
+    "level": "المستوى {{level}}",
+    "xpToNextLevel": "{{xp}} XP للمستوى {{level}}",
+    "xpIntoLevel": "{{xp}} / {{xpTotal}} XP",
+    "totalXp": "إجمالي {{xp}} XP",
+    "xpAmount": "+{{xp}} XP",
+    "xpHint": "+{{xp}} XP لتقييمك الأول",
+    "xpReward": "+{{xp}} XP",
+    "loading": "جارٍ تحميل مستواك…",
+    "achievementsTitle": "الإنجازات",
+    "xpBreakdownTitle": "من أين جاءت نقاطك",
+    "achievements": {
+      "progress": "{{current}} / {{target}}",
+      "unlocked": "مُفتح",
+      "firstReview": {
+        "name": "أول تقييم",
+        "description": "قيّم أول لعبة لك."
+      },
+      "reviewer": {
+        "name": "المراجِع",
+        "description": "قيّم 10 ألعاب."
+      },
+      "critic": {
+        "name": "الناقد",
+        "description": "قيّم 50 لعبة."
+      },
+      "fiveStarFan": {
+        "name": "معجب النجوم الخمس",
+        "description": "امنح خمس نجوم لـ 10 ألعاب."
+      },
+      "completionist": {
+        "name": "الُكمِّلي",
+        "description": "ضع علامة «لعبتُها» على 25 لعبة."
+      },
+      "curator": {
+        "name": "القائِم",
+        "description": "تابع 25 لعبة في قوائمك."
+      },
+      "collector": {
+        "name": "الجامِع",
+        "description": "تابع 100 لعبة في قوائمك."
+      },
+      "marathoner": {
+        "name": "ماراثون",
+        "description": "سجّل 50 ساعة من وقت اللعب."
+      }
+    },
+    "levelUp": {
+      "title": "المستوى {{level}}!",
+      "body": "وصلت إلى المستوى {{level}}. واصل التقدم!"
+    },
+    "tiers": {
+      "bronze": "برونزية",
+      "silver": "فضية",
+      "gold": "ذهبية"
+    },
+    "xpSources": {
+      "firstRating": "التقييمات الأولى",
+      "fiveStar": "تقييمات خمس نجوم",
+      "gamePlayed": "ألعاب شُحنت كمُلعَّبة",
+      "gameTracked": "ألعاب متابَعة في قوائمك",
+      "achievements": "الإنجازات",
+      "retained": "نقاط مكتسبة سابقًا"
+    },
+    "xpEarned": {
+      "firstRating": "أول تقييم",
+      "fiveStar": "تقييم خمس نجوم",
+      "gamePlayed": "لعبة تم لعبها",
+      "gameTracked": "لعبة متابَعة",
+      "generic": "نقاط XP مكتسبة"
     }
   },
   "userLists": {

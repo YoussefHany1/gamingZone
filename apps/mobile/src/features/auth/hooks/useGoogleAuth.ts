@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import { ToastAndroid } from "react-native";
 import auth from "@react-native-firebase/auth";
 import {
   GoogleSignin,
@@ -8,6 +7,7 @@ import {
 import Constants from "expo-constants";
 import { useTranslation } from "react-i18next";
 import { logger } from "@/src/lib/logger";
+import { showToast } from "@/src/lib/toast";
 
 // Configure once at module load — shared by every auth screen that imports
 // this hook (previously duplicated in Login and Register).
@@ -47,7 +47,7 @@ export function useGoogleAuth({
           "Google sign-in error: idToken missing in response.",
           JSON.stringify(userInfoResponse),
         );
-        ToastAndroid.show(t("auth.idTokenError"), ToastAndroid.LONG);
+        showToast(t("auth.idTokenError"));
         return;
       }
 
@@ -60,9 +60,9 @@ export function useGoogleAuth({
       if (err.code !== statusCodes.SIGN_IN_CANCELLED) {
         logger.error("Google sign-in error", error);
         if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-          ToastAndroid.show(t("auth.errors.playServices"), ToastAndroid.LONG);
+          showToast(t("auth.errors.playServices"));
         } else if (err.code !== statusCodes.IN_PROGRESS) {
-          ToastAndroid.show(t("auth.errors.general"), ToastAndroid.LONG);
+          showToast(t("auth.errors.general"));
         }
       }
     } finally {

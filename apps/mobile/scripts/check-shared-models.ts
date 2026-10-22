@@ -66,6 +66,14 @@ const SHARED_MODELS = [
   "GamingEventNetwork",
   "ChatMessage",
   "CountdownResult",
+  "XpReason",
+  "AchievementTier",
+  "AchievementMetric",
+  "AchievementDefinition",
+  "AchievementState",
+  "GamificationStats",
+  "GamificationState",
+  "XpBreakdownEntry",
 ];
 
 /**

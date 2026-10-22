@@ -32,6 +32,11 @@ export type GameRatingSectionProps = {
   user: FirebaseAuthTypes.User | null;
   rating: number;
   onRate: (newRating: number) => Promise<void>;
+  /**
+   * The XP the user would earn for rating this game for the first time.
+   * Hidden when the game is already rated — changing a rating earns nothing.
+   */
+  xpOnFirstRating: number;
 };
 
 export type GameDetailsContentProps = {

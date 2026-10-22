@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { View, TouchableOpacity } from "react-native";
 import CustomText from "@/src/components/CustomText";
-import { Star } from "lucide-react-native";
+import { Star, Zap } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -15,7 +15,12 @@ const STAR_STYLE = { paddingHorizontal: 6 } as const;
  * Five-star rating widget. Hides itself for logged-out / anonymous users —
  * auth guarding lives here so callers only need to gate on game presence.
  */
-const GameRatingSection: React.FC<GameRatingSectionProps> = ({ user, rating, onRate }) => {
+const GameRatingSection: React.FC<GameRatingSectionProps> = ({
+  user,
+  rating,
+  onRate,
+  xpOnFirstRating,
+}) => {
   const colors = useThemeColors();
   const { t } = useTranslation();
   const styles = useThemeStyles((c) => ({
@@ -44,6 +49,17 @@ const GameRatingSection: React.FC<GameRatingSectionProps> = ({ user, rating, onR
       color: c.textMuted,
       fontSize: 14,
       fontWeight: "600",
+    },
+    xpHint: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      marginTop: 8,
+    },
+    xpHintText: {
+      color: c.accentText,
+      fontSize: 12,
+      fontWeight: "700",
     },
   }));
 
@@ -75,6 +91,15 @@ const GameRatingSection: React.FC<GameRatingSectionProps> = ({ user, rating, onR
           {t("games.details.yourRating") ?? "Your Rating"}: {rating} / 5
         </CustomText>
       )}
+      {rating === 0 && xpOnFirstRating > 0 ? (
+        <View style={styles.xpHint}>
+          <Zap size={13} color={colors.accentText} />
+          <CustomText style={styles.xpHintText}>
+            {t("gamification.xpHint", { xp: xpOnFirstRating }) ??
+              `+${xpOnFirstRating} XP for your first review`}
+          </CustomText>
+        </View>
+      ) : null}
     </View>
   );
 };

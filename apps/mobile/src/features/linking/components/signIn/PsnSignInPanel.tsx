@@ -35,7 +35,7 @@ export type PsnSignInPanelProps = {
   onClearSessionHint: () => void;
   onOpenBrowser: () => void;
   onManualEntry: () => void;
-  onBack: () => void;
+  onBack?: () => void;
 };
 
 function PsnSignInPanel({
@@ -149,12 +149,6 @@ function PsnSignInPanel({
         <CustomText style={styles.secondaryBtnText}>
           {t("settings.profile.linking.psn.manualEntry") || "Paste token manually"}
         </CustomText>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.secondaryBtn, styles.mtSmall]}
-        onPress={onBack}
-      >
-        <CustomText style={styles.secondaryBtnText}>{t("common.back") || "Back"}</CustomText>
       </TouchableOpacity>
     </>
   );

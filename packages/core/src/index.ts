@@ -332,3 +332,108 @@ export interface CountdownResult {
   minutes: number;
   seconds: number;
 }
+
+// ---------------------------------------------------------------------------
+// Gamification
+// ---------------------------------------------------------------------------
+
+/**
+ * Where a chunk of XP came from.
+ *
+ * These are *activity* reasons only. Achievement bonuses are tracked
+ * separately (`XpBreakdownEntry.reason === "achievement"`) because they are
+ * granted once per unlocked badge rather than per unit of activity.
+ */
+export type XpReason =
+  | "first_rating"
+  | "five_star_rating"
+  | "game_played"
+  | "game_tracked";
+
+/** Badge rarity. Purely cosmetic ordering — no gameplay effect. */
+export type AchievementTier = "bronze" | "silver" | "gold";
+
+/**
+ * The raw counters an achievement is measured against.
+ *
+ * Every entry is a plain count taken from the user's own data. No criterion
+ * depends on the level or on XP, which keeps the derivation a single
+ * acyclic pass: counts → XP → level → achievements.
+ */
+export type AchievementMetric =
+  | "ratedCount"
+  | "fiveStarCount"
+  | "playedCount"
+  | "trackedCount"
+  | "playtimeHours";
+
+/** A badge definition. The catalog lives in `@gaming-zone/utils`. */
+export interface AchievementDefinition {
+  id: string;
+  tier: AchievementTier;
+  /**
+   * Icon key, resolved to a real icon by the app (the shared package cannot
+   * know about React Native icon libraries).
+   */
+  icon: string;
+  /** Which counter the badge watches. */
+  metric: AchievementMetric;
+  /** Value of `metric` required to unlock. */
+  target: number;
+  /** Flat XP granted once, when the badge unlocks. */
+  xp: number;
+}
+
+/** The raw counters the gamification rules are computed from. */
+export interface GamificationStats {
+  /** Games the user has rated at least once. */
+  ratedCount: number;
+  /** Ratings the user gave five stars. */
+  fiveStarCount: number;
+  /** Games in the "played" list. */
+  playedCount: number;
+  /** Games tracked in the user's own lists (the auto-mirrored "rated" list excluded). */
+  trackedCount: number;
+  /** Total logged playtime in hours. */
+  playtimeHours: number;
+}
+
+/** A badge in its current state — unlocked or still being worked towards. */
+export interface AchievementState {
+  id: string;
+  tier: AchievementTier;
+  icon: string;
+  unlocked: boolean;
+  /** Current value of the watched metric. */
+  current: number;
+  /** Value required to unlock. */
+  target: number;
+  /** Flat XP the badge grants on unlock. */
+  xp: number;
+}
+
+/** One line of the "where did my XP come from" breakdown. */
+export interface XpBreakdownEntry {
+  reason: XpReason | "achievement" | "retained";
+  /** i18n key for the line label. */
+  labelKey: string;
+  /** XP contributed by this line. */
+  amount: number;
+}
+
+/** The full gamification state for a user. */
+export interface GamificationState {
+  /** Monotonic XP high-water mark — never decreases. */
+  totalXp: number;
+  level: number;
+  /** XP earned since the current level started. */
+  xpIntoLevel: number;
+  /** XP required to reach the next level. */
+  xpToNextLevel: number;
+  /** Progress through the current level, 0..1. */
+  levelProgress: number;
+  /** XP the raw counters currently account for (may be below `totalXp`). */
+  calculatedXp: number;
+  achievements: AchievementState[];
+  breakdown: XpBreakdownEntry[];
+}

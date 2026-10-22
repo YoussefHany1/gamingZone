@@ -37,12 +37,9 @@
  * IGDB record is never re-hammered.
  */
 import crypto from 'crypto';
-import fs from 'fs';
 import * as psnApi from 'psn-api';
-// firebase-admin@14 moved `cert`/`initializeApp` out of the root package — the
-// canonical location in v13+ is the `firebase-admin/app` submodule (verified
-// working as named ESM imports under Node 22/24).
-import { cert, initializeApp } from 'firebase-admin/app';
+import { getAdmin } from './firebaseAdmin.js';
+import { createLinkState, verifyLinkState } from './linkState.js';
 import {
   authenticateXbox,
   buildAuthorizeUrl,
@@ -57,111 +54,12 @@ import {
 
 // ─── Firestore (admin) ───────────────────────────────────────────────────────
 
-let adminReady = false;
-let adminModules = null; // { auth, firestore }
-
-/**
- * Lazily initialises the Firebase admin SDK. The firestore/auth sub-modules
- * are dynamic imports so that a missing optional dependency can never crash
- * the whole lambda at boot — linked-account endpoints degrade to auth errors
- * instead, and the rest of the API keeps working.
- */
-async function getAdmin() {
-  if (adminReady) return adminModules;
-
-  const raw =
-    process.env.FCM_SERVICE_ACCOUNT ||
-    process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
-    null;
-
-  let serviceAccount = null;
-  try {
-    if (raw) {
-      serviceAccount = JSON.parse(String(raw).trim());
-    } else if (process.env.SERVICE_ACCOUNT) {
-      // Local-dev convenience: path to the JSON file.
-      serviceAccount = JSON.parse(
-        fs.readFileSync(
-          fs.existsSync(process.env.SERVICE_ACCOUNT)
-            ? process.env.SERVICE_ACCOUNT
-            : `./serviceAccountKey.json`,
-          'utf8',
-        ),
-      );
-    }
-  } catch (err) {
-    console.error('Linked accounts: failed to parse service account credentials:', err);
-  }
-
-  if (!serviceAccount) {
-    console.error(
-      'Linked accounts require a Firebase service account (env FCM_SERVICE_ACCOUNT as JSON string).',
-    );
-    adminReady = true;
-    return null;
-  }
-
-  try {
-    const [{ getAuth }, { getFirestore }] = await Promise.all([
-      import('firebase-admin/auth'),
-      import('firebase-admin/firestore'),
-    ]);
-    const app = initializeApp({
-      credential: cert(serviceAccount),
-      projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id,
-    });
-    adminModules = { auth: getAuth(app), firestore: getFirestore(app) };
-    adminReady = true;
-  } catch (err) {
-    console.error('Linked accounts: failed to initialise Firebase admin:', err);
-  }
-  return adminModules;
-}
+// The admin SDK singleton lives in firebaseAdmin.js — see that module for the
+// lazy initialisation and service-account handling.
 
 // ─── SECRET / HMAC helpers ───────────────────────────────────────────────────
 
 const linkSecret = () => process.env.SERVER_SECRET || process.env.RSS_SECRET || '';
-const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
-
-/**
- * state format: base64url("<uid>|<platform>|<expiresAt>[|<extra>]") + "." + HMAC-SHA256
- * Binds every link attempt to an authenticated Firebase user and a deadline.
- *
- * `extra` carries adapter-specific payload (the Xbox PKCE verifier) inside the
- * signed blob — no server-side session is needed to finish the handshake.
- */
-function createLinkState(uid, platform, extra = '') {
-  const expiresAt = Date.now() + STATE_TTL_MS;
-  const payload = `${uid}|${platform}|${expiresAt}${extra ? `|${extra}` : ''}`;
-  const body = Buffer.from(payload).toString('base64url');
-  const sig = crypto.createHmac('sha256', linkSecret()).update(payload).digest('base64url');
-  return `${body}.${sig}`;
-}
-
-/**
- * Returns `{ uid, extra }` for a good/untampered state, or null when the
- * state is missing, expired, signed for another platform or forged.
- */
-function verifyLinkState(state, platform) {
-  if (!state || typeof state !== 'string' || !linkSecret()) return null;
-  const separatorIdx = state.lastIndexOf('.');
-  if (separatorIdx < 0) return null;
-
-  const body = state.slice(0, separatorIdx);
-  const sig = state.slice(separatorIdx + 1);
-  const payload = Buffer.from(body, 'base64url').toString('utf8');
-  const expectedSig = crypto.createHmac('sha256', linkSecret()).update(payload).digest('base64url');
-  const sigOk =
-    sig.length === expectedSig.length &&
-    crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig));
-  if (!sigOk) return null;
-
-  const [uid, platformInState, expiresAtRaw, ...rest] = payload.split('|');
-  if (!uid || platformInState !== platform) return null;
-  const expiresAt = Number(expiresAtRaw);
-  if (!Number.isFinite(expiresAt) || expiresAt < Date.now()) return null;
-  return { uid, extra: rest.join('|') };
-}
 
 // ─── Secret-at-rest: AES-256-GCM ─────────────────────────────────────────────
 

@@ -6,8 +6,8 @@
  * of raw axios calls.
  */
 import apiClient from "./client";
+import { getBackendIdToken } from "./authToken";
 import { logger } from "@/src/lib/logger";
-import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import type {
   IgdbNameMapResponse,
   PsnSyncResponse,
@@ -15,58 +15,6 @@ import type {
   LinkStateResponse,
   LinkedAccountPlatform,
 } from "@/src/features/settings/types";
-
-/**
- * Waits for Firebase to restore the signed-in user. On a cold start (the app
- * was launched by the Steam deep link) the session is restored
- * asynchronously, and a request issued in that window would be rejected.
- */
-function waitForAuthUser(authModule: {
-  (): FirebaseAuthTypes.Module;
-}): Promise<FirebaseAuthTypes.User | null> {
-  return new Promise((resolve) => {
-    let settled = false;
-    // Held in an object so the cleanup callback never touches a binding that
-    // is still in its temporal dead zone.
-    const cleanup: { unsubscribe?: () => void } = {};
-
-    const finish = (user: FirebaseAuthTypes.User | null) => {
-      if (settled) return;
-      settled = true;
-      resolve(user);
-    };
-
-    const timer = setTimeout(() => {
-      cleanup.unsubscribe?.();
-      finish(null);
-    }, 5000);
-
-    cleanup.unsubscribe = authModule().onAuthStateChanged((user) => {
-      if (!user) return;
-      clearTimeout(timer);
-      cleanup.unsubscribe?.();
-      finish(user);
-    });
-  });
-}
-
-/** Returns a valid, capped Firebase ID token for backend auth. */
-export async function getBackendIdToken(): Promise<string | null> {
-  try {
-    const { default: auth } = await import("@react-native-firebase/auth");
-    const user = auth().currentUser ?? (await waitForAuthUser(auth));
-    if (!user) {
-      logger.warn(
-        "[linkedAccountsApi] getBackendIdToken: no auth().currentUser — user not signed in",
-      );
-      return null;
-    }
-    return await user.getIdToken();
-  } catch (error: unknown) {
-    logger.error("[linkedAccountsApi] getBackendIdToken failed", error as Error);
-    return null;
-  }
-}
 
 /** Result of a link-state request — the HTTP status is kept for diagnostics. */
 export type LinkStateResult =

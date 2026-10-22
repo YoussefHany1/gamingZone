@@ -15,7 +15,7 @@ import { PSN_COOKIE_URL } from "@/src/features/linking/lib/constants";
 export type PsnManualPanelProps = {
   busy: boolean;
   onSubmit: (npsso: string) => Promise<void>;
-  onBack: () => void;
+  onBack?: () => void;
 };
 
 function PsnManualPanel({
@@ -73,12 +73,6 @@ function PsnManualPanel({
             {t("settings.profile.linking.psn.connect") || "Connect"}
           </CustomText>
         )}
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.secondaryBtn, styles.mtSmall]}
-        onPress={onBack}
-      >
-        <CustomText style={styles.secondaryBtnText}>{t("common.back") || "Back"}</CustomText>
       </TouchableOpacity>
     </>
   );

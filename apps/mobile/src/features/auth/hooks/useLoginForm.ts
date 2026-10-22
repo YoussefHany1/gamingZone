@@ -4,6 +4,7 @@ import auth from "@react-native-firebase/auth";
 import { useTranslation } from "react-i18next";
 import { useAuthErrorMessages } from "./useAuthErrorMessages";
 import { useGoogleAuth } from "./useGoogleAuth";
+import { useDiscordAuth } from "./useDiscordAuth";
 import { useAnonymousAuth } from "./useAnonymousAuth";
 import type { AuthNavigationProp } from "../types";
 import { logger } from "@/src/lib/logger";
@@ -20,6 +21,7 @@ export type UseLoginFormResult = {
   isLoading: boolean;
   handleLogin: () => Promise<void>;
   handleGooglePress: () => Promise<void>;
+  handleDiscordPress: () => Promise<void>;
   handleAnonymousLogin: () => Promise<void>;
   handleNavigateToForgotPassword: () => void;
   handleNavigateToRegister: () => void;
@@ -68,6 +70,12 @@ export function useLoginForm({
     onSuccess: goToApp,
   });
 
+  const handleDiscordPress = useDiscordAuth({
+    isLoading,
+    setLoading: setIsLoading,
+    onSuccess: goToApp,
+  });
+
   const handleAnonymousLogin = useAnonymousAuth({
     isLoading,
     setLoading: setIsLoading,
@@ -93,6 +101,7 @@ export function useLoginForm({
     isLoading,
     handleLogin,
     handleGooglePress,
+    handleDiscordPress,
     handleAnonymousLogin,
     handleNavigateToForgotPassword,
     handleNavigateToRegister,

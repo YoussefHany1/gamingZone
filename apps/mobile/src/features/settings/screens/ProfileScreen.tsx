@@ -18,6 +18,8 @@ import ProfileEmptyLibraryCard from "../components/profile/ProfileEmptyLibraryCa
 import ProfileHeaderCard from "../components/profile/ProfileHeaderCard";
 import ProfileStatsGrid from "../components/profile/ProfileStatsGrid";
 import RateCard from "../components/profile/RateCard";
+import LevelCard from "@/src/features/gamification/components/LevelCard";
+import { useGamification } from "@/src/features/gamification/hooks/useGamification";
 import { useProfileData } from "../hooks/useProfileData";
 import { useUserStats } from "../hooks/useUserStats";
 
@@ -30,6 +32,7 @@ const ProfileScreen = React.memo((): React.ReactElement => {
   const uid = currentUser?.uid ?? "";
 
   const { stats, loading, refreshing, refresh } = useUserStats(uid);
+  const { gamification } = useGamification(uid);
   const { displayName, photoURL, memberSince, platform, country } = useProfileData();
   const isReady = useDeferredReady();
 
@@ -84,6 +87,14 @@ const ProfileScreen = React.memo((): React.ReactElement => {
               memberSince={memberSince}
               platform={platform}
               country={country}
+            />
+
+            <LevelCard
+              gamification={gamification}
+              unlockedCount={
+                gamification?.achievements.filter((a) => a.unlocked).length ?? 0
+              }
+              onPress={() => navigation.navigate("Achievements")}
             />
 
             <SectionTitle title={t("settings.profileShowcase.statsSection")} />

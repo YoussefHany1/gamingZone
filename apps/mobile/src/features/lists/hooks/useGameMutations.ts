@@ -8,6 +8,8 @@ import {
   saveGameRating,
   syncRatingFieldAcrossLists,
 } from "@/src/services/ratingService";
+import { awardXpForRating } from "@/src/features/gamification/lib/awardXp";
+import { refreshUserStats } from "@/src/store/useUserStatsStore";
 import type { GameEntry } from "../types";
 import { logger } from "@/src/lib/logger";
 
@@ -79,6 +81,11 @@ export function useGameMutations({
 
                   await syncRatingFieldAcrossLists(targetUserId, gameIdStr, 0);
                 }
+
+                // The counters moved, so the XP they justify is re-derived.
+                // Removing a game never takes XP away — the ratchet keeps the
+                // high-water mark — but a game that is still there does count.
+                refreshUserStats(targetUserId);
               } catch {
                 setGames(oldGames);
                 storageSet(cacheKey, oldGames);
@@ -105,6 +112,17 @@ export function useGameMutations({
 
       try {
         await saveGameRating(currentUser.uid, gameId, newRating, game);
+
+        // Only the first rating of a game is worth XP. The list entry carries
+        // the mirrored rating, so an absent rating means the game has not
+        // been rated yet. The refresh that follows is what lets the
+        // authoritative derivation grant anything the local award missed.
+        awardXpForRating(
+          currentUser.uid,
+          gameId,
+          newRating,
+          newRating > 0 && !game.rating,
+        );
       } catch (e) {
         logger.error("Error rating game inside list:", e);
       }

@@ -18,6 +18,7 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useTranslation } from "react-i18next";
 import type { UserList } from "@/src/types/sharedTypes";
 import { useAuthUser } from "@/src/hooks/useAuthUser";
+import { refreshUserStats } from "@/src/store/useUserStatsStore";
 import type { ListSelectionModalProps } from "../../types";
 import { logger } from "@/src/lib/logger";
 
@@ -300,6 +301,9 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
           } else {
             await gameRef.delete();
           }
+
+          // The counters moved, so the XP they justify is re-derived.
+          refreshUserStats(user.uid);
         } catch (error) {
           logger.error("Error toggling list:", error);
           // Revert on failure

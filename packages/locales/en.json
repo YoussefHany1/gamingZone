@@ -58,6 +58,7 @@
       "forgotPassword": "Forgot Password?",
       "signInButton": "Sign In",
       "googleSignIn": "Sign In with Google",
+      "discordSignIn": "Sign In with Discord",
       "createAccount": "Create new account",
       "success": "Login successful",
       "failed": "Login failed"
@@ -71,6 +72,7 @@
       "male": "Male",
       "female": "Female",
       "googleSignUp": "Sign Up with Google",
+      "discordSignUp": "Sign Up with Discord",
       "haveAnAccount": "Already have an account?",
       "success": "Sign up successful",
       "emptyFields": "Please fill in all required fields"
@@ -98,6 +100,8 @@
       "invalidEmail": "The email address is invalid",
       "weakPassword": "The password is too weak",
       "googleSignIn": "Google Sign-In failed. Please try again",
+      "discordSignIn": "Discord Sign-In failed. Please try again",
+      "discordNotConfigured": "Discord sign-in is not available right now.",
       "playServices": "Google Play services are not available on this device.",
       "emailRequired": "Email is required",
       "emailInvalid": "Please enter a valid email address",
@@ -475,6 +479,78 @@
         "android": "Android",
         "ios": "iOS"
       }
+    }
+  },
+  "gamification": {
+    "level": "Level {{level}}",
+    "xpToNextLevel": "{{xp}} XP to Level {{level}}",
+    "xpIntoLevel": "{{xp}} / {{xpTotal}} XP",
+    "totalXp": "{{xp}} XP total",
+    "xpAmount": "+{{xp}} XP",
+    "xpHint": "+{{xp}} XP for your first review",
+    "xpReward": "+{{xp}} XP",
+    "loading": "Loading your level…",
+    "achievementsTitle": "Achievements",
+    "xpBreakdownTitle": "Where your XP comes from",
+    "achievements": {
+      "progress": "{{current}} / {{target}}",
+      "unlocked": "Unlocked",
+      "firstReview": {
+        "name": "First Review",
+        "description": "Rate your first game."
+      },
+      "reviewer": {
+        "name": "Reviewer",
+        "description": "Rate 10 games."
+      },
+      "critic": {
+        "name": "Critic",
+        "description": "Rate 50 games."
+      },
+      "fiveStarFan": {
+        "name": "Five-Star Fan",
+        "description": "Give five stars to 10 games."
+      },
+      "completionist": {
+        "name": "Completionist",
+        "description": "Mark 25 games as played."
+      },
+      "curator": {
+        "name": "Curator",
+        "description": "Track 25 games in your lists."
+      },
+      "collector": {
+        "name": "Collector",
+        "description": "Track 100 games in your lists."
+      },
+      "marathoner": {
+        "name": "Marathoner",
+        "description": "Log 50 hours of playtime."
+      }
+    },
+    "levelUp": {
+      "title": "Level {{level}}!",
+      "body": "You reached Level {{level}}. Keep going!"
+    },
+    "tiers": {
+      "bronze": "Bronze",
+      "silver": "Silver",
+      "gold": "Gold"
+    },
+    "xpSources": {
+      "firstRating": "First ratings",
+      "fiveStar": "Five-star ratings",
+      "gamePlayed": "Games marked as played",
+      "gameTracked": "Games tracked in your lists",
+      "achievements": "Achievements",
+      "retained": "Previously earned"
+    },
+    "xpEarned": {
+      "firstRating": "First review",
+      "fiveStar": "Five-star rating",
+      "gamePlayed": "Game played",
+      "gameTracked": "Game tracked",
+      "generic": "XP earned"
     }
   },
   "userLists": {

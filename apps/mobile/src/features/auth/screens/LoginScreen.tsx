@@ -16,6 +16,7 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import AuthLogo from "../components/AuthLogo";
 import AuthPrimaryButton from "../components/AuthPrimaryButton";
 import AuthGoogleButton from "../components/AuthGoogleButton";
+import AuthDiscordButton from "../components/AuthDiscordButton";
 import AuthOutlineButton from "../components/AuthOutlineButton";
 import AuthGuestButton from "../components/AuthGuestButton";
 import AuthPasswordInput from "../components/AuthPasswordInput";
@@ -33,6 +34,7 @@ const LoginScreen: React.FC<AuthScreenProps<"Login">> = memo(({ navigation }) =>
     isLoading,
     handleLogin,
     handleGooglePress,
+    handleDiscordPress,
     handleAnonymousLogin,
     handleNavigateToForgotPassword,
     handleNavigateToRegister,
@@ -63,6 +65,7 @@ const LoginScreen: React.FC<AuthScreenProps<"Login">> = memo(({ navigation }) =>
       marginBottom: 10,
     },
     forgotPasswordText: { color: c.accentText },
+    discordButton: { marginTop: 15 },
     createAccountButton: { marginTop: 35 },
   }));
 
@@ -119,6 +122,14 @@ const LoginScreen: React.FC<AuthScreenProps<"Login">> = memo(({ navigation }) =>
               onPress={handleGooglePress}
               loading={isLoading}
               disabled={isLoading}
+            />
+
+            <AuthDiscordButton
+              label={t("auth.login.discordSignIn")}
+              onPress={handleDiscordPress}
+              loading={isLoading}
+              disabled={isLoading}
+              containerStyle={styles.discordButton}
             />
 
             <AuthOutlineButton

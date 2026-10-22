@@ -4,6 +4,7 @@ import cors from 'cors';
 import { unixDaysAgo, unixDaysFromNow, unixMonthsAgo, unixNow, unixYearsAgo } from './time.js';
 import { AppError, callIgdb, getAppToken, asyncRoute } from './igdbClient.js';
 import { registerLinkedAccountRoutes } from './linkedAccounts.js';
+import { registerDiscordAuthRoutes } from './discordAuth.js';
 const app = express();
 
 app.use(cors());
@@ -1384,6 +1385,9 @@ app.get('/play/search', cacheMiddleware(3600), asyncRoute(async (req, res) => {
 
 // Linked accounts (Steam OpenID + PSN library import + IGDB name mapping)
 registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgdb });
+
+// Discord sign-in (OAuth on the backend → one-time code → Firebase custom token)
+registerDiscordAuthRoutes(app, { AppError, asyncRoute });
 
 // invalid route handler (404)
 app.get('*', (req, res) => {

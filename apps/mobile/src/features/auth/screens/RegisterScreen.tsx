@@ -11,6 +11,7 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import AuthLogo from "../components/AuthLogo";
 import AuthPrimaryButton from "../components/AuthPrimaryButton";
 import AuthGoogleButton from "../components/AuthGoogleButton";
+import AuthDiscordButton from "../components/AuthDiscordButton";
 import AuthOutlineButton from "../components/AuthOutlineButton";
 import AuthGuestButton from "../components/AuthGuestButton";
 import VerifyEmailModal from "../components/VerifyEmailModal";
@@ -50,6 +51,7 @@ const RegisterScreen: React.FC<AuthScreenProps<"Register">> = memo(
         marginBottom: 10,
       },
       createAccountButton: { marginTop: 35 },
+      discordButton: { marginTop: 15 },
     }));
 
     return (
@@ -132,6 +134,14 @@ const RegisterScreen: React.FC<AuthScreenProps<"Register">> = memo(
                 onPress={form.handleGooglePress}
                 loading={form.isLoading}
                 disabled={form.isLoading}
+              />
+
+              <AuthDiscordButton
+                label={t("auth.register.discordSignUp")}
+                onPress={form.handleDiscordPress}
+                loading={form.isLoading}
+                disabled={form.isLoading}
+                containerStyle={styles.discordButton}
               />
 
               <AuthOutlineButton

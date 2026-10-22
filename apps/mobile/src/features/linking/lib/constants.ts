@@ -1,10 +1,14 @@
 /**
- * Shared constants for the linked-account (library import) flows.
+ * Shared constants for every backend → app redirect.
  *
  * They live here — and not inside the components — so the WebView panels, the
  * flow hooks and the deep-link router all speak the exact same URLs and
  * schemes. Changing a redirect scheme in one place must never leave the
  * other side listening for the old value.
+ *
+ * That registry covers the linked-account (library import) flows and the
+ * Discord sign-in callback, which lands here for the same reason: the backend
+ * finishes the OAuth handshake and hands control back through a custom scheme.
  */
 
 /** The backend redirects back into the app with this scheme after Steam linking. */
@@ -12,6 +16,13 @@ export const STEAM_REDIRECT = "gaming-zone://steam-link";
 
 /** The backend redirects back into the app with this scheme after Xbox linking. */
 export const XBOX_REDIRECT = "gaming-zone://xbox-link";
+
+/**
+ * The backend redirects back into the app with this scheme after Discord
+ * sign-in (`?status=success&code=…` | `?status=error&reason=…`). Must match
+ * `APP_REDIRECT` in apps/backend/api/discordAuth.js.
+ */
+export const DISCORD_REDIRECT = "gaming-zone://discord-auth";
 
 /**
  * Sony's ssocookie endpoint NEVER shows a login form — without an active
