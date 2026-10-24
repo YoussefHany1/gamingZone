@@ -156,7 +156,8 @@
       "accountSettings": "Configuración de la cuenta",
       "gamesList": "Mi lista de juegos",
       "myLists": "Mis listas",
-      "profile": "Mi perfil"
+      "profile": "Mi perfil",
+      "pcSpecs": "Mi PC"
     }
   },
   "home": {
@@ -436,7 +437,27 @@
       "unsubscribed": "Te has dado de baja de las notificaciones de lanzamiento de este juego",
       "backToGames": "Volver a los juegos",
       "specifications": "Especificaciones",
-      "closePlayer": "Cerrar reproductor"
+      "closePlayer": "Cerrar reproductor",
+      "pcRequirementsSource": "Datos de PCGamingWiki (CC BY-NC-SA)",
+      "compatibility": {
+        "title": "Compatibilidad de PC",
+        "noSpecs": "Añade las especificaciones de tu PC en Ajustes → Mi PC para ver una estimación.",
+        "noData": "No se encontraron requisitos para este juego.",
+        "bottleneck": "Cuello de botella: {{part}}",
+        "approximate": "Algunos requisitos se emparejaron de forma aproximada.",
+        "estimate": "Estimación para {{resolution}}; la falta de almacenamiento es solo una advertencia.",
+        "parts": {
+          "cpu": "CPU",
+          "gpu": "GPU",
+          "ram": "RAM",
+          "storage": "Almacenamiento"
+        },
+        "status": {
+          "meets": "Cumple",
+          "below": "Por debajo",
+          "unknown": "Desconocido"
+        }
+      }
     },
     "filter": {
       "title": "Filtrar juegos",
@@ -643,6 +664,7 @@
     "currentLang": "Español",
     "menu": {
       "notifications": "Gestionar notificaciones",
+      "myPc": "Mi PC",
       "myLists": "Mis listas",
       "rateUs": "Califícanos",
       "inviteFriends": "Invitar a amigos",
@@ -922,5 +944,80 @@
   },
   "notifications": {
     "newsChannelName": "Notificaciones de noticias"
+  },
+  "pcSpecs": {
+    "quality": {
+      "unsupported": "No compatible",
+      "low": "Bajo",
+      "medium": "Medio",
+      "high": "Alto",
+      "ultra": "Ultra"
+    },
+    "badge": {
+      "estimate": "Est."
+    },
+    "sections": {
+      "hardware": "Hardware",
+      "ram": "Memoria",
+      "storage": "Almacenamiento",
+      "resolution": "Resolución objetivo"
+    },
+    "placeholders": {
+      "cpu": "Seleccionar CPU",
+      "gpu": "Seleccionar GPU"
+    },
+    "storage": {
+      "free": "Almacenamiento libre"
+    },
+    "summary": {
+      "title": "Tu equipo",
+      "score": "Puntuación estimada",
+      "cpu": "Puntuación de CPU",
+      "gpu": "Puntuación de GPU",
+      "incomplete": "Selecciona una CPU y una GPU para ver tu puntuación estimada.",
+      "tier": {
+        "entry": "Gama de entrada",
+        "mainstream": "Gama media",
+        "performance": "Rendimiento",
+        "enthusiast": "Entusiasta"
+      }
+    },
+    "resolution": {
+      "title": "Resolución objetivo",
+      "hint": "Las estimaciones de compatibilidad usan esta resolución.",
+      "r1080p": "1080p",
+      "r1440p": "1440p",
+      "r4k": "4K"
+    },
+    "custom": {
+      "label": "Personalizado",
+      "ramPlaceholder": "RAM en GB",
+      "storagePlaceholder": "Almacenamiento libre en GB",
+      "invalid": "Introduce un valor entre {{min}} y {{max}}"
+    },
+    "actions": {
+      "save": "Guardar",
+      "clear": "Borrar especificaciones del PC",
+      "clearTitle": "¿Borrar las especificaciones del PC?",
+      "clearMessage": "Tus especificaciones guardadas se eliminarán de este dispositivo y de tu cuenta.",
+      "clearConfirm": "Borrar",
+      "clearCancel": "Cancelar"
+    },
+    "hints": {
+      "estimate": "Las estimaciones usan tu resolución objetivo."
+    },
+    "picker": {
+      "searchPlaceholder": "Buscar componentes...",
+      "titleCpu": "Selecciona una CPU",
+      "titleGpu": "Selecciona una GPU",
+      "resultsCount": "{{count}} resultados",
+      "noResults": "No se encontraron componentes",
+      "selected": "Seleccionado",
+      "vram": "{{vram}} GB de VRAM"
+    },
+    "errors": {
+      "partsRequired": "Selecciona CPU y GPU",
+      "saveFailed": "Error al guardar las especificaciones del PC"
+    }
   }
 }

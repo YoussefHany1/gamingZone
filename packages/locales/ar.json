@@ -444,7 +444,7 @@
         "noData": "لا توجد متطلبات لهذا اللعبة.",
         "bottleneck": "عنق الزجاجة: {{part}}",
         "approximate": "بعض المتطلبات تمت مطابقتها تقريبياً.",
-        "estimate": "تقدير عند 1080p؛ نقص المساحة تحذير فقط.",
+        "estimate": "تقدير لدقة {{resolution}}؛ نقص المساحة تحذير فقط.",
         "parts": {
           "cpu": "المعالج",
           "gpu": "كرت الشاشة",
@@ -456,7 +456,8 @@
           "below": "أقل من المطلوب",
           "unknown": "غير معروف"
         }
-      }
+      },
+      "pcRequirementsSource": "البيانات من PCGamingWiki (CC BY-NC-SA)"
     },
     "filter": {
       "title": "تصفية الألعاب",
@@ -958,7 +959,8 @@
     "sections": {
       "hardware": "الأجهزة",
       "ram": "الذاكرة",
-      "storage": "التخزين"
+      "storage": "التخزين",
+      "resolution": "الدقة المستهدفة"
     },
     "placeholders": {
       "cpu": "اختر المعالج",
@@ -967,14 +969,51 @@
     "storage": {
       "free": "مساحة فارغة"
     },
+    "summary": {
+      "title": "إعداداتك",
+      "score": "النقاط التقديرية",
+      "cpu": "نقاط المعالج",
+      "gpu": "نقاط كرت الشاشة",
+      "incomplete": "اختر معالجاً وكرت شاشة لرؤية نقاطك التقديرية.",
+      "tier": {
+        "entry": "فئة اقتصادية",
+        "mainstream": "فئة متوسطة",
+        "performance": "فئة أداء",
+        "enthusiast": "فئة متقدمة"
+      }
+    },
+    "resolution": {
+      "title": "الدقة المستهدفة",
+      "hint": "تقديرات التوافق تستخدم هذه الدقة.",
+      "r1080p": "1080p",
+      "r1440p": "1440p",
+      "r4k": "4K"
+    },
+    "custom": {
+      "label": "مخصص",
+      "ramPlaceholder": "الذاكرة بالجيجابايت",
+      "storagePlaceholder": "المساحة الفارغة بالجيجابايت",
+      "invalid": "أدخل قيمة بين {{min}} و{{max}}"
+    },
     "actions": {
-      "save": "حفظ"
+      "save": "حفظ",
+      "clear": "مسح مواصفات الجهاز",
+      "clearTitle": "مسح مواصفات الجهاز؟",
+      "clearMessage": "ستتم إزالة مواصفاتك المحفوظة من هذا الجهاز ومن حسابك.",
+      "clearConfirm": "مسح",
+      "clearCancel": "إلغاء"
     },
     "hints": {
-      "estimate": "التقدير عند 1080p."
+      "estimate": "التقديرات تستخدم دقتك المستهدفة."
     },
     "picker": {
-      "searchPlaceholder": "ابحث عن القطع..."
+      "searchPlaceholder": "ابحث عن القطع...",
+      "titleCpu": "اختر معالجاً",
+      "titleGpu": "اختر كرت شاشة",
+      "resultsCount": "{{count}} نتيجة",
+      "noResults": "لا توجد قطع مطابقة",
+      "selected": "المحدد",
+      "vram": "ذاكرة {{vram}} جيجابايت"
     },
     "errors": {
       "partsRequired": "اختر المعالج وكرت الشاشة",

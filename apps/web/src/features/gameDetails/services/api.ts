@@ -3,14 +3,8 @@ import "server-only";
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import axios from "axios";
-import type { GameData } from "@gaming-zone/core";
+import type { GameData, PcRequirements } from "@gaming-zone/core";
 import { getServerApiUrl } from "@/lib/api-config";
-
-export {
-  extractSteamAppId,
-  parseSpecHtml,
-  fetchSteamRequirements,
-} from "@gaming-zone/utils";
 
 /**
  * IGDB ids are numeric. `id` arrives straight from the `/games/[id]` path
@@ -70,3 +64,30 @@ export const fetchGameDetails = cache(
     }
   },
 );
+
+/**
+ * PC requirements for one game, resolved by the backend (PCGamingWiki by name,
+ * Steam fallback). Cached like game details: the route's in-memory cache and
+ * `s-maxage` absorb repeat renders, and the long revalidate matches the games
+ * page TTL so the render window stays consistent.
+ */
+export const fetchPcRequirements = cache(async (id: string): Promise<PcRequirements | null> => {
+  if (!GAME_ID_PATTERN.test(id.trim())) return null;
+
+  try {
+    return await unstable_cache(
+      async () => {
+        const res = await axios.get<Record<string, PcRequirements | null>>(
+          `${getServerApiUrl()}/pc-requirements`,
+          { params: { ids: id }, timeout: 30000 },
+        );
+        return res.data?.[id] ?? null;
+      },
+      ["pc-requirements", id],
+      { revalidate: 604800, tags: ["games", `games:details:${id}`] },
+    )();
+  } catch (error) {
+    console.error("Error fetching pc requirements:", error);
+    return null;
+  }
+});

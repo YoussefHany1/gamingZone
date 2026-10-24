@@ -1,17 +1,17 @@
 /**
- * Batch Steam PC-requirements endpoint.
+ * Batch PC-requirements endpoint (PCGamingWiki primary, Steam fallback).
  *
- * Game-card rails only know an IGDB id, so the backend resolves each game's
- * Steam app id and fetches all requirements in one Steam call. The raw HTML is
- * parsed on the client by the shared `@gaming-zone/utils` parser, keeping the
- * scoring rules identical between mobile and web.
+ * Game-card rails only know an IGDB id, so the backend resolves requirements
+ * server-side — PCGamingWiki by game name, with a Steam `appdetails` fallback —
+ * and returns structured `{ label, value }` rows for both tiers. The rows feed
+ * the shared compatibility scorer on mobile and web unchanged.
  */
-import type { PcRequirements } from "@gaming-zone/core";
+import type { SpecRow } from "@gaming-zone/core";
 import apiClient from "./client";
 
-/** One game's raw Steam requirement tiers, or null when there are none. */
+/** One game's requirement tiers, or null when there are none. */
 export type PcRequirementsResponseValue =
-  | { minimum: string | null; recommended: string | null }
+  | { minimum: SpecRow[] | null; recommended: SpecRow[] | null }
   | null;
 
 /** IGDB id → requirement tiers. A missing key means "retry later". */
@@ -21,7 +21,7 @@ export type PcRequirementsResponse = Record<string, PcRequirementsResponseValue>
 export const PC_REQUIREMENTS_BATCH_SIZE = 40;
 
 /**
- * Fetches Steam requirements for up to {@link PC_REQUIREMENTS_BATCH_SIZE} IGDB
+ * Fetches requirement rows for up to {@link PC_REQUIREMENTS_BATCH_SIZE} IGDB
  * games. Rejects on transport/server failure so the caller can back off.
  */
 export async function fetchPcRequirementsBatch(
@@ -43,6 +43,3 @@ export async function fetchPcRequirementsBatch(
 
   return data as PcRequirementsResponse;
 }
-
-/** Local alias kept for readability at call sites. */
-export type PcRequirementsValue = PcRequirements | null;

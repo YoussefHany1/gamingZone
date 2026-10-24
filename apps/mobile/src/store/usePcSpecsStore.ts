@@ -10,17 +10,21 @@ import type { PcSpecs } from "@gaming-zone/core";
 import { useAuthStore } from "./useAuthStore";
 import {
   clearGuestPcSpecs,
+  clearLocalPcSpecs,
   readGuestPcSpecs,
   readLocalPcSpecs,
   writeGuestPcSpecs,
   writeLocalPcSpecs,
 } from "@/src/features/pcSpecs/lib/specsStorage";
-import { savePcSpecsToAccount } from "@/src/services/pcSpecsService";
+import {
+  clearPcSpecsFromAccount,
+  savePcSpecsToAccount,
+} from "@/src/services/pcSpecsService";
 
-/** The four editable fields; the store stamps `updatedAt`. */
+/** The editable fields; the store stamps `updatedAt` and defaults the resolution. */
 export type PcSpecsInput = Pick<
   PcSpecs,
-  "cpuId" | "gpuId" | "ramGb" | "freeStorageGb"
+  "cpuId" | "gpuId" | "ramGb" | "freeStorageGb" | "resolution"
 >;
 
 interface PcSpecsState {
@@ -35,6 +39,8 @@ interface PcSpecsState {
   applyAccountSpecs: (uid: string, specs: PcSpecs | null) => void;
   /** Saves locally and, for signed-in users, to Firestore. */
   save: (input: PcSpecsInput) => Promise<PcSpecs>;
+  /** Resets to "not configured" locally and, for signed-in users, on the account. */
+  clear: () => Promise<void>;
   /** Drops the guest copy without touching any account. */
   discardGuestCopy: () => void;
 }
@@ -60,7 +66,11 @@ export const usePcSpecsStore = create<PcSpecsState>()((set, get) => ({
   },
 
   save: async (input) => {
-    const next: PcSpecs = { ...input, updatedAt: Date.now() };
+    const next: PcSpecs = {
+      resolution: "1080p",
+      ...input,
+      updatedAt: Date.now(),
+    };
     const user = useAuthStore.getState().user;
 
     set({ saving: true });
@@ -84,6 +94,32 @@ export const usePcSpecsStore = create<PcSpecsState>()((set, get) => ({
       clearGuestPcSpecs();
       set({ saving: false });
       return next;
+    } catch (error) {
+      set({ saving: false });
+      throw error;
+    }
+  },
+
+  clear: async () => {
+    const user = useAuthStore.getState().user;
+    set({ saving: true });
+
+    // Guest: local only, by design.
+    if (!user || user.isAnonymous) {
+      clearGuestPcSpecs();
+      set({ specs: null, hydrated: true, saving: false });
+      return;
+    }
+
+    // Drop the local copy first so the UI survives a transient Firestore
+    // failure; the snapshot reconciliation keeps showing "not configured".
+    clearLocalPcSpecs(user.uid);
+    set({ specs: null, hydrated: true });
+
+    try {
+      await clearPcSpecsFromAccount(user.uid);
+      clearGuestPcSpecs();
+      set({ saving: false });
     } catch (error) {
       set({ saving: false });
       throw error;

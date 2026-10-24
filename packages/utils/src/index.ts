@@ -9,9 +9,7 @@ import type {
   GameTimeToBeat,
   LangRow,
   LanguageSupport,
-  PcRequirements,
   PlayTime,
-  SpecRow,
   Website,
 } from "@gaming-zone/core";
 
@@ -46,7 +44,7 @@ export function getAgeRatingLabel(ratingCategory: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Steam PC requirements
+// Steam app details (prices)
 // ---------------------------------------------------------------------------
 
 /** Extracts the Steam App ID from a game's website list, or returns null. */
@@ -56,37 +54,6 @@ export function extractSteamAppId(websites?: Website[]): string | null {
   if (!steamSite) return null;
   const match = steamSite.url.match(/store\.steampowered\.com\/app\/(\d+)/);
   return match ? (match[1] ?? null) : null;
-}
-
-/** Parses Steam's HTML PC requirements blob into structured label/value rows. */
-export function parseSpecHtml(html: string): SpecRow[] {
-  const stripped = html.replace(/<[^>]+>/g, (tag) => {
-    const lower = tag.toLowerCase();
-    if (lower.startsWith("</li") || lower.startsWith("<br")) return "\n";
-    return "";
-  });
-
-  const rows: SpecRow[] = [];
-  stripped.split("\n").forEach((line) => {
-    const clean = line
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&nbsp;/g, " ")
-      .trim();
-    if (!clean) return;
-
-    const colonIdx = clean.indexOf(":");
-    if (colonIdx <= 0) return;
-
-    const label = clean.slice(0, colonIdx).replace(/\s*\*$/, "").trim();
-    const value = clean.slice(colonIdx + 1).trim();
-    if (label && value && !/additional/i.test(label)) {
-      rows.push({ label, value });
-    }
-  });
-
-  return rows;
 }
 
 /** `price_overview` fragment of Steam's appdetails payload. Amounts are in cents (request pinned to `cc=US`, so USD). */
@@ -100,10 +67,8 @@ export type SteamPriceOverview = {
   discountPercent: number;
 };
 
-/** Trimmed subset of Steam's appdetails payload shared by the requirements + price consumers. */
+/** Trimmed subset of Steam's appdetails payload used by the store-price consumers. */
 export type SteamAppDetails = {
-  /** Null when Steam returns no `pc_requirements` for the app. */
-  pcRequirements: PcRequirements | null;
   /** Null when Steam omits `price_overview` and the app isn't free. */
   priceOverview: SteamPriceOverview | null;
   /** True when Steam reports the app as free (`is_free`). */
@@ -123,29 +88,19 @@ const steamDetailsCache = new Map<
 async function fetchSteamAppDetailsUncached(appId: string): Promise<SteamAppDetails> {
   try {
     // cc=US pins the currency so `price_overview` always matches the "$"
-    // rendering used by the stores row (the web app, which shares this call
-    // for requirements, does not display prices).
+    // rendering used by the stores row.
     const res = await axios.get(
       `https://store.steampowered.com/api/appdetails?appids=${appId}&cc=US`,
       { timeout: 8000 },
     );
     const data = res.data?.[appId];
     if (!data?.success || !data?.data) {
-      return { pcRequirements: null, priceOverview: null, isFree: false };
+      return { priceOverview: null, isFree: false };
     }
 
-    const { pc_requirements: pcRequirements, price_overview: overview, is_free: isFree } =
-      data.data;
+    const { price_overview: overview, is_free: isFree } = data.data;
 
     return {
-      pcRequirements: pcRequirements
-        ? {
-            minimum: pcRequirements.minimum ? parseSpecHtml(pcRequirements.minimum) : [],
-            recommended: pcRequirements.recommended
-              ? parseSpecHtml(pcRequirements.recommended)
-              : [],
-          }
-        : null,
       priceOverview: overview
         ? {
             currency: String(overview.currency ?? ""),
@@ -157,14 +112,14 @@ async function fetchSteamAppDetailsUncached(appId: string): Promise<SteamAppDeta
       isFree: Boolean(isFree),
     };
   } catch {
-    return { pcRequirements: null, priceOverview: null, isFree: false };
+    return { priceOverview: null, isFree: false };
   }
 }
 
 /**
  * Fetches Steam's appdetails for a Steam app, deduplicated through a
- * module-level cache: the PC-requirements hook and the store-price lookup
- * share a single request instead of issuing one each.
+ * module-level cache so the store-price lookups share a single request
+ * instead of issuing one each.
  *
  * Never rejects — failed lookups resolve to all-null fields and are evicted
  * from the cache so the next consumer retries.
@@ -185,21 +140,13 @@ export function fetchSteamAppDetails(appId: string): Promise<SteamAppDetails> {
   // Empty results (fetch failed, app not found) are retried on next access
   // instead of being cached for the full TTL.
   promise.then((details) => {
-    const isEmpty = !details.pcRequirements && !details.priceOverview && !details.isFree;
+    const isEmpty = !details.priceOverview && !details.isFree;
     if (isEmpty && steamDetailsCache.get(appId)?.promise === promise) {
       steamDetailsCache.delete(appId);
     }
   });
 
   return promise;
-}
-
-/** Fetches PC system requirements for a Steam app. Thin back-compat wrapper over `fetchSteamAppDetails`. */
-export async function fetchSteamRequirements(
-  appId: string,
-): Promise<PcRequirements | null> {
-  const details = await fetchSteamAppDetails(appId);
-  return details.pcRequirements;
 }
 
 // ---------------------------------------------------------------------------

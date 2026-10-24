@@ -15,12 +15,15 @@ export type PcQualityBadgeProps = {
   compact?: boolean;
 };
 
-const COLORS: Record<PcQuality, { bg: string; text: string; border: string }> = {
+// Semantic quality scale — fixed hues (green → purple) that stay readable in
+// both schemes. `unsupported` is the exception: it follows the palette's
+// danger token so destructive tones track the active theme.
+const COLORS: Record<PcQuality, { bg: string; text: string; border: string } | null> = {
   ultra: { bg: "rgba(168, 85, 247, 0.9)", text: "#f3e8ff", border: "rgba(216, 180, 254, 0.9)" },
   high: { bg: "rgba(34, 197, 94, 0.9)", text: "#f0fdf4", border: "rgba(187, 247, 208, 0.9)" },
   medium: { bg: "rgba(234, 179, 8, 0.9)", text: "#fefce8", border: "rgba(254, 240, 138, 0.9)" },
   low: { bg: "rgba(249, 115, 22, 0.9)", text: "#fff7ed", border: "rgba(253, 186, 116, 0.9)" },
-  unsupported: { bg: "rgba(239, 68, 68, 0.95)", text: "#fef2f2", border: "rgba(252, 165, 165, 0.9)" },
+  unsupported: null,
 };
 
 const PcQualityBadge: React.FC<PcQualityBadgeProps> = ({ quality, style, compact }) => {
@@ -59,18 +62,20 @@ const PcQualityBadge: React.FC<PcQualityBadgeProps> = ({ quality, style, compact
   const palette = COLORS[quality];
   const label = t(`pcSpecs.quality.${quality}`);
 
+  const dynamic = palette ?? { bg: colors.danger, text: "#ffffff", border: colors.danger };
+
   return (
     <View
       style={[
         styles.badge,
         {
-          backgroundColor: palette.bg,
-          borderColor: palette.border,
+          backgroundColor: dynamic.bg,
+          borderColor: dynamic.border,
         },
         style,
       ]}
     >
-      <CustomText style={[styles.text, { color: palette.text }]}>{label}</CustomText>
+      <CustomText style={[styles.text, { color: dynamic.text }]}>{label}</CustomText>
       <CustomText style={styles.label}>{t("pcSpecs.badge.estimate")}</CustomText>
     </View>
   );

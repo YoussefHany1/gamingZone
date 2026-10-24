@@ -78,6 +78,12 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; 
       fontWeight: "500",
       flexWrap: "wrap",
     },
+    sourceNote: {
+      color: c.textMuted,
+      fontSize: 11,
+      marginTop: 6,
+      direction: "ltr",
+    },
   }));
 
   const { t } = useTranslation();
@@ -146,6 +152,9 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; 
               </View>
             ))}
           </View>
+          <CustomText style={styles.sourceNote}>
+            {t("games.details.pcRequirementsSource")}
+          </CustomText>
           <GameCompatibilityCard compatibility={compatibility} hasSpecs={!!specs} />
         </>
       )}

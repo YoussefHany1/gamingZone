@@ -22,7 +22,9 @@ export function pcSpecsStorageKey(uid: string): string {
 
 function readValid(key: string): PcSpecs | null {
   const value = storageGet<unknown>(key);
-  return isValidPcSpecs(value) ? value : null;
+  if (!isValidPcSpecs(value)) return null;
+  // Copies written before the resolution setting existed read as 1080p.
+  return { ...value, resolution: value.resolution ?? "1080p" };
 }
 
 export function readGuestPcSpecs(): PcSpecs | null {

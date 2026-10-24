@@ -156,7 +156,8 @@
       "accountSettings": "Paramètres du compte",
       "gamesList": "Ma liste de jeux",
       "myLists": "Mes listes",
-      "profile": "Mon profil"
+      "profile": "Mon profil",
+      "pcSpecs": "Mon PC"
     }
   },
   "home": {
@@ -436,7 +437,27 @@
       "unsubscribed": "Vous êtes désabonné des notifications de sortie de ce jeu",
       "backToGames": "Retour aux jeux",
       "specifications": "Spécifications",
-      "closePlayer": "Fermer le lecteur"
+      "closePlayer": "Fermer le lecteur",
+      "pcRequirementsSource": "Données de PCGamingWiki (CC BY-NC-SA)",
+      "compatibility": {
+        "title": "Compatibilité PC",
+        "noSpecs": "Ajoutez les spécifications de votre PC dans Réglages → Mon PC pour voir une estimation.",
+        "noData": "Aucune configuration requise trouvée pour ce jeu.",
+        "bottleneck": "Facteur limitant : {{part}}",
+        "approximate": "Certaines configurations ont été associées de manière approximative.",
+        "estimate": "Estimation pour {{resolution}} ; un manque de stockage n'est qu'un avertissement.",
+        "parts": {
+          "cpu": "CPU",
+          "gpu": "GPU",
+          "ram": "RAM",
+          "storage": "Stockage"
+        },
+        "status": {
+          "meets": "Conforme",
+          "below": "Insuffisant",
+          "unknown": "Inconnu"
+        }
+      }
     },
     "filter": {
       "title": "Filtrer les jeux",
@@ -643,6 +664,7 @@
     },
     "menu": {
       "notifications": "Gérer les notifications",
+      "myPc": "Mon PC",
       "myLists": "Mes listes",
       "rateUs": "Notez-nous",
       "inviteFriends": "Inviter des amis",
@@ -922,5 +944,80 @@
   },
   "notifications": {
     "newsChannelName": "Notifications d'actualités"
+  },
+  "pcSpecs": {
+    "quality": {
+      "unsupported": "Non pris en charge",
+      "low": "Bas",
+      "medium": "Moyen",
+      "high": "Élevé",
+      "ultra": "Ultra"
+    },
+    "badge": {
+      "estimate": "Est."
+    },
+    "sections": {
+      "hardware": "Matériel",
+      "ram": "Mémoire",
+      "storage": "Stockage",
+      "resolution": "Résolution cible"
+    },
+    "placeholders": {
+      "cpu": "Sélectionner le CPU",
+      "gpu": "Sélectionner le GPU"
+    },
+    "storage": {
+      "free": "Stockage libre"
+    },
+    "summary": {
+      "title": "Votre configuration",
+      "score": "Score estimé",
+      "cpu": "Score CPU",
+      "gpu": "Score GPU",
+      "incomplete": "Sélectionnez un CPU et un GPU pour voir votre score estimé.",
+      "tier": {
+        "entry": "Entrée de gamme",
+        "mainstream": "Milieu de gamme",
+        "performance": "Performant",
+        "enthusiast": "Haut de gamme"
+      }
+    },
+    "resolution": {
+      "title": "Résolution cible",
+      "hint": "Les estimations de compatibilité utilisent cette résolution.",
+      "r1080p": "1080p",
+      "r1440p": "1440p",
+      "r4k": "4K"
+    },
+    "custom": {
+      "label": "Personnalisé",
+      "ramPlaceholder": "RAM en Go",
+      "storagePlaceholder": "Stockage libre en Go",
+      "invalid": "Saisissez une valeur entre {{min}} et {{max}}"
+    },
+    "actions": {
+      "save": "Enregistrer",
+      "clear": "Effacer les spécifications du PC",
+      "clearTitle": "Effacer les spécifications du PC ?",
+      "clearMessage": "Vos spécifications enregistrées seront supprimées de cet appareil et de votre compte.",
+      "clearConfirm": "Effacer",
+      "clearCancel": "Annuler"
+    },
+    "hints": {
+      "estimate": "Les estimations utilisent votre résolution cible."
+    },
+    "picker": {
+      "searchPlaceholder": "Rechercher des composants...",
+      "titleCpu": "Sélectionner un CPU",
+      "titleGpu": "Sélectionner un GPU",
+      "resultsCount": "{{count}} résultats",
+      "noResults": "Aucun composant trouvé",
+      "selected": "Sélectionné",
+      "vram": "{{vram}} Go de VRAM"
+    },
+    "errors": {
+      "partsRequired": "Sélectionnez le CPU et le GPU",
+      "saveFailed": "Échec de l'enregistrement des spécifications du PC"
+    }
   }
 }

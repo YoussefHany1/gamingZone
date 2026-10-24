@@ -1,36 +1,73 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
-import { Cpu, HardDrive, MemoryStick } from "lucide-react-native";
+import { Cpu, HardDrive, Trash2 } from "lucide-react-native";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useBottomInset } from "@/src/hooks/useBottomInset";
 import CustomText from "@/src/components/CustomText";
-import { PC_CPUS, PC_GPUS, searchHardware } from "@gaming-zone/utils";
+import { PC_CPUS, PC_GPUS } from "@gaming-zone/utils";
+import type { PcResolution } from "@gaming-zone/core";
 import { usePcSpecsStore } from "@/src/store/usePcSpecsStore";
-import type { PcCpu, PcGpu } from "@gaming-zone/core";
+import HardwarePickerModal from "../components/HardwarePickerModal";
+import PcScoreSummary from "../components/PcScoreSummary";
+import {
+  RAM_MAX_GB,
+  RAM_MIN_GB,
+  RAM_OPTIONS,
+  RESOLUTION_OPTIONS,
+  STORAGE_MAX_GB,
+  STORAGE_MIN_GB,
+  STORAGE_OPTIONS,
+  isCustomGbInvalid,
+  isCustomValue,
+  parseCustomGb,
+  type PcResolutionOption,
+} from "../lib/pcSpecsForm";
 
 type PickerType = "cpu" | "gpu" | null;
 
-const RAM_OPTIONS = [4, 6, 8, 12, 16, 32, 48, 64];
-const STORAGE_OPTIONS = [50, 100, 200, 250, 500, 1000, 2000];
+const RESOLUTION_LABEL_KEYS: Record<PcResolutionOption, string> = {
+  "1080p": "pcSpecs.resolution.r1080p",
+  "1440p": "pcSpecs.resolution.r1440p",
+  "4k": "pcSpecs.resolution.r4k",
+};
 
 const PcSpecsScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const colors = useThemeColors();
   const bottomInset = useBottomInset();
-  const { specs, save, saving, hydrate, hydrated } = usePcSpecsStore();
+  const headerHeight = useHeaderHeight();
+  const { specs, save, clear, saving, hydrate, hydrated } = usePcSpecsStore();
 
   const [cpuId, setCpuId] = useState(specs?.cpuId ?? "");
   const [gpuId, setGpuId] = useState(specs?.gpuId ?? "");
   const [ramGb, setRamGb] = useState(specs?.ramGb ?? 16);
   const [freeStorageGb, setFreeStorageGb] = useState(specs?.freeStorageGb ?? 200);
+  const [resolution, setResolution] = useState<PcResolution>(specs?.resolution ?? "1080p");
   const [picker, setPicker] = useState<PickerType>(null);
-  const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Custom-value inputs: shown when the current value is not a chip option.
+  const [ramCustom, setRamCustom] = useState(isCustomValue(RAM_OPTIONS, ramGb));
+  const [ramText, setRamText] = useState(String(ramGb));
+  const [storageCustom, setStorageCustom] = useState(
+    isCustomValue(STORAGE_OPTIONS, freeStorageGb),
+  );
+  const [storageText, setStorageText] = useState(String(freeStorageGb));
 
   useEffect(() => {
     if (!hydrated) hydrate();
@@ -42,21 +79,21 @@ const PcSpecsScreen: React.FC = () => {
       setGpuId(specs.gpuId);
       setRamGb(specs.ramGb);
       setFreeStorageGb(specs.freeStorageGb);
+      setResolution(specs.resolution ?? "1080p");
+      setRamCustom(isCustomValue(RAM_OPTIONS, specs.ramGb));
+      setRamText(String(specs.ramGb));
+      setStorageCustom(isCustomValue(STORAGE_OPTIONS, specs.freeStorageGb));
+      setStorageText(String(specs.freeStorageGb));
     }
   }, [specs]);
 
   const cpu = useMemo(() => PC_CPUS.find((item) => item.id === cpuId), [cpuId]);
   const gpu = useMemo(() => PC_GPUS.find((item) => item.id === gpuId), [gpuId]);
 
-  const results = useMemo(() => {
-    if (picker === "cpu") return searchHardware(PC_CPUS, query);
-    if (picker === "gpu") return searchHardware(PC_GPUS, query);
-    return [];
-  }, [picker, query]);
-
   const styles = useThemeStyles((c) => ({
     safe: { flex: 1, backgroundColor: c.background },
-    container: { padding: 16, paddingBottom: bottomInset + 24, gap: 16 },
+    kbView: { flex: 1 },
+    container: { padding: 16, paddingBottom: bottomInset - 50, gap: 16 },
     card: {
       backgroundColor: c.surface,
       borderRadius: 12,
@@ -66,6 +103,7 @@ const PcSpecsScreen: React.FC = () => {
       gap: 12,
     },
     sectionTitle: { color: c.text, fontSize: 16, fontWeight: "700" },
+    hint: { color: c.textMuted, fontSize: 13 },
     row: {
       flexDirection: "row",
       alignItems: "center",
@@ -97,6 +135,17 @@ const PcSpecsScreen: React.FC = () => {
       alignItems: "center",
     },
     buttonText: { color: c.onAccent, fontWeight: "700" },
+    clearButton: {
+      alignItems: "center",
+      paddingVertical: 12,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: c.danger,
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 8,
+    },
+    clearText: { color: c.danger, fontWeight: "600" },
     input: {
       backgroundColor: c.background,
       borderColor: c.border,
@@ -106,32 +155,20 @@ const PcSpecsScreen: React.FC = () => {
       paddingVertical: 10,
       color: c.text,
     },
-    list: { gap: 6 },
-    listItem: {
-      padding: 12,
-      borderRadius: 10,
-      backgroundColor: c.background,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-    listText: { color: c.text },
   }));
 
-  const openPicker = (type: PickerType) => {
-    setQuery("");
-    setPicker(type);
+  const applyRamText = (text: string) => {
+    setRamText(text);
+    if (isCustomGbInvalid(text, RAM_MIN_GB, RAM_MAX_GB)) return;
+    const parsed = parseCustomGb(text, RAM_MIN_GB, RAM_MAX_GB);
+    if (parsed !== null) setRamGb(parsed);
   };
 
-  const selectCpu = (item: PcCpu) => {
-    setCpuId(item.id);
-    setPicker(null);
-    setQuery("");
-  };
-
-  const selectGpu = (item: PcGpu) => {
-    setGpuId(item.id);
-    setPicker(null);
-    setQuery("");
+  const applyStorageText = (text: string) => {
+    setStorageText(text);
+    if (isCustomGbInvalid(text, STORAGE_MIN_GB, STORAGE_MAX_GB)) return;
+    const parsed = parseCustomGb(text, STORAGE_MIN_GB, STORAGE_MAX_GB);
+    if (parsed !== null) setFreeStorageGb(parsed);
   };
 
   const handleSave = async () => {
@@ -141,125 +178,211 @@ const PcSpecsScreen: React.FC = () => {
     }
     setError(null);
     try {
-      await save({ cpuId, gpuId, ramGb, freeStorageGb });
+      await save({ cpuId, gpuId, ramGb, freeStorageGb, resolution });
       navigation.goBack();
     } catch {
       setError(t("pcSpecs.errors.saveFailed"));
     }
   };
 
-  if (picker) {
-    return (
-      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
-        <View style={[styles.container, { paddingTop: 12 }]}>
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder={t("pcSpecs.picker.searchPlaceholder")}
-            placeholderTextColor={colors.textMuted}
-            style={styles.input}
-            autoFocus
-          />
-          <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
-            {results.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.listItem}
-                onPress={() =>
-                  picker === "cpu"
-                    ? selectCpu(item as PcCpu)
-                    : selectGpu(item as PcGpu)
-                }
-              >
-                <CustomText style={styles.listText}>{item.label}</CustomText>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-          <TouchableOpacity onPress={() => setPicker(null)}>
-            <CustomText style={styles.muted}>{t("common.cancel")}</CustomText>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const handleClear = () => {
+    Alert.alert(t("pcSpecs.actions.clearTitle"), t("pcSpecs.actions.clearMessage"), [
+      { text: t("pcSpecs.actions.clearCancel"), style: "cancel" },
+      {
+        text: t("pcSpecs.actions.clearConfirm"),
+        style: "destructive",
+        onPress: () => {
+          clear()
+            .then(() => navigation.goBack())
+            .catch(() => setError(t("pcSpecs.errors.saveFailed")));
+        },
+      },
+    ]);
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.card}>
-          <CustomText style={styles.sectionTitle}>{t("pcSpecs.sections.hardware")}</CustomText>
-          <TouchableOpacity style={styles.row} onPress={() => openPicker("cpu")}>
-            <Cpu size={18} color={colors.textMuted} />
-            <CustomText style={styles.rowText} numberOfLines={1}>
-              {cpu?.label ?? t("pcSpecs.placeholders.cpu")}
-            </CustomText>
-            <CustomText style={styles.muted}>{t("common.edit")}</CustomText>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.row} onPress={() => openPicker("gpu")}>
-            <HardDrive size={18} color={colors.textMuted} />
-            <CustomText style={styles.rowText} numberOfLines={1}>
-              {gpu?.label ?? t("pcSpecs.placeholders.gpu")}
-            </CustomText>
-            <CustomText style={styles.muted}>{t("common.edit")}</CustomText>
-          </TouchableOpacity>
-        </View>
+      <KeyboardAvoidingView
+        style={styles.kbView}
+        behavior={Platform.OS === "android" ? "height" : "padding"}
+        keyboardVerticalOffset={headerHeight}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <PcScoreSummary specs={cpuId && gpuId ? { cpuId, gpuId } : null} />
 
-        <View style={styles.card}>
-          <CustomText style={styles.sectionTitle}>{t("pcSpecs.sections.ram")}</CustomText>
-          <View style={styles.grid}>
-            {RAM_OPTIONS.map((value) => (
+          <View style={styles.card}>
+            <CustomText style={styles.sectionTitle}>
+              {t("pcSpecs.sections.hardware")}
+            </CustomText>
+            <TouchableOpacity style={styles.row} onPress={() => setPicker("cpu")}>
+              <Cpu size={18} color={colors.textMuted} />
+              <CustomText style={styles.rowText} numberOfLines={1}>
+                {cpu?.label ?? t("pcSpecs.placeholders.cpu")}
+              </CustomText>
+              <CustomText style={styles.muted}>{t("common.edit")}</CustomText>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.row} onPress={() => setPicker("gpu")}>
+              <HardDrive size={18} color={colors.textMuted} />
+              <CustomText style={styles.rowText} numberOfLines={1}>
+                {gpu?.label ?? t("pcSpecs.placeholders.gpu")}
+              </CustomText>
+              <CustomText style={styles.muted}>{t("common.edit")}</CustomText>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.card}>
+            <CustomText style={styles.sectionTitle}>
+              {t("pcSpecs.sections.resolution")}
+            </CustomText>
+            <View style={styles.grid}>
+              {RESOLUTION_OPTIONS.map((option) => {
+                const active = resolution === option;
+                return (
+                  <TouchableOpacity
+                    key={option}
+                    style={[styles.chip, active && styles.chipActive]}
+                    onPress={() => setResolution(option)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                  >
+                    <CustomText style={[styles.chipText, active && styles.chipTextActive]}>
+                      {t(RESOLUTION_LABEL_KEYS[option])}
+                    </CustomText>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <CustomText style={styles.hint}>{t("pcSpecs.resolution.hint")}</CustomText>
+          </View>
+
+          <View style={styles.card}>
+            <CustomText style={styles.sectionTitle}>{t("pcSpecs.sections.ram")}</CustomText>
+            <View style={styles.grid}>
+              {RAM_OPTIONS.map((value) => {
+                const active = !ramCustom && ramGb === value;
+                return (
+                  <TouchableOpacity
+                    key={value}
+                    style={[styles.chip, active && styles.chipActive]}
+                    onPress={() => {
+                      setRamCustom(false);
+                      setRamText(String(value));
+                      setRamGb(value);
+                    }}
+                  >
+                    <CustomText style={[styles.chipText, active && styles.chipTextActive]}>
+                      {value} GB
+                    </CustomText>
+                  </TouchableOpacity>
+                );
+              })}
               <TouchableOpacity
-                key={value}
-                style={[styles.chip, ramGb === value && styles.chipActive]}
-                onPress={() => setRamGb(value)}
+                style={[styles.chip, ramCustom && styles.chipActive]}
+                onPress={() => setRamCustom(true)}
               >
-                <CustomText style={[styles.chipText, ramGb === value && styles.chipTextActive]}>
-                  {value} GB
+                <CustomText style={[styles.chipText, ramCustom && styles.chipTextActive]}>
+                  {t("pcSpecs.custom.label")}
                 </CustomText>
               </TouchableOpacity>
-            ))}
+            </View>
+            {ramCustom && (
+              <TextInput
+                value={ramText}
+                onChangeText={applyRamText}
+                placeholder={t("pcSpecs.custom.ramPlaceholder")}
+                placeholderTextColor={colors.textMuted}
+                style={styles.input}
+                keyboardType="number-pad"
+              />
+            )}
           </View>
-        </View>
 
-        <View style={styles.card}>
-          <CustomText style={styles.sectionTitle}>{t("pcSpecs.sections.storage")}</CustomText>
-          <View style={styles.row}>
-            <MemoryStick size={18} color={colors.textMuted} />
-            <CustomText style={styles.muted}>{t("pcSpecs.storage.free")}</CustomText>
-          </View>
-          <View style={styles.grid}>
-            {STORAGE_OPTIONS.map((value) => (
+          <View style={styles.card}>
+            <CustomText style={styles.sectionTitle}>
+              {t("pcSpecs.sections.storage")}
+            </CustomText>
+            <View style={styles.grid}>
+              {STORAGE_OPTIONS.map((value) => {
+                const active = !storageCustom && freeStorageGb === value;
+                return (
+                  <TouchableOpacity
+                    key={value}
+                    style={[styles.chip, active && styles.chipActive]}
+                    onPress={() => {
+                      setStorageCustom(false);
+                      setStorageText(String(value));
+                      setFreeStorageGb(value);
+                    }}
+                  >
+                    <CustomText
+                      style={[styles.chipText, active && styles.chipTextActive]}
+                    >
+                      {value} GB
+                    </CustomText>
+                  </TouchableOpacity>
+                );
+              })}
               <TouchableOpacity
-                key={value}
-                style={[styles.chip, freeStorageGb === value && styles.chipActive]}
-                onPress={() => setFreeStorageGb(value)}
+                style={[styles.chip, storageCustom && styles.chipActive]}
+                onPress={() => setStorageCustom(true)}
               >
-                <CustomText
-                  style={[styles.chipText, freeStorageGb === value && styles.chipTextActive]}
-                >
-                  {value} GB
+                <CustomText style={[styles.chipText, storageCustom && styles.chipTextActive]}>
+                  {t("pcSpecs.custom.label")}
                 </CustomText>
               </TouchableOpacity>
-            ))}
+            </View>
+            {storageCustom && (
+              <TextInput
+                value={storageText}
+                onChangeText={applyStorageText}
+                placeholder={t("pcSpecs.custom.storagePlaceholder")}
+                placeholderTextColor={colors.textMuted}
+                style={styles.input}
+                keyboardType="number-pad"
+              />
+            )}
           </View>
-        </View>
 
-        {error && <CustomText style={{ color: "#ef4444" }}>{error}</CustomText>}
+          {error && <CustomText style={{ color: colors.danger }}>{error}</CustomText>}
 
-        <TouchableOpacity
-          style={[styles.button, (saving || !cpuId || !gpuId) && { opacity: 0.7 }]}
-          onPress={handleSave}
-          disabled={saving || !cpuId || !gpuId}
-        >
-          {saving ? (
-            <ActivityIndicator color={colors.onAccent} />
-          ) : (
-            <CustomText style={styles.buttonText}>{t("pcSpecs.actions.save")}</CustomText>
+          <TouchableOpacity
+            style={[styles.button, (saving || !cpuId || !gpuId) && { opacity: 0.5 }]}
+            onPress={handleSave}
+            disabled={saving || !cpuId || !gpuId}
+          >
+            {saving ? (
+              <ActivityIndicator color={colors.onAccent} />
+            ) : (
+              <CustomText style={styles.buttonText}>{t("pcSpecs.actions.save")}</CustomText>
+            )}
+          </TouchableOpacity>
+
+          {specs && (
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={handleClear}
+              disabled={saving}
+              accessibilityRole="button"
+            >
+              <Trash2 size={16} color={colors.danger} />
+              <CustomText style={styles.clearText}>{t("pcSpecs.actions.clear")}</CustomText>
+            </TouchableOpacity>
           )}
-        </TouchableOpacity>
 
-        <CustomText style={styles.muted}>{t("pcSpecs.hints.estimate")}</CustomText>
-      </ScrollView>
+          <CustomText style={styles.muted}>{t("pcSpecs.hints.estimate")}</CustomText>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      <HardwarePickerModal
+        visible={picker !== null}
+        kind={picker ?? "cpu"}
+        selectedId={picker === "cpu" ? cpuId : gpuId}
+        onSelect={(id) => {
+          if (picker === "cpu") setCpuId(id);
+          else if (picker === "gpu") setGpuId(id);
+        }}
+        onClose={() => setPicker(null)}
+      />
     </SafeAreaView>
   );
 };

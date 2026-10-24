@@ -16,7 +16,7 @@
  *   4. variants of one model that Steam distinguishes by VRAM (GTX 1060 3GB /
  *      6GB) share a `family` so the requirement parser can pick the right one.
  */
-import type { PcCpu, PcGpu } from "@gaming-zone/core";
+import type { PcCpu, PcGamingTier, PcGpu, PcScoreSummary, PcSpecs } from "@gaming-zone/core";
 
 export const PC_CPUS: readonly PcCpu[] = [
   // Intel — Core i3
@@ -25,6 +25,7 @@ export const PC_CPUS: readonly PcCpu[] = [
   { id: "intel-core-i3-10100", label: "Intel Core i3-10100", score: 28, match: "\\bi3[- ]?10100f?\\b" },
   { id: "intel-core-i3-12100", label: "Intel Core i3-12100", score: 38, match: "\\bi3[- ]?12100f?\\b" },
   { id: "intel-core-i3-13100", label: "Intel Core i3-13100", score: 40, match: "\\bi3[- ]?13100f?\\b" },
+  { id: "intel-core-i3-14100", label: "Intel Core i3-14100", score: 41, match: "\\bi3[- ]?14100f?\\b" },
 
   // Intel — Core i5
   { id: "intel-core-i5-4460", label: "Intel Core i5-4460", score: 10, match: "\\bi5[- ]?4460\\b" },
@@ -39,6 +40,7 @@ export const PC_CPUS: readonly PcCpu[] = [
   { id: "intel-core-i5-13400", label: "Intel Core i5-13400", score: 50, match: "\\bi5[- ]?13400f?\\b" },
   { id: "intel-core-i5-13600k", label: "Intel Core i5-13600K", score: 60, match: "\\bi5[- ]?13600kf?\\b" },
   { id: "intel-core-i5-14400", label: "Intel Core i5-14400", score: 52, match: "\\bi5[- ]?14400f?\\b" },
+  { id: "intel-core-i5-14600k", label: "Intel Core i5-14600K", score: 61, match: "\\bi5[- ]?14600kf?\\b" },
 
   // Intel — Core i7
   { id: "intel-core-i7-4790k", label: "Intel Core i7-4790K", score: 15, match: "\\bi7[- ]?4790k?\\b" },
@@ -50,7 +52,8 @@ export const PC_CPUS: readonly PcCpu[] = [
   { id: "intel-core-i7-11700k", label: "Intel Core i7-11700K", score: 44, match: "\\bi7[- ]?11700k?\\b" },
   { id: "intel-core-i7-12700k", label: "Intel Core i7-12700K", score: 53, match: "\\bi7[- ]?12700k?\\b" },
   { id: "intel-core-i7-13700k", label: "Intel Core i7-13700K", score: 62, match: "\\bi7[- ]?13700k?\\b" },
-  { id: "intel-core-i7-14700k", label: "Intel Core i7-14700K", score: 66, match: "\\bi7[- ]?14700k?\\b" },
+  { id: "intel-core-i7-14700k", label: "Intel Core i7-14700K", score: 66, match: "\\bi7[- ]?14700kf?\\b" },
+  { id: "intel-core-i7-14700", label: "Intel Core i7-14700", score: 63, match: "\\bi7[- ]?14700\\b" },
 
   // Intel — Core i9
   { id: "intel-core-i9-9900k", label: "Intel Core i9-9900K", score: 38, match: "\\bi9[- ]?9900k?\\b" },
@@ -70,9 +73,12 @@ export const PC_CPUS: readonly PcCpu[] = [
   { id: "amd-ryzen-5-1600", label: "AMD Ryzen 5 1600", score: 22, match: "\\bryzen 5 1600(?:x|af)?\\b" },
   { id: "amd-ryzen-5-2600", label: "AMD Ryzen 5 2600", score: 26, match: "\\bryzen 5 2600(?:x)?\\b" },
   { id: "amd-ryzen-5-3600", label: "AMD Ryzen 5 3600", score: 34, match: "\\bryzen 5 3600(?:x|xt)?\\b" },
+  { id: "amd-ryzen-5-4500", label: "AMD Ryzen 5 4500", score: 30, match: "\\bryzen 5 4500\\b" },
   { id: "amd-ryzen-5-5500", label: "AMD Ryzen 5 5500", score: 42, match: "\\bryzen 5 5500\\b" },
   { id: "amd-ryzen-5-5600", label: "AMD Ryzen 5 5600", score: 46, match: "\\bryzen 5 5600(?:x)?\\b" },
   { id: "amd-ryzen-5-7600", label: "AMD Ryzen 5 7600", score: 54, match: "\\bryzen 5 7600(?:x)?\\b" },
+  { id: "amd-ryzen-5-7500f", label: "AMD Ryzen 5 7500F", score: 52, match: "\\bryzen 5 7500f\\b" },
+  { id: "amd-ryzen-5-9600x", label: "AMD Ryzen 5 9600X", score: 58, match: "\\bryzen 5 9600x\\b" },
 
   // AMD — Ryzen 7
   { id: "amd-ryzen-7-1700", label: "AMD Ryzen 7 1700", score: 23, match: "\\bryzen 7 1700(?:x)?\\b" },
@@ -82,6 +88,7 @@ export const PC_CPUS: readonly PcCpu[] = [
   { id: "amd-ryzen-7-5800x", label: "AMD Ryzen 7 5800X", score: 49, match: "\\bryzen 7 5800x\\b" },
   { id: "amd-ryzen-7-5800x3d", label: "AMD Ryzen 7 5800X3D", score: 58, match: "\\bryzen 7 5800x3d\\b" },
   { id: "amd-ryzen-7-7700x", label: "AMD Ryzen 7 7700X", score: 58, match: "\\bryzen 7 7700x\\b" },
+  { id: "amd-ryzen-7-7700", label: "AMD Ryzen 7 7700", score: 56, match: "\\bryzen 7 7700\\b" },
   { id: "amd-ryzen-7-7800x3d", label: "AMD Ryzen 7 7800X3D", score: 68, match: "\\bryzen 7 7800x3d\\b" },
   { id: "amd-ryzen-7-9700x", label: "AMD Ryzen 7 9700X", score: 64, match: "\\bryzen 7 9700x\\b" },
 
@@ -90,7 +97,10 @@ export const PC_CPUS: readonly PcCpu[] = [
   { id: "amd-ryzen-9-5900x", label: "AMD Ryzen 9 5900X", score: 52, match: "\\bryzen 9 5900x\\b" },
   { id: "amd-ryzen-9-5950x", label: "AMD Ryzen 9 5950X", score: 56, match: "\\bryzen 9 5950x\\b" },
   { id: "amd-ryzen-9-7900x", label: "AMD Ryzen 9 7900X", score: 64, match: "\\bryzen 9 7900x\\b" },
+  { id: "amd-ryzen-9-7900x3d", label: "AMD Ryzen 9 7900X3D", score: 65, match: "\\bryzen 9 7900x3d\\b" },
   { id: "amd-ryzen-9-7950x", label: "AMD Ryzen 9 7950X", score: 70, match: "\\bryzen 9 7950x\\b" },
+  { id: "amd-ryzen-9-9900x", label: "AMD Ryzen 9 9900X", score: 68, match: "\\bryzen 9 9900x\\b" },
+  { id: "amd-ryzen-9-9950x", label: "AMD Ryzen 9 9950X", score: 72, match: "\\bryzen 9 9950x\\b" },
 
   // Low-power / integrated CPU entries (common in laptops)
   { id: "intel-uhd-620", label: "Intel UHD Graphics 620 (laptop)", score: 2, match: "\\buhd graphics 620\\b" },
@@ -173,6 +183,7 @@ export const PC_GPUS: readonly PcGpu[] = [
   { id: "nvidia-geforce-rtx-3080", label: "NVIDIA GeForce RTX 3080", score: 60, match: "\\brtx 3080\\b" },
   { id: "nvidia-geforce-rtx-3080-ti", label: "NVIDIA GeForce RTX 3080 Ti", score: 64, match: "\\brtx 3080 ti\\b" },
   { id: "nvidia-geforce-rtx-3090", label: "NVIDIA GeForce RTX 3090", score: 68, match: "\\brtx 3090\\b" },
+  { id: "nvidia-geforce-rtx-3090-ti", label: "NVIDIA GeForce RTX 3090 Ti", score: 70, match: "\\brtx 3090 ti\\b" },
 
   // NVIDIA — RTX 40 series
   { id: "nvidia-geforce-rtx-4060", label: "NVIDIA GeForce RTX 4060", score: 44, match: "\\brtx 4060\\b" },
@@ -185,10 +196,45 @@ export const PC_GPUS: readonly PcGpu[] = [
   { id: "nvidia-geforce-rtx-4090", label: "NVIDIA GeForce RTX 4090", score: 90, match: "\\brtx 4090\\b" },
 
   // NVIDIA — RTX 50 series
+  {
+    id: "nvidia-geforce-rtx-5060-8gb",
+    label: "NVIDIA GeForce RTX 5060 8GB",
+    score: 42,
+    match: "\\brtx 5060\\b",
+    family: "rtx-5060",
+    vramGb: 8,
+  },
+  {
+    id: "nvidia-geforce-rtx-5060-ti-8gb",
+    label: "NVIDIA GeForce RTX 5060 Ti 8GB",
+    score: 48,
+    match: "\\brtx 5060 ti\\b",
+    family: "rtx-5060-ti",
+    vramGb: 8,
+  },
+  {
+    id: "nvidia-geforce-rtx-5060-ti-16gb",
+    label: "NVIDIA GeForce RTX 5060 Ti 16GB",
+    score: 50,
+    match: "\\brtx 5060 ti\\b",
+    family: "rtx-5060-ti",
+    vramGb: 16,
+  },
   { id: "nvidia-geforce-rtx-5070", label: "NVIDIA GeForce RTX 5070", score: 66, match: "\\brtx 5070\\b" },
   { id: "nvidia-geforce-rtx-5070-ti", label: "NVIDIA GeForce RTX 5070 Ti", score: 70, match: "\\brtx 5070 ti\\b" },
   { id: "nvidia-geforce-rtx-5080", label: "NVIDIA GeForce RTX 5080", score: 80, match: "\\brtx 5080\\b" },
   { id: "nvidia-geforce-rtx-5090", label: "NVIDIA GeForce RTX 5090", score: 100, match: "\\brtx 5090\\b" },
+
+  // NVIDIA — laptop dGPUs (TGP-limited, scored below their desktop counterparts)
+  { id: "nvidia-geforce-rtx-3050-laptop", label: "NVIDIA GeForce RTX 3050 Laptop", score: 20, match: "\\brtx 3050 laptop\\b" },
+  { id: "nvidia-geforce-rtx-3060-laptop", label: "NVIDIA GeForce RTX 3060 Laptop", score: 28, match: "\\brtx 3060 laptop\\b" },
+  { id: "nvidia-geforce-rtx-4050-laptop", label: "NVIDIA GeForce RTX 4050 Laptop", score: 30, match: "\\brtx 4050 laptop\\b" },
+  { id: "nvidia-geforce-rtx-4060-laptop", label: "NVIDIA GeForce RTX 4060 Laptop", score: 36, match: "\\brtx 4060 laptop\\b" },
+  { id: "nvidia-geforce-rtx-4070-laptop", label: "NVIDIA GeForce RTX 4070 Laptop", score: 44, match: "\\brtx 4070 laptop\\b" },
+  { id: "nvidia-geforce-rtx-4080-laptop", label: "NVIDIA GeForce RTX 4080 Laptop", score: 58, match: "\\brtx 4080 laptop\\b" },
+  { id: "nvidia-geforce-rtx-4090-laptop", label: "NVIDIA GeForce RTX 4090 Laptop", score: 68, match: "\\brtx 4090 laptop\\b" },
+  { id: "nvidia-geforce-rtx-5060-laptop", label: "NVIDIA GeForce RTX 5060 Laptop", score: 40, match: "\\brtx 5060 laptop\\b" },
+  { id: "nvidia-geforce-rtx-5070-laptop", label: "NVIDIA GeForce RTX 5070 Laptop", score: 52, match: "\\brtx 5070 laptop\\b" },
 
   // AMD — RX 400/500
   { id: "amd-radeon-rx-460", label: "AMD Radeon RX 460", score: 8, match: "\\brx 460\\b" },
@@ -300,4 +346,32 @@ export function searchHardware<T extends PcCpu>(
 /** True when both ids exist in the current catalog. */
 export function isValidPcHardware(cpuId: string, gpuId: string): boolean {
   return CPU_BY_ID.has(cpuId) && GPU_BY_ID.has(gpuId);
+}
+
+/** Tier brackets for the overall machine score (see `estimatePcScore`). */
+export function pcTierForScore(score: number): PcGamingTier {
+  if (score < 25) return "entry";
+  if (score < 50) return "mainstream";
+  if (score < 75) return "performance";
+  return "enthusiast";
+}
+
+/**
+ * Overall machine capability for the specs screen summary card.
+ *
+ * Pinned formula: `round(gpu * 0.65 + cpu * 0.35)` — the GPU dominates gaming
+ * performance, and the catalog calibrates equivalent CPUs and GPUs to the same
+ * 0–100 scale, so the weights blend like-for-like.
+ *
+ * Returns null whenever the CPU or GPU cannot be resolved from the catalog:
+ * blending an unknown part in at weight 0 would present a misleading score,
+ * so the UI shows a neutral placeholder instead of a tier badge.
+ */
+export function estimatePcScore(specs: PcSpecs): PcScoreSummary | null {
+  const cpu = findCpuById(specs.cpuId);
+  const gpu = findGpuById(specs.gpuId);
+  if (!cpu || !gpu) return null;
+
+  const score = Math.round(gpu.score * 0.65 + cpu.score * 0.35);
+  return { score, tier: pcTierForScore(score) };
 }

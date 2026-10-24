@@ -3,8 +3,7 @@ import { Metadata } from "next";
 import GameDetailsClient from "@/features/gameDetails/components/GameDetailsClient";
 import {
   fetchGameDetails,
-  fetchSteamRequirements,
-  extractSteamAppId,
+  fetchPcRequirements,
 } from "@/features/gameDetails/services/api";
 import { fetchGamesList } from "@/features/games";
 import {
@@ -28,11 +27,8 @@ import { getSiteBaseUrl } from "@/lib/metadata";
 // matching `revalidate` in @/features/gameDetails/services/api.ts must move in
 // step or this silently drops back to that lower value.
 //
-// Known cost, deliberate: fetchSteamRequirements is NOT in the data cache
-// (module-level 5-minute instance cache in @gaming-zone/utils), so every
-// regeneration still scrapes Steam live. It cannot shorten this window (it
-// mints no data-cache entry) and its output is stable, so it costs wall-clock
-// per regen but almost never an ISR write.
+// Both data fetches (game details + PC requirements) are in the data cache with
+// the same TTL, so a regeneration reads the backend at most once per entry.
 export const revalidate = 604800;
 
 const PRERENDERED_GAME_LIMIT = 12;
@@ -155,9 +151,9 @@ export default async function GameDetailsPage(props: {
   const playTime = formatPlayTime(game.game_time_to_beats);
   const languageRows = formatLanguageRows(game.language_supports || []);
 
-  // Extract Steam specifications
-  const steamAppId = extractSteamAppId(game.websites);
-  const pcSpecs = steamAppId ? await fetchSteamRequirements(steamAppId) : null;
+  // PC requirements (PCGamingWiki primary, Steam fallback — resolved by the
+  // backend and cached like the game details payload).
+  const pcSpecs = await fetchPcRequirements(id);
 
   // Age rating info
   const esrbRating = game.age_ratings?.find((r) => r.organization === 2);

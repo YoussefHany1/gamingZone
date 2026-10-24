@@ -444,7 +444,7 @@
         "noData": "No requirements found for this game.",
         "bottleneck": "Bottleneck: {{part}}",
         "approximate": "Some requirements were matched approximately.",
-        "estimate": "Estimate at 1080p; storage shortfall is a warning.",
+        "estimate": "Estimate for {{resolution}}; storage shortfall is a warning.",
         "parts": {
           "cpu": "CPU",
           "gpu": "GPU",
@@ -456,7 +456,8 @@
           "below": "Below",
           "unknown": "Unknown"
         }
-      }
+      },
+      "pcRequirementsSource": "Data from PCGamingWiki (CC BY-NC-SA)"
     },
     "filter": {
       "title": "Filter Games",
@@ -958,7 +959,8 @@
     "sections": {
       "hardware": "Hardware",
       "ram": "Memory",
-      "storage": "Storage"
+      "storage": "Storage",
+      "resolution": "Target Resolution"
     },
     "placeholders": {
       "cpu": "Select CPU",
@@ -967,14 +969,52 @@
     "storage": {
       "free": "Free storage"
     },
+    "summary": {
+      "title": "Your Setup",
+      "score": "Estimated score",
+      "cpu": "CPU score",
+      "gpu": "GPU score",
+      "incomplete": "Select a CPU and a GPU to see your estimated score.",
+      "tier": {
+        "entry": "Entry Level",
+        "mainstream": "Mainstream",
+        "performance": "Performance",
+        "enthusiast": "Enthusiast"
+      }
+    },
+    "resolution": {
+      "title": "Target Resolution",
+      "hint": "Compatibility estimates use this resolution.",
+      "r1080p": "1080p",
+      "r1440p": "1440p",
+      "r4k": "4K"
+    },
+    "custom": {
+      "label": "Custom",
+      "ramPlaceholder": "RAM in GB",
+      "storagePlaceholder": "Free storage in GB",
+      "invalid": "Enter a value between {{min}} and {{max}}"
+    },
     "actions": {
-      "save": "Save"
+      "save": "Save",
+      "clear": "Clear PC specs",
+      "clearTitle": "Clear PC specs?",
+      "clearMessage": "Your saved specs will be removed from this device and your account.",
+      "clearConfirm": "Clear",
+      "clearCancel": "Cancel"
     },
     "hints": {
-      "estimate": "Estimates are at 1080p."
+      "estimate": "Estimates use your target resolution."
     },
     "picker": {
-      "searchPlaceholder": "Search parts..."
+      "searchPlaceholder": "Search parts...",
+      "titleCpu": "Select a CPU",
+      "titleGpu": "Select a GPU",
+      "resultsCount_one": "{{count}} result",
+      "resultsCount_other": "{{count}} results",
+      "noResults": "No parts found",
+      "selected": "Selected",
+      "vram": "{{vram}} GB VRAM"
     },
     "errors": {
       "partsRequired": "Select CPU and GPU",

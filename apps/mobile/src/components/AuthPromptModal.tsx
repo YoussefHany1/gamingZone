@@ -19,12 +19,7 @@ interface AuthPromptModalProps {
 const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ visible, onDismiss }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  let navigation: any = null;
-  try {
-    navigation = useNavigation<any>();
-  } catch {
-    navigation = null;
-  }
+  const navigation = useNavigation<any>();
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const styles = useThemeStyles((c) => ({

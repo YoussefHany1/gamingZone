@@ -12,7 +12,6 @@ import {
   getSummaryKey,
   igdbImageUrl,
   normalizeGameTitle,
-  parseSpecHtml,
 } from "./index";
 
 // Fixed clock so the time-dependent helpers are deterministic.
@@ -69,46 +68,6 @@ describe("extractSteamAppId", () => {
 
   it("returns null when a type-13 URL does not contain /app/<id>", () => {
     expect(extractSteamAppId([website(13, "https://store.steampowered.com/")])).toBeNull();
-  });
-});
-
-describe("parseSpecHtml", () => {
-  it("turns list items into label/value rows", () => {
-    expect(parseSpecHtml("<li>OS: Windows 10</li><li>Memory: 8 GB</li>")).toEqual([
-      { label: "OS", value: "Windows 10" },
-      { label: "Memory", value: "8 GB" },
-    ]);
-  });
-
-  it("decodes HTML entities", () => {
-    expect(parseSpecHtml("<li>OS: A&amp;B &lt;64-bit&gt;</li>")).toEqual([
-      { label: "OS", value: "A&B <64-bit>" },
-    ]);
-  });
-
-  it("strips a trailing asterisk from the label", () => {
-    expect(parseSpecHtml("<li>Storage*: 50 GB</li>")).toEqual([
-      { label: "Storage", value: "50 GB" },
-    ]);
-  });
-
-  it("keeps colons that appear in the value", () => {
-    expect(parseSpecHtml("<li>OS: Windows: 10</li>")).toEqual([
-      { label: "OS", value: "Windows: 10" },
-    ]);
-  });
-
-  it("drops rows without a value and the Additional Notes row", () => {
-    expect(parseSpecHtml("<strong>Minimum:</strong><br>")).toEqual([]);
-    expect(parseSpecHtml("<li>Additional Notes: requires an account</li>")).toEqual([]);
-  });
-
-  it("ignores lines with no colon", () => {
-    expect(parseSpecHtml("<li>just some text</li>")).toEqual([]);
-  });
-
-  it("returns an empty array for empty input", () => {
-    expect(parseSpecHtml("")).toEqual([]);
   });
 });
 

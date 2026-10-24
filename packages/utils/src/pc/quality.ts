@@ -1,9 +1,19 @@
 /**
  * PC-vs-Steam-requirements estimator.
  *
- * The output is a relative estimate at 1080p, not a benchmark. Every comparison
- * is per-component (CPU score vs CPU requirement, GPU vs GPU) so the CPU and
- * GPU indexes never get mixed into a meaningless ratio.
+ * The output is a relative estimate at the user's target resolution, not a
+ * benchmark. Every comparison is per-component (CPU score vs CPU requirement,
+ * GPU vs GPU) so the CPU and GPU indexes never get mixed into a meaningless
+ * ratio.
+ *
+ * Resolution model — `RESOLUTION_FACTORS` below. Catalog scores are a 1080p
+ * index, so at 1440p/4K the user's effective part score is scaled down before
+ * the ratio. The GPU factors are calibrated from public relative-performance
+ * scaling of reference cards (RTX 3060/4070-class) across resolutions: pixel
+ * counts grow 1.78× (1440p) and 3.86× (4K) over 1080p, but real GPU scaling is
+ * sublinear, and the constants sit inside the measured 0.74–0.80 (1440p) and
+ * 0.55–0.60 (4K) bands. CPU load grows much slower with resolution, hence the
+ * milder CPU factors.
  */
 import type {
   PcCompatibility,
@@ -11,6 +21,7 @@ import type {
   PcPartVerdict,
   PcQuality,
   PcRequirements,
+  PcResolution,
   PcSpecs,
   SpecRow,
 } from "@gaming-zone/core";
@@ -35,6 +46,20 @@ export const PC_QUALITY_RANK: Record<PcQuality, number> = {
   high: 3,
   ultra: 4,
 };
+
+/**
+ * Effective-score multiplier per part for each target resolution. See the
+ * file header for how the 1440p/4K values were calibrated.
+ */
+export const RESOLUTION_FACTORS: Record<PcResolution, { gpu: number; cpu: number }> = {
+  "1080p": { gpu: 1, cpu: 1 },
+  "1440p": { gpu: 0.78, cpu: 0.9 },
+  "4k": { gpu: 0.58, cpu: 0.8 },
+};
+
+const RESOLUTION_KEYS = new Set<string>(
+  Object.keys(RESOLUTION_FACTORS),
+);
 
 export function capPcQuality(quality: PcQuality, maximum: PcQuality): PcQuality {
   return PC_QUALITY_RANK[quality] > PC_QUALITY_RANK[maximum] ? maximum : quality;
@@ -125,20 +150,25 @@ export function estimatePcCompatibility(
       ? specs.freeStorageGb
       : null;
 
+  const resolution: PcResolution = specs.resolution ?? "1080p";
+  const factors = RESOLUTION_FACTORS[resolution];
+  const effectiveCpuScore = cpu ? cpu.score * factors.cpu : null;
+  const effectiveGpuScore = gpu ? gpu.score * factors.gpu : null;
+
   const minPairs: Array<{ part: PcPartKey; ratio: number }> = [];
   const recPairs: Array<{ part: PcPartKey; ratio: number }> = [];
 
-  if (cpu && minimum.cpu && minimum.cpu.score > 0) {
-    minPairs.push({ part: "cpu", ratio: cpu.score / minimum.cpu.score });
+  if (effectiveCpuScore !== null && minimum.cpu && minimum.cpu.score > 0) {
+    minPairs.push({ part: "cpu", ratio: effectiveCpuScore / minimum.cpu.score });
   }
-  if (gpu && minimum.gpu && minimum.gpu.score > 0) {
-    minPairs.push({ part: "gpu", ratio: gpu.score / minimum.gpu.score });
+  if (effectiveGpuScore !== null && minimum.gpu && minimum.gpu.score > 0) {
+    minPairs.push({ part: "gpu", ratio: effectiveGpuScore / minimum.gpu.score });
   }
-  if (cpu && recommended.cpu && recommended.cpu.score > 0) {
-    recPairs.push({ part: "cpu", ratio: cpu.score / recommended.cpu.score });
+  if (effectiveCpuScore !== null && recommended.cpu && recommended.cpu.score > 0) {
+    recPairs.push({ part: "cpu", ratio: effectiveCpuScore / recommended.cpu.score });
   }
-  if (gpu && recommended.gpu && recommended.gpu.score > 0) {
-    recPairs.push({ part: "gpu", ratio: gpu.score / recommended.gpu.score });
+  if (effectiveGpuScore !== null && recommended.gpu && recommended.gpu.score > 0) {
+    recPairs.push({ part: "gpu", ratio: effectiveGpuScore / recommended.gpu.score });
   }
   if (userRam !== null && minimum.ramGb && minimum.ramGb > 0) {
     minPairs.push({ part: "ram", ratio: userRam / minimum.ramGb });
@@ -224,14 +254,14 @@ export function estimatePcCompatibility(
       cpu?.label ?? "Unknown CPU",
       minimum.cpu?.score ?? null,
       recommended.cpu?.score ?? null,
-      cpu?.score ?? null,
+      effectiveCpuScore,
     ),
     gpu: verdict(
       minimum.gpuRaw ?? recommended.gpuRaw,
       gpu?.label ?? "Unknown GPU",
       minimum.gpu?.score ?? null,
       recommended.gpu?.score ?? null,
-      gpu?.score ?? null,
+      effectiveGpuScore,
     ),
     ram: ramVerdict,
     storage: {
@@ -254,6 +284,7 @@ export function estimatePcCompatibility(
       minimum.gpu?.approximate === true ||
       recommended.cpu?.approximate === true ||
       recommended.gpu?.approximate === true,
+    resolution,
   };
 }
 
@@ -274,6 +305,7 @@ export function isValidPcSpecs(value: unknown): value is PcSpecs {
     Number.isFinite(candidate.freeStorageGb) &&
     candidate.freeStorageGb >= 0 &&
     candidate.freeStorageGb <= 100_000 &&
+    (candidate.resolution === undefined || RESOLUTION_KEYS.has(candidate.resolution)) &&
     typeof candidate.updatedAt === "number" &&
     Number.isFinite(candidate.updatedAt)
   );

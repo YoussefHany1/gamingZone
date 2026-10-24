@@ -156,7 +156,8 @@
       "accountSettings": "Definições da conta",
       "gamesList": "A minha lista de jogos",
       "myLists": "As minhas listas",
-      "profile": "O meu perfil"
+      "profile": "O meu perfil",
+      "pcSpecs": "O Meu PC"
     }
   },
   "home": {
@@ -436,7 +437,27 @@
       "unsubscribed": "Cancelou a subscrição das notificações de lançamento deste jogo",
       "backToGames": "Voltar aos jogos",
       "specifications": "Especificações",
-      "closePlayer": "Fechar o leitor"
+      "closePlayer": "Fechar o leitor",
+      "pcRequirementsSource": "Dados da PCGamingWiki (CC BY-NC-SA)",
+      "compatibility": {
+        "title": "Compatibilidade do PC",
+        "noSpecs": "Adicione as especificações do seu PC em Definições → O Meu PC para ver uma estimativa.",
+        "noData": "Nenhum requisito encontrado para este jogo.",
+        "bottleneck": "Estrangulamento: {{part}}",
+        "approximate": "Alguns requisitos foram correspondidos de forma aproximada.",
+        "estimate": "Estimativa para {{resolution}}; falta de armazenamento é apenas um aviso.",
+        "parts": {
+          "cpu": "CPU",
+          "gpu": "GPU",
+          "ram": "RAM",
+          "storage": "Armazenamento"
+        },
+        "status": {
+          "meets": "Cumpre",
+          "below": "Abaixo",
+          "unknown": "Desconhecido"
+        }
+      }
     },
     "filter": {
       "title": "Filtrar jogos",
@@ -643,6 +664,7 @@
     "currentLang": "Português",
     "menu": {
       "notifications": "Gerir notificações",
+      "myPc": "O Meu PC",
       "myLists": "As minhas listas",
       "rateUs": "Avalie-nos",
       "inviteFriends": "Convidar amigos",
@@ -922,5 +944,80 @@
   },
   "notifications": {
     "newsChannelName": "Notificações de notícias"
+  },
+  "pcSpecs": {
+    "quality": {
+      "unsupported": "Não compatível",
+      "low": "Baixo",
+      "medium": "Médio",
+      "high": "Alto",
+      "ultra": "Ultra"
+    },
+    "badge": {
+      "estimate": "Est."
+    },
+    "sections": {
+      "hardware": "Hardware",
+      "ram": "Memória",
+      "storage": "Armazenamento",
+      "resolution": "Resolução alvo"
+    },
+    "placeholders": {
+      "cpu": "Selecionar CPU",
+      "gpu": "Selecionar GPU"
+    },
+    "storage": {
+      "free": "Armazenamento livre"
+    },
+    "summary": {
+      "title": "O seu setup",
+      "score": "Pontuação estimada",
+      "cpu": "Pontuação da CPU",
+      "gpu": "Pontuação da GPU",
+      "incomplete": "Selecione uma CPU e uma GPU para ver a sua pontuação estimada.",
+      "tier": {
+        "entry": "Entrada",
+        "mainstream": "Intermédio",
+        "performance": "Desempenho",
+        "enthusiast": "Entusiasta"
+      }
+    },
+    "resolution": {
+      "title": "Resolução alvo",
+      "hint": "As estimativas de compatibilidade utilizam esta resolução.",
+      "r1080p": "1080p",
+      "r1440p": "1440p",
+      "r4k": "4K"
+    },
+    "custom": {
+      "label": "Personalizado",
+      "ramPlaceholder": "RAM em GB",
+      "storagePlaceholder": "Armazenamento livre em GB",
+      "invalid": "Introduza um valor entre {{min}} e {{max}}"
+    },
+    "actions": {
+      "save": "Guardar",
+      "clear": "Limpar especificações do PC",
+      "clearTitle": "Limpar as especificações do PC?",
+      "clearMessage": "As suas especificações guardadas serão removidas deste dispositivo e da sua conta.",
+      "clearConfirm": "Limpar",
+      "clearCancel": "Cancelar"
+    },
+    "hints": {
+      "estimate": "As estimativas utilizam a sua resolução alvo."
+    },
+    "picker": {
+      "searchPlaceholder": "Procurar componentes...",
+      "titleCpu": "Selecione uma CPU",
+      "titleGpu": "Selecione uma GPU",
+      "resultsCount": "{{count}} resultados",
+      "noResults": "Nenhum componente encontrado",
+      "selected": "Selecionado",
+      "vram": "{{vram}} GB de VRAM"
+    },
+    "errors": {
+      "partsRequired": "Selecione CPU e GPU",
+      "saveFailed": "Falha ao guardar as especificações do PC"
+    }
   }
 }

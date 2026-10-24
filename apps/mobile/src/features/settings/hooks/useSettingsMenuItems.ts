@@ -45,26 +45,62 @@ export function useSettingsMenuItems(): UseSettingsMenuItemsResult {
         id: "pcSpecs",
         icon: Cpu,
         label: t("settings.menu.myPc"),
-        onPress: () => navigation.navigate("PcSpecs"),
+        onPress: () => {
+          const parent = (navigation as any).getParent?.();
+          if (parent) {
+            parent.navigate("Settings", { screen: "PcSpecsScreen" });
+          } else {
+            (navigation as any).navigate("PcSpecsScreen");
+          }
+        },
       },
       {
         id: "lists",
         icon: List,
         label: t("settings.menu.myLists"),
-        onPress: () => navigation.navigate("UserListsScreen"),
+        onPress: () => {
+          try {
+            const nav: any = navigation;
+            if (nav.getParent?.()?.getParent?.()?.navigate) {
+              nav.getParent().getParent().navigate("Settings", { screen: "UserListsScreen" });
+              return;
+            }
+            if (nav.getParent?.()?.navigate) {
+              nav.getParent().navigate("UserListsScreen");
+              return;
+            }
+            nav.navigate("UserListsScreen");
+          } catch {
+            (navigation as any).navigate("UserListsScreen");
+          }
+        },
       },
       {
         id: "notifications",
         icon: Bell,
         label: t("settings.menu.notifications"),
-        onPress: () => navigation.navigate("NotificationSettings"),
+        onPress: () => {
+          const parent = (navigation as any).getParent?.();
+          if (parent) {
+            parent.navigate("Settings", { screen: "NotificationSettings" });
+          } else {
+            (navigation as any).navigate("NotificationSettings");
+          }
+        },
       },
       ...(isAdmin ? [{ id: "adminAds", component: AdminAdsToggle }] : []),
       {
         id: "theme",
         icon: Palette,
         label: `${t("settings.theme.title")} (Beta)`,
-        onPress: () => navigation.navigate("ThemeScreen"),
+        onPress: () => {
+          const parent = (navigation as any).getParent?.();
+          if (parent) {
+            parent.navigate("Settings", { screen: "ThemeScreen" });
+          } else {
+            (navigation as any).navigate("ThemeScreen");
+          }
+        },
       },
       {
         id: "rate",
@@ -77,13 +113,27 @@ export function useSettingsMenuItems(): UseSettingsMenuItemsResult {
         id: "contact",
         icon: MessageSquare,
         label: t("settings.menu.contactUs"),
-        onPress: () => navigation.navigate("ContactScreen"),
+        onPress: () => {
+          const parent = (navigation as any).getParent?.();
+          if (parent) {
+            parent.navigate("Settings", { screen: "ContactScreen" });
+          } else {
+            (navigation as any).navigate("ContactScreen");
+          }
+        },
       },
       {
         id: "language",
         icon: Languages,
         label: t("settings.menu.changeLanguage"),
-        onPress: () => navigation.navigate("LanguageScreen"),
+        onPress: () => {
+          const parent = (navigation as any).getParent?.();
+          if (parent) {
+            parent.navigate("Settings", { screen: "LanguageScreen" });
+          } else {
+            (navigation as any).navigate("LanguageScreen");
+          }
+        },
       },
       {
         id: "privacy",

@@ -22,10 +22,13 @@ const entry = (fetchedAt: number, value: PcRequirements | null = requirements())
 });
 
 describe("parseRequirementsValue", () => {
-  it("parses both Steam tiers into rows", () => {
+  it("keeps backend-provided rows for both tiers", () => {
     const parsed = parseRequirementsValue({
-      minimum: "<li>Processor: Intel Core i5</li><li>Memory: 8 GB RAM</li>",
-      recommended: "<li>Graphics: NVIDIA GTX 1060</li>",
+      minimum: [
+        { label: "Processor", value: "Intel Core i5" },
+        { label: "Memory", value: "8 GB RAM" },
+      ],
+      recommended: [{ label: "Graphics", value: "NVIDIA GTX 1060" }],
     });
 
     expect(parsed?.minimum).toEqual([
@@ -40,8 +43,10 @@ describe("parseRequirementsValue", () => {
   it("returns null for missing or empty tiers", () => {
     expect(parseRequirementsValue(null)).toBeNull();
     expect(parseRequirementsValue({ minimum: null, recommended: null })).toBeNull();
+    expect(parseRequirementsValue({ minimum: [], recommended: null })).toBeNull();
+    // Malformed rows are narrowed away; an all-empty result is null.
     expect(
-      parseRequirementsValue({ minimum: "<div>no colon</div>", recommended: null }),
+      parseRequirementsValue({ minimum: [{ nope: true } as never], recommended: null }),
     ).toBeNull();
   });
 });

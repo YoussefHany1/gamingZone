@@ -87,7 +87,7 @@ export type SettingsStackParamList = {
   ContactScreen: undefined;
   UserListsScreen: undefined;
   Achievements: undefined;
-  PcSpecs: undefined;
+  PcSpecsScreen: undefined;
 };
 
 export type MainTabParamList = {
@@ -316,6 +316,11 @@ const SettingsStack = memo(() => {
         name="Achievements"
         component={AchievementsScreen}
         options={screenTitles.achievements}
+      />
+      <SettingsStackNav.Screen
+        name="PcSpecsScreen"
+        component={PcSpecsScreen}
+        options={screenTitles.pcSpecs}
       />
     </SettingsStackNav.Navigator>
   );

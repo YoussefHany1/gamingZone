@@ -83,3 +83,43 @@ export function normalizeSteamRequirements(pcRequirements) {
 
   return minimum || recommended ? { minimum, recommended } : null;
 }
+
+/**
+ * Parses Steam's HTML PC-requirements blob into the structured
+ * `{ label, value }` rows the route returns.
+ *
+ * Port of `parseSpecHtml` from `@gaming-zone/utils` — the backend cannot import
+ * that package (workspace-only dependency), so the label/value rows it produces
+ * for the Steam fallback must stay byte-identical to the mobile/web parser.
+ */
+export function parseSpecHtmlToRows(html) {
+  if (typeof html !== 'string') return [];
+
+  const stripped = html.replace(/<[^>]+>/g, (tag) => {
+    const lower = tag.toLowerCase();
+    if (lower.startsWith('</li') || lower.startsWith('<br')) return '\n';
+    return '';
+  });
+
+  const rows = [];
+  stripped.split('\n').forEach((line) => {
+    const clean = line
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&nbsp;/g, ' ')
+      .trim();
+    if (!clean) return;
+
+    const colonIdx = clean.indexOf(':');
+    if (colonIdx <= 0) return;
+
+    const label = clean.slice(0, colonIdx).replace(/\s*\*$/, '').trim();
+    const value = clean.slice(colonIdx + 1).trim();
+    if (label && value && !/additional/i.test(label)) {
+      rows.push({ label, value });
+    }
+  });
+
+  return rows;
+}

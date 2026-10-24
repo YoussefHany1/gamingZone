@@ -15,12 +15,7 @@ import {
   XboxIcon,
 } from "@/src/components/icons/BrandIcons";
 
-export {
-  AGE_RATING_MAP,
-  extractSteamAppId,
-  fetchSteamRequirements,
-  parseSpecHtml,
-} from "@gaming-zone/utils";
+export { AGE_RATING_MAP } from "@gaming-zone/utils";
 
 // ── Store icon map ──────────────────────────────────────────────────────────
 

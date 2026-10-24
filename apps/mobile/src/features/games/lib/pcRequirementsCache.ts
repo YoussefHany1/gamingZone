@@ -1,5 +1,5 @@
 /**
- * Pure cache policy for the shared Steam-requirements lookup.
+ * Pure cache policy for the shared PC-requirements lookup.
  *
  * Deliberately free of React, MMKV and network imports so the TTL/merge rules
  * can be unit-tested without the native storage module. The requirements store
@@ -7,7 +7,6 @@
  * and out of the helpers below.
  */
 import type { PcRequirements, SpecRow } from "@gaming-zone/core";
-import { parseSpecHtml } from "@gaming-zone/utils";
 import type { PcRequirementsResponseValue } from "@/src/services/api/pcRequirementsApi";
 
 /** MMKV key holding the serialised cache. */
@@ -20,7 +19,7 @@ export const PC_REQUIREMENTS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const PC_REQUIREMENTS_CACHE_LIMIT = 600;
 
 export type PcRequirementsCacheEntry = {
-  /** Null means Steam has no requirements for this game (still cacheable). */
+  /** Null means no requirements could be resolved for this game (still cacheable). */
   requirements: PcRequirements | null;
   /** Unix milliseconds. */
   fetchedAt: number;
@@ -50,18 +49,21 @@ export function isPcRequirements(value: unknown): value is PcRequirements {
 }
 
 /**
- * Turns one backend tier payload into structured rows.
+ * Validates one backend tier payload into structured rows.
  *
- * Returns null when neither tier has any row, so "has a Steam page but no
- * requirement table" is cached as "nothing to show" instead of an empty card.
+ * The backend already returns parsed `{ label, value }` rows (PCGamingWiki or
+ * Steam source); this only narrows them. Returns null when neither tier has
+ * any row, so "resolved but nothing to show" is cached as such instead of an
+ * empty card.
  */
 export function parseRequirementsValue(
   value: PcRequirementsResponseValue,
 ): PcRequirements | null {
   if (!value) return null;
 
-  const minimum = value.minimum ? parseSpecHtml(value.minimum) : [];
-  const recommended = value.recommended ? parseSpecHtml(value.recommended) : [];
+  const minimum = value.minimum && isRequirementRows(value.minimum) ? value.minimum : [];
+  const recommended =
+    value.recommended && isRequirementRows(value.recommended) ? value.recommended : [];
   if (minimum.length === 0 && recommended.length === 0) return null;
 
   return { minimum, recommended };

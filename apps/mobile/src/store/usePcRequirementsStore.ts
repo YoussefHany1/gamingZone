@@ -1,5 +1,5 @@
 /**
- * Shared, batched Steam-requirements store.
+ * Shared, batched PC-requirements store.
  *
  * Cards do not fetch: they call `request(gameId)` once on mount and read their
  * entry. The store owns the debounce, the 40-id chunks, in-flight dedupe, the
@@ -37,8 +37,6 @@ interface PcRequirementsState {
   byGameId: Record<number, PcRequirementsEntry>;
   /** Registers interest in a game; safe to call from every card render. */
   request: (gameId: number) => void;
-  /** Stores an already-fetched result (the details screen's Steam lookup). */
-  seed: (gameId: number, requirements: PcRequirements | null) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -222,25 +220,5 @@ export const usePcRequirementsStore = create<PcRequirementsState>()((set, get) =
 
     pendingIds.add(gameId);
     scheduleFlush();
-  },
-
-  seed: (gameId: number, requirements: PcRequirements | null) => {
-    if (!Number.isInteger(gameId) || gameId <= 0) return;
-
-    // Do not let a "no Steam page" seed erase requirements another source
-    // already resolved for the same game.
-    if (requirements === null) {
-      const current = cacheEntry(gameId);
-      if (isPcRequirementsCacheFresh(current) && current?.requirements) {
-        setReady(gameId, current.requirements);
-        return;
-      }
-    }
-
-    const now = Date.now();
-    persistCache(mergePcRequirementsCache(readCache(), [{ gameId, requirements }], now));
-    retryAfter.delete(gameId);
-    pendingIds.delete(gameId);
-    setReady(gameId, requirements);
   },
 }));

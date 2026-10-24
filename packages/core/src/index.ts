@@ -103,6 +103,17 @@ export interface PcRequirements {
 // relative scores can improve without a data migration.
 // ---------------------------------------------------------------------------
 
+/**
+ * Target rendering resolution for compatibility estimates.
+ *
+ * Catalog scores are calibrated at 1080p; other resolutions scale the
+ * comparison (see `RESOLUTION_FACTORS` in `@gaming-zone/utils`).
+ */
+export type PcResolution = "1080p" | "1440p" | "4k";
+
+/** Overall capability bracket derived from the machine's estimated score. */
+export type PcGamingTier = "entry" | "mainstream" | "performance" | "enthusiast";
+
 /** Estimated quality at 1080p. `unsupported` means the PC is below the minimum. */
 export type PcQuality = "unsupported" | "low" | "medium" | "high" | "ultra";
 
@@ -113,6 +124,8 @@ export interface PcSpecs {
   gpuId: string;
   ramGb: number;
   freeStorageGb: number;
+  /** Defaults to "1080p" when absent (older persisted copies). */
+  resolution?: PcResolution;
   /** Unix milliseconds; lets clients replace older local copies deterministically. */
   updatedAt: number;
 }
@@ -155,6 +168,15 @@ export interface PcCompatibility {
   bottleneck: PcPartKey | null;
   /** True when at least one requirement was inferred rather than catalog-exact. */
   approximate: boolean;
+  /** The resolution the estimate was made for; "1080p" for legacy data. */
+  resolution: PcResolution;
+}
+
+/** Overall machine capability from `estimatePcScore` (`@gaming-zone/utils`). */
+export interface PcScoreSummary {
+  /** 0–100 index: `gpu * 0.65 + cpu * 0.35`, rounded. */
+  score: number;
+  tier: PcGamingTier;
 }
 
 export interface LangRow {

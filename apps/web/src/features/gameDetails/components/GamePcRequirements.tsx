@@ -59,6 +59,8 @@ export default function GamePcRequirements({
           </div>
         )}
       </div>
+
+      <p className="text-[11px] text-gray-500">{t("games.details.pcRequirementsSource")}</p>
     </section>
   );
 }

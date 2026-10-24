@@ -156,7 +156,8 @@
       "accountSettings": "खाता सेटिंग्स",
       "gamesList": "मेरी गेम्स सूची",
       "myLists": "मेरी सूचियाँ",
-      "profile": "मेरी प्रोफ़ाइल"
+      "profile": "मेरी प्रोफ़ाइल",
+      "pcSpecs": "मेरा PC"
     }
   },
   "home": {
@@ -436,7 +437,27 @@
       "unsubscribed": "आपने इस गेम की रिलीज़ अधिसूचनाओं से सदस्यता समाप्त कर दी है",
       "backToGames": "गेम्स पर वापस जाएँ",
       "specifications": "विशिष्टताएँ",
-      "closePlayer": "प्लेयर बंद करें"
+      "closePlayer": "प्लेयर बंद करें",
+      "pcRequirementsSource": "डेटा PCGamingWiki से (CC BY-NC-SA)",
+      "compatibility": {
+        "title": "PC अनुकूलता",
+        "noSpecs": "अनुमान देखने के लिए सेटिंग्स → मेरा PC में अपने PC की विशिष्टताएँ जोड़ें।",
+        "noData": "इस गेम के लिए कोई आवश्यकताएँ नहीं मिलीं।",
+        "bottleneck": "बाधा: {{part}}",
+        "approximate": "कुछ आवश्यकताएँ अनुमानित रूप से मेल खाईं।",
+        "estimate": "{{resolution}} के लिए अनुमान; स्टोरेज की कमी केवल चेतावनी है।",
+        "parts": {
+          "cpu": "CPU",
+          "gpu": "GPU",
+          "ram": "RAM",
+          "storage": "स्टोरेज"
+        },
+        "status": {
+          "meets": "पूरा करता है",
+          "below": "कम है",
+          "unknown": "अज्ञात"
+        }
+      }
     },
     "filter": {
       "title": "गेम्स फ़िल्टर करें",
@@ -643,6 +664,7 @@
     },
     "menu": {
       "notifications": "सूचनाएं प्रबंधित करें",
+      "myPc": "मेरा PC",
       "myLists": "मेरी सूचियाँ",
       "rateUs": "हमें रेट करें",
       "inviteFriends": "दोस्तों को आमंत्रित करें",
@@ -922,5 +944,80 @@
   },
   "notifications": {
     "newsChannelName": "समाचार सूचनाएं"
+  },
+  "pcSpecs": {
+    "quality": {
+      "unsupported": "असमर्थित",
+      "low": "कम",
+      "medium": "मध्यम",
+      "high": "उच्च",
+      "ultra": "अल्ट्रा"
+    },
+    "badge": {
+      "estimate": "अनुमानित"
+    },
+    "sections": {
+      "hardware": "हार्डवेयर",
+      "ram": "मेमोरी",
+      "storage": "स्टोरेज",
+      "resolution": "लक्ष्य रेज़ॉल्यूशन"
+    },
+    "placeholders": {
+      "cpu": "CPU चुनें",
+      "gpu": "GPU चुनें"
+    },
+    "storage": {
+      "free": "खाली स्टोरेज"
+    },
+    "summary": {
+      "title": "आपका सेटअप",
+      "score": "अनुमानित स्कोर",
+      "cpu": "CPU स्कोर",
+      "gpu": "GPU स्कोर",
+      "incomplete": "अपना अनुमानित स्कोर देखने के लिए CPU और GPU चुनें।",
+      "tier": {
+        "entry": "एंट्री लेवल",
+        "mainstream": "मध्यम श्रेणी",
+        "performance": "परफ़ॉर्मेंस",
+        "enthusiast": "एंथूसियास्ट"
+      }
+    },
+    "resolution": {
+      "title": "लक्ष्य रेज़ॉल्यूशन",
+      "hint": "अनुकूलता के अनुमान इसी रेज़ॉल्यूशन पर आधारित हैं।",
+      "r1080p": "1080p",
+      "r1440p": "1440p",
+      "r4k": "4K"
+    },
+    "custom": {
+      "label": "कस्टम",
+      "ramPlaceholder": "GB में RAM",
+      "storagePlaceholder": "GB में खाली स्टोरेज",
+      "invalid": "{{min}} और {{max}} के बीच कोई मान दर्ज करें"
+    },
+    "actions": {
+      "save": "सहेजें",
+      "clear": "PC विशिष्टताएँ मिटाएँ",
+      "clearTitle": "PC विशिष्टताएँ मिटाएँ?",
+      "clearMessage": "आपकी सहेजी गई विशिष्टताएँ इस डिवाइस और आपके खाते से हटा दी जाएँगी।",
+      "clearConfirm": "मिटाएँ",
+      "clearCancel": "रद्द करें"
+    },
+    "hints": {
+      "estimate": "अनुमान आपके लक्ष्य रेज़ॉल्यूशन का उपयोग करते हैं।"
+    },
+    "picker": {
+      "searchPlaceholder": "पार्ट्स खोजें...",
+      "titleCpu": "CPU चुनें",
+      "titleGpu": "GPU चुनें",
+      "resultsCount": "{{count}} परिणाम",
+      "noResults": "कोई पार्ट नहीं मिला",
+      "selected": "चयनित",
+      "vram": "{{vram}} GB VRAM"
+    },
+    "errors": {
+      "partsRequired": "CPU और GPU चुनें",
+      "saveFailed": "PC विशिष्टताएँ सहेजने में विफल"
+    }
   }
 }

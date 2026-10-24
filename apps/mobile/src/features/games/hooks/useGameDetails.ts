@@ -138,10 +138,7 @@ export const useGameDetails = ({
       : typeof currentId === "string" && /^\d+$/.test(currentId)
         ? Number(currentId)
         : null;
-  const { pcRequirements, pcReqLoading } = useGamePcRequirements(
-    game?.websites,
-    numericCurrentId,
-  );
+  const { pcRequirements, pcReqLoading } = useGamePcRequirements(numericCurrentId);
   const { storePrices, storePricesLoading } = useGameStorePrices(
     game?.name,
     game?.websites,

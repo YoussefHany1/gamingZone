@@ -233,4 +233,68 @@ describe("estimatePcCompatibility", () => {
     ).toBe(false);
     expect(isValidPcSpecs(specs("missing", "nvidia-geforce-rtx-3060-12gb"))).toBe(false);
   });
+
+  it("validates the optional resolution field", () => {
+    const base = specs("amd-ryzen-5-5600", "nvidia-geforce-rtx-3060-12gb");
+    expect(isValidPcSpecs({ ...base, resolution: "1440p" })).toBe(true);
+    expect(isValidPcSpecs({ ...base, resolution: "4k" })).toBe(true);
+    expect(isValidPcSpecs({ ...base, resolution: "8k" as never })).toBe(false);
+  });
+});
+
+describe("resolution scaling", () => {
+  const minimum = rows(
+    "Intel Core i5-8400",
+    "NVIDIA GTX 1060 6GB",
+    "8 GB RAM",
+    "50 GB available space",
+  );
+  const recommended = rows(
+    "Intel Core i5-12400",
+    "NVIDIA RTX 3060",
+    "16 GB RAM",
+    "50 GB available space",
+  );
+  const requirements = { minimum, recommended };
+
+  // i5-12400 (46) + RTX 3060 12GB (40): exactly the recommended tier at 1080p.
+  const base = specs("intel-core-i5-12400", "nvidia-geforce-rtx-3060-12gb", 16);
+
+  it("defaults missing resolution to 1080p and keeps legacy output identical", () => {
+    const implicit = estimatePcCompatibility(base, requirements);
+    const explicit = estimatePcCompatibility({ ...base, resolution: "1080p" }, requirements);
+    expect(implicit).toEqual({ ...explicit, resolution: "1080p" });
+    expect(implicit?.quality).toBe("high");
+  });
+
+  it("reports the resolution it estimated for", () => {
+    expect(estimatePcCompatibility(base, requirements)?.resolution).toBe("1080p");
+    expect(
+      estimatePcCompatibility({ ...base, resolution: "1440p" }, requirements)?.resolution,
+    ).toBe("1440p");
+  });
+
+  it("downgrades a recommended-tier PC at 1440p (GPU factor 0.78)", () => {
+    const result = estimatePcCompatibility({ ...base, resolution: "1440p" }, requirements);
+    // Effective GPU 40 * 0.78 = 31.2 < 40 → below recommended ratio 1, above 0.75 → medium.
+    expect(result?.quality).toBe("medium");
+    expect(result?.parts.gpu.status).toBe("meets"); // minimum still met
+  });
+
+  it("keeps a big headroom PC at high even at 4k", () => {
+    const strong = specs("amd-ryzen-7-7800x3d", "nvidia-geforce-rtx-4090", 32);
+    const result = estimatePcCompatibility({ ...strong, resolution: "4k" }, requirements);
+    // Effective GPU 100 * 0.58 = 58 (ratio 1.45 vs recommended) but CPU
+    // 68 * 0.8 = 54.4 (ratio 1.18) caps the rig below ultra under the pinned
+    // factors — documents the deliberate conservatism of the CPU factors.
+    expect(result?.quality).toBe("high");
+    expect(result?.parts.gpu.status).toBe("meets");
+  });
+
+  it("does not scale RAM or storage", () => {
+    const tight = specs("intel-core-i5-12400", "nvidia-geforce-rtx-3060-12gb", 16, 10);
+    const result = estimatePcCompatibility({ ...tight, resolution: "4k" }, requirements);
+    expect(result?.parts.storage.status).toBe("below");
+    expect(result?.parts.storage.required).toBe("50 GB available space");
+  });
 });

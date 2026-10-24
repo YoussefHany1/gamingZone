@@ -101,7 +101,7 @@ const GameCompatibilityCard: React.FC<GameCompatibilityCardProps> = ({
 
   const statusColor = (status: "meets" | "below" | "unknown") => {
     if (status === "meets") return colors.accentText;
-    if (status === "below") return "#ef4444";
+    if (status === "below") return colors.danger;
     return colors.textMuted;
   };
 
@@ -116,6 +116,11 @@ const GameCompatibilityCard: React.FC<GameCompatibilityCardProps> = ({
         <CustomText style={styles.title}>{t("games.details.compatibility.title")}</CustomText>
         <PcQualityBadge quality={compatibility.quality} compact />
       </View>
+      <CustomText style={styles.subtitle}>
+        {t("games.details.compatibility.estimate", {
+          resolution: t(`pcSpecs.resolution.r${compatibility.resolution}`),
+        })}
+      </CustomText>
       {parts.map((part) => (
         <View key={part.key} style={styles.row}>
           <CustomText style={styles.partName}>
@@ -139,7 +144,6 @@ const GameCompatibilityCard: React.FC<GameCompatibilityCardProps> = ({
       {compatibility.approximate && (
         <CustomText style={styles.footer}>{t("games.details.compatibility.approximate")}</CustomText>
       )}
-      <CustomText style={styles.footer}>{t("games.details.compatibility.estimate")}</CustomText>
     </View>
   );
 };
