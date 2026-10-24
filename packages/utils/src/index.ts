@@ -414,3 +414,9 @@ export function igdbImageUrl(
 
 export * from "./gamification";
 
+// ---------------------------------------------------------------------------
+// PC specifications + compatibility
+// ---------------------------------------------------------------------------
+
+export * from "./pc";
+

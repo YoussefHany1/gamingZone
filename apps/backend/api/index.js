@@ -5,6 +5,8 @@ import { unixDaysAgo, unixDaysFromNow, unixMonthsAgo, unixNow, unixYearsAgo } fr
 import { AppError, callIgdb, getAppToken, asyncRoute } from './igdbClient.js';
 import { registerLinkedAccountRoutes } from './linkedAccounts.js';
 import { registerDiscordAuthRoutes } from './discordAuth.js';
+import { registerAccountDeletionRoutes } from './accountDeletion.js';
+import { registerPcRequirementsRoutes } from './pcRequirements.js';
 const app = express();
 
 app.use(cors());
@@ -1389,6 +1391,12 @@ registerLinkedAccountRoutes(app, { AppError, asyncRoute, callIgdb });
 // Discord sign-in (OAuth on the backend → one-time code → Firebase custom token)
 registerDiscordAuthRoutes(app, { AppError, asyncRoute });
 
+// Account deletion (Admin SDK cleanup of every user-owned document)
+registerAccountDeletionRoutes(app, { AppError, asyncRoute });
+
+// Batch Steam PC requirements for game cards
+registerPcRequirementsRoutes(app, { AppError, asyncRoute, callIgdb });
+
 // invalid route handler (404)
 app.get('*', (req, res) => {
   res.redirect('https://play.google.com/store/apps/details?id=com.yh.gamingzone');
@@ -1409,6 +1417,9 @@ app.use((err, req, res, _next) => {
       status >= 500
         ? 'An error occurred on the server while fetching data. Please try again later.'
         : err.message,
+    // Optional machine-readable discriminator (e.g. `requires_recent_login`);
+    // absent for every existing error, so old responses are unchanged.
+    ...(err.code ? { code: err.code } : {}),
   });
 });
 

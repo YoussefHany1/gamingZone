@@ -16,6 +16,7 @@ export type SettingsMenuListProps = {
   isRtl: boolean;
 };
 
+/** @deprecated Use SettingsActionButton. */
 export type SettingsSignOutButtonProps = {
   label: string;
   onPress: () => void;

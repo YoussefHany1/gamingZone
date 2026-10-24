@@ -42,16 +42,30 @@ function waitForAuthUser(authModule: {
   });
 }
 
+/** Options for {@link getBackendIdToken}. */
+export type BackendIdTokenOptions = {
+  /**
+   * Forces a network refresh so the backend sees the current token — and with
+   * it the current `auth_time`. Required right after a re-authentication,
+   * because a cached token would still carry the old sign-in time.
+   */
+  forceRefresh?: boolean;
+};
+
 /** Returns a valid, capped Firebase ID token for backend auth. */
-export async function getBackendIdToken(): Promise<string | null> {
+export async function getBackendIdToken({
+  forceRefresh = false,
+}: BackendIdTokenOptions = {}): Promise<string | null> {
   try {
     const { default: auth } = await import("@react-native-firebase/auth");
     const user = auth().currentUser ?? (await waitForAuthUser(auth));
     if (!user) {
-      logger.warn("[authToken] getBackendIdToken: no auth().currentUser — user not signed in");
+      logger.warn(
+        "[authToken] getBackendIdToken: no auth().currentUser — user not signed in",
+      );
       return null;
     }
-    return await user.getIdToken();
+    return await user.getIdToken(forceRefresh);
   } catch (error: unknown) {
     logger.error("[authToken] getBackendIdToken failed", error as Error);
     return null;

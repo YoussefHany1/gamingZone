@@ -12,3 +12,4 @@ export { default } from "./client";
 export * from "./igdbApi";
 export * from "./steamApi";
 export * from "./cheapSharkApi";
+export * from "./pcRequirementsApi";

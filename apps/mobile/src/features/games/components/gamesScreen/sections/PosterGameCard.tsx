@@ -10,6 +10,8 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { CoverImage } from "./CoverImage";
 import type { GamesStackParamList } from "../../../types";
 import type { Game } from "@/src/types/sharedTypes";
+import { usePcCompatibility } from "@/src/features/pcSpecs/hooks/usePcCompatibility";
+import PcQualityBadge from "@/src/features/pcSpecs/components/PcQualityBadge";
 
 /**
  * The unified poster card of the games feed — Phase 4's one true merge:
@@ -48,6 +50,7 @@ const CARD_MARGIN = 5;
 const PosterGameCard = React.memo<PosterGameCardProps>(
   ({ item, index, statIconVariant = "star", deriveRecyclingKey = false, centerStatItems = false }) => {
     const colors = useThemeColors();
+    const compatibility = usePcCompatibility(item.id, item.first_release_date);
     const styles = useThemeStyles((c) => ({
       gameCard: {
         width: CARD_WIDTH,
@@ -131,6 +134,13 @@ const PosterGameCard = React.memo<PosterGameCardProps>(
             colors={["transparent", colors.backgroundDeep]}
             style={styles.coverGradient}
           />
+          {compatibility?.quality && (
+            <PcQualityBadge
+              quality={compatibility.quality}
+              compact
+              style={{ top: 8, right: 8 }}
+            />
+          )}
           {rank !== null && (
             <View style={styles.trendBadge}>
               <CustomText style={styles.trendRank}>#{rank}</CustomText>

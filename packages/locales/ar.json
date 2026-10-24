@@ -39,6 +39,13 @@
       "subtitle": "جارٍ تنزيل التحسينات...",
       "footer": "يُرجى الانتظار، سيُعاد تشغيل التطبيق تلقائياً"
     },
+    "authPrompt": {
+      "title": "سجّل الدخول لحفظ تقدمك",
+      "message": "أنت تتصفح كضيف. أنشئ حسابًا أو سجّل الدخول لمزامنة ألعابك وقوائمك وإنجازاتك والمزيد.",
+      "signIn": "تسجيل الدخول",
+      "signUp": "إنشاء حساب",
+      "dontShowAgain": "لا تظهر لي هذا مجددًا"
+    },
     "back": "رجوع",
     "pullToRefresh": "اسحب لأسفل للمحاولة مرة أخرى",
     "clearSearch": "مسح البحث",
@@ -149,7 +156,8 @@
       "accountSettings": "إعدادات الحساب",
       "gamesList": "قائمة ألعابي",
       "myLists": "قوائمي",
-      "profile": "ملفي الشخصي"
+      "profile": "ملفي الشخصي",
+      "pcSpecs": "جهازي"
     }
   },
   "home": {
@@ -429,7 +437,26 @@
       "unsubscribed": "تم إلغاء التنبيه لصدور هذه اللعبة",
       "backToGames": "العودة إلى الألعاب",
       "specifications": "المواصفات",
-      "closePlayer": "إغلاق المشغّل"
+      "closePlayer": "إغلاق المشغّل",
+      "compatibility": {
+        "title": "توافق الجهاز",
+        "noSpecs": "أضف مواصفات جهازك من الإعدادات ← جهازي لرؤية التقدير.",
+        "noData": "لا توجد متطلبات لهذا اللعبة.",
+        "bottleneck": "عنق الزجاجة: {{part}}",
+        "approximate": "بعض المتطلبات تمت مطابقتها تقريبياً.",
+        "estimate": "تقدير عند 1080p؛ نقص المساحة تحذير فقط.",
+        "parts": {
+          "cpu": "المعالج",
+          "gpu": "كرت الشاشة",
+          "ram": "الذاكرة",
+          "storage": "التخزين"
+        },
+        "status": {
+          "meets": "متوافق",
+          "below": "أقل من المطلوب",
+          "unknown": "غير معروف"
+        }
+      }
     },
     "filter": {
       "title": "تصفية الألعاب",
@@ -604,6 +631,7 @@
     "currentLang": "العربية",
     "menu": {
       "notifications": "إعدادات الإشعارات",
+      "myPc": "جهازي",
       "myLists": "قوائمي",
       "rateUs": "قيمنا",
       "inviteFriends": "دعوة الأصدقاء",
@@ -837,7 +865,31 @@
       "appConfigVersion": "إصدار إعدادات التطبيق: {{value}}",
       "notDefined": "غير محدد",
       "runningNativeBuild": "يعمل بنسخة أصلية"
-    }
+    },
+    "deleteAccount": {
+      "delete": "حذف الحساب",
+      "confirmTitle": "حذف الحساب",
+      "confirmMessage": "هذا الإجراء نهائي ولا يمكن التراجع عنه. سيتم حذف جميع بياناتك.",
+      "errorTitle": "خطأ",
+      "errorMessage": "فشل حذف حسابك. يرجى المحاولة مرة أخرى.",
+      "reauthTitle": "تأكيد هويتك",
+      "reauthMessage": "لأسباب أمنية، يرجى تأكيد هويتك قبل حذف حسابك.",
+      "passwordPlaceholder": "أدخل كلمة المرور",
+      "verifyAndDelete": "تأكيد وحذف",
+      "verifyWithGoogle": "التأكيد باستخدام Google",
+      "verifyWithDiscord": "التأكيد باستخدام Discord",
+      "discordAlternative": "سجّلت باستخدام Discord؟ أكّد باستخدام Discord",
+      "passwordRequired": "يرجى إدخال كلمة المرور.",
+      "wrongPassword": "كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.",
+      "reauthFailed": "فشل التحقق. يرجى المحاولة مرة أخرى.",
+      "reauthExpired": "جلستك قديمة جدًا. يرجى المحاولة مرة أخرى.",
+      "googleAccountMismatch": "حساب Google هذا لا يطابق هذا الحساب. يرجى اختيار الحساب الصحيح.",
+      "discordAccountMismatch": "حساب Discord هذا لا يطابق هذا الحساب.",
+      "googleUnavailable": "خدمات Google Play غير متوفرة على هذا الجهاز.",
+      "discordUnavailable": "التحقق عبر Discord غير متوفر حاليًا.",
+      "discordFailed": "فشل التحقق عبر Discord. يرجى المحاولة مرة أخرى."
+    },
+    "developedBy": "تم التطوير بواسطة يوسف هاني"
   },
   "aiChat": {
     "title": "المساعد الذكي للألعاب (تجريبي)",
@@ -891,5 +943,42 @@
   },
   "notifications": {
     "newsChannelName": "إشعارات الأخبار"
+  },
+  "pcSpecs": {
+    "quality": {
+      "unsupported": "غير مدعوم",
+      "low": "منخفض",
+      "medium": "متوسط",
+      "high": "عالي",
+      "ultra": "فائق"
+    },
+    "badge": {
+      "estimate": "تقديري"
+    },
+    "sections": {
+      "hardware": "الأجهزة",
+      "ram": "الذاكرة",
+      "storage": "التخزين"
+    },
+    "placeholders": {
+      "cpu": "اختر المعالج",
+      "gpu": "اختر كرت الشاشة"
+    },
+    "storage": {
+      "free": "مساحة فارغة"
+    },
+    "actions": {
+      "save": "حفظ"
+    },
+    "hints": {
+      "estimate": "التقدير عند 1080p."
+    },
+    "picker": {
+      "searchPlaceholder": "ابحث عن القطع..."
+    },
+    "errors": {
+      "partsRequired": "اختر المعالج وكرت الشاشة",
+      "saveFailed": "فشل حفظ مواصفات الجهاز"
+    }
   }
 }

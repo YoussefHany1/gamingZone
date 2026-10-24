@@ -34,6 +34,13 @@
       "subtitle": "Estamos a preparar melhorias para si...",
       "footer": "Aguarde, a aplicação será reiniciada automaticamente"
     },
+    "authPrompt": {
+      "title": "Inicia sessão para guardar o teu progresso",
+      "message": "Estás a navegar como convidado. Cria uma conta ou inicia sessão para sincronizar os teus jogos, listas, conquistas e muito mais.",
+      "signIn": "Iniciar sessão",
+      "signUp": "Registar",
+      "dontShowAgain": "Não mostrar novamente"
+    },
     "time": {
       "d": "d",
       "h": "h",
@@ -837,7 +844,31 @@
       "appConfigVersion": "Versão da configuração: {{value}}",
       "notDefined": "Não definido",
       "runningNativeBuild": "A executar build nativo"
-    }
+    },
+    "deleteAccount": {
+      "delete": "Eliminar conta",
+      "confirmTitle": "Eliminar conta",
+      "confirmMessage": "Esta ação é permanente e não pode ser anulada. Todos os seus dados serão eliminados.",
+      "errorTitle": "Erro",
+      "errorMessage": "Falha ao eliminar a sua conta. Tente novamente.",
+      "reauthTitle": "Verifique se é você",
+      "reauthMessage": "Por segurança, confirme que é você antes de eliminar a sua conta.",
+      "passwordPlaceholder": "Introduza a sua palavra-passe",
+      "verifyAndDelete": "Verificar e eliminar",
+      "verifyWithGoogle": "Verificar com Google",
+      "verifyWithDiscord": "Verificar com Discord",
+      "discordAlternative": "Registou-se com Discord? Verifique com Discord",
+      "passwordRequired": "Introduza a sua palavra-passe.",
+      "wrongPassword": "Palavra-passe incorreta. Tente novamente.",
+      "reauthFailed": "A verificação falhou. Tente novamente.",
+      "reauthExpired": "A sua sessão ainda é demasiado antiga. Tente novamente.",
+      "googleAccountMismatch": "Essa conta Google não corresponde a esta conta. Escolha a correta.",
+      "discordAccountMismatch": "Essa conta Discord não corresponde a esta conta.",
+      "googleUnavailable": "O Google Play Services não está disponível neste dispositivo.",
+      "discordUnavailable": "A verificação com Discord não está disponível de momento.",
+      "discordFailed": "A verificação com Discord falhou. Tente novamente."
+    },
+    "developedBy": "Desenvolvido por Youssef Hany"
   },
   "aiChat": {
     "title": "Assistente de gaming (beta)",

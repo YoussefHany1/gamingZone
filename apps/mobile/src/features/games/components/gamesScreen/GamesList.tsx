@@ -20,6 +20,8 @@ import type { Game } from "@/src/types/sharedTypes";
 import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import { searchGames } from "@/src/services/api/igdbApi";
+import { usePcCompatibility } from "@/src/features/pcSpecs/hooks/usePcCompatibility";
+import PcQualityBadge from "@/src/features/pcSpecs/components/PcQualityBadge";
 
 const CARD_HEIGHT = 270;
 const CARD_WIDTH = 160;
@@ -62,6 +64,7 @@ async function fetchSearchResults(
 // Game Card
 
 const GameCard = React.memo<GameCardProps>(({ item }) => {
+  const compatibility = usePcCompatibility(item.id, item.first_release_date);
   const styles = useThemeStyles((c) => ({
     gameCard: {
       borderWidth: 1,
@@ -74,10 +77,16 @@ const GameCard = React.memo<GameCardProps>(({ item }) => {
       height: CARD_HEIGHT,
       width: CARD_WIDTH,
     },
-    cover: {
+    coverWrapper: {
       width: 140,
       height: 190,
+      position: "relative",
+      overflow: "hidden",
       borderRadius: 10,
+    },
+    cover: {
+      width: "100%",
+      height: "100%",
       backgroundColor: c.accent,
     },
     gameType: {
@@ -132,25 +141,34 @@ const GameCard = React.memo<GameCardProps>(({ item }) => {
       accessibilityRole="button"
       accessibilityLabel={item.name}
     >
-      <Image
-        source={
-          item.cover
-            ? {
-                uri: igdbImageUrl(item.cover.image_id, "cover_big"),
-              }
-            : require("@/assets/image-not-found.webp")
-        }
-        style={styles.cover}
-        contentFit="cover"
-        cachePolicy="memory-disk"
-        recyclingKey={item.cover?.image_id || item.id.toString()}
-      />
-      {shouldShowLabel && <CustomText style={styles.gameType}>{t(labelKey)}</CustomText>}
-      {item.total_rating != null && (
-        <CustomText style={[styles.rating, getRatingStyle(item.total_rating / 10)]}>
-          {Math.round(item.total_rating) / 10}
-        </CustomText>
-      )}
+      <View style={styles.coverWrapper}>
+        <Image
+          source={
+            item.cover
+              ? {
+                  uri: igdbImageUrl(item.cover.image_id, "cover_big"),
+                }
+              : require("@/assets/image-not-found.webp")
+          }
+          style={styles.cover}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          recyclingKey={item.cover?.image_id || item.id.toString()}
+        />
+        {shouldShowLabel && <CustomText style={styles.gameType}>{t(labelKey)}</CustomText>}
+        {compatibility?.quality && (
+          <PcQualityBadge
+            quality={compatibility.quality}
+            compact
+            style={{ bottom: 6, left: 6 }}
+          />
+        )}
+        {item.total_rating != null && (
+          <CustomText style={[styles.rating, getRatingStyle(item.total_rating / 10)]}>
+            {Math.round(item.total_rating) / 10}
+          </CustomText>
+        )}
+      </View>
       <CustomText style={styles.title} numberOfLines={2}>
         {item.name}
       </CustomText>

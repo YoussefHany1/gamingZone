@@ -1,6 +1,4 @@
-import striptags from 'striptags';
-import he from 'he';
-
+import { cleanDescription, normalizeText } from './clean';
 import {
   extractThumbnail,
   generateDocId,
@@ -106,7 +104,7 @@ function getItemLink(item: RssItem, sourceUrl: string): string | null {
   return getLinkFromValue(item.guid, sourceUrl);
 }
 
-function getDescription(item: RssItem): string {
+function getDescription(item: RssItem, title: string): string {
   const candidates = [
     item['content:encoded'],
     item.content_html,
@@ -119,7 +117,7 @@ function getDescription(item: RssItem): string {
   let description = '';
 
   for (const candidate of candidates) {
-    const text = cleanHtmlText(candidate);
+    const text = cleanDescription(candidate, { title });
     if (text.length > description.length) description = text;
   }
 
@@ -183,7 +181,7 @@ function createNormalizedArticle(
   const title = firstText([item.title, item.name, item.headline]);
   if (!title) return null;
 
-  const description = getDescription(item);
+  const description = getDescription(item, title);
   const identity = getIdentity(item, link);
 
   return {
@@ -203,26 +201,7 @@ function normalizeJsonItems(data: unknown, sourceUrl: string): NormalizedArticle
     .filter((item): item is NormalizedArticle => item !== null);
 }
 
-function cleanHtmlText(html: unknown): string {
-  const text = getTextValue(html);
-  if (!text) return '';
-
-  const structured = text
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|h[1-6]|li|tr|th|td|ul|ol|blockquote)>/gi, '\n\n')
-    .replace(/<(p|div|h[1-6]|li|tr|th|td|ul|ol|blockquote)[^>]*>/gi, '\n\n');
-
-  return normalizeText(he.decode(striptags(structured)));
-}
-
-export function normalizeText(text: string): string {
-  return text
-    .replace(/\r\n?/g, '\n')
-    .replace(/ *\n */g, '\n')
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
+export { normalizeText } from './clean';
 
 function normalizeXmlItems(parsedData: unknown, sourceUrl: string): NormalizedArticle[] {
   const root = asRecord(parsedData);

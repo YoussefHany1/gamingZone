@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from "react";
-import { ScrollView } from "react-native";
+import { ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
@@ -7,12 +7,16 @@ import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useBottomInset } from "@/src/hooks/useBottomInset";
 import { useAuthStore } from "@/src/store/useAuthStore";
+import CustomText from "@/src/components/CustomText";
+import { openLink } from "@/src/lib/browser";
 import SettingsMenuList from "../components/settings/SettingsMenuList";
-import SettingsSignOutButton from "../components/settings/SettingsSignOutButton";
+import SettingsActionButton from "../components/settings/SettingsSignOutButton";
 import SettingsUserCard from "../components/settings/SettingsUserCard";
 import { useSettingsMenuItems } from "../hooks/useSettingsMenuItems";
 import { useSignOut } from "../hooks/useSignOut";
 import type { SettingsNavProp } from "../types";
+
+const GITHUB_PROFILE_URL = "https://github.com/YoussefHany1";
 
 const SettingsScreen = memo((): React.ReactElement => {
   const bottomInset = useBottomInset();
@@ -25,6 +29,17 @@ const SettingsScreen = memo((): React.ReactElement => {
       },
       scrollContent: {
         paddingBottom: bottomInset,
+      },
+      footer: {
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 20,
+      },
+      developerText: {
+        fontSize: 12,
+        fontWeight: "500",
+        color: c.textMuted,
+        textAlign: "center",
       },
     }),
     [bottomInset],
@@ -45,8 +60,12 @@ const SettingsScreen = memo((): React.ReactElement => {
     navigation.navigate(isGuest ? "Auth" : "Profile");
   }, [isGuest, navigation]);
 
+  const handleDeveloperPress = useCallback((): void => {
+    void openLink(GITHUB_PROFILE_URL);
+  }, []);
+
   return (
-    <SafeAreaView style={styles.container} >
+    <SafeAreaView style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -64,11 +83,24 @@ const SettingsScreen = memo((): React.ReactElement => {
         <SettingsMenuList items={menuItems} isRtl={isRtl} />
 
         {!isGuest && (
-          <SettingsSignOutButton
+          <SettingsActionButton
             label={t("settings.menu.signOut")}
             onPress={confirmSignOut}
+            variant="signOut"
           />
         )}
+
+        <TouchableOpacity
+          style={styles.footer}
+          onPress={handleDeveloperPress}
+          activeOpacity={0.7}
+          accessibilityRole="link"
+          accessibilityLabel={t("settings.developedBy")}
+        >
+          <CustomText style={styles.developerText}>
+            {t("settings.developedBy")}
+          </CustomText>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

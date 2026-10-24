@@ -41,6 +41,7 @@ import {
   ThemeScreen,
   ContactScreen,
 } from "@/src/features/settings";
+import PcSpecsScreen from "@/src/features/pcSpecs/screens/PcSpecsScreen";
 import { UserGamesScreen, UserListsScreen } from "@/src/features/lists";
 import { AchievementsScreen } from "@/src/features/gamification";
 import { AIChatScreen } from "@/src/features/ai";
@@ -86,6 +87,7 @@ export type SettingsStackParamList = {
   ContactScreen: undefined;
   UserListsScreen: undefined;
   Achievements: undefined;
+  PcSpecs: undefined;
 };
 
 export type MainTabParamList = {
@@ -239,6 +241,7 @@ const SettingsStack = memo(() => {
       contact: { title: t("settings.contact.title") },
       userLists: { title: t("navigation.titles.myLists") },
       achievements: { title: t("gamification.achievementsTitle") },
+      pcSpecs: { title: t("navigation.titles.pcSpecs") },
     }),
     [t],
   );

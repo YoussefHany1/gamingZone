@@ -33,3 +33,5 @@ export type VerifyEmailModalProps = {
   onResend: () => void;
   onSkip: () => void;
 };
+
+

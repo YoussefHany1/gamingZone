@@ -7,7 +7,7 @@ import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import CustomText from "./CustomText";
 import Svg, { Path } from "react-native-svg";
-import { ContactScreen } from "@/src/features/settings";
+import ContactScreen from "@/src/features/settings/screens/ContactScreen";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

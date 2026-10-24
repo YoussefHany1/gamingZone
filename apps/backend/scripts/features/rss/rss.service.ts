@@ -9,6 +9,7 @@ import { sha1Id } from '../../lib/hash';
 import { getErrorMessage } from '../../lib/errors';
 import { ANDROID_CHANNEL_ID, buildTopicPush, sendTopicPush } from '../../lib/fcm';
 
+import { buildPushTitle, buildTeaser, cleanDescription } from './clean';
 import { safeId, resolveImageUrl } from './helpers';
 import { fetchFeed, fetchArticleData } from './fetch';
 import { normalizeItems, NormalizedArticle, FetchedContent } from './normalize';
@@ -125,7 +126,7 @@ function getStringValue(value: unknown): string | null {
 }
 
 async function sendNotifications(
-  articles: (NormalizedArticle & { topicName: string })[],
+  articles: (NormalizedArticle & { topicName: string; siteName: string })[],
   summary: RssSummary,
 ): Promise<void> {
   if (!articles.length) return;
@@ -144,8 +145,8 @@ async function sendNotifications(
           firebaseState,
           buildTopicPush({
             topic: article.topicName,
-            title: article.title.substring(0, 150),
-            body: article.description.substring(0, 150),
+            title: buildPushTitle(article.title, { siteName: article.siteName }),
+            body: buildTeaser(article.description, 150),
             image: imageLink,
             channelId: ANDROID_CHANNEL_ID.NEWS,
             data: {
@@ -224,7 +225,7 @@ async function createArticle(sourceData: SourceData, item: NormalizedArticle): P
   const payload = {
     title: item.title,
     link: item.link,
-    description: fullDescription || item.description,
+    description: cleanDescription(fullDescription || item.description, { title: item.title }),
     pubDate,
     thumbnail: item.thumbnail || null,
     guid: String(item.guid || item.link),
@@ -451,7 +452,7 @@ async function processSource(
       logger.info(`   🚀 Saved and queued ${createdItems.length} new articles.`);
       if (options.notify !== false) {
         await sendNotifications(
-          createdItems.map((item) => ({ ...item, topicName })),
+          createdItems.map((item) => ({ ...item, topicName, siteName: name })),
           summary,
         );
       }

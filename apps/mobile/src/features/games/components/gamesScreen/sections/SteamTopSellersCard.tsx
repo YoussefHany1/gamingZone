@@ -10,6 +10,8 @@ import { useThemeStore } from "@/src/store/useThemeStore";
 import { CoverImage } from "./CoverImage";
 import type { GamesStackParamList } from "../../../types";
 import type { Game } from "@/src/types/sharedTypes";
+import { usePcCompatibility } from "@/src/features/pcSpecs/hooks/usePcCompatibility";
+import PcQualityBadge from "@/src/features/pcSpecs/components/PcQualityBadge";
 
 export type SteamTopSellersCardProps = {
   item: Game;
@@ -49,6 +51,7 @@ const getReviewLabel = (rating: number): { label: string; color: string } => {
  */
 const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(({ item, index }) => {
   const colors = useThemeColors();
+  const compatibility = usePcCompatibility(item.id, item.first_release_date);
   const styles = useThemeStyles((c) => ({
     gameCard: {
       width: CARD_WIDTH,
@@ -182,6 +185,14 @@ const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(({ item, index 
           colors={["transparent", STEAM_CARD_BG]}
           style={styles.coverGradient}
         />
+
+        {compatibility?.quality && (
+          <PcQualityBadge
+            quality={compatibility.quality}
+            compact
+            style={{ top: 6, left: 6 }}
+          />
+        )}
 
         {/* Rank badge — Steam "Top Seller" ribbon style */}
         <View style={[styles.rankBadge, isTopThree && styles.rankBadgeGold]}>

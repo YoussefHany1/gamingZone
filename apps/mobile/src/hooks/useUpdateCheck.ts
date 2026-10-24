@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Alert, Linking } from "react-native";
+import { Alert, Linking, Platform } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { storage } from "../lib/storage";
 import Constants from "expo-constants";
@@ -13,10 +13,15 @@ import { logger } from "@/src/lib/logger";
 // Constants
 // ---------------------------------------------------------------------------
 
-const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.yh.gamingzone";
+const PLAY_STORE_PACKAGE = "com.yh.gamingzone";
 
-const PLAY_STORE_API_URL =
-  "https://play.google.com/store/apps/details?id=com.yh.gamingzone&hl=en&gl=US";
+/** Opens the Play Store app directly when installed. */
+const PLAY_STORE_MARKET_URL = `market://details?id=${PLAY_STORE_PACKAGE}`;
+
+/** Browser fallback for devices without the Play Store app. */
+const PLAY_STORE_WEB_URL = `https://play.google.com/store/apps/details?id=${PLAY_STORE_PACKAGE}`;
+
+const PLAY_STORE_API_URL = `https://play.google.com/store/apps/details?id=${PLAY_STORE_PACKAGE}&hl=en&gl=US`;
 
 /** AsyncStorage key prefix — keyed per version so alerts reset on each new local build. */
 const SHOWN_KEY_PREFIX = "update_alert_shown_v";
@@ -67,7 +72,11 @@ async function fetchLatestVersion(): Promise<string | null> {
       clearTimeout(timeoutId);
     }
 
-    // Primary pattern: ,"1.0.3"]
+    // Current Play Store payload: "141":[[["1.0.3"]]]
+    const keyed = html.match(/"141":\[\[\["(\d+\.\d+(?:\.\d+)*)"\]\]/);
+    if (keyed?.[1]) return keyed[1];
+
+    // Older payload: ,"1.0.3"]
     const primary = html.match(/",\["(\d+\.\d+(?:\.\d+)*)"\]/);
     if (primary?.[1]) return primary[1];
 
@@ -78,6 +87,17 @@ async function fetchLatestVersion(): Promise<string | null> {
     return null;
   } catch {
     return null;
+  }
+}
+
+/** Opens the Play Store listing, preferring the native app. */
+async function openPlayStore(): Promise<void> {
+  try {
+    await Linking.openURL(PLAY_STORE_MARKET_URL);
+  } catch {
+    await Linking.openURL(PLAY_STORE_WEB_URL).catch(() => {
+      // Both intents failed — nothing else we can do.
+    });
   }
 }
 
@@ -94,6 +114,9 @@ const useUpdateCheck = (): void => {
   tRef.current = t;
 
   useEffect(() => {
+    // The update source is the Google Play listing, so skip on other platforms.
+    if (Platform.OS !== "android") return;
+
     const checkForUpdate = async (): Promise<void> => {
       try {
         const currentVersion = Constants.expoConfig?.version ?? "0.0.0";
@@ -116,7 +139,7 @@ const useUpdateCheck = (): void => {
             { text: tRef.current("common.updateAlert.later"), style: "cancel" },
             {
               text: tRef.current("common.updateAlert.updateNow"),
-              onPress: () => Linking.openURL(PLAY_STORE_URL),
+              onPress: () => void openPlayStore(),
             },
           ],
           { cancelable: true },

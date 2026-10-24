@@ -39,6 +39,13 @@
       "subtitle": "We're downloading improvements for you...",
       "footer": "Please wait, the app will restart automatically"
     },
+    "authPrompt": {
+      "title": "Sign in to save your progress",
+      "message": "You're browsing as a guest. Create an account or sign in to sync your games, lists, achievements and more.",
+      "signIn": "Sign In",
+      "signUp": "Sign Up",
+      "dontShowAgain": "Don't show me this again"
+    },
     "back": "Back",
     "pullToRefresh": "Pull down to try again",
     "clearSearch": "Clear search",
@@ -149,7 +156,8 @@
       "accountSettings": "Account Settings",
       "gamesList": "My Games List",
       "myLists": "My Lists",
-      "profile": "My Profile"
+      "profile": "My Profile",
+      "pcSpecs": "My PC"
     }
   },
   "home": {
@@ -429,7 +437,26 @@
       "unsubscribed": "You have unsubscribed from release notifications for this game",
       "backToGames": "Back to Games",
       "specifications": "Specifications",
-      "closePlayer": "Close player"
+      "closePlayer": "Close player",
+      "compatibility": {
+        "title": "PC Compatibility",
+        "noSpecs": "Add your PC specs in Settings → My PC to see an estimate.",
+        "noData": "No requirements found for this game.",
+        "bottleneck": "Bottleneck: {{part}}",
+        "approximate": "Some requirements were matched approximately.",
+        "estimate": "Estimate at 1080p; storage shortfall is a warning.",
+        "parts": {
+          "cpu": "CPU",
+          "gpu": "GPU",
+          "ram": "RAM",
+          "storage": "Storage"
+        },
+        "status": {
+          "meets": "Meets",
+          "below": "Below",
+          "unknown": "Unknown"
+        }
+      }
     },
     "filter": {
       "title": "Filter Games",
@@ -604,6 +631,7 @@
     "currentLang": "English",
     "menu": {
       "notifications": "Notification Settings",
+      "myPc": "My PC",
       "myLists": "My Lists",
       "rateUs": "Rate Us",
       "inviteFriends": "Invite Friends",
@@ -837,7 +865,31 @@
       "appConfigVersion": "App Config Version: {{value}}",
       "notDefined": "Not Defined",
       "runningNativeBuild": "Running Native Build"
-    }
+    },
+    "deleteAccount": {
+      "delete": "Delete Account",
+      "confirmTitle": "Delete Account",
+      "confirmMessage": "This action is permanent and cannot be undone. All your data will be deleted.",
+      "errorTitle": "Error",
+      "errorMessage": "Failed to delete your account. Please try again.",
+      "reauthTitle": "Verify it's you",
+      "reauthMessage": "For your security, please confirm it's you before deleting your account.",
+      "passwordPlaceholder": "Enter your password",
+      "verifyAndDelete": "Verify and delete",
+      "verifyWithGoogle": "Verify with Google",
+      "verifyWithDiscord": "Verify with Discord",
+      "discordAlternative": "Signed up with Discord? Verify with Discord",
+      "passwordRequired": "Please enter your password.",
+      "wrongPassword": "Incorrect password. Please try again.",
+      "reauthFailed": "Verification failed. Please try again.",
+      "reauthExpired": "Your session is still too old. Please try again.",
+      "googleAccountMismatch": "That Google account doesn't match this account. Please choose the right one.",
+      "discordAccountMismatch": "That Discord account doesn't match this account.",
+      "googleUnavailable": "Google Play services are not available on this device.",
+      "discordUnavailable": "Discord verification is not available right now.",
+      "discordFailed": "Discord verification failed. Please try again."
+    },
+    "developedBy": "Developed By Youssef Hany"
   },
   "aiChat": {
     "title": "Gaming Assistant (Beta)",
@@ -891,5 +943,42 @@
   },
   "notifications": {
     "newsChannelName": "News Notifications"
+  },
+  "pcSpecs": {
+    "quality": {
+      "unsupported": "Unsupported",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "ultra": "Ultra"
+    },
+    "badge": {
+      "estimate": "Est."
+    },
+    "sections": {
+      "hardware": "Hardware",
+      "ram": "Memory",
+      "storage": "Storage"
+    },
+    "placeholders": {
+      "cpu": "Select CPU",
+      "gpu": "Select GPU"
+    },
+    "storage": {
+      "free": "Free storage"
+    },
+    "actions": {
+      "save": "Save"
+    },
+    "hints": {
+      "estimate": "Estimates are at 1080p."
+    },
+    "picker": {
+      "searchPlaceholder": "Search parts..."
+    },
+    "errors": {
+      "partsRequired": "Select CPU and GPU",
+      "saveFailed": "Failed to save PC specs"
+    }
   }
 }

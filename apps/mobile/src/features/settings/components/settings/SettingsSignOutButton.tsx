@@ -1,48 +1,60 @@
 import React, { memo } from "react";
 import { View, TouchableOpacity } from "react-native";
-import { LogOut } from "lucide-react-native";
+import { LogOut, Trash2 } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type { SettingsSignOutButtonProps } from "./types";
 
-/** Destructive sign-out row, shown only for signed-in (non-anonymous) users. */
-const SettingsSignOutButton = memo(
-  ({ label, onPress }: SettingsSignOutButtonProps): React.ReactElement => {
+export type SettingsActionButtonProps = {
+  label: string;
+  onPress: () => void;
+  variant?: "signOut" | "delete";
+};
+
+/** Destructive sign-out / delete-account row, shown only for signed-in (non-anonymous) users. */
+const SettingsActionButton = memo(
+  ({ label, onPress, variant = "signOut" }: SettingsActionButtonProps): React.ReactElement => {
+    const isDelete = variant === "delete";
     const styles = useThemeStyles(() => ({
-      signOutButton: {
+      button: {
         marginVertical: 10,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
         padding: 16,
-        backgroundColor: "rgba(221, 119, 119, 0.2)",
+        backgroundColor: isDelete
+          ? "rgba(220, 38, 38, 0.15)"
+          : "rgba(221, 119, 119, 0.2)",
         borderRadius: 12,
       },
-      signOutLeft: {
+      left: {
         flexDirection: "row",
         alignItems: "center",
         flex: 1,
       },
-      signOutIcon: {
+      icon: {
         marginRight: 8,
       },
-      signOutText: {
+      text: {
         fontSize: 18,
         fontWeight: "600",
-        color: "red",
+        color: isDelete ? "#dc2626" : "red",
       },
     }));
 
+    const Icon = isDelete ? Trash2 : LogOut;
+
     return (
-      <TouchableOpacity style={styles.signOutButton} onPress={onPress} activeOpacity={0.7}>
-        <View style={styles.signOutLeft}>
-          <LogOut size={20} color="red" style={styles.signOutIcon} />
-          <CustomText style={styles.signOutText}>{label}</CustomText>
+      <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.7}>
+        <View style={styles.left}>
+          <Icon size={20} color={isDelete ? "#dc2626" : "red"} style={styles.icon} />
+          <CustomText style={styles.text}>{label}</CustomText>
         </View>
       </TouchableOpacity>
     );
   },
 );
 
-SettingsSignOutButton.displayName = "SettingsSignOutButton";
-export default SettingsSignOutButton;
+SettingsActionButton.displayName = "SettingsActionButton";
+export { SettingsActionButton };
+export default SettingsActionButton;

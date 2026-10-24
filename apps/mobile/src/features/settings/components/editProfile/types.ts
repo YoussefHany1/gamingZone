@@ -1,5 +1,6 @@
 import type { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import type { PickerOption } from "@/src/types/sharedTypes";
+import type { ReauthMethod } from "@/src/features/settings/types";
 
 export type EditProfileAvatarProps = {
   imageUri: string | null;
@@ -44,4 +45,19 @@ export type ProfilePlatformSelectorProps = {
 
 export type SteamSyncButtonProps = {
   onPress: () => void;
+};
+
+export type ReauthModalProps = {
+  visible: boolean;
+  method: ReauthMethod;
+  password: string;
+  errorMessage: string | null;
+  isSubmitting: boolean;
+  /** Shows the Discord escape hatch for password accounts that were created with Discord. */
+  showDiscordAlternative: boolean;
+  onChangePassword: (value: string) => void;
+  onSubmitPassword: () => void;
+  onVerifyWithGoogle: () => void;
+  onVerifyWithDiscord: () => void;
+  onCancel: () => void;
 };

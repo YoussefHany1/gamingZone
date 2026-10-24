@@ -3,6 +3,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import {
   Bell,
+  Cpu,
   Languages,
   List,
   MessageSquare,
@@ -40,6 +41,12 @@ export function useSettingsMenuItems(): UseSettingsMenuItemsResult {
 
   const menuItems = useMemo<MenuItem[]>(
     () => [
+      {
+        id: "pcSpecs",
+        icon: Cpu,
+        label: t("settings.menu.myPc"),
+        onPress: () => navigation.navigate("PcSpecs"),
+      },
       {
         id: "lists",
         icon: List,

@@ -11,6 +11,7 @@ import { useVerifyEmail } from "./useVerifyEmail";
 import type { UseVerifyEmailResult } from "./useVerifyEmail";
 import { useCountryOptions } from "./useCountryOptions";
 import type { AuthNavigationProp, AuthPickerOption, Gender } from "../types";
+import { useAuthStore } from "@/src/store/useAuthStore";
 import { logger } from "@/src/lib/logger";
 
 export type UseRegisterFormParams = {
@@ -52,6 +53,7 @@ export function useRegisterForm({
   const [isLoading, setIsLoading] = useState(false);
   const messages = useAuthErrorMessages();
   const { country, setCountry, countriesList } = useCountryOptions();
+  const refreshUser = useAuthStore((state) => state.refreshUser);
 
   const goToApp = useCallback(() => {
     navigation.replace("MainApp");
@@ -100,6 +102,10 @@ export function useRegisterForm({
 
       await user.updateProfile({ displayName: name });
 
+      // updateProfile only emits `onUserChanged`, not `onAuthStateChanged`, so
+      // the store's snapshot keeps the old (empty) displayName until refreshed.
+      refreshUser();
+
       // Send email verification
       try {
         await user.sendEmailVerification();
@@ -115,6 +121,7 @@ export function useRegisterForm({
         country,
         gender,
         photoURL: null,
+        phoneNumber: null,
         createdAt: firestore.FieldValue.serverTimestamp(),
         platform: "",
         dob: "",
@@ -132,7 +139,18 @@ export function useRegisterForm({
     } finally {
       setIsLoading(false);
     }
-  }, [email, password, name, country, gender, t, validatePassword, messages, openVerification]);
+  }, [
+    email,
+    password,
+    name,
+    country,
+    gender,
+    t,
+    validatePassword,
+    messages,
+    openVerification,
+    refreshUser,
+  ]);
 
   const handleGooglePress = useGoogleAuth({
     isLoading,

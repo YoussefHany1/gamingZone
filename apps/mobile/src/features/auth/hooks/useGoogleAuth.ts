@@ -1,18 +1,9 @@
 import { useCallback } from "react";
 import auth from "@react-native-firebase/auth";
-import {
-  GoogleSignin,
-  statusCodes,
-} from "@react-native-google-signin/google-signin";
-import Constants from "expo-constants";
+import { GoogleSignin, statusCodes } from "@/src/features/auth/lib/googleSignIn";
 import { useTranslation } from "react-i18next";
 import { logger } from "@/src/lib/logger";
 import { showToast } from "@/src/lib/toast";
-
-// Configure once at module load — shared by every auth screen that imports
-// this hook (previously duplicated in Login and Register).
-const { GOOGLE_WEB_CLIENT_ID } = Constants.expoConfig?.extra ?? {};
-GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
 
 export type UseGoogleAuthParams = {
   isLoading: boolean;

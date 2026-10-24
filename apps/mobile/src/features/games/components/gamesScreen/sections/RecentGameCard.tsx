@@ -11,6 +11,8 @@ import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { CoverImage } from "./CoverImage";
 import type { Game } from "@/src/types/sharedTypes";
+import { usePcCompatibility } from "@/src/features/pcSpecs/hooks/usePcCompatibility";
+import PcQualityBadge from "@/src/features/pcSpecs/components/PcQualityBadge";
 
 export type RecentGameCardProps = {
   item: Game;
@@ -41,6 +43,7 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
   const navigation = useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
   const { t, i18n } = useTranslation();
   const colors = useThemeColors();
+  const compatibility = usePcCompatibility(item.id, item.first_release_date);
 
   const styles = useThemeStyles((c) => ({
     gameCard: {
@@ -137,6 +140,14 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
         {/* Cover + rating badge */}
         <View style={styles.coverContainer}>
           <CoverImage item={item} deriveRecyclingKey style={styles.cover} />
+
+          {compatibility?.quality && (
+            <PcQualityBadge
+              quality={compatibility.quality}
+              compact
+              style={{ top: 6, left: 6 }}
+            />
+          )}
 
           {item.total_rating != null && (
             <LinearGradient

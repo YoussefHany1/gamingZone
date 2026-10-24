@@ -8,14 +8,16 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import type {
   NavigationContainerRef,
   Theme,
-  LinkingOptions} from "@react-navigation/native";
+  LinkingOptions,
+} from "@react-navigation/native";
 import {
   NavigationContainer,
   DefaultTheme,
   DarkTheme,
-  getStateFromPath
+  getStateFromPath,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { usePcSpecsSync } from "./store/usePcSpecsSync";
 
 import analytics from "@react-native-firebase/analytics";
 import * as SplashScreen from "expo-splash-screen";
@@ -35,6 +37,7 @@ import useRateApp from "./hooks/useRateApp";
 import useUpdateCheck from "./hooks/useUpdateCheck";
 import useAppOpenSync from "./hooks/useAppOpenSync";
 import useOTAUpdate from "./hooks/useOTAUpdate";
+import { useAuthPrompt } from "./hooks/useAuthPrompt";
 import { MainAppTabs, AuthStack } from "./navigation/AppNavigator";
 import OnboardingScreen from "./features/onboarding/screens/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -165,6 +168,11 @@ const linking: LinkingOptions<any> = {
 
 SplashScreen.preventAutoHideAsync();
 
+function PcSpecsSyncRoot() {
+  usePcSpecsSync();
+  return null;
+}
+
 function App(): React.ReactElement | null {
   const [fontsLoaded, fontError] = useFonts(APP_FONTS);
 
@@ -287,6 +295,11 @@ function App(): React.ReactElement | null {
   useAppOpenSync(user);
 
   const otaState = useOTAUpdate();
+  const {
+    visible: showAuthPrompt,
+    dismiss: dismissAuthPrompt,
+    AuthPromptModal,
+  } = useAuthPrompt();
 
   const handleNavigationReady = useCallback(() => {
     routeNameRef.current = navigationRef.current?.getCurrentRoute()?.name;
@@ -349,6 +362,7 @@ function App(): React.ReactElement | null {
         <GestureHandlerRootView style={styles.container}>
           <StatusBar style={isDark ? "light" : "dark"} />
           <OfflineBanner />
+          <PcSpecsSyncRoot />
 
           <NavigationContainer
             ref={navigationRef}
@@ -371,6 +385,7 @@ function App(): React.ReactElement | null {
           <GamificationOverlay />
         </GestureHandlerRootView>
       </SafeAreaProvider>
+      <AuthPromptModal visible={showAuthPrompt} onDismiss={dismissAuthPrompt} />
     </ErrorBoundary>
   );
 }

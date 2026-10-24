@@ -21,7 +21,7 @@ interface Resources {
 }
 
 // Resources
-const resources: Resources = {
+const resources = {
   en: { translation: en },
   ar: { translation: ar },
   es: { translation: es },
@@ -29,7 +29,7 @@ const resources: Resources = {
   hi: { translation: hi },
   "pt-BR": { translation: ptBr },
   "pt-PT": { translation: ptPT },
-};
+} as unknown as Resources;
 
 // Language Detection
 // Restore the user-selected language first; fall back to the device RTL flag

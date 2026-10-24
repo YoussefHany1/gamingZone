@@ -10,6 +10,7 @@ import type { ChromeReleaseChannel } from 'puppeteer-core';
 import { withRetry } from '../../lib/http';
 import { fixArabHardwareEncoding } from './encoding';
 import { isBadImage } from './helpers';
+import { cleanDescription } from './clean';
 import { normalizeText } from './normalize';
 
 const parser = new xml2js.Parser({
@@ -117,7 +118,16 @@ async function extractDescriptionFromDoc(document: Document): Promise<string | n
     const { Readability } = await import('@mozilla/readability');
     const reader = new Readability(document);
     const article = reader.parse();
-    if (article?.textContent) return normalizeText(article.textContent);
+    const title = article?.title || document.title;
+    const contentHtml = article?.content;
+    if (contentHtml) {
+      const cleaned = cleanDescription(contentHtml, { title });
+      if (cleaned) return cleaned;
+    }
+    if (article?.textContent) {
+      const cleaned = cleanDescription(article.textContent, { title });
+      if (cleaned) return cleaned;
+    }
   } catch (error: unknown) {
     logger.debug(`Readability extraction failed: ${getErrorMessage(error)}`);
   }

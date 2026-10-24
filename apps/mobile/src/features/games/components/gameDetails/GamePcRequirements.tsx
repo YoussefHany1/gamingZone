@@ -6,14 +6,21 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useSharedStyles } from "./shared";
 import GamePcRequirementsSkeleton from "../../skeleton/gameDetails/GamePcRequirementsSkeleton";
+import GameCompatibilityCard from "./GameCompatibilityCard";
+import { usePcCompatibility } from "@/src/features/pcSpecs/hooks/usePcCompatibility";
+import { usePcSpecsStore } from "@/src/store/usePcSpecsStore";
 import type { GamePcRequirementsProps, PcRequirementsTab as Tab } from "../../types";
 
-const GamePcRequirements: React.FC<GamePcRequirementsProps> = ({
+const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; firstReleaseDate?: number | null }> = ({
   pcRequirements,
   pcReqLoading,
+  gameId,
+  firstReleaseDate,
 }) => {
   const sharedStyles = useSharedStyles();
   const colors = useThemeColors();
+  const specs = usePcSpecsStore((state) => state.specs);
+  const compatibility = usePcCompatibility(gameId ?? null, firstReleaseDate ?? null, pcRequirements);
   const styles = useThemeStyles((c) => ({
     wrapper: {
       marginTop: 20,
@@ -139,6 +146,7 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps> = ({
               </View>
             ))}
           </View>
+          <GameCompatibilityCard compatibility={compatibility} hasSpecs={!!specs} />
         </>
       )}
     </View>

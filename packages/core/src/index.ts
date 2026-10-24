@@ -95,6 +95,68 @@ export interface PcRequirements {
   recommended: SpecRow[];
 }
 
+// ---------------------------------------------------------------------------
+// PC specifications + estimated compatibility
+//
+// The user picks their parts from a curated catalog (see
+// `@gaming-zone/utils`); only the stable catalog ids are stored, so labels and
+// relative scores can improve without a data migration.
+// ---------------------------------------------------------------------------
+
+/** Estimated quality at 1080p. `unsupported` means the PC is below the minimum. */
+export type PcQuality = "unsupported" | "low" | "medium" | "high" | "ultra";
+
+export type PcPartKey = "cpu" | "gpu" | "ram" | "storage";
+
+export interface PcSpecs {
+  cpuId: string;
+  gpuId: string;
+  ramGb: number;
+  freeStorageGb: number;
+  /** Unix milliseconds; lets clients replace older local copies deterministically. */
+  updatedAt: number;
+}
+
+/**
+ * One relative-performance entry of the hardware catalog.
+ *
+ * `score` is a hand-curated 0–100 "1080p capability" index — comparable
+ * between CPUs and GPUs, but not a benchmark and not an FPS prediction.
+ */
+export interface PcCpu {
+  id: string;
+  label: string;
+  score: number;
+  /** Regex source matched against Steam's requirement text (case-insensitive). */
+  match: string;
+  /** Groups VRAM/clock variants of the same model line (e.g. "rtx-3060"). */
+  family?: string;
+  /** Extra search terms for the picker, beyond the label. */
+  aliases?: readonly string[];
+}
+
+export interface PcGpu extends PcCpu {
+  vramGb?: number;
+}
+
+/** How one part compares against Steam's requirement text. */
+export interface PcPartVerdict {
+  /** Steam's requirement value ("GTX 1060 6GB"), or null when not listed. */
+  required: string | null;
+  /** The user's part as displayed ("RTX 3060 12GB"). */
+  actual: string;
+  status: "meets" | "below" | "unknown";
+}
+
+export interface PcCompatibility {
+  quality: PcQuality;
+  parts: Record<PcPartKey, PcPartVerdict>;
+  /** The quality-limiting part, or null when no part is below its requirement. */
+  bottleneck: PcPartKey | null;
+  /** True when at least one requirement was inferred rather than catalog-exact. */
+  approximate: boolean;
+}
+
 export interface LangRow {
   name: string;
   Audio: boolean;

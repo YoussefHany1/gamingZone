@@ -132,7 +132,16 @@ export const useGameDetails = ({
 
   // ── Loaded independently of the main payload ─────────────────────────────
   const { rating, rateGame } = useGameRating(currentId, gameDataForList);
-  const { pcRequirements, pcReqLoading } = useGamePcRequirements(game?.websites);
+  const numericCurrentId =
+    typeof currentId === "number"
+      ? currentId
+      : typeof currentId === "string" && /^\d+$/.test(currentId)
+        ? Number(currentId)
+        : null;
+  const { pcRequirements, pcReqLoading } = useGamePcRequirements(
+    game?.websites,
+    numericCurrentId,
+  );
   const { storePrices, storePricesLoading } = useGameStorePrices(
     game?.name,
     game?.websites,

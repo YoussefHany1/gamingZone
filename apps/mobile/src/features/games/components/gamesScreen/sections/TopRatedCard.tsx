@@ -10,6 +10,8 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { CoverImage } from "./CoverImage";
 import type { GamesStackParamList } from "../../../types";
 import type { Game } from "@/src/types/sharedTypes";
+import { usePcCompatibility } from "@/src/features/pcSpecs/hooks/usePcCompatibility";
+import PcQualityBadge from "@/src/features/pcSpecs/components/PcQualityBadge";
 
 export type TopRatedCardProps = {
   item: Game;
@@ -45,6 +47,7 @@ const getMedalEmoji = (rank: number): string => {
 const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
   const navigation = useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
   const colors = useThemeColors();
+  const compatibility = usePcCompatibility(item.id, item.first_release_date);
 
   const styles = useThemeStyles((c) => ({
     cardBackground: { position: "absolute", width: "100%", height: "100%" },
@@ -205,6 +208,13 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
           colors={["transparent", colors.scrim]}
           style={styles.coverGradient}
         />
+        {compatibility?.quality && (
+          <PcQualityBadge
+            quality={compatibility.quality}
+            compact
+            style={{ top: 8, right: 8 }}
+          />
+        )}
       </View>
 
       {/* Game info */}

@@ -8,6 +8,8 @@ import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useSharedStyles } from "./shared";
 import type { GameHorizontalScrollProps } from "../../types";
+import { usePcCompatibility } from "@/src/features/pcSpecs/hooks/usePcCompatibility";
+import PcQualityBadge from "@/src/features/pcSpecs/components/PcQualityBadge";
 
 /** Returns the IGDB small cover URL for a given image_id. */
 const coverUrl = (imageId: string) => igdbImageUrl(imageId, "cover_small");
@@ -19,6 +21,7 @@ const HorizontalGameCard: React.FC<{
   accentColor: string;
 }> = memo(({ game, onPress, styles, accentColor }) => {
   const [loading, setLoading] = useState(true);
+  const compatibility = usePcCompatibility(game.id, game.first_release_date);
 
   return (
     <TouchableOpacity style={styles.card} onPress={() => onPress(game.id)}>
@@ -43,6 +46,13 @@ const HorizontalGameCard: React.FC<{
           <View style={styles.loaderOverlay} pointerEvents="none">
             <ActivityIndicator size="small" color={accentColor} />
           </View>
+        )}
+        {compatibility?.quality && (
+          <PcQualityBadge
+            quality={compatibility.quality}
+            compact
+            style={{ top: 6, right: 6 }}
+          />
         )}
       </View>
       <CustomText style={styles.gameName} numberOfLines={2}>

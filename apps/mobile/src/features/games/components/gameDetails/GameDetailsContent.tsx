@@ -226,6 +226,8 @@ const GameDetailsContent: React.FC<GameDetailsContentProps> = ({
         <GamePcRequirements
           pcRequirements={pcRequirements}
           pcReqLoading={pcReqLoading}
+          gameId={typeof currentId === "number" ? currentId : Number(currentId)}
+          firstReleaseDate={game?.first_release_date ?? null}
         />
 
         {/* Game series */}

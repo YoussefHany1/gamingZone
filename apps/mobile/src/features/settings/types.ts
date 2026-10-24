@@ -58,6 +58,9 @@ export type SteamWishlistResponse = {
 /** Platforms the user can link for library auto-imports. */
 export type LinkedAccountPlatform = "steam" | "psn" | "xbox";
 
+/** How the user chose to verify their identity before deleting their account. */
+export type ReauthMethod = "password" | "google" | "discord";
+
 /** Backend-driven lifecycle state shown in Settings (never a toast). */
 export type LinkedAccountStatus = "active" | "reauth_required" | "unlinked";
 
