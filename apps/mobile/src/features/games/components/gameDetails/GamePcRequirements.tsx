@@ -92,12 +92,38 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; 
   // Nothing to render while not loading and no data available
   if (!pcReqLoading && !pcRequirements) return null;
 
+  // Determine available tabs
+  const hasMin = (pcRequirements?.minimum?.length ?? 0) > 0;
+  const hasRec = (pcRequirements?.recommended?.length ?? 0) > 0;
+  const hasRtMin = ((pcRequirements as any)?.rtMinimum?.length ?? 0) > 0;
+  const hasRtUltra = ((pcRequirements as any)?.rtUltra?.length ?? 0) > 0;
+
+  // Adjust active tab if current is not available
+  let currentTab = activeTab;
+  if (currentTab === "min" && !hasMin) {
+    if (hasRec) currentTab = "rec";
+    else if (hasRtMin) currentTab = "rtmin";
+    else if (hasRtUltra) currentTab = "rtultra";
+  } else if (currentTab === "rec" && !hasRec) {
+    if (hasMin) currentTab = "min";
+    else if (hasRtMin) currentTab = "rtmin";
+    else if (hasRtUltra) currentTab = "rtultra";
+  } else if (currentTab === "rtmin" && !hasRtMin) {
+    if (hasMin) currentTab = "min";
+    else if (hasRec) currentTab = "rec";
+    else if (hasRtUltra) currentTab = "rtultra";
+  } else if (currentTab === "rtultra" && !hasRtUltra) {
+    if (hasMin) currentTab = "min";
+    else if (hasRec) currentTab = "rec";
+    else if (hasRtMin) currentTab = "rtmin";
+  }
+
   const activeRows =
-    activeTab === "min"
+    currentTab === "min"
       ? (pcRequirements?.minimum ?? [])
-      : activeTab === "rec"
+      : currentTab === "rec"
         ? (pcRequirements?.recommended ?? [])
-        : activeTab === "rtmin"
+        : currentTab === "rtmin"
           ? ((pcRequirements as any)?.rtMinimum ?? [])
           : ((pcRequirements as any)?.rtUltra ?? []);
 
@@ -113,49 +139,49 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; 
         <>
           {/* Min / Recommended / RT tabs */}
           <View style={styles.tabRow}>
-            {pcRequirements.minimum.length > 0 && (
+            {hasMin && (
               <TouchableOpacity
-                style={[styles.tab, activeTab === "min" && styles.tabActive]}
+                style={[styles.tab, currentTab === "min" && styles.tabActive]}
                 onPress={() => setActiveTab("min")}
               >
                 <CustomText
-                  style={[styles.tabText, activeTab === "min" && styles.tabTextActive]}
+                  style={[styles.tabText, currentTab === "min" && styles.tabTextActive]}
                 >
                   {t("games.details.minimum")}
                 </CustomText>
               </TouchableOpacity>
             )}
-            {pcRequirements.recommended.length > 0 && (
+            {hasRec && (
               <TouchableOpacity
-                style={[styles.tab, activeTab === "rec" && styles.tabActive]}
+                style={[styles.tab, currentTab === "rec" && styles.tabActive]}
                 onPress={() => setActiveTab("rec")}
               >
                 <CustomText
-                  style={[styles.tabText, activeTab === "rec" && styles.tabTextActive]}
+                  style={[styles.tabText, currentTab === "rec" && styles.tabTextActive]}
                 >
                   {t("games.details.recommended")}
                 </CustomText>
               </TouchableOpacity>
             )}
-            {(pcRequirements as any)?.rtMinimum?.length > 0 && (
+            {hasRtMin && (
               <TouchableOpacity
-                style={[styles.tab, activeTab === "rtmin" && styles.tabActive]}
+                style={[styles.tab, currentTab === "rtmin" && styles.tabActive]}
                 onPress={() => setActiveTab("rtmin")}
               >
                 <CustomText
-                  style={[styles.tabText, activeTab === "rtmin" && styles.tabTextActive]}
+                  style={[styles.tabText, currentTab === "rtmin" && styles.tabTextActive]}
                 >
                   {t("games.details.rtMinimum", { defaultValue: "RT Minimum" })}
                 </CustomText>
               </TouchableOpacity>
             )}
-            {(pcRequirements as any)?.rtUltra?.length > 0 && (
+            {hasRtUltra && (
               <TouchableOpacity
-                style={[styles.tab, activeTab === "rtultra" && styles.tabActive]}
+                style={[styles.tab, currentTab === "rtultra" && styles.tabActive]}
                 onPress={() => setActiveTab("rtultra")}
               >
                 <CustomText
-                  style={[styles.tabText, activeTab === "rtultra" && styles.tabTextActive]}
+                  style={[styles.tabText, currentTab === "rtultra" && styles.tabTextActive]}
                 >
                   {t("games.details.rtUltra", { defaultValue: "RT Ultra" })}
                 </CustomText>

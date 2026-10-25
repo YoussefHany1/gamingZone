@@ -276,25 +276,36 @@ export function parseSystemrequirements(wikitext) {
   
   // Look for alt templates or specific naming
   for (const t of parsed) {
-    const alt = (t.params.get('alt') || t.params.get('alttitle') || t.params.get('title') || '').toString().toLowerCase();
-    if (alt.includes('rt') && alt.includes('min')) {
+    const alt = (t.params.get('alt') || t.params.get('alttitle') || t.params.get('title') || t.params.get('name') || '').toString().toLowerCase();
+    if ((alt.includes('rt') && (alt.includes('min') || alt.includes('minimum') || alt.includes('medium'))) || alt.includes('ray tracing minimum') || alt.includes('rt minimum')) {
       rtMinimum = buildRows(t.params, 'min');
-      if (rtMinimum.length === 0) rtMinimum = buildRows(t.params, 'rec'); // sometimes uses rec prefix
+      if (rtMinimum.length === 0) rtMinimum = buildRows(t.params, 'rec');
+      if (rtMinimum.length === 0) rtMinimum = buildRows(t.params, 'rtmin');
     }
-    if ((alt.includes('rt') && alt.includes('ultra')) || alt.includes('ray tracing ultra')) {
+    if ((alt.includes('rt') && (alt.includes('ultra') || alt.includes('high'))) || alt.includes('ray tracing ultra') || alt.includes('rt ultra') || alt.includes('rt high')) {
       rtUltra = buildRows(t.params, 'rec');
       if (rtUltra.length === 0) rtUltra = buildRows(t.params, 'min');
+      if (rtUltra.length === 0) rtUltra = buildRows(t.params, 'rtultra');
     }
   }
   
   // Also check direct params like rtmin*/rtultra* in same template
   if (rtMinimum.length === 0) {
-    const rtMinTest = buildRows(windows.params, 'rtmin');
-    if (rtMinTest.length > 0) rtMinimum = rtMinTest;
+    rtMinimum = buildRows(windows.params, 'rtmin');
+    if (rtMinimum.length === 0) rtMinimum = buildRows(windows.params, 'rt_min');
   }
   if (rtUltra.length === 0) {
-    const rtUltraTest = buildRows(windows.params, 'rtultra');
-    if (rtUltraTest.length > 0) rtUltra = rtUltraTest;
+    rtUltra = buildRows(windows.params, 'rtultra');
+    if (rtUltra.length === 0) rtUltra = buildRows(windows.params, 'rt_ultra');
+  }
+  
+  // Check alt1/alt2 style params in main template
+  if (rtMinimum.length === 0) {
+    rtMinimum = buildRows(windows.params, 'alt1');
+  }
+  if (rtUltra.length === 0) {
+    rtUltra = buildRows(windows.params, 'alt2');
+    if (rtUltra.length === 0) rtUltra = buildRows(windows.params, 'alt3');
   }
 
   if (minimum.length === 0 && recommended.length === 0 && rtMinimum.length === 0 && rtUltra.length === 0) {
