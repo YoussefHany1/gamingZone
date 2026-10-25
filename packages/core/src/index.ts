@@ -93,6 +93,8 @@ export interface SpecRow {
 export interface PcRequirements {
   minimum: SpecRow[];
   recommended: SpecRow[];
+  rtMinimum?: SpecRow[];
+  rtUltra?: SpecRow[];
 }
 
 // ---------------------------------------------------------------------------

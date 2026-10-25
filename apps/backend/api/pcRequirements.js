@@ -11,7 +11,7 @@
  * compatibility scorer consumes.
  *
  * Response:
- *   { "<igdbId>": { minimum: Row[]|null, recommended: Row[]|null } | null }
+ *   { "<igdbId>": { minimum: Row[]|null, recommended: Row[]|null, rtMinimum?: Row[]|null, rtUltra?: Row[]|null } | null }
  * where Row = { label: string, value: string }.
  *
  * A key present with `null` means "no requirements found" and is cacheable.
@@ -268,6 +268,8 @@ export function registerPcRequirementsRoutes(app, { AppError, asyncRoute, callIg
               result[id] = {
                 minimum: rows.minimum.length > 0 ? rows.minimum : null,
                 recommended: rows.recommended.length > 0 ? rows.recommended : null,
+                ...(rows.rtMinimum && rows.rtMinimum.length > 0 ? { rtMinimum: rows.rtMinimum } : {}),
+                ...(rows.rtUltra && rows.rtUltra.length > 0 ? { rtUltra: rows.rtUltra } : {}),
               };
               writeCache(id, result[id], now);
             } else if (!steamAppIdsByGame.get(id)) {
@@ -292,8 +294,12 @@ export function registerPcRequirementsRoutes(app, { AppError, asyncRoute, callIg
 
         // ── Pass 3: Steam fallback results ────────────────────────────────
         for (const [gameId, value] of await overflowSteamPromise) {
-          result[gameId] = value;
-          writeCache(gameId, value, now);
+          if (value && (result[gameId]?.rtMinimum || result[gameId]?.rtUltra)) {
+            result[gameId] = { ...value, ...(result[gameId]?.rtMinimum ? { rtMinimum: result[gameId].rtMinimum } : {}), ...(result[gameId]?.rtUltra ? { rtUltra: result[gameId].rtUltra } : {}) };
+          } else {
+            result[gameId] = value;
+          }
+          writeCache(gameId, result[gameId], now);
         }
 
         if (steamMissIds.length > 0) {

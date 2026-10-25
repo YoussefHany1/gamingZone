@@ -251,6 +251,7 @@ function buildRows(params, prefix) {
  * Returns `{ minimum: SpecRow[], recommended: SpecRow[] }` (either tier may be
  * empty) or null when the page has no `{{System requirements}}` template at
  * all. Prefers the `OSfamily = Windows` template; falls back to the first one.
+ * Also looks for alternate templates/tags for RT Minimum and RT Ultra.
  */
 export function parseSystemrequirements(wikitext) {
   if (typeof wikitext !== 'string' || wikitext.length === 0) return null;
@@ -269,12 +270,42 @@ export function parseSystemrequirements(wikitext) {
   const minimum = buildRows(windows.params, 'min');
   const recommended = buildRows(windows.params, 'rec');
 
-  if (minimum.length === 0 && recommended.length === 0) {
+  // Try to find RT Minimum / RT Ultra
+  let rtMinimum = [];
+  let rtUltra = [];
+  
+  // Look for alt templates or specific naming
+  for (const t of parsed) {
+    const alt = (t.params.get('alt') || t.params.get('alttitle') || t.params.get('title') || '').toString().toLowerCase();
+    if (alt.includes('rt') && alt.includes('min')) {
+      rtMinimum = buildRows(t.params, 'min');
+      if (rtMinimum.length === 0) rtMinimum = buildRows(t.params, 'rec'); // sometimes uses rec prefix
+    }
+    if ((alt.includes('rt') && alt.includes('ultra')) || alt.includes('ray tracing ultra')) {
+      rtUltra = buildRows(t.params, 'rec');
+      if (rtUltra.length === 0) rtUltra = buildRows(t.params, 'min');
+    }
+  }
+  
+  // Also check direct params like rtmin*/rtultra* in same template
+  if (rtMinimum.length === 0) {
+    const rtMinTest = buildRows(windows.params, 'rtmin');
+    if (rtMinTest.length > 0) rtMinimum = rtMinTest;
+  }
+  if (rtUltra.length === 0) {
+    const rtUltraTest = buildRows(windows.params, 'rtultra');
+    if (rtUltraTest.length > 0) rtUltra = rtUltraTest;
+  }
+
+  if (minimum.length === 0 && recommended.length === 0 && rtMinimum.length === 0 && rtUltra.length === 0) {
     // A template exists but carries no specs — treat as "no requirements".
     return null;
   }
 
-  return { minimum, recommended };
+  const result = { minimum, recommended };
+  if (rtMinimum.length > 0) result.rtMinimum = rtMinimum;
+  if (rtUltra.length > 0) result.rtUltra = rtUltra;
+  return result;
 }
 
 // ---------------------------------------------------------------------------

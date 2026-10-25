@@ -81,7 +81,17 @@ export const fetchPcRequirements = cache(async (id: string): Promise<PcRequireme
           `${getServerApiUrl()}/pc-requirements`,
           { params: { ids: id }, timeout: 30000 },
         );
-        return res.data?.[id] ?? null;
+        const entry = res.data?.[id];
+        if (!entry) return null;
+
+        // The API sends `null` for a tier with no rows (e.g. a game where only
+        // minimum specs are documented). Normalize here so every render can
+        // rely on the `SpecRow[]` fields of `PcRequirements`; rendering raw
+        // `null` as an array crashed the game page's static prerender.
+        return {
+          minimum: entry.minimum ?? [],
+          recommended: entry.recommended ?? [],
+        };
       },
       ["pc-requirements", id],
       { revalidate: 604800, tags: ["games", `games:details:${id}`] },

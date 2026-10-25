@@ -64,9 +64,13 @@ export function parseRequirementsValue(
   const minimum = value.minimum && isRequirementRows(value.minimum) ? value.minimum : [];
   const recommended =
     value.recommended && isRequirementRows(value.recommended) ? value.recommended : [];
-  if (minimum.length === 0 && recommended.length === 0) return null;
+  const rtMinimum =
+    (value as any).rtMinimum && isRequirementRows((value as any).rtMinimum) ? (value as any).rtMinimum : [];
+  const rtUltra =
+    (value as any).rtUltra && isRequirementRows((value as any).rtUltra) ? (value as any).rtUltra : [];
+  if (minimum.length === 0 && recommended.length === 0 && rtMinimum.length === 0 && rtUltra.length === 0) return null;
 
-  return { minimum, recommended };
+  return { minimum, recommended, ...(rtMinimum.length > 0 ? { rtMinimum } : {}), ...(rtUltra.length > 0 ? { rtUltra } : {}) } as PcRequirements;
 }
 
 /** True while `entry` is newer than the TTL. */

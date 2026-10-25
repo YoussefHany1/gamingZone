@@ -11,7 +11,7 @@ import apiClient from "./client";
 
 /** One game's requirement tiers, or null when there are none. */
 export type PcRequirementsResponseValue =
-  | { minimum: SpecRow[] | null; recommended: SpecRow[] | null }
+  | { minimum: SpecRow[] | null; recommended: SpecRow[] | null; rtMinimum?: SpecRow[] | null; rtUltra?: SpecRow[] | null }
   | null;
 
 /** IGDB id → requirement tiers. A missing key means "retry later". */

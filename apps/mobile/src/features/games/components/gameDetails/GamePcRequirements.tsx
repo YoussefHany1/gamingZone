@@ -95,7 +95,11 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; 
   const activeRows =
     activeTab === "min"
       ? (pcRequirements?.minimum ?? [])
-      : (pcRequirements?.recommended ?? []);
+      : activeTab === "rec"
+        ? (pcRequirements?.recommended ?? [])
+        : activeTab === "rtmin"
+          ? ((pcRequirements as any)?.rtMinimum ?? [])
+          : ((pcRequirements as any)?.rtUltra ?? []);
 
   return (
     <View style={styles.wrapper}>
@@ -107,7 +111,7 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; 
 
       {!pcReqLoading && pcRequirements && (
         <>
-          {/* Min / Recommended tab switcher */}
+          {/* Min / Recommended / RT tabs */}
           <View style={styles.tabRow}>
             {pcRequirements.minimum.length > 0 && (
               <TouchableOpacity
@@ -133,11 +137,35 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; 
                 </CustomText>
               </TouchableOpacity>
             )}
+            {(pcRequirements as any)?.rtMinimum?.length > 0 && (
+              <TouchableOpacity
+                style={[styles.tab, activeTab === "rtmin" && styles.tabActive]}
+                onPress={() => setActiveTab("rtmin")}
+              >
+                <CustomText
+                  style={[styles.tabText, activeTab === "rtmin" && styles.tabTextActive]}
+                >
+                  {t("games.details.rtMinimum", { defaultValue: "RT Minimum" })}
+                </CustomText>
+              </TouchableOpacity>
+            )}
+            {(pcRequirements as any)?.rtUltra?.length > 0 && (
+              <TouchableOpacity
+                style={[styles.tab, activeTab === "rtultra" && styles.tabActive]}
+                onPress={() => setActiveTab("rtultra")}
+              >
+                <CustomText
+                  style={[styles.tabText, activeTab === "rtultra" && styles.tabTextActive]}
+                >
+                  {t("games.details.rtUltra", { defaultValue: "RT Ultra" })}
+                </CustomText>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Spec rows */}
           <View style={styles.specContainer}>
-            {activeRows.map((row, i) => (
+            {activeRows.map((row: any, i: number) => (
               <View
                 key={i}
                 style={[

@@ -133,7 +133,7 @@ export type GameLanguageTableProps = {
 export const COLUMN_KEYS = ["Audio", "Subtitles", "Interface"] as const;
 export type ColumnKey = (typeof COLUMN_KEYS)[number];
 
-export type PcRequirementsTab = "min" | "rec";
+export type PcRequirementsTab = "min" | "rec" | "rtmin" | "rtultra";
 
 export type GamePcRequirementsProps = {
   pcRequirements: PcRequirements | null;
