@@ -4,9 +4,11 @@
  * Game cards only know an IGDB id (list endpoints do not include `websites`),
  * so this route resolves requirements server-side. For each game it tries
  * PCGamingWiki first (by game name — also covers Epic/GOG-only titles), and
- * falls back to Steam's `appdetails` for games PCGamingWiki does not cover
- * that do have a Steam page. Both sources normalize to the same structured
- * `{ label, value }` rows the client-side compatibility scorer consumes.
+ * falls back to Steam's `appdetails` for games PCGamingWiki does not cover,
+ * cannot serve (it is Cloudflare-blocked in some regions, see `pcgwClient.js`)
+ * or has no requirements for, as long as they have a Steam page. Both sources
+ * normalize to the same structured `{ label, value }` rows the client-side
+ * compatibility scorer consumes.
  *
  * Response:
  *   { "<igdbId>": { minimum: Row[]|null, recommended: Row[]|null } | null }
@@ -23,21 +25,41 @@ import {
   normalizeSteamRequirements,
   parseGameIds,
   parseSpecHtmlToRows,
-  steamAppIdFromWebsites,
 } from './pcRequirementsHelpers.js';
 import { fetchPcgwRequirements } from './pcgwClient.js';
 
 const REQUIREMENTS_TTL_MS = 24 * 60 * 60 * 1000;
 const CACHE_LIMIT = 2000;
-const STEAM_TIMEOUT_MS = 7000;
+const STEAM_TIMEOUT_MS = 6000;
+/** Steam allows a few concurrent app-detail lookups; more risks rate limiting. */
+const STEAM_CONCURRENCY = 4;
+/**
+ * Wall-clock budget for the Steam fallback. A hung or rate-limited Steam must
+ * not hold the response past the clients' request timeout; unresolved games
+ * stay absent from the response so they are retried on a later request.
+ */
+const STEAM_PASS_BUDGET_MS = 6000;
+/**
+ * Tail budget for the Steam lookups that only become known after the PCGW
+ * pass (games PCGW has no page for). It starts once the PCGW pass is done, so
+ * it is kept short enough to stay inside the clients' request timeout.
+ */
+const STEAM_MISS_BUDGET_MS = 3000;
 
 /**
  * PCGamingWiki lookups budgeted per invocation. Each game costs at most two
- * upstream calls (parse + one search fallback) and they run serially, so 8
- * games stay well inside the 60 req/min limit and the function's wall clock;
- * ids beyond the budget are simply left out of the response.
+ * upstream calls (parse + one search fallback) and they run serially, so 6
+ * games stay well inside the 60 req/min limit and the clients' request timeout.
+ * Ids beyond the budget are not looked up on PCGamingWiki this time; they go
+ * straight to the Steam fallback when they have a Steam page.
  */
-const PCGW_MAX_GAMES = 8;
+const PCGW_MAX_GAMES = 6;
+/**
+ * Wall-clock budget for the PCGW pass. Slow titles (every page miss also costs
+ * a search call) must not push the response past the clients' timeout; the
+ * remaining games go to the Steam fallback instead.
+ */
+const PCGW_BUDGET_MS = 5000;
 
 /** IGDB id → cached result. `null` means "resolved, but nothing to show". */
 const requirementsCache = new Map();
@@ -60,48 +82,87 @@ function writeCache(id, value, now) {
 }
 
 /**
- * Fetches requirements for several Steam app ids in one request and returns
- * them as structured rows.
+ * Fetches one app id's requirements and normalizes them to row lists.
+ *
+ * `appdetails` rejects multi-app-id requests (`400` + a bare `null` body), so
+ * each game needs its own call. `filters=basic` is used because
+ * `filters=pc_requirements` is broken upstream (`{ success: true, data: [] }`),
+ * while `basic` still carries the `pc_requirements` block.
  *
  * Throws when Steam itself fails (rate limit, network, malformed body) so the
- * caller can leave those games uncached and retry on a later request.
+ * caller can leave that game uncached and retry on a later request. Resolves
+ * to `null` when Steam simply has no requirements for the game.
  */
-async function fetchSteamRequirementsRows(appIds) {
+async function fetchSteamAppRows(appId) {
   const url =
     'https://store.steampowered.com/api/appdetails' +
-    `?appids=${appIds.join(',')}&filters=pc_requirements&cc=US`;
+    `?appids=${appId}&filters=basic&cc=US`;
 
   const response = await fetch(url, {
     signal: AbortSignal.timeout(STEAM_TIMEOUT_MS),
     headers: { Accept: 'application/json' },
   });
   if (!response.ok) {
-    throw new Error(`Steam appdetails responded ${response.status}`);
+    throw new Error(`Steam appdetails responded ${response.status} for app ${appId}`);
   }
 
   const payload = await response.json();
-  const byAppId = new Map();
 
-  for (const appId of appIds) {
-    const entry = payload?.[appId];
-    const normalized = entry?.success
-      ? normalizeSteamRequirements(entry.data?.pc_requirements)
-      : null;
-
-    byAppId.set(
-      appId,
-      normalized
-        ? {
-            minimum: normalized.minimum ? parseSpecHtmlToRows(normalized.minimum) : null,
-            recommended: normalized.recommended
-              ? parseSpecHtmlToRows(normalized.recommended)
-              : null,
-          }
-        : null,
-    );
+  // Steam answers a bare `null` body when it rate-limits the caller. Without
+  // this guard that would look like "no requirements" and get cached for a day.
+  const entry = payload?.[appId];
+  if (!entry || typeof entry !== 'object') {
+    throw new Error('Steam appdetails returned an empty body (rate limited?)');
   }
 
-  return byAppId;
+  const normalized = entry.success
+    ? normalizeSteamRequirements(entry.data?.pc_requirements)
+    : null;
+  if (!normalized) return null;
+
+  return {
+    minimum: normalized.minimum ? parseSpecHtmlToRows(normalized.minimum) : null,
+    recommended: normalized.recommended ? parseSpecHtmlToRows(normalized.recommended) : null,
+  };
+}
+
+/**
+ * Resolves Steam requirements for `gameIds` (a few lookups in parallel) and
+ * returns `Map<igdbId, value>`. A present `null` means Steam has no
+ * requirements for that game (cacheable); a missing key means the lookup
+ * failed or ran out of budget and the game should be retried later.
+ */
+async function fetchSteamRequirementsForGames(gameIds, steamAppIdsByGame, deadline) {
+  const byGameId = new Map();
+  const appIdToGame = new Map();
+  for (const gameId of gameIds) {
+    const appId = steamAppIdsByGame.get(gameId);
+    if (appId && !appIdToGame.has(appId)) appIdToGame.set(appId, gameId);
+  }
+
+  const entries = [...appIdToGame];
+  for (let i = 0; i < entries.length; i += STEAM_CONCURRENCY) {
+    if (Date.now() >= deadline) break;
+
+    const batch = entries.slice(i, i + STEAM_CONCURRENCY);
+    const settled = await Promise.allSettled(
+      batch.map(([appId]) => fetchSteamAppRows(appId)),
+    );
+
+    settled.forEach((outcome, index) => {
+      const [appId, gameId] = batch[index];
+      if (outcome.status === 'fulfilled') {
+        byGameId.set(gameId, outcome.value);
+      } else {
+        console.warn(
+          'pc-requirements: Steam lookup failed',
+          { appId, error: outcome.reason?.message },
+        );
+      }
+    });
+  }
+
+  return byGameId;
 }
 
 export function registerPcRequirementsRoutes(app, { AppError, asyncRoute, callIgdb }) {
@@ -152,16 +213,11 @@ export function registerPcRequirementsRoutes(app, { AppError, asyncRoute, callIg
           }
         }
 
-        // ── Pass 1: PCGamingWiki (budgeted, serial upstream) ──────────────
-        const pcgwFallbackIds = [];
-        let pcgwBudget = PCGW_MAX_GAMES;
-        let pcgwAvailable = true;
-
-        const steamAppIdsByGame = new Map();
-        for (const game of Array.isArray(games) ? games : []) {
-          if (typeof game?.id !== 'number') continue;
-          steamAppIdsByGame.set(game.id, steamAppIdFromWebsites(game.websites));
-        }
+        // ── Pass 1: classify PCGamingWiki candidates ─────────────────────
+        // PCGamingWiki lookups are serialized (~1.05 s apart, 60 req/min
+        // limit), so only the first PCGW_MAX_GAMES games are looked up there.
+        // Every other game with a Steam page goes to the fallback.
+        const steamAppIdsByGame = mapSteamAppIds(games);
 
         const gamesById = new Map(
           (Array.isArray(games) ? games : [])
@@ -169,13 +225,42 @@ export function registerPcRequirementsRoutes(app, { AppError, asyncRoute, callIg
             .map((game) => [game.id, game]),
         );
 
+        const pcgwIds = [];
+        const overflowSteamIds = [];
+
         for (const id of uncached) {
           if (!returned.has(id)) continue;
-          if (!pcgwAvailable || pcgwBudget <= 0) break;
 
-          const name = typeof gamesById.get(id)?.name === 'string' ? gamesById.get(id).name : '';
-          if (!name) continue;
+          const name =
+            typeof gamesById.get(id)?.name === 'string' ? gamesById.get(id).name : '';
+          if (name && pcgwIds.length < PCGW_MAX_GAMES) {
+            pcgwIds.push(id);
+          } else if (steamAppIdsByGame.get(id)) {
+            overflowSteamIds.push(id);
+          }
+        }
 
+        // Start the Steam fallback for the overflow right away: it runs while
+        // the serial PCGW pass below is waiting, so the two do not add up.
+        const steamDeadline = Date.now() + STEAM_PASS_BUDGET_MS;
+        const overflowSteamPromise = fetchSteamRequirementsForGames(
+          overflowSteamIds,
+          steamAppIdsByGame,
+          steamDeadline,
+        );
+
+        // ── Pass 2: PCGamingWiki ──────────────────────────────────────────
+        const steamMissIds = [];
+        let pcgwBudget = pcgwIds.length;
+        const pcgwDeadline = Date.now() + PCGW_BUDGET_MS;
+
+        for (const id of pcgwIds) {
+          if (pcgwBudget <= 0 || Date.now() >= pcgwDeadline) {
+            if (steamAppIdsByGame.get(id)) steamMissIds.push(id);
+            continue;
+          }
+
+          const name = gamesById.get(id)?.name ?? '';
           try {
             const rows = await fetchPcgwRequirements(name);
             pcgwBudget -= 1;
@@ -190,38 +275,36 @@ export function registerPcRequirementsRoutes(app, { AppError, asyncRoute, callIg
               result[id] = null;
               writeCache(id, null, now);
             } else {
-              pcgwFallbackIds.push(id);
+              steamMissIds.push(id);
             }
-          } catch {
-            // Rate-limited or PCGamingWiki down: stop asking for this
-            // invocation. Remaining games stay absent — the client retries
-            // them later — except those already queued for Steam.
-            pcgwAvailable = false;
-            break;
+          } catch (error) {
+            // Upstream trouble (Cloudflare block, rate limit, outage): stop
+            // spending PCGW calls this invocation, but keep falling back to
+            // Steam for this game and every game after it.
+            pcgwBudget = 0;
+            console.warn(
+              'pc-requirements: PCGamingWiki lookup failed',
+              { name, error: error?.message },
+            );
+            if (steamAppIdsByGame.get(id)) steamMissIds.push(id);
           }
         }
 
-        // ── Pass 2: Steam fallback (one batched appdetails call) ──────────
-        const appIdToGame = new Map();
-        for (const gameId of pcgwFallbackIds) {
-          const appId = steamAppIdsByGame.get(gameId);
-          if (appId && !appIdToGame.has(appId)) appIdToGame.set(appId, gameId);
+        // ── Pass 3: Steam fallback results ────────────────────────────────
+        for (const [gameId, value] of await overflowSteamPromise) {
+          result[gameId] = value;
+          writeCache(gameId, value, now);
         }
 
-        const steamAppIds = [...appIdToGame.keys()];
-        if (steamAppIds.length > 0) {
-          try {
-            const steam = await fetchSteamRequirementsRows(steamAppIds);
-            for (const [appId, gameId] of appIdToGame) {
-              if (!steam.has(appId)) continue;
-              const value = steam.get(appId) ?? null;
-              result[gameId] = value;
-              writeCache(gameId, value, now);
-            }
-          } catch (error) {
-            // Leave these games absent from the response: the client retries
-            // them later instead of caching a wrong "no requirements".
-            console.warn('pc-requirements: Steam lookup failed', error?.message);
+        if (steamMissIds.length > 0) {
+          const missed = await fetchSteamRequirementsForGames(
+            steamMissIds,
+            steamAppIdsByGame,
+            Date.now() + STEAM_MISS_BUDGET_MS,
+          );
+          for (const [gameId, value] of missed) {
+            result[gameId] = value;
+            writeCache(gameId, value, now);
           }
         }
       }

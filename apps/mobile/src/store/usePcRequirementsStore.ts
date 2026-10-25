@@ -127,7 +127,10 @@ async function fetchChunk(ids: number[]): Promise<void> {
         // Transient: the backend did not resolve this game this time. Leave
         // the previous value (if any) and try again a few minutes later.
         retryAfter.set(id, now + GAME_RETRY_MS);
-        if (!usePcRequirementsStore.getState().byGameId[id]) setError(id);
+        const existing = usePcRequirementsStore.getState().byGameId[id];
+        if (!existing || existing.status !== "ready") {
+          setEntries({ [id]: { requirements: null, status: "error" } });
+        }
         continue;
       }
 

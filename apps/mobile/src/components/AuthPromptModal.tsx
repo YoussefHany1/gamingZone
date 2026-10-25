@@ -19,7 +19,12 @@ interface AuthPromptModalProps {
 const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ visible, onDismiss }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const navigation = useNavigation<any>();
+  let navigation: any;
+  try {
+    navigation = useNavigation<any>();
+  } catch {
+    navigation = null;
+  }
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const styles = useThemeStyles((c) => ({
@@ -149,7 +154,7 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ visible, onDismiss })
     onDismiss();
     if (navigation) {
       try {
-        navigation.navigate("Auth", { screen: "Login" });
+        navigation?.navigate?.("Auth", { screen: "Login" });
       } catch {
         // Ignore navigation errors if not inside NavigationContainer
       }
@@ -167,7 +172,7 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ visible, onDismiss })
     onDismiss();
     if (navigation) {
       try {
-        navigation.navigate("Auth", { screen: "Register" });
+        navigation?.navigate?.("Auth", { screen: "Register" });
       } catch {
         // Ignore navigation errors if not inside NavigationContainer
       }

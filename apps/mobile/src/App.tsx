@@ -385,7 +385,9 @@ function App(): React.ReactElement | null {
           <GamificationOverlay />
         </GestureHandlerRootView>
       </SafeAreaProvider>
-      <AuthPromptModal visible={showAuthPrompt} onDismiss={dismissAuthPrompt} />
+      {navigationRef.current ? (
+        <AuthPromptModal visible={showAuthPrompt} onDismiss={dismissAuthPrompt} />
+      ) : null}
     </ErrorBoundary>
   );
 }

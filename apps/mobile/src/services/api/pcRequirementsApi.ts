@@ -32,6 +32,9 @@ export async function fetchPcRequirementsBatch(
   const ids = gameIds.slice(0, PC_REQUIREMENTS_BATCH_SIZE).join(",");
   const response = await apiClient.get<PcRequirementsResponse>("/pc-requirements", {
     params: { ids },
+    // The backend walks PCGamingWiki serially (its 60 req/min limit), so a
+    // large first batch can legitimately take longer than the client default.
+    timeout: 15_000,
   });
 
   const data: unknown = response.data;

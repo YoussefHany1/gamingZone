@@ -17,10 +17,17 @@
  * PCGamingWiki enforces 60 requests/minute per IP and then blocks for 60 s,
  * so every upstream call goes through the module-level serial scheduler,
  * which spaces calls ≥1.05 s apart and fails fast during a 429 cooldown.
+ *
+ * DEPLOYMENT: PCGamingWiki is behind Cloudflare, which answers every path
+ * (API, wiki pages, even robots.txt) with a 403 "Attention Required!" page to
+ * some datacenter ranges. Vercel's default `iad1` region is blocked; `fra1` is
+ * not. `vercel.json` therefore pins this API's function region to `fra1`.
+ * Moving the function back to a default/US region silently disables PCGW and
+ * every game falls through to the Steam fallback.
  */
 
 const PCGW_API_URL = 'https://www.pcgamingwiki.com/w/api.php';
-const PCGW_TIMEOUT_MS = 8000;
+const PCGW_TIMEOUT_MS = 4000;
 
 /** Minimum gap between two upstream PCGamingWiki calls (60 req/min limit). */
 const PCGW_MIN_GAP_MS = 1050;
