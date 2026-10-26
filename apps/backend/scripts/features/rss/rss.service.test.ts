@@ -174,8 +174,20 @@ describe('runFetchRss', () => {
 
     expect(summary.sourcesProcessed).toBe(2);
     expect(mockFetchFeed).toHaveBeenCalledTimes(2);
-    expect(mockFetchFeed).toHaveBeenCalledWith('https://a.com/rss', expect.anything(), expect.anything());
-    expect(mockFetchFeed).toHaveBeenCalledWith('https://c.com/rss', expect.anything(), expect.anything());
-    expect(mockFetchFeed).not.toHaveBeenCalledWith('https://b.com/rss', expect.anything(), expect.anything());
+    expect(mockFetchFeed).toHaveBeenCalledWith(
+      'https://a.com/rss',
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(mockFetchFeed).toHaveBeenCalledWith(
+      'https://c.com/rss',
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(mockFetchFeed).not.toHaveBeenCalledWith(
+      'https://b.com/rss',
+      expect.anything(),
+      expect.anything(),
+    );
   });
 });

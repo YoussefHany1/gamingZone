@@ -7,7 +7,12 @@ import ErrorState from "@/src/components/ErrorState";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import LatestNews from "../LatestNews";
 import { useNewsPlatformFilter } from "../../hooks/useNewsPlatformFilter";
-import type { GenericNewsRouteProps, LatestNewsProps, RssFeedSource } from "../../types";
+import type {
+  GenericNewsRouteProps,
+  LatestNewsProps,
+  NewsLanguageFilter,
+  RssFeedSource,
+} from "../../types";
 
 /** Only News/Reviews get the platform filter (Home and the other tabs don't). */
 const PLATFORM_SCOPED_CATEGORIES = new Set(["news", "reviews"]);
@@ -67,7 +72,22 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
     return i18n.language === "ar" ? [...arList, ...enList] : [...enList, ...arList];
   }, [rssFeeds, categoryKey, i18n.language]);
 
-  const [selected, setSelected] = useState<RssFeedSource | undefined>(feedList[0]);
+  const [selected, setSelected] = useState<RssFeedSource | undefined>(() => {
+    if (feedList.length > 0) {
+      return {
+        name: "__all__",
+        image: "",
+        language: feedList[0]?.language ?? "en",
+      };
+    }
+    return undefined;
+  });
+
+  // App language drives the default content language for the combined feed.
+  // Only "ar" and "en" exist in the articles collection.
+  const appLanguage: NewsLanguageFilter = i18n.language.startsWith("ar") ? "ar" : "en";
+  const [allSourcesLanguage, setAllSourcesLanguage] =
+    useState<NewsLanguageFilter>(appLanguage);
 
   const styles = useThemeStyles((c) => ({
     scene: {
@@ -81,25 +101,48 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
 
   useEffect(() => {
     if (
-      (!selected || !feedList.find((f) => f.name === selected.name)) &&
-      feedList.length > 0
+      selected &&
+      selected.name !== "__all__" &&
+      !feedList.find((f) => f.name === selected.name)
     ) {
-      setSelected(feedList[0]);
+      if (feedList.length > 0) {
+        setSelected({
+          name: "__all__",
+          image: "",
+          language: feedList[0]?.language ?? "en",
+        });
+      } else {
+        setSelected(undefined);
+      }
+    } else if (!selected && feedList.length > 0) {
+      setSelected({
+        name: "__all__",
+        image: "",
+        language: feedList[0]?.language ?? "en",
+      });
     }
   }, [feedList, selected]);
 
   if (selected) {
+    const isAllSources = selected.name === "__all__";
     const feedProps: FeedProps = {
-      website: selected.name,
+      website: isAllSources ? undefined : selected.name,
       category: categoryKey,
       selectedItem: selected,
-      language: selected.language ?? "en",
+      language: isAllSources ? appLanguage : (selected.language ?? "en"),
       websitesList: feedList,
       onChangeFeed: setSelected,
       enablePagination: true,
       itemsPerPage: 10,
       adInterval: 5,
       showDropdown: true,
+      ...(isAllSources
+        ? {
+            showLanguageFilter: true,
+            languageFilter: allSourcesLanguage,
+            onLanguageChange: setAllSourcesLanguage,
+          }
+        : {}),
     };
 
     return (

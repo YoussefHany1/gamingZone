@@ -249,7 +249,8 @@
       "cancel": "Cancel",
       "englishSources": "English Sources",
       "arabicSources": "Arabic Sources",
-      "visitWebsite": "Visit Website"
+      "visitWebsite": "Visit Website",
+      "allSources": "All sources"
     },
     "duration": {
       "years": "years",
@@ -272,7 +273,12 @@
       "subtitle": "There are no articles for the selected platform right now.",
       "showAll": "Show all platforms"
     },
-    "noSources": "No news sources are available for this category."
+    "noSources": "No news sources are available for this category.",
+    "languageFilter": {
+      "all": "All languages",
+      "ar": "Arabic",
+      "en": "English"
+    }
   },
   "games": {
     "searchPlaceholder": "Search for Games...",

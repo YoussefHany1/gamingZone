@@ -249,7 +249,8 @@
       "cancel": "إلغاء",
       "arabicSources": "مصادر عربية",
       "englishSources": "مصادر إنجليزية",
-      "visitWebsite": "زيارة الموقع"
+      "visitWebsite": "زيارة الموقع",
+      "allSources": "كل المصادر"
     },
     "duration": {
       "years": "سنة",
@@ -272,7 +273,12 @@
       "subtitle": "لا توجد مقالات للمنصة المحددة حاليًا.",
       "showAll": "عرض جميع المنصات"
     },
-    "noSources": "لا توجد مصادر أخبار متاحة لهذه الفئة."
+    "noSources": "لا توجد مصادر أخبار متاحة لهذه الفئة.",
+    "languageFilter": {
+      "all": "كل اللغات",
+      "ar": "العربية",
+      "en": "الإنجليزية"
+    }
   },
   "games": {
     "searchPlaceholder": "ابحث عن ألعاب...",

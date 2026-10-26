@@ -107,6 +107,7 @@ export default function useFeed(
   language?: string,
   enabled: boolean = true,
   platform?: ArticlePlatform,
+  languageFilter?: string | null,
 ): UseFeedResult {
   // Article storage only has "ar"/"en" content — Spanish and French reuse
   // English data while the UI (direction/labels) stays driven by the app language.
@@ -117,10 +118,13 @@ export default function useFeed(
         ? "en"
         : language;
 
+  const activeLanguage =
+    languageFilter === undefined ? contentLanguage : (languageFilter ?? undefined);
+
   const cacheKey = useMemo(
     () =>
-      `feed_cache_${category ?? "nocat"}_${siteName ?? "all"}_page_${page}_lang_${contentLanguage ?? "all"}_plat_${platform ?? "all"}`,
-    [category, siteName, page, contentLanguage, platform],
+      `feed_cache_${category ?? "nocat"}_${siteName ?? "all"}_page_${page}_lang_${activeLanguage ?? "all"}_plat_${platform ?? "all"}`,
+    [category, siteName, page, activeLanguage, platform],
   );
 
   const fetchArticles = useCallback(async (): Promise<FetchResponse> => {
@@ -134,7 +138,7 @@ export default function useFeed(
     ];
 
     if (siteName) queries.push(Query.equal("siteName", siteName));
-    if (contentLanguage) queries.push(Query.equal("language", contentLanguage));
+    if (activeLanguage) queries.push(Query.equal("language", activeLanguage));
     // Array containment: general articles store all six ids, so they match
     // every platform. Appwrite cannot index array attributes, but `contains`
     // works without an index on the `platforms` array.
@@ -150,7 +154,7 @@ export default function useFeed(
       articles: response.documents as unknown as Article[],
       total: response.total,
     };
-  }, [category, siteName, page, limit, contentLanguage, platform]);
+  }, [category, siteName, page, limit, activeLanguage, platform]);
 
   // Use the longer TTL only for the primary feed (news, page 1) which has a
   // Realtime subscription keeping it fresh. All other feeds use the shorter one.
@@ -167,7 +171,7 @@ export default function useFeed(
   } = useCachedData<FetchResponse>(
     cacheKey,
     fetchArticles,
-    [category, siteName, page, limit, contentLanguage, platform],
+    [category, siteName, page, limit, activeLanguage, platform],
     cacheTtl,
     enabled,
   );
@@ -210,7 +214,7 @@ export default function useFeed(
         // Filter: only handle documents that match the active filters.
         const matchesCategory = newDoc.category === category;
         const matchesSite = siteName ? newDoc.siteName === siteName : true;
-        const matchesLang = contentLanguage ? newDoc.language === contentLanguage : true;
+        const matchesLang = activeLanguage ? newDoc.language === activeLanguage : true;
         // General articles carry every platform, so `.includes` matches them
         // under each filter; documents without `platforms` only match "All".
         const matchesPlatform = platform
@@ -232,7 +236,7 @@ export default function useFeed(
 
     return () => invokeUnsubscribe(subscription);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, siteName, page, limit, contentLanguage, platform, setData]);
+  }, [category, siteName, page, limit, activeLanguage, platform, setData]);
 
   return { articles, total, loading, isRefetching, error, refetch };
 }

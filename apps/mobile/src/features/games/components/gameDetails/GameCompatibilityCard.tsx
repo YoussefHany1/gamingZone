@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import type { PcCompatibility } from "@gaming-zone/core";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useThemeColors } from "@/src/hooks/useTheme";
-import { useSharedStyles } from "./shared";
 import CustomText from "@/src/components/CustomText";
 import PcQualityBadge from "@/src/features/pcSpecs/components/PcQualityBadge";
 import { Info } from "lucide-react-native";
@@ -19,7 +18,6 @@ const GameCompatibilityCard: React.FC<GameCompatibilityCardProps> = ({
   hasSpecs,
 }) => {
   const { t } = useTranslation();
-  const sharedStyles = useSharedStyles();
   const colors = useThemeColors();
   const styles = useThemeStyles((c) => ({
     card: {

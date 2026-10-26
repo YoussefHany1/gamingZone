@@ -3,7 +3,6 @@ import { View } from "react-native";
 import { Image } from "expo-image";
 import CustomText from "@/src/components/CustomText";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import type { ArticlePlatform } from "@gaming-zone/core";
 import PlatformBadges from "../PlatformBadges";
 import type { NewsArticleMetaProps } from "./types";
 

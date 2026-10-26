@@ -143,10 +143,24 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
   );
   const selectedItem = props.value;
 
+  const allSourcesItem: RssFeedSource = useMemo(
+    () => ({
+      name: "__all__",
+      image: "",
+      language: websites[0]?.language ?? "en",
+    }),
+    [websites],
+  );
+
+  const displayWebsites = useMemo(
+    () => [allSourcesItem, ...websites],
+    [allSourcesItem, websites],
+  );
+
   // Build section list grouped by language, ordered by current app locale
   const sections: SectionData[] = useMemo(() => {
-    const arabicSites = websites.filter((item) => item.language === "ar");
-    const englishSites = websites.filter((item) => item.language === "en");
+    const arabicSites = displayWebsites.filter((item) => item.language === "ar");
+    const englishSites = displayWebsites.filter((item) => item.language === "en");
 
     const result: SectionData[] = [];
 
@@ -170,7 +184,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
     }
 
     return result;
-  }, [websites, i18n.language, t]);
+  }, [displayWebsites, i18n.language, t]);
 
   const handleToggleNotification = async (): Promise<void> => {
     const state = await NetInfo.fetch();
@@ -181,7 +195,8 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
       );
       return;
     }
-    toggleSource(category, selectedItem!.name);
+    if (isAllSources || !selectedItem) return;
+    toggleSource(category, selectedItem.name);
   };
 
   const handleVisitSite = async (url?: string): Promise<void> => {
@@ -197,6 +212,8 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
     openLink(url);
   };
 
+  const isAllSources = selectedItem?.name === "__all__";
+
   if (websites.length === 0 || !selectedItem) {
     return <SkeletonDropdown />;
   }
@@ -207,7 +224,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
   };
 
   const notifTopic = NotificationService.getTopicName(category, selectedItem.name);
-  const isNotifEnabled: boolean = notifTopic ? (preferences[notifTopic] ?? false) : false;
+  const isNotifEnabled: boolean = isAllSources || !notifTopic ? false : (preferences[notifTopic] ?? false);
 
   return (
     <View style={styles.wrapper}>
@@ -229,19 +246,23 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
         ) : null}
 
         <CustomText style={styles.pickerButtonText} numberOfLines={1}>
-          {selectedItem?.name || "Select a website..."}
+          {isAllSources
+            ? t("news.dropdown.allSources")
+            : selectedItem?.name || t("news.dropdown.selectSource")}
         </CustomText>
 
         <ChevronDown size={20} color={colors.text} />
       </TouchableOpacity>
 
       {/* Site description card */}
-      <SiteDescription
-        selectedItem={selectedItem}
-        isNotifEnabled={isNotifEnabled}
-        onVisitSite={handleVisitSite}
-        onToggleNotification={handleToggleNotification}
-      />
+      {!isAllSources && (
+        <SiteDescription
+          selectedItem={selectedItem}
+          isNotifEnabled={isNotifEnabled}
+          onVisitSite={handleVisitSite}
+          onToggleNotification={handleToggleNotification}
+        />
+      )}
 
       {/* Selection modal */}
       <Modal
@@ -281,14 +302,16 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                   onPress={() => handleSelect(item)}
                 >
                   <View style={{ alignItems: "center", flexDirection: "row" }}>
-                    <Image
-                      recyclingKey={String(item.image ?? "")}
-                      source={item.image}
-                      style={styles.modalItemLogo}
-                      contentFit="cover"
-                      cachePolicy="memory-disk"
-                      allowDownscaling={true}
-                    />
+                    {item.name === "__all__" ? null : (
+                      <Image
+                        recyclingKey={String(item.image ?? "")}
+                        source={item.image}
+                        style={styles.modalItemLogo}
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                        allowDownscaling={true}
+                      />
+                    )}
                     <CustomText
                       style={[
                         styles.modalItemText,
@@ -297,7 +320,9 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                         },
                       ]}
                     >
-                      {item.name}
+                      {item.name === "__all__"
+                        ? t("news.dropdown.allSources")
+                        : item.name}
                     </CustomText>
                   </View>
                   {selectedItem?.name === item.name && (

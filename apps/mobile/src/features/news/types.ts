@@ -49,6 +49,8 @@ export type GenericNewsRouteProps = {
   refetch: (forceRefresh?: boolean) => Promise<void>;
 };
 
+export type NewsLanguageFilter = "all" | "ar" | "en";
+
 export type LatestNewsProps = {
   limit?: number;
   language?: string;
@@ -74,6 +76,11 @@ export type LatestNewsProps = {
   onResetPlatform?: () => void;
   /** False while the profile platform is still resolving — keeps the feed idle. */
   feedReady?: boolean;
+  /** Language filter for an "All sources" feed (`all` = no language query). */
+  languageFilter?: NewsLanguageFilter;
+  /** Renders the language chips (only meaningful for "All sources"). */
+  showLanguageFilter?: boolean;
+  onLanguageChange?: (value: NewsLanguageFilter) => void;
 };
 
 // Memoized row component

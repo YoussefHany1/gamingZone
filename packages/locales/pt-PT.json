@@ -264,7 +264,8 @@
       "cancel": "Cancelar",
       "englishSources": "Fontes em inglês",
       "arabicSources": "Fontes em árabe",
-      "visitWebsite": "Visitar o site"
+      "visitWebsite": "Visitar o site",
+      "allSources": "Todas as fontes"
     },
     "duration": {
       "years": "anos",
@@ -272,6 +273,11 @@
       "days": "dias",
       "hours": "h",
       "minutes": "min"
+    },
+    "languageFilter": {
+      "all": "Todos os idiomas",
+      "ar": "Árabe",
+      "en": "Inglês"
     }
   },
   "games": {

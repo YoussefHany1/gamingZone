@@ -264,7 +264,8 @@
       "cancel": "रद्द करें",
       "englishSources": "अंग्रेजी स्रोत",
       "arabicSources": "अरबी स्रोत",
-      "visitWebsite": "वेबसाइट पर जाएं"
+      "visitWebsite": "वेबसाइट पर जाएं",
+      "allSources": "सभी स्रोत"
     },
     "duration": {
       "years": "साल",
@@ -272,6 +273,11 @@
       "days": "दिन",
       "hours": "घं",
       "minutes": "मि"
+    },
+    "languageFilter": {
+      "all": "सभी भाषाएँ",
+      "ar": "अरबी",
+      "en": "अंग्रेज़ी"
     }
   },
   "games": {
