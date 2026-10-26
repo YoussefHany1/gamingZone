@@ -17,7 +17,8 @@
     "functions:build": "node scripts/functions/build.mjs",
     "functions:deploy": "node scripts/functions/deploy.mjs",
     "check:game-releases": "tsx ./scripts/jobs/gameReleases.job.ts",
-    "backfill:rss-descriptions": "tsx ./scripts/backfillRssDescriptions.ts"
+    "backfill:rss-descriptions": "tsx ./scripts/backfillRssDescriptions.ts",
+    "backfill:article-platforms": "tsx ./scripts/backfillArticlePlatforms.ts"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
@@ -52,7 +53,7 @@
     "eslint-plugin-prettier": "^5.5.6",
     "prettier": "^3.9.5",
     "tsx": "^4.23.1",
-    "typescript": "^7.0.2",
+    "typescript": "~6.0.3",
     "typescript-eslint": "^8.63.0",
     "vitest": "^4.1.10"
   }

@@ -1,5 +1,3 @@
-import { loadBackendEnv } from './lib/env';
-import { env } from './lib/config';
 import { initFirebaseAdmin } from './lib/firebaseAdmin';
 import { logger } from './lib/logger';
 
@@ -33,7 +31,10 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const claims = await admin.auth(app).getUser(uid).then((u) => u.customClaims ?? {});
+  const claims = await admin
+    .auth(app)
+    .getUser(uid)
+    .then((u) => u.customClaims ?? {});
 
   if (flag === '--revoke') {
     delete claims.admin;

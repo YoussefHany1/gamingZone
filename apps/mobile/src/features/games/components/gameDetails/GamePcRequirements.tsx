@@ -11,16 +11,17 @@ import { usePcCompatibility } from "@/src/features/pcSpecs/hooks/usePcCompatibil
 import { usePcSpecsStore } from "@/src/store/usePcSpecsStore";
 import type { GamePcRequirementsProps, PcRequirementsTab as Tab } from "../../types";
 
-const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; firstReleaseDate?: number | null }> = ({
-  pcRequirements,
-  pcReqLoading,
-  gameId,
-  firstReleaseDate,
-}) => {
+const GamePcRequirements: React.FC<
+  GamePcRequirementsProps & { gameId?: number; firstReleaseDate?: number | null }
+> = ({ pcRequirements, pcReqLoading, gameId, firstReleaseDate }) => {
   const sharedStyles = useSharedStyles();
   const colors = useThemeColors();
   const specs = usePcSpecsStore((state) => state.specs);
-  const compatibility = usePcCompatibility(gameId ?? null, firstReleaseDate ?? null, pcRequirements);
+  const compatibility = usePcCompatibility(
+    gameId ?? null,
+    firstReleaseDate ?? null,
+    pcRequirements,
+  );
   const styles = useThemeStyles((c) => ({
     wrapper: {
       marginTop: 20,
@@ -28,17 +29,19 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; 
     },
     tabRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       marginTop: 12,
       marginBottom: 10,
       borderRadius: 10,
       overflow: "hidden",
       borderWidth: 1,
       borderColor: c.accentText,
-      alignSelf: "flex-start",
     },
     tab: {
       paddingVertical: 7,
-      paddingHorizontal: 20,
+      width: "50%",
+      paddingHorizontal: 16,
+      borderRadius: 10,
     },
     tabActive: {
       backgroundColor: c.accent,
@@ -47,6 +50,7 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; 
       color: c.textMuted,
       fontSize: 14,
       fontWeight: "600",
+      textAlign: "center",
     },
     tabTextActive: {
       color: c.text,
@@ -77,12 +81,6 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; 
       fontSize: 14,
       fontWeight: "500",
       flexWrap: "wrap",
-    },
-    sourceNote: {
-      color: c.textMuted,
-      fontSize: 11,
-      marginTop: 6,
-      direction: "ltr",
     },
   }));
 
@@ -181,7 +179,10 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; 
                 onPress={() => setActiveTab("rtultra")}
               >
                 <CustomText
-                  style={[styles.tabText, currentTab === "rtultra" && styles.tabTextActive]}
+                  style={[
+                    styles.tabText,
+                    currentTab === "rtultra" && styles.tabTextActive,
+                  ]}
                 >
                   {t("games.details.rtUltra", { defaultValue: "RT Ultra" })}
                 </CustomText>
@@ -206,9 +207,6 @@ const GamePcRequirements: React.FC<GamePcRequirementsProps & { gameId?: number; 
               </View>
             ))}
           </View>
-          <CustomText style={styles.sourceNote}>
-            {t("games.details.pcRequirementsSource")}
-          </CustomText>
           <GameCompatibilityCard compatibility={compatibility} hasSpecs={!!specs} />
         </>
       )}

@@ -1,6 +1,9 @@
 import { logger } from '../lib/logger';
 
-import { runFetchFreeGames, teardownFreeGamesService } from '../features/freeGames/freeGames.service';
+import {
+  runFetchFreeGames,
+  teardownFreeGamesService,
+} from '../features/freeGames/freeGames.service';
 
 runFetchFreeGames()
   .then(async () => {

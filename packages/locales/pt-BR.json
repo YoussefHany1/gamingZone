@@ -236,6 +236,20 @@
     "contactSupport": "Falar com o suporte",
     "endOfList": "Fim dos artigos",
     "backToNews": "Voltar para notícias",
+    "platforms": {
+      "all": "Todas",
+      "pc": "PC",
+      "playstation": "PlayStation",
+      "xbox": "Xbox",
+      "nintendo": "Nintendo",
+      "android": "Android",
+      "ios": "iOS"
+    },
+    "emptyPlatform": {
+      "title": "Nenhum artigo para esta plataforma",
+      "subtitle": "No momento não há artigos para a plataforma selecionada.",
+      "showAll": "Mostrar todas as plataformas"
+    },
     "noSources": "Nenhuma fonte de notícias disponível para esta categoria.",
     "details": {
       "readFullArticle": "Ler o artigo completo",
@@ -456,7 +470,8 @@
           "meets": "Atende",
           "below": "Abaixo",
           "unknown": "Desconhecido"
-        }
+        },
+        "disclaimer": "Aviso: Este resultado é uma estimativa e pode não ser totalmente preciso."
       }
     },
     "filter": {
@@ -954,7 +969,8 @@
       "ultra": "Ultra"
     },
     "badge": {
-      "estimate": "Est."
+      "estimate": "Est.",
+      "disclaimer": "Resultado aproximado, pode não ser exato"
     },
     "sections": {
       "hardware": "Hardware",

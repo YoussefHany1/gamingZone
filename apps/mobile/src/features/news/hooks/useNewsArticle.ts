@@ -4,11 +4,13 @@ import { useTranslation } from "react-i18next";
 import { useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import { getArticleSummary } from "@gaming-zone/utils";
+import type { ArticlePlatform } from "@gaming-zone/core";
 import { databases } from "@/src/lib/appwrite";
 import { APPWRITE_DATABASE_ID } from "@/src/lib/config";
 import { openLink } from "@/src/lib/browser";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { formatArticleDate, getTimeAgo } from "../lib/articleFormat";
+import { badgePlatformsOf } from "../lib/articlePlatforms";
 import type { ArticleParams, RootParamList } from "../types";
 import { logger } from "@/src/lib/logger";
 
@@ -28,6 +30,8 @@ export type UseNewsArticleResult = {
   description: string;
   summary: string;
   isSummaryRtl: boolean;
+  /** Badge-ready platforms; empty when the article is general/unclassified. */
+  platforms: ArticlePlatform[];
   currentLang: string;
   formattedDate: string;
   timeAgo: string;
@@ -87,6 +91,7 @@ export function useNewsArticle(): UseNewsArticleResult {
             summary_hi: doc.summary_hi,
             summary_pt_br: doc.summary_pt_br,
             summary_pt_pt: doc.summary_pt_pt,
+            platforms: doc.platforms,
           });
         }
       } catch (error: unknown) {
@@ -127,6 +132,7 @@ export function useNewsArticle(): UseNewsArticleResult {
   // independent of the article's own content language.
   const summary = getArticleSummary(activeArticle, i18n.language);
   const isSummaryRtl = i18n.language.startsWith("ar");
+  const platforms = badgePlatformsOf(activeArticle);
   const currentLang = activeArticle.language ?? i18n.language;
 
   const formattedDate = useMemo(
@@ -155,6 +161,7 @@ export function useNewsArticle(): UseNewsArticleResult {
     description,
     summary,
     isSummaryRtl,
+    platforms,
     currentLang,
     formattedDate,
     timeAgo,

@@ -258,6 +258,20 @@
       "hours": "س",
       "minutes": "د"
     },
+    "platforms": {
+      "all": "الكل",
+      "pc": "الحاسوب",
+      "playstation": "بلايستيشن",
+      "xbox": "إكس بوكس",
+      "nintendo": "نينتندو",
+      "android": "أندرويد",
+      "ios": "آي أو إس"
+    },
+    "emptyPlatform": {
+      "title": "لا توجد مقالات لهذه المنصة",
+      "subtitle": "لا توجد مقالات للمنصة المحددة حاليًا.",
+      "showAll": "عرض جميع المنصات"
+    },
     "noSources": "لا توجد مصادر أخبار متاحة لهذه الفئة."
   },
   "games": {
@@ -455,7 +469,8 @@
           "meets": "متوافق",
           "below": "أقل من المطلوب",
           "unknown": "غير معروف"
-        }
+        },
+        "disclaimer": "تنويه: هذه النتيجة تقريبية وقد لا تكون دقيقة تماماً."
       },
       "pcRequirementsSource": "البيانات من PCGamingWiki (CC BY-NC-SA)"
     },
@@ -954,7 +969,8 @@
       "ultra": "فائق"
     },
     "badge": {
-      "estimate": "تقديري"
+      "estimate": "تقديري",
+      "disclaimer": "النتيجة تقريبية وقد تكون غير دقيقة"
     },
     "sections": {
       "hardware": "الأجهزة",

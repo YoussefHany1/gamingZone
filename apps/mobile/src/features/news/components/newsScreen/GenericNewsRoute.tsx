@@ -6,7 +6,39 @@ import Loading from "@/src/Loading";
 import ErrorState from "@/src/components/ErrorState";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import LatestNews from "../LatestNews";
-import type { GenericNewsRouteProps, RssFeedSource } from "../../types";
+import { useNewsPlatformFilter } from "../../hooks/useNewsPlatformFilter";
+import type { GenericNewsRouteProps, LatestNewsProps, RssFeedSource } from "../../types";
+
+/** Only News/Reviews get the platform filter (Home and the other tabs don't). */
+const PLATFORM_SCOPED_CATEGORIES = new Set(["news", "reviews"]);
+
+type FeedProps = Omit<
+  LatestNewsProps,
+  "platform" | "showPlatformFilter" | "onPlatformChange" | "onResetPlatform" | "feedReady"
+>;
+
+function BaseFeed(props: FeedProps) {
+  return <LatestNews {...props} />;
+}
+
+/**
+ * News/Reviews feed with the platform chip row. Split into its own component so
+ * the profile-platform read (and the chips) never runs for the other tabs.
+ */
+function PlatformAwareFeed(props: FeedProps) {
+  const { platform, resolved, setPlatform, resetPlatform } = useNewsPlatformFilter();
+
+  return (
+    <LatestNews
+      {...props}
+      platform={platform === "all" ? undefined : platform}
+      showPlatformFilter
+      feedReady={resolved}
+      onPlatformChange={setPlatform}
+      onResetPlatform={resetPlatform}
+    />
+  );
+}
 
 /**
  * One category scene: renders the selected RSS source's feed, or the
@@ -57,20 +89,26 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
   }, [feedList, selected]);
 
   if (selected) {
+    const feedProps: FeedProps = {
+      website: selected.name,
+      category: categoryKey,
+      selectedItem: selected,
+      language: selected.language ?? "en",
+      websitesList: feedList,
+      onChangeFeed: setSelected,
+      enablePagination: true,
+      itemsPerPage: 10,
+      adInterval: 5,
+      showDropdown: true,
+    };
+
     return (
       <View style={styles.scene}>
-        <LatestNews
-          website={selected.name}
-          category={categoryKey}
-          selectedItem={selected}
-          language={selected.language ?? "en"}
-          websitesList={feedList}
-          onChangeFeed={setSelected}
-          enablePagination={true}
-          itemsPerPage={10}
-          adInterval={5}
-          showDropdown={true}
-        />
+        {PLATFORM_SCOPED_CATEGORIES.has(categoryKey) ? (
+          <PlatformAwareFeed {...feedProps} />
+        ) : (
+          <BaseFeed {...feedProps} />
+        )}
       </View>
     );
   }

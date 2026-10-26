@@ -232,6 +232,20 @@
     "latestHeader": "Últimas {{category}}",
     "newsHeader": "Notícias e artigos de gaming",
     "noArticles": "De momento, não há artigos disponíveis.",
+    "platforms": {
+      "all": "Todas",
+      "pc": "PC",
+      "playstation": "PlayStation",
+      "xbox": "Xbox",
+      "nintendo": "Nintendo",
+      "android": "Android",
+      "ios": "iOS"
+    },
+    "emptyPlatform": {
+      "title": "Sem artigos para esta plataforma",
+      "subtitle": "De momento não existem artigos para a plataforma selecionada.",
+      "showAll": "Mostrar todas as plataformas"
+    },
     "noSources": "Não há fontes de notícias disponíveis para esta categoria.",
     "fetchError": "Erro ao obter os dados. Tente novamente mais tarde.",
     "contactSupport": "Contactar o suporte",
@@ -456,7 +470,8 @@
           "meets": "Cumpre",
           "below": "Abaixo",
           "unknown": "Desconhecido"
-        }
+        },
+        "disclaimer": "Aviso: Este resultado é uma estimativa e pode não ser totalmente preciso."
       }
     },
     "filter": {
@@ -954,7 +969,8 @@
       "ultra": "Ultra"
     },
     "badge": {
-      "estimate": "Est."
+      "estimate": "Est.",
+      "disclaimer": "Resultado aproximado, pode não ser exato"
     },
     "sections": {
       "hardware": "Hardware",

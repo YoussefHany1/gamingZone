@@ -11,8 +11,8 @@ export default function GamePcRequirements({
   // arrays exist (the raw API payload uses `null` for an empty tier).
   const minimumRows = pcSpecs.minimum ?? [];
   const recommendedRows = pcSpecs.recommended ?? [];
-  const rtMinRows = (pcSpecs as any).rtMinimum ?? [];
-  const rtUltraRows = (pcSpecs as any).rtUltra ?? [];
+  const rtMinRows = pcSpecs.rtMinimum ?? [];
+  const rtUltraRows = pcSpecs.rtUltra ?? [];
   if (minimumRows.length === 0 && recommendedRows.length === 0 && rtMinRows.length === 0 && rtUltraRows.length === 0) return null;
 
   return (
@@ -75,7 +75,7 @@ export default function GamePcRequirements({
               <span>{t("games.details.rtMinimum") || "RT Minimum"}</span>
             </h3>
             <div className="space-y-3">
-              {rtMinRows.map((row: any, i: number) => (
+              {rtMinRows.map((row, i) => (
                 <div key={i} className="text-xs space-y-1">
                   <span className="text-gray-400 font-bold block capitalize">
                     {row.label}
@@ -97,7 +97,7 @@ export default function GamePcRequirements({
               <span>{t("games.details.rtUltra") || "RT Ultra"}</span>
             </h3>
             <div className="space-y-3">
-              {rtUltraRows.map((row: any, i: number) => (
+              {rtUltraRows.map((row, i) => (
                 <div key={i} className="text-xs space-y-1">
                   <span className="text-gray-400 font-bold block capitalize">
                     {row.label}

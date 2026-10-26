@@ -174,8 +174,19 @@ async function flushPending(): Promise<void> {
   const now = Date.now();
   const ids = [...pendingIds].filter((id) => {
     if (isCached(id)) {
-      setReady(id, cacheEntry(id)?.requirements ?? null);
-      return false;
+      const cached = cacheEntry(id);
+      // If cached entry doesn't have RT requirements but might need them, still fetch
+      const req = cached?.requirements as any;
+      if (req && (req.rtMinimum || req.rtUltra)) {
+        setReady(id, req ?? null);
+        return false;
+      } else if (cached?.requirements) {
+        // Has basic requirements cached, but might be missing RT data - fetch to update
+        // Don't return false, let it fetch
+      } else {
+        setReady(id, cached?.requirements ?? null);
+        return false;
+      }
     }
     if (inFlightIds.has(id)) return false;
     const retryAt = retryAfter.get(id);
@@ -213,8 +224,19 @@ export const usePcRequirementsStore = create<PcRequirementsState>()((set, get) =
 
     // A fresh cache entry paints immediately without waiting for the debounce.
     if (isCached(gameId)) {
-      setReady(gameId, cacheEntry(gameId)?.requirements ?? null);
-      return;
+      const cached = cacheEntry(gameId);
+      const req = cached?.requirements as any;
+      if (req && (req.rtMinimum || req.rtUltra)) {
+        setReady(gameId, req ?? null);
+        return;
+      }
+      // Missing RT data - continue to fetch to update
+      if (cached?.requirements) {
+        // Don't return, allow fetch to get updated data
+      } else {
+        setReady(gameId, cached?.requirements ?? null);
+        return;
+      }
     }
 
     if (inFlightIds.has(gameId)) return;

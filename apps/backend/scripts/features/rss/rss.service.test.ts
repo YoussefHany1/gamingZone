@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockDatabases, mockFetchArticleData } = vi.hoisted(() => ({
+const { mockDatabases, mockFetchArticleData, mockFetchFeed } = vi.hoisted(() => ({
   mockDatabases: {
     createDocument: vi.fn(),
     getDocument: vi.fn(),
@@ -9,6 +9,7 @@ const { mockDatabases, mockFetchArticleData } = vi.hoisted(() => ({
     deleteDocument: vi.fn(),
   },
   mockFetchArticleData: vi.fn(),
+  mockFetchFeed: vi.fn(),
 }));
 
 vi.mock('../../lib/appwrite', () => ({
@@ -21,11 +22,11 @@ vi.mock('../../lib/firebaseAdmin', () => ({
 }));
 
 vi.mock('./fetch', () => ({
-  fetchFeed: vi.fn(),
+  fetchFeed: mockFetchFeed,
   fetchArticleData: mockFetchArticleData,
 }));
 
-import { createArticle, DEFAULT_ARTICLE_BATCH_SIZE } from './rss.service';
+import { createArticle, DEFAULT_ARTICLE_BATCH_SIZE, runFetchRss } from './rss.service';
 
 import type { NormalizedArticle } from './normalize';
 
@@ -155,5 +156,26 @@ describe('createArticle', () => {
     );
 
     await expect(createArticle(sourceData, makeItem())).resolves.toBe('exists');
+  });
+});
+
+describe('runFetchRss', () => {
+  it('skips sources explicitly marked with isActive: false', async () => {
+    mockDatabases.listDocuments.mockResolvedValue({
+      documents: [
+        { $id: 'src-1', rssUrl: 'https://a.com/rss', name: 'A', category: 'cat', isActive: true },
+        { $id: 'src-2', rssUrl: 'https://b.com/rss', name: 'B', category: 'cat', isActive: false },
+        { $id: 'src-3', rssUrl: 'https://c.com/rss', name: 'C', category: 'cat' },
+      ],
+    });
+    mockFetchFeed.mockResolvedValue({ isModified: false });
+
+    const summary = await runFetchRss({ fetchOnly: true });
+
+    expect(summary.sourcesProcessed).toBe(2);
+    expect(mockFetchFeed).toHaveBeenCalledTimes(2);
+    expect(mockFetchFeed).toHaveBeenCalledWith('https://a.com/rss', expect.anything(), expect.anything());
+    expect(mockFetchFeed).toHaveBeenCalledWith('https://c.com/rss', expect.anything(), expect.anything());
+    expect(mockFetchFeed).not.toHaveBeenCalledWith('https://b.com/rss', expect.anything(), expect.anything());
   });
 });

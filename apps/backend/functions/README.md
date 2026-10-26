@@ -17,7 +17,7 @@ Appwrite functions support exactly **one** schedule, and on this server that fie
 
 Notes:
 
-- `article-summaries` runs immediately after `rss` on every tick, so articles created in the same invocation are summarized within seconds — no AI work is added to the ingestion path. It generates a ≤3-line summary per supported app language (en/ar/es/fr/hi/pt-BR/pt-PT), newest-first, plus a bounded oldest-first slice so the backlog converges. Requires the `articles` collection to have the `summary_*` / `summaries_at` / `summaries_attempts` / `summaries_failed` attributes.
+- `article-summaries` runs immediately after `rss` on every tick, so articles created in the same invocation are summarized within seconds — no AI work is added to the ingestion path. It generates a ≤3-line summary per supported app language (en/ar/es/fr/hi/pt-BR/pt-PT) plus the article's gaming platforms in the same model call, newest-first, plus a bounded oldest-first slice so the backlog converges. Requires the `articles` collection to have the `summary_*` / `summaries_at` / `summaries_attempts` / `summaries_failed` / `platforms` / `platforms_source` attributes (no index — see below). Ingestion tags `platforms` immediately (keyword scan) so a new article is never missing from the mobile filter, and the AI classification overwrites that value when it succeeds.
 - `weekly-summary` is **not** idempotent (it creates a new document each run), so it only fires on the single 12:00 Friday tick.
 - Jobs broadcast FCM topic pushes via `firebase-admin` (`FCM_SERVICE_ACCOUNT`): `rss` → `news_<category>_<source>`, `free-games` → `free_games_alerts`, `weekly-summary` → `weekly_summary_alerts`. Pushes are best-effort (a failure is logged, never thrown).
 - All GitHub Actions workflows were removed (`trigger-rss.yml`, `free-games.yml`, `weekly-summary.yml`, `deploy-functions.yml`) — scheduling and code deployment are entirely inside Appwrite now.
@@ -46,8 +46,12 @@ Git-connected deploy activates. Adding a job means adding it to `worker.ts` and 
 
 ## Article summaries (schema + backfill)
 
-`article-summaries` needs 10 extra attributes on the `articles` collection. They
-are created idempotently (only the missing ones) by:
+`article-summaries` needs 12 extra attributes on the `articles` collection (the
+seven summaries, three state fields, and `platforms` / `platforms_source`). No
+index is needed: Appwrite rejects indexes on array attributes ("Creating indexes
+on array attributes is not currently supported"), and the mobile feed's
+`Query.contains('platforms', [...])` filter works without one (verified against
+production). Attributes are created idempotently (only the missing ones) by:
 
 ```sh
 cd apps/backend
@@ -57,8 +61,22 @@ npm run migrate:article-summaries -- --app-env .env.staging   # target staging
 ```
 
 The script derives the seven `summary_*` names from the same language map the
-code uses, and never alters an existing attribute — a shape mismatch is logged
-as a warning for manual review.
+code uses, and never alters an existing attribute — a shape mismatch is logged as
+a warning for manual review. It creates attributes, waits for them to become
+`available`, then runs the exact `Query.contains('platforms', [...])` query the
+mobile feed issues, so a broken filter fails here instead of in production.
+
+Articles written before platform classification need a one-off deterministic
+backfill (keyword scan of the title/description; no AI calls):
+
+```sh
+npm run backfill:article-platforms -- --dry-run --limit 200   # preview
+npm run backfill:article-platforms                            # all legacy articles
+```
+
+It never overwrites a document that already has a `platforms` value, and
+articles that match no platform are tagged with all six ids (general news
+matches every filter). Re-running it is safe.
 
 Verify state at any time (read-only):
 

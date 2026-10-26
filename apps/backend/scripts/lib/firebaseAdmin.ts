@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import { requireFcmServiceAccount } from './config';
+import { getErrorMessage } from './errors';
 
 export interface FirebaseAdminState {
   admin: typeof admin;
@@ -40,8 +41,8 @@ function initFirebaseAdmin(appName: string): FirebaseAdminState {
     }
 
     return { admin, enabled: true, error: null, appName };
-  } catch (error: any) {
-    return { admin, enabled: false, error: error.message, appName: null };
+  } catch (error: unknown) {
+    return { admin, enabled: false, error: getErrorMessage(error), appName: null };
   }
 }
 
@@ -49,9 +50,8 @@ function initFirebaseAdmin(appName: string): FirebaseAdminState {
 function firebaseAppFor(state: FirebaseAdminState): admin.app.App | null {
   if (state.appName === null) return null;
   return (
-    admin.apps.find(
-      (app): app is admin.app.App => app !== null && app.name === state.appName,
-    ) ?? null
+    admin.apps.find((app): app is admin.app.App => app !== null && app.name === state.appName) ??
+    null
   );
 }
 

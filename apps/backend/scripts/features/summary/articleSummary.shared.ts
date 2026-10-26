@@ -125,12 +125,13 @@ function buildPrompt(article: SummarizableArticle): string {
   return `You are a senior gaming news editor writing a very short summary of the article below for a gaming audience.
 
 RULES:
-1. Return a JSON object with exactly these string fields: en, ar, es, fr, hi, pt_br, pt_pt.
+1. Return a JSON object with the string fields en, ar, es, fr, hi, pt_br, pt_pt and the string array platforms.
 2. Each summary must be a single short paragraph of AT MOST 3 lines (~200-280 characters; Arabic and Hindi may use up to ~380).
 3. Plain text only — no markdown, no headings, no bullet points, no surrounding quotes.
 4. Write natively in each language (convey the meaning, do not translate word-for-word). Arabic must be clear Modern Standard Arabic (فصحى); Brazilian and European Portuguese must be distinct and natural.
 5. Cover only the most important facts (who / what / why it matters).
 6. If the text is unclear or very short, still produce your best short summary. Never leave a field empty.
+7. platforms must list every platform the article is about, using ONLY these ids: pc, playstation, xbox, nintendo, android, ios. A multi-platform release lists several ids; a platform-exclusive story lists one. For general gaming-industry news that is not tied to a specific platform (earnings, studio layoffs, awards, events, legal news), return ALL SIX ids. Never invent ids, never use "all", and never return an empty array.
 
 Article title: ${title}
 Article text: ${body || title}`;

@@ -16,7 +16,9 @@ import {
   buildPendingQueueQuery,
   parseBackfillLimit,
   pendingSummaryFilters,
+  buildPrompt,
 } from './articleSummary.shared';
+import { ARTICLE_PLATFORMS } from '../../lib/articlePlatforms';
 
 describe('parseSummaries', () => {
   it('keeps every valid language when the model returns all 7', () => {
@@ -278,5 +280,29 @@ describe('pending summary filters', () => {
     expect(failureFilter).not.toBe(
       '{"method":"equal","attribute":"summaries_failed","values":[false]}',
     );
+  });
+});
+
+describe('buildPrompt platform classification', () => {
+  const prompt = buildPrompt({
+    $id: 'doc',
+    title: 'Test article',
+    description: 'Body',
+  });
+
+  it('asks for the platforms field alongside the summaries', () => {
+    expect(prompt).toContain('platforms');
+    expect(prompt).toContain('string array platforms');
+  });
+
+  it('lists every allowed platform id', () => {
+    for (const platform of ARTICLE_PLATFORMS) {
+      expect(prompt).toContain(platform);
+    }
+  });
+
+  it('tells the model to use all ids for general news and never return an empty array', () => {
+    expect(prompt).toContain('ALL SIX');
+    expect(prompt).toContain('never return an empty array');
   });
 });

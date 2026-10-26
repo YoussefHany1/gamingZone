@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useCallback, useRef } from "react";
 import type { Models } from "react-native-appwrite";
 import { Query } from "react-native-appwrite";
+import type { ArticlePlatform } from "@gaming-zone/core";
 import { databases, client } from "@/src/lib/appwrite";
 import { APPWRITE_DATABASE_ID } from "@/src/lib/config";
 import useCachedData from "@/src/hooks/useCachedData";
@@ -41,6 +42,12 @@ export interface Article extends Models.Document {
   summary_hi?: string;
   summary_pt_br?: string;
   summary_pt_pt?: string;
+  /**
+   * Platforms the article covers. General news stores all six ids, so it
+   * matches every filter. Missing on documents that predate classification.
+   */
+  platforms?: ArticlePlatform[];
+  platforms_source?: string;
 }
 
 export interface UseFeedResult {
@@ -99,6 +106,7 @@ export default function useFeed(
   limit: number = 10,
   language?: string,
   enabled: boolean = true,
+  platform?: ArticlePlatform,
 ): UseFeedResult {
   // Article storage only has "ar"/"en" content — Spanish and French reuse
   // English data while the UI (direction/labels) stays driven by the app language.
@@ -111,8 +119,8 @@ export default function useFeed(
 
   const cacheKey = useMemo(
     () =>
-      `feed_cache_${category ?? "nocat"}_${siteName ?? "all"}_page_${page}_lang_${contentLanguage ?? "all"}`,
-    [category, siteName, page, contentLanguage],
+      `feed_cache_${category ?? "nocat"}_${siteName ?? "all"}_page_${page}_lang_${contentLanguage ?? "all"}_plat_${platform ?? "all"}`,
+    [category, siteName, page, contentLanguage, platform],
   );
 
   const fetchArticles = useCallback(async (): Promise<FetchResponse> => {
@@ -127,6 +135,10 @@ export default function useFeed(
 
     if (siteName) queries.push(Query.equal("siteName", siteName));
     if (contentLanguage) queries.push(Query.equal("language", contentLanguage));
+    // Array containment: general articles store all six ids, so they match
+    // every platform. Appwrite cannot index array attributes, but `contains`
+    // works without an index on the `platforms` array.
+    if (platform) queries.push(Query.contains("platforms", [platform]));
 
     const response = await databases.listDocuments(
       APPWRITE_DATABASE_ID,
@@ -138,7 +150,7 @@ export default function useFeed(
       articles: response.documents as unknown as Article[],
       total: response.total,
     };
-  }, [category, siteName, page, limit, contentLanguage]);
+  }, [category, siteName, page, limit, contentLanguage, platform]);
 
   // Use the longer TTL only for the primary feed (news, page 1) which has a
   // Realtime subscription keeping it fresh. All other feeds use the shorter one.
@@ -155,7 +167,7 @@ export default function useFeed(
   } = useCachedData<FetchResponse>(
     cacheKey,
     fetchArticles,
-    [category, siteName, page, limit, contentLanguage],
+    [category, siteName, page, limit, contentLanguage, platform],
     cacheTtl,
     enabled,
   );
@@ -199,8 +211,13 @@ export default function useFeed(
         const matchesCategory = newDoc.category === category;
         const matchesSite = siteName ? newDoc.siteName === siteName : true;
         const matchesLang = contentLanguage ? newDoc.language === contentLanguage : true;
+        // General articles carry every platform, so `.includes` matches them
+        // under each filter; documents without `platforms` only match "All".
+        const matchesPlatform = platform
+          ? Array.isArray(newDoc.platforms) && newDoc.platforms.includes(platform)
+          : true;
 
-        if (!matchesCategory || !matchesSite || !matchesLang) return;
+        if (!matchesCategory || !matchesSite || !matchesLang || !matchesPlatform) return;
 
         // Guard against duplicate events (Realtime can fire more than once).
         if (articlesRef.current.some((a) => a.$id === newDoc.$id)) return;
@@ -215,7 +232,7 @@ export default function useFeed(
 
     return () => invokeUnsubscribe(subscription);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, siteName, page, limit, contentLanguage, setData]);
+  }, [category, siteName, page, limit, contentLanguage, platform, setData]);
 
   return { articles, total, loading, isRefetching, error, refetch };
 }

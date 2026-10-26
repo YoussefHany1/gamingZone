@@ -226,7 +226,13 @@ async function callModelWithRetry(
 
     try {
       log.info(`🤖 ${label}: trying ${modelId(model)} (attempt ${attempt}/${retries})...`);
-      return await callByProvider[model.provider](model, options, keys, fetchImpl, controller.signal);
+      return await callByProvider[model.provider](
+        model,
+        options,
+        keys,
+        fetchImpl,
+        controller.signal,
+      );
     } catch (error: unknown) {
       const retryAfterMs = rateLimitRetryAfterMs(error);
 
@@ -254,7 +260,9 @@ async function callModelWithRetry(
       failures++;
       if (failures >= retries) throw error;
       const backoff = backoffBaseMs * 2 ** failures;
-      log.warn(`⚠️ ${label}: ${modelId(model)} attempt ${attempt} failed: ${getErrorMessage(error)}`);
+      log.warn(
+        `⚠️ ${label}: ${modelId(model)} attempt ${attempt} failed: ${getErrorMessage(error)}`,
+      );
       await sleep(backoff);
     } finally {
       clearTimeout(timer);

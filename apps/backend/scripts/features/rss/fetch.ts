@@ -11,7 +11,6 @@ import { withRetry } from '../../lib/http';
 import { fixArabHardwareEncoding } from './encoding';
 import { isBadImage } from './helpers';
 import { cleanDescription } from './clean';
-import { normalizeText } from './normalize';
 
 const parser = new xml2js.Parser({
   explicitArray: false,

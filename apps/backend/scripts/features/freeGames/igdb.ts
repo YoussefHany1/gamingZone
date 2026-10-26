@@ -7,7 +7,7 @@ async function searchIgdbGameId(gameName: string, apiBaseUrl: string): Promise<s
   const cleanName = cleanGameNameForSearch(gameName);
 
   try {
-    const response = await axiosGetWithRetry(
+    const response = await axiosGetWithRetry<{ igdb_id?: number }>(
       `${apiBaseUrl}/search-game-id`,
       {
         params: { name: cleanName },
@@ -16,7 +16,8 @@ async function searchIgdbGameId(gameName: string, apiBaseUrl: string): Promise<s
       { label: `IGDB lookup (${cleanName})` },
     );
 
-    return response.data.igdb_id || null;
+    const igdbId = response.data.igdb_id;
+    return igdbId == null ? null : String(igdbId);
   } catch (error) {
     console.log(`   ⚠️ Failed to get IGDB ID for "${cleanName}": ${getErrorMessage(error)}`);
     return null;

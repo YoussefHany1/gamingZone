@@ -1,19 +1,18 @@
 import { useEffect, useState } from "react";
 import firestore from "@react-native-firebase/firestore";
+import { ARTICLE_PLATFORMS } from "@gaming-zone/core";
+import type { ArticlePlatform } from "@gaming-zone/core";
 import { useAuthStore } from "../store/useAuthStore";
 import { logger } from "@/src/lib/logger";
 
-/** Platforms the app currently supports as an account preference. */
-export const USER_PLATFORMS = [
-  "pc",
-  "playstation",
-  "xbox",
-  "nintendo",
-  "android",
-  "ios",
-] as const;
+/**
+ * Platforms the app currently supports as an account preference. Re-exported
+ * from the shared core list so the profile picker, the news filter chips, and
+ * the article classifier can never drift apart.
+ */
+export const USER_PLATFORMS = ARTICLE_PLATFORMS;
 
-export type UserPlatform = (typeof USER_PLATFORMS)[number];
+export type UserPlatform = ArticlePlatform;
 
 export function isUserPlatform(value: unknown): value is UserPlatform {
   return (

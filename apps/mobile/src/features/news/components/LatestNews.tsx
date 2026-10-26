@@ -19,6 +19,10 @@ import { intervalToDuration } from "date-fns";
 import DropdownPicker from "./DropdownPicker";
 import SkeletonNewsItem from "../skeleton/SkeletonNewsItem";
 import ErrorState from "@/src/components/ErrorState";
+import PlatformBadges from "./PlatformBadges";
+import PlatformFilterChips from "./PlatformFilterChips";
+import { badgePlatformsOf } from "../lib/articlePlatforms";
+import type { NewsPlatformFilter } from "../lib/articlePlatforms";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -116,6 +120,9 @@ const NewsItem = memo(function NewsItem({
   // description while a summary hasn't been generated yet.
   const summary = getArticleSummary(item, language ?? "en") || item.description || "";
 
+  // General/all-platform articles yield [] here, so they stay badge-free.
+  const platforms = badgePlatformsOf(item);
+
   return (
     <View
       style={[
@@ -144,6 +151,7 @@ const NewsItem = memo(function NewsItem({
             </CustomText>
           ) : null}
           <CustomText style={styles.timeAgoText}>{timeAgo}</CustomText>
+          {platforms.length > 0 && <PlatformBadges platforms={platforms} />}
         </View>
         <View>
           <Image
@@ -182,6 +190,9 @@ const ListHeader = memo(function ListHeader({
   websitesList,
   onChangeFeed,
   showHeaderTitle,
+  showPlatformFilter,
+  platform,
+  onPlatformChange,
 }: {
   category?: string | undefined;
   t: (key: string, opts?: object) => string;
@@ -190,6 +201,9 @@ const ListHeader = memo(function ListHeader({
   websitesList: RssFeedSource[];
   onChangeFeed?: ((item: RssFeedSource) => void) | undefined;
   showHeaderTitle?: boolean | undefined;
+  showPlatformFilter?: boolean | undefined;
+  platform?: NewsPlatformFilter | undefined;
+  onPlatformChange?: ((value: NewsPlatformFilter) => void) | undefined;
 }) {
   const safeCategory = category ? String(category).toLowerCase() : "";
   const translatedCategory = safeCategory ? t(`news.tabs.${safeCategory}`) : "";
@@ -225,6 +239,9 @@ const ListHeader = memo(function ListHeader({
           onChange={(item) => onChangeFeed?.(item)}
         />
       )}
+      {showPlatformFilter && onPlatformChange && (
+        <PlatformFilterChips value={platform ?? "all"} onChange={onPlatformChange} />
+      )}
     </>
   );
 });
@@ -247,6 +264,11 @@ function LatestNews({
   itemsPerPage = 10,
   adInterval = 8,
   mockData,
+  platform,
+  showPlatformFilter,
+  onPlatformChange,
+  onResetPlatform,
+  feedReady = true,
 }: LatestNewsProps) {
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
@@ -299,6 +321,23 @@ function LatestNews({
       borderRadius: 8,
     },
     contactButtonText: {
+      color: c.onAccent,
+      fontWeight: "bold",
+      fontSize: 14,
+    },
+    filteredEmpty: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingBottom: 40,
+    },
+    showAllButton: {
+      backgroundColor: c.accent,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 8,
+    },
+    showAllText: {
       color: c.onAccent,
       fontWeight: "bold",
       fontSize: 14,
@@ -370,10 +409,10 @@ function LatestNews({
     return () => task.cancel();
   }, []);
 
-  // Reset page when category, website, or language changes
+  // Reset page when category, website, language, or platform changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [category, website, language]);
+  }, [category, website, language, platform]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
@@ -398,8 +437,10 @@ function LatestNews({
     currentPage,
     itemsPerPage,
     language,
-    // Mock-only previews (Appearance screen) must not touch the cache or NetInfo.
-    !mockData,
+    // Mock-only previews (Appearance screen) must not touch the cache or NetInfo;
+    // the feed also waits for the profile platform so it never fetches twice.
+    !mockData && feedReady,
+    platform,
   );
 
   const articles = mockData ? mockData : feedArticles;
@@ -470,6 +511,9 @@ function LatestNews({
       websitesList={websitesList ?? []}
       onChangeFeed={onChangeFeed}
       showHeaderTitle={showHeaderTitle}
+      showPlatformFilter={showPlatformFilter}
+      platform={platform ?? "all"}
+      onPlatformChange={onPlatformChange}
     />
   );
 
@@ -633,8 +677,26 @@ function LatestNews({
   }, [refetch, t]);
 
   const renderEmptyComponent = useCallback(
-    () => <ErrorState message={t("news.noArticles")} />,
-    [t],
+    () =>
+      platform && onResetPlatform ? (
+        <View style={styles.filteredEmpty}>
+          <ErrorState
+            message={t("news.emptyPlatform.title")}
+            subMessage={t("news.emptyPlatform.subtitle")}
+            // Only the platform reset belongs here — support is one tap away
+            // in settings and would compete with the actual way out.
+            showContactButton={false}
+          />
+          <Pressable style={styles.showAllButton} onPress={onResetPlatform}>
+            <CustomText style={styles.showAllText}>
+              {t("news.emptyPlatform.showAll")}
+            </CustomText>
+          </Pressable>
+        </View>
+      ) : (
+        <ErrorState message={t("news.noArticles")} />
+      ),
+    [t, platform, onResetPlatform, styles],
   );
 
   if (loading && articles.length === 0) {
@@ -651,7 +713,14 @@ function LatestNews({
   }
 
   if (error && articles.length === 0) {
-    return <ErrorState message={t("news.fetchError")} />;
+    return (
+      <View style={styles.container}>
+        {/* Keep the source + platform selectors visible: a failing filtered
+            query must not trap the user without a way back to "All". */}
+        {headerComponent}
+        <ErrorState message={t("news.fetchError")} />
+      </View>
+    );
   }
 
   if (scrollEnabled === false) {

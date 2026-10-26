@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { logger } from './logger';
+import { getErrorMessage } from './errors';
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -9,13 +10,16 @@ function isRetryableStatus(status: number): boolean {
   return status === 408 || status === 425 || status === 429 || status >= 500;
 }
 
-function isRetryableError(error: any): boolean {
-  const status = error?.response?.status;
+function isRetryableError(error: unknown): boolean {
+  const { response, code } = error as {
+    response?: { status?: number };
+    code?: string;
+  };
+  const status = response?.status;
   if (typeof status === 'number') {
     return isRetryableStatus(status);
   }
 
-  const code = error?.code;
   return (
     code === 'ECONNABORTED' ||
     code === 'ECONNRESET' ||
@@ -42,20 +46,20 @@ async function withRetry<T>(operation: () => Promise<T>, options: RetryOptions =
 
     try {
       return await operation();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const shouldRetry = attempt <= retries && isRetryableError(error);
       if (!shouldRetry) throw error;
 
       const delay = Math.min(baseDelayMs * 2 ** (attempt - 1), maxDelayMs);
       logger.warn(
-        `   ⚠️ ${label} failed (attempt ${attempt}/${retries + 1}): ${error.message}. Retrying in ${delay}ms...`,
+        `   ⚠️ ${label} failed (attempt ${attempt}/${retries + 1}): ${getErrorMessage(error)}. Retrying in ${delay}ms...`,
       );
       await sleep(delay);
     }
   }
 }
 
-async function axiosGetWithRetry<T = any>(
+async function axiosGetWithRetry<T = unknown>(
   url: string,
   config: AxiosRequestConfig = {},
   retryOptions: RetryOptions = {},

@@ -3,6 +3,8 @@ import { View } from "react-native";
 import { Image } from "expo-image";
 import CustomText from "@/src/components/CustomText";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import type { ArticlePlatform } from "@gaming-zone/core";
+import PlatformBadges from "../PlatformBadges";
 import type { NewsArticleMetaProps } from "./types";
 
 /** Site badge row (logo + name + relative time) and the absolute date row. */
@@ -11,6 +13,7 @@ const NewsArticleMeta = memo(function NewsArticleMeta({
   siteName,
   timeAgo,
   formattedDate,
+  platforms,
 }: NewsArticleMetaProps) {
   const styles = useThemeStyles((c) => ({
     site: {
@@ -59,6 +62,12 @@ const NewsArticleMeta = memo(function NewsArticleMeta({
       <View style={styles.site}>
         <CustomText style={styles.date}>{formattedDate}</CustomText>
       </View>
+
+      {platforms.length > 0 && (
+        <View style={styles.site}>
+          <PlatformBadges platforms={platforms} variant="labeled" />
+        </View>
+      )}
     </>
   );
 });

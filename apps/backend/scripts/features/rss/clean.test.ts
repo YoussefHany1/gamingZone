@@ -59,7 +59,8 @@ describe('stripHtml', () => {
 
 describe('removeBoilerplate', () => {
   it('removes published date metadata lines', () => {
-    const text = 'Nvidia announced the RTX 6090 today.\n\nPublished Oct 23, 2026, 10:30 AM EDT\n\nMore details.';
+    const text =
+      'Nvidia announced the RTX 6090 today.\n\nPublished Oct 23, 2026, 10:30 AM EDT\n\nMore details.';
     const cleaned = removeBoilerplate(text);
     expect(cleaned).toContain('Nvidia announced the RTX 6090 today.');
     expect(cleaned).not.toContain('Published Oct 23');
@@ -145,7 +146,8 @@ describe('cleanHeadline', () => {
 
 describe('buildPushTitle', () => {
   it('truncates at a word boundary', () => {
-    const long = 'This is an extremely long headline that should be truncated without cutting a word in the middle';
+    const long =
+      'This is an extremely long headline that should be truncated without cutting a word in the middle';
     const title = buildPushTitle(long, { maxChars: 40 });
     expect(title.length).toBeLessThanOrEqual(40);
     expect(title).not.toMatch(/\s$/);

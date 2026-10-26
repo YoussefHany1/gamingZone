@@ -1,5 +1,6 @@
 import type { RssFeedMap } from "@/src/hooks/useRssFeeds";
-import type { Article } from "@gaming-zone/core";
+import type { Article, ArticlePlatform } from "@gaming-zone/core";
+import type { NewsPlatformFilter } from "./lib/articlePlatforms";
 
 export type { Article } from "@gaming-zone/core";
 
@@ -29,6 +30,7 @@ export type ArticleParams = {
   summary_hi?: string;
   summary_pt_br?: string;
   summary_pt_pt?: string;
+  platforms?: string[];
   article?: ArticleParams;
 };
 
@@ -63,6 +65,15 @@ export type LatestNewsProps = {
   itemsPerPage?: number;
   adInterval?: number;
   mockData?: Article[]; // For preview screens like ThemeScreen
+  /** Active platform filter; `undefined` disables filtering (Home/preview). */
+  platform?: ArticlePlatform | undefined;
+  /** Renders the platform chip row under the source dropdown. */
+  showPlatformFilter?: boolean;
+  onPlatformChange?: (value: NewsPlatformFilter) => void;
+  /** Clears the platform filter from the filtered empty state. */
+  onResetPlatform?: () => void;
+  /** False while the profile platform is still resolving — keeps the feed idle. */
+  feedReady?: boolean;
 };
 
 // Memoized row component

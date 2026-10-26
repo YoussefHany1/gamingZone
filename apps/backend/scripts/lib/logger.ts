@@ -41,21 +41,20 @@ function formatArgs(args: unknown[]): string {
 
 export const logger = {
   info(...args: unknown[]) {
-    (pinoInstance.info as Function)(...args);
+    (pinoInstance.info as unknown as AppwriteLogFn)(...args);
     if (appwriteLog) appwriteLog(formatArgs(args));
   },
   warn(...args: unknown[]) {
-    (pinoInstance.warn as Function)(...args);
+    (pinoInstance.warn as unknown as AppwriteLogFn)(...args);
     if (appwriteLog) appwriteLog(`[WARN] ${formatArgs(args)}`);
   },
   error(...args: unknown[]) {
-    (pinoInstance.error as Function)(...args);
+    (pinoInstance.error as unknown as AppwriteLogFn)(...args);
     const msg = formatArgs(args);
     if (appwriteError) appwriteError(msg);
     else if (appwriteLog) appwriteLog(`[ERROR] ${msg}`);
   },
   debug(...args: unknown[]) {
-    (pinoInstance.debug as Function)(...args);
+    (pinoInstance.debug as unknown as AppwriteLogFn)(...args);
   },
 };
-

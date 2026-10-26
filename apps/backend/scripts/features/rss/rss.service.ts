@@ -13,6 +13,7 @@ import { buildPushTitle, buildTeaser, cleanDescription } from './clean';
 import { safeId, resolveImageUrl } from './helpers';
 import { fetchFeed, fetchArticleData } from './fetch';
 import { normalizeItems, NormalizedArticle, FetchedContent } from './normalize';
+import { ALL_PLATFORMS, detectPlatformsFromText } from '../../lib/articlePlatforms';
 
 loadBackendEnv();
 
@@ -222,10 +223,18 @@ async function createArticle(sourceData: SourceData, item: NormalizedArticle): P
   const pubDate = serializePubDate(item.pubDate);
   if (!pubDate) logger.warn(`      ⚠️ No valid publication date for ${item.link}`);
 
+  const description = cleanDescription(fullDescription || item.description, { title: item.title });
+
+  // Tag platforms at ingestion time so a fresh article is never briefly
+  // untagged (it would disappear from every platform filter until the summary
+  // job ran). The AI classification overwrites this later; matching nothing
+  // means the article is general and matches every filter.
+  const detectedPlatforms = detectPlatformsFromText(item.title, description);
+
   const payload = {
     title: item.title,
     link: item.link,
-    description: cleanDescription(fullDescription || item.description, { title: item.title }),
+    description,
     pubDate,
     thumbnail: item.thumbnail || null,
     guid: String(item.guid || item.link),
@@ -234,6 +243,8 @@ async function createArticle(sourceData: SourceData, item: NormalizedArticle): P
     category: sourceData.category,
     siteImage: sourceData.raw?.image || null,
     language: sourceData.raw?.language || null,
+    platforms: detectedPlatforms.length > 0 ? detectedPlatforms : [...ALL_PLATFORMS],
+    platforms_source: detectedPlatforms.length > 0 ? 'keyword' : 'default',
   };
 
   try {
@@ -488,7 +499,17 @@ async function runFetchRss(options: RunFetchRssOptions = {}): Promise<RssSummary
       Query.limit(1000),
     ]);
 
-    const allSources: SourceData[] = res.documents.map((doc) => ({
+    const activeDocs = res.documents.filter((doc) => {
+      const raw = doc as unknown as Record<string, unknown>;
+      return raw.isActive !== false;
+    });
+
+    const skippedInactive = res.documents.length - activeDocs.length;
+    if (skippedInactive > 0) {
+      logger.info(`⏸️ Skipped ${skippedInactive} inactive source(s) (isActive: false).`);
+    }
+
+    const allSources: SourceData[] = activeDocs.map((doc) => ({
       docId: doc.$id,
       rssUrl: doc.rssUrl,
       name: doc.name,

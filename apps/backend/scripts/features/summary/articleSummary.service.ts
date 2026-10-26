@@ -8,6 +8,8 @@ import { getErrorMessage } from '../../lib/errors';
 import { createAiRuntime } from '../../lib/ai';
 import type { AiRuntime } from '../../lib/ai';
 import { formatAiChain } from '../../lib/ai.shared';
+import { parseAiPlatforms, resolveArticlePlatforms } from '../../lib/articlePlatforms';
+import type { ArticlePlatform } from '../../lib/articlePlatforms';
 
 import {
   BACKFILL_CONCURRENCY,
@@ -59,29 +61,35 @@ export interface BackfillOptions {
 
 /**
  * Generates the 7-language summary JSON via the model fallback chain (see
- * `lib/ai`). Returns the parsed map; validation/cleaning happens in
- * `parseSummaries`, so a partial response is still usable.
+ * `lib/ai`). Returns the parsed summaries plus the platforms the same payload
+ * classified (possibly empty — the caller applies the deterministic fallback).
  *
  * The per-task chain (flash-lite first) comes from `articleSummaryChain`, so
  * this high-volume job keeps its cheap-primary cost profile regardless of the
  * shared `AI_CHAIN`/default chain.
  */
-async function generateSummaries(prompt: string, ai: AiRuntime): Promise<SummaryMap> {
+async function generateSummaries(
+  prompt: string,
+  ai: AiRuntime,
+): Promise<{ summaries: SummaryMap; platforms: ArticlePlatform[] }> {
   const { provider, model, text } = await ai.generate({
     prompt,
     label: 'article summary',
     chain: articleSummaryChain(getGroqModels(), getCerebrasModels()),
     geminiSchema: {
       type: 'OBJECT',
-      properties: Object.fromEntries(
-        Object.values(LANGUAGE_TO_JSON_KEY).map((key) => [key, { type: 'STRING' }]),
-      ),
+      properties: {
+        ...Object.fromEntries(
+          Object.values(LANGUAGE_TO_JSON_KEY).map((key) => [key, { type: 'STRING' }]),
+        ),
+        platforms: { type: 'ARRAY', items: { type: 'STRING' } },
+      },
     },
     temperature: 0.4,
   });
 
   logger.info(`🤖 Article summary generated via ${provider}/${model}.`);
-  return parseSummaries(text);
+  return { summaries: parseSummaries(text), platforms: parseAiPlatforms(text) };
 }
 /**
  * Generates and stores the summaries for one article.
@@ -106,9 +114,19 @@ async function enrichArticleWithSummaries(
   }
 
   try {
-    const summaries = await generateSummaries(buildPrompt(article), ai);
+    const { summaries, platforms: aiPlatforms } = await generateSummaries(buildPrompt(article), ai);
 
-    const payload: Record<string, unknown> = { summaries_attempts: attempts };
+    // The model's classification is authoritative and never merged with the
+    // keyword scan; keywords only fill in when the model gave nothing usable,
+    // and a full miss means "general" (matches every platform filter).
+    const resolved = resolveArticlePlatforms(aiPlatforms, article.title, article.description);
+
+    const payload: Record<string, unknown> = {
+      summaries_attempts: attempts,
+      platforms: resolved.platforms,
+      platforms_source: resolved.source,
+    };
+
     let found = 0;
     for (const language of SUMMARY_LANGUAGES) {
       const value = summaries[language];
@@ -202,8 +220,8 @@ async function runBackfillArticleSummaries(options: BackfillOptions = {}): Promi
   // one wasted 429 round-trip per article).
   const ai = createAiRuntime(getAiProviderConfig(), { log: logger });
 
-  let newest: sdk.Models.Document[] = [];
-  let oldest: sdk.Models.Document[] = [];
+  let newest: sdk.Models.Document[];
+  let oldest: sdk.Models.Document[];
 
   try {
     [newest, oldest] = await Promise.all([

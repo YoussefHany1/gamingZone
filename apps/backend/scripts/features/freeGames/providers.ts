@@ -60,7 +60,11 @@ function parseDate(dateStr: string | null | undefined): string | null {
 async function fetchSteamGames(steamApiUrl: string): Promise<NormalizedGame[]> {
   try {
     console.log('📥 Fetching from Steam (via GamerPower)...');
-    const response = await axiosGetWithRetry(steamApiUrl, {}, { label: 'Steam feed' });
+    const response = await axiosGetWithRetry<GamerPowerGame[]>(
+      steamApiUrl,
+      {},
+      { label: 'Steam feed' },
+    );
 
     if (!Array.isArray(response.data)) return [];
     return response.data.map((game: GamerPowerGame) => ({
@@ -85,7 +89,11 @@ async function fetchSteamGames(steamApiUrl: string): Promise<NormalizedGame[]> {
 async function fetchGogGames(gogApiUrl: string): Promise<NormalizedGame[]> {
   try {
     console.log('📥 Fetching from GOG (via GamerPower)...');
-    const response = await axiosGetWithRetry(gogApiUrl, {}, { label: 'GOG feed' });
+    const response = await axiosGetWithRetry<GamerPowerGame[]>(
+      gogApiUrl,
+      {},
+      { label: 'GOG feed' },
+    );
 
     if (!Array.isArray(response.data)) return [];
     return response.data.map((game: GamerPowerGame) => ({
@@ -152,7 +160,9 @@ function normalizeEpicGame(item: EpicGame, type: 'current' | 'next'): Normalized
 async function fetchEpicGames(epicApiUrl: string): Promise<NormalizedGame[]> {
   try {
     console.log('📥 Fetching from Epic Games...');
-    const response = await axiosGetWithRetry(epicApiUrl, {}, { label: 'Epic feed' });
+    const response = await axiosGetWithRetry<{
+      data: { Catalog: { searchStore: { elements: EpicGame[] } } };
+    }>(epicApiUrl, {}, { label: 'Epic feed' });
     const allGames: EpicGame[] = response.data.data.Catalog.searchStore.elements;
 
     const currentGames = allGames

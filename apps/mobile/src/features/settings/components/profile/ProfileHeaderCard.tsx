@@ -9,6 +9,8 @@ import {
   PlayStationIcon,
   XboxIcon,
 } from "@/src/components/icons/BrandIcons";
+import { NintendoSwitchIcon } from "@/src/components/icons/StoreIcons";
+import { Monitor } from "lucide-react-native";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { flagEmoji } from "@/src/lib/flagEmoji";
@@ -72,10 +74,14 @@ const ProfileHeaderCard = memo(
 
     const platformIcon = useMemo(() => {
       switch (platform) {
+        case "pc":
+          return <Monitor size={20} color={colors.textMuted} />;
         case "playstation":
           return <PlayStationIcon size={20} fill={colors.textMuted} />;
         case "xbox":
           return <XboxIcon size={20} fill={colors.textMuted} />;
+        case "nintendo":
+          return <NintendoSwitchIcon size={20} fill={colors.textMuted} />;
         case "android":
           return <AndroidIcon size={20} fill={colors.textMuted} />;
         case "ios":

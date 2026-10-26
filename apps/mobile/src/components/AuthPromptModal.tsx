@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from "react";
 import { Modal, View, StyleSheet, TouchableOpacity } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react-native";
 import CustomText from "./CustomText";
@@ -14,17 +13,22 @@ const HIDE_KEY = "hide_auth_prompt";
 interface AuthPromptModalProps {
   visible: boolean;
   onDismiss: () => void;
+  /**
+   * The modal renders outside the `NavigationContainer`, so a hook cannot reach
+   * the navigator. The owner passes the destination instead.
+   */
+  onSignIn?: () => void;
+  onSignUp?: () => void;
 }
 
-const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ visible, onDismiss }) => {
+const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
+  visible,
+  onDismiss,
+  onSignIn,
+  onSignUp,
+}) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  let navigation: any;
-  try {
-    navigation = useNavigation<any>();
-  } catch {
-    navigation = null;
-  }
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const styles = useThemeStyles((c) => ({
@@ -152,14 +156,8 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ visible, onDismiss })
       logger.warn("[AuthPromptModal] Failed to persist preference:", e);
     }
     onDismiss();
-    if (navigation) {
-      try {
-        navigation?.navigate?.("Auth", { screen: "Login" });
-      } catch {
-        // Ignore navigation errors if not inside NavigationContainer
-      }
-    }
-  }, [dontShowAgain, navigation, onDismiss]);
+    onSignIn?.();
+  }, [dontShowAgain, onSignIn, onDismiss]);
 
   const handleSignUp = useCallback(() => {
     try {
@@ -170,14 +168,8 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ visible, onDismiss })
       logger.warn("[AuthPromptModal] Failed to persist preference:", e);
     }
     onDismiss();
-    if (navigation) {
-      try {
-        navigation?.navigate?.("Auth", { screen: "Register" });
-      } catch {
-        // Ignore navigation errors if not inside NavigationContainer
-      }
-    }
-  }, [dontShowAgain, navigation, onDismiss]);
+    onSignUp?.();
+  }, [dontShowAgain, onSignUp, onDismiss]);
 
   const toggleCheckbox = useCallback(() => {
     setDontShowAgain((prev) => !prev);

@@ -74,7 +74,7 @@ const RELATIVE_DATE_METADATA =
   /^(?:published|updated|posted|last\s+updated)\s+(?:just\s+now|\d+\s+(?:second|minute|hour|day|week|month|year)s?\s+ago)$/i;
 
 const BYLINE_PREFIX = /^(?:by|written\s+by|author|posted\s+by)\s*[:\-–—]?\s*/i;
-const BYLINE_NAME = /^[A-Z][A-Za-z.'’\-]+(?:\s+[A-Z][A-Za-z.'’\-]+){0,3}$/;
+const BYLINE_NAME = /^[A-Z][A-Za-z.'’-]+(?:\s+[A-Z][A-Za-z.'’-]+){0,3}$/;
 const CREDIT =
   /^(?:(?:photo|image)\s+)?(?:credit|credits|source|via|file\s+photo|screenshot|illustration|photo\s+credit|image\s+credit)\s*[:\-–—]\s*\S.{0,200}$/i;
 const NAVIGATION =
@@ -216,8 +216,7 @@ function truncateAtWord(value: string, maxChars: number): string {
   const window = text.slice(0, maxChars + 1);
   const lastSpace = window.lastIndexOf(' ');
   const minimumBoundary = Math.max(1, Math.floor(maxChars * 0.5));
-  let cut =
-    lastSpace >= minimumBoundary ? window.slice(0, lastSpace) : text.slice(0, maxChars);
+  let cut = lastSpace >= minimumBoundary ? window.slice(0, lastSpace) : text.slice(0, maxChars);
 
   cut = cut.replace(/[\s,;:\-–—|]+$/g, '').trim();
   // If we cut aggressively to avoid mid-word, ensure we don't leave trailing punctuation mid-thought
@@ -239,7 +238,7 @@ function escapeRegExp(value: string): string {
 }
 
 const SEPARATOR_BYLINE =
-  /\s+[|–—-]\s*(?:by|written\s+by|posted\s+by)\s+[A-Z][A-Za-z.'’\-]+(?:\s+[A-Z][A-Za-z.'’\-]+){0,3}\s*$/i;
+  /\s+[|–—-]\s*(?:by|written\s+by|posted\s+by)\s+[A-Z][A-Za-z.'’-]+(?:\s+[A-Z][A-Za-z.'’-]+){0,3}\s*$/i;
 
 /**
  * Normalizes a headline for display. Only removes a site suffix when it
@@ -254,10 +253,7 @@ export function cleanHeadline(input: unknown, opts: { siteName?: string } = {}):
 
   const site = opts.siteName?.trim();
   const siteSuffix = site
-    ? new RegExp(
-        `\\s+[|\\-–—:]\\s*${escapeRegExp(site)}(?:\\.(?:com|net|org))?\\s*$`,
-        'i',
-      )
+    ? new RegExp(`\\s+[|\\-–—:]\\s*${escapeRegExp(site)}(?:\\.(?:com|net|org))?\\s*$`, 'i')
     : null;
 
   // Two passes so either ordering of "site | byline" is handled.

@@ -273,7 +273,7 @@ describe('parseSystemrequirements', () => {
     ]);
   });
 
-  it('parses Cyberpunk 2077: third GPU alternative, alt blocks ignored', () => {
+  it('parses Cyberpunk 2077: third GPU alternative and RT tiers', () => {
     const result = parseSystemrequirements(CYBERPUNK_WIKITEXT);
     expect(result.minimum).toEqual([
       { label: 'OS', value: 'Windows 10' },
@@ -283,9 +283,24 @@ describe('parseSystemrequirements', () => {
       { label: 'Graphics', value: 'Nvidia GeForce GTX 1060 or AMD Radeon RX 580 or Intel Arc A380 (6 GB VRAM)' },
       { label: 'DirectX', value: '12' },
     ]);
-    // alt1*/alt2* (RT Minimum / RT Ultra) never leak into the tiers.
-    expect(JSON.stringify(result)).not.toContain('RTX 2060"');
-    expect(JSON.stringify(result)).not.toContain('3080');
+    expect(result.recommended).toEqual([
+      { label: 'Processor', value: 'Intel Core i7-12700 or AMD Ryzen 7 7800X3D' },
+      { label: 'Memory', value: '16 GB' },
+      { label: 'Storage', value: '70 GB (SSD)' },
+      { label: 'Graphics', value: 'Nvidia GeForce RTX 2060 Super or AMD Radeon RX 5700 XT or Intel Arc A770 (8 GB VRAM)' },
+    ]);
+    // alt1*/alt2* are exposed as their own tiers, never merged into min/rec.
+    expect(result.rtMinimum).toEqual([
+      { label: 'Processor', value: 'Intel Core i7-9700' },
+      { label: 'Memory', value: '16 GB' },
+      { label: 'Graphics', value: 'Nvidia GeForce RTX 2060 (8 GB VRAM)' },
+    ]);
+    expect(result.rtUltra).toEqual([
+      { label: 'Processor', value: 'Intel Core i9-12900' },
+      { label: 'Graphics', value: 'Nvidia GeForce RTX 3080 Ti (12 GB VRAM)' },
+    ]);
+    expect(JSON.stringify(result.minimum)).not.toContain('3080');
+    expect(JSON.stringify(result.recommended)).not.toContain('3080');
   });
 
   it('returns null for pages without a template', () => {

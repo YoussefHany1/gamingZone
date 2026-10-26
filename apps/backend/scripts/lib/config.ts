@@ -87,8 +87,7 @@ export function getGroqModel(): string {
  * slashes). Falls back to the generative defaults when neither is set.
  */
 export function getGroqModels(): string[] {
-  const raw =
-    process.env.GROQ_MODELS?.trim() || process.env.GROQ_MODEL?.trim() || '';
+  const raw = process.env.GROQ_MODELS?.trim() || process.env.GROQ_MODEL?.trim() || '';
   const models = raw
     .split(',')
     .map((model) => model.trim())

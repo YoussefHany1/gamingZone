@@ -7,6 +7,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import type {
   NavigationContainerRef,
+  NavigatorScreenParams,
   Theme,
   LinkingOptions,
 } from "@react-navigation/native";
@@ -38,7 +39,7 @@ import useUpdateCheck from "./hooks/useUpdateCheck";
 import useAppOpenSync from "./hooks/useAppOpenSync";
 import useOTAUpdate from "./hooks/useOTAUpdate";
 import { useAuthPrompt } from "./hooks/useAuthPrompt";
-import { MainAppTabs, AuthStack } from "./navigation/AppNavigator";
+import { MainAppTabs, AuthStack, type AuthStackParamList } from "./navigation/AppNavigator";
 import OnboardingScreen from "./features/onboarding/screens/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import OfflineBanner from "./components/OfflineBanner";
@@ -48,7 +49,7 @@ import { logger } from "@/src/lib/logger";
 // Types
 export type RootStackParamList = {
   MainApp: undefined;
-  Auth: undefined;
+  Auth: NavigatorScreenParams<AuthStackParamList> | undefined;
 };
 
 // Global Config
@@ -301,6 +302,14 @@ function App(): React.ReactElement | null {
     AuthPromptModal,
   } = useAuthPrompt();
 
+  const handleAuthPromptSignIn = useCallback(() => {
+    navigationRef.current?.navigate("Auth", { screen: "Login" });
+  }, []);
+
+  const handleAuthPromptSignUp = useCallback(() => {
+    navigationRef.current?.navigate("Auth", { screen: "Register" });
+  }, []);
+
   const handleNavigationReady = useCallback(() => {
     routeNameRef.current = navigationRef.current?.getCurrentRoute()?.name;
   }, []);
@@ -386,7 +395,12 @@ function App(): React.ReactElement | null {
         </GestureHandlerRootView>
       </SafeAreaProvider>
       {navigationRef.current ? (
-        <AuthPromptModal visible={showAuthPrompt} onDismiss={dismissAuthPrompt} />
+        <AuthPromptModal
+          visible={showAuthPrompt}
+          onDismiss={dismissAuthPrompt}
+          onSignIn={handleAuthPromptSignIn}
+          onSignUp={handleAuthPromptSignUp}
+        />
       ) : null}
     </ErrorBoundary>
   );

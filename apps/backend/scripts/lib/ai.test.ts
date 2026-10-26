@@ -54,9 +54,7 @@ const singleGeminiChain = [
 ] as const;
 describe('defaultAiChain', () => {
   it('orders gemini-2.5-flash → gemini-3.1-flash-lite → the Groq segment', () => {
-    expect(
-      defaultAiChain(['my-groq-model'], ['my-cerebras-model']),
-    ).toEqual([
+    expect(defaultAiChain(['my-groq-model'], ['my-cerebras-model'])).toEqual([
       { provider: 'gemini', model: 'gemini-2.5-flash' },
       { provider: 'gemini', model: 'gemini-3.1-flash-lite' },
       { provider: 'groq', model: 'my-groq-model' },
@@ -124,9 +122,7 @@ describe('resolveAiModels', () => {
   const allKeys = { geminiKey: 'g', groqKey: 'q', cerebrasKey: 'c' };
 
   it('returns the default chain (gemini → groq segment → cerebras segment) when nothing is set', () => {
-    expect(
-      resolveAiModels({}, allKeys, ['groq-test-model'], ['cerebras-test-model']),
-    ).toEqual([
+    expect(resolveAiModels({}, allKeys, ['groq-test-model'], ['cerebras-test-model'])).toEqual([
       { provider: 'gemini', model: 'gemini-2.5-flash' },
       { provider: 'gemini', model: 'gemini-3.1-flash-lite' },
       { provider: 'groq', model: 'groq-test-model' },
@@ -150,23 +146,43 @@ describe('resolveAiModels', () => {
       { provider: 'cerebras', model: 'cerebras-test-model' },
     ]);
     expect(
-      resolveAiModels({}, { geminiKey: null, groqKey: 'q', cerebrasKey: null }, ['groq-test-model'], ['cerebras-test-model']),
+      resolveAiModels(
+        {},
+        { geminiKey: null, groqKey: 'q', cerebrasKey: null },
+        ['groq-test-model'],
+        ['cerebras-test-model'],
+      ),
     ).toEqual([{ provider: 'groq', model: 'groq-test-model' }]);
     expect(
-      resolveAiModels({}, { geminiKey: 'g', groqKey: null, cerebrasKey: null }, ['groq-test-model'], ['cerebras-test-model']),
+      resolveAiModels(
+        {},
+        { geminiKey: 'g', groqKey: null, cerebrasKey: null },
+        ['groq-test-model'],
+        ['cerebras-test-model'],
+      ),
     ).toEqual([
       { provider: 'gemini', model: 'gemini-2.5-flash' },
       { provider: 'gemini', model: 'gemini-3.1-flash-lite' },
     ]);
     expect(
-      resolveAiModels({}, { geminiKey: 'g', groqKey: null, cerebrasKey: 'c' }, ['groq-test-model'], ['cerebras-test-model']),
+      resolveAiModels(
+        {},
+        { geminiKey: 'g', groqKey: null, cerebrasKey: 'c' },
+        ['groq-test-model'],
+        ['cerebras-test-model'],
+      ),
     ).toEqual([
       { provider: 'gemini', model: 'gemini-2.5-flash' },
       { provider: 'gemini', model: 'gemini-3.1-flash-lite' },
       { provider: 'cerebras', model: 'cerebras-test-model' },
     ]);
     expect(
-      resolveAiModels({}, { geminiKey: null, groqKey: null, cerebrasKey: null }, ['groq-test-model'], ['cerebras-test-model']),
+      resolveAiModels(
+        {},
+        { geminiKey: null, groqKey: null, cerebrasKey: null },
+        ['groq-test-model'],
+        ['cerebras-test-model'],
+      ),
     ).toEqual([]);
   });
 
@@ -188,9 +204,14 @@ describe('resolveAiModels', () => {
     expect(resolveAiModels({ override: 'groq' }, allKeys, ['groq-test-model'])).toEqual([
       { provider: 'groq', model: 'groq-test-model' },
     ]);
-    expect(resolveAiModels({ override: 'cerebras' }, allKeys, ['groq-test-model'], ['cerebras-test-model'])).toEqual([
-      { provider: 'cerebras', model: 'cerebras-test-model' },
-    ]);
+    expect(
+      resolveAiModels(
+        { override: 'cerebras' },
+        allKeys,
+        ['groq-test-model'],
+        ['cerebras-test-model'],
+      ),
+    ).toEqual([{ provider: 'cerebras', model: 'cerebras-test-model' }]);
     expect(resolveAiModels({ override: 'gemini' }, allKeys, ['groq-test-model'])).toEqual([
       { provider: 'gemini', model: 'gemini-2.5-flash' },
       { provider: 'gemini', model: 'gemini-3.1-flash-lite' },
@@ -199,18 +220,16 @@ describe('resolveAiModels', () => {
 
   it('override with a missing key yields no models (fails loudly, never silently)', () => {
     expect(
-      resolveAiModels(
-        { override: 'groq' },
-        { geminiKey: 'g', groqKey: null, cerebrasKey: null },
-        ['groq-test-model'],
-      ),
+      resolveAiModels({ override: 'groq' }, { geminiKey: 'g', groqKey: null, cerebrasKey: null }, [
+        'groq-test-model',
+      ]),
     ).toEqual([]);
   });
 
   it('throws on a malformed AI_CHAIN value', () => {
-    expect(() =>
-      resolveAiModels({ chainEnv: 'openrouter/foo' }, allKeys),
-    ).toThrow(/Invalid AI_CHAIN entry/);
+    expect(() => resolveAiModels({ chainEnv: 'openrouter/foo' }, allKeys)).toThrow(
+      /Invalid AI_CHAIN entry/,
+    );
   });
 });
 
@@ -224,11 +243,10 @@ describe('formatAiChain', () => {
 
 describe('buildChatCompletionsRequestBody', () => {
   it('uses JSON mode and includes the model/temperature when provided', () => {
-    const body = buildChatCompletionsRequestBody(
-      'llama-3.3-70b-versatile',
-      'hi',
-      0.4,
-    ) as Record<string, unknown>;
+    const body = buildChatCompletionsRequestBody('llama-3.3-70b-versatile', 'hi', 0.4) as Record<
+      string,
+      unknown
+    >;
     expect(body).toEqual({
       model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: 'hi' }],
@@ -313,7 +331,9 @@ describe('generateAiText chain fallback', () => {
               code: 429,
               status: 'RESOURCE_EXHAUSTED',
               message: 'Quota exceeded',
-              details: [{ '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '3600s' }],
+              details: [
+                { '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '3600s' },
+              ],
             },
           },
           false,
@@ -333,7 +353,11 @@ describe('generateAiText chain fallback', () => {
 
     // An hour-long reset cannot be waited out: one attempt on 2.5-flash, then
     // straight to flash-lite — no sleep, no Groq call.
-    expect(result).toEqual({ provider: 'gemini', model: 'gemini-3.1-flash-lite', text: '{"en":"ok"}' });
+    expect(result).toEqual({
+      provider: 'gemini',
+      model: 'gemini-3.1-flash-lite',
+      text: '{"en":"ok"}',
+    });
     expect(calls).toHaveLength(2);
     expect(sleeps).toEqual([]);
   });
@@ -763,7 +787,11 @@ describe('createAiRuntime sticky quota failover', () => {
     // Call 1: 2.5-flash is quota-exhausted (hour-scale reset → immediate
     // failover), flash-lite succeeds.
     const first = await ai.generate(baseOptions);
-    expect(first).toEqual({ provider: 'gemini', model: 'gemini-3.1-flash-lite', text: '{"en":"ok"}' });
+    expect(first).toEqual({
+      provider: 'gemini',
+      model: 'gemini-3.1-flash-lite',
+      text: '{"en":"ok"}',
+    });
     expect(calls[0]).toContain('gemini-2.5-flash');
 
     // Call 2: the dead model is skipped (and logged), not retried.
@@ -792,7 +820,11 @@ describe('createAiRuntime sticky quota failover', () => {
       callsB.push(url);
       return geminiOkResponse();
     }) as unknown as typeof fetch;
-    const runtimeB = createAiRuntime(bothKeys, { fetchImpl: fetchImplB, sleep: noSleep, log: noopLog });
+    const runtimeB = createAiRuntime(bothKeys, {
+      fetchImpl: fetchImplB,
+      sleep: noSleep,
+      log: noopLog,
+    });
 
     const firstB = await runtimeB.generate(baseOptions);
     // Runtime B has its own memory: 2.5-flash is attempted first again.

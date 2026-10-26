@@ -126,7 +126,7 @@ function parseJsonSummary(rawText: string): SummaryResponse {
   try {
     return JSON.parse(rawText);
   } catch (error) {
-    throw new Error('Failed to parse AI JSON: ' + rawText.substring(0, 50));
+    throw new Error('Failed to parse AI JSON: ' + rawText.substring(0, 50), { cause: error });
   }
 }
 
@@ -209,7 +209,7 @@ function getSevenDaysAgoIso() {
 
 async function fetchLastWeekNewsTitles() {
   const sevenDaysAgo = getSevenDaysAgoIso();
-  let allDocuments: sdk.Models.Document[] = [];
+  const allDocuments: sdk.Models.Document[] = [];
   let offset = 0;
   const limit = 100;
 
@@ -329,10 +329,11 @@ async function runGenerateWeeklySummary() {
     let jsonSummary = null;
 
     const formatDoc = (doc: sdk.Models.Document) => {
-      const desc = (doc as any).description
-        ? (doc as any).description.substring(0, 150).replace(/\n/g, ' ') + '...'
+      const fields = doc as { description?: string; title?: string };
+      const desc = fields.description
+        ? fields.description.substring(0, 150).replace(/\n/g, ' ') + '...'
         : '';
-      return `- ${(doc as any).title}\n  ${desc}`;
+      return `- ${fields.title}\n  ${desc}`;
     };
 
     if (documents.length <= CHUNK_SIZE) {
@@ -393,7 +394,7 @@ async function runGenerateWeeklySummary() {
     await saveWeeklySummary(jsonSummary, sevenDaysAgo);
     logger.info('✅ Weekly summary saved!');
     await sendSummaryNotification();
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('❌ Error generating summary:', getErrorMessage(error));
     if (error instanceof SyntaxError) {
       logger.info('JSON Parse Error – check the raw AI response.');

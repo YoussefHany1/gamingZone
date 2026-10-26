@@ -102,12 +102,18 @@ async function upsertGame(game: FreeGameData, activeIds: Set<string>): Promise<v
 
   try {
     existingDoc = await withRetry(
-      () => databases.getDocument<FreeGameDoc>(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_FREE_GAMES, docId),
+      () =>
+        databases.getDocument<FreeGameDoc>(
+          CONFIG.APPWRITE_DATABASE_ID,
+          CONFIG.COLLECTION_FREE_GAMES,
+          docId,
+        ),
       { label: `getDocument ${docId}`, retries: 2 },
     );
-  } catch (error: any) {
-    if (error?.code !== 404) {
-      logger.error(`   ❌ Error fetching doc: ${error?.message || error}`);
+  } catch (error: unknown) {
+    const { code, message } = error as { code?: number; message?: string };
+    if (code !== 404) {
+      logger.error(`   ❌ Error fetching doc: ${message || getErrorMessage(error)}`);
     }
   }
 
@@ -207,7 +213,7 @@ async function cleanupOldGames(activeIds: Set<string>): Promise<void> {
   );
 
   const docsToDelete = existingDocs.filter((doc) => !activeIds.has(doc.$id));
-  
+
   for (const doc of docsToDelete) {
     await withRetry(
       () =>

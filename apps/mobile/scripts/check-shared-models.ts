@@ -92,10 +92,9 @@ const KNOWN_DUPLICATES: readonly string[] = [
   // ($createdAt, $updatedAt, $permissions, …). The DRY fix is to re-export as
   // `Article & Models.Document` from core, which is why it stays tracked here.
   "src/features/news/hooks/useFeed.ts:Article",
-  "src/features/pcSpecs/screens/PcSpecsScreen.tsx:PcSpecs",
-  "src/features/pcSpecs/components/PcQualityBadge.tsx:PcQuality",
-  "src/features/pcSpecs/hooks/usePcCompatibility.ts:PcCompatibility",
-  "src/store/usePcSpecsStore.ts:PcSpecs",
+  // Not a copy: core's `ChatMessage` plus the locally-generated `localId` used
+  // for stable list keys (users often send duplicate texts).
+  "src/features/ai/types.ts:ChatMessage",
 ];
 
 // Longest names first so a shorter prefix (e.g. `Game` vs `GameData`) cannot

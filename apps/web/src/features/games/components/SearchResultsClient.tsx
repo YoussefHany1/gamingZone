@@ -74,29 +74,35 @@ export default function SearchResultsClient({
 
   const isSearching = query !== "" || genre !== "" || platform !== "";
 
-  const [results, setResults] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(false);
+  // One state object keyed by the request it belongs to. Deriving `loading`
+  // instead of setting it synchronously inside the effect avoids a cascading
+  // render on every filter change (and the react-hooks lint error it caused).
+  const requestKey = `${query}\u0000${genre}\u0000${platform}\u0000${sort}\u0000${page}`;
+  const [resultState, setResultState] = useState<{ key: string; games: Game[] }>({
+    key: "",
+    games: [],
+  });
+  const loading = isSearching && resultState.key !== requestKey;
+  const results = resultState.key === requestKey ? resultState.games : [];
 
   useEffect(() => {
     if (!isSearching) return;
 
     let isCancelled = false;
-    setLoading(true);
 
     searchGames(query, genre, platform, sort, page)
       .then((games) => {
-        if (!isCancelled) setResults(games);
+        if (!isCancelled) setResultState({ key: requestKey, games });
       })
-      .catch((error) => console.error("Error searching games:", error))
-      .finally(() => {
-        if (!isCancelled) setLoading(false);
+      .catch((error) => {
+        console.error("Error searching games:", error);
+        if (!isCancelled) setResultState({ key: requestKey, games: [] });
       });
 
     return () => {
       isCancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, genre, platform, sort, page]);
+  }, [requestKey, isSearching, query, genre, platform, sort, page]);
 
   if (!isSearching) return null;
 

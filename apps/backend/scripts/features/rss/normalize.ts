@@ -1,4 +1,4 @@
-import { cleanDescription, normalizeText } from './clean';
+import { cleanDescription } from './clean';
 import {
   extractThumbnail,
   generateDocId,

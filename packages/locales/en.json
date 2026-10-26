@@ -258,6 +258,20 @@
       "hours": "h",
       "minutes": "m"
     },
+    "platforms": {
+      "all": "All",
+      "pc": "PC",
+      "playstation": "PlayStation",
+      "xbox": "Xbox",
+      "nintendo": "Nintendo",
+      "android": "Android",
+      "ios": "iOS"
+    },
+    "emptyPlatform": {
+      "title": "No articles for this platform",
+      "subtitle": "There are no articles for the selected platform right now.",
+      "showAll": "Show all platforms"
+    },
     "noSources": "No news sources are available for this category."
   },
   "games": {
@@ -455,7 +469,8 @@
           "meets": "Meets",
           "below": "Below",
           "unknown": "Unknown"
-        }
+        },
+        "disclaimer": "Notice: This result is an estimate and may not be completely accurate."
       },
       "pcRequirementsSource": "Data from PCGamingWiki (CC BY-NC-SA)"
     },
@@ -954,7 +969,8 @@
       "ultra": "Ultra"
     },
     "badge": {
-      "estimate": "Est."
+      "estimate": "Est.",
+      "disclaimer": "Approximate result, may not be accurate"
     },
     "sections": {
       "hardware": "Hardware",

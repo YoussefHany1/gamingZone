@@ -10,6 +10,7 @@ import {
   PlayStationIcon,
   XboxIcon,
 } from "@/src/components/icons/BrandIcons";
+import { NintendoSwitchIcon } from "@/src/components/icons/StoreIcons";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type { ProfilePlatformSelectorProps } from "./types";
@@ -70,6 +71,11 @@ const ProfilePlatformSelector = memo(
         id: "xbox",
         icon: XboxIcon,
         label: t("settings.profile.platforms.xbox") || "Xbox",
+      },
+      {
+        id: "nintendo",
+        icon: NintendoSwitchIcon,
+        label: t("settings.profile.platforms.nintendo") || "Nintendo Switch",
       },
       {
         id: "android",

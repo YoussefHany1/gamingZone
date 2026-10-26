@@ -51,9 +51,7 @@ async function run(): Promise<void> {
   const dryRun = hasFlag('--dry-run');
   const limit = getNumericArg('--limit');
 
-  logger.info(
-    `Starting RSS description backfill ${dryRun ? '(dry-run)' : ''}`.trim(),
-  );
+  logger.info(`Starting RSS description backfill ${dryRun ? '(dry-run)' : ''}`.trim());
 
   let scanned = 0;
   let changed = 0;
@@ -80,7 +78,10 @@ async function run(): Promise<void> {
 
       if (!rawDescription.trim()) continue;
 
-      const title = typeof (doc as { title?: unknown }).title === 'string' ? (doc as { title?: string }).title : undefined;
+      const title =
+        typeof (doc as { title?: unknown }).title === 'string'
+          ? (doc as { title?: string }).title
+          : undefined;
       const cleaned = cleanDescription(rawDescription, { title });
 
       if (cleaned === rawDescription.trim()) continue;

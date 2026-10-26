@@ -1,3 +1,5 @@
+import type { ArticlePlatform } from "@gaming-zone/core";
+
 export type NewsDetailsHeaderProps = {
   /** Content language — drives the RTL back-arrow direction. */
   currentLang: string;
@@ -14,6 +16,8 @@ export type NewsArticleMetaProps = {
   siteName: string;
   timeAgo: string;
   formattedDate: string;
+  /** Badge-ready platforms; empty for general/all-platform articles. */
+  platforms: ArticlePlatform[];
 };
 
 export type NewsSummaryCardProps = {

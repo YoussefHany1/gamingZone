@@ -61,6 +61,7 @@ const NewsDetails = memo((): React.ReactElement => {
     description,
     summary,
     isSummaryRtl,
+    platforms,
     currentLang,
     formattedDate,
     timeAgo,
@@ -106,6 +107,7 @@ const NewsDetails = memo((): React.ReactElement => {
             siteName={siteName}
             timeAgo={timeAgo}
             formattedDate={formattedDate}
+            platforms={platforms}
           />
 
           {summary ? (

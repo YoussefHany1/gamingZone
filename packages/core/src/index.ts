@@ -323,6 +323,29 @@ export type ArticleSummaryKey =
   | "summary_pt_pt";
 
 /**
+ * Platforms an article can be classified under, in display order. Mirrors
+ * `apps/backend/scripts/lib/articlePlatforms.ts` (the backend writes these ids;
+ * a unit test pins them there) and `USER_PLATFORMS` in the mobile app.
+ */
+export const ARTICLE_PLATFORMS = [
+  "pc",
+  "playstation",
+  "xbox",
+  "nintendo",
+  "android",
+  "ios",
+] as const;
+
+export type ArticlePlatform = (typeof ARTICLE_PLATFORMS)[number];
+
+/**
+ * Where an article's `platforms` value came from. `ai` is authoritative;
+ * `keyword`/`backfill` are deterministic fallbacks; `default` means the article
+ * is general and matches every platform filter.
+ */
+export type ArticlePlatformSource = "ai" | "keyword" | "backfill" | "default";
+
+/**
  * A news article / review item. The required fields are guaranteed by the
  * Appwrite `articles` collection schema.
  */
@@ -346,6 +369,12 @@ export interface Article {
   summary_hi?: string;
   summary_pt_br?: string;
   summary_pt_pt?: string;
+  /**
+   * Platforms the article covers. General/industry news stores all six ids so
+   * it matches every filter; missing means "not classified yet".
+   */
+  platforms?: ArticlePlatform[];
+  platforms_source?: ArticlePlatformSource;
   /**
    * Set once a document's summaries have all been generated. `summaries_failed`
    * marks documents that exhausted their retry budget (distinct from success).

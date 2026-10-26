@@ -7,6 +7,7 @@ import { useThemeColors } from "@/src/hooks/useTheme";
 import { useSharedStyles } from "./shared";
 import CustomText from "@/src/components/CustomText";
 import PcQualityBadge from "@/src/features/pcSpecs/components/PcQualityBadge";
+import { Info } from "lucide-react-native";
 
 export type GameCompatibilityCardProps = {
   compatibility: PcCompatibility | null;
@@ -71,13 +72,30 @@ const GameCompatibilityCard: React.FC<GameCompatibilityCardProps> = ({
       color: c.textMuted,
       fontSize: 11,
     },
+    disclaimerRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 6,
+      marginTop: 4,
+    },
+    disclaimerIcon: {
+      marginTop: 2,
+    },
+    disclaimerText: {
+      flex: 1,
+      color: c.textMuted,
+      fontSize: 11,
+      lineHeight: 16,
+    },
   }));
 
   if (!hasSpecs) {
     return (
       <View style={styles.card}>
         <View style={styles.header}>
-          <CustomText style={styles.title}>{t("games.details.compatibility.title")}</CustomText>
+          <CustomText style={styles.title}>
+            {t("games.details.compatibility.title")}
+          </CustomText>
         </View>
         <CustomText style={styles.subtitle}>
           {t("games.details.compatibility.noSpecs")}
@@ -90,7 +108,9 @@ const GameCompatibilityCard: React.FC<GameCompatibilityCardProps> = ({
     return (
       <View style={styles.card}>
         <View style={styles.header}>
-          <CustomText style={styles.title}>{t("games.details.compatibility.title")}</CustomText>
+          <CustomText style={styles.title}>
+            {t("games.details.compatibility.title")}
+          </CustomText>
         </View>
         <CustomText style={styles.subtitle}>
           {t("games.details.compatibility.noData")}
@@ -113,7 +133,9 @@ const GameCompatibilityCard: React.FC<GameCompatibilityCardProps> = ({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <CustomText style={styles.title}>{t("games.details.compatibility.title")}</CustomText>
+        <CustomText style={styles.title}>
+          {t("games.details.compatibility.title")}
+        </CustomText>
         <PcQualityBadge quality={compatibility.quality} compact />
       </View>
       <CustomText style={styles.subtitle}>
@@ -142,8 +164,16 @@ const GameCompatibilityCard: React.FC<GameCompatibilityCardProps> = ({
         </CustomText>
       )}
       {compatibility.approximate && (
-        <CustomText style={styles.footer}>{t("games.details.compatibility.approximate")}</CustomText>
+        <CustomText style={styles.footer}>
+          {t("games.details.compatibility.approximate")}
+        </CustomText>
       )}
+      <View style={styles.disclaimerRow}>
+        <Info size={12} color={colors.textMuted} style={styles.disclaimerIcon} />
+        <CustomText style={styles.disclaimerText}>
+          {t("games.details.compatibility.disclaimer")}
+        </CustomText>
+      </View>
     </View>
   );
 };

@@ -2,7 +2,6 @@ import * as admin from 'firebase-admin';
 
 import { getErrorMessage } from './errors';
 import { FirebaseAdminState, firebaseAppFor } from './firebaseAdmin';
-import { logger } from './logger';
 
 /**
  * Android notification channels. These must match the channel IDs the mobile
