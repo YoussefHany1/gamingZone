@@ -19,7 +19,6 @@ import { intervalToDuration } from "date-fns";
 import DropdownPicker from "./DropdownPicker";
 import SkeletonNewsItem from "../skeleton/SkeletonNewsItem";
 import ErrorState from "@/src/components/ErrorState";
-import PlatformBadges from "./PlatformBadges";
 import PlatformFilterChips from "./PlatformFilterChips";
 import { badgePlatformsOf } from "../lib/articlePlatforms";
 import type { NewsPlatformFilter } from "../lib/articlePlatforms";
@@ -29,7 +28,7 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useBottomInset } from "@/src/hooks/useBottomInset";
 import { useNavigation } from "@react-navigation/native";
 import { getArticleSummary } from "@gaming-zone/utils";
-import type { Article, NewsItemProps, LatestNewsProps, RssFeedSource, NewsLanguageFilter } from "../types";
+import type { Article, NewsItemProps, LatestNewsProps, RssFeedSource } from "../types";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
 
 const NewsItem = memo(function NewsItem({
@@ -130,11 +129,7 @@ const NewsItem = memo(function NewsItem({
         language === "ar" ? { direction: "rtl" } : { direction: "ltr" },
       ]}
     >
-      <TouchableOpacity
-        style={styles.NewsContainer}
-        // android_ripple={{ color: colors.accent }}
-        onPress={handlePress}
-      >
+      <TouchableOpacity style={styles.NewsContainer} onPress={handlePress}>
         <View style={styles.textContainer}>
           <CustomText
             numberOfLines={3}
@@ -151,7 +146,6 @@ const NewsItem = memo(function NewsItem({
             </CustomText>
           ) : null}
           <CustomText style={styles.timeAgoText}>{timeAgo}</CustomText>
-          {platforms.length > 0 && <PlatformBadges platforms={platforms} />}
         </View>
         <View>
           <Image
@@ -737,9 +731,7 @@ function LatestNews({
         ) : (
           <View>
             {listData.map((item, index) => (
-              <Fragment key={item.$id}>
-                {renderItem({ item, index } as any)}
-              </Fragment>
+              <Fragment key={item.$id}>{renderItem({ item, index } as any)}</Fragment>
             ))}
           </View>
         )}

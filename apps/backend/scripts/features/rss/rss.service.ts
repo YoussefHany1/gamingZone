@@ -225,11 +225,15 @@ async function createArticle(sourceData: SourceData, item: NormalizedArticle): P
 
   const description = cleanDescription(fullDescription || item.description, { title: item.title });
 
-  // Tag platforms at ingestion time so a fresh article is never briefly
-  // untagged (it would disappear from every platform filter until the summary
-  // job ran). The AI classification overwrites this later; matching nothing
-  // means the article is general and matches every filter.
-  const detectedPlatforms = detectPlatformsFromText(item.title, description);
+  // Tag platforms at ingestion time for news and reviews only, so a fresh article
+  // is never briefly untagged (it would disappear from every platform filter until
+  // the summary job ran). The AI classification overwrites this later; matching
+  // nothing means the article is general and matches every filter.
+  const shouldDetectPlatforms =
+    sourceData.category === 'news' || sourceData.category === 'reviews';
+  const detectedPlatforms = shouldDetectPlatforms
+    ? detectPlatformsFromText(item.title, description)
+    : [];
 
   const payload = {
     title: item.title,
@@ -501,12 +505,20 @@ async function runFetchRss(options: RunFetchRssOptions = {}): Promise<RssSummary
 
     const activeDocs = res.documents.filter((doc) => {
       const raw = doc as unknown as Record<string, unknown>;
-      return raw.isActive !== false;
+      const isActive = raw.isActive;
+      
+      // Log for debugging
+      if (isActive === false || isActive === 'false' || isActive === 0) {
+        logger.info(`⏸️ Skipping inactive source: ${raw.name} (isActive: ${isActive})`);
+        return false;
+      }
+      
+      return true;
     });
 
     const skippedInactive = res.documents.length - activeDocs.length;
     if (skippedInactive > 0) {
-      logger.info(`⏸️ Skipped ${skippedInactive} inactive source(s) (isActive: false).`);
+      logger.info(`⏸️ Total skipped ${skippedInactive} inactive source(s).`);
     }
 
     const allSources: SourceData[] = activeDocs.map((doc) => ({

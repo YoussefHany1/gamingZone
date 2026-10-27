@@ -157,6 +157,51 @@ describe('createArticle', () => {
 
     await expect(createArticle(sourceData, makeItem())).resolves.toBe('exists');
   });
+
+  it('detects platforms for news category', async () => {
+    mockDatabases.getDocument.mockRejectedValue(notFound());
+    mockFetchArticleData.mockResolvedValue({
+      imageUrl: null,
+      fullDescription: 'PS5 exclusive game announced.',
+    });
+
+    await createArticle(sourceData, makeItem({ title: 'New PS5 Game' }));
+
+    const payload = mockDatabases.createDocument.mock.calls[0][3];
+    expect(payload.platforms).toContain('playstation');
+    expect(payload.platforms_source).toBe('keyword');
+  });
+
+  it('detects platforms for reviews category', async () => {
+    mockDatabases.getDocument.mockRejectedValue(notFound());
+    mockFetchArticleData.mockResolvedValue({
+      imageUrl: null,
+      fullDescription: 'Xbox Series X game review.',
+    });
+
+    const reviewSourceData = { ...sourceData, category: 'reviews' };
+    await createArticle(reviewSourceData, makeItem({ title: 'Xbox Game Review' }));
+
+    const payload = mockDatabases.createDocument.mock.calls[0][3];
+    expect(payload.platforms).toContain('xbox');
+    expect(payload.platforms_source).toBe('keyword');
+  });
+
+  it('skips platform detection for other categories', async () => {
+    mockDatabases.getDocument.mockRejectedValue(notFound());
+    mockFetchArticleData.mockResolvedValue({
+      imageUrl: null,
+      fullDescription: 'PS5 exclusive game announced in general tech article.',
+    });
+
+    const otherSourceData = { ...sourceData, category: 'tech' };
+    await createArticle(otherSourceData, makeItem({ title: 'New PS5 Game' }));
+
+    const payload = mockDatabases.createDocument.mock.calls[0][3];
+    // Should default to all platforms since no detection was performed
+    expect(payload.platforms.length).toBeGreaterThan(1);
+    expect(payload.platforms_source).toBe('default');
+  });
 });
 
 describe('runFetchRss', () => {

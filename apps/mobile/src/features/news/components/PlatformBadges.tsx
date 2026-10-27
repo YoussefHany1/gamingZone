@@ -71,23 +71,23 @@ const PlatformBadges = memo(function PlatformBadges({
       flexWrap: "wrap",
     },
     compactRow: {
-      gap: 6,
-      marginTop: 6,
+      // gap: 2,
+      // marginTop: 6,
     },
     labeledRow: {
-      gap: 8,
-      marginTop: 10,
+      gap: 12,
+      // marginTop: 10,
     },
     chip: {
       flexDirection: "row",
       alignItems: "center",
       gap: 4,
-      backgroundColor: c.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: c.border,
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 999,
+      // backgroundColor: c.surface,
+      // borderWidth: StyleSheet.hairlineWidth,
+      // borderColor: c.border,
+      // paddingHorizontal: 8,
+      // paddingVertical: 4,
+      // borderRadius: 999,
     },
     chipText: {
       color: c.textMuted,
@@ -98,15 +98,12 @@ const PlatformBadges = memo(function PlatformBadges({
       color: c.textMuted,
       fontSize: 11,
       fontWeight: "700",
-      marginLeft: 2,
+      // marginLeft: 2,
     },
   }));
 
   const labels = useMemo(
-    () =>
-      platforms.map(
-        (platform) => t(`news.platforms.${platform}`) || platform,
-      ),
+    () => platforms.map((platform) => t(`news.platforms.${platform}`) || platform),
     [platforms, t],
   );
 
@@ -117,8 +114,8 @@ const PlatformBadges = memo(function PlatformBadges({
       <View style={[styles.row, styles.labeledRow]}>
         {platforms.map((platform, index) => (
           <View key={platform} style={styles.chip}>
-            <PlatformIcon platform={platform} size={12} tint={colors.textMuted} />
-            <CustomText style={styles.chipText}>{labels[index]}</CustomText>
+            <PlatformIcon platform={platform} size={14} tint={colors.textMuted} />
+            {/* <CustomText style={styles.chipText}>{labels[index]}</CustomText> */}
           </View>
         ))}
       </View>
@@ -129,10 +126,7 @@ const PlatformBadges = memo(function PlatformBadges({
   const overflow = platforms.length - visible.length;
 
   return (
-    <View
-      style={[styles.row, styles.compactRow]}
-      accessibilityLabel={labels.join(", ")}
-    >
+    <View style={[styles.row, styles.compactRow]} accessibilityLabel={labels.join(", ")}>
       {visible.map((platform) => (
         <PlatformIcon
           key={platform}

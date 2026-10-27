@@ -1,13 +1,6 @@
 import CustomText from "@/src/components/CustomText";
-import type {
-  SectionListData} from "react-native";
-import {
-  View,
-  TouchableOpacity,
-  Modal,
-  SectionList,
-  ToastAndroid
-} from "react-native";
+import type { SectionListData } from "react-native";
+import { View, TouchableOpacity, Modal, SectionList, ToastAndroid } from "react-native";
 import { Image } from "expo-image";
 import { Check, ChevronDown } from "lucide-react-native";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -144,43 +137,36 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
   const category = props.category.toLowerCase();
   // Memoised: the `?? []` fallback is a fresh array each render, which would
   // otherwise invalidate the `sections` memo below on every render.
-  const websites: RssFeedSource[] = useMemo(
-    () => props.websites ?? [],
-    [props.websites],
-  );
+  const websites: RssFeedSource[] = useMemo(() => props.websites ?? [], [props.websites]);
   const selectedItem = props.value;
 
-  const allSourcesItems: RssFeedSource[] = useMemo(
-    () => [
-      {
-        name: ALL_LANGUAGES_NAME,
-        image: "",
-        language: "all",
-      } as unknown as RssFeedSource,
-      {
-        name: ARABIC_SOURCES_NAME,
-        image: "",
-        language: "ar",
-      } as RssFeedSource,
-      {
-        name: ENGLISH_SOURCES_NAME,
-        image: "",
-        language: "en",
-      } as RssFeedSource,
-    ],
+  const arabicAllSource: RssFeedSource = useMemo(
+    () => ({
+      name: ARABIC_SOURCES_NAME,
+      image: "",
+      language: "ar",
+    }),
+    [],
+  );
+
+  const englishAllSource: RssFeedSource = useMemo(
+    () => ({
+      name: ENGLISH_SOURCES_NAME,
+      image: "",
+      language: "en",
+    }),
     [],
   );
 
   const getItemName = useCallback(
     (item: RssFeedSource): string => {
       switch (item.name) {
-        case ALL_LANGUAGES_NAME:
-          return t("news.languageFilter.all");
         case ARABIC_SOURCES_NAME:
-          return t("news.languageFilter.ar");
+          return t("news.dropdown.allSources");
         case ENGLISH_SOURCES_NAME:
-          return t("news.languageFilter.en");
+          return t("news.dropdown.allSources");
         case ALL_SOURCES_NAME:
+        case ALL_LANGUAGES_NAME:
           return t("news.dropdown.allSources");
         default:
           return item.name;
@@ -189,16 +175,15 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
     [t],
   );
 
-  // Build section list grouped by all sources vs websites, ordered by current app locale
+  // Build section list grouped by Arabic vs English sources, ordered by current app locale
   const sections: SectionData[] = useMemo(() => {
-    const arabicSites = websites.filter((item) => item.language === "ar");
-    const englishSites = websites.filter((item) => item.language !== "ar");
-
-    const result: SectionData[] = [
-      {
-        title: t("news.dropdown.allSources"),
-        data: allSourcesItems,
-      },
+    const arabicSites: RssFeedSource[] = [
+      arabicAllSource,
+      ...websites.filter((item) => item.language === "ar"),
+    ];
+    const englishSites: RssFeedSource[] = [
+      englishAllSource,
+      ...websites.filter((item) => item.language !== "ar"),
     ];
 
     const arSection: SectionData = {
@@ -212,16 +197,17 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
 
     const isEnglishApp = i18n.language.startsWith("en");
 
+    const result: SectionData[] = [];
     if (isEnglishApp) {
-      if (englishSites.length > 0) result.push(enSection);
-      if (arabicSites.length > 0) result.push(arSection);
+      result.push(enSection);
+      result.push(arSection);
     } else {
-      if (arabicSites.length > 0) result.push(arSection);
-      if (englishSites.length > 0) result.push(enSection);
+      result.push(arSection);
+      result.push(enSection);
     }
 
     return result;
-  }, [allSourcesItems, websites, i18n.language, t]);
+  }, [arabicAllSource, englishAllSource, websites, i18n.language, t]);
 
   const handleToggleNotification = async (): Promise<void> => {
     const state = await NetInfo.fetch();
@@ -261,7 +247,8 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
   };
 
   const notifTopic = NotificationService.getTopicName(category, selectedItem.name);
-  const isNotifEnabled: boolean = isAllSources || !notifTopic ? false : (preferences[notifTopic] ?? false);
+  const isNotifEnabled: boolean =
+    isAllSources || !notifTopic ? false : (preferences[notifTopic] ?? false);
 
   return (
     <View style={styles.wrapper}>
@@ -359,7 +346,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                     </CustomText>
                   </View>
                   {selectedItem?.name === item.name && (
-                    <Check size={24} color={colors.accentText}/>
+                    <Check size={24} color={colors.accentText} />
                   )}
                 </TouchableOpacity>
               )}

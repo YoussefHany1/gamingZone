@@ -74,9 +74,10 @@ const RELATIVE_DATE_METADATA =
   /^(?:published|updated|posted|last\s+updated)\s+(?:just\s+now|\d+\s+(?:second|minute|hour|day|week|month|year)s?\s+ago)$/i;
 
 const BYLINE_PREFIX = /^(?:by|written\s+by|author|posted\s+by)\s*[:\-–—]?\s*/i;
-const BYLINE_NAME = /^[A-Z][A-Za-z.'’-]+(?:\s+[A-Z][A-Za-z.'’-]+){0,3}$/;
+const BYLINE_NAME = /^[A-Z][A-Za-z.''-]+(?:\s+[A-Z][A-Za-z.''-]+){0,3}$/;
 const CREDIT =
-  /^(?:(?:photo|image)\s+)?(?:credit|credits|source|via|file\s+photo|screenshot|illustration|photo\s+credit|image\s+credit)\s*[:\-–—]\s*\S.{0,200}$/i;
+  /^(?:(?:photo|image)\s+)?(?:credit|credits|source|via|by|file\s+photo|screenshot|illustration|photo\s+credit|image\s+credit)\s*[:\-–—]?\s*\S.*$/i;
+const IMAGE_ATTRIBUTION = /^(?:photo|image)\s*[:\-–—]\s*.+$/i;
 const NAVIGATION =
   /^(?:read\s+more|read\s+also|related(?:\s+(?:articles?|stories|coverage))?|see\s+also|also\s+read|more\s+from|continue\s+reading|you\s+may\s+also\s+like)\b.{0,200}$/i;
 const MEDIA_PROMPT = /^(?:watch|listen)\s*[:\-–—]\s*.{1,200}$/i;
@@ -86,6 +87,30 @@ const WORDPRESS_FOOTER = /^the\s+post\s+.{0,300}?\s+appeared\s+first\s+on\s+.{0,
 const URL_ONLY = /^(?:https?:\/\/|www\.)\S+$/i;
 const ARABIC_BYLINE = /^(?:بواسطة|المصدر|اقرأ\s+أيضا|اقرأ\s+أيضًا|تابعنا|شارك)(?:\s|:|：|$)/;
 const ARABIC_DATE = /^(?:نشر|تم\s+النشر|آخر\s+تحديث|تاريخ\s+النشر)(?:\s|:|：|$)/;
+
+// UI artifacts that leak from the website interface
+const UI_ARTIFACT =
+  /^(?:link\s+copied\s+to\s+clipboard|follow|back\s+to\s+top|scroll\s+to\s+top|share|print\s+this\s+(?:article|page))\s*$/i;
+
+// Authentication prompts
+const AUTH_PROMPT =
+  /^(?:sign\s+in|log\s+in|create\s+an?\s+account|register)(?:\s+to\s+(?:your\s+)?\w+(?:\s+account)?)?\.?\s*$/i;
+
+// Game/article metadata labels that appear as standalone lines
+const METADATA_LABEL =
+  /^(?:systems?|released?|platform(?:s)?|developer(?:s)?\(s\)?|publisher(?:s)?\(s\)?|genre(?:s)?|rating|esrb|pegi)\s*[:\-–—]?\s*$/i;
+
+// Standalone dates in metadata blocks (release dates without prefix)
+const STANDALONE_DATE =
+  /^(?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2},?\s+\d{4}|\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{2}-\d{2})$/i;
+
+// ESRB/PEGI ratings with descriptors
+const CONTENT_RATING =
+  /^(?:everyone|teen|mature|adults?\s+only|e\d*|t|m|ao|pegi\s+\d+)(?:\s*\/\/?\s*[\w\s,]+)?$/i;
+
+// Author bio indicators - paragraphs about the writer rather than the article
+const AUTHOR_BIO_INTRO =
+  /^[A-Z][a-z]+\s+(?:is|was|has\s+been)\s+(?:a|an|the)\s+(?:writer|editor|journalist|contributor|reporter|senior|staff|freelance)/i;
 
 function stripUnitEdges(value: string): string {
   return value.replace(/^[\s|•·\-–—:]+|[\s|•·\-–—:]+$/g, '').trim();
@@ -122,6 +147,31 @@ function isArabicMetadata(unit: string): boolean {
   return false;
 }
 
+function isAuthorBio(unit: string): boolean {
+  // Check for intro pattern
+  if (AUTHOR_BIO_INTRO.test(unit)) return true;
+
+  // Check for hours-played patterns common in gaming bios - must mention specific game/platform with capital letter
+  // and be in a sentence talking about the person (has "she", "he", "they" or author name)
+  if (
+    /(?:\d{1,3}(?:,\d{3})+|\d+)\s+hours?\s+in\s+[A-Z]/i.test(unit) &&
+    /\b(?:she|he|they|has|her|his|their)\b/i.test(unit)
+  ) {
+    return true;
+  }
+
+  // Check for professional background patterns - must have year to be specific
+  if (/\b(?:BA|MA|Master'?s|Bachelor'?s|degree)\s+(?:in|from)\b/i.test(unit) && /\d{4}/.test(unit))
+    return true;
+  if (/\bprofessional\s+experience\s+as\b/i.test(unit)) return true;
+
+  // Check for "favorite articles" or "proud of" patterns - must reference site/publication
+  if (/\b(?:favorite|favourite)\s+articles?\s+(?:for|at)\s+\w/i.test(unit)) return true;
+  if (/\b(?:proud\s+of|proudest)\b/i.test(unit) && /\barticle/i.test(unit)) return true;
+
+  return false;
+}
+
 /** True when a whole line/paragraph/sentence is metadata rather than content. */
 function isMetadataUnit(value: string): boolean {
   const unit = stripUnitEdges(value);
@@ -132,11 +182,18 @@ function isMetadataUnit(value: string): boolean {
   if (RELATIVE_DATE_METADATA.test(unit)) return true;
   if (isByline(unit)) return true;
   if (CREDIT.test(unit)) return true;
+  if (IMAGE_ATTRIBUTION.test(unit)) return true;
   if (NAVIGATION.test(unit)) return true;
   if (MEDIA_PROMPT.test(unit)) return true;
   if (PROMO.test(unit)) return true;
   if (WORDPRESS_FOOTER.test(unit)) return true;
   if (isArabicMetadata(unit)) return true;
+  if (UI_ARTIFACT.test(unit)) return true;
+  if (AUTH_PROMPT.test(unit)) return true;
+  if (METADATA_LABEL.test(unit)) return true;
+  if (STANDALONE_DATE.test(unit)) return true;
+  if (CONTENT_RATING.test(unit)) return true;
+  if (isAuthorBio(unit)) return true;
 
   return false;
 }

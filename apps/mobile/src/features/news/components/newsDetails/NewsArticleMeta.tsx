@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import { memo } from "react";
 import { View } from "react-native";
 import { Image } from "expo-image";
 import CustomText from "@/src/components/CustomText";
@@ -19,7 +19,8 @@ const NewsArticleMeta = memo(function NewsArticleMeta({
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginHorizontal: 15,
+      flexWrap: "wrap",
+      margin: 15,
     },
     siteRow: {
       flexDirection: "row",
@@ -37,7 +38,7 @@ const NewsArticleMeta = memo(function NewsArticleMeta({
     },
     date: {
       color: c.text,
-      marginVertical: 20,
+      // marginVertical: 20,
     },
   }));
 
@@ -60,13 +61,12 @@ const NewsArticleMeta = memo(function NewsArticleMeta({
 
       <View style={styles.site}>
         <CustomText style={styles.date}>{formattedDate}</CustomText>
+        {platforms.length > 0 && (
+          <View style={styles.site}>
+            <PlatformBadges platforms={platforms} variant="labeled" />
+          </View>
+        )}
       </View>
-
-      {platforms.length > 0 && (
-        <View style={styles.site}>
-          <PlatformBadges platforms={platforms} variant="labeled" />
-        </View>
-      )}
     </>
   );
 });

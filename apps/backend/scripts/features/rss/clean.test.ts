@@ -91,6 +91,86 @@ describe('removeBoilerplate', () => {
     expect(cleaned).not.toContain('Read more');
     expect(cleaned).not.toContain('appeared first on');
   });
+
+  it('removes image credits without colons', () => {
+    const text =
+      'Mario Kart World is now available.\n\nImage by GameRant\n\nImage: Nintendo\n\nImage: Nintendo via GameRant\n\nThe game features new tracks.';
+    const cleaned = removeBoilerplate(text);
+    expect(cleaned).toContain('Mario Kart World is now available.');
+    expect(cleaned).toContain('The game features new tracks.');
+    expect(cleaned).not.toContain('Image by GameRant');
+    expect(cleaned).not.toContain('Image: Nintendo');
+    expect(cleaned).not.toContain('via GameRant');
+  });
+
+  it('removes UI artifacts', () => {
+    const text =
+      'Breaking news about gaming.\n\nFollow\n\nLink copied to clipboard\n\nThis is the actual story content.';
+    const cleaned = removeBoilerplate(text);
+    expect(cleaned).toContain('Breaking news about gaming.');
+    expect(cleaned).toContain('This is the actual story content.');
+    expect(cleaned).not.toContain('Follow');
+    expect(cleaned).not.toContain('Link copied to clipboard');
+  });
+
+  it('removes auth prompts', () => {
+    const text =
+      'Game review content here.\n\nSign in to your GameRant account\n\nMore review content.';
+    const cleaned = removeBoilerplate(text);
+    expect(cleaned).toContain('Game review content here.');
+    expect(cleaned).toContain('More review content.');
+    expect(cleaned).not.toContain('Sign in to your GameRant account');
+  });
+
+  it('removes metadata labels', () => {
+    const text = 'Game description here.\n\nSystems\n\nReleased\n\nDeveloper(s)\n\nPublisher(s)';
+    const cleaned = removeBoilerplate(text);
+    expect(cleaned).toContain('Game description here.');
+    expect(cleaned).not.toContain('Systems');
+    expect(cleaned).not.toContain('Released');
+    expect(cleaned).not.toContain('Developer(s)');
+    expect(cleaned).not.toContain('Publisher(s)');
+  });
+
+  it('removes author bios', () => {
+    const text =
+      'Article content.\n\nAndrea is an editor at GameRant, where she has been writing professionally about video games for over five years.\n\nShe has over 8,000 hours in Path of Exile.\n\nAndrea has a BA in Psychology from 2015.\n\nOne of Andrea\'s favorite articles for GameRant is about predictions.\n\nMore article content.';
+    const cleaned = removeBoilerplate(text);
+    expect(cleaned).toContain('Article content.');
+    expect(cleaned).toContain('More article content.');
+    expect(cleaned).not.toContain('Andrea is an editor');
+    expect(cleaned).not.toContain('8,000 hours');
+    expect(cleaned).not.toContain('BA in Psychology');
+    expect(cleaned).not.toContain('favorite articles');
+  });
+
+  it('keeps legitimate content that mentions hours or degrees', () => {
+    const text =
+      'The game offers over 100 hours of gameplay. Players can earn a degree in alchemy within the game world.';
+    expect(removeBoilerplate(text)).toBe(text);
+  });
+
+  it('keeps legitimate content about following or signing in game mechanics', () => {
+    const text = 'Follow the quest marker to find the treasure. Sign in blood to complete the ritual.';
+    expect(removeBoilerplate(text)).toBe(text);
+  });
+
+  it('keeps dates mentioned in article context', () => {
+    const text =
+      'The game was released on June 5, 2025, and received critical acclaim. E3 2025 had the biggest reveal yet.';
+    expect(removeBoilerplate(text)).toBe(text);
+  });
+
+  it('keeps content ratings mentioned in article text', () => {
+    const text = 'The game received an Everyone rating and is suitable for all ages.';
+    expect(removeBoilerplate(text)).toBe(text);
+  });
+
+  it('keeps image references in article content', () => {
+    const text =
+      'The image shows Mario racing through a colorful track. This image demonstrates the new graphics engine.';
+    expect(removeBoilerplate(text)).toBe(text);
+  });
 });
 
 describe('cleanDescription', () => {

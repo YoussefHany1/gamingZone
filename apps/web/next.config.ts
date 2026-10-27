@@ -7,14 +7,20 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**",
-      },
-      {
-        protocol: "http",
-        hostname: "**",
-      },
+      // Allowlist tightened after audit; add new hosts explicitly with justification.
+      // Appwrite (common endpoints)
+      { protocol: "https", hostname: "fra.cloud.appwrite.io" },
+      { protocol: "https", hostname: "cloud.appwrite.io" },
+      // Firebase Storage
+      { protocol: "https", hostname: "firebasestorage.googleapis.com" },
+      // Common CDNs / game/news image hosts seen in codebase
+      { protocol: "https", hostname: "cdn.cloudflare.steamstatic.com" },
+      { protocol: "https", hostname: "steamcdn-a.akamaihd.net" },
+      { protocol: "https", hostname: "cdn.akamai.steamstatic.com" },
+      { protocol: "https", hostname: "media.rawg.io" },
+      { protocol: "https", hostname: "images.igdb.com" },
+      { protocol: "https", hostname: "i.ytimg.com" },
+      { protocol: "https", hostname: "img.youtube.com" },
     ],
   },
   async headers() {

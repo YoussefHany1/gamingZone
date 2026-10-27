@@ -79,7 +79,7 @@ const PlatformFilterChips = memo(function PlatformFilterChips({
       backgroundColor: c.surface,
     },
     chipSelected: {
-      backgroundColor: c.accentSurface,
+      backgroundColor: "transparent",
       borderColor: c.accent,
     },
     label: {

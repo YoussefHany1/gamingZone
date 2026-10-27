@@ -79,11 +79,12 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
   }, [rssFeeds, categoryKey, i18n.language]);
 
   const appLanguage: NewsLanguageFilter = i18n.language.startsWith("ar") ? "ar" : "en";
+  const defaultSourceName = appLanguage === "ar" ? ARABIC_SOURCES_NAME : ENGLISH_SOURCES_NAME;
 
   const [selected, setSelected] = useState<RssFeedSource | undefined>(() => {
     if (feedList.length > 0) {
       return {
-        name: ALL_LANGUAGES_NAME,
+        name: defaultSourceName,
         image: "",
         language: appLanguage,
       };
@@ -103,11 +104,20 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
 
   useEffect(() => {
     setSelected((prev) => {
+      // Migrate legacy all-languages selection to language-scoped all-sources
+      if (prev && prev.name === ALL_LANGUAGES_NAME) {
+        return {
+          name: defaultSourceName,
+          image: "",
+          language: appLanguage,
+        };
+      }
+
       if (prev && !isAllSourcesName(prev.name)) {
         if (!feedList.find((f) => f.name === prev.name)) {
           if (feedList.length > 0) {
             return {
-              name: ALL_LANGUAGES_NAME,
+              name: defaultSourceName,
               image: "",
               language: appLanguage,
             };
@@ -119,7 +129,7 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
 
       if (!prev && feedList.length > 0) {
         return {
-          name: ALL_LANGUAGES_NAME,
+          name: defaultSourceName,
           image: "",
           language: appLanguage,
         };
@@ -131,7 +141,7 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
 
       return prev;
     });
-  }, [appLanguage, feedList]);
+  }, [appLanguage, defaultSourceName, feedList]);
 
   if (selected) {
     const isAllSources = isAllSourcesName(selected.name);
