@@ -21,6 +21,21 @@ const ARTICLES_COLLECTION_ID = "articles";
 const CACHE_TTL_PRIMARY_MS = 600_000; // 10 minutes — backed by Realtime
 const CACHE_TTL_SECONDARY_MS = 300_000; // 5 minutes — no live subscription
 
+/**
+ * UI languages whose content is served from the English article pool. Arabic is
+ * stored natively; English is stored as-is; everything else has no dedicated
+ * articles in the collection.
+ */
+const OTHER_CONTENT_LANGUAGES = new Set([
+  "en",
+  "es",
+  "fr",
+  "hi",
+  "pt",
+  "pt-BR",
+  "pt-PT",
+]);
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -109,21 +124,28 @@ export default function useFeed(
   platform?: ArticlePlatform,
   languageFilter?: string | null,
 ): UseFeedResult {
-  // Article storage only has "ar"/"en" content — Spanish and French reuse
-  // English data while the UI (direction/labels) stays driven by the app language.
+  // Article storage only has "ar"/"en" content — every other UI language reuses
+  // the English feed so the list is never empty just because the app is in
+  // Spanish, French, Hindi or Portuguese.
   const contentLanguage =
-    language === "es" || language === "fr" || language === "hi"
-      ? "en"
-      : language === "pt-BR" || language === "pt-PT"
+    language === "ar"
+      ? "ar"
+      : language && OTHER_CONTENT_LANGUAGES.has(language)
         ? "en"
         : language;
 
+  // `undefined` = derive from the source/app language, `null`/`"all"` = no
+  // language query (the "All languages" source entry).
   const activeLanguage =
-    languageFilter === undefined ? contentLanguage : (languageFilter ?? undefined);
+    languageFilter === undefined
+      ? contentLanguage
+      : languageFilter === null || languageFilter === "all"
+        ? undefined
+        : languageFilter;
 
   const cacheKey = useMemo(
     () =>
-      `feed_cache_${category ?? "nocat"}_${siteName ?? "all"}_page_${page}_lang_${activeLanguage ?? "all"}_plat_${platform ?? "all"}`,
+      `feed_cache_v2_${category ?? "nocat"}_${siteName ?? "all"}_page_${page}_lang_${activeLanguage ?? "all"}_plat_${platform ?? "all"}`,
     [category, siteName, page, activeLanguage, platform],
   );
 

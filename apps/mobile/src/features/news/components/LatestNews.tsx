@@ -21,7 +21,6 @@ import SkeletonNewsItem from "../skeleton/SkeletonNewsItem";
 import ErrorState from "@/src/components/ErrorState";
 import PlatformBadges from "./PlatformBadges";
 import PlatformFilterChips from "./PlatformFilterChips";
-import LanguageFilterChips from "./LanguageFilterChips";
 import { badgePlatformsOf } from "../lib/articlePlatforms";
 import type { NewsPlatformFilter } from "../lib/articlePlatforms";
 import { useTranslation } from "react-i18next";
@@ -194,9 +193,6 @@ const ListHeader = memo(function ListHeader({
   showPlatformFilter,
   platform,
   onPlatformChange,
-  showLanguageFilter,
-  languageFilter,
-  onLanguageChange,
 }: {
   category?: string | undefined;
   t: (key: string, opts?: object) => string;
@@ -208,9 +204,6 @@ const ListHeader = memo(function ListHeader({
   showPlatformFilter?: boolean | undefined;
   platform?: NewsPlatformFilter | undefined;
   onPlatformChange?: ((value: NewsPlatformFilter) => void) | undefined;
-  showLanguageFilter?: boolean | undefined;
-  languageFilter?: NewsLanguageFilter | undefined;
-  onLanguageChange?: ((value: NewsLanguageFilter) => void) | undefined;
 }) {
   const safeCategory = category ? String(category).toLowerCase() : "";
   const translatedCategory = safeCategory ? t(`news.tabs.${safeCategory}`) : "";
@@ -246,12 +239,6 @@ const ListHeader = memo(function ListHeader({
           onChange={(item) => onChangeFeed?.(item)}
         />
       )}
-      {showLanguageFilter && onLanguageChange && (
-        <LanguageFilterChips
-          value={languageFilter ?? "all"}
-          onChange={onLanguageChange}
-        />
-      )}
       {showPlatformFilter && onPlatformChange && (
         <PlatformFilterChips value={platform ?? "all"} onChange={onPlatformChange} />
       )}
@@ -283,8 +270,6 @@ function LatestNews({
   onResetPlatform,
   feedReady = true,
   languageFilter,
-  showLanguageFilter,
-  onLanguageChange,
 }: LatestNewsProps) {
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
@@ -457,7 +442,8 @@ function LatestNews({
     // the feed also waits for the profile platform so it never fetches twice.
     !mockData && feedReady,
     platform,
-    languageFilter === "all" ? null : languageFilter,
+    // `all` = no language query; `undefined` = derive from `language`.
+    languageFilter,
   );
 
   const articles = mockData ? mockData : feedArticles;
@@ -533,9 +519,6 @@ function LatestNews({
       showPlatformFilter={showPlatformFilter}
       platform={platform ?? "all"}
       onPlatformChange={onPlatformChange}
-      showLanguageFilter={showLanguageFilter}
-      languageFilter={languageFilter}
-      onLanguageChange={onLanguageChange}
     />
   );
 

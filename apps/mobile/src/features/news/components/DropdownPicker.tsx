@@ -15,11 +15,18 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { openLink } from "@/src/lib/browser";
 import { useNotificationPreferences } from "@/src/hooks/useNotificationPreferences";
 import NotificationService from "@/src/services/notificationService";
-import { useState, memo, useMemo } from "react";
+import { useState, memo, useMemo, useCallback } from "react";
 import SkeletonDropdown from "../skeleton/SkeletonDropdown";
 import { useTranslation } from "react-i18next";
 import NetInfo from "@react-native-community/netinfo";
 import SiteDescription from "./SiteDescription";
+import {
+  ALL_LANGUAGES_NAME,
+  ALL_SOURCES_NAME,
+  ARABIC_SOURCES_NAME,
+  ENGLISH_SOURCES_NAME,
+  isAllSourcesName,
+} from "../lib/allSources";
 import type { DropdownPickerProps, SectionData, RssFeedSource } from "../types";
 
 const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
@@ -143,26 +150,56 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
   );
   const selectedItem = props.value;
 
-  const allSourcesItem: RssFeedSource = useMemo(
-    () => ({
-      name: "__all__",
-      image: "",
-      language: websites[0]?.language ?? "en",
-    }),
-    [websites],
+  const allSourcesItems: RssFeedSource[] = useMemo(
+    () => [
+      {
+        name: ALL_LANGUAGES_NAME,
+        image: "",
+        language: "all",
+      } as unknown as RssFeedSource,
+      {
+        name: ARABIC_SOURCES_NAME,
+        image: "",
+        language: "ar",
+      } as RssFeedSource,
+      {
+        name: ENGLISH_SOURCES_NAME,
+        image: "",
+        language: "en",
+      } as RssFeedSource,
+    ],
+    [],
   );
 
-  const displayWebsites = useMemo(
-    () => [allSourcesItem, ...websites],
-    [allSourcesItem, websites],
+  const getItemName = useCallback(
+    (item: RssFeedSource): string => {
+      switch (item.name) {
+        case ALL_LANGUAGES_NAME:
+          return t("news.languageFilter.all");
+        case ARABIC_SOURCES_NAME:
+          return t("news.languageFilter.ar");
+        case ENGLISH_SOURCES_NAME:
+          return t("news.languageFilter.en");
+        case ALL_SOURCES_NAME:
+          return t("news.dropdown.allSources");
+        default:
+          return item.name;
+      }
+    },
+    [t],
   );
 
-  // Build section list grouped by language, ordered by current app locale
+  // Build section list grouped by all sources vs websites, ordered by current app locale
   const sections: SectionData[] = useMemo(() => {
-    const arabicSites = displayWebsites.filter((item) => item.language === "ar");
-    const englishSites = displayWebsites.filter((item) => item.language === "en");
+    const arabicSites = websites.filter((item) => item.language === "ar");
+    const englishSites = websites.filter((item) => item.language !== "ar");
 
-    const result: SectionData[] = [];
+    const result: SectionData[] = [
+      {
+        title: t("news.dropdown.allSources"),
+        data: allSourcesItems,
+      },
+    ];
 
     const arSection: SectionData = {
       title: t("news.dropdown.arabicSources"),
@@ -184,7 +221,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
     }
 
     return result;
-  }, [displayWebsites, i18n.language, t]);
+  }, [allSourcesItems, websites, i18n.language, t]);
 
   const handleToggleNotification = async (): Promise<void> => {
     const state = await NetInfo.fetch();
@@ -212,7 +249,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
     openLink(url);
   };
 
-  const isAllSources = selectedItem?.name === "__all__";
+  const isAllSources = isAllSourcesName(selectedItem?.name);
 
   if (websites.length === 0 || !selectedItem) {
     return <SkeletonDropdown />;
@@ -246,9 +283,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
         ) : null}
 
         <CustomText style={styles.pickerButtonText} numberOfLines={1}>
-          {isAllSources
-            ? t("news.dropdown.allSources")
-            : selectedItem?.name || t("news.dropdown.selectSource")}
+          {selectedItem ? getItemName(selectedItem) : t("news.dropdown.selectSource")}
         </CustomText>
 
         <ChevronDown size={20} color={colors.text} />
@@ -302,7 +337,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                   onPress={() => handleSelect(item)}
                 >
                   <View style={{ alignItems: "center", flexDirection: "row" }}>
-                    {item.name === "__all__" ? null : (
+                    {isAllSourcesName(item.name) ? null : (
                       <Image
                         recyclingKey={String(item.image ?? "")}
                         source={item.image}
@@ -320,9 +355,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                         },
                       ]}
                     >
-                      {item.name === "__all__"
-                        ? t("news.dropdown.allSources")
-                        : item.name}
+                      {getItemName(item)}
                     </CustomText>
                   </View>
                   {selectedItem?.name === item.name && (

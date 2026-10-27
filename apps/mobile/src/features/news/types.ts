@@ -78,9 +78,6 @@ export type LatestNewsProps = {
   feedReady?: boolean;
   /** Language filter for an "All sources" feed (`all` = no language query). */
   languageFilter?: NewsLanguageFilter;
-  /** Renders the language chips (only meaningful for "All sources"). */
-  showLanguageFilter?: boolean;
-  onLanguageChange?: (value: NewsLanguageFilter) => void;
 };
 
 // Memoized row component

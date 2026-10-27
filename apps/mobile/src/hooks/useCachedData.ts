@@ -163,6 +163,7 @@ export default function useCachedData<T>(
   const snapshot = snapshotRef.current;
 
   const [data, setDataState] = useState<T | null>(snapshot.data);
+  const [prevKey, setPrevKey] = useState<string>(key);
 
   const [isLoading, setIsLoading] = useState(
     // If we already have cached data we don't need to show a full-page
@@ -181,6 +182,17 @@ export default function useCachedData<T>(
   // initialiser, so after a key change the refs above would otherwise still
   // hold the previous key's payload.
   const currentKeyRef = useRef<string>(key);
+
+  // Synchronise state synchronously during render when key changes
+  if (prevKey !== key) {
+    setPrevKey(key);
+    setDataState(snapshot.data);
+    setIsLoading(!snapshot.present);
+    setError(null);
+    setErrorKind("none");
+    currentKeyRef.current = key;
+    currentDataRef.current = snapshot.data;
+  }
 
   // Stable ref to fetchFn so useCallback deps stay minimal.
   const fetchFnRef = useRef(fetchFn);
@@ -211,18 +223,29 @@ export default function useCachedData<T>(
           currentDataRef.current = snapshot.data;
           currentKeyRef.current = key;
           safeSet(setDataState, snapshot.data);
-          if (snapshot.present) safeSet(setIsLoading, false);
+          safeSet(setIsLoading, !snapshot.present);
         }
 
         // 2. Respect TTL — skip the network call if the cache is still fresh.
         if (!forceRefresh) {
           const ts = storageGetTimestamp(timestampKey); // synchronous, no await
           if (ts !== null && currentDataRef.current) {
-            const age = Date.now() - ts;
-            if (age < ttl) {
-              safeSet(setIsLoading, false);
-              safeSet(setIsRefetching, false);
-              return;
+            // Guard against empty cached payloads (e.g. empty articles list due to prior failed query or zero results)
+            const isEmptyArticles =
+              Boolean((currentDataRef.current as any)?.articles) &&
+              Array.isArray((currentDataRef.current as any).articles) &&
+              (currentDataRef.current as any).articles.length === 0;
+            const isEmptyArray =
+              Array.isArray(currentDataRef.current) &&
+              currentDataRef.current.length === 0;
+
+            if (!isEmptyArticles && !isEmptyArray) {
+              const age = Date.now() - ts;
+              if (age < ttl) {
+                safeSet(setIsLoading, false);
+                safeSet(setIsRefetching, false);
+                return;
+              }
             }
           }
         }

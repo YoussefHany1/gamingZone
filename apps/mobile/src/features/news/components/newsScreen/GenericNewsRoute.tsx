@@ -7,6 +7,12 @@ import ErrorState from "@/src/components/ErrorState";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import LatestNews from "../LatestNews";
 import { useNewsPlatformFilter } from "../../hooks/useNewsPlatformFilter";
+import {
+  ALL_LANGUAGES_NAME,
+  ARABIC_SOURCES_NAME,
+  ENGLISH_SOURCES_NAME,
+  isAllSourcesName,
+} from "../../lib/allSources";
 import type {
   GenericNewsRouteProps,
   LatestNewsProps,
@@ -72,22 +78,18 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
     return i18n.language === "ar" ? [...arList, ...enList] : [...enList, ...arList];
   }, [rssFeeds, categoryKey, i18n.language]);
 
+  const appLanguage: NewsLanguageFilter = i18n.language.startsWith("ar") ? "ar" : "en";
+
   const [selected, setSelected] = useState<RssFeedSource | undefined>(() => {
     if (feedList.length > 0) {
       return {
-        name: "__all__",
+        name: ALL_LANGUAGES_NAME,
         image: "",
-        language: feedList[0]?.language ?? "en",
+        language: appLanguage,
       };
     }
     return undefined;
   });
-
-  // App language drives the default content language for the combined feed.
-  // Only "ar" and "en" exist in the articles collection.
-  const appLanguage: NewsLanguageFilter = i18n.language.startsWith("ar") ? "ar" : "en";
-  const [allSourcesLanguage, setAllSourcesLanguage] =
-    useState<NewsLanguageFilter>(appLanguage);
 
   const styles = useThemeStyles((c) => ({
     scene: {
@@ -100,49 +102,59 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
   }));
 
   useEffect(() => {
-    if (
-      selected &&
-      selected.name !== "__all__" &&
-      !feedList.find((f) => f.name === selected.name)
-    ) {
-      if (feedList.length > 0) {
-        setSelected({
-          name: "__all__",
-          image: "",
-          language: feedList[0]?.language ?? "en",
-        });
-      } else {
-        setSelected(undefined);
+    setSelected((prev) => {
+      if (prev && !isAllSourcesName(prev.name)) {
+        if (!feedList.find((f) => f.name === prev.name)) {
+          if (feedList.length > 0) {
+            return {
+              name: ALL_LANGUAGES_NAME,
+              image: "",
+              language: appLanguage,
+            };
+          }
+          return undefined;
+        }
+        return prev;
       }
-    } else if (!selected && feedList.length > 0) {
-      setSelected({
-        name: "__all__",
-        image: "",
-        language: feedList[0]?.language ?? "en",
-      });
-    }
-  }, [feedList, selected]);
+
+      if (!prev && feedList.length > 0) {
+        return {
+          name: ALL_LANGUAGES_NAME,
+          image: "",
+          language: appLanguage,
+        };
+      }
+
+      if (prev && isAllSourcesName(prev.name) && feedList.length === 0) {
+        return undefined;
+      }
+
+      return prev;
+    });
+  }, [appLanguage, feedList]);
 
   if (selected) {
-    const isAllSources = selected.name === "__all__";
+    const isAllSources = isAllSourcesName(selected.name);
+    const languageFilter: NewsLanguageFilter =
+      selected.name === ARABIC_SOURCES_NAME
+        ? "ar"
+        : selected.name === ENGLISH_SOURCES_NAME
+          ? "en"
+          : "all";
+    const allSourcesLanguage: NewsLanguageFilter =
+      languageFilter === "all" ? appLanguage : languageFilter;
     const feedProps: FeedProps = {
       website: isAllSources ? undefined : selected.name,
       category: categoryKey,
       selectedItem: selected,
-      language: isAllSources ? appLanguage : (selected.language ?? "en"),
+      language: isAllSources ? allSourcesLanguage : (selected.language ?? "en"),
       websitesList: feedList,
       onChangeFeed: setSelected,
       enablePagination: true,
       itemsPerPage: 10,
       adInterval: 5,
       showDropdown: true,
-      ...(isAllSources
-        ? {
-            showLanguageFilter: true,
-            languageFilter: allSourcesLanguage,
-            onLanguageChange: setAllSourcesLanguage,
-          }
-        : {}),
+      ...(isAllSources ? { languageFilter } : {}),
     };
 
     return (
