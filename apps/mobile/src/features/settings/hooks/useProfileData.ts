@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import firestore from "@react-native-firebase/firestore";
+import type { ProfileStatus } from "@gaming-zone/core";
 import { useAuthStore } from "@/src/store/useAuthStore";
+import { useMyProfile } from "@/src/features/social/hooks/useMyProfile";
 import { logger } from "@/src/lib/logger";
 
 export type ProfileData = {
@@ -11,6 +13,11 @@ export type ProfileData = {
   memberSince: string | null;
   platform: string;
   country: string;
+  /** Public projection; empty until the profile has been bootstrapped. */
+  handle: string;
+  bannerURL: string;
+  bio: string;
+  status: ProfileStatus | null;
 };
 
 /**
@@ -24,6 +31,7 @@ export function useProfileData(): ProfileData {
   const { t, i18n } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const uid = user?.uid ?? "";
+  const { profile } = useMyProfile(uid);
 
   const [details, setDetails] = useState<{ platform: string; country: string }>({
     platform: "",
@@ -76,5 +84,9 @@ export function useProfileData(): ProfileData {
     memberSince,
     platform: details.platform,
     country: details.country,
+    handle: profile?.handle ?? "",
+    bannerURL: profile?.bannerURL ?? "",
+    bio: profile?.bio ?? "",
+    status: profile?.status ?? null,
   };
 }

@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import { useLangStore } from "@/store/useLangStore";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useProfileBootstrap } from "@/features/profile/hooks/useProfileBootstrap";
 import { Toaster } from "react-hot-toast";
 
 export function Providers({
@@ -14,6 +15,9 @@ export function Providers({
 }) {
   const { lang, setLang } = useLangStore();
   const initAuth = useAuthStore((state) => state.initAuth);
+
+  // Every signed-in account must own a profile + handle. No-op once bootstrapped.
+  useProfileBootstrap();
 
   useEffect(() => {
     // 1. Initialize Auth
@@ -35,7 +39,7 @@ export function Providers({
     if (typeof document !== "undefined") {
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
-      
+
       // Toggle font classes on the body
       if (lang === "ar") {
         document.body.classList.remove("font-inter");

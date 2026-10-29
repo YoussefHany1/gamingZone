@@ -15,6 +15,7 @@ import { useLangStore } from "@/store/useLangStore";
 
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import Image from "next/image";
+import { PublicProfileFields } from "./PublicProfileFields";
 
 export default function ProfileForm() {
   const router = useRouter();
@@ -42,6 +43,26 @@ export default function ProfileForm() {
     handlePickImage,
     handleFileChange,
     handleSave,
+    handle,
+    setHandle,
+    claimedHandle,
+    handleError,
+    claiming,
+    handleClaim,
+    bannerPreviewUrl,
+    bannerInputRef,
+    handlePickBanner,
+    handleBannerChange,
+    handleRemoveBanner,
+    bio,
+    setBio,
+    statusEmoji,
+    setStatusEmoji,
+    statusText,
+    setStatusText,
+    privacy,
+    updatePrivacy,
+    profileHref,
   } = useProfile();
 
   // Redirect to login if not authenticated after loading completes
@@ -248,6 +269,30 @@ export default function ProfileForm() {
               </div>
 
               {/* Save Button */}
+              <PublicProfileFields
+                t={t}
+                handle={handle}
+                claimedHandle={claimedHandle}
+                handleError={handleError}
+                claiming={claiming}
+                onHandleChange={setHandle}
+                onClaimHandle={handleClaim}
+                bannerPreviewUrl={bannerPreviewUrl}
+                bannerInputRef={bannerInputRef}
+                onPickBanner={handlePickBanner}
+                onBannerChange={handleBannerChange}
+                onRemoveBanner={handleRemoveBanner}
+                bio={bio}
+                onBioChange={setBio}
+                statusEmoji={statusEmoji}
+                onStatusEmojiChange={setStatusEmoji}
+                statusText={statusText}
+                onStatusTextChange={setStatusText}
+                privacy={privacy}
+                onPrivacyChange={updatePrivacy}
+                profileHref={profileHref}
+              />
+
               <button
                 id="profile-save"
                 onClick={handleSave}

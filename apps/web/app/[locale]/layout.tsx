@@ -73,13 +73,31 @@ export const generateMetadata = createLocalizedMetadata({
     title: "Gaming Zone | News, Game Tracker & Free Games",
     description:
       "Your ultimate destination for gaming news, game tracker and free games alerts. Join our community of gamers and stay updated with the latest trends in the world of gaming.",
-    keywords: ["gaming", "news", "free games", "tracker", "videogames", "esports", "steam", "epic games"],
+    keywords: [
+      "gaming",
+      "news",
+      "free games",
+      "tracker",
+      "videogames",
+      "esports",
+      "steam",
+      "epic games",
+    ],
   },
   ar: {
     title: "Gaming Zone | أخبار، مراجعات، ألعاب مجانية",
     description:
       "الموقع العربي الأول لمتابعة أخبار ألعاب الفيديو، المراجعات، فعاليات وعروض الألعاب المجانية، وتنظيم قوائم ومكتبة ألعابك المفضلة.",
-    keywords: ["ألعاب", "أخبار", "ألعاب مجانية", "مراجعات", "إكسبوكس", "بلايستيشن", "كمبيوتر", "جيمرز"],
+    keywords: [
+      "ألعاب",
+      "أخبار",
+      "ألعاب مجانية",
+      "مراجعات",
+      "إكسبوكس",
+      "بلايستيشن",
+      "كمبيوتر",
+      "جيمرز",
+    ],
   },
 });
 

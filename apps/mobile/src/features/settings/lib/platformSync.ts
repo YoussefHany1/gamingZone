@@ -37,6 +37,7 @@ import {
   fetchSteamWishlist,
 } from "@/src/services/api/steamApi";
 import { mapTitlesToIgdbChunked, syncPsnTitles, syncXboxTitles } from "@/src/services/api/linkedAccountsApi";
+import { syncLinks } from "@/src/features/social/lib/profileService";
 import { normalizeGameTitle } from "@gaming-zone/utils";
 import type {
   LinkedAccountPlatform,
@@ -547,6 +548,16 @@ export async function markSynced(platform: LinkedAccountPlatform): Promise<void>
 /** Flips the account to "unlinked" (artifacts in lists are kept). */
 export async function unlinkAccount(platform: LinkedAccountPlatform): Promise<void> {
   await updateLinkedAccountDoc(platform, { status: "unlinked" });
+
+  // `profiles/{uid}.links` is a server-owned projection. Backend link writes
+  // refresh it themselves; an unlink is a client write (owner-only rules), so
+  // ask the backend to rebuild the projection. The unlink itself already
+  // succeeded — a failed refresh must not surface as a failed disconnect.
+  try {
+    await syncLinks();
+  } catch (error: unknown) {
+    logger.warn("[platformSync] link projection refresh failed", error);
+  }
 }
 
 /**

@@ -52,7 +52,8 @@
     "selectAnOption": "اختر خياراً",
     "somethingWentWrong": "حدث خطأ ما",
     "contactSupport": "الدعم",
-    "gamer": "لاعب"
+    "gamer": "لاعب",
+    "edit": "تعديل"
   },
   "auth": {
     "emailPlaceholder": "البريد الإلكتروني",
@@ -913,6 +914,76 @@
     },
     "developedBy": "تم التطوير بواسطة يوسف هاني"
   },
+  "social": {
+    "profile": {
+      "title": "الملف العام",
+      "publicProfile": "الملف العام",
+      "publicProfileHint": "كيف يراك اللاعبون الآخرون",
+      "banner": "الغلاف",
+      "changeBanner": "تغيير الغلاف",
+      "removeBanner": "إزالة",
+      "handle": "المعرّف",
+      "handlePlaceholder": "your_handle",
+      "handleClaim": "حجز",
+      "handleErrors": {
+        "empty": "أدخل معرّفًا",
+        "length": "يجب أن يكون المعرّف بين 3 و20 حرفًا",
+        "charset": "استخدم حروفًا إنجليزية صغيرة وأرقامًا وشرطات سفلية فقط",
+        "reserved": "هذا المعرّف محجوز",
+        "taken": "هذا المعرّف مستخدم بالفعل",
+        "failed": "تعذّر حجز المعرّف. حاول مرة أخرى."
+      },
+      "bio": "نبذة",
+      "bioPlaceholder": "أخبر اللاعبين بما تحب لعبه",
+      "status": "الحالة",
+      "statusPlaceholder": "ماذا تلعب؟",
+      "privacy": {
+        "discoverable": "قابل للاكتشاف",
+        "discoverableHint": "إظهار ملفي في البحث بالمعرّف",
+        "showLinks": "إظهار الحسابات المرتبطة",
+        "showLinksHint": "عرض Steam وPlayStation وXbox وDiscord في ملفي",
+        "showStats": "إظهار الإحصاءات",
+        "showStatsHint": "عرض إحصاءات لعبي في ملفي"
+      },
+      "savePublicProfile": "حفظ الملف العام",
+      "saveSuccess": "تم تحديث الملف العام",
+      "saveError": "تعذّر حفظ ملفك العام",
+      "viewPublicProfile": "عرض الملف العام",
+      "linksTitle": "الحسابات المرتبطة",
+      "notFound": "لم يتم العثور على هذا الملف",
+      "blocked": "هذا الملف غير متاح",
+      "unknownError": "تعذّر تحميل هذا الملف",
+      "stats": {
+        "friends": "الأصدقاء",
+        "sessions": "جلسات اللعب"
+      },
+      "openLink": "فتح"
+    },
+    "friends": {
+      "title": "Friends",
+      "empty": "No friends yet"
+    },
+    "requests": {
+      "title": "Requests",
+      "empty": "No pending requests",
+      "sent": "Request sent",
+      "accept": "Accept",
+      "cancel": "Cancel request"
+    },
+    "search": {
+      "placeholder": "Search by @handle",
+      "noResults": "No players found"
+    },
+    "actions": {
+      "addFriend": "Add friend",
+      "removeFriend": "Remove friend",
+      "block": "Block",
+      "unblock": "Unblock"
+    },
+    "errors": {
+      "load": "Could not load social data"
+    }
+  },
   "aiChat": {
     "title": "المساعد الذكي للألعاب (تجريبي)",
     "placeholder": "اسألني أي شيء عن الألعاب...",
@@ -964,7 +1035,8 @@
     "addGame": "إضافة لعبة"
   },
   "notifications": {
-    "newsChannelName": "إشعارات الأخبار"
+    "newsChannelName": "إشعارات الأخبار",
+    "socialChannelName": "Social Notifications"
   },
   "pcSpecs": {
     "quality": {

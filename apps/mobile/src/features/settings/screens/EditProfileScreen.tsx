@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -22,7 +22,6 @@ import ProfileDobField from "../components/editProfile/ProfileDobField";
 import ProfileGenderSelector from "../components/editProfile/ProfileGenderSelector";
 import ProfileNameField from "../components/editProfile/ProfileNameField";
 import ProfilePlatformSelector from "../components/editProfile/ProfilePlatformSelector";
-import LinkedAccountsButton from "../components/editProfile/LinkedAccountsButton";
 import DeleteAccountButton from "../components/editProfile/DeleteAccountButton";
 import ReauthModal from "../components/editProfile/ReauthModal";
 import { useCountryList } from "@/src/hooks/useCountryList";
@@ -30,6 +29,7 @@ import { useEditProfileForm } from "../hooks/useEditProfileForm";
 import { useEmailVerification } from "../hooks/useEmailVerification";
 import { useDeleteAccount } from "../hooks/useDeleteAccount";
 import SkeletonProfile from "../skeleton/SkeletonProfile";
+import PublicProfileEditorSection from "@/src/features/social/components/PublicProfileEditorSection";
 
 function EditProfileScreen(): React.ReactElement {
   const { t } = useTranslation();
@@ -75,6 +75,7 @@ function EditProfileScreen(): React.ReactElement {
 
   const [showAvatarPicker, setShowAvatarPicker] = useState<boolean>(false);
   const [showLinkModal, setShowLinkModal] = useState<boolean>(false);
+  const [forceReady, setForceReady] = useState<boolean>(false);
 
   const bottomInset = useBottomInset();
   const styles = useThemeStyles(
@@ -97,6 +98,11 @@ function EditProfileScreen(): React.ReactElement {
     }),
     [bottomInset],
   );
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setForceReady(true), 1000);
+    return () => clearTimeout(timeout);
+  }, []);
 
   const openAvatarPicker = useCallback((): void => setShowAvatarPicker(true), []);
   const closeAvatarPicker = useCallback((): void => setShowAvatarPicker(false), []);
@@ -123,7 +129,7 @@ function EditProfileScreen(): React.ReactElement {
 
   return (
     <SafeAreaView style={styles.container} edges={["right", "left"]}>
-      {isSaving || !isReady ? (
+      {isSaving || (!isReady && !forceReady) ? (
         <SkeletonProfile />
       ) : (
         <ScrollView
@@ -158,9 +164,9 @@ function EditProfileScreen(): React.ReactElement {
 
           <ProfilePlatformSelector value={platform} onChange={setPlatform} />
 
-          <AdSlot visible={isReady} marginVertical={30} />
+          <PublicProfileEditorSection uid={currentUser.uid} />
 
-          <LinkedAccountsButton onPress={openLinkModal} />
+          <AdSlot visible={isReady || forceReady} marginVertical={30} />
 
           <TouchableOpacity onPress={save} style={styles.saveBtn}>
             <CustomText style={styles.saveText}>{t("common.saveChanges")}</CustomText>

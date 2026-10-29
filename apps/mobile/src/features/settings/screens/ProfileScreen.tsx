@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { View, ScrollView, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -12,16 +12,17 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import type { SettingsStackParamList } from "@/src/navigation/AppNavigator";
 import AdSlot from "@/src/components/AdSlot";
-import ProfileActions from "../components/profile/ProfileActions";
 import ProfileContentSkeleton from "../components/profile/ProfileContentSkeleton";
 import ProfileEmptyLibraryCard from "../components/profile/ProfileEmptyLibraryCard";
 import ProfileHeaderCard from "../components/profile/ProfileHeaderCard";
+import ProfileMenu from "../components/profile/ProfileMenu";
 import ProfileStatsGrid from "../components/profile/ProfileStatsGrid";
 import RateCard from "../components/profile/RateCard";
 import LevelCard from "@/src/features/gamification/components/LevelCard";
 import { useGamification } from "@/src/features/gamification/hooks/useGamification";
 import { useProfileData } from "../hooks/useProfileData";
 import { useUserStats } from "../hooks/useUserStats";
+import LinkAccountModal from "@/src/features/linking/components/LinkAccountModal";
 
 const ProfileScreen = React.memo((): React.ReactElement => {
   const { t } = useTranslation();
@@ -33,8 +34,19 @@ const ProfileScreen = React.memo((): React.ReactElement => {
 
   const { stats, loading, refreshing, refresh } = useUserStats(uid);
   const { gamification } = useGamification(uid);
-  const { displayName, photoURL, memberSince, platform, country } = useProfileData();
+  const {
+    displayName,
+    photoURL,
+    memberSince,
+    platform,
+    country,
+    handle,
+    bannerURL,
+    bio,
+    status,
+  } = useProfileData();
   const isReady = useDeferredReady();
+  const [showLinkModal, setShowLinkModal] = useState<boolean>(false);
 
   // Refresh statistics whenever the screen regains focus (silent re-fetch).
   useFocusEffect(
@@ -87,6 +99,11 @@ const ProfileScreen = React.memo((): React.ReactElement => {
               memberSince={memberSince}
               platform={platform}
               country={country}
+              handle={handle}
+              bannerURL={bannerURL}
+              bio={bio}
+              status={status}
+              onEditProfile={() => navigation.navigate("EditProfile")}
             />
 
             <LevelCard
@@ -117,14 +134,17 @@ const ProfileScreen = React.memo((): React.ReactElement => {
               />
             )}
 
-            <ProfileActions
-              onEditProfile={() => navigation.navigate("EditProfile")}
+            <ProfileMenu
+              onPublicProfile={() => navigation.navigate("UserProfile", { uid })}
               onMyLists={() => navigation.navigate("UserListsScreen")}
+              onPcSpecs={() => navigation.navigate("PcSpecsScreen")}
+              onConnectedApps={() => setShowLinkModal(true)}
             />
 
           </>
         )}
       </ScrollView>
+      <LinkAccountModal visible={showLinkModal} onClose={() => setShowLinkModal(false)} />
     </SafeAreaView>
   );
 });

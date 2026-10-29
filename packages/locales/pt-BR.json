@@ -52,7 +52,8 @@
     "selectAnOption": "Selecione uma opção",
     "somethingWentWrong": "Algo deu errado",
     "contactSupport": "Contatar o suporte",
-    "gamer": "Jogador"
+    "gamer": "Jogador",
+    "edit": "Editar"
   },
   "auth": {
     "emailPlaceholder": "E-mail",
@@ -913,6 +914,76 @@
     },
     "developedBy": "Desenvolvido por Youssef Hany"
   },
+  "social": {
+    "profile": {
+      "title": "Perfil público",
+      "publicProfile": "Perfil público",
+      "publicProfileHint": "Como os outros jogadores veem você",
+      "banner": "Capa",
+      "changeBanner": "Alterar capa",
+      "removeBanner": "Remover",
+      "handle": "Nome de usuário",
+      "handlePlaceholder": "seu_usuario",
+      "handleClaim": "Reservar",
+      "handleErrors": {
+        "empty": "Digite um nome de usuário",
+        "length": "O nome deve ter entre 3 e 20 caracteres",
+        "charset": "Use apenas minúsculas, números e sublinhados",
+        "reserved": "Esse nome está reservado",
+        "taken": "Esse nome já está em uso",
+        "failed": "Não foi possível reservar o nome. Tente novamente."
+      },
+      "bio": "Bio",
+      "bioPlaceholder": "Conte aos jogadores o que você curte",
+      "status": "Status",
+      "statusPlaceholder": "Do que você está jogando?",
+      "privacy": {
+        "discoverable": "Visível na busca",
+        "discoverableHint": "Mostrar meu perfil na busca por nome de usuário",
+        "showLinks": "Mostrar contas vinculadas",
+        "showLinksHint": "Exibir Steam, PlayStation, Xbox e Discord no meu perfil",
+        "showStats": "Mostrar estatísticas",
+        "showStatsHint": "Exibir minhas estatísticas de jogo no meu perfil"
+      },
+      "savePublicProfile": "Salvar perfil público",
+      "saveSuccess": "Perfil público atualizado",
+      "saveError": "Não foi possível salvar seu perfil público",
+      "viewPublicProfile": "Ver perfil público",
+      "linksTitle": "Contas vinculadas",
+      "notFound": "Este perfil não foi encontrado",
+      "blocked": "Este perfil não está disponível",
+      "unknownError": "Não foi possível carregar este perfil",
+      "stats": {
+        "friends": "Amigos",
+        "sessions": "Sessões de jogo"
+      },
+      "openLink": "Abrir"
+    },
+    "friends": {
+      "title": "Friends",
+      "empty": "No friends yet"
+    },
+    "requests": {
+      "title": "Requests",
+      "empty": "No pending requests",
+      "sent": "Request sent",
+      "accept": "Accept",
+      "cancel": "Cancel request"
+    },
+    "search": {
+      "placeholder": "Search by @handle",
+      "noResults": "No players found"
+    },
+    "actions": {
+      "addFriend": "Add friend",
+      "removeFriend": "Remove friend",
+      "block": "Block",
+      "unblock": "Unblock"
+    },
+    "errors": {
+      "load": "Could not load social data"
+    }
+  },
   "aiChat": {
     "title": "Assistente de games (Beta)",
     "placeholder": "Pergunte-me qualquer coisa sobre games...",
@@ -964,7 +1035,8 @@
     "addGame": "Adicionar um jogo"
   },
   "notifications": {
-    "newsChannelName": "Notificações de notícias"
+    "newsChannelName": "Notificações de notícias",
+    "socialChannelName": "Social Notifications"
   },
   "pcSpecs": {
     "quality": {

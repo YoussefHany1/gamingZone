@@ -8,6 +8,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { uploadProfileImage } from "../lib/cloudinary";
 import { firstMissingField, type ProfileFormField } from "../lib/profileForm";
+import { updateMyPublicProfile } from "@/src/features/social/lib/profileService";
 import type { FirestoreUser } from "../types";
 import { logger } from "@/src/lib/logger";
 
@@ -172,6 +173,20 @@ export function useEditProfileForm(): UseEditProfileFormResult {
         country,
         platform,
       });
+
+      // Mirror the public fields into the profile projection. A missing profile
+      // (bootstrap still running) is not an error for the account save, so this
+      // is best-effort and must never fail the whole save.
+      try {
+        await updateMyPublicProfile(currentUser.uid, {
+          displayName: name,
+          photoURL: newPhotoURL,
+          platform,
+          country,
+        });
+      } catch (error) {
+        logger.warn("Profile projection update skipped:", error);
+      }
 
       refreshUser();
       setIsSaving(false);

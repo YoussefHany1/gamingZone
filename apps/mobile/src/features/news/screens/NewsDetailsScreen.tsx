@@ -4,7 +4,6 @@ import { useNavigation } from "@react-navigation/native";
 import CustomText from "@/src/components/CustomText";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
-import AdSlot from "@/src/components/AdSlot";
 import { useBottomInset } from "@/src/hooks/useBottomInset";
 import NewsArticleImage from "../components/newsDetails/NewsArticleImage";
 import NewsArticleMeta from "../components/newsDetails/NewsArticleMeta";
@@ -114,9 +113,11 @@ const NewsDetails = memo((): React.ReactElement => {
             <NewsSummaryCard summary={summary} isRtl={isSummaryRtl} />
           ) : null}
 
-          <NewsDescription description={description} currentLang={currentLang} />
-
-          <AdSlot visible={isReady} />
+          <NewsDescription
+            description={description}
+            currentLang={currentLang}
+            isReady={isReady}
+          />
 
           <ReadFullArticleButton onPress={handleOpenLink} />
         </View>

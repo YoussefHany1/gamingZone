@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { Alert } from "react-native";
 import auth from "@react-native-firebase/auth";
 import { useTranslation } from "react-i18next";
+import NotificationService from "@/src/services/notificationService";
 
 export type UseSignOutResult = {
   /** Asks for confirmation, then signs out. */
@@ -20,6 +21,11 @@ export function useSignOut(): UseSignOutResult {
 
   const handleSignOut = useCallback(async (): Promise<void> => {
     try {
+      // Best-effort: drop this install's push token while the session can still
+      // write to Firestore, so the next account does not inherit it.
+      const uid = auth().currentUser?.uid;
+      if (uid) await NotificationService.clearFCMToken(uid);
+
       await auth().signOut();
     } catch {
       Alert.alert(t("settings.signOut.errorTitle"), t("settings.signOut.errorMessage"));

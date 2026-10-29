@@ -55,7 +55,10 @@ export default async function GamesSearchPage(props: {
       searchResults={[]}
       searchSlot={
         <Suspense fallback={null}>
-          <SearchResultsClient locale={locale} searchPath={`/${locale}/games/search`} />
+          <SearchResultsClient
+            locale={locale}
+            searchPath={`/${locale}/games/search`}
+          />
         </Suspense>
       }
       freeGames={[]}

@@ -12,6 +12,7 @@ import type { UseVerifyEmailResult } from "./useVerifyEmail";
 import { useCountryOptions } from "./useCountryOptions";
 import type { AuthNavigationProp, AuthPickerOption, Gender } from "../types";
 import { useAuthStore } from "@/src/store/useAuthStore";
+import { claimGeneratedHandle } from "@/src/features/social/lib/profileService";
 import { logger } from "@/src/lib/logger";
 
 export type UseRegisterFormParams = {
@@ -126,6 +127,15 @@ export function useRegisterForm({
         platform: "",
         dob: "",
       });
+
+      // Claim the handle + create `profiles/{uid}`. Best-effort: a backend
+      // outage must not lose the account (useProfileBootstrap retries on the
+      // next session).
+      try {
+        await claimGeneratedHandle(name, user.uid);
+      } catch (error) {
+        logger.warn("Handle bootstrap failed during registration:", error);
+      }
 
       // Ask the user to verify their email. This is optional — the modal
       // offers a "Continue" action that enters the app without verifying.

@@ -77,7 +77,7 @@ const BYLINE_PREFIX = /^(?:by|written\s+by|author|posted\s+by)\s*[:\-–—]?\s*
 const BYLINE_NAME = /^[A-Z][A-Za-z.''-]+(?:\s+[A-Z][A-Za-z.''-]+){0,3}$/;
 const CREDIT =
   /^(?:(?:photo|image)\s+)?(?:credit|credits|source|via|by|file\s+photo|screenshot|illustration|photo\s+credit|image\s+credit)\s*[:\-–—]?\s*\S.*$/i;
-const IMAGE_ATTRIBUTION = /^(?:photo|image)\s*[:\-–—]\s*.+$/i;
+const IMAGE_ATTRIBUTION = /^(?:photo|image|screenshot|courtesy)\s*[:\-–—]\s*.+$/i;
 const NAVIGATION =
   /^(?:read\s+more|read\s+also|related(?:\s+(?:articles?|stories|coverage))?|see\s+also|also\s+read|more\s+from|continue\s+reading|you\s+may\s+also\s+like)\b.{0,200}$/i;
 const MEDIA_PROMPT = /^(?:watch|listen)\s*[:\-–—]\s*.{1,200}$/i;
@@ -90,7 +90,7 @@ const ARABIC_DATE = /^(?:نشر|تم\s+النشر|آخر\s+تحديث|تاريخ
 
 // UI artifacts that leak from the website interface
 const UI_ARTIFACT =
-  /^(?:link\s+copied\s+to\s+clipboard|follow|back\s+to\s+top|scroll\s+to\s+top|share|print\s+this\s+(?:article|page))\s*$/i;
+  /^(?:link\s+copied\s+to\s+clipboard|follow(?:\s+us)?\.?|back\s+to\s+top|scroll\s+to\s+top|share|print\s+this\s+(?:article|page))\.?\s*$/i;
 
 // Authentication prompts
 const AUTH_PROMPT =
@@ -111,6 +111,10 @@ const CONTENT_RATING =
 // Author bio indicators - paragraphs about the writer rather than the article
 const AUTHOR_BIO_INTRO =
   /^[A-Z][a-z]+\s+(?:is|was|has\s+been)\s+(?:a|an|the)\s+(?:writer|editor|journalist|contributor|reporter|senior|staff|freelance)/i;
+
+// Additional patterns for common leaks
+const INLINE_NOISE =
+  /^(?:image\s+by\s+[\w\s]+|follow(?:\s+us)?(?:\s+on\s+[\w\s]+)?|see\s+more\s+at|read\s+original\s+at|originally\s+appeared\s+on|via\s+\w+|courtesy\s+of\s+\w+|link\s+copied\s+to\s+clipboard|sign\s+in\s+to\s+(?:your\s+)?[\w\s]+account)\.?\s*$/i;
 
 function stripUnitEdges(value: string): string {
   return value.replace(/^[\s|•·\-–—:]+|[\s|•·\-–—:]+$/g, '').trim();
@@ -151,8 +155,7 @@ function isAuthorBio(unit: string): boolean {
   // Check for intro pattern
   if (AUTHOR_BIO_INTRO.test(unit)) return true;
 
-  // Check for hours-played patterns common in gaming bios - must mention specific game/platform with capital letter
-  // and be in a sentence talking about the person (has "she", "he", "they" or author name)
+  // Check for hours-played patterns common in gaming bios
   if (
     /(?:\d{1,3}(?:,\d{3})+|\d+)\s+hours?\s+in\s+[A-Z]/i.test(unit) &&
     /\b(?:she|he|they|has|her|his|their)\b/i.test(unit)
@@ -193,6 +196,7 @@ function isMetadataUnit(value: string): boolean {
   if (METADATA_LABEL.test(unit)) return true;
   if (STANDALONE_DATE.test(unit)) return true;
   if (CONTENT_RATING.test(unit)) return true;
+  if (INLINE_NOISE.test(unit)) return true;
   if (isAuthorBio(unit)) return true;
 
   return false;
@@ -295,7 +299,7 @@ function escapeRegExp(value: string): string {
 }
 
 const SEPARATOR_BYLINE =
-  /\s+[|–—-]\s*(?:by|written\s+by|posted\s+by)\s+[A-Z][A-Za-z.'’-]+(?:\s+[A-Z][A-Za-z.'’-]+){0,3}\s*$/i;
+  /\s+[|–—-]\s*(?:by|written\s+by|posted\s+by)\s+[A-Z][A-Za-z.''-]+(?:\s+[A-Z][A-Za-z.''-]+){0,3}\s*$/i;
 
 /**
  * Normalizes a headline for display. Only removes a site suffix when it

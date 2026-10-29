@@ -52,12 +52,15 @@ apps/backend/functions/**/.appwrite/
 
 # firebase
 *serviceAccountKey.json
+*firebase-adminsdk*.json
 google-services.json
 firebase.json
 firebase.js
 firestore.rules
 firebase-*.json
 serviceAccountKey.json
+# Downloaded Firebase service-account credentials (contain a private key)
+gaming-zone-*.json
 
 android/app/release/app-release.aab
 android/app/release/app-release.apk

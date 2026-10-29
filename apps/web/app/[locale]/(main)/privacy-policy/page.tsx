@@ -27,8 +27,8 @@ export default function PrivacyPolicyPage() {
             1. Information We Collect
           </h3>
           <p>
-            Based on the app&apos;s functionality, we collect the following types of
-            information:
+            Based on the app&apos;s functionality, we collect the following
+            types of information:
           </p>
 
           <h4 className="text-lg font-semibold text-white mt-6 mb-3">

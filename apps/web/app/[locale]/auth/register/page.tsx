@@ -1,6 +1,11 @@
 "use client";
 
-import { RegisterForm, SocialRegister, useRegister, AuthLayout } from "@/features/auth";
+import {
+  RegisterForm,
+  SocialRegister,
+  useRegister,
+  AuthLayout,
+} from "@/features/auth";
 import { Card } from "@/components/ui/Card";
 
 export default function RegisterPage() {

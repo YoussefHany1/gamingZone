@@ -13,14 +13,14 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
-import { Gamepad2, House, Newspaper, Settings } from "lucide-react-native";
+import { Gamepad2, House, Newspaper, Settings, Users } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTabBarStore } from "../store/useTabBarStore";
 import { useIsDark, useThemeColors } from "@/src/hooks/useTheme";
 import { mix, withAlpha } from "@/src/constants/colorUtils";
 
-export const TAB_ROUTES = ["Home", "News", "Games", "Settings"] as const;
+export const TAB_ROUTES = ["Home", "News", "Games", "Settings", "Social"] as const;
 export type TabRoute = (typeof TAB_ROUTES)[number];
 
 const TAB_ICON_MAP: Record<TabRoute, LucideIcon> = {
@@ -28,6 +28,7 @@ const TAB_ICON_MAP: Record<TabRoute, LucideIcon> = {
   News: Newspaper,
   Games: Gamepad2,
   Settings,
+  Social: Users,
 };
 
 // ── Palette ───────────────────────────────────────────────────────────────────

@@ -52,7 +52,8 @@
     "selectAnOption": "Select an option",
     "somethingWentWrong": "Something went wrong",
     "contactSupport": "Contact Support",
-    "gamer": "Gamer"
+    "gamer": "Gamer",
+    "edit": "Edit"
   },
   "auth": {
     "emailPlaceholder": "Email",
@@ -148,7 +149,8 @@
       "home": "Home",
       "news": "News",
       "games": "Games",
-      "settings": "Settings"
+      "settings": "Settings",
+      "social": "Social"
     },
     "titles": {
       "home": "Home",
@@ -157,7 +159,8 @@
       "gamesList": "My Games List",
       "myLists": "My Lists",
       "profile": "My Profile",
-      "pcSpecs": "My PC"
+      "pcSpecs": "My PC",
+      "social": "Social"
     }
   },
   "home": {
@@ -839,7 +842,9 @@
       "emptyLibrary": "Your library is empty — add games to build your stats.",
       "browseGames": "Browse games",
       "editProfile": "Edit profile",
-      "myLists": "My lists"
+      "myLists": "My lists",
+      "accountAndData": "Account & Data",
+      "pcSpecs": "My PC"
     },
     "languageSelect": {
       "confirmTitle": "Change Language",
@@ -913,6 +918,76 @@
     },
     "developedBy": "Developed By Youssef Hany"
   },
+  "social": {
+    "profile": {
+      "title": "Public Profile",
+      "publicProfile": "Public profile",
+      "publicProfileHint": "How other players see you",
+      "banner": "Banner",
+      "changeBanner": "Change banner",
+      "removeBanner": "Remove",
+      "handle": "Handle",
+      "handlePlaceholder": "your_handle",
+      "handleClaim": "Claim",
+      "handleErrors": {
+        "empty": "Enter a handle",
+        "length": "Handles must be 3–20 characters",
+        "charset": "Use lowercase letters, numbers and underscores only",
+        "reserved": "That handle is reserved",
+        "taken": "That handle is already taken",
+        "failed": "Could not claim the handle. Try again."
+      },
+      "bio": "Bio",
+      "bioPlaceholder": "Tell players what you're into",
+      "status": "Status",
+      "statusPlaceholder": "What are you playing?",
+      "privacy": {
+        "discoverable": "Discoverable",
+        "discoverableHint": "Show my profile in handle search",
+        "showLinks": "Show linked accounts",
+        "showLinksHint": "Display Steam, PlayStation, Xbox and Discord on my profile",
+        "showStats": "Show stats",
+        "showStatsHint": "Display my play statistics on my profile"
+      },
+      "savePublicProfile": "Save public profile",
+      "saveSuccess": "Public profile updated",
+      "saveError": "Could not save your public profile",
+      "viewPublicProfile": "View public profile",
+      "linksTitle": "Linked accounts",
+      "notFound": "This profile could not be found",
+      "blocked": "This profile is unavailable",
+      "unknownError": "Could not load this profile",
+      "stats": {
+        "friends": "Friends",
+        "sessions": "Play sessions"
+      },
+      "openLink": "Open"
+    },
+    "friends": {
+      "title": "Friends",
+      "empty": "No friends yet"
+    },
+    "requests": {
+      "title": "Requests",
+      "empty": "No pending requests",
+      "sent": "Request sent",
+      "accept": "Accept",
+      "cancel": "Cancel request"
+    },
+    "search": {
+      "placeholder": "Search by @handle",
+      "noResults": "No players found"
+    },
+    "actions": {
+      "addFriend": "Add friend",
+      "removeFriend": "Remove friend",
+      "block": "Block",
+      "unblock": "Unblock"
+    },
+    "errors": {
+      "load": "Could not load social data"
+    }
+  },
   "aiChat": {
     "title": "Gaming Assistant (Beta)",
     "placeholder": "Ask me anything about gaming...",
@@ -964,7 +1039,8 @@
     "addGame": "Add a game"
   },
   "notifications": {
-    "newsChannelName": "News Notifications"
+    "newsChannelName": "News Notifications",
+    "socialChannelName": "Social Notifications"
   },
   "pcSpecs": {
     "quality": {

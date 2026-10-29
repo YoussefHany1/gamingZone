@@ -5,5 +5,25 @@
   "exports": {
     "./*.json": "./*.json",
     "./*": "./*"
+  },
+  "social": {
+    "friends": {
+      "title": "Friends",
+      "empty": "No friends yet"
+    },
+    "requests": {
+      "title": "Requests",
+      "empty": "No pending requests"
+    },
+    "search": {
+      "placeholder": "Search by @handle",
+      "noResults": "No players found"
+    },
+    "actions": {
+      "addFriend": "Add friend"
+    },
+    "errors": {
+      "load": "Could not load social data"
+    }
   }
 }

@@ -9,6 +9,7 @@ import {
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import { useLangStore } from "@/store/useLangStore";
+import { ensurePublicProfile } from "@/features/profile/lib/publicProfile";
 import { createSessionFromUser } from "../services/session";
 
 import countries from "i18n-iso-countries";
@@ -59,6 +60,15 @@ export function useRegister() {
           dob: "",
         });
 
+        // Claim the handle + create `profiles/{uid}` in one server-side
+        // transaction. Best-effort: a Functions outage must not lose the
+        // account (useProfileBootstrap retries on the next session).
+        try {
+          await ensurePublicProfile(user.uid, name);
+        } catch (profileError) {
+          console.warn("Handle bootstrap failed during registration:", profileError);
+        }
+
         await createSessionFromUser(user);
 
         router.push("/");
@@ -85,6 +95,19 @@ export function useRegister() {
     setLoading(true);
     try {
       const userCredential = await signInWithPopup(auth, googleProvider);
+
+      // Google sign-up does not create a `users` document; the handle claim is
+      // the only thing this path owes the social layer. Best-effort so a
+      // Functions outage never blocks sign-in.
+      try {
+        await ensurePublicProfile(
+          userCredential.user.uid,
+          userCredential.user.displayName ?? "",
+        );
+      } catch (profileError) {
+        console.warn("Handle bootstrap failed during Google sign-up:", profileError);
+      }
+
       await createSessionFromUser(userCredential.user);
       router.push("/");
     } catch (err) {

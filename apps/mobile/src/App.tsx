@@ -39,7 +39,11 @@ import useUpdateCheck from "./hooks/useUpdateCheck";
 import useAppOpenSync from "./hooks/useAppOpenSync";
 import useOTAUpdate from "./hooks/useOTAUpdate";
 import { useAuthPrompt } from "./hooks/useAuthPrompt";
-import { MainAppTabs, AuthStack, type AuthStackParamList } from "./navigation/AppNavigator";
+import {
+  MainAppTabs,
+  AuthStack,
+  type AuthStackParamList,
+} from "./navigation/AppNavigator";
 import OnboardingScreen from "./features/onboarding/screens/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import OfflineBanner from "./components/OfflineBanner";
@@ -99,6 +103,9 @@ const linking: LinkingOptions<any> = {
           Settings: {
             screens: {
               UserGamesScreen: "lists/:listId",
+              // Shared profile links (the same `/u/{handle}` path the web app
+              // serves) open the public profile on mobile too.
+              UserProfile: "u/:handle",
             },
           },
         },

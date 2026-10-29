@@ -1,5 +1,3 @@
-
-
 import { NewsDetailsArticle } from "@/features/news";
 
 interface SearchParams {
@@ -32,8 +30,6 @@ export default async function NewsDetailsFallbackPage(props: {
 
   return (
     <div className="w-full flex flex-col text-white">
-      
-
       <NewsDetailsArticle
         title={title}
         link={link}
@@ -44,8 +40,6 @@ export default async function NewsDetailsFallbackPage(props: {
         isArabic={isArabic}
         locale={locale}
       />
-
-      
     </div>
   );
 }

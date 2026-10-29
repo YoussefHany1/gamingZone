@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "./Link";
 import { usePathname, useRouter } from "next/navigation";
 import { useLangStore } from "../store/useLangStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { auth as firebaseAuth } from "../lib/firebase";
 import { signOut, signInAnonymously } from "firebase/auth";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import Image from "next/image";
+import { db } from "../lib/firebase";
 import {
   Gamepad2,
   Newspaper,
@@ -17,6 +19,7 @@ import {
   Menu,
   X,
   Bookmark,
+  Users,
 } from "lucide-react";
 
 export default function Header() {
@@ -25,6 +28,22 @@ export default function Header() {
   const { lang, t } = useLangStore();
   const user = useAuthStore((state) => state.user);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState(0);
+
+  useEffect(() => {
+    if (!user || user.isAnonymous) {
+      setPendingRequests(0);
+      return;
+    }
+    const requestsQuery = query(
+      collection(db, "friendRequests"),
+      where("to", "==", user.uid),
+      where("status", "==", "pending"),
+    );
+    return onSnapshot(requestsQuery, (snapshot) =>
+      setPendingRequests(snapshot.size),
+    );
+  }, [user]);
 
   // Pathnames are locale-prefixed (/en/news); compare against the bare path
   const pathWithoutLocale = (() => {
@@ -77,6 +96,11 @@ export default function Header() {
             label: t("navigation.titles.myLists"),
             icon: Bookmark,
           },
+          {
+            href: "/social",
+            label: t("navigation.tabs.social"),
+            icon: Users,
+          },
         ]
       : []),
   ];
@@ -92,12 +116,12 @@ export default function Header() {
               href="/"
               className="flex items-center gap-2 group"
             >
-                <Image
-                  src="/assets/icon.webp"
-                  alt="Logo"
-                  width={50}
-                  height={50}
-                />
+              <Image
+                src="/assets/icon.webp"
+                alt="Logo"
+                width={50}
+                height={50}
+              />
               <span className="text-xl text-nowrap font-extrabold tracking-wider text-white font-inter">
                 Gaming Zone
               </span>
@@ -121,7 +145,14 @@ export default function Header() {
                       : "text-gray-300 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <span className="relative">
+                    <Icon className="w-4 h-4" />
+                    {link.href === "/social" && pendingRequests > 0 && (
+                      <span className="absolute -top-2 -right-2 min-w-4 h-4 px-1 rounded-full bg-live-red text-[10px] font-bold text-white flex items-center justify-center">
+                        {pendingRequests > 9 ? "9+" : pendingRequests}
+                      </span>
+                    )}
+                  </span>
                   <span>{link.label}</span>
                 </Link>
               );
@@ -238,7 +269,14 @@ export default function Header() {
                     : "text-gray-300 hover:text-white"
                 }`}
               >
-                <Icon className="w-5 h-5" />
+                <span className="relative">
+                  <Icon className="w-5 h-5" />
+                  {link.href === "/social" && pendingRequests > 0 && (
+                    <span className="absolute -top-2 -right-2 min-w-4 h-4 px-1 rounded-full bg-live-red text-[10px] font-bold text-white flex items-center justify-center">
+                      {pendingRequests > 9 ? "9+" : pendingRequests}
+                    </span>
+                  )}
+                </span>
                 <span>{link.label}</span>
               </Link>
             );

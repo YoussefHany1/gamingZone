@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "cloud.appwrite.io" },
       // Firebase Storage
       { protocol: "https", hostname: "firebasestorage.googleapis.com" },
+      // Cloudinary (banners/avatars) + Google account avatars
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
       // Common CDNs / game/news image hosts seen in codebase
       { protocol: "https", hostname: "cdn.cloudflare.steamstatic.com" },
       { protocol: "https", hostname: "steamcdn-a.akamaihd.net" },

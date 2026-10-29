@@ -18,16 +18,13 @@ import fs from 'fs';
 import { cert, initializeApp } from 'firebase-admin/app';
 
 let adminReady = false;
-let adminModules = null; // { auth, firestore }
+let adminModules = null; // { app, auth, firestore }
 
 /** Returns `{ auth, firestore }`, or null when no service account is configured. */
 export async function getAdmin() {
   if (adminReady) return adminModules;
 
-  const raw =
-    process.env.FCM_SERVICE_ACCOUNT ||
-    process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
-    null;
+  const raw = process.env.FCM_SERVICE_ACCOUNT || process.env.FIREBASE_SERVICE_ACCOUNT_JSON || null;
 
   let serviceAccount = null;
   try {
@@ -65,7 +62,7 @@ export async function getAdmin() {
       credential: cert(serviceAccount),
       projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id,
     });
-    adminModules = { auth: getAuth(app), firestore: getFirestore(app) };
+    adminModules = { app, auth: getAuth(app), firestore: getFirestore(app) };
     adminReady = true;
   } catch (err) {
     console.error('Firebase admin: failed to initialise:', err);

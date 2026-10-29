@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import type { GameEntry } from "@/src/features/lists/types";
+import type { ProfileStatus } from "@gaming-zone/core";
 import type { UserStats } from "../../hooks/useUserStats";
 
 export type StatTileProps = {
@@ -20,6 +21,11 @@ export type ProfileHeaderCardProps = {
   memberSince: string | null;
   platform: string;
   country: string;
+  handle: string;
+  bannerURL: string;
+  bio: string;
+  status: ProfileStatus | null;
+  onEditProfile?: () => void;
 };
 
 export type ProfileStatsGridProps = {
@@ -33,4 +39,18 @@ export type ProfileEmptyLibraryCardProps = {
 export type ProfileActionsProps = {
   onEditProfile: () => void;
   onMyLists: () => void;
+};
+
+export type ProfileMenuProps = {
+  onPublicProfile: () => void;
+  onMyLists: () => void;
+  onPcSpecs: () => void;
+  onConnectedApps: () => void;
+};
+
+export type ProfileMenuItemProps = {
+  icon: React.ComponentType<{ size?: number; color?: string }>;
+  label: string;
+  onPress: () => void;
+  showDivider?: boolean;
 };

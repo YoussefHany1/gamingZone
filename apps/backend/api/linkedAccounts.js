@@ -40,6 +40,7 @@ import crypto from 'crypto';
 import * as psnApi from 'psn-api';
 import { getAdmin } from './firebaseAdmin.js';
 import { createLinkState, verifyLinkState } from './linkState.js';
+import { syncProfileLinks } from './social.js';
 import {
   authenticateXbox,
   buildAuthorizeUrl,
@@ -110,6 +111,16 @@ async function setLinkedAccount(uid, platform, data) {
     },
     { merge: true },
   );
+
+  // Projects the identifier into the public profile. This replaces the old
+  // `onLinkedAccountWritten` Cloud Functions trigger (which would need Blaze).
+  // A projection failure must not fail the link itself: the account is already
+  // stored, and POST /social/links/sync can rebuild the projection later.
+  try {
+    await syncProfileLinks(uid);
+  } catch (err) {
+    console.warn('[linkedAccounts] link projection failed:', err?.message ?? err);
+  }
 }
 
 async function getLinkedAccountDoc(uid, platform) {

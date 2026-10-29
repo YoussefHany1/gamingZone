@@ -52,7 +52,8 @@
     "selectAnOption": "एक विकल्प चुनें",
     "somethingWentWrong": "कुछ गलत हो गया",
     "contactSupport": "सहायता से संपर्क करें",
-    "gamer": "गेमर"
+    "gamer": "गेमर",
+    "edit": "संपादित करें"
   },
   "auth": {
     "emailPlaceholder": "ईमेल",
@@ -913,6 +914,76 @@
     },
     "developedBy": "यूसुफ़ हनी द्वारा विकसित"
   },
+  "social": {
+    "profile": {
+      "title": "सार्वजनिक प्रोफ़ाइल",
+      "publicProfile": "सार्वजनिक प्रोफ़ाइल",
+      "publicProfileHint": "दूसरे खिलाड़ी आपको कैसे देखते हैं",
+      "banner": "बैनर",
+      "changeBanner": "बैनर बदलें",
+      "removeBanner": "हटाएँ",
+      "handle": "हैंडल",
+      "handlePlaceholder": "your_handle",
+      "handleClaim": "सुरक्षित करें",
+      "handleErrors": {
+        "empty": "हैंडल दर्ज करें",
+        "length": "हैंडल 3–20 अक्षरों का होना चाहिए",
+        "charset": "केवल छोटे अक्षर, अंक और अंडरस्कोर इस्तेमाल करें",
+        "reserved": "यह हैंडल आरक्षित है",
+        "taken": "यह हैंडल पहले से लिया गया है",
+        "failed": "हैंडल सुरक्षित नहीं हो सका। फिर कोशिश करें।"
+      },
+      "bio": "परिचय",
+      "bioPlaceholder": "खिलाड़ियों को बताएँ कि आप क्या खेलते हैं",
+      "status": "स्थिति",
+      "statusPlaceholder": "आप क्या खेल रहे हैं?",
+      "privacy": {
+        "discoverable": "खोज में दिखें",
+        "discoverableHint": "हैंडल खोज में मेरी प्रोफ़ाइल दिखाएँ",
+        "showLinks": "जुड़े खाते दिखाएँ",
+        "showLinksHint": "मेरी प्रोफ़ाइल पर Steam, PlayStation, Xbox और Discord दिखाएँ",
+        "showStats": "आँकड़े दिखाएँ",
+        "showStatsHint": "मेरी प्रोफ़ाइल पर मेरे गेम आँकड़े दिखाएँ"
+      },
+      "savePublicProfile": "सार्वजनिक प्रोफ़ाइल सहेजें",
+      "saveSuccess": "सार्वजनिक प्रोफ़ाइल अपडेट हुई",
+      "saveError": "आपकी सार्वजनिक प्रोफ़ाइल सहेजी नहीं जा सकी",
+      "viewPublicProfile": "सार्वजनिक प्रोफ़ाइल देखें",
+      "linksTitle": "जुड़े खाते",
+      "notFound": "यह प्रोफ़ाइल नहीं मिली",
+      "blocked": "यह प्रोफ़ाइल उपलब्ध नहीं है",
+      "unknownError": "यह प्रोफ़ाइल लोड नहीं हो सकी",
+      "stats": {
+        "friends": "मित्र",
+        "sessions": "गेमिंग सत्र"
+      },
+      "openLink": "खोलें"
+    },
+    "friends": {
+      "title": "Friends",
+      "empty": "No friends yet"
+    },
+    "requests": {
+      "title": "Requests",
+      "empty": "No pending requests",
+      "sent": "Request sent",
+      "accept": "Accept",
+      "cancel": "Cancel request"
+    },
+    "search": {
+      "placeholder": "Search by @handle",
+      "noResults": "No players found"
+    },
+    "actions": {
+      "addFriend": "Add friend",
+      "removeFriend": "Remove friend",
+      "block": "Block",
+      "unblock": "Unblock"
+    },
+    "errors": {
+      "load": "Could not load social data"
+    }
+  },
   "aiChat": {
     "title": "गेमिंग सहायक (बीटा)",
     "placeholder": "गेमिंग के बारे में मुझसे कुछ भी पूछें...",
@@ -964,7 +1035,8 @@
     "addGame": "एक गेम जोड़ें"
   },
   "notifications": {
-    "newsChannelName": "समाचार सूचनाएं"
+    "newsChannelName": "समाचार सूचनाएं",
+    "socialChannelName": "Social Notifications"
   },
   "pcSpecs": {
     "quality": {

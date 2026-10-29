@@ -10,6 +10,7 @@ export type RssFeedSource = {
   language: "ar" | "en";
   website?: string;
   aboutSite?: string;
+  isActive?: boolean;
 };
 
 export type ArticleParams = {

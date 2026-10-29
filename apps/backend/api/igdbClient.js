@@ -15,6 +15,38 @@ if (!CLIENT_ID || !CLIENT_SECRET) {
   process.exit(1);
 }
 
+// IGDB rate limit: 4 requests per second per Client ID
+// Use a token bucket to ensure we never exceed this limit globally
+const MAX_REQUESTS_PER_SECOND = 4;
+const requestQueue = [];
+let tokens = MAX_REQUESTS_PER_SECOND;
+let lastRefill = Date.now();
+
+function refillTokens() {
+  const now = Date.now();
+  const elapsed = (now - lastRefill) / 1000; // seconds
+  if (elapsed >= 1) {
+    tokens = Math.min(MAX_REQUESTS_PER_SECOND, tokens + elapsed * MAX_REQUESTS_PER_SECOND);
+    lastRefill = now;
+  }
+}
+
+function waitForToken() {
+  return new Promise((resolve) => {
+    const tryAcquire = () => {
+      refillTokens();
+      if (tokens >= 1) {
+        tokens -= 1;
+        resolve();
+        return;
+      }
+      // Wait until next refill (roughly 250ms for 1 token at 4/sec)
+      setTimeout(tryAcquire, 250);
+    };
+    tryAcquire();
+  });
+}
+
 /**
  * Error carrying an HTTP status. 4xx statuses surface `err.message` to the
  * client (expected, user-fixable); 5xx are collapsed to a generic message.
@@ -82,17 +114,17 @@ export const asyncRoute = (fn) => (req, res, next) => {
 };
 
 /**
- * Calls an IGDB endpoint. On HTTP 429 the request is retried once after a
- * short randomized back-off — callers are expected to pace their chunks
- * (≤4 req/sec), this only absorbs an occasional contention blip when several
- * serverless instances run concurrently.
+ * Calls an IGDB endpoint. Enforces global rate limiting of 4 req/sec.
+ * On HTTP 429 the request is retried once after a longer back-off.
  */
 export async function callIgdb(apiEndpoint, queryBody) {
+  await waitForToken();
   let response = await postIgdb(apiEndpoint, queryBody);
 
   if (response.status === 429) {
-    const jitter = Math.floor(Math.random() * 300);
-    await sleep(1000 + jitter);
+    const jitter = Math.floor(Math.random() * 500);
+    await sleep(2000 + jitter); // Wait longer on 429
+    await waitForToken();
     response = await postIgdb(apiEndpoint, queryBody);
   }
 

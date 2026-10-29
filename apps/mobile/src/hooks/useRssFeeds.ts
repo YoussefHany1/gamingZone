@@ -26,6 +26,7 @@ export interface RssSource extends Models.Document {
   image?: string;
   /** The resolved URL — may originate from either rssUrl or website on the backend. */
   url?: string;
+  isActive?: boolean;
 }
 
 /** Articles grouped by their category key. */

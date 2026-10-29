@@ -24,6 +24,7 @@ import { logger } from "@/src/lib/logger";
 // ---------------------------------------------------------------------------
 
 const NEWS_CHANNEL_ID = "news_notifications" as const;
+const SOCIAL_CHANNEL_ID = "social_notifications" as const;
 
 /**
  * Channel *id* is fixed at module scope, but the display name follows the
@@ -36,10 +37,7 @@ function useNewsChannelName(): string {
 }
 
 // `name` is omitted from the base: it is supplied per-call from i18n.
-const NEWS_CHANNEL_BASE: Omit<
-  Notifications.NotificationChannelInput,
-  "name"
-> = {
+const NEWS_CHANNEL_BASE: Omit<Notifications.NotificationChannelInput, "name"> = {
   importance: Notifications.AndroidImportance.MAX,
   vibrationPattern: [0, 250, 250, 250],
   // Brand color for the LED — intentionally not themed, since the channel is
@@ -81,6 +79,7 @@ function extractImageUrl(
 
 const useNotifications = (user: FirebaseAuthTypes.User | null | undefined): void => {
   const newsChannelName = useNewsChannelName();
+  const { i18n, t } = useTranslation();
 
   useEffect(() => {
     if (!user) return;
@@ -113,6 +112,10 @@ const useNotifications = (user: FirebaseAuthTypes.User | null | undefined): void
           ...NEWS_CHANNEL_BASE,
           name: newsChannelName,
         });
+        await Notifications.setNotificationChannelAsync(SOCIAL_CHANNEL_ID, {
+          ...NEWS_CHANNEL_BASE,
+          name: t("notifications.socialChannelName"),
+        });
 
         if (!isGuest) {
           const authStatus = await messaging().requestPermission();
@@ -129,6 +132,7 @@ const useNotifications = (user: FirebaseAuthTypes.User | null | undefined): void
           const token = await messaging().getToken();
           if (cancelled || !isSessionValid()) return;
           await NotificationService.saveFCMToken(user.uid, token);
+          await NotificationService.saveUserLanguage(user.uid, i18n.language);
 
           const preferences = await NotificationService.getUserPreferences(user.uid);
           if (cancelled || !isSessionValid()) return;

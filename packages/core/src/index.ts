@@ -3,6 +3,13 @@
  * mobile (React Native / Expo) apps. Pure types only, no runtime code.
  */
 
+// Social layer: handle rules + the public profile projection. Runtime helpers
+// live here too (validation is shared by clients and Cloud Functions), but
+// they stay dependency-free.
+export * from "./social";
+export * from "./profileMapping";
+export * from "./flagEmoji";
+
 // ---------------------------------------------------------------------------
 // IGDB raw shapes
 // ---------------------------------------------------------------------------

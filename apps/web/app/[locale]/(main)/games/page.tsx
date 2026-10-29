@@ -1,4 +1,8 @@
-import { GamesPageView, fetchFreeGames, fetchGamesList } from "@/features/games";
+import {
+  GamesPageView,
+  fetchFreeGames,
+  fetchGamesList,
+} from "@/features/games";
 import { createLocalizedMetadata } from "@/lib/metadata";
 
 /**

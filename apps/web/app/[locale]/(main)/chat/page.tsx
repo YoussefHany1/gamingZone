@@ -2,7 +2,6 @@
 
 import React from "react";
 
-
 import {
   ChatHeader,
   ChatEmptyState,
@@ -30,8 +29,6 @@ export default function AIChatPage() {
 
   return (
     <div className="w-full flex flex-col text-white">
-      
-
       <main className="grow max-w-5xl mx-auto w-full px-4 py-8 flex flex-col gap-6 h-[calc(100vh-140px)]">
         <ChatHeader
           t={t}
@@ -67,8 +64,6 @@ export default function AIChatPage() {
           t={t}
         />
       </main>
-
-      
     </div>
   );
 }

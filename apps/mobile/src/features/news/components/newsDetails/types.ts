@@ -30,6 +30,7 @@ export type NewsDescriptionProps = {
   description: string;
   /** Content language — selects the body font family. */
   currentLang: string;
+  isReady?: boolean;
 };
 
 export type ReadFullArticleButtonProps = {

@@ -1,6 +1,10 @@
 "use client";
 
-import { ForgotPasswordForm, useForgotPassword, AuthLayout } from "@/features/auth";
+import {
+  ForgotPasswordForm,
+  useForgotPassword,
+  AuthLayout,
+} from "@/features/auth";
 import { Card } from "@/components/ui/Card";
 
 export default function ForgotPasswordPage() {

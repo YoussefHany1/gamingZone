@@ -137,7 +137,14 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
   const category = props.category.toLowerCase();
   // Memoised: the `?? []` fallback is a fresh array each render, which would
   // otherwise invalidate the `sections` memo below on every render.
-  const websites: RssFeedSource[] = useMemo(() => props.websites ?? [], [props.websites]);
+  // Filters out inactive sources (isActive === false).
+  const websites: RssFeedSource[] = useMemo(
+    () =>
+      (props.websites ?? []).filter(
+        (item) => item.isActive !== false && (item.isActive as unknown) !== "false",
+      ),
+    [props.websites],
+  );
   const selectedItem = props.value;
 
   const arabicAllSource: RssFeedSource = useMemo(

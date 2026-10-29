@@ -39,7 +39,10 @@ export async function generateStaticParams() {
         const articles = await fetchServerArticles(category, "en");
         return articles.map((art) => art.$id);
       } catch (error) {
-        console.error(`[news/[id]] generateStaticParams: ${category} failed:`, error);
+        console.error(
+          `[news/[id]] generateStaticParams: ${category} failed:`,
+          error,
+        );
         return [];
       }
     }),

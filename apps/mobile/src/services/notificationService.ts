@@ -4,13 +4,16 @@ import firestore, {
   collection,
   doc,
   getDoc,
-  setDoc,
   getDocs,
   serverTimestamp,
+  updateDoc,
+  deleteField,
 } from "@react-native-firebase/firestore";
 import type { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
 import * as Notifications from "expo-notifications";
+import { Platform } from "react-native";
 import { logger } from "@/src/lib/logger";
+import { storage } from "@/src/lib/storage";
 
 declare const globalThis: { RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS: boolean };
 globalThis.RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS = true;
@@ -28,9 +31,33 @@ export interface NotificationPreferenceData {
 }
 
 // user data saved in Firestore
+//
+// Push is multi-device: `fcmTokens` has one entry per app install, keyed by a
+// locally generated install id so a rotated token overwrites its own slot
+// instead of evicting another device's. `fcmToken` (legacy single-device field)
+// is written in parallel until `push.ts` stops reading it.
+export interface FcmTokenEntry {
+  token: string;
+  platform: string;
+  updatedAt: ReturnType<typeof serverTimestamp>;
+}
+
 export interface UserTokenData {
   fcmToken: string;
+  fcmTokens: Record<string, FcmTokenEntry>;
   lastActive: ReturnType<typeof serverTimestamp>;
+}
+
+/** Stable per-install id. Not a secret — it only names a map entry. */
+const INSTALL_ID_KEY = "notifications.installId";
+
+function getInstallId(): string {
+  const existing = storage.getString(INSTALL_ID_KEY);
+  if (existing) return existing;
+
+  const generated = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  storage.set(INSTALL_ID_KEY, generated);
+  return generated;
 }
 
 export interface NotificationSourceStatsData {
@@ -279,7 +306,21 @@ class NotificationService {
     }
   }
 
-  // Save FCM token to Firestore for the user
+  /** Stores the user's locale for server-side localized social notifications. */
+  static async saveUserLanguage(userId: string, language: string): Promise<void> {
+    if (!userId || !language) return;
+    try {
+      await updateDoc(doc(firestore(), COLLECTIONS.USERS, userId), { language });
+    } catch (error) {
+      logger.error("❌ Language Sync Error:", error);
+    }
+  }
+
+  // Save FCM token to Firestore for the user.
+  //
+  // The map write is a dotted field path rather than `setDoc(..., { merge })`
+  // with a nested map, because only the dot path is guaranteed to touch this
+  // install's entry and leave the other devices' tokens untouched.
   static async saveFCMToken(userId: string, fcmToken: string): Promise<void> {
     if (!userId || !fcmToken) {
       logger.warn(ERRORS.MISSING_PARAMS);
@@ -288,16 +329,61 @@ class NotificationService {
 
     try {
       const userRef = doc(firestore(), COLLECTIONS.USERS, userId);
+      const tokenId = getInstallId();
 
       const data: UserTokenData = {
         fcmToken,
+        fcmTokens: {
+          [tokenId]: {
+            token: fcmToken,
+            platform: Platform.OS,
+            updatedAt: serverTimestamp(),
+          },
+        },
         lastActive: serverTimestamp(),
       };
 
-      await setDoc(userRef, data, { merge: true });
+      const update: Record<string, unknown> = {
+        fcmToken: data.fcmToken,
+        lastActive: data.lastActive,
+        [`fcmTokens.${tokenId}`]: data.fcmTokens[tokenId],
+      };
+
+      await updateDoc(userRef, update);
       logger.debug("✅ FCM Token Synced");
     } catch (error) {
       logger.error("❌ Token Sync Error:", error);
+    }
+  }
+
+  /**
+   * Removes this install's push token, called before sign-out so the next
+   * account on the same device does not inherit notifications for the old one.
+   * The legacy `fcmToken` is only cleared when it belongs to this install.
+   */
+  static async clearFCMToken(userId: string): Promise<void> {
+    if (!userId) return;
+
+    try {
+      const userRef = doc(firestore(), COLLECTIONS.USERS, userId);
+      const tokenId = getInstallId();
+      const currentToken = await messaging()
+        .getToken()
+        .catch(() => "");
+
+      const snapshot = await getDoc(userRef);
+      const legacyToken = snapshot.exists() ? snapshot.get("fcmToken") : undefined;
+
+      const update: Record<string, unknown> = {
+        [`fcmTokens.${tokenId}`]: deleteField(),
+      };
+      if (currentToken && legacyToken === currentToken) {
+        update.fcmToken = deleteField();
+      }
+
+      await updateDoc(userRef, update);
+    } catch (error) {
+      logger.error("❌ Token Clear Error:", error);
     }
   }
 

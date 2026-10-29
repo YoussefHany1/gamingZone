@@ -6,6 +6,8 @@ import { AppError, callIgdb, getAppToken, asyncRoute } from './igdbClient.js';
 import { registerLinkedAccountRoutes } from './linkedAccounts.js';
 import { registerDiscordAuthRoutes } from './discordAuth.js';
 import { registerAccountDeletionRoutes } from './accountDeletion.js';
+import { registerSocialRoutes } from './social.js';
+import { registerFriendRoutes } from './friends.js';
 import { registerPcRequirementsRoutes } from './pcRequirements.js';
 const app = express();
 
@@ -1393,6 +1395,12 @@ registerDiscordAuthRoutes(app, { AppError, asyncRoute });
 
 // Account deletion (Admin SDK cleanup of every user-owned document)
 registerAccountDeletionRoutes(app, { AppError, asyncRoute });
+
+// Social layer trusted writes (handle reservation + public link projection)
+registerSocialRoutes(app, { AppError, asyncRoute });
+
+// Friends: requests, blocking and handle search (all server-write-only)
+registerFriendRoutes(app, { AppError, asyncRoute });
 
 // Batch Steam PC requirements for game cards
 registerPcRequirementsRoutes(app, { AppError, asyncRoute, callIgdb });

@@ -30,7 +30,6 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const [dontShowAgain, setDontShowAgain] = useState(false);
-
   const styles = useThemeStyles((c) => ({
     overlay: {
       flex: 1,
@@ -42,7 +41,7 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
     container: {
       width: "100%",
       maxWidth: 400,
-      backgroundColor: c.surface,
+      backgroundColor: c.background,
       borderRadius: 16,
       borderWidth: 1,
       borderColor: c.border,
@@ -87,10 +86,13 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
       height: 20,
       borderRadius: 4,
       borderWidth: 1.5,
-      borderColor: c.border,
+      borderColor: c.accent,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: dontShowAgain ? c.accent : "transparent",
+      backgroundColor: "transparent",
+    },
+    checkboxChecked: {
+      backgroundColor: c.accent,
     },
     checkboxInner: {
       width: 10,
@@ -117,7 +119,7 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
       justifyContent: "center",
     },
     signInButton: {
-      backgroundColor: c.surface,
+      // backgroundColor: c.surface,
       borderWidth: 1,
       borderColor: c.border,
     },
@@ -132,7 +134,7 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
     signUpText: {
       fontSize: 15,
       fontWeight: "600",
-      color: c.accentText,
+      color: c.text,
     },
   }));
 
@@ -207,7 +209,7 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
             onPress={toggleCheckbox}
             activeOpacity={0.7}
           >
-            <View style={styles.checkbox}>
+            <View style={[styles.checkbox, dontShowAgain && styles.checkboxChecked]}>
               {dontShowAgain && <View style={styles.checkboxInner} />}
             </View>
             <CustomText style={styles.checkboxLabel}>

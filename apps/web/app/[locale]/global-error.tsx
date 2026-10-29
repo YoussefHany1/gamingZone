@@ -21,13 +21,14 @@ export default function GlobalError({
           <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/20">
             <AlertCircle className="w-10 h-10 text-red-400" />
           </div>
-          
+
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-white">
               A critical error occurred
             </h1>
             <p className="text-gray-400 text-sm">
-              We&apos;re sorry, but something went terribly wrong. Please try refreshing the page.
+              We&apos;re sorry, but something went terribly wrong. Please try
+              refreshing the page.
             </p>
           </div>
 

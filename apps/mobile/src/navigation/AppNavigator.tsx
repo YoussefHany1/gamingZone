@@ -23,10 +23,7 @@ import * as Notifications from "expo-notifications";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { adUnitId } from "../constants/config";
 import { HomeScreen } from "@/src/features/home";
-import {
-  NewsScreen,
-  NewsDetailsScreen as NewsDetails,
-} from "@/src/features/news";
+import { NewsScreen, NewsDetailsScreen as NewsDetails } from "@/src/features/news";
 import {
   GamesScreen,
   GameDetailsScreen as GameDetails,
@@ -47,10 +44,11 @@ import { AchievementsScreen } from "@/src/features/gamification";
 import { AIChatScreen } from "@/src/features/ai";
 import { EventDetailsScreen } from "@/src/features/events";
 import {
-  LoginScreen,
-  RegisterScreen,
-  ForgotPasswordScreen,
-} from "@/src/features/auth";
+  SocialScreen,
+  UserProfileScreen,
+  useProfileBootstrap,
+} from "@/src/features/social";
+import { LoginScreen, RegisterScreen, ForgotPasswordScreen } from "@/src/features/auth";
 import type { GamingEvent } from "@/src/types/sharedTypes";
 import { logger } from "@/src/lib/logger";
 
@@ -80,6 +78,7 @@ export type SettingsStackParamList = {
   NotificationSettings: undefined;
   Profile: undefined;
   EditProfile: undefined;
+  UserProfile: { uid?: string; handle?: string } | undefined;
   UserGamesScreen: { listId: string; listName: string; ownerId?: string } | undefined;
   LanguageScreen: undefined;
   ThemeScreen: undefined;
@@ -95,6 +94,7 @@ export type MainTabParamList = {
   News: undefined;
   Games: undefined;
   Settings: undefined;
+  Social: undefined;
 };
 
 export type AuthStackParamList = {
@@ -108,6 +108,7 @@ const HomeStackNav = createNativeStackNavigator<HomeStackParamList>();
 const NewsStackNav = createNativeStackNavigator<NewsStackParamList>();
 const GamesStackNav = createNativeStackNavigator<GamesStackParamList>();
 const SettingsStackNav = createNativeStackNavigator<SettingsStackParamList>();
+const SocialStackNav = createNativeStackNavigator();
 const AuthStackNav = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createMaterialTopTabNavigator<MainTabParamList>();
 
@@ -224,6 +225,13 @@ const GamesStack = memo(() => {
 });
 GamesStack.displayName = "GamesStack";
 
+const SocialStack = memo(() => (
+  <SocialStackNav.Navigator id="SocialStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
+    <SocialStackNav.Screen name="SocialScreen" component={SocialScreen} />
+  </SocialStackNav.Navigator>
+));
+SocialStack.displayName = "SocialStack";
+
 const SettingsStack = memo(() => {
   const { t } = useTranslation();
   const settingsHeaderOptions = useSettingsHeaderOptions();
@@ -242,6 +250,7 @@ const SettingsStack = memo(() => {
       userLists: { title: t("navigation.titles.myLists") },
       achievements: { title: t("gamification.achievementsTitle") },
       pcSpecs: { title: t("navigation.titles.pcSpecs") },
+      userProfile: { title: t("social.profile.title") },
     }),
     [t],
   );
@@ -267,6 +276,11 @@ const SettingsStack = memo(() => {
         name="EditProfile"
         component={EditProfileScreen}
         options={screenTitles.editProfile}
+      />
+      <SettingsStackNav.Screen
+        name="UserProfile"
+        component={UserProfileScreen}
+        options={screenTitles.userProfile}
       />
       <SettingsStackNav.Screen
         name="UserGamesScreen"
@@ -371,6 +385,10 @@ export const MainAppTabs = memo(() => {
   const { t } = useTranslation();
   const [showAds, setShowAds] = useState<boolean>(false);
 
+  // Every signed-in account must own a profile + handle before the social tab
+  // exists. Runs once per session; a no-op after the first bootstrap.
+  useProfileBootstrap();
+
   useEffect(() => {
     const requestPermission = async (): Promise<void> => {
       const { status } = await Notifications.requestPermissionsAsync();
@@ -397,6 +415,7 @@ export const MainAppTabs = memo(() => {
       // Only enable swipe on the main screens of each tab
       const isBaseScreen =
         !focusedRouteName ||
+        focusedRouteName === "SocialScreen" ||
         focusedRouteName === "HomeScreen" ||
         focusedRouteName === "NewsScreen" ||
         focusedRouteName === "GamesScreen" ||
@@ -445,6 +464,13 @@ export const MainAppTabs = memo(() => {
           {({ route }) => (
             <FreezeScene routeKey={route.key}>
               <SettingsStack />
+            </FreezeScene>
+          )}
+        </Tab.Screen>
+        <Tab.Screen name="Social">
+          {({ route }) => (
+            <FreezeScene routeKey={route.key}>
+              <SocialStack />
             </FreezeScene>
           )}
         </Tab.Screen>
