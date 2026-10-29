@@ -129,19 +129,19 @@ export function SocialPageView() {
       {loading && <p className="text-gray-400">{t("common.loading")}</p>}
       {segment === "sessions" && !query.trim() ? (
         <div className="space-y-3">
-          {sessions.length === 0 ? <p className="text-gray-400">No sessions yet</p> : sessions.map((session) => {
+          {sessions.length === 0 ? <p className="text-gray-400">{t("social.sessions.empty")}</p> : sessions.map((session) => {
             const proposal = session.proposals?.[0];
             const accepted = proposal?.responses[user.uid] === "accepted";
             const everyoneAccepted = proposal && session.participantUids.every((participant) => proposal.responses[participant] === "accepted");
             return (
               <div key={session.id} className="glass-panel border border-white/10 rounded-2xl p-4 flex items-center gap-3">
                 <div className="flex-1"><p className="text-white font-semibold">{session.gameName}</p><p className="text-sm text-gray-400">{session.status}{proposal ? ` • ${new Date(proposal.startsAt).toLocaleString()}` : ""}</p></div>
-                {proposal && !accepted && session.status === "proposed" ? <button className="rounded-lg bg-secondary-blue text-white px-3 py-2" onClick={() => void action(() => respondToSlot(session.id, proposal.id, "accepted"))}>Accept</button> : null}
-                {proposal && accepted && session.status === "proposed" ? <button className="rounded-lg bg-red-700 text-white px-3 py-2" onClick={() => void action(() => respondToSlot(session.id, proposal.id, "declined"))}>Decline</button> : null}
-                {proposal && proposal.proposerUid === user.uid && session.status === "proposed" ? <button className="rounded-lg bg-white/10 text-gray-200 px-3 py-2" onClick={() => void action(() => withdrawProposal(session.id, proposal.id))}>Withdraw</button> : null}
-                {proposal && everyoneAccepted && session.status === "proposed" ? <button className="rounded-lg bg-secondary-blue text-white px-3 py-2" onClick={() => void action(() => confirmSession(session.id, proposal.id))}>Confirm</button> : null}
-                {session.status === "proposed" ? <button className="rounded-lg bg-white/10 text-gray-200 px-3 py-2" onClick={() => void action(() => cancelSession(session.id))}>Cancel</button> : null}
-                {session.status !== "cancelled" ? <button className="rounded-lg bg-white/10 text-gray-200 px-3 py-2" onClick={() => void action(() => leaveSession(session.id))}>Leave</button> : null}
+                {proposal && !accepted && session.status === "proposed" ? <button className="rounded-lg bg-secondary-blue text-white px-3 py-2" onClick={() => void action(() => respondToSlot(session.id, proposal.id, "accepted"))}>{t("social.sessions.accept")}</button> : null}
+                {proposal && accepted && session.status === "proposed" ? <button className="rounded-lg bg-red-700 text-white px-3 py-2" onClick={() => void action(() => respondToSlot(session.id, proposal.id, "declined"))}>{t("social.sessions.decline")}</button> : null}
+                {proposal && proposal.proposerUid === user.uid && session.status === "proposed" ? <button className="rounded-lg bg-white/10 text-gray-200 px-3 py-2" onClick={() => void action(() => withdrawProposal(session.id, proposal.id))}>{t("social.sessions.withdraw")}</button> : null}
+                {proposal && everyoneAccepted && session.status === "proposed" ? <button className="rounded-lg bg-secondary-blue text-white px-3 py-2" onClick={() => void action(() => confirmSession(session.id, proposal.id))}>{t("social.sessions.confirm")}</button> : null}
+                {session.status === "proposed" ? <button className="rounded-lg bg-white/10 text-gray-200 px-3 py-2" onClick={() => void action(() => cancelSession(session.id))}>{t("social.sessions.cancel")}</button> : null}
+                {session.status !== "cancelled" ? <button className="rounded-lg bg-white/10 text-gray-200 px-3 py-2" onClick={() => void action(() => leaveSession(session.id))}>{t("social.sessions.leave")}</button> : null}
               </div>
             );
           })}
@@ -149,12 +149,12 @@ export function SocialPageView() {
       ) : !query.trim() && (
         <div className="glass-panel border border-white/10 rounded-2xl p-4 space-y-3">
           <h2 className="text-white font-semibold flex items-center gap-2">
-            <UsersRound className="w-5 h-5" /> Create group
+            <UsersRound className="w-5 h-5" /> {t("social.groups.create")}
           </h2>
           <input
             value={groupTitle}
             onChange={(event) => setGroupTitle(event.target.value)}
-            placeholder="Group name"
+            placeholder={t("social.groups.name")}
             className="w-full rounded-xl bg-white/10 text-white px-4 py-3 outline-none"
           />
           <div className="grid sm:grid-cols-2 gap-2">
@@ -179,7 +179,7 @@ export function SocialPageView() {
             disabled={creatingGroup || !groupTitle.trim() || selectedFriends.length === 0}
             className="rounded-xl bg-secondary-blue text-white px-4 py-2 disabled:opacity-50"
           >
-            {creatingGroup ? "Creating…" : "Create group"}
+            {creatingGroup ? t("social.groups.creating") : t("social.groups.create")}
           </button>
         </div>
       )}

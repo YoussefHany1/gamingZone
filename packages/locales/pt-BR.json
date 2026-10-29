@@ -973,7 +973,45 @@
     },
     "chats": {
       "title": "Conversas",
-      "empty": "Ainda não há conversas"
+      "empty": "Ainda não há conversas",
+      "noMessages": "Ainda não há mensagens",
+      "select": "Selecione uma conversa para começar a conversar.",
+      "start": "Comece a conversa",
+      "loadOlder": "Carregar mensagens antigas",
+      "loading": "Carregando…",
+      "removed": "Mensagem removida",
+      "unableLoad": "Não foi possível carregar as mensagens",
+      "unableSend": "Não foi possível enviar",
+      "messagePlaceholder": "Mensagem",
+      "send": "Enviar",
+      "deleteForMe": "Excluir mensagem para mim",
+      "conversation": "Conversa",
+      "openGame": "Abrir jogo"
+    },
+    "groups": {
+      "create": "Criar grupo",
+      "name": "Nome do grupo",
+      "creating": "Criando…",
+      "selected": "Selecionado",
+      "select": "Selecionar",
+      "cancel": "Cancelar",
+      "fallback": "Grupo"
+    },
+    "sessions": {
+      "title": "Sessões",
+      "empty": "Ainda não há sessões",
+      "gameName": "Nome do jogo",
+      "gameId": "ID do jogo",
+      "schedule": "Agendar",
+      "saving": "Salvando…",
+      "scheduled": "Sessão agendada",
+      "error": "Não foi possível agendar a sessão",
+      "accept": "Aceitar",
+      "decline": "Recusar",
+      "withdraw": "Retirar",
+      "confirm": "Confirmar",
+      "cancel": "Cancelar",
+      "leave": "Sair"
     },
     "search": {
       "placeholder": "Search by @handle",

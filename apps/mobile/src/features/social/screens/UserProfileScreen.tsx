@@ -178,7 +178,7 @@ function UserProfileScreen(): React.ReactElement {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container} edges={["left", "right"]}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
           <ActivityIndicator color={colors.accentText} />
         </View>
@@ -195,7 +195,7 @@ function UserProfileScreen(): React.ReactElement {
           : t("social.profile.notFound");
 
     return (
-      <SafeAreaView style={styles.container} edges={["left", "right"]}>
+      <SafeAreaView style={styles.container}>
         <ErrorState message={message} showContactButton={false} />
       </SafeAreaView>
     );
@@ -204,7 +204,7 @@ function UserProfileScreen(): React.ReactElement {
   const isOwner = profile.uid === currentUid;
 
   return (
-    <SafeAreaView style={styles.container} edges={["left", "right"]}>
+    <SafeAreaView style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -268,7 +268,9 @@ function UserProfileScreen(): React.ReactElement {
                 style={styles.actionButton}
                 onPress={async () => {
                   try {
-                    const conversationId = await getOrCreateDirectConversation(profile.uid);
+                    const conversationId = await getOrCreateDirectConversation(
+                      profile.uid,
+                    );
                     navigation.getParent()?.navigate("Social", {
                       screen: "ChatScreen",
                       params: { conversationId },

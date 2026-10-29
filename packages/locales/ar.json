@@ -972,8 +972,46 @@
       "cancel": "Cancel request"
     },
     "chats": {
-      "title": "Chats",
-      "empty": "No conversations yet"
+      "title": "المحادثات",
+      "empty": "لا توجد محادثات بعد",
+      "noMessages": "لا توجد رسائل بعد",
+      "select": "اختر محادثة لبدء الدردشة.",
+      "start": "ابدأ المحادثة",
+      "loadOlder": "تحميل الرسائل الأقدم",
+      "loading": "جارٍ التحميل…",
+      "removed": "تمت إزالة الرسالة",
+      "unableLoad": "تعذر تحميل الرسائل",
+      "unableSend": "تعذر الإرسال",
+      "messagePlaceholder": "رسالة",
+      "send": "إرسال",
+      "deleteForMe": "حذف الرسالة من جانبي",
+      "conversation": "محادثة",
+      "openGame": "فتح اللعبة"
+    },
+    "groups": {
+      "create": "إنشاء مجموعة",
+      "name": "اسم المجموعة",
+      "creating": "جارٍ الإنشاء…",
+      "selected": "محدد",
+      "select": "تحديد",
+      "cancel": "إلغاء",
+      "fallback": "مجموعة"
+    },
+    "sessions": {
+      "title": "جلسات اللعب",
+      "empty": "لا توجد جلسات بعد",
+      "gameName": "اسم اللعبة",
+      "gameId": "معرّف اللعبة",
+      "schedule": "جدولة",
+      "saving": "جارٍ الحفظ…",
+      "scheduled": "تمت جدولة الجلسة",
+      "error": "تعذرت جدولة الجلسة",
+      "accept": "قبول",
+      "decline": "رفض",
+      "withdraw": "سحب",
+      "confirm": "تأكيد",
+      "cancel": "إلغاء",
+      "leave": "مغادرة"
     },
     "search": {
       "placeholder": "Search by @handle",

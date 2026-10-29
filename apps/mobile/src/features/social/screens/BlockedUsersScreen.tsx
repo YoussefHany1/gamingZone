@@ -110,7 +110,7 @@ export default function BlockedUsersScreen(): React.ReactElement {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["left", "right"]}>
+    <SafeAreaView style={styles.container}>
       <FlashList
         data={blockedUsers}
         keyExtractor={(item) => item.uid}

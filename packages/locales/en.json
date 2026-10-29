@@ -977,7 +977,45 @@
     },
     "chats": {
       "title": "Chats",
-      "empty": "No conversations yet"
+      "empty": "No conversations yet",
+      "noMessages": "No messages yet",
+      "select": "Select a conversation to start chatting.",
+      "start": "Start the conversation",
+      "loadOlder": "Load older messages",
+      "loading": "Loading…",
+      "removed": "Message removed",
+      "unableLoad": "Unable to load messages",
+      "unableSend": "Unable to send",
+      "messagePlaceholder": "Message",
+      "send": "Send",
+      "deleteForMe": "Delete message for me",
+      "conversation": "Conversation",
+      "openGame": "Open game"
+    },
+    "groups": {
+      "create": "Create group",
+      "name": "Group name",
+      "creating": "Creating…",
+      "selected": "Selected",
+      "select": "Select",
+      "cancel": "Cancel",
+      "fallback": "Group"
+    },
+    "sessions": {
+      "title": "Sessions",
+      "empty": "No sessions yet",
+      "gameName": "Game name",
+      "gameId": "Game ID",
+      "schedule": "Schedule",
+      "saving": "Saving…",
+      "scheduled": "Session scheduled",
+      "error": "Unable to schedule session",
+      "accept": "Accept",
+      "decline": "Decline",
+      "withdraw": "Withdraw",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "leave": "Leave"
     },
     "search": {
       "placeholder": "Search by @handle",

@@ -211,7 +211,7 @@ export default function SocialScreen(): React.ReactElement {
               ))}
             </View>
           }
-          ListEmptyComponent={<View style={styles.empty}><CustomText style={styles.muted}>No sessions yet</CustomText></View>}
+          ListEmptyComponent={<View style={styles.empty}><CustomText style={styles.muted}>{t("social.sessions.empty")}</CustomText></View>}
           renderItem={({ item }) => {
             const proposal = item.proposals.find((candidate) => candidate.status !== "withdrawn");
             const accepted = proposal?.responses[currentUid] === "accepted";
@@ -220,15 +220,15 @@ export default function SocialScreen(): React.ReactElement {
               <View style={styles.row}>
                 <View style={styles.rowText}>
                   <CustomText style={styles.rowText}>{item.gameName}</CustomText>
-                  {item.status === "proposed" ? <TouchableOpacity style={styles.action} onPress={() => setSessionForm({ conversationId: item.conversationId, gameId: item.gameId, gameName: item.gameName, startsAt: new Date(Date.now() + 60 * 60 * 1000) })}><CustomText style={{ color: colors.onAccent }}>New proposal</CustomText></TouchableOpacity> : null}
+                  {item.status === "proposed" ? <TouchableOpacity style={styles.action} onPress={() => setSessionForm({ conversationId: item.conversationId, gameId: item.gameId, gameName: item.gameName, startsAt: new Date(Date.now() + 60 * 60 * 1000) })}><CustomText style={{ color: colors.onAccent }}>{t("social.sessions.schedule")}</CustomText></TouchableOpacity> : null}
                   <CustomText style={styles.muted}>{item.status}{proposal ? ` • ${new Date(proposal.startsAt).toLocaleString()}` : ""}</CustomText>
                 </View>
-                {proposal && !accepted && item.status === "proposed" ? <TouchableOpacity style={styles.action} onPress={() => void respondToSlot(item.id, proposal.id, "accepted")}><CustomText style={{ color: colors.onAccent }}>Accept</CustomText></TouchableOpacity> : null}
-                {proposal && accepted && item.status === "proposed" ? <TouchableOpacity style={styles.dangerAction} onPress={() => void respondToSlot(item.id, proposal.id, "declined")}><CustomText style={{ color: colors.onAccent }}>Decline</CustomText></TouchableOpacity> : null}
-                {proposal && proposal.proposerUid === currentUid && item.status === "proposed" ? <TouchableOpacity style={styles.secondaryButton} onPress={() => void withdrawProposal(item.id, proposal.id)}><CustomText style={styles.secondaryButtonText}>Withdraw</CustomText></TouchableOpacity> : null}
-                {proposal && everyoneAccepted && item.status === "proposed" ? <TouchableOpacity style={styles.action} onPress={() => void confirmSession(item.id, proposal.id)}><CustomText style={{ color: colors.onAccent }}>Confirm</CustomText></TouchableOpacity> : null}
-                {item.status === "proposed" ? <TouchableOpacity style={styles.dangerAction} onPress={() => void cancelSession(item.id)}><CustomText style={{ color: colors.onAccent }}>Cancel</CustomText></TouchableOpacity> : null}
-                {item.status !== "cancelled" ? <TouchableOpacity style={styles.secondaryButton} onPress={() => void leaveSession(item.id)}><CustomText style={styles.secondaryButtonText}>Leave</CustomText></TouchableOpacity> : null}
+                {proposal && !accepted && item.status === "proposed" ? <TouchableOpacity style={styles.action} onPress={() => void respondToSlot(item.id, proposal.id, "accepted")}><CustomText style={{ color: colors.onAccent }}>{t("social.sessions.accept")}</CustomText></TouchableOpacity> : null}
+                {proposal && accepted && item.status === "proposed" ? <TouchableOpacity style={styles.dangerAction} onPress={() => void respondToSlot(item.id, proposal.id, "declined")}><CustomText style={{ color: colors.onAccent }}>{t("social.sessions.decline")}</CustomText></TouchableOpacity> : null}
+                {proposal && proposal.proposerUid === currentUid && item.status === "proposed" ? <TouchableOpacity style={styles.secondaryButton} onPress={() => void withdrawProposal(item.id, proposal.id)}><CustomText style={styles.secondaryButtonText}>{t("social.sessions.withdraw")}</CustomText></TouchableOpacity> : null}
+                {proposal && everyoneAccepted && item.status === "proposed" ? <TouchableOpacity style={styles.action} onPress={() => void confirmSession(item.id, proposal.id)}><CustomText style={{ color: colors.onAccent }}>{t("social.sessions.confirm")}</CustomText></TouchableOpacity> : null}
+                {item.status === "proposed" ? <TouchableOpacity style={styles.dangerAction} onPress={() => void cancelSession(item.id)}><CustomText style={{ color: colors.onAccent }}>{t("social.sessions.cancel")}</CustomText></TouchableOpacity> : null}
+                {item.status !== "cancelled" ? <TouchableOpacity style={styles.secondaryButton} onPress={() => void leaveSession(item.id)}><CustomText style={styles.secondaryButtonText}>{t("social.sessions.leave")}</CustomText></TouchableOpacity> : null}
               </View>
             );
           }}
@@ -242,7 +242,7 @@ export default function SocialScreen(): React.ReactElement {
       <Modal visible={sessionForm !== null} transparent animationType="fade" onRequestClose={() => setSessionForm(null)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modal}>
-            <CustomText style={styles.modalTitle}>Propose play time</CustomText>
+            <CustomText style={styles.modalTitle}>{t("social.sessions.schedule")}</CustomText>
             <CustomText style={styles.muted}>{sessionForm?.gameName}</CustomText>
             <TouchableOpacity style={styles.secondaryButton} onPress={() => setSessionForm((previous) => previous ? { ...previous, startsAt: new Date(previous.startsAt.getTime() + 30 * 60 * 1000) } : previous)}>
               <CustomText style={styles.secondaryButtonText}>{sessionForm?.startsAt.toLocaleString()}</CustomText>
@@ -257,20 +257,20 @@ export default function SocialScreen(): React.ReactElement {
               }}
             />
             <TouchableOpacity style={styles.action} onPress={() => void submitSession()} disabled={sessionBusy}>
-              <CustomText style={{ color: colors.onAccent }}>{sessionBusy ? "Saving…" : "Propose"}</CustomText>
+              <CustomText style={{ color: colors.onAccent }}>{sessionBusy ? t("social.sessions.saving") : t("social.sessions.schedule")}</CustomText>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setSessionForm(null)}><CustomText style={styles.muted}>Cancel</CustomText></TouchableOpacity>
+            <TouchableOpacity onPress={() => setSessionForm(null)}><CustomText style={styles.muted}>{t("social.sessions.cancel")}</CustomText></TouchableOpacity>
           </View>
         </View>
       </Modal>
       <Modal visible={groupOpen} transparent animationType="fade" onRequestClose={() => setGroupOpen(false)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modal}>
-            <CustomText style={styles.modalTitle}>Create group</CustomText>
+            <CustomText style={styles.modalTitle}>{t("social.groups.create")}</CustomText>
             <CustomTextInput
               value={groupTitle}
               onChangeText={setGroupTitle}
-              placeholder="Group name"
+              placeholder={t("social.groups.name")}
               placeholderTextColor={colors.textMuted}
               style={styles.input}
             />
@@ -291,16 +291,16 @@ export default function SocialScreen(): React.ReactElement {
                     {profile?.displayName ?? "Player"}
                   </CustomText>
                   <CustomText style={[styles.muted, selected && styles.selectedText]}>
-                    {selected ? "Selected" : "Select"}
+                    {selected ? t("social.groups.selected") : t("social.groups.select")}
                   </CustomText>
                 </TouchableOpacity>
               );
             })}
             <TouchableOpacity style={styles.action} onPress={() => void submitGroup()} disabled={groupBusy}>
-              <CustomText style={{ color: colors.onAccent }}>{groupBusy ? "Creating…" : "Create"}</CustomText>
+              <CustomText style={{ color: colors.onAccent }}>{groupBusy ? t("social.groups.creating") : t("social.groups.create")}</CustomText>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setGroupOpen(false)}>
-              <CustomText style={styles.muted}>Cancel</CustomText>
+              <CustomText style={styles.muted}>{t("social.groups.cancel")}</CustomText>
             </TouchableOpacity>
           </View>
         </View>
@@ -337,7 +337,7 @@ export default function SocialScreen(): React.ReactElement {
             {segment === "friends" && !isSearching ? (
               <TouchableOpacity style={styles.action} onPress={() => setGroupOpen(true)}>
                 <Plus size={16} color={colors.onAccent} />
-                <CustomText style={{ color: colors.onAccent }}>Create group</CustomText>
+                <CustomText style={{ color: colors.onAccent }}>{t("social.groups.create")}</CustomText>
               </TouchableOpacity>
             ) : null}
             <View style={styles.search}>
@@ -386,10 +386,10 @@ export default function SocialScreen(): React.ReactElement {
               const otherUid = item.members.find((member) => member !== uid);
               const profile = otherUid ? friendProfiles[otherUid] : null;
               label = profile?.displayName ?? "Player";
-              subtitle = item.lastMessage?.text ?? "No messages yet";
+              subtitle = item.lastMessage?.text ?? t("social.chats.noMessages");
             } else {
-              label = item.title ?? "Group";
-              subtitle = item.lastMessage?.text ?? "No messages yet";
+              label = item.title ?? t("social.groups.fallback");
+              subtitle = item.lastMessage?.text ?? t("social.chats.noMessages");
             }
           } else if ("members" in item) {
             // Friendship: friend's displayName as label, @handle as subtitle

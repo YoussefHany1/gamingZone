@@ -973,7 +973,45 @@
     },
     "chats": {
       "title": "चैट",
-      "empty": "अभी कोई बातचीत नहीं"
+      "empty": "अभी कोई बातचीत नहीं",
+      "noMessages": "अभी कोई संदेश नहीं",
+      "select": "चैट शुरू करने के लिए बातचीत चुनें।",
+      "start": "बातचीत शुरू करें",
+      "loadOlder": "पुराने संदेश लोड करें",
+      "loading": "लोड हो रहा है…",
+      "removed": "संदेश हटा दिया गया",
+      "unableLoad": "संदेश लोड नहीं हो सके",
+      "unableSend": "भेजा नहीं जा सका",
+      "messagePlaceholder": "संदेश",
+      "send": "भेजें",
+      "deleteForMe": "मेरे लिए संदेश हटाएं",
+      "conversation": "बातचीत",
+      "openGame": "गेम खोलें"
+    },
+    "groups": {
+      "create": "समूह बनाएं",
+      "name": "समूह का नाम",
+      "creating": "बनाया जा रहा है…",
+      "selected": "चयनित",
+      "select": "चुनें",
+      "cancel": "रद्द करें",
+      "fallback": "समूह"
+    },
+    "sessions": {
+      "title": "गेमिंग सत्र",
+      "empty": "अभी कोई सत्र नहीं",
+      "gameName": "गेम का नाम",
+      "gameId": "गेम आईडी",
+      "schedule": "शेड्यूल करें",
+      "saving": "सहेजा जा रहा है…",
+      "scheduled": "सत्र शेड्यूल हो गया",
+      "error": "सत्र शेड्यूल नहीं हो सका",
+      "accept": "स्वीकार करें",
+      "decline": "अस्वीकार करें",
+      "withdraw": "वापस लें",
+      "confirm": "पुष्टि करें",
+      "cancel": "रद्द करें",
+      "leave": "छोड़ें"
     },
     "search": {
       "placeholder": "Search by @handle",

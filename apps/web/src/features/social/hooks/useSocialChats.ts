@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   collection,
   doc,
+  getDocs,
   limit,
   onSnapshot,
   orderBy,
   query,
+  startAfter,
   where,
   type DocumentData,
 } from "firebase/firestore";
@@ -31,8 +33,17 @@ function mapMessage(id: string, data: DocumentData): SocialMessage {
 export function useSocialChats(uid: string) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<SocialMessage[]>([]);
+  const [olderMessages, setOlderMessages] = useState<SocialMessage[]>([]);
+  const [hasOlderMessages, setHasOlderMessages] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [unread, setUnread] = useState<Record<string, boolean>>({});
+  const selectConversation = useCallback((conversationId: string | null) => {
+    setSelectedId(conversationId);
+    setMessages([]);
+    setOlderMessages([]);
+    setHasOlderMessages(false);
+  }, []);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -50,10 +61,7 @@ export function useSocialChats(uid: string) {
   }, [uid]);
 
   useEffect(() => {
-    if (!selectedId) {
-      setMessages([]);
-      return;
-    }
+    if (!selectedId) return;
     const messagesQuery = query(
       collection(db, "conversations", selectedId, "messages"),
       orderBy("createdAt", "desc"),
@@ -62,10 +70,41 @@ export function useSocialChats(uid: string) {
     );
     return onSnapshot(
       messagesQuery,
-      (snapshot) => setMessages(snapshot.docs.map((item) => mapMessage(item.id, item.data()))),
+      (snapshot) => {
+        const newest = snapshot.docs.map((item) => mapMessage(item.id, item.data()));
+        setMessages(newest);
+        setOlderMessages((current) => {
+          const newestIds = new Set(newest.map((item) => item.id));
+          return current.filter((item) => !newestIds.has(item.id));
+        });
+        setHasOlderMessages((currentHasOlder) => currentHasOlder || snapshot.size === 50);
+      },
       () => setError("load"),
     );
   }, [selectedId]);
+
+  const loadOlderMessages = async () => {
+    if (!selectedId || loadingOlder || !hasOlderMessages || messages.length === 0) return;
+    setLoadingOlder(true);
+    try {
+      const oldest = olderMessages[olderMessages.length - 1] ?? messages[messages.length - 1];
+      if (!oldest) return;
+      const olderQuery = query(
+        collection(db, "conversations", selectedId, "messages"),
+        orderBy("createdAt", "desc"),
+        orderBy("__name__", "desc"),
+        startAfter(oldest.createdAt, oldest.id),
+        limit(50),
+      );
+      const snapshot = await getDocs(olderQuery);
+      setOlderMessages((current) => [...current, ...snapshot.docs.map((item) => mapMessage(item.id, item.data()))]);
+      setHasOlderMessages(snapshot.size === 50);
+    } catch {
+      setError("load");
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
 
   useEffect(() => {
     if (!uid || conversations.length === 0) return;
@@ -98,11 +137,14 @@ export function useSocialChats(uid: string) {
 
   return {
     conversations,
-    messages,
+    messages: [...messages, ...olderMessages],
+    hasOlderMessages,
+    loadingOlder,
+    loadOlderMessages,
     selectedId,
     selectedConversation,
     unread,
     error,
-    selectConversation: setSelectedId,
+    selectConversation,
   };
 }

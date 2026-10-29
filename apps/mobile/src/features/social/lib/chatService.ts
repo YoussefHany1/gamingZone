@@ -37,6 +37,25 @@ export function listenToConversations(
     );
 }
 
+export async function loadOlderMessages(
+  conversationId: string,
+  cursor: SocialMessage,
+): Promise<SocialMessage[]> {
+  const snapshot = await firestore()
+    .collection("conversations")
+    .doc(conversationId)
+    .collection("messages")
+    .orderBy("createdAt", "desc")
+    .orderBy(firestore.FieldPath.documentId(), "desc")
+    .startAfter(cursor.createdAt, cursor.id)
+    .limit(50)
+    .get();
+  return snapshot.docs.map((item) => ({
+    id: item.id,
+    ...(item.data() as Omit<SocialMessage, "id">),
+  }));
+}
+
 export function listenToMessages(
   conversationId: string,
   onChange: (items: SocialMessage[]) => void,
