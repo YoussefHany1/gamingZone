@@ -24,7 +24,7 @@
  * `blocked`, `already_friends`, `request_resolved`, `not_blocker`.
  */
 import { getAdmin } from './firebaseAdmin.js';
-import { sendFriendRequestPush } from './push.js';
+import { sendFriendRequestPush, sendPushToUids } from './push.js';
 import { requireAuth } from './social.js';
 
 // ─── Pure helpers (mirror of `packages/core/src/social.ts`) ──────────────────
@@ -635,23 +635,30 @@ export async function createDirectConversation(uid, otherUid) {
 }
 
 /** Writes a text message and inbox preview atomically. */
-export async function sendConversationMessage(uid, conversationId, rawText) {
+export async function sendConversationMessage(uid, conversationId, rawText, options = {}) {
   if (!isUid(uid) || typeof conversationId !== 'string' || !conversationId || conversationId.includes('/')) {
     throw invalid();
   }
   const text = typeof rawText === 'string' ? rawText.trim().slice(0, 4000) : '';
-  if (!text) throw invalid('Message cannot be empty');
+  const game = options?.game;
+  const hasGame = game && (typeof game.id === 'number' || typeof game.id === 'string') && typeof game.name === 'string';
+  if (!text && !hasGame) throw invalid('Message cannot be empty');
+  if (hasGame && game.name.length > 200) throw invalid('Game name is too long');
+  const messageType = hasGame ? 'game_suggestion' : 'text';
+  const previewText = text || `Game suggestion: ${game.name}`;
 
   const admin = await requireAdmin();
   const { FieldValue } = await loadFirestoreSdk();
   const db = admin.firestore;
   const conversationRef = db.collection('conversations').doc(conversationId);
   const messageRef = conversationRef.collection('messages').doc();
+  let conversationData = null;
 
   await db.runTransaction(async (transaction) => {
     const conversationSnap = await transaction.get(conversationRef);
     if (!conversationSnap.exists) throw new FriendError('Conversation not found', 404, 'conversation_not_found');
     const data = conversationSnap.data() ?? {};
+    conversationData = data;
     if (!Array.isArray(data.members) || !data.members.includes(uid)) {
       throw new FriendError('You are not a conversation member', 403, 'not_member');
     }
@@ -665,20 +672,122 @@ export async function sendConversationMessage(uid, conversationId, rawText) {
     const now = FieldValue.serverTimestamp();
     transaction.create(messageRef, {
       senderId: uid,
-      text,
-      type: 'text',
+      text: previewText,
+      type: messageType,
+      ...(hasGame ? { gameId: game.id, gameName: game.name, coverImageId: game.coverImageId ?? null } : {}),
       createdAt: now,
       editedAt: null,
       deletedAt: null,
       deletedFor: [],
     });
     transaction.set(conversationRef, {
-      lastMessage: { senderId: uid, text, type: 'text', createdAt: now },
+      lastMessage: { senderId: uid, text: previewText, type: messageType, createdAt: now },
       lastMessageAt: now,
     }, { merge: true });
   });
 
+  void sendMessagePush(uid, conversationData ?? {}, previewText);
   return { messageId: messageRef.id };
+}
+
+export async function createGroupConversation(uid, input) {
+  const title = typeof input?.title === 'string' ? input.title.trim().slice(0, 80) : '';
+  const requestedMembers = Array.isArray(input?.members) ? input.members.filter(isUid) : [];
+  const members = Array.from(new Set([uid, ...requestedMembers]));
+  if (!title) throw invalid('Group title is required');
+  if (members.length < 2) throw invalid('A group needs at least two members');
+  if (members.length > 50) throw invalid('Groups are limited to 50 members');
+
+  const admin = await requireAdmin();
+  const { FieldValue } = await loadFirestoreSdk();
+  const db = admin.firestore;
+  const friendshipRefs = members.filter((member) => member !== uid).map((member) =>
+    db.collection('friendships').doc(friendshipId(uid, member)),
+  );
+  const conversationRef = db.collection('conversations').doc();
+
+  await db.runTransaction(async (transaction) => {
+    const friendshipSnaps = await Promise.all(friendshipRefs.map((ref) => transaction.get(ref)));
+    if (friendshipSnaps.some((snap) => !snap.exists || snap.get('status') !== 'active')) {
+      throw new FriendError('Groups can only include friends', 403, 'not_friends');
+    }
+    transaction.create(conversationRef, {
+      type: 'group',
+      title,
+      photoURL: null,
+      members,
+      admins: [uid],
+      dmKey: null,
+      lastMessage: null,
+      lastMessageAt: null,
+      createdAt: FieldValue.serverTimestamp(),
+      createdBy: uid,
+    });
+  });
+
+  return { conversationId: conversationRef.id };
+}
+
+export async function updateGroupMembers(uid, conversationId, memberUids, action) {
+  if (!isUid(uid) || typeof conversationId !== 'string' || conversationId.includes('/')) throw invalid();
+  if (!Array.isArray(memberUids) || memberUids.some((member) => !isUid(member))) throw invalid();
+  const admin = await requireAdmin();
+  const db = admin.firestore;
+  const ref = db.collection('conversations').doc(conversationId);
+  await db.runTransaction(async (transaction) => {
+    const snap = await transaction.get(ref);
+    const data = snap.data() ?? {};
+    if (!snap.exists || data.type !== 'group' || !data.admins?.includes(uid)) {
+      throw new FriendError('Only group admins can manage members', 403, 'not_admin');
+    }
+    const current = Array.isArray(data.members) ? data.members : [];
+    const next = action === 'remove'
+      ? current.filter((member) => !memberUids.includes(member))
+      : Array.from(new Set([...current, ...memberUids]));
+    if (next.length > 50) throw invalid('Groups are limited to 50 members');
+    if (next.length < 2) throw invalid('A group needs at least two members');
+    let admins = (data.admins ?? []).filter((adminUid) => next.includes(adminUid));
+    if (admins.length === 0) admins = [next[0]];
+    transaction.update(ref, { members: next, admins });
+  });
+  return { updated: true };
+}
+
+export async function leaveGroupConversation(uid, conversationId) {
+  if (!isUid(uid) || typeof conversationId !== 'string' || conversationId.includes('/')) throw invalid();
+  const admin = await requireAdmin();
+  const db = admin.firestore;
+  const ref = db.collection('conversations').doc(conversationId);
+  await db.runTransaction(async (transaction) => {
+    const snap = await transaction.get(ref);
+    const data = snap.data() ?? {};
+    if (!snap.exists || data.type !== 'group' || !data.members?.includes(uid)) {
+      throw new FriendError('You are not in this group', 403, 'not_member');
+    }
+    const members = data.members.filter((member) => member !== uid);
+    if (members.length < 2) {
+      transaction.delete(ref);
+      return;
+    }
+    let admins = (data.admins ?? []).filter((adminUid) => adminUid !== uid && members.includes(adminUid));
+    if (admins.length === 0) admins = [members[0]];
+    transaction.update(ref, { members, admins });
+  });
+  return { left: true };
+}
+
+async function sendMessagePush(uid, conversationData, text) {
+  const recipients = (conversationData.members ?? []).filter((member) => member !== uid);
+  if (recipients.length === 0) return;
+  try {
+    await sendPushToUids(recipients, {
+      title: conversationData.type === 'group' ? (conversationData.title || 'New message') : 'New message',
+      body: text.slice(0, 120),
+      data: { type: 'social_message' },
+    });
+  } catch (error) {
+    console.warn('[push] message push failed:', error?.message ?? error);
+  }
 }
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
@@ -738,7 +847,29 @@ export function registerFriendRoutes(app, { AppError, asyncRoute }) {
   );
 
   post('/social/messages', (req) =>
-    sendConversationMessage(req.authUid, req.body?.conversationId, req.body?.text),
+    sendConversationMessage(req.authUid, req.body?.conversationId, req.body?.text, {
+      game: req.body?.game,
+    }),
+  );
+
+  post('/social/conversations/group', (req) =>
+    createGroupConversation(req.authUid, {
+      title: req.body?.title,
+      members: req.body?.members,
+    }),
+  );
+
+  post('/social/conversations/group/members', (req) =>
+    updateGroupMembers(
+      req.authUid,
+      req.body?.conversationId,
+      req.body?.members,
+      req.body?.action,
+    ),
+  );
+
+  post('/social/conversations/group/leave', (req) =>
+    leaveGroupConversation(req.authUid, req.body?.conversationId),
   );
 
   app.get(

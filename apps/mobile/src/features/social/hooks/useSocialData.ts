@@ -13,7 +13,7 @@ import {
   listenToIncomingRequests,
   searchProfiles,
 } from "../lib/friendService";
-import { listenToConversations } from "../lib/chatService";
+import { listenToConversations, listenToReadPosition } from "../lib/chatService";
 
 export function useSocialData() {
   const uid = useAuthStore((state) => state.user?.uid ?? "");
@@ -24,6 +24,7 @@ export function useSocialData() {
     {},
   );
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [readAt, setReadAt] = useState<Record<string, number | null>>({});
   const [searchError, setSearchError] = useState<unknown>(null);
 
   useEffect(() => {
@@ -50,6 +51,25 @@ export function useSocialData() {
       stopConversations();
     };
   }, [uid]);
+
+  useEffect(() => {
+    if (!uid) return;
+    const stops = conversations.map((conversation) =>
+      listenToReadPosition(
+        conversation.id,
+        uid,
+        (position) => {
+          const value = position.lastReadAt;
+          setReadAt((previous) => ({
+            ...previous,
+            [conversation.id]: typeof value === "number" ? value : null,
+          }));
+        },
+        (error) => logger.warn(`[social] Read state unavailable for ${conversation.id}`, error),
+      ),
+    );
+    return () => stops.forEach((stop) => stop());
+  }, [uid, conversations]);
 
   // Profile cache covering friendships, requests, and DM counterparts.
   useEffect(() => {
@@ -115,6 +135,27 @@ export function useSocialData() {
       .catch(() => undefined);
   }, [uid, friendships, requests, conversations]);
 
+  const unreadCounts = conversations.reduce<Record<string, number>>((counts, conversation) => {
+    const lastMessage = conversation.lastMessage;
+    const lastMessageAt = conversation.lastMessageAt as unknown;
+    const rawMillis =
+      typeof lastMessageAt === "number"
+        ? lastMessageAt
+        : typeof (lastMessageAt as { toMillis?: () => number } | null)?.toMillis === "function"
+          ? (lastMessageAt as { toMillis: () => number }).toMillis()
+          : null;
+    const lastRead = readAt[conversation.id] ?? null;
+    if (
+      lastMessage &&
+      lastMessage.senderId !== uid &&
+      rawMillis !== null &&
+      (lastRead === null || rawMillis > lastRead)
+    ) {
+      counts[conversation.id] = 1;
+    }
+    return counts;
+  }, {});
+
   const search = useCallback(async (query: string) => {
     try {
       const next = await searchProfiles(query);
@@ -134,6 +175,7 @@ export function useSocialData() {
     friendProfiles,
     requests,
     conversations,
+    unreadCounts,
     results,
     search,
     searchError,

@@ -31,6 +31,7 @@ import {
   runCheckGameReleases,
   teardownGameReleasesService,
 } from '../../../scripts/features/gameReleases/gameReleases.service';
+import { runSessionReminders } from './sessionReminders';
 import { setAppwriteLogger } from '../../../scripts/lib/logger';
 import { getErrorMessage } from '../../../scripts/lib/errors';
 
@@ -49,6 +50,7 @@ export const JOBS: Record<string, (options: JobOptions) => Promise<unknown>> = {
     await runCheckGameReleases();
     await teardownGameReleasesService();
   },
+  'session-reminders': () => runSessionReminders(),
 };
 
 export const JOB_NAMES = Object.keys(JOBS);

@@ -10,6 +10,20 @@ export async function getOrCreateDirectConversation(uid: string): Promise<string
   return result.conversationId;
 }
 
+export async function createGroupConversation(
+  title: string,
+  members: string[],
+): Promise<string> {
+  const result = await callSocialApi<{ conversationId: string }>(
+    "/social/conversations/group",
+    { title, members },
+  );
+  return result.conversationId;
+}
+
+export const leaveGroupConversation = (conversationId: string) =>
+  callSocialApi("/social/conversations/group/leave", { conversationId });
+
 export type FriendProfile = ProfileSearchHit & { id: string };
 
 export function listenToFriendships(

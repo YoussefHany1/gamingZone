@@ -34,6 +34,7 @@ const JOB_NAMES = [
   'free-games',
   'weekly-summary',
   'game-releases',
+  'session-reminders',
   'diagnostics',
 ] as const;
 
@@ -217,7 +218,7 @@ function jobsFromScheduledTick(now: Date): string[] {
   // RSS sync and the article-summary backfill both run every tick. The summary
   // job runs second so freshly created articles are summarized in the same
   // invocation without adding work to the ingestion path.
-  const jobs: string[] = ['rss', 'article-summaries'];
+  const jobs: string[] = ['rss', 'article-summaries', 'session-reminders'];
 
   if (now.getUTCMinutes() === 0) {
     jobs.push('free-games');

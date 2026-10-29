@@ -11,8 +11,9 @@ export async function sendMessage(
   conversationId: string,
   senderId: string,
   text: string,
+  game?: { id: string | number; name: string; coverImageId?: string | null },
 ): Promise<void> {
-  await callSocialApi("/social/messages", { conversationId, text });
+  await callSocialApi("/social/messages", { conversationId, text, ...(game ? { game } : {}) });
 }
 
 export function listenToConversations(
@@ -46,6 +47,7 @@ export function listenToMessages(
     .doc(conversationId)
     .collection("messages")
     .orderBy("createdAt", "desc")
+    .orderBy(firestore.FieldPath.documentId(), "desc")
     .limit(50)
     .onSnapshot(
       (snapshot) =>
@@ -87,4 +89,17 @@ export async function markConversationRead(
     .collection("reads")
     .doc(uid)
     .set({ lastReadAt: firestore.FieldValue.serverTimestamp() }, { merge: true });
+}
+
+export async function deleteMessageForMe(
+  conversationId: string,
+  messageId: string,
+  uid: string,
+): Promise<void> {
+  await firestore()
+    .collection("conversations")
+    .doc(conversationId)
+    .collection("messages")
+    .doc(messageId)
+    .update({ deletedFor: firestore.FieldValue.arrayUnion(uid) });
 }

@@ -32,6 +32,7 @@ export interface SocialMessage {
   type: MessageType;
   gameId?: string | number;
   gameName?: string;
+  coverImageId?: string | null;
   createdAt: number | null;
   editedAt: number | null;
   deletedAt: number | null;

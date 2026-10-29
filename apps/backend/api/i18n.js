@@ -74,6 +74,43 @@ const MESSAGES = {
       body: 'Tu e {name} são agora amigos.',
     },
   },
+  sessionReminder: {
+    en: {
+      t60: { title: 'Session starting in 1 hour', body: '{gameName} starts at {time}.' },
+      t15: { title: 'Session starting in 15 minutes', body: '{gameName} starts soon at {time}.' },
+      starting: { title: 'Session starting now', body: '{gameName} is starting now.' },
+    },
+    ar: {
+      t60: { title: 'تبدأ الجلسة خلال ساعة', body: 'تبدأ جلسة {gameName} في {time}.' },
+      t15: { title: 'تبدأ الجلسة خلال 15 دقيقة', body: 'تبدأ جلسة {gameName} قريبًا في {time}.' },
+      starting: { title: 'تبدأ الجلسة الآن', body: 'تبدأ جلسة {gameName} الآن.' },
+    },
+    es: {
+      t60: { title: 'La sesión empieza en 1 hora', body: '{gameName} empieza a las {time}.' },
+      t15: { title: 'La sesión empieza en 15 minutos', body: '{gameName} empieza pronto a las {time}.' },
+      starting: { title: 'La sesión empieza ahora', body: '{gameName} empieza ahora.' },
+    },
+    fr: {
+      t60: { title: 'La session commence dans 1 heure', body: '{gameName} commence à {time}.' },
+      t15: { title: 'La session commence dans 15 minutes', body: '{gameName} commence bientôt à {time}.' },
+      starting: { title: 'La session commence maintenant', body: '{gameName} commence maintenant.' },
+    },
+    hi: {
+      t60: { title: 'सेशन 1 घंटे में शुरू होगा', body: '{gameName} {time} पर शुरू होगा।' },
+      t15: { title: 'सेशन 15 मिनट में शुरू होगा', body: '{gameName} जल्द {time} पर शुरू होगा।' },
+      starting: { title: 'सेशन अभी शुरू हो रहा है', body: '{gameName} अभी शुरू हो रहा है।' },
+    },
+    'pt-BR': {
+      t60: { title: 'A sessão começa em 1 hora', body: '{gameName} começa às {time}.' },
+      t15: { title: 'A sessão começa em 15 minutos', body: '{gameName} começa em breve às {time}.' },
+      starting: { title: 'A sessão está começando', body: '{gameName} está começando agora.' },
+    },
+    'pt-PT': {
+      t60: { title: 'A sessão começa dentro de 1 hora', body: '{gameName} começa às {time}.' },
+      t15: { title: 'A sessão começa dentro de 15 minutos', body: '{gameName} começa brevemente às {time}.' },
+      starting: { title: 'A sessão começa agora', body: '{gameName} começa agora.' },
+    },
+  },
 };
 
 /**
@@ -107,6 +144,16 @@ export function friendRequestMessage(locale, { name, handle }) {
       name: name || 'Player',
       handle: handle || 'player',
     }),
+  };
+}
+
+/** @returns {{ title: string, body: string }} */
+export function sessionReminderMessage(locale, reminder, { gameName, time }) {
+  const messages = MESSAGES.sessionReminder[normalizePushLocale(locale)] ?? MESSAGES.sessionReminder.en;
+  const message = messages[reminder] ?? messages.starting;
+  return {
+    title: message.title,
+    body: interpolate(message.body, { gameName: gameName || 'Game', time: time || '' }),
   };
 }
 

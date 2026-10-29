@@ -8,6 +8,7 @@ import { registerDiscordAuthRoutes } from './discordAuth.js';
 import { registerAccountDeletionRoutes } from './accountDeletion.js';
 import { registerSocialRoutes } from './social.js';
 import { registerFriendRoutes } from './friends.js';
+import { registerSessionRoutes } from './sessions.js';
 import { registerPcRequirementsRoutes } from './pcRequirements.js';
 const app = express();
 
@@ -1401,6 +1402,9 @@ registerSocialRoutes(app, { AppError, asyncRoute });
 
 // Friends: requests, blocking and handle search (all server-write-only)
 registerFriendRoutes(app, { AppError, asyncRoute });
+
+// Play-session agreement state machine.
+registerSessionRoutes(app, { AppError, asyncRoute });
 
 // Batch Steam PC requirements for game cards
 registerPcRequirementsRoutes(app, { AppError, asyncRoute, callIgdb });
