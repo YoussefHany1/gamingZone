@@ -664,7 +664,8 @@
       "changeLanguage": "Change Language",
       "privacyPolicy": "Privacy Policy",
       "signOut": "Sign Out",
-      "showAds": "Show Ads"
+      "showAds": "Show Ads",
+      "blockedUsers": "Blocked Users"
     },
     "profile": {
       "changePic": "Change your profile picture",
@@ -974,6 +975,10 @@
       "accept": "Accept",
       "cancel": "Cancel request"
     },
+    "chats": {
+      "title": "Chats",
+      "empty": "No conversations yet"
+    },
     "search": {
       "placeholder": "Search by @handle",
       "noResults": "No players found"
@@ -982,10 +987,17 @@
       "addFriend": "Add friend",
       "removeFriend": "Remove friend",
       "block": "Block",
-      "unblock": "Unblock"
+      "unblock": "Unblock",
+      "message": "Message"
     },
     "errors": {
-      "load": "Could not load social data"
+      "load": "Could not load social data",
+      "search": "Search failed. Please try again.",
+      "chat": "Could not open chat"
+    },
+    "blockedUsers": {
+      "title": "Blocked Users",
+      "empty": "No blocked users"
     }
   },
   "aiChat": {

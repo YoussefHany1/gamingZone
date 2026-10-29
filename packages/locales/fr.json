@@ -694,7 +694,8 @@
       "changeLanguage": "Changer de langue",
       "privacyPolicy": "Politique de confidentialité",
       "showAds": "Afficher les publicités",
-      "signOut": "Se déconnecter"
+      "signOut": "Se déconnecter",
+      "blockedUsers": "Utilisateurs bloqués"
     },
     "signOut": {
       "confirmTitle": "Déconnexion",
@@ -970,6 +971,10 @@
       "accept": "Accept",
       "cancel": "Cancel request"
     },
+    "chats": {
+      "title": "Discussions",
+      "empty": "Aucune conversation pour le moment"
+    },
     "search": {
       "placeholder": "Search by @handle",
       "noResults": "No players found"
@@ -978,10 +983,17 @@
       "addFriend": "Add friend",
       "removeFriend": "Remove friend",
       "block": "Block",
-      "unblock": "Unblock"
+      "unblock": "Unblock",
+      "message": "Message"
     },
     "errors": {
-      "load": "Could not load social data"
+      "load": "Could not load social data",
+      "search": "La recherche a échoué. Réessayez.",
+      "chat": "Impossible d'ouvrir la conversation"
+    },
+    "blockedUsers": {
+      "title": "Utilisateurs bloqués",
+      "empty": "Aucun utilisateur bloqué"
     }
   },
   "aiChat": {

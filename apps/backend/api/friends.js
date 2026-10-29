@@ -16,6 +16,8 @@
  *   POST /social/friends/cancel    { to }
  *   POST /social/friends/remove    { uid }
  *   POST /social/blocks            { uid, action: 'block' | 'unblock' }
+ *   POST /social/conversations/dm  { uid }
+ *   POST /social/messages           { conversationId, text }
  *   GET  /social/search?q=         handle-prefix search, discovery + blocks
  *
  * Error codes: `invalid_payload`, `cannot_friend_self`, `user_not_found`,
@@ -461,7 +463,17 @@ export async function blockUser(uid, otherUid) {
         createdAt: FieldValue.serverTimestamp(),
       });
     }
-    transaction.set(blockListRef, { createdAt: FieldValue.serverTimestamp() });
+
+    // Denormalise the blocked user's profile snapshot into the blocker's list
+    // so the blocked-users screen can display names even when `profiles/{uid}`
+    // is no longer readable.
+    const otherData = otherProfileSnap.exists ? otherProfileSnap.data() : {};
+    transaction.set(blockListRef, {
+      handle: asString(otherData.handle),
+      displayName: asString(otherData.displayName) || 'Player',
+      photoURL: typeof otherData.photoURL === 'string' ? otherData.photoURL : null,
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
     if (friendshipSnap.exists && friendshipSnap.get('status') === 'active') {
       writeFriendship(
@@ -570,6 +582,105 @@ export async function searchProfiles(uid, rawQuery) {
   };
 }
 
+// ─── Chat operations ──────────────────────────────────────────────────────────
+
+/** Creates an idempotent DM conversation for two active friends. */
+export async function createDirectConversation(uid, otherUid) {
+  if (!isUid(uid) || !isUid(otherUid) || uid === otherUid) {
+    throw invalid('You cannot message yourself');
+  }
+
+  const admin = await requireAdmin();
+  const { FieldValue } = await loadFirestoreSdk();
+  const db = admin.firestore;
+  const conversationId = friendshipId(uid, otherUid);
+  const friendshipRef = db.collection('friendships').doc(conversationId);
+  const blockedRef = db.collection('blockedPairs').doc(conversationId);
+  const conversationRef = db.collection('conversations').doc(conversationId);
+
+  await db.runTransaction(async (transaction) => {
+    const [friendshipSnap, blockedSnap, selfProfileSnap, otherProfileSnap] = await Promise.all([
+      transaction.get(friendshipRef),
+      transaction.get(blockedRef),
+      transaction.get(db.collection('profiles').doc(uid)),
+      transaction.get(db.collection('profiles').doc(otherUid)),
+    ]);
+
+    if (!selfProfileSnap.exists || !otherProfileSnap.exists) {
+      throw new FriendError('User not found', 404, 'user_not_found');
+    }
+    if (blockedSnap.exists) throw new FriendError('Messaging is blocked', 403, 'blocked');
+    if (!friendshipSnap.exists || friendshipSnap.get('status') !== 'active') {
+      throw new FriendError('You can only message friends', 403, 'not_friends');
+    }
+
+    const existing = await transaction.get(conversationRef);
+    if (existing.exists) return;
+
+    transaction.create(conversationRef, {
+      type: 'dm',
+      title: null,
+      photoURL: null,
+      members: sortPair(uid, otherUid),
+      admins: [],
+      dmKey: conversationId,
+      lastMessage: null,
+      lastMessageAt: null,
+      createdAt: FieldValue.serverTimestamp(),
+      createdBy: uid,
+    });
+  });
+
+  return { conversationId };
+}
+
+/** Writes a text message and inbox preview atomically. */
+export async function sendConversationMessage(uid, conversationId, rawText) {
+  if (!isUid(uid) || typeof conversationId !== 'string' || !conversationId || conversationId.includes('/')) {
+    throw invalid();
+  }
+  const text = typeof rawText === 'string' ? rawText.trim().slice(0, 4000) : '';
+  if (!text) throw invalid('Message cannot be empty');
+
+  const admin = await requireAdmin();
+  const { FieldValue } = await loadFirestoreSdk();
+  const db = admin.firestore;
+  const conversationRef = db.collection('conversations').doc(conversationId);
+  const messageRef = conversationRef.collection('messages').doc();
+
+  await db.runTransaction(async (transaction) => {
+    const conversationSnap = await transaction.get(conversationRef);
+    if (!conversationSnap.exists) throw new FriendError('Conversation not found', 404, 'conversation_not_found');
+    const data = conversationSnap.data() ?? {};
+    if (!Array.isArray(data.members) || !data.members.includes(uid)) {
+      throw new FriendError('You are not a conversation member', 403, 'not_member');
+    }
+    if (data.type === 'dm') {
+      const members = data.members.filter((member) => member !== uid);
+      if (members.length !== 1) throw invalid('Invalid conversation');
+      const blockedSnap = await transaction.get(db.collection('blockedPairs').doc(blockedPairId(uid, members[0])));
+      if (blockedSnap.exists) throw new FriendError('Messaging is blocked', 403, 'blocked');
+    }
+
+    const now = FieldValue.serverTimestamp();
+    transaction.create(messageRef, {
+      senderId: uid,
+      text,
+      type: 'text',
+      createdAt: now,
+      editedAt: null,
+      deletedAt: null,
+      deletedFor: [],
+    });
+    transaction.set(conversationRef, {
+      lastMessage: { senderId: uid, text, type: 'text', createdAt: now },
+      lastMessageAt: now,
+    }, { merge: true });
+  });
+
+  return { messageId: messageRef.id };
+}
+
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
 export function registerFriendRoutes(app, { AppError, asyncRoute }) {
@@ -621,6 +732,14 @@ export function registerFriendRoutes(app, { AppError, asyncRoute }) {
     if (action === 'unblock') return unblockUser(req.authUid, req.body?.uid);
     throw invalid();
   });
+
+  post('/social/conversations/dm', (req) =>
+    createDirectConversation(req.authUid, req.body?.uid),
+  );
+
+  post('/social/messages', (req) =>
+    sendConversationMessage(req.authUid, req.body?.conversationId, req.body?.text),
+  );
 
   app.get(
     '/social/search',

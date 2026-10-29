@@ -1,6 +1,14 @@
 import firestore from "@react-native-firebase/firestore";
 import type { FriendRequest, Friendship, ProfileSearchHit } from "@gaming-zone/core";
-import { callSocialApi } from "./socialApi";
+import { callSocialApi, callSocialApiGet } from "./socialApi";
+
+export async function getOrCreateDirectConversation(uid: string): Promise<string> {
+  const result = await callSocialApi<{ conversationId: string }>(
+    "/social/conversations/dm",
+    { uid },
+  );
+  return result.conversationId;
+}
 
 export type FriendProfile = ProfileSearchHit & { id: string };
 
@@ -47,9 +55,9 @@ export function listenToIncomingRequests(
 }
 
 export async function searchProfiles(query: string): Promise<ProfileSearchHit[]> {
-  const result = await callSocialApi<{ results: ProfileSearchHit[] }>("/social/search", {
-    q: query,
-  });
+  const result = await callSocialApiGet<{ results: ProfileSearchHit[] }>(
+    `/social/search?q=${encodeURIComponent(query)}`,
+  );
   return result.results ?? [];
 }
 

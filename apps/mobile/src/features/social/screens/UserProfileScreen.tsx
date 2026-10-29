@@ -14,6 +14,7 @@ import {
   respondFriendRequest,
   sendFriendRequest,
   unblockUser,
+  getOrCreateDirectConversation,
 } from "../lib/friendService";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -25,8 +26,10 @@ import ErrorState from "@/src/components/ErrorState";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useAuthStore } from "@/src/store/useAuthStore";
+import { logger } from "@/src/lib/logger";
 import type { SettingsStackParamList } from "@/src/navigation/AppNavigator";
 import { usePublicProfile } from "../hooks/usePublicProfile";
+import { deriveRelation, emptyRelationState, type RelationState } from "../lib/relation";
 import PublicProfileHeader from "../components/PublicProfileHeader";
 import PublicLinksCard from "../components/PublicLinksCard";
 
@@ -53,38 +56,68 @@ function UserProfileScreen(): React.ReactElement {
   );
 
   const { profile, loading, error } = usePublicProfile(params);
-  const [relation, setRelation] = useState<
-    "friends" | "sent" | "received" | "blocked" | "none"
-  >("none");
+  const [relationState, setRelationState] = useState<RelationState>(emptyRelationState);
   const otherUid = profile?.uid ?? uid;
+  const relation = deriveRelation(relationState);
 
   useEffect(() => {
+    setRelationState(emptyRelationState);
     if (!currentUid || !otherUid || currentUid === otherUid) return;
+
+    // Two handlers, not one. With RNFirebase's single-callback form an error is
+    // delivered as `(null, error)`, so `snapshot.data()` used to throw
+    // "Cannot read property 'data' of null". The explicit error handler keeps
+    // failures (for example a rules denial on another user's pair document) out
+    // of the render path.
+    const onListenerError = (listenerError: unknown): void => {
+      logger.warn("[social] Relation listener failed", listenerError);
+    };
+
     const stops = [
       firestore()
         .collection("friendships")
         .doc(friendshipId(currentUid, otherUid))
-        .onSnapshot((snap) => {
-          if (snap.data()?.status === "active") setRelation("friends");
-        }),
+        .onSnapshot(
+          (snap) =>
+            setRelationState((previous) => ({
+              ...previous,
+              friendshipActive: snap?.data()?.status === "active",
+            })),
+          onListenerError,
+        ),
       firestore()
         .collection("friendRequests")
         .doc(friendRequestId(currentUid, otherUid))
-        .onSnapshot((snap) => {
-          if (snap.data()?.status === "pending") setRelation("sent");
-        }),
+        .onSnapshot(
+          (snap) =>
+            setRelationState((previous) => ({
+              ...previous,
+              requestSent: snap?.data()?.status === "pending",
+            })),
+          onListenerError,
+        ),
       firestore()
         .collection("friendRequests")
         .doc(friendRequestId(otherUid, currentUid))
-        .onSnapshot((snap) => {
-          if (snap.data()?.status === "pending") setRelation("received");
-        }),
+        .onSnapshot(
+          (snap) =>
+            setRelationState((previous) => ({
+              ...previous,
+              requestReceived: snap?.data()?.status === "pending",
+            })),
+          onListenerError,
+        ),
       firestore()
         .collection("blockedPairs")
         .doc(blockedPairId(currentUid, otherUid))
-        .onSnapshot((snap) => {
-          if (snap.exists()) setRelation("blocked");
-        }),
+        .onSnapshot(
+          (snap) =>
+            setRelationState((previous) => ({
+              ...previous,
+              blocked: Boolean(snap?.exists()),
+            })),
+          onListenerError,
+        ),
     ];
     return () => stops.forEach((stop) => stop());
   }, [currentUid, otherUid]);
@@ -227,6 +260,26 @@ function UserProfileScreen(): React.ReactElement {
               >
                 <CustomText style={styles.actionButtonText}>
                   {t("social.requests.accept")}
+                </CustomText>
+              </TouchableOpacity>
+            )}
+            {relation === "friends" && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={async () => {
+                  try {
+                    const conversationId = await getOrCreateDirectConversation(profile.uid);
+                    navigation.getParent()?.navigate("Social", {
+                      screen: "ChatScreen",
+                      params: { conversationId },
+                    });
+                  } catch {
+                    Alert.alert(t("social.errors.chat"));
+                  }
+                }}
+              >
+                <CustomText style={styles.actionButtonText}>
+                  {t("social.actions.message")}
                 </CustomText>
               </TouchableOpacity>
             )}

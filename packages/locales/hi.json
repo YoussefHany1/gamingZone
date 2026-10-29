@@ -694,7 +694,8 @@
       "changeLanguage": "भाषा बदलें",
       "privacyPolicy": "गोपनीयता नीति",
       "showAds": "विज्ञापन दिखाएं",
-      "signOut": "लॉग आउट करें"
+      "signOut": "लॉग आउट करें",
+      "blockedUsers": "अवरुद्ध उपयोगकर्ता"
     },
     "signOut": {
       "confirmTitle": "लॉग आउट करें",
@@ -970,6 +971,10 @@
       "accept": "Accept",
       "cancel": "Cancel request"
     },
+    "chats": {
+      "title": "चैट",
+      "empty": "अभी कोई बातचीत नहीं"
+    },
     "search": {
       "placeholder": "Search by @handle",
       "noResults": "No players found"
@@ -978,10 +983,17 @@
       "addFriend": "Add friend",
       "removeFriend": "Remove friend",
       "block": "Block",
-      "unblock": "Unblock"
+      "unblock": "Unblock",
+      "message": "संदेश"
     },
     "errors": {
-      "load": "Could not load social data"
+      "load": "Could not load social data",
+      "search": "खोज विफल रही। कृपया पुनः प्रयास करें।",
+      "chat": "चैट नहीं खोल सके"
+    },
+    "blockedUsers": {
+      "title": "अवरुद्ध उपयोगकर्ता",
+      "empty": "कोई अवरुद्ध उपयोगकर्ता नहीं"
     }
   },
   "aiChat": {

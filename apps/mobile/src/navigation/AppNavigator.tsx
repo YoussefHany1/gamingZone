@@ -44,8 +44,10 @@ import { AchievementsScreen } from "@/src/features/gamification";
 import { AIChatScreen } from "@/src/features/ai";
 import { EventDetailsScreen } from "@/src/features/events";
 import {
+  ChatScreen,
   SocialScreen,
   UserProfileScreen,
+  BlockedUsersScreen,
   useProfileBootstrap,
 } from "@/src/features/social";
 import { LoginScreen, RegisterScreen, ForgotPasswordScreen } from "@/src/features/auth";
@@ -87,6 +89,7 @@ export type SettingsStackParamList = {
   UserListsScreen: undefined;
   Achievements: undefined;
   PcSpecsScreen: undefined;
+  BlockedUsersScreen: undefined;
 };
 
 export type MainTabParamList = {
@@ -103,12 +106,17 @@ export type AuthStackParamList = {
   ForgotPassword: undefined;
 };
 
+export type SocialStackParamList = {
+  SocialScreen: undefined;
+  ChatScreen: { conversationId: string };
+};
+
 //  Navigators
 const HomeStackNav = createNativeStackNavigator<HomeStackParamList>();
 const NewsStackNav = createNativeStackNavigator<NewsStackParamList>();
 const GamesStackNav = createNativeStackNavigator<GamesStackParamList>();
 const SettingsStackNav = createNativeStackNavigator<SettingsStackParamList>();
-const SocialStackNav = createNativeStackNavigator();
+const SocialStackNav = createNativeStackNavigator<SocialStackParamList>();
 const AuthStackNav = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createMaterialTopTabNavigator<MainTabParamList>();
 
@@ -228,6 +236,7 @@ GamesStack.displayName = "GamesStack";
 const SocialStack = memo(() => (
   <SocialStackNav.Navigator id="SocialStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
     <SocialStackNav.Screen name="SocialScreen" component={SocialScreen} />
+    <SocialStackNav.Screen name="ChatScreen" component={ChatScreen} />
   </SocialStackNav.Navigator>
 ));
 SocialStack.displayName = "SocialStack";
@@ -251,6 +260,7 @@ const SettingsStack = memo(() => {
       achievements: { title: t("gamification.achievementsTitle") },
       pcSpecs: { title: t("navigation.titles.pcSpecs") },
       userProfile: { title: t("social.profile.title") },
+      blockedUsers: { title: t("social.blockedUsers.title") },
     }),
     [t],
   );
@@ -335,6 +345,11 @@ const SettingsStack = memo(() => {
         name="PcSpecsScreen"
         component={PcSpecsScreen}
         options={screenTitles.pcSpecs}
+      />
+      <SettingsStackNav.Screen
+        name="BlockedUsersScreen"
+        component={BlockedUsersScreen}
+        options={screenTitles.blockedUsers}
       />
     </SettingsStackNav.Navigator>
   );

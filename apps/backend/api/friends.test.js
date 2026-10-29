@@ -48,7 +48,7 @@ describe('friend route registration', () => {
     const asyncRoute = (handler) => handler;
     registerFriendRoutes(app, { AppError: class extends Error {}, asyncRoute });
 
-    expect(routes).toHaveLength(6);
+    expect(routes).toHaveLength(8);
     for (const route of routes) {
       expect(route.handlers).toHaveLength(2);
       expect(typeof route.handlers[0]).toBe('function');

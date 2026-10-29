@@ -7,6 +7,7 @@
 // live here too (validation is shared by clients and Cloud Functions), but
 // they stay dependency-free.
 export * from "./social";
+export * from "./chat";
 export * from "./profileMapping";
 export * from "./flagEmoji";
 

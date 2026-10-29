@@ -662,7 +662,8 @@
       "changeLanguage": "تغيير اللغة",
       "privacyPolicy": "سياسة الخصوصية",
       "signOut": "تسجيل الخروج",
-      "showAds": "إظهار الإعلانات"
+      "showAds": "إظهار الإعلانات",
+      "blockedUsers": "المستخدمون المحظورون"
     },
     "profile": {
       "changePic": "تغيير صورة الملف الشخصي",
@@ -970,6 +971,10 @@
       "accept": "Accept",
       "cancel": "Cancel request"
     },
+    "chats": {
+      "title": "Chats",
+      "empty": "No conversations yet"
+    },
     "search": {
       "placeholder": "Search by @handle",
       "noResults": "No players found"
@@ -978,10 +983,17 @@
       "addFriend": "Add friend",
       "removeFriend": "Remove friend",
       "block": "Block",
-      "unblock": "Unblock"
+      "unblock": "Unblock",
+      "message": "مراسلة"
     },
     "errors": {
-      "load": "Could not load social data"
+      "load": "Could not load social data",
+      "search": "تعذّر البحث. حاول مرة أخرى.",
+      "chat": "تعذر فتح المحادثة"
+    },
+    "blockedUsers": {
+      "title": "المستخدمون المحظورون",
+      "empty": "لا يوجد مستخدمون محظورون"
     }
   },
   "aiChat": {

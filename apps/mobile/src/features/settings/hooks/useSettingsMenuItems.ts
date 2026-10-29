@@ -8,6 +8,7 @@ import {
   List,
   MessageSquare,
   Palette,
+  ShieldAlert,
   ShieldCheck,
   Star,
 } from "lucide-react-native";
@@ -85,6 +86,19 @@ export function useSettingsMenuItems(): UseSettingsMenuItemsResult {
             parent.navigate("Settings", { screen: "NotificationSettings" });
           } else {
             (navigation as any).navigate("NotificationSettings");
+          }
+        },
+      },
+      {
+        id: "blockedUsers",
+        icon: ShieldAlert,
+        label: t("settings.menu.blockedUsers"),
+        onPress: () => {
+          const parent = (navigation as any).getParent?.();
+          if (parent) {
+            parent.navigate("Settings", { screen: "BlockedUsersScreen" });
+          } else {
+            (navigation as any).navigate("BlockedUsersScreen");
           }
         },
       },

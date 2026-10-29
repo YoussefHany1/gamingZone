@@ -24,31 +24,53 @@ export class SocialApiError extends Error {
   }
 }
 
+/**
+ * `apiClient`'s interceptor keeps the status and body on the rejection so the
+ * endpoint's `code` survives (see services/api/client.ts).
+ */
+function toSocialApiError(error: unknown): SocialApiError {
+  const err = error as { status?: number; data?: unknown; message?: string };
+  const data = err.data as { message?: string; code?: string } | undefined;
+
+  return new SocialApiError(
+    data?.message ?? err.message ?? "Request failed",
+    typeof err.status === "number" ? err.status : 0,
+    data?.code,
+  );
+}
+
+async function authHeaders(): Promise<{ Authorization: string }> {
+  const token = await getBackendIdToken();
+  if (!token) {
+    throw new SocialApiError("You must be signed in", 401, "unauthenticated");
+  }
+  return { Authorization: `Bearer ${token}` };
+}
+
 /** POSTs JSON to a social endpoint. Throws {@link SocialApiError} on failure. */
 export async function callSocialApi<T>(
   path: string,
   body: Record<string, unknown>,
 ): Promise<T> {
-  const token = await getBackendIdToken();
-  if (!token) {
-    throw new SocialApiError("You must be signed in", 401, "unauthenticated");
-  }
-
+  const headers = await authHeaders();
   try {
-    const response = await apiClient.post<T>(path, body, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await apiClient.post<T>(path, body, { headers });
     return response.data;
   } catch (error: unknown) {
-    // `apiClient`'s interceptor keeps the status and body on the rejection so
-    // the endpoint's `code` survives (see services/api/client.ts).
-    const err = error as { status?: number; data?: unknown; message?: string };
-    const data = err.data as { message?: string; code?: string } | undefined;
+    throw toSocialApiError(error);
+  }
+}
 
-    throw new SocialApiError(
-      data?.message ?? err.message ?? "Request failed",
-      typeof err.status === "number" ? err.status : 0,
-      data?.code,
-    );
+/**
+ * GETs a social endpoint. Read-only endpoints (`/social/search`) are registered
+ * as GET on the backend, so they must not go through the POST helper.
+ */
+export async function callSocialApiGet<T>(path: string): Promise<T> {
+  const headers = await authHeaders();
+  try {
+    const response = await apiClient.get<T>(path, { headers });
+    return response.data;
+  } catch (error: unknown) {
+    throw toSocialApiError(error);
   }
 }

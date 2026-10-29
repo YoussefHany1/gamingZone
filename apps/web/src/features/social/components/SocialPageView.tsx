@@ -8,7 +8,6 @@ import { useLangStore } from "@/store/useLangStore";
 import Link from "@/components/Link";
 import { normalizeProfileSearch } from "@gaming-zone/core";
 import {
-  cancelFriendRequest,
   removeFriend,
   respondFriendRequest,
   searchProfiles,
@@ -39,11 +38,7 @@ export function SocialPageView() {
   useEffect(() => {
     const normalized = normalizeProfileSearch(query);
     if (timer.current) clearTimeout(timer.current);
-    if (normalized.length < 2) {
-      setResults([]);
-      setLoading(false);
-      return;
-    }
+    if (normalized.length < 2) return;
     timer.current = setTimeout(async () => {
       setLoading(true);
       setError("");

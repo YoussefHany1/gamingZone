@@ -1,5 +1,7 @@
 export { default as UserProfileScreen } from "./screens/UserProfileScreen";
 export { default as SocialScreen } from "./screens/SocialScreen";
+export { default as ChatScreen } from "./screens/ChatScreen";
+export { default as BlockedUsersScreen } from "./screens/BlockedUsersScreen";
 export { useSocialData } from "./hooks/useSocialData";
 export { default as PublicProfileHeader } from "./components/PublicProfileHeader";
 export { default as PublicLinksCard } from "./components/PublicLinksCard";

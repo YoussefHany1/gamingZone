@@ -31,10 +31,7 @@ export default function Header() {
   const [pendingRequests, setPendingRequests] = useState(0);
 
   useEffect(() => {
-    if (!user || user.isAnonymous) {
-      setPendingRequests(0);
-      return;
-    }
+    if (!user || user.isAnonymous) return;
     const requestsQuery = query(
       collection(db, "friendRequests"),
       where("to", "==", user.uid),

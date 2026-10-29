@@ -71,18 +71,18 @@ export function usePublicProfile({
       return firestore()
         .collection("profiles")
         .doc(uid)
-        .onSnapshot(
-          (snapshot) => {
-            const mapped = mapPublicProfile(
-              uid,
-              snapshot.exists() ? snapshot.data() : undefined,
-            );
-            setProfile(mapped);
-            setError(mapped ? null : "not_found");
-            setLoading(false);
-          },
-          onError,
-        );
+        .onSnapshot((snapshot) => {
+          // `onSnapshot(next, onError)` only calls `next` with a snapshot, but
+          // the optional chain keeps a malformed/empty event from throwing in
+          // the render path.
+          const mapped = mapPublicProfile(
+            uid,
+            snapshot?.exists() ? snapshot.data() : undefined,
+          );
+          setProfile(mapped);
+          setError(mapped ? null : "not_found");
+          setLoading(false);
+        }, onError);
     }
 
     // Resolve the handle to a uid first. `profiles` has no client `list` rule —
@@ -96,42 +96,36 @@ export function usePublicProfile({
     const stopHandle = firestore()
       .collection("usernames")
       .doc(normalizedHandle)
-      .onSnapshot(
-        (snapshot) => {
-          const resolvedUid = (snapshot.data() as { uid?: unknown } | undefined)?.uid;
+      .onSnapshot((snapshot) => {
+        const resolvedUid = (snapshot?.data() as { uid?: unknown } | undefined)?.uid;
 
-          if (typeof resolvedUid !== "string" || !resolvedUid) {
-            stopProfile();
-            stopProfile = () => {};
-            listeningUid = "";
-            setProfile(null);
-            setError("not_found");
-            setLoading(false);
-            return;
-          }
-
-          if (resolvedUid === listeningUid) return;
-          listeningUid = resolvedUid;
-
+        if (typeof resolvedUid !== "string" || !resolvedUid) {
           stopProfile();
-          stopProfile = firestore()
-            .collection("profiles")
-            .doc(resolvedUid)
-            .onSnapshot(
-              (profileSnapshot) => {
-                const mapped = mapPublicProfile(
-                  resolvedUid,
-                  profileSnapshot.exists() ? profileSnapshot.data() : undefined,
-                );
-                setProfile(mapped);
-                setError(mapped ? null : "not_found");
-                setLoading(false);
-              },
-              onError,
+          stopProfile = () => {};
+          listeningUid = "";
+          setProfile(null);
+          setError("not_found");
+          setLoading(false);
+          return;
+        }
+
+        if (resolvedUid === listeningUid) return;
+        listeningUid = resolvedUid;
+
+        stopProfile();
+        stopProfile = firestore()
+          .collection("profiles")
+          .doc(resolvedUid)
+          .onSnapshot((profileSnapshot) => {
+            const mapped = mapPublicProfile(
+              resolvedUid,
+              profileSnapshot?.exists() ? profileSnapshot.data() : undefined,
             );
-        },
-        onError,
-      );
+            setProfile(mapped);
+            setError(mapped ? null : "not_found");
+            setLoading(false);
+          }, onError);
+      }, onError);
 
     return () => {
       stopHandle();
