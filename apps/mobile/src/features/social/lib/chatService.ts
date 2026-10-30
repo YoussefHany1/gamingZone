@@ -7,6 +7,23 @@ export function directConversationId(uidA: string, uidB: string): string {
   return dmKey(uidA, uidB);
 }
 
+/** Firestore stores timestamps as `Timestamp`; the shared model expects millis. */
+function toMillis(value: unknown): number | null {
+  if (typeof value === "number") return value;
+  const candidate = value as { toMillis?: () => number } | null;
+  return typeof candidate?.toMillis === "function" ? candidate.toMillis() : null;
+}
+
+function mapMessage(id: string, data: Record<string, unknown>): SocialMessage {
+  return {
+    ...(data as Omit<SocialMessage, "id" | "createdAt" | "editedAt" | "deletedAt">),
+    id,
+    createdAt: toMillis(data.createdAt),
+    editedAt: toMillis(data.editedAt),
+    deletedAt: toMillis(data.deletedAt),
+  };
+}
+
 export async function sendMessage(
   conversationId: string,
   senderId: string,
@@ -41,19 +58,17 @@ export async function loadOlderMessages(
   conversationId: string,
   cursor: SocialMessage,
 ): Promise<SocialMessage[]> {
+  if (cursor.createdAt === null) return [];
   const snapshot = await firestore()
     .collection("conversations")
     .doc(conversationId)
     .collection("messages")
     .orderBy("createdAt", "desc")
     .orderBy(firestore.FieldPath.documentId(), "desc")
-    .startAfter(cursor.createdAt, cursor.id)
+    .startAfter(firestore.Timestamp.fromMillis(cursor.createdAt), cursor.id)
     .limit(50)
     .get();
-  return snapshot.docs.map((item) => ({
-    id: item.id,
-    ...(item.data() as Omit<SocialMessage, "id">),
-  }));
+  return snapshot.docs.map((item) => mapMessage(item.id, item.data()));
 }
 
 export function listenToMessages(
@@ -70,12 +85,7 @@ export function listenToMessages(
     .limit(50)
     .onSnapshot(
       (snapshot) =>
-        onChange(
-          snapshot.docs.map((item) => ({
-            id: item.id,
-            ...(item.data() as Omit<SocialMessage, "id">),
-          })),
-        ),
+        onChange(snapshot.docs.map((item) => mapMessage(item.id, item.data()))),
       onError,
     );
 }

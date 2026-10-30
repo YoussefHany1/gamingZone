@@ -29,6 +29,11 @@ import {
 import { usePlaySessions } from "../hooks/usePlaySessions";
 import { cancelSession, confirmSession, leaveSession, respondToSlot, withdrawProposal } from "../lib/sessionService";
 
+function formatMessageTime(value: number | null): string {
+  if (typeof value !== "number") return "";
+  return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
 export default function ChatScreen(): React.ReactElement {
   const route = useRoute<RouteProp<SocialStackParamList, "ChatScreen">>();
   const { t } = useTranslation();
@@ -218,7 +223,7 @@ export default function ChatScreen(): React.ReactElement {
                   ) : null}
                   <View style={styles.messageMeta}>
                     <CustomText style={[styles.muted, own && styles.ownMessage]}>
-                      {item.createdAt ? String(item.createdAt) : ""}
+                      {formatMessageTime(item.createdAt)}
                     </CustomText>
                     <TouchableOpacity
                       style={styles.deleteButton}
