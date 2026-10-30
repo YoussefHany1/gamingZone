@@ -8,6 +8,7 @@ import { db } from "@/lib/firebase";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useLangStore } from "@/store/useLangStore";
 import { useSocialChats } from "../hooks/useSocialChats";
+import { useChatProfiles } from "../hooks/useChatProfiles";
 import { cancelSession, confirmSession, createPlaySession, leaveSession, proposeSlot, respondToSlot, sendSocialMessage, withdrawProposal } from "../lib/socialApi";
 import { usePlaySessions } from "../hooks/usePlaySessions";
 
@@ -41,6 +42,19 @@ export function SocialChatPanel({ profiles }: { profiles: ProfileSearchHit[] }) 
     () => Object.fromEntries(profiles.map((profile) => [profile.uid, profile])),
     [profiles],
   );
+
+  const senderUids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          chats.messages
+            .map((message) => message.senderId)
+            .filter((senderId) => senderId && senderId !== uid && senderId !== "system"),
+        ),
+      ),
+    [chats.messages, uid],
+  );
+  const senderProfiles = useChatProfiles(senderUids);
 
   useEffect(() => {
     if (!chats.selectedId || !uid) return;
@@ -170,8 +184,24 @@ export function SocialChatPanel({ profiles }: { profiles: ProfileSearchHit[] }) 
               {[...chats.messages].reverse().map((message: SocialMessage) => {
                 const own = message.senderId === uid;
                 const removed = message.deletedFor?.includes(uid);
+                const sender = senderProfiles[message.senderId] ?? profileByUid[message.senderId];
+                const showAvatar = !own && message.senderId !== "system";
                 return (
-                  <div key={message.id} className={`flex ${own ? "justify-end" : "justify-start"}`}>
+                  <div key={message.id} className={`flex items-end gap-2 ${own ? "justify-end" : "justify-start"}`}>
+                    {showAvatar ? (
+                      sender?.photoURL ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={sender.photoURL}
+                          alt=""
+                          className="w-7 h-7 rounded-full object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-secondary-blue text-white text-xs font-bold flex items-center justify-center shrink-0">
+                          {sender?.displayName?.[0] ?? "P"}
+                        </div>
+                      )
+                    ) : null}
                     <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${own ? "bg-secondary-blue text-white" : "bg-white/10 text-gray-100"}`}>
                       <p>{removed ? t("social.chats.removed") : message.text}</p>
                       {!removed && message.type === "game_suggestion" && message.gameName ? (

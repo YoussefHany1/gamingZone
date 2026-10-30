@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -7,6 +7,7 @@ import {
   View,
 } from "react-native";
 import { FlashList } from "@shopify/flash-list";
+import { Image } from "expo-image";
 import { Send, Trash2 } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
@@ -27,6 +28,7 @@ import {
   sendMessage,
 } from "../lib/chatService";
 import { usePlaySessions } from "../hooks/usePlaySessions";
+import { useChatProfiles } from "../hooks/useChatProfiles";
 import { cancelSession, confirmSession, leaveSession, respondToSlot, withdrawProposal } from "../lib/sessionService";
 
 function formatMessageTime(value: number | null): string {
@@ -42,15 +44,26 @@ export default function ChatScreen(): React.ReactElement {
   const styles = useThemeStyles((c) => ({
     container: { flex: 1, backgroundColor: c.background, marginBottom: 20 },
     content: { padding: 16, paddingBottom: 10 },
-    bubble: {
-      maxWidth: "82%",
-      padding: 11,
-      borderRadius: 16,
+    messageRow: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      gap: 8,
       marginBottom: 8,
+    },
+    ownRow: { justifyContent: "flex-end" },
+    avatar: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
       backgroundColor: c.surface,
     },
-    ownBubble: { alignSelf: "flex-end", backgroundColor: c.accent },
-    otherBubble: { alignSelf: "flex-start" },
+    bubble: {
+      maxWidth: "78%",
+      padding: 11,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    ownBubble: { backgroundColor: c.accent },
     message: { color: c.text },
     muted: { color: c.textMuted, fontSize: 11 },
     gameCard: {
@@ -106,6 +119,18 @@ export default function ChatScreen(): React.ReactElement {
   const sending = useRef(false);
   const conversationId = route.params.conversationId;
   const sessions = usePlaySessions(uid).filter((session) => session.conversationId === conversationId && session.status !== "completed" && session.status !== "cancelled");
+  const senderUids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [...messages, ...olderMessages]
+            .map((item) => item.senderId)
+            .filter((senderId) => senderId && senderId !== uid && senderId !== "system"),
+        ),
+      ),
+    [messages, olderMessages, uid],
+  );
+  const senderProfiles = useChatProfiles(senderUids);
 
   useEffect(() => {
     setOlderMessages([]);
@@ -208,30 +233,45 @@ export default function ChatScreen(): React.ReactElement {
             ListHeaderComponent={hasOlderMessages ? <TouchableOpacity style={styles.sessionSecondary} onPress={() => void loadOlder()} disabled={loadingOlder}><CustomText style={styles.message}>{loadingOlder ? t("social.chats.loading") : t("social.chats.loadOlder")}</CustomText></TouchableOpacity> : null}
             renderItem={({ item }) => {
               const own = item.senderId === uid;
+              const senderProfile = senderProfiles[item.senderId];
+              const showAvatar = !own && item.senderId !== "system";
+              const avatarSource = senderProfile?.photoURL
+                ? { uri: senderProfile.photoURL }
+                : require("@/assets/default_profile.webp");
               return (
-                <View
-                  style={[styles.bubble, own ? styles.ownBubble : styles.otherBubble]}
-                >
-                  <CustomText style={[styles.message, own && styles.ownMessage]}>
-                    {item.deletedFor.includes(uid) ? t("social.chats.removed") : item.text}
-                  </CustomText>
-                  {!item.deletedFor.includes(uid) && item.type === "game_suggestion" && item.gameName ? (
-                    <View style={styles.gameCard}>
-                      <CustomText style={styles.gameTitle}>{item.gameName}</CustomText>
-                      <CustomText style={styles.gameLink}>{t("social.chats.openGame")}</CustomText>
-                    </View>
+                <View style={[styles.messageRow, own && styles.ownRow]}>
+                  {showAvatar ? (
+                    <Image
+                      source={avatarSource}
+                      style={styles.avatar}
+                      contentFit="cover"
+                      transition={150}
+                      cachePolicy="memory-disk"
+                      accessibilityIgnoresInvertColors
+                    />
                   ) : null}
-                  <View style={styles.messageMeta}>
-                    <CustomText style={[styles.muted, own && styles.ownMessage]}>
-                      {formatMessageTime(item.createdAt)}
+                  <View style={[styles.bubble, own && styles.ownBubble]}>
+                    <CustomText style={[styles.message, own && styles.ownMessage]}>
+                      {item.deletedFor.includes(uid) ? t("social.chats.removed") : item.text}
                     </CustomText>
-                    <TouchableOpacity
-                      style={styles.deleteButton}
-                      onPress={() => void deleteMessageForMe(conversationId, item.id, uid)}
-                      accessibilityLabel={t("social.chats.deleteForMe")}
-                    >
-                      <Trash2 size={14} color={own ? colors.onAccent : colors.textMuted} />
-                    </TouchableOpacity>
+                    {!item.deletedFor.includes(uid) && item.type === "game_suggestion" && item.gameName ? (
+                      <View style={styles.gameCard}>
+                        <CustomText style={styles.gameTitle}>{item.gameName}</CustomText>
+                        <CustomText style={styles.gameLink}>{t("social.chats.openGame")}</CustomText>
+                      </View>
+                    ) : null}
+                    <View style={styles.messageMeta}>
+                      <CustomText style={[styles.muted, own && styles.ownMessage]}>
+                        {formatMessageTime(item.createdAt)}
+                      </CustomText>
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => void deleteMessageForMe(conversationId, item.id, uid)}
+                        accessibilityLabel={t("social.chats.deleteForMe")}
+                      >
+                        <Trash2 size={14} color={own ? colors.onAccent : colors.textMuted} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
               );
