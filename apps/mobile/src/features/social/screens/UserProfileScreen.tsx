@@ -1,13 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import firestore from "@react-native-firebase/firestore";
-import { blockedPairId, friendRequestId, friendshipId } from "@gaming-zone/core";
+import React, { useCallback, useMemo } from "react";
+import { ActivityIndicator, Alert, ScrollView, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { MoreVertical } from "lucide-react-native";
+import PressScale from "../components/PressScale";
 import {
   blockUser,
   cancelFriendRequest,
@@ -26,12 +21,12 @@ import ErrorState from "@/src/components/ErrorState";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useAuthStore } from "@/src/store/useAuthStore";
-import { logger } from "@/src/lib/logger";
 import type { SettingsStackParamList } from "@/src/navigation/AppNavigator";
 import { usePublicProfile } from "../hooks/usePublicProfile";
-import { deriveRelation, emptyRelationState, type RelationState } from "../lib/relation";
+import { useProfileRelation } from "../hooks/useProfileRelation";
 import PublicProfileHeader from "../components/PublicProfileHeader";
 import PublicLinksCard from "../components/PublicLinksCard";
+import ProfileActionBar from "../components/ProfileActionBar";
 
 /**
  * Public profile by uid or handle.
@@ -56,82 +51,46 @@ function UserProfileScreen(): React.ReactElement {
   );
 
   const { profile, loading, error } = usePublicProfile(params);
-  const [relationState, setRelationState] = useState<RelationState>(emptyRelationState);
   const otherUid = profile?.uid ?? uid;
-  const relation = deriveRelation(relationState);
-
-  useEffect(() => {
-    setRelationState(emptyRelationState);
-    if (!currentUid || !otherUid || currentUid === otherUid) return;
-
-    // Two handlers, not one. With RNFirebase's single-callback form an error is
-    // delivered as `(null, error)`, so `snapshot.data()` used to throw
-    // "Cannot read property 'data' of null". The explicit error handler keeps
-    // failures (for example a rules denial on another user's pair document) out
-    // of the render path.
-    const onListenerError = (listenerError: unknown): void => {
-      logger.warn("[social] Relation listener failed", listenerError);
-    };
-
-    const stops = [
-      firestore()
-        .collection("friendships")
-        .doc(friendshipId(currentUid, otherUid))
-        .onSnapshot(
-          (snap) =>
-            setRelationState((previous) => ({
-              ...previous,
-              friendshipActive: snap?.data()?.status === "active",
-            })),
-          onListenerError,
-        ),
-      firestore()
-        .collection("friendRequests")
-        .doc(friendRequestId(currentUid, otherUid))
-        .onSnapshot(
-          (snap) =>
-            setRelationState((previous) => ({
-              ...previous,
-              requestSent: snap?.data()?.status === "pending",
-            })),
-          onListenerError,
-        ),
-      firestore()
-        .collection("friendRequests")
-        .doc(friendRequestId(otherUid, currentUid))
-        .onSnapshot(
-          (snap) =>
-            setRelationState((previous) => ({
-              ...previous,
-              requestReceived: snap?.data()?.status === "pending",
-            })),
-          onListenerError,
-        ),
-      firestore()
-        .collection("blockedPairs")
-        .doc(blockedPairId(currentUid, otherUid))
-        .onSnapshot(
-          (snap) =>
-            setRelationState((previous) => ({
-              ...previous,
-              blocked: Boolean(snap?.exists()),
-            })),
-          onListenerError,
-        ),
-    ];
-    return () => stops.forEach((stop) => stop());
-  }, [currentUid, otherUid]);
-
-  const runSocialAction = (action: () => Promise<unknown>, message: string): void => {
-    Alert.alert(message, undefined, [
-      { text: t("common.cancel"), style: "cancel" },
-      { text: t("common.save"), onPress: () => void action().catch(() => undefined) },
-    ]);
-  };
+  const relation = useProfileRelation(currentUid, otherUid);
 
   const styles = useThemeStyles((c) => ({
     container: { flex: 1, backgroundColor: c.background },
-    content: { padding: 20, paddingBottom: 60 },
+    content: { padding: 16, paddingBottom: 60 },
+    heroWrap: {
+      borderRadius: 22,
+      overflow: "hidden",
+      marginBottom: 18,
+      borderWidth: 1,
+      borderColor: c.accentBorder,
+      backgroundColor: c.surface,
+    },
+    heroGradient: {
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 18,
+      minHeight: 110,
+    },
+    heroLabel: { color: c.onAccent, fontSize: 11, fontWeight: "800", letterSpacing: 1 },
+    heroTop: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    heroBody: { padding: 12 },
+    statRow: { flexDirection: "row", gap: 8, marginTop: 12 },
+    stat: { flex: 1, padding: 10, borderRadius: 12, backgroundColor: c.accentSurface },
+    statValue: { color: c.text, fontSize: 17, fontWeight: "900" },
+    statLabel: { color: c.textMuted, fontSize: 11, marginTop: 2 },
+    menuButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: c.surface,
+    },
+
     centered: {
       flex: 1,
       alignItems: "center",
@@ -150,31 +109,20 @@ function UserProfileScreen(): React.ReactElement {
       fontSize: 15,
       fontWeight: "700",
     },
-    actionRow: { flexDirection: "row", gap: 8, marginTop: 20 },
-    actionButton: {
-      flex: 1,
-      borderRadius: 12,
-      backgroundColor: c.accent,
-      paddingVertical: 13,
-      alignItems: "center",
-    },
-    dangerButton: {
-      flex: 1,
-      borderRadius: 12,
-      backgroundColor: c.danger,
-      paddingVertical: 13,
-      alignItems: "center",
-    },
-    secondaryButton: {
-      flex: 1,
-      borderRadius: 12,
-      backgroundColor: c.surface,
-      paddingVertical: 13,
-      alignItems: "center",
-    },
-    actionButtonText: { color: c.onAccent, fontWeight: "700" },
-    secondaryButtonText: { color: c.text, fontWeight: "700" },
   }));
+
+  const openDirectMessage = useCallback(async (): Promise<void> => {
+    if (!profile) return;
+    try {
+      const conversationId = await getOrCreateDirectConversation(profile.uid);
+      navigation.getParent()?.navigate("Social", {
+        screen: "ChatScreen",
+        params: { conversationId },
+      });
+    } catch {
+      Alert.alert(t("social.errors.chat"));
+    }
+  }, [navigation, profile, t]);
 
   if (loading) {
     return (
@@ -209,120 +157,74 @@ function UserProfileScreen(): React.ReactElement {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <PublicProfileHeader
-          profile={profile}
-          {...(isOwner ? { onEdit: () => navigation.navigate("EditProfile") } : {})}
-        />
+        <View style={styles.heroWrap}>
+          <LinearGradient
+            colors={[colors.backgroundDeep, colors.accent]}
+            style={styles.heroGradient}
+          >
+            <View style={styles.heroTop}>
+              <CustomText style={styles.heroLabel}>
+                {isOwner
+                  ? t("social.profile.yourProfile")
+                  : t("social.profile.gamerProfile")}
+              </CustomText>
+              {!isOwner ? (
+                <PressScale
+                  style={styles.menuButton}
+                  onPress={() => Alert.alert(t("social.actions.more"))}
+                >
+                  <MoreVertical size={18} color={colors.textMuted} />
+                </PressScale>
+              ) : null}
+            </View>
+          </LinearGradient>
+          <View style={styles.heroBody}>
+            <PublicProfileHeader
+              profile={profile}
+              {...(isOwner ? { onEdit: () => navigation.navigate("EditProfile") } : {})}
+            />
+            <View style={styles.statRow}>
+              <View style={styles.stat}>
+                <CustomText style={styles.statValue}>{profile.counts.friends}</CustomText>
+                <CustomText style={styles.statLabel}>
+                  {t("social.profile.stats.friends")}
+                </CustomText>
+              </View>
+              <View style={styles.stat}>
+                <CustomText style={styles.statValue}>
+                  {profile.counts.sessions}
+                </CustomText>
+                <CustomText style={styles.statLabel}>
+                  {t("social.profile.stats.sessions")}
+                </CustomText>
+              </View>
+            </View>
+          </View>
+        </View>
 
         <PublicLinksCard links={profile.links} privacy={profile.privacy} />
 
         {!isOwner && currentUid && (
-          <View style={styles.actionRow}>
-            {relation === "none" && (
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() =>
-                  runSocialAction(
-                    () => sendFriendRequest(profile.uid),
-                    t("social.actions.addFriend"),
-                  )
-                }
-              >
-                <CustomText style={styles.actionButtonText}>
-                  {t("social.actions.addFriend")}
-                </CustomText>
-              </TouchableOpacity>
-            )}
-            {relation === "sent" && (
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={() =>
-                  runSocialAction(
-                    () => cancelFriendRequest(profile.uid),
-                    t("social.requests.cancel"),
-                  )
-                }
-              >
-                <CustomText style={styles.secondaryButtonText}>
-                  {t("social.requests.cancel")}
-                </CustomText>
-              </TouchableOpacity>
-            )}
-            {relation === "received" && (
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() =>
-                  runSocialAction(
-                    () => respondFriendRequest(profile.uid, "accept"),
-                    t("social.requests.accept"),
-                  )
-                }
-              >
-                <CustomText style={styles.actionButtonText}>
-                  {t("social.requests.accept")}
-                </CustomText>
-              </TouchableOpacity>
-            )}
-            {relation === "friends" && (
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={async () => {
-                  try {
-                    const conversationId = await getOrCreateDirectConversation(
-                      profile.uid,
-                    );
-                    navigation.getParent()?.navigate("Social", {
-                      screen: "ChatScreen",
-                      params: { conversationId },
-                    });
-                  } catch {
-                    Alert.alert(t("social.errors.chat"));
-                  }
-                }}
-              >
-                <CustomText style={styles.actionButtonText}>
-                  {t("social.actions.message")}
-                </CustomText>
-              </TouchableOpacity>
-            )}
-            {relation === "blocked" ? (
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={() =>
-                  runSocialAction(
-                    () => unblockUser(profile.uid),
-                    t("social.actions.unblock"),
-                  )
-                }
-              >
-                <CustomText style={styles.secondaryButtonText}>
-                  {t("social.actions.unblock")}
-                </CustomText>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={styles.dangerButton}
-                onPress={() =>
-                  runSocialAction(() => blockUser(profile.uid), t("social.actions.block"))
-                }
-              >
-                <CustomText style={styles.actionButtonText}>
-                  {t("social.actions.block")}
-                </CustomText>
-              </TouchableOpacity>
-            )}
-          </View>
+          <ProfileActionBar
+            relation={relation}
+            onAddFriend={() => sendFriendRequest(profile.uid)}
+            onCancelRequest={() => cancelFriendRequest(profile.uid)}
+            onAcceptRequest={() => respondFriendRequest(profile.uid, "accept")}
+            onMessage={openDirectMessage}
+            onBlock={() => blockUser(profile.uid)}
+            onUnblock={() => unblockUser(profile.uid)}
+          />
         )}
 
         {isOwner && (
-          <TouchableOpacity
+          <PressScale
             style={styles.editButton}
             onPress={() => navigation.navigate("EditProfile")}
           >
             <CustomText style={styles.editButtonText}>
               {t("settings.profileShowcase.editProfile")}
             </CustomText>
-          </TouchableOpacity>
+          </PressScale>
         )}
       </ScrollView>
     </SafeAreaView>

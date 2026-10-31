@@ -1,88 +1,104 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
+  I18nManager,
   Platform,
   TouchableOpacity,
   View,
 } from "react-native";
-import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
-import { Send, Trash2 } from "lucide-react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRoute } from "@react-navigation/native";
+import { ArrowLeft, ArrowRight, MoreVertical, Send, Users } from "lucide-react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import type { RouteProp } from "@react-navigation/native";
 import type { SocialMessage } from "@gaming-zone/core";
 import CustomText from "@/src/components/CustomText";
 import CustomTextInput from "@/src/components/CustomTextInput";
+import PressScale from "../components/PressScale";
+import GamerAvatar from "../components/GamerAvatar";
+import GameBottomSheet from "../components/GameBottomSheet";
+import PlaySessionCard from "../components/PlaySessionCard";
+import ChatMessageList from "../components/ChatMessageList";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useAuthStore } from "@/src/store/useAuthStore";
+import { logger } from "@/src/lib/logger";
 import type { SocialStackParamList } from "@/src/navigation/AppNavigator";
-import {
-  deleteMessageForMe,
-  loadOlderMessages,
-  listenToMessages,
-  markConversationRead,
-  sendMessage,
-} from "../lib/chatService";
+import { deleteMessageForMe, editMessage, sendMessage } from "../lib/chatService";
 import { usePlaySessions } from "../hooks/usePlaySessions";
 import { useChatProfiles } from "../hooks/useChatProfiles";
-import { cancelSession, confirmSession, leaveSession, respondToSlot, withdrawProposal } from "../lib/sessionService";
-
-function formatMessageTime(value: number | null): string {
-  if (typeof value !== "number") return "";
-  return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
+import { useChatMessages } from "../hooks/useChatMessages";
+import { useConversationDetails } from "../hooks/useConversationDetails";
+import type { SessionActionErrorHandler } from "../hooks/useSessionActions";
 
 export default function ChatScreen(): React.ReactElement {
   const route = useRoute<RouteProp<SocialStackParamList, "ChatScreen">>();
+  const navigation = useNavigation<NativeStackNavigationProp<SocialStackParamList>>();
   const { t } = useTranslation();
   const uid = useAuthStore((state) => state.user?.uid ?? "");
   const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
   const styles = useThemeStyles((c) => ({
-    container: { flex: 1, backgroundColor: c.background, marginBottom: 20 },
-    content: { padding: 16, paddingBottom: 10 },
-    messageRow: {
+    container: { flex: 1, backgroundColor: c.background, marginBottom: 25 },
+    header: {
       flexDirection: "row",
-      alignItems: "flex-end",
-      gap: 8,
-      marginBottom: 8,
+      alignItems: "center",
+      gap: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: c.accentBorder,
+      backgroundColor: c.backgroundDeep,
     },
-    ownRow: { justifyContent: "flex-end" },
-    avatar: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
+    backButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerText: { flex: 1 },
+    headerSubtitle: { color: c.textMuted, fontSize: 11, marginTop: 2 },
+    headerAction: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      alignItems: "center",
+      justifyContent: "center",
       backgroundColor: c.surface,
     },
-    bubble: {
-      maxWidth: "78%",
-      padding: 11,
-      borderRadius: 16,
-      backgroundColor: c.surface,
+    avatarRing: {
+      borderWidth: 1,
+      borderColor: c.accentBorder,
+      borderRadius: 24,
+      padding: 2,
     },
-    ownBubble: { backgroundColor: c.accent },
-    message: { color: c.text },
-    muted: { color: c.textMuted, fontSize: 11 },
-    gameCard: {
-      marginTop: 8,
-      padding: 10,
-      borderRadius: 10,
+    groupMember: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    headerLtr: { flexDirection: "row" },
+    headerRtl: { flexDirection: "row-reverse" },
+    headerAvatar: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
       backgroundColor: c.background,
     },
-    gameTitle: { color: c.text, fontWeight: "700" },
-    gameLink: { color: c.accent, fontSize: 12, marginTop: 4 },
-    messageMeta: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
-    deleteButton: { padding: 4 },
-
-    ownMessage: { color: c.onAccent },
+    headerName: { color: c.text, fontSize: 17, fontWeight: "700" },
     composer: {
       flexDirection: "row",
       alignItems: "center",
       gap: 8,
-      padding: 10,
+      paddingTop: 10,
+      paddingHorizontal: 10,
       borderTopWidth: 1,
       borderTopColor: c.border,
     },
@@ -102,23 +118,36 @@ export default function ChatScreen(): React.ReactElement {
       justifyContent: "center",
       backgroundColor: c.accent,
     },
-    empty: { flex: 1, alignItems: "center", justifyContent: "center" },
-    sessionCard: { marginHorizontal: 16, marginTop: 10, padding: 12, borderRadius: 12, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border },
-    sessionActions: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
-    sessionButton: { backgroundColor: c.accent, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
-    sessionSecondary: { backgroundColor: c.background, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
+    sendError: { color: c.danger, fontSize: 11 },
   }));
-  const [messages, setMessages] = useState<SocialMessage[]>([]);
-  const [olderMessages, setOlderMessages] = useState<SocialMessage[]>([]);
+
   const [text, setText] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [sendError, setSendError] = useState(false);
-  const [loadError, setLoadError] = useState(false);
-  const [hasOlderMessages, setHasOlderMessages] = useState(false);
-  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
   const sending = useRef(false);
   const conversationId = route.params.conversationId;
-  const sessions = usePlaySessions(uid).filter((session) => session.conversationId === conversationId && session.status !== "completed" && session.status !== "cancelled");
+
+  const {
+    members: conversationMembers,
+    title: conversationTitle,
+    photoURL: conversationPhotoURL,
+  } = useConversationDetails(conversationId);
+  const sessions = usePlaySessions(uid).filter(
+    (session) =>
+      session.conversationId === conversationId &&
+      session.status !== "completed" &&
+      session.status !== "cancelled",
+  );
+  const {
+    messages,
+    olderMessages,
+    loading,
+    loadError,
+    hasOlderMessages,
+    loadingOlder,
+    loadOlder,
+  } = useChatMessages(conversationId, uid);
   const senderUids = useMemo(
     () =>
       Array.from(
@@ -131,46 +160,18 @@ export default function ChatScreen(): React.ReactElement {
     [messages, olderMessages, uid],
   );
   const senderProfiles = useChatProfiles(senderUids);
-
-  useEffect(() => {
-    setOlderMessages([]);
-    setHasOlderMessages(false);
-    const stop = listenToMessages(
-      conversationId,
-      (next) => {
-        setMessages(next);
-        setOlderMessages((current) => {
-          const newestIds = new Set(next.map((item) => item.id));
-          return current.filter((item) => !newestIds.has(item.id));
-        });
-        setHasOlderMessages((currentHasOlder) => currentHasOlder || next.length === 50);
-        setLoading(false);
-        setLoadError(false);
-        void markConversationRead(conversationId, uid);
-      },
-      () => {
-        setLoading(false);
-        setLoadError(true);
-      },
-    );
-    return stop;
-  }, [conversationId, uid]);
-
-  const loadOlder = async (): Promise<void> => {
-    if (loadingOlder || !hasOlderMessages || messages.length === 0) return;
-    setLoadingOlder(true);
-    try {
-      const cursor = olderMessages[olderMessages.length - 1] ?? messages[messages.length - 1];
-      if (!cursor) return;
-      const older = await loadOlderMessages(conversationId, cursor);
-      setOlderMessages((current) => [...current, ...older]);
-      setHasOlderMessages(older.length === 50);
-    } catch {
-      setLoadError(true);
-    } finally {
-      setLoadingOlder(false);
-    }
-  };
+  const conversationProfiles = useChatProfiles(
+    conversationMembers.filter((member) => member !== uid),
+  );
+  const otherMemberId = conversationMembers.find((member) => member !== uid) ?? "";
+  const otherProfile = otherMemberId ? conversationProfiles[otherMemberId] : undefined;
+  const headerName =
+    conversationTitle ?? otherProfile?.displayName ?? t("social.chats.conversation");
+  const headerPhotoURL = conversationPhotoURL ?? otherProfile?.photoURL;
+  const memberProfiles = conversationMembers
+    .filter((member) => member !== uid)
+    .map((member) => ({ uid: member, profile: conversationProfiles[member] }))
+    .filter((item) => item.profile);
 
   const submit = async (): Promise<void> => {
     const value = text.trim();
@@ -179,7 +180,12 @@ export default function ChatScreen(): React.ReactElement {
     setText("");
     setSendError(false);
     try {
-      await sendMessage(conversationId, uid, value);
+      if (editingMessageId) {
+        await editMessage(conversationId, editingMessageId, value);
+        setEditingMessageId(null);
+      } else {
+        await sendMessage(conversationId, uid, value);
+      }
     } catch {
       setSendError(true);
       setText(value);
@@ -188,99 +194,148 @@ export default function ChatScreen(): React.ReactElement {
     }
   };
 
+  const showMessageActions = useCallback(
+    (item: SocialMessage): void => {
+      const canAct =
+        item.senderId === uid &&
+        !item.deletedFor.includes(uid) &&
+        item.createdAt !== null &&
+        Date.now() - item.createdAt <= 10 * 60 * 1000;
+      if (!canAct) return;
+
+      Alert.alert(t("social.chats.messageActions"), undefined, [
+        {
+          text: t("social.chats.edit"),
+          onPress: () => {
+            setEditingMessageId(item.id);
+            setText(item.text);
+          },
+        },
+        {
+          text: t("social.chats.deleteForMe"),
+          style: "destructive",
+          onPress: () => void deleteMessageForMe(conversationId, item.id),
+        },
+        { text: t("common.cancel"), style: "cancel" },
+      ]);
+    },
+    [conversationId, t, uid],
+  );
+
+  const handleSessionError = useCallback<SessionActionErrorHandler>((error, action) => {
+    logger.error(`[social] Session ${action} failed`, error);
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
       >
-        {sessions.map((session) => {
-          const proposal = session.proposals.find((item) => item.status !== "withdrawn");
-          const accepted = proposal?.responses[uid] === "accepted";
-          const everyoneAccepted = proposal && session.participantUids.every((participant) => proposal.responses[participant] === "accepted");
-          return (
-            <View key={session.id} style={styles.sessionCard}>
-              <CustomText style={styles.gameTitle}>{session.gameName}</CustomText>
-              <CustomText style={styles.muted}>{session.status}{proposal ? ` • ${new Date(proposal.startsAt).toLocaleString()}` : ""}</CustomText>
-              <View style={styles.sessionActions}>
-                {proposal && !accepted && session.status === "proposed" ? <TouchableOpacity style={styles.sessionButton} onPress={() => void respondToSlot(session.id, proposal.id, "accepted")}><CustomText style={{ color: colors.onAccent }}>{t("social.sessions.accept")}</CustomText></TouchableOpacity> : null}
-                {proposal && accepted && session.status === "proposed" ? <TouchableOpacity style={styles.sessionSecondary} onPress={() => void respondToSlot(session.id, proposal.id, "declined")}><CustomText style={styles.message}>{t("social.sessions.decline")}</CustomText></TouchableOpacity> : null}
-                {proposal && proposal.proposerUid === uid && session.status === "proposed" ? <TouchableOpacity style={styles.sessionSecondary} onPress={() => void withdrawProposal(session.id, proposal.id)}><CustomText style={styles.message}>{t("social.sessions.withdraw")}</CustomText></TouchableOpacity> : null}
-                {proposal && everyoneAccepted && session.status === "proposed" ? <TouchableOpacity style={styles.sessionButton} onPress={() => void confirmSession(session.id, proposal.id)}><CustomText style={{ color: colors.onAccent }}>{t("social.sessions.confirm")}</CustomText></TouchableOpacity> : null}
-                {session.status === "proposed" ? <TouchableOpacity style={styles.sessionSecondary} onPress={() => void cancelSession(session.id)}><CustomText style={styles.message}>{t("social.sessions.cancel")}</CustomText></TouchableOpacity> : null}
-                <TouchableOpacity style={styles.sessionSecondary} onPress={() => void leaveSession(session.id)}><CustomText style={styles.message}>{t("social.sessions.leave")}</CustomText></TouchableOpacity>
+        <GameBottomSheet visible={membersOpen} onClose={() => setMembersOpen(false)}>
+          <CustomText style={styles.headerName}>{t("social.chats.members")}</CustomText>
+          {memberProfiles.map(({ uid: memberUid, profile }) => (
+            <TouchableOpacity
+              key={memberUid}
+              style={styles.groupMember}
+              onPress={() => setMembersOpen(false)}
+            >
+              <GamerAvatar photoURL={profile?.photoURL} size={38} />
+              <View style={styles.headerText}>
+                <CustomText style={styles.headerName}>
+                  {profile?.displayName ?? t("social.groups.fallback")}
+                </CustomText>
+                <CustomText style={styles.headerSubtitle}>
+                  {t("social.chats.member")}
+                </CustomText>
               </View>
-            </View>
-          );
-        })}
-        {loading ? (
-          <View style={styles.empty}>
-            <ActivityIndicator color={colors.accent} />
-          </View>
-        ) : loadError ? (
-          <View style={styles.empty}>
-            <CustomText style={[styles.message, { color: colors.danger }]}>{t("social.chats.unableLoad")}</CustomText>
-          </View>
-        ) : messages.length === 0 ? (
-          <View style={styles.empty}>
-            <CustomText style={styles.message}>{t("social.chats.start")}</CustomText>
-          </View>
-        ) : (
-          <FlashList
-            data={[...messages, ...olderMessages].reverse()}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.content}
-            ListHeaderComponent={hasOlderMessages ? <TouchableOpacity style={styles.sessionSecondary} onPress={() => void loadOlder()} disabled={loadingOlder}><CustomText style={styles.message}>{loadingOlder ? t("social.chats.loading") : t("social.chats.loadOlder")}</CustomText></TouchableOpacity> : null}
-            renderItem={({ item }) => {
-              const own = item.senderId === uid;
-              const senderProfile = senderProfiles[item.senderId];
-              const showAvatar = !own && item.senderId !== "system";
-              const avatarSource = senderProfile?.photoURL
-                ? { uri: senderProfile.photoURL }
-                : require("@/assets/default_profile.webp");
-              return (
-                <View style={[styles.messageRow, own && styles.ownRow]}>
-                  {showAvatar ? (
-                    <Image
-                      source={avatarSource}
-                      style={styles.avatar}
-                      contentFit="cover"
-                      transition={150}
-                      cachePolicy="memory-disk"
-                      accessibilityIgnoresInvertColors
-                    />
-                  ) : null}
-                  <View style={[styles.bubble, own && styles.ownBubble]}>
-                    <CustomText style={[styles.message, own && styles.ownMessage]}>
-                      {item.deletedFor.includes(uid) ? t("social.chats.removed") : item.text}
-                    </CustomText>
-                    {!item.deletedFor.includes(uid) && item.type === "game_suggestion" && item.gameName ? (
-                      <View style={styles.gameCard}>
-                        <CustomText style={styles.gameTitle}>{item.gameName}</CustomText>
-                        <CustomText style={styles.gameLink}>{t("social.chats.openGame")}</CustomText>
-                      </View>
-                    ) : null}
-                    <View style={styles.messageMeta}>
-                      <CustomText style={[styles.muted, own && styles.ownMessage]}>
-                        {formatMessageTime(item.createdAt)}
-                      </CustomText>
-                      <TouchableOpacity
-                        style={styles.deleteButton}
-                        onPress={() => void deleteMessageForMe(conversationId, item.id, uid)}
-                        accessibilityLabel={t("social.chats.deleteForMe")}
-                      >
-                        <Trash2 size={14} color={own ? colors.onAccent : colors.textMuted} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              );
-            }}
+            </TouchableOpacity>
+          ))}
+        </GameBottomSheet>
+        <View
+          style={[styles.header, I18nManager.isRTL ? styles.headerRtl : styles.headerLtr]}
+        >
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel={t("common.back")}
+          >
+            {I18nManager.isRTL ? (
+              <ArrowRight size={22} color={colors.text} />
+            ) : (
+              <ArrowLeft size={22} color={colors.text} />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.avatarRing}
+            onPress={() => (conversationTitle ? setMembersOpen(true) : undefined)}
+            disabled={!conversationTitle}
+          >
+            <Image
+              source={
+                headerPhotoURL
+                  ? { uri: headerPhotoURL }
+                  : require("@/assets/default_profile.webp")
+              }
+              style={styles.headerAvatar}
+              contentFit="cover"
+              transition={150}
+              cachePolicy="memory-disk"
+              accessibilityIgnoresInvertColors
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerText}
+            onPress={() => (conversationTitle ? setMembersOpen(true) : undefined)}
+            disabled={!conversationTitle}
+          >
+            <CustomText style={styles.headerName} numberOfLines={1}>
+              {headerName}
+            </CustomText>
+            <CustomText style={styles.headerSubtitle}>
+              {conversationTitle
+                ? t("social.chats.groupMembers", { count: conversationMembers.length })
+                : t("social.chats.directMessage")}
+            </CustomText>
+          </TouchableOpacity>
+          <PressScale
+            style={styles.headerAction}
+            onPress={() => (conversationTitle ? setMembersOpen(true) : undefined)}
+            disabled={!conversationTitle}
+          >
+            {conversationTitle ? (
+              <Users size={18} color={colors.accentText} />
+            ) : (
+              <MoreVertical size={18} color={colors.textMuted} />
+            )}
+          </PressScale>
+        </View>
+        {sessions.map((session) => (
+          <PlaySessionCard
+            key={session.id}
+            session={session}
+            currentUid={uid}
+            variant="chat"
+            onError={handleSessionError}
           />
-        )}
-        <View style={styles.composer}>
+        ))}
+        <ChatMessageList
+          messages={messages}
+          olderMessages={olderMessages}
+          uid={uid}
+          senderProfiles={senderProfiles}
+          loading={loading}
+          loadError={loadError}
+          hasOlderMessages={hasOlderMessages}
+          loadingOlder={loadingOlder}
+          onLoadOlder={loadOlder}
+          onShowActions={showMessageActions}
+        />
+        <View style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 8) }]}>
           {sendError ? (
-            <CustomText style={[styles.message, { color: colors.danger }]}>
+            <CustomText style={styles.sendError}>
               {t("social.chats.unableSend")}
             </CustomText>
           ) : null}

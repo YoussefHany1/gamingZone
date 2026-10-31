@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Modal, Platform, RefreshControl, TouchableOpacity, View } from "react-native";
-import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import React, { useCallback, useMemo, useState } from "react";
+import { ActivityIndicator, Alert, Platform, RefreshControl, View } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import type { NavigationProp } from "@react-navigation/native";
 import type { SocialStackParamList } from "@/src/navigation/AppNavigator";
@@ -14,33 +14,40 @@ import type {
   Friendship,
   ProfileSearchHit,
 } from "@gaming-zone/core";
-type SocialParentNavigation = {
-  Settings: { screen: "UserProfile"; params: { uid: string } };
-};
 import CustomText from "@/src/components/CustomText";
 import CustomTextInput from "@/src/components/CustomTextInput";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { useSocialData } from "../hooks/useSocialData";
+import { useProfileSearch } from "../hooks/useProfileSearch";
+import { showToast } from "@/src/lib/toast";
 import {
   createGroupConversation,
   respondFriendRequest,
   sendFriendRequest,
 } from "../lib/friendService";
-import { usePlaySessions } from "../hooks/usePlaySessions";
-import {
-  cancelSession,
-  confirmSession,
-  createPlaySession,
-  leaveSession,
-  proposeSlot,
-  respondToSlot,
-  withdrawProposal,
-} from "../lib/sessionService";
+import { usePlaySessions, type PlaySession } from "../hooks/usePlaySessions";
+import { createPlaySession, proposeSlot } from "../lib/sessionService";
+import PressScale from "../components/PressScale";
+import GameBottomSheet from "../components/GameBottomSheet";
+import GamingEmptyState from "../components/GamingEmptyState";
+import SocialListRow from "../components/SocialListRow";
+import PlaySessionCard from "../components/PlaySessionCard";
+import GroupCreateSheet, { type GroupFriend } from "../components/GroupCreateSheet";
+import { relativeTime } from "../lib/relativeTime";
+import type { SessionActionErrorHandler } from "../hooks/useSessionActions";
+
+type SocialParentNavigation = {
+  Settings: { screen: "UserProfile"; params: { uid: string } };
+};
+type Segment = "friends" | "requests" | "chats" | "sessions";
+const segments: Segment[] = ["friends", "requests", "chats", "sessions"];
+type SocialListItem =
+  PlaySession | ProfileSearchHit | FriendRequest | Friendship | Conversation;
 
 export default function SocialScreen(): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const colors = useThemeColors();
   const currentUid = useAuthStore((state) => state.user?.uid ?? "");
   const sessions = usePlaySessions(currentUid);
@@ -49,101 +56,160 @@ export default function SocialScreen(): React.ReactElement {
   const styles = useThemeStyles((c) => ({
     container: { flex: 1, backgroundColor: c.background },
     content: { padding: 16, paddingBottom: 80 },
-    tabs: { flexDirection: "row", gap: 8, marginBottom: 14 },
+    tabs: {
+      flexDirection: "row",
+      gap: 7,
+      padding: 4,
+      marginBottom: 14,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
     tab: {
       flex: 1,
+      minHeight: 42,
+      borderRadius: 12,
       alignItems: "center",
-      paddingVertical: 10,
-      borderRadius: 10,
-      backgroundColor: c.surface,
+      justifyContent: "center",
+      paddingHorizontal: 3,
     },
-    activeTab: { backgroundColor: c.accent },
-    tabText: { color: c.textMuted, fontWeight: "600" },
+    activeTab: {
+      backgroundColor: c.accent,
+      shadowColor: c.accent,
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 3,
+    },
+    tabText: { color: c.textMuted, fontSize: 12, fontWeight: "700" },
     activeTabText: { color: c.onAccent },
+    badge: {
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      paddingHorizontal: 5,
+      marginTop: 3,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: c.accentSurface,
+    },
+    badgeActive: { backgroundColor: c.onAccent },
+    badgeText: { color: c.accentText, fontSize: 10, fontWeight: "800" },
+    badgeActiveText: { color: c.accent },
     search: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
-      backgroundColor: c.surface,
-      borderRadius: 12,
-      paddingHorizontal: 12,
+      gap: 9,
+      minHeight: 50,
+      paddingHorizontal: 14,
       marginBottom: 14,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
     },
-    input: { flex: 1, color: c.text, paddingVertical: 12 },
-    row: {
+    input: { flex: 1, color: c.text, paddingVertical: 8, fontSize: 15 },
+    action: {
+      minHeight: 36,
       flexDirection: "row",
       alignItems: "center",
-      gap: 10,
-      padding: 14,
-      marginBottom: 8,
-      borderRadius: 12,
-      backgroundColor: c.surface,
-    },
-    rowText: { flex: 1, color: c.text },
-    muted: { color: c.textMuted, fontSize: 13 },
-    action: {
+      justifyContent: "center",
+      gap: 5,
       paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 8,
+      borderRadius: 11,
       backgroundColor: c.accent,
     },
     dangerAction: { backgroundColor: c.danger },
-    secondaryButton: { backgroundColor: c.surface, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8 },
-    secondaryButtonText: { color: c.text, fontSize: 12 },
-    empty: { alignItems: "center", paddingVertical: 48 },
-    unreadBadge: {
-      minWidth: 22,
-      height: 22,
-      borderRadius: 11,
+    secondaryButton: {
+      minHeight: 36,
       alignItems: "center",
       justifyContent: "center",
-      paddingHorizontal: 6,
+      paddingHorizontal: 11,
+      borderRadius: 11,
+      backgroundColor: c.accentSurface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    secondaryButtonText: { color: c.text, fontSize: 12, fontWeight: "700" },
+    actionText: { color: c.onAccent, fontSize: 12, fontWeight: "800" },
+    groupCreate: {
+      minHeight: 40,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 5,
+      paddingHorizontal: 12,
+      borderRadius: 11,
+      backgroundColor: c.accent,
+      marginBottom: 14,
+    },
+    searchError: { marginBottom: 12, color: c.danger },
+    sheetTitle: { color: c.text, fontSize: 20, fontWeight: "900", marginBottom: 14 },
+    muted: { color: c.textMuted, fontSize: 12, marginTop: 3 },
+    sheetActions: { flexDirection: "row", gap: 10, marginTop: 6 },
+    actionGrow: {
+      flex: 1,
+      minHeight: 40,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 11,
       backgroundColor: c.accent,
     },
-    unreadText: { color: c.onAccent, fontSize: 12, fontWeight: "700" },
-    searchError: { marginBottom: 12, color: c.danger },
-    modalBackdrop: { flex: 1, justifyContent: "center", backgroundColor: "rgba(0,0,0,0.65)", padding: 20 },
-    modal: { backgroundColor: c.surface, borderRadius: 16, padding: 18, gap: 12 },
-    modalTitle: { color: c.text, fontSize: 18, fontWeight: "700" },
-    selected: { backgroundColor: c.accent },
-    selectedText: { color: c.onAccent },
+    secondaryGrow: {
+      flex: 1,
+      minHeight: 40,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 11,
+      backgroundColor: c.accentSurface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
   }));
-  const [segment, setSegment] = useState<"friends" | "requests" | "chats" | "sessions">("friends");
-  const [query, setQuery] = useState("");
-  const [searching, setSearching] = useState(false);
+
+  const [segment, setSegment] = useState<Segment>("friends");
   const [groupOpen, setGroupOpen] = useState(false);
-  const [groupTitle, setGroupTitle] = useState("");
-  const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
-  const [groupBusy, setGroupBusy] = useState(false);
   const [sessionBusy, setSessionBusy] = useState(false);
-  const [sessionForm, setSessionForm] = useState<{ conversationId: string; gameName: string; gameId: string | number; startsAt: Date } | null>(null);
-  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [sessionForm, setSessionForm] = useState<{
+    conversationId: string;
+    gameName: string;
+    gameId: string | number;
+    startsAt: Date;
+  } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const { uid, friendships, friendProfiles, requests, conversations, unreadCounts } =
+    useSocialData();
   const {
-    uid,
-    friendships,
-    friendProfiles,
-    requests,
-    conversations,
-    unreadCounts,
+    query,
+    setQuery,
     results,
-    search,
-    searchError,
-  } = useSocialData();
+    searching,
+    error: searchError,
+    active: isSearching,
+    refresh: refreshSearch,
+  } = useProfileSearch();
 
   const submitSession = async () => {
     if (!sessionForm || sessionBusy) return;
     setSessionBusy(true);
     try {
-      let sessionId = sessions.find((session) => session.conversationId === sessionForm.conversationId && session.status === "proposed")?.id;
-      if (!sessionId) {
-        sessionId = (await createPlaySession({
-          conversationId: sessionForm.conversationId,
-          gameId: sessionForm.gameId,
-          gameName: sessionForm.gameName,
-        })).sessionId;
+      let id = sessions.find(
+        (session) =>
+          session.conversationId === sessionForm.conversationId &&
+          session.status === "proposed",
+      )?.id;
+      if (!id) {
+        id = (
+          await createPlaySession({
+            conversationId: sessionForm.conversationId,
+            gameId: sessionForm.gameId,
+            gameName: sessionForm.gameName,
+          })
+        ).sessionId;
       }
-      await proposeSlot(sessionId, sessionForm.startsAt.getTime());
+      await proposeSlot(id, sessionForm.startsAt.getTime());
       setSessionForm(null);
+      showToast(t("social.sessions.scheduled"));
     } catch {
       Alert.alert(t("social.errors.chat"));
     } finally {
@@ -151,322 +217,363 @@ export default function SocialScreen(): React.ReactElement {
     }
   };
 
-  const submitGroup = async () => {
-    if (!groupTitle.trim() || selectedFriends.length === 0 || groupBusy) return;
-    setGroupBusy(true);
-    try {
-      const conversationId = await createGroupConversation(groupTitle, selectedFriends);
-      setGroupOpen(false);
-      setGroupTitle("");
-      setSelectedFriends([]);
+  const createGroup = useCallback(
+    async (title: string, memberUids: string[]): Promise<void> => {
+      const conversationId = await createGroupConversation(title, memberUids);
       navigation.navigate("ChatScreen", { conversationId });
-    } catch {
-      Alert.alert(t("social.errors.chat"));
-    } finally {
-      setGroupBusy(false);
-    }
+    },
+    [navigation],
+  );
+
+  const rows = isSearching
+    ? results
+    : segment === "requests"
+      ? requests
+      : segment === "chats"
+        ? conversations
+        : friendships;
+  const counts: Record<Segment, number> = {
+    friends: friendships.length,
+    requests: requests.length,
+    chats: conversations.length,
+    sessions: sessions.length,
   };
 
-  useEffect(() => {
-    if (debounce.current) clearTimeout(debounce.current);
-    if (query.trim().replace(/^@+/, "").length < 2) return;
-    debounce.current = setTimeout(async () => {
-      setSearching(true);
-      await search(query);
-      setSearching(false);
-    }, 300);
-    return () => {
-      if (debounce.current) clearTimeout(debounce.current);
-    };
-  }, [query, search]);
+  const groupFriends = useMemo<GroupFriend[]>(
+    () =>
+      friendships.flatMap((friendship) => {
+        const friendUid = friendship.members.find((member) => member !== uid);
+        if (!friendUid) return [];
+        const profile = friendProfiles[friendUid];
+        return [
+          {
+            uid: friendUid,
+            displayName: profile?.displayName ?? "Player",
+            photoURL: profile?.photoURL ?? null,
+          },
+        ];
+      }),
+    [friendProfiles, friendships, uid],
+  );
 
-  const rows: Array<ProfileSearchHit | FriendRequest | Friendship | Conversation> =
-    query.trim().length >= 2
-      ? results
-      : segment === "requests"
-        ? requests
-        : segment === "chats"
-          ? conversations
-          : friendships;
+  const openProfile = useCallback(
+    (targetUid?: string) => {
+      if (targetUid)
+        navigation
+          .getParent()
+          ?.navigate("Settings", { screen: "UserProfile", params: { uid: targetUid } });
+    },
+    [navigation],
+  );
 
-  const trimmedQuery = query.trim();
-  const isSearching = trimmedQuery.length >= 2;
-  const emptyText = isSearching
-    ? t("social.search.noResults")
-    : t(`social.${segment}.empty`);
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refreshSearch();
+      showToast(t("social.messages.refreshed"));
+    } catch {
+      showToast(t("social.errors.refresh"));
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshSearch, t]);
 
-  if (segment === "sessions" && !isSearching) {
-    return (
-      <SafeAreaView style={styles.container} edges={["left", "right"]}>
-        <FlashList
-          data={sessions}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.content}
-          ListHeaderComponent={
-            <View style={styles.tabs}>
-              {(["friends", "requests", "chats", "sessions"] as const).map((value) => (
-                <TouchableOpacity key={value} style={[styles.tab, segment === value && styles.activeTab]} onPress={() => setSegment(value)}>
-                  <CustomText style={[styles.tabText, segment === value && styles.activeTabText]}>{value}</CustomText>
-                </TouchableOpacity>
-              ))}
-            </View>
-          }
-          ListEmptyComponent={<View style={styles.empty}><CustomText style={styles.muted}>{t("social.sessions.empty")}</CustomText></View>}
-          renderItem={({ item }) => {
-            const proposal = item.proposals.find((candidate) => candidate.status !== "withdrawn");
-            const accepted = proposal?.responses[currentUid] === "accepted";
-            const everyoneAccepted = proposal && item.participantUids.every((participant) => proposal.responses[participant] === "accepted");
-            return (
-              <View style={styles.row}>
-                <View style={styles.rowText}>
-                  <CustomText style={styles.rowText}>{item.gameName}</CustomText>
-                  {item.status === "proposed" ? <TouchableOpacity style={styles.action} onPress={() => setSessionForm({ conversationId: item.conversationId, gameId: item.gameId, gameName: item.gameName, startsAt: new Date(Date.now() + 60 * 60 * 1000) })}><CustomText style={{ color: colors.onAccent }}>{t("social.sessions.schedule")}</CustomText></TouchableOpacity> : null}
-                  <CustomText style={styles.muted}>{item.status}{proposal ? ` • ${new Date(proposal.startsAt).toLocaleString()}` : ""}</CustomText>
-                </View>
-                {proposal && !accepted && item.status === "proposed" ? <TouchableOpacity style={styles.action} onPress={() => void respondToSlot(item.id, proposal.id, "accepted")}><CustomText style={{ color: colors.onAccent }}>{t("social.sessions.accept")}</CustomText></TouchableOpacity> : null}
-                {proposal && accepted && item.status === "proposed" ? <TouchableOpacity style={styles.dangerAction} onPress={() => void respondToSlot(item.id, proposal.id, "declined")}><CustomText style={{ color: colors.onAccent }}>{t("social.sessions.decline")}</CustomText></TouchableOpacity> : null}
-                {proposal && proposal.proposerUid === currentUid && item.status === "proposed" ? <TouchableOpacity style={styles.secondaryButton} onPress={() => void withdrawProposal(item.id, proposal.id)}><CustomText style={styles.secondaryButtonText}>{t("social.sessions.withdraw")}</CustomText></TouchableOpacity> : null}
-                {proposal && everyoneAccepted && item.status === "proposed" ? <TouchableOpacity style={styles.action} onPress={() => void confirmSession(item.id, proposal.id)}><CustomText style={{ color: colors.onAccent }}>{t("social.sessions.confirm")}</CustomText></TouchableOpacity> : null}
-                {item.status === "proposed" ? <TouchableOpacity style={styles.dangerAction} onPress={() => void cancelSession(item.id)}><CustomText style={{ color: colors.onAccent }}>{t("social.sessions.cancel")}</CustomText></TouchableOpacity> : null}
-                {item.status !== "cancelled" ? <TouchableOpacity style={styles.secondaryButton} onPress={() => void leaveSession(item.id)}><CustomText style={styles.secondaryButtonText}>{t("social.sessions.leave")}</CustomText></TouchableOpacity> : null}
-              </View>
-            );
-          }}
+  const handleFriendAction = useCallback(
+    async (action: () => Promise<unknown>, successMsg: string, errorMsg: string) => {
+      try {
+        await action();
+        showToast(successMsg);
+      } catch {
+        showToast(errorMsg);
+      }
+    },
+    [],
+  );
+
+  const handleSessionError = useCallback<SessionActionErrorHandler>(() => {
+    showToast(t("social.sessions.actionFailed"));
+  }, [t]);
+
+  const handleSchedule = useCallback((session: PlaySession) => {
+    setSessionForm({
+      conversationId: session.conversationId,
+      gameId: session.gameId,
+      gameName: session.gameName,
+      startsAt: new Date(Date.now() + 60 * 60 * 1000),
+    });
+  }, []);
+
+  const renderItem = useCallback(
+    ({
+      item,
+    }: {
+      item: ProfileSearchHit | FriendRequest | Friendship | Conversation;
+    }) => {
+      const isConversation =
+        "type" in item && (item.type === "dm" || item.type === "group");
+      let label = "Player",
+        subtitle = "",
+        photoURL: string | null | undefined,
+        targetUid: string | undefined;
+      if (isSearching && "handle" in item) {
+        label = `@${item.handle}`;
+        subtitle = item.displayName;
+        photoURL = item.photoURL;
+        targetUid = item.uid;
+      } else if ("from" in item) {
+        const profile = friendProfiles[item.from];
+        photoURL = profile?.photoURL;
+        label = profile?.displayName ?? "Player";
+        subtitle = profile?.handle ? `@${profile.handle}` : "";
+        targetUid = item.from;
+      } else if (isConversation) {
+        if (item.type === "dm") {
+          targetUid = item.members.find((member) => member !== uid);
+          const profile = targetUid ? friendProfiles[targetUid] : undefined;
+          photoURL = profile?.photoURL;
+          label = profile?.displayName ?? "Player";
+        } else {
+          label = item.title ?? t("social.groups.fallback");
+          subtitle = item.lastMessage?.text ?? t("social.chats.noMessages");
+        }
+      } else if ("members" in item) {
+        targetUid = item.members.find((member) => member !== uid);
+        const profile = targetUid ? friendProfiles[targetUid] : undefined;
+        photoURL = profile?.photoURL;
+        label = profile?.displayName ?? "Player";
+        subtitle = profile?.handle ? `@${profile.handle}` : "";
+      }
+      const onRow = () =>
+        isConversation
+          ? navigation.navigate("ChatScreen", { conversationId: item.id })
+          : openProfile(targetUid);
+      const meta =
+        isConversation && item.lastMessageAt
+          ? relativeTime(item.lastMessageAt, i18n.language)
+          : null;
+      const unreadCount = isConversation ? (unreadCounts[item.id] ?? 0) : 0;
+
+      const actions =
+        isSearching && "uid" in item && targetUid !== uid ? (
+          <PressScale
+            style={styles.action}
+            onPress={() =>
+              handleFriendAction(
+                () => sendFriendRequest(item.uid),
+                t("social.requests.sent"),
+                t("social.errors.friendRequest"),
+              )
+            }
+          >
+            <UserPlus size={16} color={colors.onAccent} />
+          </PressScale>
+        ) : !isSearching && "from" in item && !isConversation ? (
+          <>
+            <PressScale
+              style={styles.action}
+              onPress={() =>
+                void handleFriendAction(
+                  () => respondFriendRequest(item.from, "accept"),
+                  t("social.requests.accepted"),
+                  t("social.errors.friendRequest"),
+                )
+              }
+            >
+              <Check size={16} color={colors.onAccent} />
+            </PressScale>
+            <PressScale
+              style={[styles.action, styles.dangerAction]}
+              onPress={() =>
+                void handleFriendAction(
+                  () => respondFriendRequest(item.from, "decline"),
+                  t("social.requests.declined"),
+                  t("social.errors.friendRequest"),
+                )
+              }
+            >
+              <X size={16} color={colors.onAccent} />
+            </PressScale>
+          </>
+        ) : null;
+
+      return (
+        <SocialListRow
+          photoURL={photoURL}
+          label={label}
+          subtitle={subtitle}
+          meta={meta}
+          unreadCount={unreadCount}
+          conversation={isConversation}
+          onPress={onRow}
+          disabled={!isConversation && !targetUid}
+          trailing={actions}
         />
-      </SafeAreaView>
-    );
-  }
+      );
+    },
+    [
+      colors.onAccent,
+      friendProfiles,
+      handleFriendAction,
+      i18n.language,
+      isSearching,
+      navigation,
+      openProfile,
+      styles.action,
+      styles.dangerAction,
+      t,
+      uid,
+      unreadCounts,
+    ],
+  );
+
+  const listData = segment === "sessions" && !isSearching ? sessions : rows;
+  const renderListItem = useCallback(
+    ({ item }: { item: SocialListItem }) =>
+      "gameName" in item ? (
+        <PlaySessionCard
+          session={item}
+          currentUid={currentUid}
+          variant="social"
+          participantProfiles={friendProfiles}
+          onSchedule={handleSchedule}
+          onError={handleSessionError}
+        />
+      ) : (
+        renderItem({ item })
+      ),
+    [currentUid, friendProfiles, handleSchedule, handleSessionError, renderItem],
+  );
 
   return (
     <>
-      <Modal visible={sessionForm !== null} transparent animationType="fade" onRequestClose={() => setSessionForm(null)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modal}>
-            <CustomText style={styles.modalTitle}>{t("social.sessions.schedule")}</CustomText>
-            <CustomText style={styles.muted}>{sessionForm?.gameName}</CustomText>
-            <TouchableOpacity style={styles.secondaryButton} onPress={() => setSessionForm((previous) => previous ? { ...previous, startsAt: new Date(previous.startsAt.getTime() + 30 * 60 * 1000) } : previous)}>
-              <CustomText style={styles.secondaryButtonText}>{sessionForm?.startsAt.toLocaleString()}</CustomText>
-            </TouchableOpacity>
-            <DateTimePicker
-              value={sessionForm?.startsAt ?? new Date(Date.now() + 60 * 60 * 1000)}
-              mode="datetime"
-              minimumDate={new Date(Date.now() + 5 * 60 * 1000)}
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={(_event: DateTimePickerEvent, selectedDate?: Date) => {
-                if (selectedDate) setSessionForm((previous) => previous ? { ...previous, startsAt: selectedDate } : previous);
-              }}
-            />
-            <TouchableOpacity style={styles.action} onPress={() => void submitSession()} disabled={sessionBusy}>
-              <CustomText style={{ color: colors.onAccent }}>{sessionBusy ? t("social.sessions.saving") : t("social.sessions.schedule")}</CustomText>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setSessionForm(null)}><CustomText style={styles.muted}>{t("social.sessions.cancel")}</CustomText></TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-      <Modal visible={groupOpen} transparent animationType="fade" onRequestClose={() => setGroupOpen(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modal}>
-            <CustomText style={styles.modalTitle}>{t("social.groups.create")}</CustomText>
-            <CustomTextInput
-              value={groupTitle}
-              onChangeText={setGroupTitle}
-              placeholder={t("social.groups.name")}
-              placeholderTextColor={colors.textMuted}
-              style={styles.input}
-            />
-            {friendships.map((friendship) => {
-              const friendUid = friendship.members.find((member) => member !== uid);
-              if (!friendUid) return null;
-              const profile = friendProfiles[friendUid];
-              const selected = selectedFriends.includes(friendUid);
-              return (
-                <TouchableOpacity
-                  key={friendUid}
-                  style={[styles.row, selected && styles.selected]}
-                  onPress={() => setSelectedFriends((previous) => selected
-                    ? previous.filter((item) => item !== friendUid)
-                    : [...previous, friendUid])}
-                >
-                  <CustomText style={[styles.rowText, selected && styles.selectedText]}>
-                    {profile?.displayName ?? "Player"}
-                  </CustomText>
-                  <CustomText style={[styles.muted, selected && styles.selectedText]}>
-                    {selected ? t("social.groups.selected") : t("social.groups.select")}
-                  </CustomText>
-                </TouchableOpacity>
-              );
-            })}
-            <TouchableOpacity style={styles.action} onPress={() => void submitGroup()} disabled={groupBusy}>
-              <CustomText style={{ color: colors.onAccent }}>{groupBusy ? t("social.groups.creating") : t("social.groups.create")}</CustomText>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setGroupOpen(false)}>
-              <CustomText style={styles.muted}>{t("social.groups.cancel")}</CustomText>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-      <SafeAreaView style={styles.container}>
-      <FlashList
-        data={rows}
-        keyExtractor={(item) => ("id" in item ? item.id : item.uid)}
-        contentContainerStyle={styles.content}
-        refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={() => undefined}
-            tintColor={colors.accent}
+      <GameBottomSheet
+        visible={sessionForm !== null}
+        onClose={() => setSessionForm(null)}
+      >
+        <CustomText style={styles.sheetTitle}>{t("social.sessions.schedule")}</CustomText>
+        <CustomText style={styles.muted}>{sessionForm?.gameName}</CustomText>
+        {sessionForm && (
+          <DateTimePicker
+            value={sessionForm.startsAt}
+            mode="datetime"
+            minimumDate={new Date(Date.now() + 5 * 60 * 1000)}
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={(_, date) => {
+              if (date)
+                setSessionForm((previous) =>
+                  previous ? { ...previous, startsAt: date } : previous,
+                );
+            }}
           />
-        }
-        ListHeaderComponent={
-          <>
-            <View style={styles.tabs}>
-              {(["friends", "requests", "chats", "sessions"] as const).map((value) => (
-                <TouchableOpacity
-                  key={value}
-                  style={[styles.tab, segment === value && styles.activeTab]}
-                  onPress={() => setSegment(value)}
-                >
-                  <CustomText
-                    style={[styles.tabText, segment === value && styles.activeTabText]}
-                  >
-                    {t(`social.${value}.title`)}
-                  </CustomText>
-                </TouchableOpacity>
-              ))}
-            </View>
-            {segment === "friends" && !isSearching ? (
-              <TouchableOpacity style={styles.action} onPress={() => setGroupOpen(true)}>
-                <Plus size={16} color={colors.onAccent} />
-                <CustomText style={{ color: colors.onAccent }}>{t("social.groups.create")}</CustomText>
-              </TouchableOpacity>
-            ) : null}
-            <View style={styles.search}>
-              <Search size={18} color={colors.textMuted} />
-              <CustomTextInput
-                value={query}
-                onChangeText={setQuery}
-                placeholder={t("social.search.placeholder")}
-                placeholderTextColor={colors.textMuted}
-                style={styles.input}
-              />
-              {searching && <ActivityIndicator color={colors.accent} />}
-            </View>
-            {searchError ? (
-              <CustomText style={[styles.muted, styles.searchError]}>
-                {t("social.errors.search")}
-              </CustomText>
-            ) : null}
-          </>
-        }
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <CustomText style={styles.muted}>{emptyText}</CustomText>
-          </View>
-        }
-        renderItem={({ item }) => {
-          const isSearch = query.trim().length >= 2;
-          const isConversation =
-            "type" in item && (item.type === "dm" || item.type === "group");
+        )}
+        <View style={styles.sheetActions}>
+          <PressScale
+            style={styles.actionGrow}
+            onPress={() => void submitSession()}
+            disabled={sessionBusy}
+          >
+            <CustomText style={styles.actionText}>
+              {sessionBusy ? t("social.sessions.saving") : t("social.sessions.schedule")}
+            </CustomText>
+          </PressScale>
+          <PressScale style={styles.secondaryGrow} onPress={() => setSessionForm(null)}>
+            <CustomText style={styles.secondaryButtonText}>
+              {t("social.sessions.cancel")}
+            </CustomText>
+          </PressScale>
+        </View>
+      </GameBottomSheet>
 
-          let label = "";
-          let subtitle = "";
-
-          if (isSearch && "handle" in item) {
-            // Search results: @handle as label, displayName as subtitle
-            label = `@${item.handle}`;
-            subtitle = item.displayName;
-          } else if ("from" in item) {
-            // Friend request: sender's displayName as label, @handle as subtitle
-            const profile = friendProfiles[item.from];
-            label = profile?.displayName ?? "Player";
-            subtitle = profile?.handle ? `@${profile.handle}` : "";
-          } else if (isConversation) {
-            // Conversation row
-            if (item.type === "dm") {
-              const otherUid = item.members.find((member) => member !== uid);
-              const profile = otherUid ? friendProfiles[otherUid] : null;
-              label = profile?.displayName ?? "Player";
-              subtitle = item.lastMessage?.text ?? t("social.chats.noMessages");
-            } else {
-              label = item.title ?? t("social.groups.fallback");
-              subtitle = item.lastMessage?.text ?? t("social.chats.noMessages");
-            }
-          } else if ("members" in item) {
-            // Friendship: friend's displayName as label, @handle as subtitle
-            const otherUid = item.members.find((member) => member !== uid);
-            const profile = otherUid ? friendProfiles[otherUid] : null;
-            label = profile?.displayName ?? "Player";
-            subtitle = profile?.handle ? `@${profile.handle}` : "";
-          } else {
-            label = "";
-          }
-
-          return (
-            <TouchableOpacity
-              style={styles.row}
-              onPress={() => {
-                if (isConversation) {
-                  navigation.navigate("ChatScreen", { conversationId: item.id });
-                  return;
-                }
-                const targetUid =
-                  "uid" in item
-                    ? item.uid
-                    : "from" in item
-                      ? item.from
-                      : item.members.find((member) => member !== uid);
-                if (targetUid) {
-                  navigation.getParent()?.navigate("Settings", {
-                    screen: "UserProfile",
-                    params: { uid: targetUid },
-                  });
-                }
-              }}
-              disabled={
-                !isConversation && !("uid" in item || "from" in item || "members" in item)
-              }
-            >
-              <View style={styles.rowText}>
-                <CustomText style={styles.rowText}>{label}</CustomText>
-                {subtitle ? (
-                  <CustomText style={styles.muted}>{subtitle}</CustomText>
-                ) : null}
-              </View>
-              {isConversation && unreadCounts[item.id] ? (
-                <View style={styles.unreadBadge}>
-                  <CustomText style={styles.unreadText}>
-                    {unreadCounts[item.id]}
-                  </CustomText>
-                </View>
-              ) : null}
-              {isSearch && "uid" in item && (
-                <TouchableOpacity
-                  style={styles.action}
-                  onPress={() => void sendFriendRequest(item.uid)}
-                >
-                  <UserPlus size={16} color={colors.onAccent} />
-                </TouchableOpacity>
-              )}
-              {!isSearch && "from" in item && (
-                <>
-                  <TouchableOpacity
-                    style={styles.action}
-                    onPress={() => void respondFriendRequest(item.from, "accept")}
-                  >
-                    <Check size={16} color={colors.onAccent} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.action, styles.dangerAction]}
-                    onPress={() => void respondFriendRequest(item.from, "decline")}
-                  >
-                    <X size={16} color={colors.onAccent} />
-                  </TouchableOpacity>
-                </>
-              )}
-            </TouchableOpacity>
-          );
-        }}
+      <GroupCreateSheet
+        visible={groupOpen}
+        onClose={() => setGroupOpen(false)}
+        friends={groupFriends}
+        onCreate={createGroup}
       />
+
+      <SafeAreaView style={styles.container}>
+        <FlashList
+          data={listData}
+          keyExtractor={(item) => ("id" in item ? item.id : item.uid)}
+          contentContainerStyle={styles.content}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.accent}
+            />
+          }
+          ListHeaderComponent={
+            <>
+              <View style={styles.tabs}>
+                {segments.map((value) => {
+                  const active = segment === value;
+                  return (
+                    <PressScale
+                      key={value}
+                      style={[styles.tab, active && styles.activeTab]}
+                      onPress={() => setSegment(value)}
+                    >
+                      <CustomText
+                        style={[styles.tabText, active && styles.activeTabText]}
+                      >
+                        {t(`social.${value}.title`)}
+                      </CustomText>
+                      {counts[value] > 0 && value !== "friends" && (
+                        <View style={[styles.badge, active && styles.badgeActive]}>
+                          <CustomText
+                            style={[styles.badgeText, active && styles.badgeActiveText]}
+                          >
+                            {counts[value]}
+                          </CustomText>
+                        </View>
+                      )}
+                    </PressScale>
+                  );
+                })}
+              </View>
+              {segment === "friends" && !isSearching && (
+                <PressScale style={styles.groupCreate} onPress={() => setGroupOpen(true)}>
+                  <Plus size={16} color={colors.onAccent} />
+                  <CustomText style={styles.actionText}>
+                    {t("social.groups.create")}
+                  </CustomText>
+                </PressScale>
+              )}
+              <View style={styles.search}>
+                <Search size={18} color={colors.textMuted} />
+                <CustomTextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder={t("social.search.placeholder")}
+                  placeholderTextColor={colors.textMuted}
+                  style={styles.input}
+                />
+                {query.length > 0 && (
+                  <PressScale onPress={() => setQuery("")}>
+                    <X size={18} color={colors.textMuted} />
+                  </PressScale>
+                )}
+                {searching && <ActivityIndicator color={colors.accent} />}
+              </View>
+              {searchError && (
+                <CustomText style={styles.searchError}>
+                  {t("social.errors.search")}
+                </CustomText>
+              )}
+            </>
+          }
+          ListEmptyComponent={
+            <GamingEmptyState
+              title={
+                isSearching ? t("social.search.noResults") : t(`social.${segment}.empty`)
+              }
+              actionLabel={segment === "friends" ? t("social.groups.create") : undefined}
+              onAction={segment === "friends" ? () => setGroupOpen(true) : undefined}
+            />
+          }
+          renderItem={renderListItem}
+        />
       </SafeAreaView>
     </>
   );
