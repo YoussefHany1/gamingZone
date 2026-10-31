@@ -28,6 +28,24 @@ function isBlockedError(error: unknown): boolean {
   );
 }
 
+/** Live read of one `profiles/{uid}` document. */
+function listenToProfile(
+  uid: string,
+  onProfile: (profile: PublicProfile | null) => void,
+  onError: (error: unknown) => void,
+): () => void {
+  return firestore()
+    .collection("profiles")
+    .doc(uid)
+    .onSnapshot(
+      (snapshot) =>
+        onProfile(
+          mapPublicProfile(uid, snapshot?.exists() ? snapshot.data() : undefined),
+        ),
+      onError,
+    );
+}
+
 /**
  * One public profile, read live.
  *
@@ -67,22 +85,14 @@ export function usePublicProfile({
       setLoading(false);
     };
 
+    const applyProfile = (mapped: PublicProfile | null): void => {
+      setProfile(mapped);
+      setError(mapped ? null : "not_found");
+      setLoading(false);
+    };
+
     if (uid) {
-      return firestore()
-        .collection("profiles")
-        .doc(uid)
-        .onSnapshot((snapshot) => {
-          // `onSnapshot(next, onError)` only calls `next` with a snapshot, but
-          // the optional chain keeps a malformed/empty event from throwing in
-          // the render path.
-          const mapped = mapPublicProfile(
-            uid,
-            snapshot?.exists() ? snapshot.data() : undefined,
-          );
-          setProfile(mapped);
-          setError(mapped ? null : "not_found");
-          setLoading(false);
-        }, onError);
+      return listenToProfile(uid, applyProfile, onError);
     }
 
     // Resolve the handle to a uid first. `profiles` has no client `list` rule —
@@ -113,18 +123,7 @@ export function usePublicProfile({
         listeningUid = resolvedUid;
 
         stopProfile();
-        stopProfile = firestore()
-          .collection("profiles")
-          .doc(resolvedUid)
-          .onSnapshot((profileSnapshot) => {
-            const mapped = mapPublicProfile(
-              resolvedUid,
-              profileSnapshot?.exists() ? profileSnapshot.data() : undefined,
-            );
-            setProfile(mapped);
-            setError(mapped ? null : "not_found");
-            setLoading(false);
-          }, onError);
+        stopProfile = listenToProfile(resolvedUid, applyProfile, onError);
       }, onError);
 
     return () => {

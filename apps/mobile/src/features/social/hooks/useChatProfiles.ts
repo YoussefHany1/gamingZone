@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import firestore from "@react-native-firebase/firestore";
 import { logger } from "@/src/lib/logger";
+import { mapChatSenderProfile } from "../lib/profileLookup";
 
-export interface ChatSenderProfile {
-  displayName: string;
-  photoURL: string | null;
-}
+export type { ChatSenderProfile } from "../lib/profileLookup";
 
 /**
  * Public profiles are readable one document at a time (`list` is denied), so
@@ -13,17 +11,22 @@ export interface ChatSenderProfile {
  * Results are cached for the session to avoid re-reading the same profile on
  * every realtime message update.
  */
-const profileCache = new Map<string, ChatSenderProfile>();
+const profileCache = new Map<string, ReturnType<typeof mapChatSenderProfile>>();
 
-export function useChatProfiles(uids: string[]): Record<string, ChatSenderProfile> {
+type ChatSenderProfileMap = Record<string, ReturnType<typeof mapChatSenderProfile>>;
+
+export function useChatProfiles(uids: string[]): ChatSenderProfileMap {
   const key = useMemo(
-    () => Array.from(new Set(uids.filter(Boolean))).sort().join("|"),
+    () =>
+      Array.from(new Set(uids.filter(Boolean)))
+        .sort()
+        .join("|"),
     [uids],
   );
-  const [fetched, setFetched] = useState<Record<string, ChatSenderProfile>>({});
+  const [fetched, setFetched] = useState<ChatSenderProfileMap>({});
 
   const cached = useMemo(() => {
-    const result: Record<string, ChatSenderProfile> = {};
+    const result: ChatSenderProfileMap = {};
     for (const id of key ? key.split("|") : []) {
       const profile = profileCache.get(id);
       if (profile) result[id] = profile;
@@ -41,12 +44,7 @@ export function useChatProfiles(uids: string[]): Record<string, ChatSenderProfil
       missing.map(async (id) => {
         try {
           const snapshot = await firestore().collection("profiles").doc(id).get();
-          const data = snapshot.data() ?? {};
-          const profile: ChatSenderProfile = {
-            displayName:
-              typeof data.displayName === "string" ? data.displayName : "Player",
-            photoURL: typeof data.photoURL === "string" ? data.photoURL : null,
-          };
+          const profile = mapChatSenderProfile(snapshot.data());
           profileCache.set(id, profile);
           return [id, profile] as const;
         } catch (error) {

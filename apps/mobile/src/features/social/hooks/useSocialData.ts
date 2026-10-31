@@ -1,173 +1,120 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import firestore from "@react-native-firebase/firestore";
-import type {
-  Conversation,
-  FriendRequest,
-  Friendship,
-  ProfileSearchHit,
-} from "@gaming-zone/core";
+import type { FriendRequest, Friendship, ProfileSearchHit } from "@gaming-zone/core";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { logger } from "@/src/lib/logger";
-import {
-  listenToFriendships,
-  listenToIncomingRequests,
-  searchProfiles,
-} from "../lib/friendService";
-import { listenToConversations, listenToReadPosition } from "../lib/chatService";
+import { listenToFriendships, listenToIncomingRequests } from "../lib/friendService";
+import { mapProfileSearchHit } from "../lib/profileLookup";
+import { useConversationList } from "./useConversationList";
 
+const UID_SEPARATOR = "\n";
+
+/**
+ * Friendships, incoming requests, conversations and the derived unread badges.
+ *
+ * Orchestrates the realtime listeners only; conversation/read state lives in
+ * `useConversationList` and search lives in `useProfileSearch`, so this hook
+ * does not re-render the whole feature when the user types in the search box.
+ */
 export function useSocialData() {
   const uid = useAuthStore((state) => state.user?.uid ?? "");
   const [friendships, setFriendships] = useState<Friendship[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
-  const [results, setResults] = useState<ProfileSearchHit[]>([]);
   const [friendProfiles, setFriendProfiles] = useState<Record<string, ProfileSearchHit>>(
     {},
   );
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [readAt, setReadAt] = useState<Record<string, number | null>>({});
-  const [searchError, setSearchError] = useState<unknown>(null);
+  const { conversations, readAt } = useConversationList(uid);
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid) {
+      setFriendships([]);
+      setRequests([]);
+      return;
+    }
 
-    const stopFriends = listenToFriendships(
-      uid,
-      (next) => setFriendships(next),
-      (err) => logger.error("[social] Friends listener failed", err),
+    const stopFriends = listenToFriendships(uid, setFriendships, (error) =>
+      logger.error("[social] Friends listener failed", error),
     );
-    const stopRequests = listenToIncomingRequests(
-      uid,
-      (next) => setRequests(next),
-      (err) => logger.error("[social] Requests listener failed", err),
-    );
-    const stopConversations = listenToConversations(
-      uid,
-      (next) => setConversations(next),
-      (err) => logger.warn("[social] Conversations unavailable", err),
+    const stopRequests = listenToIncomingRequests(uid, setRequests, (error) =>
+      logger.error("[social] Requests listener failed", error),
     );
     return () => {
       stopFriends();
       stopRequests();
-      stopConversations();
     };
   }, [uid]);
 
-  useEffect(() => {
-    if (!uid) return;
-    const stops = conversations.map((conversation) =>
-      listenToReadPosition(
-        conversation.id,
-        uid,
-        (position) => {
-          const value = position.lastReadAt;
-          setReadAt((previous) => ({
-            ...previous,
-            [conversation.id]: typeof value === "number" ? value : null,
-          }));
-        },
-        (error) => logger.warn(`[social] Read state unavailable for ${conversation.id}`, error),
-      ),
-    );
-    return () => stops.forEach((stop) => stop());
-  }, [uid, conversations]);
-
-  // Profile cache covering friendships, requests, and DM counterparts.
-  useEffect(() => {
-    if (!uid) return;
-
-    const profileUids = new Set<string>();
-
-    // Friendship members (excluding self)
-    friendships.forEach((f) =>
-      f.members.forEach((member) => {
-        if (member !== uid) profileUids.add(member);
+  // Every uid the list needs a profile for: friends, request senders and DM
+  // counterparts. Sort + join so the fetch only runs when the *set* changes,
+  // not on every message update.
+  const profileKey = useMemo(() => {
+    const uids = new Set<string>();
+    friendships.forEach((friendship) =>
+      friendship.members.forEach((member) => {
+        if (member !== uid) uids.add(member);
       }),
     );
-
-    // Request senders
-    requests.forEach((r) => profileUids.add(r.from));
-
-    // DM counterparts (skip groups and self)
-    conversations.forEach((c) => {
-      if (c.type === "dm") {
-        c.members.forEach((member) => {
-          if (member !== uid) profileUids.add(member);
-        });
-      }
+    requests.forEach((request) => uids.add(request.from));
+    conversations.forEach((conversation) => {
+      if (conversation.type !== "dm") return;
+      conversation.members.forEach((member) => {
+        if (member !== uid) uids.add(member);
+      });
     });
+    return Array.from(uids).sort().join(UID_SEPARATOR);
+  }, [uid, friendships, requests, conversations]);
 
-    if (profileUids.size === 0) {
+  useEffect(() => {
+    if (!uid || !profileKey) {
       setFriendProfiles({});
       return;
     }
 
+    let cancelled = false;
     void Promise.all(
-      Array.from(profileUids).map(async (targetUid) => {
+      profileKey.split(UID_SEPARATOR).map(async (targetUid) => {
         try {
           const snapshot = await firestore().collection("profiles").doc(targetUid).get();
           if (!snapshot.exists()) return null;
-          const data = snapshot.data() ?? {};
-          return [
-            targetUid,
-            {
-              uid: targetUid,
-              handle: typeof data.handle === "string" ? data.handle : "",
-              displayName:
-                typeof data.displayName === "string" ? data.displayName : "Player",
-              photoURL: typeof data.photoURL === "string" ? data.photoURL : null,
-              platform: typeof data.platform === "string" ? data.platform : "",
-              country: typeof data.country === "string" ? data.country : "",
-            } satisfies ProfileSearchHit,
-          ] as const;
+          return [targetUid, mapProfileSearchHit(targetUid, snapshot.data())] as const;
         } catch (error) {
           logger.warn(`[social] Failed to load profile ${targetUid}`, error);
           return null;
         }
       }),
     )
-      .then((entries) =>
+      .then((entries) => {
+        if (cancelled) return;
         setFriendProfiles(
           Object.fromEntries(
             entries.filter(Boolean) as Array<readonly [string, ProfileSearchHit]>,
           ),
-        ),
-      )
+        );
+      })
       .catch(() => undefined);
-  }, [uid, friendships, requests, conversations]);
 
-  const unreadCounts = conversations.reduce<Record<string, number>>((counts, conversation) => {
-    const lastMessage = conversation.lastMessage;
-    const lastMessageAt = conversation.lastMessageAt as unknown;
-    const rawMillis =
-      typeof lastMessageAt === "number"
-        ? lastMessageAt
-        : typeof (lastMessageAt as { toMillis?: () => number } | null)?.toMillis === "function"
-          ? (lastMessageAt as { toMillis: () => number }).toMillis()
-          : null;
-    const lastRead = readAt[conversation.id] ?? null;
-    if (
-      lastMessage &&
-      lastMessage.senderId !== uid &&
-      rawMillis !== null &&
-      (lastRead === null || rawMillis > lastRead)
-    ) {
-      counts[conversation.id] = 1;
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, profileKey]);
+
+  const unreadCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const conversation of conversations) {
+      const lastMessage = conversation.lastMessage;
+      const lastMessageAt = conversation.lastMessageAt;
+      const lastRead = readAt[conversation.id] ?? null;
+      if (
+        lastMessage &&
+        lastMessage.senderId !== uid &&
+        lastMessageAt !== null &&
+        (lastRead === null || lastMessageAt > lastRead)
+      ) {
+        counts[conversation.id] = 1;
+      }
     }
     return counts;
-  }, {});
-
-  const search = useCallback(async (query: string) => {
-    try {
-      const next = await searchProfiles(query);
-      setResults(next);
-      setSearchError(null);
-      return next;
-    } catch (reason) {
-      logger.error("[social] Search failed", reason);
-      setSearchError(reason);
-      return [];
-    }
-  }, []);
+  }, [conversations, readAt, uid]);
 
   return {
     uid,
@@ -176,8 +123,5 @@ export function useSocialData() {
     requests,
     conversations,
     unreadCounts,
-    results,
-    search,
-    searchError,
   };
 }

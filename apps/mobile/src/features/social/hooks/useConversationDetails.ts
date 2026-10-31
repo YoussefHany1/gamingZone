@@ -1,0 +1,54 @@
+import { useEffect, useState } from "react";
+import firestore from "@react-native-firebase/firestore";
+import { logger } from "@/src/lib/logger";
+
+export type ConversationDetails = {
+  members: string[];
+  title: string | null;
+  photoURL: string | null;
+};
+
+const EMPTY_DETAILS: ConversationDetails = {
+  members: [],
+  title: null,
+  photoURL: null,
+};
+
+/**
+ * One-shot metadata read for a conversation.
+ *
+ * Messages arrive through the realtime listener in `useChatMessages`; the
+ * conversation document itself (title, photo, members) only changes through
+ * explicit actions, so a single read per conversation is enough.
+ */
+export function useConversationDetails(conversationId: string): ConversationDetails {
+  const [details, setDetails] = useState<ConversationDetails>(EMPTY_DETAILS);
+
+  useEffect(() => {
+    let cancelled = false;
+    setDetails(EMPTY_DETAILS);
+
+    void firestore()
+      .collection("conversations")
+      .doc(conversationId)
+      .get()
+      .then((snapshot) => {
+        if (cancelled || !snapshot.exists) return;
+        const data = snapshot.data() ?? {};
+        setDetails({
+          members: Array.isArray(data.members) ? data.members : [],
+          title: typeof data.title === "string" ? data.title : null,
+          photoURL: typeof data.photoURL === "string" ? data.photoURL : null,
+        });
+      })
+      .catch((error) => {
+        logger.warn(`[social] Failed to load conversation ${conversationId}`, error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId]);
+
+  return details;
+}
