@@ -1,17 +1,14 @@
 import React, { memo } from "react";
-import { Linking, TouchableOpacity, View } from "react-native";
+import { Linking, Share, ToastAndroid, View } from "react-native";
 import { useTranslation } from "react-i18next";
-import { ExternalLink } from "lucide-react-native";
+import { BadgeCheck, Copy, ExternalLink } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import SectionTitle from "@/src/components/SectionTitle";
-import {
-  DiscordIcon,
-  PlayStationIcon,
-  XboxIcon,
-} from "@/src/components/icons/BrandIcons";
-import { SteamIcon } from "@/src/components/icons/StoreIcons";
+import PressScale from "./PressScale";
+import PlatformGlyph from "./PlatformGlyph";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { BRAND_ACCENTS } from "@/src/constants/brandColors";
 import {
   PROFILE_LINK_PLATFORMS,
   profileLinkUrl,
@@ -41,20 +38,7 @@ function platformLabel(platform: ProfileLinkPlatform): string {
   }
 }
 
-function platformIcon(platform: ProfileLinkPlatform, color: string): React.ReactElement {
-  switch (platform) {
-    case "steam":
-      return <SteamIcon size={22} fill={color} />;
-    case "psn":
-      return <PlayStationIcon size={22} fill={color} />;
-    case "xbox":
-      return <XboxIcon size={22} fill={color} />;
-    case "discord":
-    default:
-      return <DiscordIcon size={22} fill={color} />;
-  }
-}
-
+// Brand identity stays a fixed decorative accent (see `BRAND_ACCENTS`).
 const PublicLinksCard = memo(
   ({ links, privacy }: PublicLinksCardProps): React.ReactElement | null => {
     const colors = useThemeColors();
@@ -78,25 +62,44 @@ const PublicLinksCard = memo(
         borderBottomWidth: 1,
         borderBottomColor: c.border,
       },
-      label: {
-        color: c.textMuted,
-        fontSize: 12,
-      },
-      identifier: {
-        color: c.text,
-        fontSize: 15,
-        fontWeight: "600",
+      glyphWrap: {
+        width: 42,
+        height: 42,
+        borderRadius: 13,
+        alignItems: "center",
+        justifyContent: "center",
       },
       grow: { flex: 1 },
+      label: { color: c.textMuted, fontSize: 12 },
+      identifier: { color: c.text, fontSize: 15, fontWeight: "600" },
+      verified: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        marginTop: 2,
+      },
+      verifiedText: { color: c.textMuted, fontSize: 10, fontWeight: "700" },
+      iconAction: { padding: 6 },
+      lastRow: { borderBottomWidth: 0 },
     }));
 
     if (!privacy.showLinks) return null;
 
     const visible = PROFILE_LINK_PLATFORMS.map((platform) => links[platform]).filter(
-      (link): link is ProfileLink => Boolean(link?.visible),
+      (link): link is ProfileLink => Boolean(link?.identifier),
     );
 
     if (visible.length === 0) return null;
+
+    const copyIdentifier = async (name: string, identifier: string): Promise<void> => {
+      try {
+        await Share.share({ message: `${name}: ${identifier}` });
+        if (ToastAndroid)
+          ToastAndroid.show(t("social.profile.copied"), ToastAndroid.SHORT);
+      } catch {
+        // The share sheet was dismissed; nothing to recover.
+      }
+    };
 
     return (
       <View style={styles.container}>
@@ -104,26 +107,52 @@ const PublicLinksCard = memo(
         <View style={styles.card}>
           {visible.map((link, index) => {
             const url = profileLinkUrl(link);
+            const brand =
+              BRAND_ACCENTS[link.platform as keyof typeof BRAND_ACCENTS] ?? colors.accent;
             const isLast = index === visible.length - 1;
 
             return (
-              <TouchableOpacity
-                key={link.platform}
-                style={[styles.row, isLast && { borderBottomWidth: 0 }]}
-                activeOpacity={url ? 0.6 : 1}
-                disabled={!url}
-                onPress={url ? () => void Linking.openURL(url) : undefined}
-                accessibilityRole={url ? "link" : undefined}
-              >
-                {platformIcon(link.platform, colors.textMuted)}
+              <View key={link.platform} style={[styles.row, isLast && styles.lastRow]}>
+                {/* eslint-disable-next-line react-native/no-inline-styles -- brand tint is per-row, cannot live in the shared stylesheet */}
+                <View style={[styles.glyphWrap, { backgroundColor: `${brand}22` }]}>
+                  <PlatformGlyph
+                    platform={link.platform}
+                    color={brand}
+                    size={22}
+                    unknownAsDiscord
+                  />
+                </View>
                 <View style={styles.grow}>
-                  <CustomText style={styles.label}>{platformLabel(link.platform)}</CustomText>
+                  <CustomText style={styles.label}>
+                    {platformLabel(link.platform)}
+                  </CustomText>
                   <CustomText style={styles.identifier} numberOfLines={1}>
                     {link.identifier}
                   </CustomText>
+                  <View style={styles.verified}>
+                    <BadgeCheck size={12} color={colors.accentText} />
+                    <CustomText style={styles.verifiedText}>
+                      {t("social.profile.verified")}
+                    </CustomText>
+                  </View>
                 </View>
-                {url && <ExternalLink size={16} color={colors.textMuted} />}
-              </TouchableOpacity>
+                <PressScale
+                  style={styles.iconAction}
+                  onPress={() =>
+                    void copyIdentifier(platformLabel(link.platform), link.identifier)
+                  }
+                >
+                  <Copy size={17} color={colors.textMuted} />
+                </PressScale>
+                {url ? (
+                  <PressScale
+                    style={styles.iconAction}
+                    onPress={() => void Linking.openURL(url)}
+                  >
+                    <ExternalLink size={17} color={colors.accentText} />
+                  </PressScale>
+                ) : null}
+              </View>
             );
           })}
         </View>

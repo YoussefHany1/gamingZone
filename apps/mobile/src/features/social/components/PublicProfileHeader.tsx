@@ -4,16 +4,11 @@ import { Image } from "expo-image";
 import { useTranslation } from "react-i18next";
 import { Pencil } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
-import {
-  DiscordIcon,
-  PlayStationIcon,
-  XboxIcon,
-} from "@/src/components/icons/BrandIcons";
-import { SteamIcon } from "@/src/components/icons/StoreIcons";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { flagEmoji } from "@/src/lib/flagEmoji";
 import type { PublicProfile } from "@gaming-zone/core";
+import PlatformGlyph from "./PlatformGlyph";
 
 export type PublicProfileHeaderProps = {
   profile: PublicProfile;
@@ -81,6 +76,7 @@ const PublicProfileHeader = memo(
         color: c.text,
         fontSize: 20,
         fontWeight: "700",
+        flexShrink: 1,
       },
       handle: {
         color: c.textMuted,
@@ -126,20 +122,9 @@ const PublicProfileHeader = memo(
 
     const countryFlag = flagEmoji(profile.country);
 
-    const platformIcon = useMemo(() => {
-      switch (profile.platform) {
-        case "playstation":
-          return <PlayStationIcon size={16} fill={colors.textMuted} />;
-        case "xbox":
-          return <XboxIcon size={16} fill={colors.textMuted} />;
-        case "discord":
-          return <DiscordIcon size={16} fill={colors.textMuted} />;
-        case "steam":
-          return <SteamIcon size={16} fill={colors.textMuted} />;
-        default:
-          return null;
-      }
-    }, [profile.platform, colors.textMuted]);
+    const platformIcon = (
+      <PlatformGlyph platform={profile.platform} color={colors.textMuted} size={16} />
+    );
 
     const memberSince = useMemo(() => {
       if (!profile.createdAt) return null;
@@ -179,7 +164,7 @@ const PublicProfileHeader = memo(
             />
             <View style={styles.nameBlock}>
               <View style={styles.nameRow}>
-                <CustomText style={[styles.name, { flexShrink: 1 }]} numberOfLines={1}>
+                <CustomText style={[styles.name]} numberOfLines={1}>
                   {profile.displayName}
                 </CustomText>
                 {onEdit && (
@@ -210,7 +195,9 @@ const PublicProfileHeader = memo(
             </View>
           )}
 
-          {profile.bio !== "" && <CustomText style={styles.bio}>{profile.bio}</CustomText>}
+          {profile.bio !== "" && (
+            <CustomText style={styles.bio}>{profile.bio}</CustomText>
+          )}
 
           <View style={styles.metaRow}>
             {platformIcon}

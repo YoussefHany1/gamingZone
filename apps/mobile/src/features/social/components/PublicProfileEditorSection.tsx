@@ -1,18 +1,19 @@
-import React, { memo, useCallback, useState } from "react";
-import { ActivityIndicator, Image, Switch, TextInput, ToastAndroid, TouchableOpacity, View } from "react-native";
+import React, { memo, useCallback } from "react";
+import { ActivityIndicator, ToastAndroid, TouchableOpacity, View } from "react-native";
 import { useTranslation } from "react-i18next";
-import * as ImagePicker from "expo-image-picker";
 import CustomText from "@/src/components/CustomText";
 import SectionTitle from "@/src/components/SectionTitle";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import { uploadProfileImage } from "@/src/features/settings/lib/cloudinary";
-import { logger } from "@/src/lib/logger";
-import {
-  PROFILE_BIO_MAX_LENGTH,
-  PROFILE_STATUS_MAX_LENGTH,
-} from "@gaming-zone/core";
 import { usePublicProfileEditor } from "../hooks/usePublicProfileEditor";
+import { useBannerUpload } from "../hooks/useBannerUpload";
+import {
+  BannerField,
+  BioField,
+  HandleField,
+  PrivacyToggle,
+  StatusField,
+} from "./profileEditor/ProfileEditorFields";
 
 export type PublicProfileEditorSectionProps = {
   uid: string;
@@ -46,8 +47,7 @@ const PublicProfileEditorSection = memo(
       claimDraftHandle,
       save,
     } = usePublicProfileEditor(uid);
-
-    const [uploadingBanner, setUploadingBanner] = useState<boolean>(false);
+    const { uploading: uploadingBanner, pickBanner } = useBannerUpload(setBannerURL);
 
     const styles = useThemeStyles((c) => ({
       container: { marginTop: 24 },
@@ -58,103 +58,6 @@ const PublicProfileEditorSection = memo(
         borderColor: c.border,
         padding: 16,
         gap: 16,
-      },
-      banner: {
-        width: "100%",
-        height: 110,
-        borderRadius: 12,
-        backgroundColor: c.accentSurface,
-      },
-      bannerActions: {
-        flexDirection: "row",
-        gap: 10,
-        marginTop: 10,
-      },
-      smallButton: {
-        flex: 1,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: c.accentBorder,
-        backgroundColor: c.accentSurface,
-        paddingVertical: 10,
-        alignItems: "center",
-      },
-      smallButtonText: {
-        color: c.accentText,
-        fontWeight: "600",
-        fontSize: 13,
-      },
-      label: {
-        color: c.textMuted,
-        fontSize: 13,
-        marginBottom: 6,
-      },
-      input: {
-        color: c.text,
-        backgroundColor: c.background,
-        borderWidth: 1,
-        borderColor: c.border,
-        borderRadius: 10,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        fontSize: 15,
-      },
-      multiline: {
-        minHeight: 90,
-        textAlignVertical: "top",
-      },
-      handleRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-      },
-      at: {
-        color: c.textMuted,
-        fontSize: 16,
-        fontWeight: "600",
-      },
-      claimButton: {
-        borderRadius: 10,
-        backgroundColor: c.accent,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        alignItems: "center",
-        justifyContent: "center",
-      },
-      claimButtonText: {
-        color: c.onAccent,
-        fontWeight: "700",
-        fontSize: 13,
-      },
-      statusRow: {
-        flexDirection: "row",
-        gap: 10,
-      },
-      emojiInput: {
-        width: 64,
-        textAlign: "center",
-      },
-      error: {
-        color: c.danger,
-        fontSize: 12,
-        marginTop: 6,
-      },
-      switchRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-      },
-      switchCopy: { flex: 1 },
-      switchTitle: {
-        color: c.text,
-        fontSize: 14,
-        fontWeight: "600",
-      },
-      switchHint: {
-        color: c.textMuted,
-        fontSize: 12,
-        marginTop: 2,
       },
       saveButton: {
         borderRadius: 12,
@@ -169,41 +72,10 @@ const PublicProfileEditorSection = memo(
       },
     }));
 
-    const pickBanner = useCallback(async (): Promise<void> => {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (permission.status !== "granted") {
-        ToastAndroid.show(t("settings.profile.messages.permissionMsg"), ToastAndroid.LONG);
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [3, 1],
-        quality: 0.8,
-      });
-
-      const uri = result.canceled ? undefined : result.assets[0]?.uri;
-      if (!uri) return;
-
-      setUploadingBanner(true);
-      try {
-        const url = await uploadProfileImage(uri);
-        if (url) setBannerURL(url);
-      } catch (error) {
-        logger.error("[PublicProfileEditorSection] banner upload failed:", error);
-        ToastAndroid.show(t("settings.profile.messages.uploadFailed"), ToastAndroid.LONG);
-      } finally {
-        setUploadingBanner(false);
-      }
-    }, [setBannerURL, t]);
-
     const handleSave = useCallback(async (): Promise<void> => {
       const success = await save();
       ToastAndroid.show(
-        success
-          ? t("social.profile.saveSuccess")
-          : t("social.profile.saveError"),
+        success ? t("social.profile.saveSuccess") : t("social.profile.saveError"),
         ToastAndroid.LONG,
       );
     }, [save, t]);
@@ -224,156 +96,44 @@ const PublicProfileEditorSection = memo(
           subtitle={t("social.profile.publicProfileHint")}
         />
         <View style={styles.card}>
-          {draft.bannerURL && (
-            <Image source={{ uri: draft.bannerURL }} style={styles.banner} resizeMode="cover" />
-          )}
-          <View>
-            <CustomText style={styles.label}>{t("social.profile.banner")}</CustomText>
-            <View style={styles.bannerActions}>
-              <TouchableOpacity
-                style={styles.smallButton}
-                onPress={() => void pickBanner()}
-                disabled={uploadingBanner}
-              >
-                {uploadingBanner ? (
-                  <ActivityIndicator color={colors.accentText} size="small" />
-                ) : (
-                  <CustomText style={styles.smallButtonText}>
-                    {t("social.profile.changeBanner")}
-                  </CustomText>
-                )}
-              </TouchableOpacity>
-              {draft.bannerURL && (
-                <TouchableOpacity
-                  style={styles.smallButton}
-                  onPress={() => setBannerURL(null)}
-                >
-                  <CustomText style={styles.smallButtonText}>
-                    {t("social.profile.removeBanner")}
-                  </CustomText>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-
-          <View>
-            <CustomText style={styles.label}>{t("social.profile.handle")}</CustomText>
-            <View style={styles.handleRow}>
-              <CustomText style={styles.at}>@</CustomText>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                value={draft.handle}
-                onChangeText={setHandle}
-                autoCapitalize="none"
-                autoCorrect={false}
-                maxLength={20}
-                placeholder={t("social.profile.handlePlaceholder")}
-                placeholderTextColor={colors.textMuted}
-              />
-              <TouchableOpacity
-                style={styles.claimButton}
-                onPress={() => void claimDraftHandle()}
-                disabled={claiming}
-              >
-                {claiming ? (
-                  <ActivityIndicator color={colors.onAccent} size="small" />
-                ) : (
-                  <CustomText style={styles.claimButtonText}>
-                    {t("social.profile.handleClaim")}
-                  </CustomText>
-                )}
-              </TouchableOpacity>
-            </View>
-            {handleError && (
-              <CustomText style={styles.error}>
-                {t(`social.profile.handleErrors.${handleError}`)}
-              </CustomText>
-            )}
-          </View>
-
-          <View>
-            <CustomText style={styles.label}>{t("social.profile.bio")}</CustomText>
-            <TextInput
-              style={[styles.input, styles.multiline]}
-              value={draft.bio}
-              onChangeText={setBio}
-              multiline
-              maxLength={PROFILE_BIO_MAX_LENGTH}
-              placeholder={t("social.profile.bioPlaceholder")}
-              placeholderTextColor={colors.textMuted}
-            />
-          </View>
-
-          <View>
-            <CustomText style={styles.label}>{t("social.profile.status")}</CustomText>
-            <View style={styles.statusRow}>
-              <TextInput
-                style={[styles.input, styles.emojiInput]}
-                value={draft.statusEmoji}
-                onChangeText={setStatusEmoji}
-                maxLength={8}
-                placeholder="🎮"
-                placeholderTextColor={colors.textMuted}
-              />
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                value={draft.statusText}
-                onChangeText={setStatusText}
-                maxLength={PROFILE_STATUS_MAX_LENGTH}
-                placeholder={t("social.profile.statusPlaceholder")}
-                placeholderTextColor={colors.textMuted}
-              />
-            </View>
-          </View>
-
-          <View style={styles.switchRow}>
-            <View style={styles.switchCopy}>
-              <CustomText style={styles.switchTitle}>
-                {t("social.profile.privacy.discoverable")}
-              </CustomText>
-              <CustomText style={styles.switchHint}>
-                {t("social.profile.privacy.discoverableHint")}
-              </CustomText>
-            </View>
-            <Switch
-              value={draft.privacy.discoverable}
-              onValueChange={(value) => setPrivacy({ discoverable: value })}
-              trackColor={{ true: colors.accentText, false: colors.border }}
-            />
-          </View>
-
-          <View style={styles.switchRow}>
-            <View style={styles.switchCopy}>
-              <CustomText style={styles.switchTitle}>
-                {t("social.profile.privacy.showLinks")}
-              </CustomText>
-              <CustomText style={styles.switchHint}>
-                {t("social.profile.privacy.showLinksHint")}
-              </CustomText>
-            </View>
-            <Switch
-              value={draft.privacy.showLinks}
-              onValueChange={(value) => setPrivacy({ showLinks: value })}
-              trackColor={{ true: colors.accentText, false: colors.border }}
-            />
-          </View>
-
-          <View style={styles.switchRow}>
-            <View style={styles.switchCopy}>
-              <CustomText style={styles.switchTitle}>
-                {t("social.profile.privacy.showStats")}
-              </CustomText>
-              <CustomText style={styles.switchHint}>
-                {t("social.profile.privacy.showStatsHint")}
-              </CustomText>
-            </View>
-            <Switch
-              value={draft.privacy.showStats}
-              onValueChange={(value) => setPrivacy({ showStats: value })}
-              trackColor={{ true: colors.accentText, false: colors.border }}
-            />
-          </View>
-
+          <BannerField
+            bannerURL={draft.bannerURL}
+            uploading={uploadingBanner}
+            onPick={() => void pickBanner()}
+            onRemove={() => setBannerURL(null)}
+          />
+          <HandleField
+            value={draft.handle}
+            claiming={claiming}
+            error={handleError}
+            onChange={setHandle}
+            onClaim={() => void claimDraftHandle()}
+          />
+          <BioField value={draft.bio} onChange={setBio} />
+          <StatusField
+            emoji={draft.statusEmoji}
+            text={draft.statusText}
+            onChangeEmoji={setStatusEmoji}
+            onChangeText={setStatusText}
+          />
+          <PrivacyToggle
+            title={t("social.profile.privacy.discoverable")}
+            hint={t("social.profile.privacy.discoverableHint")}
+            value={draft.privacy.discoverable}
+            onChange={(value) => setPrivacy({ discoverable: value })}
+          />
+          <PrivacyToggle
+            title={t("social.profile.privacy.showLinks")}
+            hint={t("social.profile.privacy.showLinksHint")}
+            value={draft.privacy.showLinks}
+            onChange={(value) => setPrivacy({ showLinks: value })}
+          />
+          <PrivacyToggle
+            title={t("social.profile.privacy.showStats")}
+            hint={t("social.profile.privacy.showStatsHint")}
+            value={draft.privacy.showStats}
+            onChange={(value) => setPrivacy({ showStats: value })}
+          />
           <TouchableOpacity
             style={styles.saveButton}
             onPress={() => void handleSave()}
