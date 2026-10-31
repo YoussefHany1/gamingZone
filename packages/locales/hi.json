@@ -53,7 +53,8 @@
     "somethingWentWrong": "कुछ गलत हो गया",
     "contactSupport": "सहायता से संपर्क करें",
     "gamer": "गेमर",
-    "edit": "संपादित करें"
+    "edit": "संपादित करें",
+    "save": "सहेजें"
   },
   "auth": {
     "emailPlaceholder": "ईमेल",
@@ -958,7 +959,11 @@
         "friends": "मित्र",
         "sessions": "गेमिंग सत्र"
       },
-      "openLink": "खोलें"
+      "openLink": "खोलें",
+      "verified": "लिंक किया खाता",
+      "copied": "खाता विवरण साझा किए गए",
+      "yourProfile": "आपकी प्रोफ़ाइल",
+      "gamerProfile": "गेमर प्रोफ़ाइल"
     },
     "friends": {
       "title": "Friends",
@@ -968,6 +973,8 @@
       "title": "Requests",
       "empty": "No pending requests",
       "sent": "Request sent",
+      "accepted": "मित्रता अनुरोध स्वीकार किया गया",
+      "declined": "मित्रता अनुरोध अस्वीकार किया गया",
       "accept": "Accept",
       "cancel": "Cancel request"
     },
@@ -985,8 +992,17 @@
       "messagePlaceholder": "संदेश",
       "send": "भेजें",
       "deleteForMe": "मेरे लिए संदेश हटाएं",
+      "edit": "संपादित करें",
+      "messageActions": "संदेश विकल्प",
+      "editConfirm": "क्या यह संदेश संपादित करें?",
       "conversation": "बातचीत",
-      "openGame": "गेम खोलें"
+      "openGame": "गेम खोलें",
+      "members": "स्क्वाड सदस्य",
+      "groupMembers": "{{count}} सदस्य",
+      "directMessage": "सीधा संदेश",
+      "member": "स्क्वाड सदस्य",
+      "edited": "संपादित",
+      "attachmentsComingSoon": "अटैचमेंट जल्द आ रहे हैं"
     },
     "groups": {
       "create": "समूह बनाएं",
@@ -1011,7 +1027,9 @@
       "withdraw": "वापस लें",
       "confirm": "पुष्टि करें",
       "cancel": "रद्द करें",
-      "leave": "छोड़ें"
+      "leave": "छोड़ें",
+      "players": "{{count}} खिलाड़ी",
+      "actionFailed": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।"
     },
     "search": {
       "placeholder": "Search by @handle",
@@ -1022,16 +1040,25 @@
       "removeFriend": "Remove friend",
       "block": "Block",
       "unblock": "Unblock",
-      "message": "संदेश"
+      "message": "संदेश",
+      "more": "और विकल्प"
     },
     "errors": {
       "load": "Could not load social data",
       "search": "खोज विफल रही। कृपया पुनः प्रयास करें।",
-      "chat": "चैट नहीं खोल सके"
+      "chat": "चैट नहीं खोल सके",
+      "friendRequest": "मित्रता अनुरोध नहीं भेजा जा सका",
+      "refresh": "रीफ़्रेश नहीं कर सके"
     },
     "blockedUsers": {
       "title": "अवरुद्ध उपयोगकर्ता",
-      "empty": "कोई अवरुद्ध उपयोगकर्ता नहीं"
+      "empty": "कोई अवरुद्ध उपयोगकर्ता नहीं",
+      "subtitle": "अवरुद्ध खिलाड़ियों को प्रबंधित करें।",
+      "confirmTitle": "खिलाड़ी को अनब्लॉक करें?",
+      "confirmMessage": "यह खिलाड़ी फिर से आपसे संपर्क कर सकेगा।"
+    },
+    "messages": {
+      "refreshed": "रीफ़्रेश हो गया"
     }
   },
   "aiChat": {

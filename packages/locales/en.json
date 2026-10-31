@@ -53,7 +53,8 @@
     "somethingWentWrong": "Something went wrong",
     "contactSupport": "Contact Support",
     "gamer": "Gamer",
-    "edit": "Edit"
+    "edit": "Edit",
+    "save": "Save"
   },
   "auth": {
     "emailPlaceholder": "Email",
@@ -962,7 +963,11 @@
         "friends": "Friends",
         "sessions": "Play sessions"
       },
-      "openLink": "Open"
+      "openLink": "Open",
+      "verified": "Linked account",
+      "copied": "Account details shared",
+      "yourProfile": "YOUR PROFILE",
+      "gamerProfile": "GAMER PROFILE"
     },
     "friends": {
       "title": "Friends",
@@ -972,6 +977,8 @@
       "title": "Requests",
       "empty": "No pending requests",
       "sent": "Request sent",
+      "accepted": "Friend request accepted",
+      "declined": "Friend request declined",
       "accept": "Accept",
       "cancel": "Cancel request"
     },
@@ -989,8 +996,17 @@
       "messagePlaceholder": "Message",
       "send": "Send",
       "deleteForMe": "Delete message for me",
+      "edit": "Edit",
+      "messageActions": "Message actions",
+      "editConfirm": "Edit this message?",
       "conversation": "Conversation",
-      "openGame": "Open game"
+      "openGame": "Open game",
+      "members": "Squad members",
+      "groupMembers": "{{count}} members",
+      "directMessage": "Direct message",
+      "member": "Squad member",
+      "edited": "edited",
+      "attachmentsComingSoon": "Attachments are coming soon"
     },
     "groups": {
       "create": "Create group",
@@ -1015,7 +1031,9 @@
       "withdraw": "Withdraw",
       "confirm": "Confirm",
       "cancel": "Cancel",
-      "leave": "Leave"
+      "leave": "Leave",
+      "players": "{{count}} players",
+      "actionFailed": "Something went wrong. Please try again."
     },
     "search": {
       "placeholder": "Search by @handle",
@@ -1026,16 +1044,25 @@
       "removeFriend": "Remove friend",
       "block": "Block",
       "unblock": "Unblock",
-      "message": "Message"
+      "message": "Message",
+      "more": "More options"
     },
     "errors": {
       "load": "Could not load social data",
       "search": "Search failed. Please try again.",
-      "chat": "Could not open chat"
+      "chat": "Could not open chat",
+      "friendRequest": "Could not send the friend request",
+      "refresh": "Could not refresh"
     },
     "blockedUsers": {
       "title": "Blocked Users",
-      "empty": "No blocked users"
+      "empty": "No blocked users",
+      "subtitle": "Manage players you have blocked.",
+      "confirmTitle": "Unblock player?",
+      "confirmMessage": "This player will be able to interact with you again."
+    },
+    "messages": {
+      "refreshed": "Refreshed"
     }
   },
   "aiChat": {

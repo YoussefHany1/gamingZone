@@ -53,7 +53,8 @@
     "somethingWentWrong": "Algo salió mal",
     "contactSupport": "Contactar soporte",
     "gamer": "Jugador",
-    "edit": "Editar"
+    "edit": "Editar",
+    "save": "Guardar"
   },
   "auth": {
     "emailPlaceholder": "Correo electrónico",
@@ -958,7 +959,11 @@
         "friends": "Amigos",
         "sessions": "Sesiones de juego"
       },
-      "openLink": "Abrir"
+      "openLink": "Abrir",
+      "verified": "Cuenta vinculada",
+      "copied": "Datos de la cuenta compartidos",
+      "yourProfile": "TU PERFIL",
+      "gamerProfile": "PERFIL DE JUGADOR"
     },
     "friends": {
       "title": "Friends",
@@ -968,6 +973,8 @@
       "title": "Requests",
       "empty": "No pending requests",
       "sent": "Request sent",
+      "accepted": "Solicitud de amistad aceptada",
+      "declined": "Solicitud de amistad rechazada",
       "accept": "Accept",
       "cancel": "Cancel request"
     },
@@ -985,8 +992,17 @@
       "messagePlaceholder": "Mensaje",
       "send": "Enviar",
       "deleteForMe": "Eliminar mensaje para mí",
+      "edit": "Editar",
+      "messageActions": "Acciones del mensaje",
+      "editConfirm": "¿Editar este mensaje?",
       "conversation": "Conversación",
-      "openGame": "Abrir juego"
+      "openGame": "Abrir juego",
+      "members": "Miembros del equipo",
+      "groupMembers": "{{count}} miembros",
+      "directMessage": "Mensaje directo",
+      "member": "Miembro del equipo",
+      "edited": "editado",
+      "attachmentsComingSoon": "Los archivos estarán disponibles pronto"
     },
     "groups": {
       "create": "Crear grupo",
@@ -1011,7 +1027,9 @@
       "withdraw": "Retirar",
       "confirm": "Confirmar",
       "cancel": "Cancelar",
-      "leave": "Salir"
+      "leave": "Salir",
+      "players": "{{count}} jugadores",
+      "actionFailed": "Algo salió mal. Inténtalo de nuevo."
     },
     "search": {
       "placeholder": "Search by @handle",
@@ -1022,16 +1040,25 @@
       "removeFriend": "Remove friend",
       "block": "Block",
       "unblock": "Unblock",
-      "message": "Mensaje"
+      "message": "Mensaje",
+      "more": "Más opciones"
     },
     "errors": {
       "load": "Could not load social data",
       "search": "No se pudo buscar. Inténtalo de nuevo.",
-      "chat": "No se pudo abrir el chat"
+      "chat": "No se pudo abrir el chat",
+      "friendRequest": "No se pudo enviar la solicitud de amistad",
+      "refresh": "No se pudo actualizar"
     },
     "blockedUsers": {
       "title": "Usuarios bloqueados",
-      "empty": "No hay usuarios bloqueados"
+      "empty": "No hay usuarios bloqueados",
+      "subtitle": "Gestiona los jugadores que has bloqueado.",
+      "confirmTitle": "¿Desbloquear jugador?",
+      "confirmMessage": "Este jugador podrá volver a interactuar contigo."
+    },
+    "messages": {
+      "refreshed": "Actualizado"
     }
   },
   "aiChat": {

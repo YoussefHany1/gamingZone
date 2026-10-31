@@ -47,30 +47,39 @@ async function authHeaders(): Promise<{ Authorization: string }> {
   return { Authorization: `Bearer ${token}` };
 }
 
-/** POSTs JSON to a social endpoint. Throws {@link SocialApiError} on failure. */
-export async function callSocialApi<T>(
+/**
+ * Shared request path for both verbs: attach the ID token, call the endpoint
+ * and normalise any rejection into {@link SocialApiError}.
+ */
+async function request<T>(
+  method: "get" | "post",
   path: string,
-  body: Record<string, unknown>,
+  body?: Record<string, unknown>,
 ): Promise<T> {
   const headers = await authHeaders();
   try {
-    const response = await apiClient.post<T>(path, body, { headers });
+    const response =
+      method === "post"
+        ? await apiClient.post<T>(path, body, { headers })
+        : await apiClient.get<T>(path, { headers });
     return response.data;
   } catch (error: unknown) {
     throw toSocialApiError(error);
   }
 }
 
+/** POSTs JSON to a social endpoint. Throws {@link SocialApiError} on failure. */
+export function callSocialApi<T>(
+  path: string,
+  body: Record<string, unknown>,
+): Promise<T> {
+  return request<T>("post", path, body);
+}
+
 /**
  * GETs a social endpoint. Read-only endpoints (`/social/search`) are registered
  * as GET on the backend, so they must not go through the POST helper.
  */
-export async function callSocialApiGet<T>(path: string): Promise<T> {
-  const headers = await authHeaders();
-  try {
-    const response = await apiClient.get<T>(path, { headers });
-    return response.data;
-  } catch (error: unknown) {
-    throw toSocialApiError(error);
-  }
+export function callSocialApiGet<T>(path: string): Promise<T> {
+  return request<T>("get", path);
 }

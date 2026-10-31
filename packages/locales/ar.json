@@ -53,7 +53,8 @@
     "somethingWentWrong": "حدث خطأ ما",
     "contactSupport": "الدعم",
     "gamer": "لاعب",
-    "edit": "تعديل"
+    "edit": "تعديل",
+    "save": "حفظ"
   },
   "auth": {
     "emailPlaceholder": "البريد الإلكتروني",
@@ -958,7 +959,11 @@
         "friends": "الأصدقاء",
         "sessions": "جلسات اللعب"
       },
-      "openLink": "فتح"
+      "openLink": "فتح",
+      "verified": "حساب مرتبط",
+      "copied": "تمت مشاركة بيانات الحساب",
+      "yourProfile": "ملفك الشخصي",
+      "gamerProfile": "ملف اللاعب"
     },
     "friends": {
       "title": "Friends",
@@ -968,6 +973,8 @@
       "title": "Requests",
       "empty": "No pending requests",
       "sent": "Request sent",
+      "accepted": "تم قبول طلب الصداقة",
+      "declined": "تم رفض طلب الصداقة",
       "accept": "Accept",
       "cancel": "Cancel request"
     },
@@ -985,8 +992,17 @@
       "messagePlaceholder": "رسالة",
       "send": "إرسال",
       "deleteForMe": "حذف الرسالة من جانبي",
+      "edit": "تعديل",
+      "messageActions": "إجراءات الرسالة",
+      "editConfirm": "هل تريد تعديل هذه الرسالة؟",
       "conversation": "محادثة",
-      "openGame": "فتح اللعبة"
+      "openGame": "فتح اللعبة",
+      "members": "أعضاء الفريق",
+      "groupMembers": "{{count}} أعضاء",
+      "directMessage": "رسالة مباشرة",
+      "member": "عضو الفريق",
+      "edited": "تم التعديل",
+      "attachmentsComingSoon": "المرفقات قريبًا"
     },
     "groups": {
       "create": "إنشاء مجموعة",
@@ -1011,7 +1027,9 @@
       "withdraw": "سحب",
       "confirm": "تأكيد",
       "cancel": "إلغاء",
-      "leave": "مغادرة"
+      "leave": "مغادرة",
+      "players": "{{count}} لاعبين",
+      "actionFailed": "حدث خطأ ما. حاول مرة أخرى."
     },
     "search": {
       "placeholder": "Search by @handle",
@@ -1022,16 +1040,25 @@
       "removeFriend": "Remove friend",
       "block": "Block",
       "unblock": "Unblock",
-      "message": "مراسلة"
+      "message": "مراسلة",
+      "more": "المزيد من الخيارات"
     },
     "errors": {
       "load": "Could not load social data",
       "search": "تعذّر البحث. حاول مرة أخرى.",
-      "chat": "تعذر فتح المحادثة"
+      "chat": "تعذر فتح المحادثة",
+      "friendRequest": "تعذّر إرسال طلب الصداقة",
+      "refresh": "تعذّر التحديث"
     },
     "blockedUsers": {
       "title": "المستخدمون المحظورون",
-      "empty": "لا يوجد مستخدمون محظورون"
+      "empty": "لا يوجد مستخدمون محظورون",
+      "subtitle": "إدارة اللاعبين الذين حظرتهم.",
+      "confirmTitle": "إلغاء حظر اللاعب؟",
+      "confirmMessage": "سيتمكن هذا اللاعب من التفاعل معك مجددًا."
+    },
+    "messages": {
+      "refreshed": "تم التحديث"
     }
   },
   "aiChat": {

@@ -1,27 +1,45 @@
 import firestore from "@react-native-firebase/firestore";
 import type { Conversation, ReadPosition, SocialMessage } from "@gaming-zone/core";
-import { dmKey } from "@gaming-zone/core";
+import { dmKey, timestampToMillis } from "@gaming-zone/core";
 import { callSocialApi } from "./socialApi";
 
 export function directConversationId(uidA: string, uidB: string): string {
   return dmKey(uidA, uidB);
 }
 
-/** Firestore stores timestamps as `Timestamp`; the shared model expects millis. */
-function toMillis(value: unknown): number | null {
-  if (typeof value === "number") return value;
-  const candidate = value as { toMillis?: () => number } | null;
-  return typeof candidate?.toMillis === "function" ? candidate.toMillis() : null;
-}
-
 function mapMessage(id: string, data: Record<string, unknown>): SocialMessage {
   return {
     ...(data as Omit<SocialMessage, "id" | "createdAt" | "editedAt" | "deletedAt">),
     id,
-    createdAt: toMillis(data.createdAt),
-    editedAt: toMillis(data.editedAt),
-    deletedAt: toMillis(data.deletedAt),
+    createdAt: timestampToMillis(data.createdAt),
+    editedAt: timestampToMillis(data.editedAt),
+    deletedAt: timestampToMillis(data.deletedAt),
   };
+}
+
+type RawLastMessage = Omit<NonNullable<Conversation["lastMessage"]>, "createdAt"> & {
+  createdAt?: unknown;
+};
+
+/**
+ * `Conversation` is a millis-based model, but Firestore stores `Timestamp`
+ * objects. Every read path must go through this mapper or `relativeTime` and
+ * the unread comparison receive a `Timestamp` where they expect a number.
+ */
+function mapConversation(id: string, data: Record<string, unknown>): Conversation {
+  const lastMessage = (data.lastMessage ?? null) as RawLastMessage | null;
+  return {
+    ...(data as Omit<Conversation, "id" | "lastMessage" | "lastMessageAt">),
+    id,
+    lastMessage: lastMessage
+      ? { ...lastMessage, createdAt: timestampToMillis(lastMessage.createdAt) }
+      : null,
+    lastMessageAt: timestampToMillis(data.lastMessageAt),
+  };
+}
+
+function mapReadPosition(data: Record<string, unknown> | undefined): ReadPosition {
+  return { lastReadAt: timestampToMillis(data?.lastReadAt) };
 }
 
 export async function sendMessage(
@@ -43,13 +61,7 @@ export function listenToConversations(
     .where("members", "array-contains", uid)
     .orderBy("lastMessageAt", "desc")
     .onSnapshot(
-      (snapshot) =>
-        onChange(
-          snapshot.docs.map((item) => ({
-            id: item.id,
-            ...(item.data() as Omit<Conversation, "id">),
-          })),
-        ),
+      (snapshot) => onChange(snapshot.docs.map((item) => mapConversation(item.id, item.data()))),
       onError,
     );
 }
@@ -102,8 +114,7 @@ export function listenToReadPosition(
     .collection("reads")
     .doc(uid)
     .onSnapshot(
-      (snapshot) =>
-        onChange((snapshot?.data() as ReadPosition | undefined) ?? { lastReadAt: null }),
+      (snapshot) => onChange(mapReadPosition(snapshot?.data())),
       onError,
     );
 }
@@ -120,15 +131,26 @@ export async function markConversationRead(
     .set({ lastReadAt: firestore.FieldValue.serverTimestamp() }, { merge: true });
 }
 
+export async function editMessage(
+  conversationId: string,
+  messageId: string,
+  text: string,
+): Promise<void> {
+  await callSocialApi("/social/messages/action", {
+    conversationId,
+    messageId,
+    action: "edit",
+    text,
+  });
+}
+
 export async function deleteMessageForMe(
   conversationId: string,
   messageId: string,
-  uid: string,
 ): Promise<void> {
-  await firestore()
-    .collection("conversations")
-    .doc(conversationId)
-    .collection("messages")
-    .doc(messageId)
-    .update({ deletedFor: firestore.FieldValue.arrayUnion(uid) });
+  await callSocialApi("/social/messages/action", {
+    conversationId,
+    messageId,
+    action: "delete",
+  });
 }
