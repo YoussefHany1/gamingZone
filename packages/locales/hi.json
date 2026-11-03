@@ -880,7 +880,8 @@
       "emptyLibrary": "आपकी लाइब्रेरी खाली है — आँकड़े बनाने के लिए खेल जोड़ें।",
       "browseGames": "खेल ब्राउज़ करें",
       "editProfile": "प्रोफ़ाइल संपादित करें",
-      "myLists": "मेरी सूचियाँ"
+      "myLists": "मेरी सूचियाँ",
+      "blockedUsers": "ब्लॉक किए गए उपयोगकर्ता"
     },
     "admin": {
       "dashboard": "एडमिन डैशबोर्ड",
@@ -963,7 +964,11 @@
       "verified": "लिंक किया खाता",
       "copied": "खाता विवरण साझा किए गए",
       "yourProfile": "आपकी प्रोफ़ाइल",
-      "gamerProfile": "गेमर प्रोफ़ाइल"
+      "gamerProfile": "गेमर प्रोफ़ाइल",
+      "mutualFriends": "{{count}} मित्र साझा हैं",
+      "librarySection": "गेम लाइब्रेरी",
+      "libraryCount": "{{count}} गेम",
+      "libraryHidden": "यह खिलाड़ी अपनी गेम लाइब्रेरी निजी रखता है"
     },
     "friends": {
       "title": "Friends",
@@ -1002,7 +1007,11 @@
       "directMessage": "सीधा संदेश",
       "member": "स्क्वाड सदस्य",
       "edited": "संपादित",
-      "attachmentsComingSoon": "अटैचमेंट जल्द आ रहे हैं"
+      "attachmentsComingSoon": "अटैचमेंट जल्द आ रहे हैं",
+      "copy": "कॉपी करें",
+      "copied": "संदेश कॉपी हो गया",
+      "sent": "भेजा गया",
+      "read": "पढ़ा गया"
     },
     "groups": {
       "create": "समूह बनाएं",
@@ -1011,13 +1020,23 @@
       "selected": "चयनित",
       "select": "चुनें",
       "cancel": "रद्द करें",
-      "fallback": "समूह"
+      "fallback": "समूह",
+      "settings": "ग्रुप सेटिंग",
+      "renameSuccess": "ग्रुप अपडेट हो गया",
+      "remove": "हटाएँ",
+      "addMember": "सदस्य जोड़ें",
+      "add": "जोड़ें",
+      "error": "ग्रुप अपडेट नहीं हो सका"
     },
     "sessions": {
       "title": "गेमिंग सत्र",
       "empty": "अभी कोई सत्र नहीं",
       "gameName": "गेम का नाम",
       "gameId": "गेम आईडी",
+      "searchGame": "गेम खोजें",
+      "changeGame": "गेम बदलें",
+      "noGamesFound": "कोई गेम नहीं मिला",
+      "selectGameFirst": "पहले एक गेम चुनें",
       "schedule": "शेड्यूल करें",
       "saving": "सहेजा जा रहा है…",
       "scheduled": "सत्र शेड्यूल हो गया",
@@ -1029,7 +1048,21 @@
       "cancel": "रद्द करें",
       "leave": "छोड़ें",
       "players": "{{count}} खिलाड़ी",
-      "actionFailed": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।"
+      "actionFailed": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।",
+      "addToCalendar": "कैलेंडर में जोड़ें",
+      "calendarError": "कैलेंडर नहीं खुल सका",
+      "links": {
+        "add": "पार्टी लिंक (वैकल्पिक)",
+        "urlPlaceholder": "https://discord.gg/…",
+        "labelPlaceholder": "लेबल (वैकल्पिक)",
+        "invalidUrl": "पूरा https:// लिंक इस्तेमाल करें",
+        "openError": "लिंक नहीं खुल सका",
+        "kind": {
+          "voice": "वॉइस",
+          "lobby": "लॉबी",
+          "party": "पार्टी"
+        }
+      }
     },
     "search": {
       "placeholder": "Search by @handle",
@@ -1059,6 +1092,10 @@
     },
     "messages": {
       "refreshed": "रीफ़्रेश हो गया"
+    },
+    "presence": {
+      "online": "ऑनलाइन",
+      "lastSeen": "अंतिम बार {{when}} देखा गया"
     }
   },
   "aiChat": {

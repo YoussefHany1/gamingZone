@@ -1,14 +1,14 @@
 import React, { memo } from "react";
 import { View } from "react-native";
 import { useTranslation } from "react-i18next";
-import { AtSign, Cpu, Gamepad2, List } from "lucide-react-native";
+import { AtSign, Ban, Cpu, Gamepad2, List } from "lucide-react-native";
 import SectionTitle from "@/src/components/SectionTitle";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import ProfileMenuItem from "./ProfileMenuItem";
 import type { ProfileMenuProps } from "./types";
 
 const ProfileMenu = memo(
-  ({ onPublicProfile, onMyLists, onPcSpecs, onConnectedApps }: ProfileMenuProps): React.ReactElement => {
+  ({ onPublicProfile, onMyLists, onPcSpecs, onConnectedApps, onBlockedUsers }: ProfileMenuProps): React.ReactElement => {
     const { t } = useTranslation();
 
     const styles = useThemeStyles((c) => ({
@@ -47,6 +47,11 @@ const ProfileMenu = memo(
             icon={Gamepad2}
             label={t("settings.profile.connectedApps") || t("settings.profile.linking.title") || "Connected Apps"}
             onPress={onConnectedApps}
+          />
+          <ProfileMenuItem
+            icon={Ban}
+            label={t("settings.profileShowcase.blockedUsers")}
+            onPress={onBlockedUsers}
             showDivider={false}
           />
         </View>

@@ -2,14 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { MessageCircle, Send, Trash2 } from "lucide-react";
-import { arrayUnion, doc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import type { Conversation, ProfileSearchHit, SocialMessage } from "@gaming-zone/core";
 import { db } from "@/lib/firebase";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useLangStore } from "@/store/useLangStore";
 import { useSocialChats } from "../hooks/useSocialChats";
 import { useChatProfiles } from "../hooks/useChatProfiles";
-import { cancelSession, confirmSession, createPlaySession, leaveSession, proposeSlot, respondToSlot, sendSocialMessage, withdrawProposal } from "../lib/socialApi";
+import { cancelSession, confirmSession, createPlaySession, leaveSession, proposeSlot, respondToSlot, sendSocialMessage, updateSocialMessage, withdrawProposal } from "../lib/socialApi";
 import { usePlaySessions } from "../hooks/usePlaySessions";
 
 function displayTime(value: unknown): string {
@@ -35,8 +35,14 @@ export function SocialChatPanel({ profiles }: { profiles: ProfileSearchHit[] }) 
   const [sessionError, setSessionError] = useState("");
   const [minimumSessionStart] = useState(() => new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16));
   const [sessionBusy, setSessionBusy] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
   const chats = useSocialChats(uid);
   const sessions = usePlaySessions(uid).filter((session) => session.conversationId === chats.selectedId && session.status !== "completed" && session.status !== "cancelled");
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const profileByUid = useMemo(
     () => Object.fromEntries(profiles.map((profile) => [profile.uid, profile])),
@@ -90,6 +96,8 @@ export function SocialChatPanel({ profiles }: { profiles: ProfileSearchHit[] }) 
     }
   };
 
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+
   const submit = async () => {
     const value = text.trim();
     if (!value || !chats.selectedId || sending) return;
@@ -97,13 +105,30 @@ export function SocialChatPanel({ profiles }: { profiles: ProfileSearchHit[] }) 
     setSendError(false);
     setText("");
     try {
-      await sendSocialMessage(chats.selectedId, value);
+      if (editingMessageId) {
+        await updateSocialMessage({ conversationId: chats.selectedId, messageId: editingMessageId, action: "edit", text: value });
+        setEditingMessageId(null);
+      } else {
+        await sendSocialMessage(chats.selectedId, value);
+      }
     } catch {
       setSendError(true);
       setText(value);
     } finally {
       setSending(false);
     }
+  };
+
+  const canActOnMessage = (message: SocialMessage) =>
+    message.senderId === uid &&
+    !message.deletedFor?.includes(uid) &&
+    message.createdAt !== null &&
+    now - message.createdAt <= 10 * 60 * 1000;
+
+  const startEditing = (message: SocialMessage) => {
+    if (!canActOnMessage(message)) return;
+    setEditingMessageId(message.id);
+    setText(message.text);
   };
 
   return (
@@ -187,7 +212,16 @@ export function SocialChatPanel({ profiles }: { profiles: ProfileSearchHit[] }) 
                 const sender = senderProfiles[message.senderId] ?? profileByUid[message.senderId];
                 const showAvatar = !own && message.senderId !== "system";
                 return (
-                  <div key={message.id} className={`flex items-end gap-2 ${own ? "justify-end" : "justify-start"}`}>
+                  <div
+                    key={message.id}
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                      if (!canActOnMessage(message)) return;
+                      const shouldEdit = window.confirm(t("social.chats.editConfirm"));
+                      if (shouldEdit) startEditing(message);
+                    }}
+                    className={`flex items-end gap-2 ${own ? "justify-end" : "justify-start"}`}
+                  >
                     {showAvatar ? (
                       sender?.photoURL ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -214,14 +248,15 @@ export function SocialChatPanel({ profiles }: { profiles: ProfileSearchHit[] }) 
                       ) : null}
                       <div className="flex items-center justify-between gap-3 mt-1">
                         <span className="text-xs opacity-60">{displayTime(message.createdAt)}</span>
-                        {!removed ? (
+                        {!removed && own && canActOnMessage(message) ? (
                           <button
                             onClick={() => {
                               if (!chats.selectedId) return;
-                              void updateDoc(
-                                doc(db, "conversations", chats.selectedId, "messages", message.id),
-                                { deletedFor: arrayUnion(uid) },
-                              );
+                              void updateSocialMessage({
+                                conversationId: chats.selectedId,
+                                messageId: message.id,
+                                action: "delete",
+                              });
                             }}
                             className="opacity-60 hover:opacity-100"
                             aria-label={t("social.chats.deleteForMe")}

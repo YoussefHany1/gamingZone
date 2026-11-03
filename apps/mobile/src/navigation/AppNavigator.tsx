@@ -37,6 +37,7 @@ import {
   LanguageSelectScreen as LanguageScreen,
   ThemeScreen,
   ContactScreen,
+  BlockedUsersScreen,
 } from "@/src/features/settings";
 import PcSpecsScreen from "@/src/features/pcSpecs/screens/PcSpecsScreen";
 import { UserGamesScreen, UserListsScreen } from "@/src/features/lists";
@@ -47,7 +48,6 @@ import {
   ChatScreen,
   SocialScreen,
   UserProfileScreen,
-  BlockedUsersScreen,
   useProfileBootstrap,
 } from "@/src/features/social";
 import { LoginScreen, RegisterScreen, ForgotPasswordScreen } from "@/src/features/auth";
@@ -109,6 +109,7 @@ export type AuthStackParamList = {
 export type SocialStackParamList = {
   SocialScreen: undefined;
   ChatScreen: { conversationId: string };
+  UserProfile: { uid?: string; handle?: string } | undefined;
 };
 
 //  Navigators
@@ -233,12 +234,20 @@ const GamesStack = memo(() => {
 });
 GamesStack.displayName = "GamesStack";
 
-const SocialStack = memo(() => (
-  <SocialStackNav.Navigator id="SocialStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
-    <SocialStackNav.Screen name="SocialScreen" component={SocialScreen} />
-    <SocialStackNav.Screen name="ChatScreen" component={ChatScreen} />
-  </SocialStackNav.Navigator>
-));
+const SocialStack = memo(() => {
+  const { t } = useTranslation();
+  return (
+    <SocialStackNav.Navigator id="SocialStack" screenOptions={HIDDEN_HEADER_OPTIONS}>
+      <SocialStackNav.Screen name="SocialScreen" component={SocialScreen} />
+      <SocialStackNav.Screen name="ChatScreen" component={ChatScreen} />
+      <SocialStackNav.Screen
+        name="UserProfile"
+        component={UserProfileScreen}
+        options={{ title: t("social.profile.title") }}
+      />
+    </SocialStackNav.Navigator>
+  );
+});
 SocialStack.displayName = "SocialStack";
 
 const SettingsStack = memo(() => {
@@ -475,17 +484,17 @@ export const MainAppTabs = memo(() => {
             </FreezeScene>
           )}
         </Tab.Screen>
-        <Tab.Screen name="Settings">
-          {({ route }) => (
-            <FreezeScene routeKey={route.key}>
-              <SettingsStack />
-            </FreezeScene>
-          )}
-        </Tab.Screen>
         <Tab.Screen name="Social">
           {({ route }) => (
             <FreezeScene routeKey={route.key}>
               <SocialStack />
+            </FreezeScene>
+          )}
+        </Tab.Screen>
+        <Tab.Screen name="Settings">
+          {({ route }) => (
+            <FreezeScene routeKey={route.key}>
+              <SettingsStack />
             </FreezeScene>
           )}
         </Tab.Screen>

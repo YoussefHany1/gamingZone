@@ -1,0 +1,38 @@
+diff --git a/node_modules/expo-dev-launcher/android/src/debug/java/expo/modules/devlauncher/DevLauncherController.kt b/node_modules/expo-dev-launcher/android/src/debug/java/expo/modules/devlauncher/DevLauncherController.kt
+index 1a3b870..768cd68 100644
+--- a/node_modules/expo-dev-launcher/android/src/debug/java/expo/modules/devlauncher/DevLauncherController.kt
++++ b/node_modules/expo-dev-launcher/android/src/debug/java/expo/modules/devlauncher/DevLauncherController.kt
+@@ -386,21 +386,29 @@ class DevLauncherController private constructor(
+   }
+ 
+   private fun ensureHostWasCleared(host: ReactHost, activityToBeInvalidated: ReactActivity? = null) {
+-    if (host.currentReactContext?.hasActiveReactInstance() == true) {
+-      runBlockingOnMainThread {
++    if (host.currentReactContext != null) {
++      val destroyTask = runBlockingOnMainThread {
+         networkInterceptor?.close()
+         networkInterceptor = null
+         clearHost(host, activityToBeInvalidated)
+       }
++      if (Thread.currentThread() != android.os.Looper.getMainLooper().thread) {
++        try {
++          destroyTask.waitForCompletion()
++        } catch (e: Exception) {
++          // Ignore errors while waiting for the previous React host to be destroyed.
++        }
++      }
+     }
+   }
+ 
+   @UiThread
+-  private fun clearHost(host: ReactHost, activityToBeInvalidated: ReactActivity?) {
+-    host.destroy("DevLauncher reloading app", null)
++  private fun clearHost(host: ReactHost, activityToBeInvalidated: ReactActivity?): com.facebook.react.interfaces.TaskInterface<Void> {
++    val task = host.destroy("DevLauncher reloading app", null)
+     activityToBeInvalidated?.let {
+       invalidateActivity(it)
+     }
++    return task
+   }
+ 
+   override fun getCurrentReactActivityDelegate(activity: ReactActivity, delegateSupplierDevLauncher: DevLauncherReactActivityDelegateSupplier): ReactActivityDelegate {

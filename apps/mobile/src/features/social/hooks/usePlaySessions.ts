@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import firestore from "@react-native-firebase/firestore";
 import { logger } from "@/src/lib/logger";
+import type { SessionLink } from "../lib/sessionLink";
 
 export type PlaySession = {
   id: string;
@@ -8,6 +9,8 @@ export type PlaySession = {
   participantUids: string[];
   gameId: string | number;
   gameName: string;
+  /** Party-room links (voice/lobby); absent on sessions created before this field existed. */
+  links?: SessionLink[];
   proposals: Array<{
     id: string;
     proposerUid: string;

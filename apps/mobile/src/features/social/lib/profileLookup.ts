@@ -6,7 +6,8 @@
  * different fields, so the mapping is split here instead of being repeated in
  * every hook.
  */
-import type { ProfileSearchHit } from "@gaming-zone/core";
+import type { ProfileSearchHit, ProfileStatus } from "@gaming-zone/core";
+import { mapStatus } from "@gaming-zone/core";
 
 export type ChatSenderProfile = {
   displayName: string;
@@ -41,5 +42,18 @@ export function mapChatSenderProfile(
   return {
     displayName: asString(source.displayName, "Player"),
     photoURL: typeof source.photoURL === "string" ? source.photoURL : null,
+  };
+}
+
+/** Friends list row: identity plus the profile status text (if any). */
+export function mapFriendProfile(
+  uid: string,
+  data: Record<string, unknown> | undefined,
+): ProfileSearchHit & { statusText?: string } {
+  const hit = mapProfileSearchHit(uid, data);
+  const status = mapStatus((data ?? {}).status);
+  return {
+    ...hit,
+    ...(status?.text ? { statusText: status.text } : {}),
   };
 }

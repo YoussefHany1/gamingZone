@@ -41,4 +41,7 @@ export interface SocialMessage {
 
 export interface ReadPosition {
   lastReadAt: number | null;
+  muted?: boolean;
+  archived?: boolean;
+  deletedAt?: number | null;
 }

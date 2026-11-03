@@ -25,6 +25,49 @@ function isUid(value) {
   return typeof value === 'string' && value.length > 0 && value.length <= 128 && !value.includes('/');
 }
 
+// ─── Session links (party rooms) ─────────────────────────────────────────────
+//
+// Mirrors `validateSessionUrl` in mobile `sessionLink.ts` — https-only,
+// whitespace-free, dotted host (also rejects `user@host` userinfo tricks),
+// ≤2048 chars. `javascript:` / `intent:` / custom app schemes are rejected
+// by construction, and the client re-validates again before `openURL`.
+
+const SESSION_LINK_LIMIT = 5;
+const SESSION_LINK_MAX_LENGTH = 2048;
+const SESSION_LINK_KINDS = new Set(['voice', 'lobby', 'party']);
+
+function normalizeSessionUrl(url) {
+  if (typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (!trimmed || trimmed.length > SESSION_LINK_MAX_LENGTH || /\s/.test(trimmed)) return null;
+  if (!/^https:\/\//i.test(trimmed)) return null;
+  const host = trimmed.slice('https://'.length).split(/[/?#]/)[0] ?? '';
+  if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+(?::\d{1,5})?$/i.test(host)) return null;
+  return trimmed;
+}
+
+function generateLinkId() {
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/** Normalizes a client's links array: invalid rows are dropped, capped at 5. */
+function normalizeSessionLinks(input) {
+  if (!Array.isArray(input)) return [];
+  const links = [];
+  for (const link of input) {
+    if (!link || typeof link !== 'object') continue;
+    const url = normalizeSessionUrl(link.url);
+    if (!url) continue;
+    // A missing kind means a generic party link; explicit unknown kinds are
+    // ignored so a schema change cannot smuggle arbitrary strings per row.
+    const kind = link.kind === undefined ? 'party' : SESSION_LINK_KINDS.has(link.kind) ? link.kind : null;
+    if (!kind) continue;
+    const label = typeof link.label === 'string' ? link.label.trim().slice(0, 40) || null : null;
+    links.push({ id: generateLinkId(), label, url, kind });
+  }
+  return links.slice(0, SESSION_LINK_LIMIT);
+}
+
 let firestoreSdkPromise;
 function loadFirestoreSdk() {
   firestoreSdkPromise ??= import('firebase-admin/firestore');
@@ -55,6 +98,7 @@ export async function createPlaySession(uid, input) {
   const db = admin.firestore;
   const conversationRef = db.collection('conversations').doc(conversationId);
   const sessionRef = db.collection('playSessions').doc();
+  const links = normalizeSessionLinks(input?.links);
 
   await db.runTransaction(async (transaction) => {
     const conversationSnap = await transaction.get(conversationRef);
@@ -68,6 +112,7 @@ export async function createPlaySession(uid, input) {
       participantUids: participants,
       gameId,
       gameName,
+      links,
       proposals: [],
       confirmedProposalId: null,
       startsAt: null,
@@ -80,13 +125,14 @@ export async function createPlaySession(uid, input) {
   return { sessionId: sessionRef.id };
 }
 
+// NOTE: `FieldValue.serverTimestamp()` is invalid inside array elements, so
+// proposal documents stamp `createdAt` as a plain ms epoch instead.
 export async function proposeSlot(uid, sessionId, input) {
   const startsAt = normalizeStartsAt(input?.startsAt);
   const durationMin = Number.isFinite(input?.durationMin) ? Math.max(15, Math.min(480, Math.floor(input.durationMin))) : 60;
   const validation = validateStartsAt(startsAt);
   if (validation) throw new SessionError(validation.replaceAll('_', ' '), 400, validation);
   const admin = await requireAdmin();
-  const { FieldValue } = await loadFirestoreSdk();
   const db = admin.firestore;
   const proposalId = `${uid}_${Date.now()}`;
   await db.runTransaction(async (transaction) => {
@@ -97,7 +143,7 @@ export async function proposeSlot(uid, sessionId, input) {
     if (proposals.length >= MAX_PROPOSALS) throw new SessionError('Proposal limit reached', 409, 'proposal_limit');
     const responses = Object.fromEntries(data.participantUids.map((participant) => [participant, participant === uid ? 'accepted' : 'pending']));
     transaction.update(ref, {
-      proposals: [...proposals, { id: proposalId, proposerUid: uid, startsAt, durationMin, responses, createdAt: FieldValue.serverTimestamp(), status: 'open' }],
+      proposals: [...proposals, { id: proposalId, proposerUid: uid, startsAt, durationMin, responses, createdAt: Date.now(), status: 'open' }],
     });
   });
   return { proposalId };
@@ -181,6 +227,42 @@ export async function leaveSession(uid, sessionId) {
   return { left: true };
 }
 
+/**
+ * Adds or removes a party-room link on a session. Creator-only, matching the
+ * single-admin feel of groups: nobody else edits another player's lobby list.
+ * Returns the resulting links array so callers can reconcile their cache.
+ */
+export async function updateSessionLinks(uid, sessionId, input) {
+  const action = input?.action;
+  if (action !== 'add' && action !== 'remove') throw invalid();
+  const admin = await requireAdmin();
+  const db = admin.firestore;
+  return db.runTransaction(async (transaction) => {
+    const { ref, data } = await readSession(transaction, db, sessionId);
+    if (!data.participantUids?.includes(uid)) throw new SessionError('Not a participant', 403, 'not_participant');
+    if (data.createdBy !== uid) throw new SessionError('Only the session creator can manage links', 403, 'not_creator');
+    if (!['proposed', 'confirmed'].includes(data.status)) throw new SessionError('Session is closed', 409, 'session_closed');
+
+    const links = Array.isArray(data.links) ? data.links.filter((link) => link && typeof link === 'object') : [];
+    if (action === 'add') {
+      const url = normalizeSessionUrl(input?.link?.url);
+      if (!url) throw new SessionError('Links must be https:// URLs', 400, 'invalid_link');
+      if (links.some((link) => link.url === url)) throw new SessionError('This link is already attached', 409, 'duplicate_link');
+      if (links.length >= SESSION_LINK_LIMIT) throw new SessionError('Link limit reached', 409, 'link_limit');
+      const kind = input?.link?.kind === undefined ? 'party' : SESSION_LINK_KINDS.has(input.link.kind) ? input.link.kind : null;
+      if (!kind) throw invalid();
+      const label = typeof input?.link?.label === 'string' ? input.link.label.trim().slice(0, 40) || null : null;
+      links.push({ id: generateLinkId(), label, url, kind });
+    } else if (typeof input?.link?.id !== 'string') {
+      throw invalid();
+    }
+
+    const next = action === 'remove' ? links.filter((link) => link.id !== input.link.id) : links;
+    transaction.update(ref, { links: next });
+    return { links: next };
+  });
+}
+
 export function registerSessionRoutes(app, { AppError, asyncRoute }) {
   const auth = requireAuth(AppError);
   const rethrow = (cause) => {
@@ -203,6 +285,7 @@ export function registerSessionRoutes(app, { AppError, asyncRoute }) {
   post('/social/sessions/respond', (req) => respondToSlot(req.authUid, req.body?.sessionId, req.body?.proposalId, req.body?.response));
   post('/social/sessions/withdraw', (req) => withdrawProposal(req.authUid, req.body?.sessionId, req.body?.proposalId));
   post('/social/sessions/confirm', (req) => confirmSession(req.authUid, req.body?.sessionId, req.body?.proposalId));
+  post('/social/sessions/links', (req) => updateSessionLinks(req.authUid, req.body?.sessionId, req.body));
   post('/social/sessions/cancel', (req) => cancelSession(req.authUid, req.body?.sessionId));
   post('/social/sessions/leave', (req) => leaveSession(req.authUid, req.body?.sessionId));
 }

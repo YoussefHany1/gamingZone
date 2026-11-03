@@ -61,6 +61,13 @@ export const searchProfiles = (q: string) =>
 export const getOrCreateDirectConversation = (uid: string) =>
   callSocialApi<{ conversationId: string }>("/social/conversations/dm", { uid });
 
+export const updateSocialMessage = (input: {
+  conversationId: string;
+  messageId: string;
+  action: "edit" | "delete";
+  text?: string;
+}) => callSocialApi("/social/messages/action", input);
+
 export const sendSocialMessage = (
   conversationId: string,
   text: string,

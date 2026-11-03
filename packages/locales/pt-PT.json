@@ -880,7 +880,8 @@
       "emptyLibrary": "A sua biblioteca está vazia — adicione jogos para criar as suas estatísticas.",
       "browseGames": "Explorar jogos",
       "editProfile": "Editar perfil",
-      "myLists": "As minhas listas"
+      "myLists": "As minhas listas",
+      "blockedUsers": "Utilizadores bloqueados"
     },
     "admin": {
       "dashboard": "Painel de administração",
@@ -963,7 +964,11 @@
       "verified": "Conta associada",
       "copied": "Detalhes da conta partilhados",
       "yourProfile": "O SEU PERFIL",
-      "gamerProfile": "PERFIL DE JOGADOR"
+      "gamerProfile": "PERFIL DE JOGADOR",
+      "mutualFriends": "{{count}} amigos em comum",
+      "librarySection": "Biblioteca de jogos",
+      "libraryCount": "{{count}} jogos",
+      "libraryHidden": "Este jogador mantém a biblioteca de jogos privada"
     },
     "friends": {
       "title": "Friends",
@@ -1002,7 +1007,11 @@
       "directMessage": "Mensagem direta",
       "member": "Membro do esquadrão",
       "edited": "editado",
-      "attachmentsComingSoon": "Anexos em breve"
+      "attachmentsComingSoon": "Anexos em breve",
+      "copy": "Copiar",
+      "copied": "Mensagem copiada",
+      "sent": "Enviada",
+      "read": "Lida"
     },
     "groups": {
       "create": "Criar grupo",
@@ -1011,13 +1020,23 @@
       "selected": "Selecionado",
       "select": "Selecionar",
       "cancel": "Cancelar",
-      "fallback": "Grupo"
+      "fallback": "Grupo",
+      "settings": "Definições do grupo",
+      "renameSuccess": "Grupo atualizado",
+      "remove": "Remover",
+      "addMember": "Adicionar membros",
+      "add": "Adicionar",
+      "error": "Não foi possível atualizar o grupo"
     },
     "sessions": {
       "title": "Sessões",
       "empty": "Ainda não há sessões",
       "gameName": "Nome do jogo",
       "gameId": "ID do jogo",
+      "searchGame": "Procurar um jogo",
+      "changeGame": "Alterar o jogo",
+      "noGamesFound": "Nenhum jogo encontrado",
+      "selectGameFirst": "Escolha primeiro um jogo",
       "schedule": "Agendar",
       "saving": "A guardar…",
       "scheduled": "Sessão agendada",
@@ -1029,7 +1048,21 @@
       "cancel": "Cancelar",
       "leave": "Sair",
       "players": "{{count}} jogadores",
-      "actionFailed": "Algo correu mal. Tente novamente."
+      "actionFailed": "Algo correu mal. Tente novamente.",
+      "addToCalendar": "Adicionar ao calendário",
+      "calendarError": "Não foi possível abrir o calendário",
+      "links": {
+        "add": "Ligação de party (opcional)",
+        "urlPlaceholder": "https://discord.gg/…",
+        "labelPlaceholder": "Legenda (opcional)",
+        "invalidUrl": "Use uma ligação https:// completa",
+        "openError": "Não foi possível abrir a ligação",
+        "kind": {
+          "voice": "Voz",
+          "lobby": "Sala",
+          "party": "Party"
+        }
+      }
     },
     "search": {
       "placeholder": "Search by @handle",
@@ -1059,6 +1092,10 @@
     },
     "messages": {
       "refreshed": "Atualizado"
+    },
+    "presence": {
+      "online": "Online",
+      "lastSeen": "Visto {{when}}"
     }
   },
   "aiChat": {

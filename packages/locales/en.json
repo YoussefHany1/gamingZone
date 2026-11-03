@@ -846,6 +846,7 @@
       "editProfile": "Edit profile",
       "myLists": "My lists",
       "accountAndData": "Account & Data",
+      "blockedUsers": "Blocked users",
       "pcSpecs": "My PC"
     },
     "languageSelect": {
@@ -966,8 +967,16 @@
       "openLink": "Open",
       "verified": "Linked account",
       "copied": "Account details shared",
+      "share": "Share profile",
+      "shareTitle": "Share profile",
+      "shareMessage": "Add me on Gaming Zone: @{{handle}} {{url}}",
+      "shareMessageNoHandle": "Add me on Gaming Zone: {{name}}",
       "yourProfile": "YOUR PROFILE",
-      "gamerProfile": "GAMER PROFILE"
+      "gamerProfile": "GAMER PROFILE",
+      "mutualFriends": "{{count}} mutual friends",
+      "librarySection": "Game library",
+      "libraryCount": "{{count}} games",
+      "libraryHidden": "This player keeps their game library private"
     },
     "friends": {
       "title": "Friends",
@@ -980,11 +989,24 @@
       "accepted": "Friend request accepted",
       "declined": "Friend request declined",
       "accept": "Accept",
-      "cancel": "Cancel request"
+      "cancel": "Cancel request",
+      "incomingTab": "Incoming",
+      "sentTab": "Sent",
+      "cancelled": "Friend request cancelled"
     },
     "chats": {
       "title": "Chats",
       "empty": "No conversations yet",
+      "new": "New chat",
+      "active": "Active",
+      "archived": "Archived",
+      "open": "Open",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "archive": "Archive",
+      "unarchive": "Unarchive",
+      "delete": "Delete",
+      "leaveGroup": "Leave group",
       "noMessages": "No messages yet",
       "select": "Select a conversation to start chatting.",
       "start": "Start the conversation",
@@ -1006,7 +1028,11 @@
       "directMessage": "Direct message",
       "member": "Squad member",
       "edited": "edited",
-      "attachmentsComingSoon": "Attachments are coming soon"
+      "attachmentsComingSoon": "Attachments are coming soon",
+      "copy": "Copy",
+      "copied": "Message copied",
+      "sent": "Sent",
+      "read": "Read"
     },
     "groups": {
       "create": "Create group",
@@ -1015,13 +1041,25 @@
       "selected": "Selected",
       "select": "Select",
       "cancel": "Cancel",
-      "fallback": "Group"
+      "fallback": "Group",
+      "settings": "Group settings",
+      "renameSuccess": "Group updated",
+      "remove": "Remove",
+      "addMember": "Add members",
+      "add": "Add",
+      "error": "Could not update the group"
     },
     "sessions": {
       "title": "Sessions",
       "empty": "No sessions yet",
+      "new": "New session",
+      "noChatsYet": "No chats yet",
       "gameName": "Game name",
       "gameId": "Game ID",
+      "searchGame": "Search for a game",
+      "changeGame": "Change game",
+      "noGamesFound": "No games found",
+      "selectGameFirst": "Select a game first",
       "schedule": "Schedule",
       "saving": "Saving…",
       "scheduled": "Session scheduled",
@@ -1033,7 +1071,22 @@
       "cancel": "Cancel",
       "leave": "Leave",
       "players": "{{count}} players",
-      "actionFailed": "Something went wrong. Please try again."
+      "actionFailed": "Something went wrong. Please try again.",
+      "openChat": "Open chat",
+      "addToCalendar": "Add to calendar",
+      "calendarError": "Could not open calendar",
+      "links": {
+        "add": "Party link (optional)",
+        "urlPlaceholder": "https://discord.gg/…",
+        "labelPlaceholder": "Label (optional)",
+        "invalidUrl": "Use a full https:// link",
+        "openError": "Could not open link",
+        "kind": {
+          "voice": "Voice",
+          "lobby": "Lobby",
+          "party": "Party"
+        }
+      }
     },
     "search": {
       "placeholder": "Search by @handle",
@@ -1045,7 +1098,9 @@
       "block": "Block",
       "unblock": "Unblock",
       "message": "Message",
-      "more": "More options"
+      "more": "More options",
+      "viewProfile": "View profile",
+      "inviteToSession": "Invite to session"
     },
     "errors": {
       "load": "Could not load social data",
@@ -1059,10 +1114,15 @@
       "empty": "No blocked users",
       "subtitle": "Manage players you have blocked.",
       "confirmTitle": "Unblock player?",
-      "confirmMessage": "This player will be able to interact with you again."
+      "confirmMessage": "This player will be able to interact with you again.",
+      "entry": "Blocked users"
     },
     "messages": {
       "refreshed": "Refreshed"
+    },
+    "presence": {
+      "online": "Online",
+      "lastSeen": "Last seen {{when}}"
     }
   },
   "aiChat": {

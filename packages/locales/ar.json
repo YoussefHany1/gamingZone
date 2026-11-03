@@ -842,7 +842,8 @@
       "emptyLibrary": "مكتبتك فارغة — أضف ألعاباً لبناء إحصائياتك.",
       "browseGames": "تصفح الألعاب",
       "editProfile": "تعديل الملف الشخصي",
-      "myLists": "قوائمي"
+      "myLists": "قوائمي",
+      "blockedUsers": "المستخدمون المحظورون"
     },
     "languageSelect": {
       "confirmTitle": "تغيير اللغة",
@@ -963,7 +964,11 @@
       "verified": "حساب مرتبط",
       "copied": "تمت مشاركة بيانات الحساب",
       "yourProfile": "ملفك الشخصي",
-      "gamerProfile": "ملف اللاعب"
+      "gamerProfile": "ملف اللاعب",
+      "mutualFriends": "{{count}} أصدقاء مشتركون",
+      "librarySection": "مكتبة الألعاب",
+      "libraryCount": "{{count}} ألعاب",
+      "libraryHidden": "هذا اللاعب يُبقي مكتبة ألعابه خاصة"
     },
     "friends": {
       "title": "Friends",
@@ -1002,7 +1007,11 @@
       "directMessage": "رسالة مباشرة",
       "member": "عضو الفريق",
       "edited": "تم التعديل",
-      "attachmentsComingSoon": "المرفقات قريبًا"
+      "attachmentsComingSoon": "المرفقات قريبًا",
+      "copy": "نسخ",
+      "copied": "تم نسخ الرسالة",
+      "sent": "أُرسلت",
+      "read": "قُرئت"
     },
     "groups": {
       "create": "إنشاء مجموعة",
@@ -1011,13 +1020,23 @@
       "selected": "محدد",
       "select": "تحديد",
       "cancel": "إلغاء",
-      "fallback": "مجموعة"
+      "fallback": "مجموعة",
+      "settings": "إعدادات المجموعة",
+      "renameSuccess": "تم تحديث المجموعة",
+      "remove": "إزالة",
+      "addMember": "إضافة أعضاء",
+      "add": "إضافة",
+      "error": "تعذّر تحديث المجموعة"
     },
     "sessions": {
       "title": "جلسات اللعب",
       "empty": "لا توجد جلسات بعد",
       "gameName": "اسم اللعبة",
       "gameId": "معرّف اللعبة",
+      "searchGame": "ابحث عن لعبة",
+      "changeGame": "تغيير اللعبة",
+      "noGamesFound": "لم يتم العثور على ألعاب",
+      "selectGameFirst": "اختر لعبة أولاً",
       "schedule": "جدولة",
       "saving": "جارٍ الحفظ…",
       "scheduled": "تمت جدولة الجلسة",
@@ -1029,7 +1048,21 @@
       "cancel": "إلغاء",
       "leave": "مغادرة",
       "players": "{{count}} لاعبين",
-      "actionFailed": "حدث خطأ ما. حاول مرة أخرى."
+      "actionFailed": "حدث خطأ ما. حاول مرة أخرى.",
+      "addToCalendar": "إضافة إلى التقويم",
+      "calendarError": "تعذّر فتح التقويم",
+      "links": {
+        "add": "رابط المجموعة (اختياري)",
+        "urlPlaceholder": "https://discord.gg/…",
+        "labelPlaceholder": "تسمية (اختياري)",
+        "invalidUrl": "استخدم رابط https:// كاملًا",
+        "openError": "تعذّر فتح الرابط",
+        "kind": {
+          "voice": "صوت",
+          "lobby": "لوبي",
+          "party": "مجموعة"
+        }
+      }
     },
     "search": {
       "placeholder": "Search by @handle",
@@ -1059,6 +1092,10 @@
     },
     "messages": {
       "refreshed": "تم التحديث"
+    },
+    "presence": {
+      "online": "متصل الآن",
+      "lastSeen": "آخر ظهور {{when}}"
     }
   },
   "aiChat": {

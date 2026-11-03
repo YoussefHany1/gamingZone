@@ -37,6 +37,7 @@ import useNotifications from "./hooks/useNotifications";
 import useRateApp from "./hooks/useRateApp";
 import useUpdateCheck from "./hooks/useUpdateCheck";
 import useAppOpenSync from "./hooks/useAppOpenSync";
+import { usePresenceHeartbeat } from "./features/social/hooks/usePresenceHeartbeat";
 import useOTAUpdate from "./hooks/useOTAUpdate";
 import { useAuthPrompt } from "./hooks/useAuthPrompt";
 import {
@@ -49,6 +50,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import OfflineBanner from "./components/OfflineBanner";
 import GamificationOverlay from "./features/gamification/components/GamificationOverlay";
 import { logger } from "@/src/lib/logger";
+import { logScreenNavigation } from "@/src/lib/navigationLogger";
 
 // Types
 export type RootStackParamList = {
@@ -301,6 +303,7 @@ function App(): React.ReactElement | null {
   useRateApp();
   useUpdateCheck();
   useAppOpenSync(user);
+  usePresenceHeartbeat(user);
 
   const otaState = useOTAUpdate();
   const {
@@ -319,11 +322,14 @@ function App(): React.ReactElement | null {
 
   const handleNavigationReady = useCallback(() => {
     routeNameRef.current = navigationRef.current?.getCurrentRoute()?.name;
+    logScreenNavigation(navigationRef);
   }, []);
 
   const handleStateChange = useCallback(async () => {
     const previousRouteName = routeNameRef.current;
     const currentRouteName = navigationRef.current?.getCurrentRoute()?.name;
+
+    logScreenNavigation(navigationRef);
 
     if (previousRouteName !== currentRouteName && currentRouteName) {
       await analytics().logScreenView({

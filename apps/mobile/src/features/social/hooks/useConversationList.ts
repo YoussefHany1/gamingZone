@@ -1,12 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Conversation, ReadPosition } from "@gaming-zone/core";
 import { logger } from "@/src/lib/logger";
 import { listenToConversations, listenToReadPosition } from "../lib/chatService";
 
+export type ConversationUserState = {
+  lastReadAt: number | null;
+  muted: boolean;
+  archived: boolean;
+  deletedAt: number | null;
+};
+
 export type ConversationListResult = {
   conversations: Conversation[];
-  /** `lastReadAt` per conversation id, in millis. */
+  /** `lastReadAt` per conversation id, in millis (derived). */
   readAt: Record<string, number | null>;
+  /** Per-user state per conversation id. */
+  userState: Record<string, ConversationUserState>;
 };
 
 const ID_SEPARATOR = "\n";
@@ -20,7 +29,7 @@ const ID_SEPARATOR = "\n";
  */
 export function useConversationList(uid: string): ConversationListResult {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [readAt, setReadAt] = useState<Record<string, number | null>>({});
+  const [positions, setPositions] = useState<Record<string, ReadPosition>>({});
   const readStops = useRef(new Map<string, () => void>());
 
   const stopReadListeners = useCallback(() => {
@@ -31,7 +40,7 @@ export function useConversationList(uid: string): ConversationListResult {
   useEffect(() => {
     // A new account must never inherit the previous account's list or reads.
     setConversations([]);
-    setReadAt({});
+    setPositions({});
     stopReadListeners();
 
     if (!uid) return;
@@ -63,18 +72,25 @@ export function useConversationList(uid: string): ConversationListResult {
         id,
         uid,
         (position: ReadPosition) => {
-          setReadAt((previous) =>
-            previous[id] === position.lastReadAt
-              ? previous
-              : { ...previous, [id]: position.lastReadAt },
-          );
+          setPositions((previous) => {
+            const prev = previous[id];
+            if (
+              prev?.lastReadAt === position.lastReadAt &&
+              prev?.muted === position.muted &&
+              prev?.archived === position.archived &&
+              prev?.deletedAt === position.deletedAt
+            ) {
+              return previous;
+            }
+            return { ...previous, [id]: position };
+          });
         },
         (error) => logger.warn(`[social] Read state unavailable for ${id}`, error),
       );
       readStops.current.set(id, stop);
     }
 
-    setReadAt((previous) => {
+    setPositions((previous) => {
       const previousIds = Object.keys(previous);
       if (
         previousIds.length === wanted.size &&
@@ -82,13 +98,34 @@ export function useConversationList(uid: string): ConversationListResult {
       ) {
         return previous;
       }
-      const next: Record<string, number | null> = {};
+      const next: Record<string, ReadPosition> = {};
       for (const id of ids) {
-        if (id in previous) next[id] = previous[id] ?? null;
+        if (id in previous) next[id] = previous[id]!;
       }
       return next;
     });
   }, [uid, idsKey]);
 
-  return { conversations, readAt };
+  const readAt = useMemo(() => {
+    const result: Record<string, number | null> = {};
+    for (const [id, position] of Object.entries(positions)) {
+      result[id] = position.lastReadAt;
+    }
+    return result;
+  }, [positions]);
+
+  const userState = useMemo(() => {
+    const result: Record<string, ConversationUserState> = {};
+    for (const [id, position] of Object.entries(positions)) {
+      result[id] = {
+        lastReadAt: position.lastReadAt,
+        muted: position.muted === true,
+        archived: position.archived === true,
+        deletedAt: position.deletedAt ?? null,
+      };
+    }
+    return result;
+  }, [positions]);
+
+  return { conversations, readAt, userState };
 }

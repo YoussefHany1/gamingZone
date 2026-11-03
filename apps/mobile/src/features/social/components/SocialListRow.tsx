@@ -12,11 +12,15 @@ export type SocialListRowProps = {
   /** Extra muted line (conversation timestamp). */
   meta?: string | null;
   unreadCount?: number;
+  /** Bold the subtitle (used for unread conversations). */
+  subtitleBold?: boolean;
   /** Action buttons or status text rendered at the end of the row. */
   trailing?: React.ReactNode;
   selected?: boolean;
   /** Conversation subtitles use the snippet style instead of the muted one. */
   conversation?: boolean;
+  /** Green "online now" dot on the avatar (presence, friends/chats only). */
+  online?: boolean;
   onPress?: (() => void) | undefined;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -33,9 +37,11 @@ const SocialListRow = memo(
     subtitle,
     meta,
     unreadCount,
+    subtitleBold = false,
     trailing,
     selected = false,
     conversation = false,
+    online = false,
     onPress,
     disabled = false,
     style,
@@ -76,7 +82,7 @@ const SocialListRow = memo(
         onPress={onPress}
         disabled={disabled}
       >
-        <GamerAvatar photoURL={photoURL} size={44} />
+        <GamerAvatar photoURL={photoURL} size={44} online={online} />
         <View style={styles.body}>
           <CustomText
             style={[styles.label, selected && styles.selectedText]}
@@ -88,6 +94,7 @@ const SocialListRow = memo(
             <CustomText
               style={[
                 conversation ? styles.snippet : styles.muted,
+                subtitleBold && { fontWeight: "700" },
                 selected && styles.selectedText,
               ]}
               numberOfLines={1}

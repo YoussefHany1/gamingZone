@@ -139,6 +139,7 @@ const ProfileScreen = React.memo((): React.ReactElement => {
               onMyLists={() => navigation.navigate("UserListsScreen")}
               onPcSpecs={() => navigation.navigate("PcSpecsScreen")}
               onConnectedApps={() => setShowLinkModal(true)}
+              onBlockedUsers={() => navigation.navigate("BlockedUsersScreen")}
             />
 
           </>

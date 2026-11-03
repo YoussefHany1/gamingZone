@@ -90,7 +90,12 @@ export default function GroupCreateSheet({
   };
 
   return (
-    <GameBottomSheet visible={visible} onClose={onClose}>
+    <GameBottomSheet
+      visible={visible}
+      onClose={onClose}
+      name="GroupCreateSheet"
+      file="src/features/social/components/GroupCreateSheet.tsx"
+    >
       <CustomText style={styles.title}>{t("social.groups.create")}</CustomText>
       <CustomTextInput
         value={title}

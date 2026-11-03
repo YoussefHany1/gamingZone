@@ -13,6 +13,7 @@ export { default as ContactScreen } from "./screens/ContactScreen";
 export { default as LanguageSelectScreen } from "./screens/LanguageSelectScreen";
 export { default as NotificationScreen } from "./screens/NotificationScreen";
 export { default as ThemeScreen } from "./screens/ThemeScreen";
+export { default as BlockedUsersScreen } from "./screens/BlockedUsersScreen";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export type {} from "./types";

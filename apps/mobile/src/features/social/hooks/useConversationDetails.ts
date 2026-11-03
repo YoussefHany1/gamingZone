@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import firestore from "@react-native-firebase/firestore";
+import type { ConversationType } from "@gaming-zone/core";
 import { logger } from "@/src/lib/logger";
 
 export type ConversationDetails = {
+  type: ConversationType | null;
   members: string[];
   title: string | null;
   photoURL: string | null;
 };
 
 const EMPTY_DETAILS: ConversationDetails = {
+  type: null,
   members: [],
   title: null,
   photoURL: null,
@@ -36,6 +39,7 @@ export function useConversationDetails(conversationId: string): ConversationDeta
         if (cancelled || !snapshot.exists) return;
         const data = snapshot.data() ?? {};
         setDetails({
+          type: data.type === "dm" || data.type === "group" ? data.type : null,
           members: Array.isArray(data.members) ? data.members : [],
           title: typeof data.title === "string" ? data.title : null,
           photoURL: typeof data.photoURL === "string" ? data.photoURL : null,

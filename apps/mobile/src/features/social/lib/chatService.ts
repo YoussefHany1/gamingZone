@@ -39,7 +39,12 @@ function mapConversation(id: string, data: Record<string, unknown>): Conversatio
 }
 
 function mapReadPosition(data: Record<string, unknown> | undefined): ReadPosition {
-  return { lastReadAt: timestampToMillis(data?.lastReadAt) };
+  return {
+    lastReadAt: timestampToMillis(data?.lastReadAt),
+    muted: data?.muted === true,
+    archived: data?.archived === true,
+    deletedAt: timestampToMillis(data?.deletedAt),
+  };
 }
 
 export async function sendMessage(
@@ -129,6 +134,50 @@ export async function markConversationRead(
     .collection("reads")
     .doc(uid)
     .set({ lastReadAt: firestore.FieldValue.serverTimestamp() }, { merge: true });
+}
+
+export async function setConversationMuted(
+  conversationId: string,
+  uid: string,
+  muted: boolean,
+): Promise<void> {
+  await firestore()
+    .collection("conversations")
+    .doc(conversationId)
+    .collection("reads")
+    .doc(uid)
+    .set({ muted }, { merge: true });
+}
+
+export async function setConversationArchived(
+  conversationId: string,
+  uid: string,
+  archived: boolean,
+): Promise<void> {
+  await firestore()
+    .collection("conversations")
+    .doc(conversationId)
+    .collection("reads")
+    .doc(uid)
+    .set({ archived }, { merge: true });
+}
+
+export async function hideConversation(conversationId: string, uid: string): Promise<void> {
+  await firestore()
+    .collection("conversations")
+    .doc(conversationId)
+    .collection("reads")
+    .doc(uid)
+    .set({ deletedAt: firestore.FieldValue.serverTimestamp() }, { merge: true });
+}
+
+export async function unhideConversation(conversationId: string, uid: string): Promise<void> {
+  await firestore()
+    .collection("conversations")
+    .doc(conversationId)
+    .collection("reads")
+    .doc(uid)
+    .set({ deletedAt: null }, { merge: true });
 }
 
 export async function editMessage(

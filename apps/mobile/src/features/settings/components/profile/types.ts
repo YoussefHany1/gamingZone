@@ -46,6 +46,7 @@ export type ProfileMenuProps = {
   onMyLists: () => void;
   onPcSpecs: () => void;
   onConnectedApps: () => void;
+  onBlockedUsers: () => void;
 };
 
 export type ProfileMenuItemProps = {

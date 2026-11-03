@@ -8,6 +8,9 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import PressScale from "./PressScale";
 import GamerAvatar from "./GamerAvatar";
 import type { PlaySession } from "../hooks/usePlaySessions";
+import { openSessionInCalendar } from "../lib/calendarLink";
+import { openSessionLink } from "../lib/sessionLink";
+import { showToast } from "@/src/lib/toast";
 import {
   useSessionActions,
   type SessionActionErrorHandler,
@@ -33,6 +36,8 @@ export type PlaySessionCardProps = {
   participantProfiles?: ParticipantProfiles;
   /** Social-only: opens the time picker for a still-unconfirmed session. */
   onSchedule?: ((session: PlaySession) => void) | undefined;
+  /** Social-only: opens the chat linked to this session. */
+  onOpenChat?: ((session: PlaySession) => void) | undefined;
   onError?: SessionActionErrorHandler;
 };
 
@@ -77,6 +82,7 @@ const PlaySessionCard = memo(
     variant,
     participantProfiles,
     onSchedule,
+    onOpenChat,
     onError,
   }: PlaySessionCardProps): React.ReactElement => {
     const { t, i18n } = useTranslation();
@@ -151,6 +157,22 @@ const PlaySessionCard = memo(
       secondaryButtonText: { color: c.text, fontSize: 12, fontWeight: "700" },
       dangerBorder: { borderColor: c.danger },
       dangerText: { color: c.danger },
+      linkRow: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 7,
+        marginTop: 10,
+      },
+      linkChip: {
+        maxWidth: "100%",
+        paddingHorizontal: 9,
+        paddingVertical: 5,
+        borderRadius: 8,
+        backgroundColor: c.accentSurface,
+        borderWidth: 1,
+        borderColor: c.border,
+      },
+      linkChipText: { color: c.accentText, fontSize: 11, fontWeight: "700" },
 
       sessionCard: {
         marginHorizontal: 16,
@@ -225,6 +247,31 @@ const PlaySessionCard = memo(
         )}`
       : "";
 
+    const links = session.links ?? [];
+    /** Party-room chips: open safe links, surface invalid ones as a toast. */
+    const openLink = (url: string): void => {
+      void openSessionLink(url).then((opened) => {
+        if (!opened) showToast(t("social.sessions.links.openError"));
+      });
+    };
+    const linkRow =
+      links.length > 0 ? (
+        <View style={styles.linkRow}>
+          {links.map((link) => (
+            <TouchableOpacity
+              key={link.id}
+              style={styles.linkChip}
+              onPress={() => openLink(link.url)}
+              accessibilityRole="link"
+            >
+              <CustomText style={styles.linkChipText} numberOfLines={1}>
+                {link.label ?? t(`social.sessions.links.kind.${link.kind}`)}
+              </CustomText>
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : null;
+
     const actionRow = (
       <View style={variant === "social" ? styles.sessionActions : styles.chatActions}>
         {variant === "social" && onSchedule && session.status === "proposed" ? (
@@ -260,6 +307,38 @@ const PlaySessionCard = memo(
         {variant === "social" && actions.cancel
           ? renderAction("cancel", t("social.sessions.cancel"), "danger")
           : null}
+        {variant === "social" && onOpenChat ? (
+          <ActionSurface
+            key="openChat"
+            variant={variant}
+            style={styles.secondaryButton}
+            onPress={() => onOpenChat(session)}
+          >
+            <CustomText style={styles.secondaryButtonText}>
+              {t("social.sessions.openChat")}
+            </CustomText>
+          </ActionSurface>
+        ) : null}
+        {variant === "social" && typeof session.startsAt === "number" ? (
+          <ActionSurface
+            key="calendar"
+            variant={variant}
+            style={styles.secondaryButton}
+            onPress={() => {
+              if (session.startsAt === null) return;
+              void openSessionInCalendar({
+                gameName: session.gameName,
+                startsAt: session.startsAt,
+              }).then((opened) => {
+                if (!opened) showToast(t("social.sessions.calendarError"));
+              });
+            }}
+          >
+            <CustomText style={styles.secondaryButtonText}>
+              {t("social.sessions.addToCalendar")}
+            </CustomText>
+          </ActionSurface>
+        ) : null}
       </View>
     );
 
@@ -271,6 +350,7 @@ const PlaySessionCard = memo(
             {session.status}
             {startsLabel}
           </CustomText>
+          {linkRow}
           {actionRow}
         </View>
       );
@@ -278,7 +358,11 @@ const PlaySessionCard = memo(
 
     return (
       <View style={styles.session}>
-        <View style={styles.sessionTop}>
+        <PressScale
+          style={styles.sessionTop}
+          onPress={onOpenChat ? () => onOpenChat(session) : undefined}
+          disabled={!onOpenChat}
+        >
           <View style={styles.gameTile}>
             <Gamepad2 size={20} color={colors.accentText} />
             <CustomText style={styles.gameInitial}>
@@ -299,7 +383,7 @@ const PlaySessionCard = memo(
               </View>
             ) : null}
           </View>
-        </View>
+        </PressScale>
         <View style={styles.participantRow}>
           {session.participantUids.slice(0, 5).map((participant) => (
             <View key={participant} style={styles.miniAvatar}>
@@ -317,6 +401,7 @@ const PlaySessionCard = memo(
             </CustomText>
           </View>
         </View>
+        {linkRow}
         {actionRow}
       </View>
     );

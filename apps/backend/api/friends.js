@@ -17,8 +17,11 @@
  *   POST /social/friends/remove    { uid }
  *   POST /social/blocks            { uid, action: 'block' | 'unblock' }
  *   POST /social/conversations/dm  { uid }
- *   POST /social/messages           { conversationId, text }
+ *   POST /social/messages            { conversationId, text }
+ *   POST /social/messages/action     { conversationId, messageId, action, text }
+ *   POST /social/conversations/group/edit  { conversationId, title?, photoURL? } (admin)
  *   GET  /social/search?q=         handle-prefix search, discovery + blocks
+ *   GET  /social/profile/mutuals/:uid  { count } — viewer must be an active friend
  *
  * Error codes: `invalid_payload`, `cannot_friend_self`, `user_not_found`,
  * `blocked`, `already_friends`, `request_resolved`, `not_blocker`.
@@ -690,6 +693,57 @@ export async function sendConversationMessage(uid, conversationId, rawText, opti
   return { messageId: messageRef.id };
 }
 
+const MESSAGE_ACTION_WINDOW_MS = 10 * 60 * 1000;
+
+function messageCreatedAtMillis(value) {
+  if (typeof value === 'number') return value;
+  if (value && typeof value.toMillis === 'function') return value.toMillis();
+  if (value && typeof value._seconds === 'number') return value._seconds * 1000;
+  return null;
+}
+
+async function updateOwnMessage(uid, conversationId, messageId, action, rawText) {
+  if (!isUid(uid) || typeof conversationId !== 'string' || !conversationId || conversationId.includes('/') ||
+      typeof messageId !== 'string' || !messageId || messageId.includes('/')) throw invalid();
+  if (action !== 'edit' && action !== 'delete') throw invalid();
+  const text = typeof rawText === 'string' ? rawText.trim().slice(0, 4000) : '';
+  if (action === 'edit' && !text) throw invalid('Message cannot be empty');
+
+  const admin = await requireAdmin();
+  const { FieldValue } = await loadFirestoreSdk();
+  const db = admin.firestore;
+  const conversationRef = db.collection('conversations').doc(conversationId);
+  const messageRef = conversationRef.collection('messages').doc(messageId);
+
+  await db.runTransaction(async (transaction) => {
+    const [conversationSnap, messageSnap] = await Promise.all([
+      transaction.get(conversationRef),
+      transaction.get(messageRef),
+    ]);
+    if (!conversationSnap.exists || !messageSnap.exists) throw new FriendError('Message not found', 404, 'message_not_found');
+    const conversation = conversationSnap.data() ?? {};
+    const message = messageSnap.data() ?? {};
+    if (!Array.isArray(conversation.members) || !conversation.members.includes(uid)) {
+      throw new FriendError('You are not a conversation member', 403, 'not_member');
+    }
+    if (message.senderId !== uid) throw new FriendError('Only your own messages can be changed', 403, 'not_message_owner');
+    const createdAt = messageCreatedAtMillis(message.createdAt);
+    if (createdAt === null || Date.now() - createdAt > MESSAGE_ACTION_WINDOW_MS) {
+      throw new FriendError('Message actions expire after 10 minutes', 403, 'message_action_expired');
+    }
+
+    if (action === 'edit') {
+      transaction.update(messageRef, { text, editedAt: FieldValue.serverTimestamp() });
+      if (conversation.lastMessage?.senderId === uid && conversation.lastMessage?.text === message.text) {
+        transaction.set(conversationRef, { lastMessage: { ...conversation.lastMessage, text, editedAt: FieldValue.serverTimestamp() } }, { merge: true });
+      }
+    } else {
+      transaction.update(messageRef, { deletedFor: FieldValue.arrayUnion(uid) });
+    }
+  });
+  return { updated: true };
+}
+
 export async function createGroupConversation(uid, input) {
   const title = typeof input?.title === 'string' ? input.title.trim().slice(0, 80) : '';
   const requestedMembers = Array.isArray(input?.members) ? input.members.filter(isUid) : [];
@@ -753,6 +807,52 @@ export async function updateGroupMembers(uid, conversationId, memberUids, action
   return { updated: true };
 }
 
+/**
+ * Mirrors mobile `sessionLink.ts`: https-only, whitespace-free, dotted host
+ * (also rejects `user@host` userinfo tricks), ≤2048 chars. The only consumer
+ * is group photos, which the client renders through <Image source={{uri}}>
+ * — remote https URLs only; there is no storage upload on this tier.
+ */
+function normalizeHttpsUrl(url) {
+  if (typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (!trimmed || trimmed.length > 2048 || /\s/.test(trimmed) || !/^https:\/\//i.test(trimmed)) return null;
+  const host = trimmed.slice('https://'.length).split(/[/?#]/)[0] ?? '';
+  if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+(?::\d{1,5})?$/i.test(host)) return null;
+  return trimmed;
+}
+
+/**
+ * Admin-only rename and/or group photo change. A passed `null` clears the
+ * photo; anything else must pass the https check or silently keeps the old
+ * value.
+ */
+export async function updateGroupConversation(uid, conversationId, input) {
+  if (!isUid(uid) || typeof conversationId !== 'string' || conversationId.includes('/')) throw invalid();
+  const title = typeof input?.title === 'string' ? input.title.trim().slice(0, 80) : null;
+  const photoUrl = input?.photoURL === null ? null : normalizeHttpsUrl(input?.photoURL);
+  if (!title && photoUrl === undefined && input?.photoURL !== null) {
+    throw invalid('Nothing to update');
+  }
+
+  const admin = await requireAdmin();
+  const db = admin.firestore;
+  const ref = db.collection('conversations').doc(conversationId);
+  await db.runTransaction(async (transaction) => {
+    const snap = await transaction.get(ref);
+    const data = snap.data() ?? {};
+    if (!snap.exists || data.type !== 'group' || !data.admins?.includes(uid)) {
+      throw new FriendError('Only group admins can update the group', 403, 'not_admin');
+    }
+    const update = {};
+    if (title) update.title = title;
+    if (photoUrl !== undefined) update.photoURL = photoUrl;
+    if (Object.keys(update).length === 0) return; // nothing valid to write
+    transaction.update(ref, update);
+  });
+  return { updated: true };
+}
+
 export async function leaveGroupConversation(uid, conversationId) {
   if (!isUid(uid) || typeof conversationId !== 'string' || conversationId.includes('/')) throw invalid();
   const admin = await requireAdmin();
@@ -788,6 +888,63 @@ async function sendMessagePush(uid, conversationData, text) {
   } catch (error) {
     console.warn('[push] message push failed:', error?.message ?? error);
   }
+}
+
+/**
+ * Counts active friends shared by the viewer and the profile being viewed.
+ *
+ * `friendships` reads are member-gated in firestore.rules, so a client can
+ * never intersect two friend lists itself — it only sees its own rows. This
+ * trusted query intersects both lists server-side and returns the count only:
+ * no friendship ids or member lists leave the backend.
+ *
+ * The viewer must be an active friend of the target; otherwise there is no
+ * trusted relationship to expose anything through, and we answer `0` instead
+ * of an error so the UI can simply omit the row.
+ */
+async function countMutualFriends(viewerUid, targetUid) {
+  if (!isUid(viewerUid) || !isUid(targetUid)) throw invalid('Invalid target user');
+  if (viewerUid === targetUid) return 0;
+
+  const admin = await requireAdmin();
+  const db = admin.firestore;
+
+  // Gate: only active friends get a nonzero answer.
+  const pairSnap = await db
+    .collection('friendships')
+    .doc(friendshipId(viewerUid, targetUid))
+    .get();
+  if (!pairSnap.exists || pairSnap.get('status') !== 'active') return 0;
+
+  const activeFriendUids = async (uid) => {
+    const snapshot = await db
+      .collection('friendships')
+      .where('members', 'array-contains', uid)
+      .where('status', '==', 'active')
+      .get();
+    const friends = new Set();
+    snapshot.forEach((doc) => {
+      const members = doc.get('members');
+      if (!Array.isArray(members)) return;
+      for (const member of members) {
+        if (isUid(member) && member !== uid) friends.add(member);
+      }
+    });
+    return friends;
+  };
+
+  const [viewerFriends, targetFriends] = await Promise.all([
+    activeFriendUids(viewerUid),
+    activeFriendUids(targetUid),
+  ]);
+
+  // The pair itself never lands in both sets (a friendship doc lists its two
+  // distinct members), but filter defensively anyway.
+  let count = 0;
+  for (const friend of viewerFriends) {
+    if (friend !== viewerUid && friend !== targetUid && targetFriends.has(friend)) count += 1;
+  }
+  return count;
 }
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
@@ -852,6 +1009,16 @@ export function registerFriendRoutes(app, { AppError, asyncRoute }) {
     }),
   );
 
+  post('/social/messages/action', (req) =>
+    updateOwnMessage(
+      req.authUid,
+      req.body?.conversationId,
+      req.body?.messageId,
+      req.body?.action,
+      req.body?.text,
+    ),
+  );
+
   post('/social/conversations/group', (req) =>
     createGroupConversation(req.authUid, {
       title: req.body?.title,
@@ -863,13 +1030,32 @@ export function registerFriendRoutes(app, { AppError, asyncRoute }) {
     updateGroupMembers(
       req.authUid,
       req.body?.conversationId,
-      req.body?.members,
+      req.body?.memberUids,
       req.body?.action,
     ),
   );
 
+  post('/social/conversations/group/edit', (req) =>
+    updateGroupConversation(req.authUid, req.body?.conversationId, req.body),
+  );
+
   post('/social/conversations/group/leave', (req) =>
     leaveGroupConversation(req.authUid, req.body?.conversationId),
+  );
+
+  app.get(
+    '/social/profile/mutuals/:uid',
+    auth,
+    asyncRoute(async (req, res) => {
+      try {
+        const count = await countMutualFriends(req.authUid, req.params?.uid);
+        // The count moves slowly; caching briefly absorbs profile revisits.
+        res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300');
+        res.json({ ok: true, count });
+      } catch (cause) {
+        throw rethrow(cause);
+      }
+    }),
   );
 
   app.get(

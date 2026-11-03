@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from "react";
-import { ActivityIndicator, Alert, ScrollView, View } from "react-native";
+import { ActivityIndicator, Alert, Platform, ScrollView, Share, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MoreVertical } from "lucide-react-native";
 import PressScale from "../components/PressScale";
@@ -24,8 +24,10 @@ import { useAuthStore } from "@/src/store/useAuthStore";
 import type { SettingsStackParamList } from "@/src/navigation/AppNavigator";
 import { usePublicProfile } from "../hooks/usePublicProfile";
 import { useProfileRelation } from "../hooks/useProfileRelation";
+import { profilePath } from "@gaming-zone/core";
 import PublicProfileHeader from "../components/PublicProfileHeader";
 import PublicLinksCard from "../components/PublicLinksCard";
+import LibraryGrid from "../components/LibraryGrid";
 import ProfileActionBar from "../components/ProfileActionBar";
 
 /**
@@ -171,7 +173,37 @@ function UserProfileScreen(): React.ReactElement {
               {!isOwner ? (
                 <PressScale
                   style={styles.menuButton}
-                  onPress={() => Alert.alert(t("social.actions.more"))}
+                  onPress={() => {
+                    const handle = profile?.handle;
+                    const shareUrl = handle
+                      ? `https://gz1.games${profilePath(handle)}`
+                      : null;
+                    Alert.alert(t("social.actions.more"), undefined, [
+                      ...(shareUrl
+                        ? [
+                            {
+                              text: t("social.profile.share"),
+                              onPress: () => {
+                                void Share.share(
+                                  Platform.select({
+                                    ios: { message: t("social.profile.shareMessage", { handle, url: shareUrl }), url: shareUrl },
+                                    default: { message: `${t("social.profile.shareMessage", { handle, url: shareUrl })} ${shareUrl}` },
+                                  })!,
+                                  { dialogTitle: t("social.profile.shareTitle") },
+                                );
+                              },
+                            },
+                          ]
+                        : []),
+                      {
+                        text: t("social.actions.block"),
+                        onPress: () => {
+                          void blockUser(otherUid);
+                        },
+                      },
+                      { text: t("common.cancel"), style: "cancel" },
+                    ]);
+                  }}
                 >
                   <MoreVertical size={18} color={colors.textMuted} />
                 </PressScale>
@@ -203,6 +235,8 @@ function UserProfileScreen(): React.ReactElement {
         </View>
 
         <PublicLinksCard links={profile.links} privacy={profile.privacy} />
+
+        <LibraryGrid profile={profile} isOwner={isOwner} />
 
         {!isOwner && currentUid && (
           <ProfileActionBar

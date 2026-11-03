@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import GamerAvatar from "../components/GamerAvatar";
-import GamingEmptyState from "../components/GamingEmptyState";
+import GamerAvatar from "@/src/features/social/components/GamerAvatar";
+import GamingEmptyState from "@/src/features/social/components/GamingEmptyState";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { FlashList } from "@shopify/flash-list";
@@ -18,7 +18,7 @@ import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { logger } from "@/src/lib/logger";
-import { unblockUser } from "../lib/friendService";
+import { unblockUser } from "@/src/features/social/lib/friendService";
 import {
   useBlockedUsers,
   type BlockedUser,
@@ -144,16 +144,6 @@ export default function BlockedUsersScreen(): React.ReactElement {
     <SafeAreaView style={styles.container}>
       <FlashList
         data={blockedUsers}
-        ListHeaderComponent={
-          <View>
-            <CustomText style={styles.header}>
-              {t("social.blockedUsers.title")}
-            </CustomText>
-            <CustomText style={styles.intro}>
-              {t("social.blockedUsers.subtitle")}
-            </CustomText>
-          </View>
-        }
         keyExtractor={(item) => item.uid}
         contentContainerStyle={styles.content}
         refreshControl={

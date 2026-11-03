@@ -6,8 +6,11 @@ import { Pencil } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import useCachedData from "@/src/hooks/useCachedData";
+import { useAuthStore } from "@/src/store/useAuthStore";
 import { flagEmoji } from "@/src/lib/flagEmoji";
 import type { PublicProfile } from "@gaming-zone/core";
+import { getMutualFriendCount } from "../lib/friendService";
 import PlatformGlyph from "./PlatformGlyph";
 
 export type PublicProfileHeaderProps = {
@@ -104,6 +107,11 @@ const PublicProfileHeader = memo(
         lineHeight: 20,
         marginTop: 12,
       },
+      mutuals: {
+        color: c.textMuted,
+        fontSize: 12,
+        marginTop: 4,
+      },
       metaRow: {
         flexDirection: "row",
         alignItems: "center",
@@ -137,6 +145,19 @@ const PublicProfileHeader = memo(
         return null;
       }
     }, [profile.createdAt, i18n.language]);
+
+    // Mutual friends: only fetched when viewing someone else's profile. The
+    // count is cached per (viewer, profile) pair in MMKV with a short TTL so
+    // tab switches and list scrolls never re-request the backend.
+    const viewerUid = useAuthStore((state) => state.user?.uid ?? null);
+    const isOwnProfile = !viewerUid || viewerUid === profile.uid;
+    const { data: mutualCount } = useCachedData<number>(
+      viewerUid ? `social/mutuals/${viewerUid}_${profile.uid}` : "social/mutuals/disabled",
+      () => getMutualFriendCount(profile.uid),
+      [profile.uid, viewerUid],
+      300_000,
+      !isOwnProfile,
+    );
 
     return (
       <View style={styles.card}>
@@ -181,6 +202,11 @@ const PublicProfileHeader = memo(
               <CustomText style={styles.handle} numberOfLines={1}>
                 @{profile.handle}
               </CustomText>
+              {typeof mutualCount === "number" && mutualCount > 0 && (
+                <CustomText style={styles.mutuals}>
+                  {t("social.profile.mutualFriends", { count: mutualCount })}
+                </CustomText>
+              )}
             </View>
           </View>
 

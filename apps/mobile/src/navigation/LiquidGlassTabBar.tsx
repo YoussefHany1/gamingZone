@@ -27,8 +27,8 @@ const TAB_ICON_MAP: Record<TabRoute, LucideIcon> = {
   Home: House,
   News: Newspaper,
   Games: Gamepad2,
-  Settings,
   Social: Users,
+  Settings,
 };
 
 // ── Palette ───────────────────────────────────────────────────────────────────

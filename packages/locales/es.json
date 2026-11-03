@@ -880,7 +880,8 @@
       "emptyLibrary": "Tu biblioteca está vacía — añade juegos para crear tus estadísticas.",
       "browseGames": "Explorar juegos",
       "editProfile": "Editar perfil",
-      "myLists": "Mis listas"
+      "myLists": "Mis listas",
+      "blockedUsers": "Usuarios bloqueados"
     },
     "admin": {
       "dashboard": "Panel de administración",
@@ -963,7 +964,11 @@
       "verified": "Cuenta vinculada",
       "copied": "Datos de la cuenta compartidos",
       "yourProfile": "TU PERFIL",
-      "gamerProfile": "PERFIL DE JUGADOR"
+      "gamerProfile": "PERFIL DE JUGADOR",
+      "mutualFriends": "{{count}} amigos en común",
+      "librarySection": "Biblioteca de juegos",
+      "libraryCount": "{{count}} juegos",
+      "libraryHidden": "Este jugador mantiene su biblioteca privada"
     },
     "friends": {
       "title": "Friends",
@@ -1002,7 +1007,11 @@
       "directMessage": "Mensaje directo",
       "member": "Miembro del equipo",
       "edited": "editado",
-      "attachmentsComingSoon": "Los archivos estarán disponibles pronto"
+      "attachmentsComingSoon": "Los archivos estarán disponibles pronto",
+      "copy": "Copiar",
+      "copied": "Mensaje copiado",
+      "sent": "Enviado",
+      "read": "Leído"
     },
     "groups": {
       "create": "Crear grupo",
@@ -1011,13 +1020,23 @@
       "selected": "Seleccionado",
       "select": "Seleccionar",
       "cancel": "Cancelar",
-      "fallback": "Grupo"
+      "fallback": "Grupo",
+      "settings": "Ajustes del grupo",
+      "renameSuccess": "Grupo actualizado",
+      "remove": "Quitar",
+      "addMember": "Añadir miembros",
+      "add": "Añadir",
+      "error": "No se pudo actualizar el grupo"
     },
     "sessions": {
       "title": "Sesiones",
       "empty": "No hay sesiones aún",
       "gameName": "Nombre del juego",
       "gameId": "ID del juego",
+      "searchGame": "Buscar un juego",
+      "changeGame": "Cambiar juego",
+      "noGamesFound": "No se encontraron juegos",
+      "selectGameFirst": "Elige primero un juego",
       "schedule": "Programar",
       "saving": "Guardando…",
       "scheduled": "Sesión programada",
@@ -1029,7 +1048,21 @@
       "cancel": "Cancelar",
       "leave": "Salir",
       "players": "{{count}} jugadores",
-      "actionFailed": "Algo salió mal. Inténtalo de nuevo."
+      "actionFailed": "Algo salió mal. Inténtalo de nuevo.",
+      "addToCalendar": "Añadir al calendario",
+      "calendarError": "No se pudo abrir el calendario",
+      "links": {
+        "add": "Enlace de party (opcional)",
+        "urlPlaceholder": "https://discord.gg/…",
+        "labelPlaceholder": "Etiqueta (opcional)",
+        "invalidUrl": "Usa un enlace https:// completo",
+        "openError": "No se pudo abrir el enlace",
+        "kind": {
+          "voice": "Voz",
+          "lobby": "Sala",
+          "party": "Party"
+        }
+      }
     },
     "search": {
       "placeholder": "Search by @handle",
@@ -1059,6 +1092,10 @@
     },
     "messages": {
       "refreshed": "Actualizado"
+    },
+    "presence": {
+      "online": "En línea",
+      "lastSeen": "Visto {{when}}"
     }
   },
   "aiChat": {

@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
+import { Check, CheckCheck } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import type { SocialMessage } from "@gaming-zone/core";
 import CustomText from "@/src/components/CustomText";
@@ -15,6 +16,12 @@ export type ChatMessageListProps = {
   olderMessages: SocialMessage[];
   uid: string;
   senderProfiles: Record<string, ChatSenderProfile>;
+  /**
+   * The peer's `lastReadAt` (1:1 chats only, null otherwise). Drives the
+   * read ticks on own messages: single Check once sent, accent CheckCheck
+   * once the peer's read position passes the message timestamp.
+   */
+  otherLastReadAt: number | null;
   loading: boolean;
   loadError: boolean;
   hasOlderMessages: boolean;
@@ -41,6 +48,7 @@ const ChatMessageList = memo(
     olderMessages,
     uid,
     senderProfiles,
+    otherLastReadAt,
     loading,
     loadError,
     hasOlderMessages,
@@ -86,6 +94,7 @@ const ChatMessageList = memo(
       gameLink: { color: c.accent, fontSize: 12, marginTop: 4 },
       messageMeta: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
       ownMessage: { color: c.onAccent },
+      tickSent: { opacity: 0.55 },
       empty: { flex: 1, alignItems: "center", justifyContent: "center" },
       sessionSecondary: {
         backgroundColor: c.background,
@@ -187,6 +196,22 @@ const ChatMessageList = memo(
                     <CustomText style={styles.edited}>
                       {t("social.chats.edited")}
                     </CustomText>
+                  ) : null}
+                  {own && typeof item.createdAt === "number" && item.senderId !== "system" ? (
+                    (otherLastReadAt !== null && otherLastReadAt >= item.createdAt) ? (
+                      <CheckCheck
+                        size={14}
+                        color={colors.onAccent}
+                        accessibilityLabel={t("social.chats.read")}
+                      />
+                    ) : (
+                      <Check
+                        size={14}
+                        color={colors.onAccent}
+                        style={styles.tickSent}
+                        accessibilityLabel={t("social.chats.sent")}
+                      />
+                    )
                   ) : null}
                 </View>
               </TouchableOpacity>
