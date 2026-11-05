@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from "react";
 import { RefreshControl, View } from "react-native";
-import { Plus, Share2 } from "lucide-react-native";
+import { MessageSquare, Plus, SearchX, Share2, UserPlus, Users } from "lucide-react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -204,6 +204,17 @@ export default function SocialSegmentScene({
               screen.isSearching
                 ? t("social.search.noResults")
                 : t(`social.${segment}.empty`)
+            }
+            icon={
+              screen.isSearching
+                ? SearchX
+                : segment === "friends"
+                  ? Users
+                  : segment === "requests"
+                    ? UserPlus
+                    : segment === "chats"
+                      ? MessageSquare
+                      : undefined
             }
             actionLabel={
               segment === "friends" ? t("social.groups.create") : undefined

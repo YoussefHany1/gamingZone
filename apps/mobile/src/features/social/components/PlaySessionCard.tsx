@@ -1,5 +1,7 @@
 import React, { memo } from "react";
 import { TouchableOpacity, View, type StyleProp, type ViewStyle } from "react-native";
+import { Image } from "expo-image";
+import { igdbImageUrl } from "@gaming-zone/utils";
 import { useTranslation } from "react-i18next";
 import { Gamepad2 } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
@@ -21,6 +23,7 @@ import {
   type SessionActionKind,
   type SessionVariant,
 } from "../lib/sessionView";
+import { useGameCoverImage } from "../hooks/useGameCoverImage";
 import { countdown } from "../lib/relativeTime";
 
 export type ParticipantProfiles = Record<
@@ -89,6 +92,14 @@ const PlaySessionCard = memo(
     const colors = useThemeColors();
     const runAction = useSessionActions(onError);
     const { proposal, actions } = deriveSessionView(session, currentUid, variant);
+    /** IGDB artwork resolves per gameId (module-cached); null → initials tile. */
+    const coverImageId = useGameCoverImage(session.gameId);
+    /** A session is over once its start time has passed (or the server marked it). */
+    const isCompleted =
+      session.status === "completed" ||
+      (session.status === "confirmed" &&
+        typeof session.startsAt === "number" &&
+        session.startsAt <= Date.now());
 
     const styles = useThemeStyles((c) => ({
       session: {
@@ -108,6 +119,14 @@ const PlaySessionCard = memo(
         backgroundColor: c.backgroundDeep,
         borderWidth: 1,
         borderColor: c.accentBorder,
+      },
+      /** Artwork fills the same 58×58 footprint as the initials fallback tile. */
+      gameCover: {
+        width: 58,
+        height: 58,
+        borderRadius: 16,
+        backgroundColor: c.skeletonBase,
+        overflow: "hidden",
       },
       gameInitial: { color: c.accentText, fontSize: 20, fontWeight: "900" },
       sessionTop: { flexDirection: "row", gap: 12, alignItems: "center" },
@@ -133,6 +152,18 @@ const PlaySessionCard = memo(
         backgroundColor: c.stripe,
       },
       chipText: { color: c.textMuted, fontSize: 10, fontWeight: "800" },
+      /** Read-only indicator shown once a session is over. */
+      completedBadge: {
+        alignSelf: "flex-start",
+        marginTop: 14,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 8,
+        backgroundColor: c.accentSurface,
+        borderWidth: 1,
+        borderColor: c.border,
+      },
+      completedBadgeText: { color: c.textMuted, fontSize: 11, fontWeight: "800" },
       action: {
         minHeight: 36,
         flexDirection: "row",
@@ -295,9 +326,6 @@ const PlaySessionCard = memo(
         {actions.withdraw
           ? renderAction("withdraw", t("social.sessions.withdraw"), "secondary")
           : null}
-        {actions.confirm
-          ? renderAction("confirm", t("social.sessions.confirm"), "primary")
-          : null}
         {variant === "chat" && actions.cancel
           ? renderAction("cancel", t("social.sessions.cancel"), "secondary")
           : null}
@@ -347,11 +375,11 @@ const PlaySessionCard = memo(
         <View style={styles.sessionCard}>
           <CustomText style={styles.gameTitle}>{session.gameName}</CustomText>
           <CustomText style={styles.muted}>
-            {session.status}
+            {isCompleted ? t("social.sessions.completed") : session.status}
             {startsLabel}
           </CustomText>
           {linkRow}
-          {actionRow}
+          {!isCompleted && actionRow}
         </View>
       );
     }
@@ -363,16 +391,26 @@ const PlaySessionCard = memo(
           onPress={onOpenChat ? () => onOpenChat(session) : undefined}
           disabled={!onOpenChat}
         >
-          <View style={styles.gameTile}>
-            <Gamepad2 size={20} color={colors.accentText} />
-            <CustomText style={styles.gameInitial}>
-              {sessionInitials(session.gameName)}
-            </CustomText>
-          </View>
+          {coverImageId ? (
+            <Image
+              source={{ uri: igdbImageUrl(coverImageId, "cover_small") }}
+              style={styles.gameCover}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={`session-cover-${session.gameId}`}
+            />
+          ) : (
+            <View style={styles.gameTile}>
+              <Gamepad2 size={20} color={colors.accentText} />
+              <CustomText style={styles.gameInitial}>
+                {sessionInitials(session.gameName)}
+              </CustomText>
+            </View>
+          )}
           <View style={styles.sessionInfo}>
             <CustomText style={styles.sessionTitle}>{session.gameName}</CustomText>
             <CustomText style={styles.sessionMeta}>
-              {session.status}
+              {isCompleted ? t("social.sessions.completed") : session.status}
               {startsLabel}
             </CustomText>
             {proposal ? (
@@ -402,7 +440,7 @@ const PlaySessionCard = memo(
           </View>
         </View>
         {linkRow}
-        {actionRow}
+        {!isCompleted && actionRow}
       </View>
     );
   },

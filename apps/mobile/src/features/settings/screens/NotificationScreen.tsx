@@ -12,6 +12,7 @@ import AdSlot from "@/src/components/AdSlot";
 import AlertToggleCard from "../components/notifications/AlertToggleCard";
 import NotificationCategorySection from "../components/notifications/NotificationCategorySection";
 import NotificationTestButton from "../components/notifications/NotificationTestButton";
+import SessionReminderStepper from "@/src/features/social/components/social/SessionReminderStepper";
 import { useNotificationSettings } from "../hooks/useNotificationSettings";
 import {
   FREE_GAMES_CATEGORY,
@@ -109,6 +110,11 @@ const NotificationScreen = (): React.ReactElement => {
           enabled={isTopicEnabled(WEEKLY_SUMMARY_CATEGORY, WEEKLY_SUMMARY_SOURCE)}
           onToggle={toggleWeeklySummary}
         />
+
+        {/* Session reminders — local scheduled notifications for confirmed
+            play sessions. The steppers in the session composer and here stay
+            in sync through the shared offset hook. */}
+        <SessionReminderStepper />
 
         <CustomText style={styles.footerText}>
           {t("settings.notifications.footer")}

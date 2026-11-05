@@ -11,7 +11,7 @@
  * surfaced as a failed friend request.
  */
 import { getAdmin } from './firebaseAdmin.js';
-import { friendAcceptedMessage, friendRequestMessage } from './i18n.js';
+import { friendAcceptedMessage, friendRequestMessage, sessionRequestMessage } from './i18n.js';
 
 /** Android channel the mobile app creates on first launch. */
 export const SOCIAL_CHANNEL_ID = 'social_notifications';
@@ -173,6 +173,46 @@ async function pruneTokens(admin, entries) {
  *
  * @param {{ fromUid: string, toUid: string, autoAccepted?: boolean }} params
  */
+/**
+ * Notifies session participants that a new slot has been proposed.
+ * The proposer is excluded; only the other participants need to respond.
+ */
+export async function sendSessionRequestPush({ fromUid, toUids, gameName, startsAt, conversationId, sessionId }) {
+  const recipients = Array.isArray(toUids) ? toUids.filter((uid) => uid && uid !== fromUid) : [];
+  if (!fromUid || recipients.length === 0) return { sent: 0, failed: 0 };
+
+  const admin = await getAdmin();
+  if (!admin) return { sent: 0, failed: 0 };
+
+  const userSnapshots = await admin.firestore.getAll(
+    ...recipients.map((uid) => admin.firestore.collection('users').doc(uid)),
+  );
+  const time = Number.isFinite(startsAt)
+    ? new Date(startsAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    : '';
+
+  // Each recipient may have a different language; send independently so the
+  // localized title/body remain correct on every device.
+  let sent = 0;
+  let failed = 0;
+  for (const [index, snapshot] of userSnapshots.entries()) {
+    const uid = recipients[index];
+    const locale = snapshot.exists ? snapshot.get('language') : 'en';
+    const result = await sendPushToUids([uid], {
+      ...sessionRequestMessage(locale, { gameName, time }),
+      data: {
+        type: 'session_request',
+        sessionId: String(sessionId),
+        conversationId: String(conversationId),
+        fromUid,
+      },
+    });
+    sent += result.sent;
+    failed += result.failed;
+  }
+  return { sent, failed };
+}
+
 export async function sendFriendRequestPush({ fromUid, toUid, autoAccepted = false }) {
   if (!fromUid || !toUid || fromUid === toUid) return { sent: 0, failed: 0 };
 

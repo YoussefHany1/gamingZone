@@ -215,7 +215,13 @@ export function useSocialScreen() {
       requests: build("requests"),
       chats: build("chats"),
     } as SocialRowsBySegment;
-    base.sessions = sessions;
+    base.sessions = [...sessions].sort((a, b) => {
+      // Latest first: confirmed sessions by their start time, proposed ones
+      // (no startsAt yet) sink to the bottom.
+      const aTime = typeof a.startsAt === "number" ? a.startsAt : 0;
+      const bTime = typeof b.startsAt === "number" ? b.startsAt : 0;
+      return bTime - aTime;
+    });
     return base;
   }, [
     countryFilter,

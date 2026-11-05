@@ -1037,6 +1037,15 @@
       "changeGame": "Cambiar juego",
       "noGamesFound": "No se encontraron juegos",
       "selectGameFirst": "Elige primero un juego",
+      "reminder": {
+        "title": "Recordatorios de sesiones",
+        "description": "Recibe una notificación antes de que comience una sesión confirmada en este dispositivo.",
+        "minutes": "{{minutes}} min",
+        "leadTime": "Avísame",
+        "atStart": "Al iniciar",
+        "notificationTitle": "Hora de jugar: {{gameName}}",
+        "notificationBody": "Tu sesión empieza a las {{time}}. ¡Hora de reunir al equipo!"
+      },
       "schedule": "Programar",
       "saving": "Guardando…",
       "scheduled": "Sesión programada",
@@ -1047,6 +1056,7 @@
       "confirm": "Confirmar",
       "cancel": "Cancelar",
       "leave": "Salir",
+      "completed": "Completada",
       "players": "{{count}} jugadores",
       "actionFailed": "Algo salió mal. Inténtalo de nuevo.",
       "addToCalendar": "Añadir al calendario",
@@ -1150,7 +1160,8 @@
   },
   "notifications": {
     "newsChannelName": "Notificaciones de noticias",
-    "socialChannelName": "Social Notifications"
+    "socialChannelName": "Social Notifications",
+    "sessionRemindersChannelName": "Recordatorios de sesiones"
   },
   "pcSpecs": {
     "quality": {

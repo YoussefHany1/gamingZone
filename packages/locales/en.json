@@ -1060,6 +1060,15 @@
       "changeGame": "Change game",
       "noGamesFound": "No games found",
       "selectGameFirst": "Select a game first",
+      "reminder": {
+        "title": "Session reminders",
+        "description": "Get a notification before a confirmed session starts on this device.",
+        "minutes": "{{minutes}} min",
+        "leadTime": "Remind me",
+        "atStart": "At start",
+        "notificationTitle": "Game time: {{gameName}}",
+        "notificationBody": "Your session starts at {{time}}. Time to gather your party!"
+      },
       "schedule": "Schedule",
       "saving": "Saving…",
       "scheduled": "Session scheduled",
@@ -1070,6 +1079,7 @@
       "confirm": "Confirm",
       "cancel": "Cancel",
       "leave": "Leave",
+      "completed": "Completed",
       "players": "{{count}} players",
       "actionFailed": "Something went wrong. Please try again.",
       "openChat": "Open chat",
@@ -1177,7 +1187,8 @@
   },
   "notifications": {
     "newsChannelName": "News Notifications",
-    "socialChannelName": "Social Notifications"
+    "socialChannelName": "Social Notifications",
+    "sessionRemindersChannelName": "Session Reminders"
   },
   "pcSpecs": {
     "quality": {

@@ -1037,6 +1037,15 @@
       "changeGame": "गेम बदलें",
       "noGamesFound": "कोई गेम नहीं मिला",
       "selectGameFirst": "पहले एक गेम चुनें",
+      "reminder": {
+        "title": "सेशन रिमाइंडर",
+        "description": "इस डिवाइस पर पुष्ट की गई सेशन शुरू होने से पहले सूचना पाएं।",
+        "minutes": "{{minutes}} मि",
+        "leadTime": "मुझे याद दिलाएं",
+        "atStart": "शुरुआत पर",
+        "notificationTitle": "खेलने का समय: {{gameName}}",
+        "notificationBody": "आपका सेशन {{time}} बजे शुरू होता है। अपनी टीम को बुलाइए!"
+      },
       "schedule": "शेड्यूल करें",
       "saving": "सहेजा जा रहा है…",
       "scheduled": "सत्र शेड्यूल हो गया",
@@ -1047,6 +1056,7 @@
       "confirm": "पुष्टि करें",
       "cancel": "रद्द करें",
       "leave": "छोड़ें",
+      "completed": "पूर्ण",
       "players": "{{count}} खिलाड़ी",
       "actionFailed": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।",
       "addToCalendar": "कैलेंडर में जोड़ें",
@@ -1150,7 +1160,8 @@
   },
   "notifications": {
     "newsChannelName": "समाचार सूचनाएं",
-    "socialChannelName": "Social Notifications"
+    "socialChannelName": "Social Notifications",
+    "sessionRemindersChannelName": "सेशन रिमाइंडर"
   },
   "pcSpecs": {
     "quality": {

@@ -1037,6 +1037,15 @@
       "changeGame": "تغيير اللعبة",
       "noGamesFound": "لم يتم العثور على ألعاب",
       "selectGameFirst": "اختر لعبة أولاً",
+      "reminder": {
+        "title": "تذكيرات الجلسات",
+        "description": "احصل على إشعار قبل بدء الجلسة المؤكدة على هذا الجهاز.",
+        "minutes": "{{minutes}} د",
+        "leadTime": "ذكّرني",
+        "atStart": "عند البدء",
+        "notificationTitle": "وقت اللعب: {{gameName}}",
+        "notificationBody": "تبدأ جلستك الساعة {{time}}. حان وقت جمع الفريق!"
+      },
       "schedule": "جدولة",
       "saving": "جارٍ الحفظ…",
       "scheduled": "تمت جدولة الجلسة",
@@ -1047,6 +1056,7 @@
       "confirm": "تأكيد",
       "cancel": "إلغاء",
       "leave": "مغادرة",
+      "completed": "مكتملة",
       "players": "{{count}} لاعبين",
       "actionFailed": "حدث خطأ ما. حاول مرة أخرى.",
       "addToCalendar": "إضافة إلى التقويم",
@@ -1150,7 +1160,8 @@
   },
   "notifications": {
     "newsChannelName": "إشعارات الأخبار",
-    "socialChannelName": "Social Notifications"
+    "socialChannelName": "Social Notifications",
+    "sessionRemindersChannelName": "تذكيرات الجلسات"
   },
   "pcSpecs": {
     "quality": {

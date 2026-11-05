@@ -9,6 +9,7 @@ import {
   getFocusedRouteNameFromRoute,
   useNavigationState,
 } from "@react-navigation/native";
+import type { NavigatorScreenParams } from "@react-navigation/native";
 import { Freeze } from "react-freeze";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import type {
@@ -97,7 +98,9 @@ export type MainTabParamList = {
   News: undefined;
   Games: undefined;
   Settings: undefined;
-  Social: undefined;
+  // Nested params (SocialStack) so notification-tap handlers can deep-navigate,
+  // e.g. MainApp → Social → ChatScreen from a session reminder tap.
+  Social: NavigatorScreenParams<SocialStackParamList> | undefined;
 };
 
 export type AuthStackParamList = {

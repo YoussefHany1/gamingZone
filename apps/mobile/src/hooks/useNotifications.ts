@@ -7,12 +7,13 @@ import * as Notifications from "expo-notifications";
 import type { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { useTranslation } from "react-i18next";
 import NotificationService from "@/src/services/notificationService";
+import { SESSION_REMINDERS_CHANNEL_ID } from "@/src/features/social/lib/sessionReminderScheduler";
 import { DARK_COLORS } from "../constants/colors";
 import { logger } from "@/src/lib/logger";
 
 /**
  * Handles all FCM setup for the authenticated user:
- *   - Creates/updates the Android notification channel
+ *   - Creates/updates the Android notification channels (news, social, session reminders)
  *   - Requests permission
  *   - Saves / refreshes the FCM token in Firestore
  *   - Syncs topic subscriptions from stored preferences
@@ -25,6 +26,8 @@ import { logger } from "@/src/lib/logger";
 
 const NEWS_CHANNEL_ID = "news_notifications" as const;
 const SOCIAL_CHANNEL_ID = "social_notifications" as const;
+// Created here; consumed by the local session-reminder scheduler (see
+// sessionReminderScheduler.ts) so reminders have independent OS-level controls.
 
 /**
  * Channel *id* is fixed at module scope, but the display name follows the
@@ -34,6 +37,16 @@ const SOCIAL_CHANNEL_ID = "social_notifications" as const;
 function useNewsChannelName(): string {
   const { t } = useTranslation();
   return t("notifications.newsChannelName");
+}
+
+/**
+ * Like the news channel name above, the reminders channel display name
+ * follows the active language; including it in the setup effect's deps is
+ * what re-creates the channel on a language switch.
+ */
+function useSessionRemindersChannelName(): string {
+  const { t } = useTranslation();
+  return t("notifications.sessionRemindersChannelName");
 }
 
 // `name` is omitted from the base: it is supplied per-call from i18n.
@@ -79,6 +92,7 @@ function extractImageUrl(
 
 const useNotifications = (user: FirebaseAuthTypes.User | null | undefined): void => {
   const newsChannelName = useNewsChannelName();
+  const sessionRemindersChannelName = useSessionRemindersChannelName();
   const { i18n, t } = useTranslation();
 
   useEffect(() => {
@@ -115,6 +129,10 @@ const useNotifications = (user: FirebaseAuthTypes.User | null | undefined): void
         await Notifications.setNotificationChannelAsync(SOCIAL_CHANNEL_ID, {
           ...NEWS_CHANNEL_BASE,
           name: t("notifications.socialChannelName"),
+        });
+        await Notifications.setNotificationChannelAsync(SESSION_REMINDERS_CHANNEL_ID, {
+          ...NEWS_CHANNEL_BASE,
+          name: sessionRemindersChannelName,
         });
 
         if (!isGuest) {
@@ -210,9 +228,10 @@ const useNotifications = (user: FirebaseAuthTypes.User | null | undefined): void
       unsubscribeOnMessage?.();
       unsubscribeTokenRefresh?.();
     };
-    // newsChannelName re-runs setup so the OS channel display name follows a
-    // language change (Android applies the new name to the existing channel).
-  }, [user, newsChannelName]);
+    // newsChannelName / sessionRemindersChannelName re-run setup so the OS
+    // channel display names follow a language change (Android applies the new
+    // name to the existing channel).
+  }, [user, newsChannelName, sessionRemindersChannelName]);
 };
 
 export default useNotifications;

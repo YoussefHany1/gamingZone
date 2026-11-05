@@ -38,12 +38,15 @@ import useRateApp from "./hooks/useRateApp";
 import useUpdateCheck from "./hooks/useUpdateCheck";
 import useAppOpenSync from "./hooks/useAppOpenSync";
 import { usePresenceHeartbeat } from "./features/social/hooks/usePresenceHeartbeat";
+import { useSessionReminders } from "./features/social/hooks/useSessionReminders";
+import { useSessionReminderNavigation } from "./features/social/hooks/useSessionReminderNavigation";
 import useOTAUpdate from "./hooks/useOTAUpdate";
 import { useAuthPrompt } from "./hooks/useAuthPrompt";
 import {
   MainAppTabs,
   AuthStack,
   type AuthStackParamList,
+  type MainTabParamList,
 } from "./navigation/AppNavigator";
 import OnboardingScreen from "./features/onboarding/screens/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -53,8 +56,12 @@ import { logger } from "@/src/lib/logger";
 import { logScreenNavigation } from "@/src/lib/navigationLogger";
 
 // Types
+//
+// `MainApp` accepts a `NavigatorScreenParams` payload so notification-tap
+// handlers can point straight at a nested screen (Social > ChatScreen)
+// without casting around the strict param list.
 export type RootStackParamList = {
-  MainApp: undefined;
+  MainApp: NavigatorScreenParams<MainTabParamList> | undefined;
   Auth: NavigatorScreenParams<AuthStackParamList> | undefined;
 };
 
@@ -304,6 +311,12 @@ function App(): React.ReactElement | null {
   useUpdateCheck();
   useAppOpenSync(user);
   usePresenceHeartbeat(user);
+  // Reminder scheduling lives at the root so a reboot's cleared OS alarms are
+  // re-armed by the first Firestore session snapshot — independent of which
+  // screen the user lands on.
+  useSessionReminders(user);
+  // Session reminder taps (cold-start included) open the session's chat.
+  useSessionReminderNavigation(navigationRef);
 
   const otaState = useOTAUpdate();
   const {

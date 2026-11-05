@@ -3,6 +3,7 @@ import { Alert } from "react-native";
 import auth from "@react-native-firebase/auth";
 import { useTranslation } from "react-i18next";
 import NotificationService from "@/src/services/notificationService";
+import { cancelAllSessionReminders } from "@/src/features/social/lib/sessionReminderScheduler";
 
 export type UseSignOutResult = {
   /** Asks for confirmation, then signs out. */
@@ -25,6 +26,10 @@ export function useSignOut(): UseSignOutResult {
       // write to Firestore, so the next account does not inherit it.
       const uid = auth().currentUser?.uid;
       if (uid) await NotificationService.clearFCMToken(uid);
+
+      // Locally scheduled reminders are device-resident: cancel before the
+      // auth state flips so the next account starts with an empty set.
+      await cancelAllSessionReminders();
 
       await auth().signOut();
     } catch {

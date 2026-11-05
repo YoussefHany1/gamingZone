@@ -81,7 +81,7 @@ describe("sessionInitials", () => {
 });
 
 describe("deriveSessionView", () => {
-  it("offers accept, confirm and withdraw states for the proposer", () => {
+  it("offers accept and withdraw states for the proposer (confirm is automatic)", () => {
     const view = deriveSessionView(makeSession(), UID, "social");
     expect(view.accepted).toBe(true);
     expect(view.everyoneAccepted).toBe(true);
@@ -89,7 +89,8 @@ describe("deriveSessionView", () => {
       accept: false,
       decline: true,
       withdraw: true,
-      confirm: true,
+      // The backend auto-confirms on the final acceptance; users never tap confirm.
+      confirm: false,
     });
   });
 

@@ -689,7 +689,7 @@ export async function sendConversationMessage(uid, conversationId, rawText, opti
     }, { merge: true });
   });
 
-  void sendMessagePush(uid, conversationData ?? {}, previewText);
+  void sendMessagePush(uid, conversationId, conversationData ?? {}, previewText);
   return { messageId: messageRef.id };
 }
 
@@ -876,14 +876,14 @@ export async function leaveGroupConversation(uid, conversationId) {
   return { left: true };
 }
 
-async function sendMessagePush(uid, conversationData, text) {
+async function sendMessagePush(uid, conversationId, conversationData, text) {
   const recipients = (conversationData.members ?? []).filter((member) => member !== uid);
   if (recipients.length === 0) return;
   try {
     await sendPushToUids(recipients, {
       title: conversationData.type === 'group' ? (conversationData.title || 'New message') : 'New message',
       body: text.slice(0, 120),
-      data: { type: 'social_message' },
+      data: { type: 'social_message', conversationId, senderUid: uid },
     });
   } catch (error) {
     console.warn('[push] message push failed:', error?.message ?? error);

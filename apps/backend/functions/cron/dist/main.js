@@ -28,7 +28,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/main.ts
+// functions/cron/src/main.ts
 var main_exports = {};
 __export(main_exports, {
   default: () => main_default
@@ -40,12 +40,12 @@ var import_node_os = __toESM(require("node:os"));
 var import_node_path = __toESM(require("node:path"));
 var import_node_v8 = require("node:v8");
 
-// ../../scripts/lib/errors.ts
+// scripts/lib/errors.ts
 function getErrorMessage(error) {
   return error instanceof Error ? error.message : String(error);
 }
 
-// src/main.ts
+// functions/cron/src/main.ts
 var JOB_NAMES = [
   "rss",
   "article-summaries",

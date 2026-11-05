@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
-import { Check, CheckCheck } from "lucide-react-native";
+import { Check, CheckCheck, MessageCircle } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import type { SocialMessage } from "@gaming-zone/core";
 import CustomText from "@/src/components/CustomText";
@@ -125,7 +125,7 @@ const ChatMessageList = memo(
     if (messages.length === 0) {
       return (
         <View style={styles.empty}>
-          <GamingEmptyState title={t("social.chats.start")} />
+          <GamingEmptyState title={t("social.chats.start")} icon={MessageCircle} />
         </View>
       );
     }

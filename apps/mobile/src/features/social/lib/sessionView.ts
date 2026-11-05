@@ -51,6 +51,10 @@ export function sessionInitials(gameName: string): string {
  *  - chat always offers "leave" and offers "cancel" while the session is
  *    proposed.
  * The proposal actions themselves are identical.
+ *
+ * "confirm" is no longer a user action: the backend confirms a session in the
+ * same transaction that records the final acceptance, so the field stays
+ * false and the card UIs skip it.
  */
 export function deriveSessionView(
   session: PlaySession,
@@ -71,7 +75,8 @@ export function deriveSessionView(
     accept: Boolean(proposal) && !accepted && proposed,
     decline: Boolean(proposal) && accepted && proposed,
     withdraw: Boolean(proposal) && proposal?.proposerUid === currentUid && proposed,
-    confirm: Boolean(proposal) && everyoneAccepted && proposed,
+    // Auto-confirmed by the backend on the final acceptance.
+    confirm: false,
     leave: variant === "chat" ? true : session.status !== "cancelled",
     cancel:
       variant === "chat"

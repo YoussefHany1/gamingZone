@@ -1037,6 +1037,15 @@
       "changeGame": "Alterar jogo",
       "noGamesFound": "Nenhum jogo encontrado",
       "selectGameFirst": "Escolha um jogo primeiro",
+      "reminder": {
+        "title": "Lembretes de sessões",
+        "description": "Receba uma notificação antes do início de uma sessão confirmada neste dispositivo.",
+        "minutes": "{{minutes}} min",
+        "leadTime": "Lembre-me",
+        "atStart": "No início",
+        "notificationTitle": "Hora de jogar: {{gameName}}",
+        "notificationBody": "Sua sessão começa às {{time}}. Hora de reunir a galera!"
+      },
       "schedule": "Agendar",
       "saving": "Salvando…",
       "scheduled": "Sessão agendada",
@@ -1047,6 +1056,7 @@
       "confirm": "Confirmar",
       "cancel": "Cancelar",
       "leave": "Sair",
+      "completed": "Concluída",
       "players": "{{count}} jogadores",
       "actionFailed": "Algo deu errado. Tente novamente.",
       "addToCalendar": "Adicionar ao calendário",
@@ -1150,7 +1160,8 @@
   },
   "notifications": {
     "newsChannelName": "Notificações de notícias",
-    "socialChannelName": "Social Notifications"
+    "socialChannelName": "Social Notifications",
+    "sessionRemindersChannelName": "Lembretes de sessões"
   },
   "pcSpecs": {
     "quality": {

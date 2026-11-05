@@ -141,12 +141,18 @@ export default function ChatScreen(): React.ReactElement {
     title: conversationTitle,
     photoURL: conversationPhotoURL,
   } = useConversationDetails(conversationId);
-  const sessions = usePlaySessions(uid).filter(
-    (session) =>
-      session.conversationId === conversationId &&
-      session.status !== "completed" &&
-      session.status !== "cancelled",
-  );
+  const latestSession = usePlaySessions(uid)
+    .filter(
+      (session) =>
+        session.conversationId === conversationId &&
+        session.status !== "completed" &&
+        session.status !== "cancelled",
+    )
+    .sort((a, b) => {
+      const aTime = typeof a.startsAt === "number" ? a.startsAt : 0;
+      const bTime = typeof b.startsAt === "number" ? b.startsAt : 0;
+      return bTime - aTime;
+    })[0];
   const {
     messages,
     olderMessages,
@@ -417,15 +423,15 @@ export default function ChatScreen(): React.ReactElement {
             )}
           </PressScale>
         </View>
-        {sessions.map((session) => (
+        {latestSession ? (
           <PlaySessionCard
-            key={session.id}
-            session={session}
+            key={latestSession.id}
+            session={latestSession}
             currentUid={uid}
             variant="chat"
             onError={handleSessionError}
           />
-        ))}
+        ) : null}
         <ChatMessageList
           messages={messages}
           olderMessages={olderMessages}

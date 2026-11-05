@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import GamerAvatar from "@/src/features/social/components/GamerAvatar";
 import GamingEmptyState from "@/src/features/social/components/GamingEmptyState";
+import { Ban } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { FlashList } from "@shopify/flash-list";
@@ -153,7 +154,7 @@ export default function BlockedUsersScreen(): React.ReactElement {
             tintColor={colors.accent}
           />
         }
-        ListEmptyComponent={<GamingEmptyState title={t("social.blockedUsers.empty")} />}
+        ListEmptyComponent={<GamingEmptyState title={t("social.blockedUsers.empty")} icon={Ban} />}
         renderItem={({ item }) => (
           <BlockedUserRow user={item} onOpen={openProfile} onUnblock={confirmUnblock} />
         )}

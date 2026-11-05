@@ -4,10 +4,10 @@ import type { SocialSegment } from "../lib/socialList";
 import type { SocialRouteShape } from "../types";
 
 const SOCIAL_SEGMENTS: readonly SocialSegment[] = [
-  "friends",
-  "requests",
   "chats",
   "sessions",
+  "friends",
+  "requests",
 ];
 
 export type UseSocialTabsParams = {

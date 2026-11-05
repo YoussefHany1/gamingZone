@@ -1,5 +1,6 @@
 import { getAdmin } from './firebaseAdmin.js';
 import { requireAuth } from './social.js';
+import { sendSessionRequestPush } from './push.js';
 import {
   activeProposals,
   allParticipantsAccepted,
@@ -135,10 +136,16 @@ export async function proposeSlot(uid, sessionId, input) {
   const admin = await requireAdmin();
   const db = admin.firestore;
   const proposalId = `${uid}_${Date.now()}`;
+  let recipientUids = [];
+  let conversationId = '';
+  let gameName = '';
   await db.runTransaction(async (transaction) => {
     const { ref, data } = await readSession(transaction, db, sessionId);
     if (!data.participantUids?.includes(uid)) throw new SessionError('Not a participant', 403, 'not_participant');
     if (data.status !== 'proposed') throw new SessionError('Session is no longer open', 409, 'session_closed');
+    recipientUids = Array.isArray(data.participantUids) ? data.participantUids : [];
+    conversationId = typeof data.conversationId === 'string' ? data.conversationId : '';
+    gameName = typeof data.gameName === 'string' ? data.gameName : 'Game';
     const proposals = activeProposals(data.proposals, Date.now());
     if (proposals.length >= MAX_PROPOSALS) throw new SessionError('Proposal limit reached', 409, 'proposal_limit');
     const responses = Object.fromEntries(data.participantUids.map((participant) => [participant, participant === uid ? 'accepted' : 'pending']));
@@ -146,13 +153,38 @@ export async function proposeSlot(uid, sessionId, input) {
       proposals: [...proposals, { id: proposalId, proposerUid: uid, startsAt, durationMin, responses, createdAt: Date.now(), status: 'open' }],
     });
   });
+  // Push is best-effort and deliberately happens after the durable proposal
+  // write, so notification delivery can never make proposing a slot fail.
+  void sendSessionRequestPush({
+    fromUid: uid,
+    toUids: recipientUids,
+    gameName,
+    startsAt,
+    conversationId,
+    sessionId,
+  }).catch((error) => console.warn('[push] session request push failed:', error?.message ?? error));
   return { proposalId };
+}
+
+/**
+ * The shared confirmation writes for a fully-accepted proposal. Must run
+ * inside the same transaction that produced the acceptance so the doc can
+ * never sit in an "everyone accepted but still open" limbo.
+ */
+function applyConfirmation(transaction, db, ref, data, proposal, FieldValue) {
+  const messageRef = db.collection('conversations').doc(data.conversationId).collection('messages').doc();
+  const now = FieldValue.serverTimestamp();
+  transaction.update(ref, { status: 'confirmed', confirmedProposalId: proposal.id, startsAt: proposal.startsAt, proposals: [proposal] });
+  transaction.create(messageRef, { senderId: 'system', text: `${data.gameName} session confirmed`, type: 'system', createdAt: now, editedAt: null, deletedAt: null, deletedFor: [] });
+  transaction.set(db.collection('conversations').doc(data.conversationId), { lastMessage: { senderId: 'system', text: `${data.gameName} session confirmed`, type: 'system', createdAt: now }, lastMessageAt: now }, { merge: true });
 }
 
 export async function respondToSlot(uid, sessionId, proposalId, response) {
   if (!['accepted', 'declined'].includes(response)) throw invalid();
   const admin = await requireAdmin();
+  const { FieldValue } = await loadFirestoreSdk();
   const db = admin.firestore;
+  let confirmed = false;
   await db.runTransaction(async (transaction) => {
     const { ref, data } = await readSession(transaction, db, sessionId);
     if (!data.participantUids?.includes(uid)) throw new SessionError('Not a participant', 403, 'not_participant');
@@ -160,10 +192,21 @@ export async function respondToSlot(uid, sessionId, proposalId, response) {
     const proposals = (data.proposals ?? []).map((proposal) =>
       proposal.id === proposalId ? { ...proposal, responses: { ...proposal.responses, [uid]: response } } : proposal,
     );
-    if (!proposals.some((proposal) => proposal.id === proposalId)) throw new SessionError('Proposal not found', 404, 'proposal_not_found');
+    const proposal = proposals.find((item) => item.id === proposalId);
+    if (!proposal) throw new SessionError('Proposal not found', 404, 'proposal_not_found');
+
+    // Auto-confirm: acceptance is the last missing agreement — as soon as
+    // every participant has accepted the same slot, the session is confirmed
+    // (startsAt moves onto the doc) with no extra "confirm" tap needed.
+    if (response === 'accepted' &&
+        allParticipantsAccepted(data.participantUids, proposal.responses)) {
+      applyConfirmation(transaction, db, ref, data, proposal, FieldValue);
+      confirmed = true;
+      return;
+    }
     transaction.update(ref, { proposals });
   });
-  return { responded: true };
+  return { responded: true, ...(confirmed ? { confirmed: true } : {}) };
 }
 
 export async function withdrawProposal(uid, sessionId, proposalId) {
@@ -187,17 +230,15 @@ export async function confirmSession(uid, sessionId, proposalId) {
   await db.runTransaction(async (transaction) => {
     const { ref, data } = await readSession(transaction, db, sessionId);
     if (!data.participantUids?.includes(uid)) throw new SessionError('Not a participant', 403, 'not_participant');
+    // Newer clients never need this route (acceptance auto-confirms), but it
+    // remains for clients that shipped before the auto-confirm behaviour.
     if (data.status !== 'proposed') throw new SessionError('Session is no longer open', 409, 'session_closed');
     const proposal = (data.proposals ?? []).find((item) => item.id === proposalId);
     if (!proposal) throw new SessionError('Proposal not found', 404, 'proposal_not_found');
     if (!allParticipantsAccepted(data.participantUids, proposal.responses)) {
       throw new SessionError('Everyone must accept the same slot', 409, 'not_agreed');
     }
-    const messageRef = db.collection('conversations').doc(data.conversationId).collection('messages').doc();
-    const now = FieldValue.serverTimestamp();
-    transaction.update(ref, { status: 'confirmed', confirmedProposalId: proposalId, startsAt: proposal.startsAt, proposals: [proposal] });
-    transaction.create(messageRef, { senderId: 'system', text: `${data.gameName} session confirmed`, type: 'system', createdAt: now, editedAt: null, deletedAt: null, deletedFor: [] });
-    transaction.set(db.collection('conversations').doc(data.conversationId), { lastMessage: { senderId: 'system', text: `${data.gameName} session confirmed`, type: 'system', createdAt: now }, lastMessageAt: now }, { merge: true });
+    applyConfirmation(transaction, db, ref, data, proposal, FieldValue);
   });
   return { confirmed: true };
 }

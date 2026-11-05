@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { runDiscordAuthFlow } from "@/src/features/auth/lib/discordAuthFlow";
 import { GoogleSignin, statusCodes } from "@/src/features/auth/lib/googleSignIn";
 import { deleteAccount } from "@/src/services/api/accountApi";
+import { cancelAllSessionReminders } from "@/src/features/social/lib/sessionReminderScheduler";
 import type { DeleteAccountResult } from "@/src/services/api/accountApi";
 import type { ReauthMethod } from "../types";
 import { logger } from "@/src/lib/logger";
@@ -127,6 +128,9 @@ export function useDeleteAccount({
    */
   const completeDeletion = useCallback(async (): Promise<void> => {
     try {
+      // The account — its sessions along with it — is gone; the locally
+      // scheduled reminders must not survive it either.
+      await cancelAllSessionReminders();
       await auth().signOut();
     } catch (error) {
       logger.warn("Failed to clear the deleted session:", error);

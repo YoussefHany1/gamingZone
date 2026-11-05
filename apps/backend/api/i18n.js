@@ -74,6 +74,36 @@ const MESSAGES = {
       body: 'Tu e {name} são agora amigos.',
     },
   },
+  sessionRequest: {
+    en: {
+      title: 'New session request',
+      body: '{gameName} — proposed for {time}.',
+    },
+    ar: {
+      title: 'طلب جلسة جديد',
+      body: 'اقترح {gameName} موعدًا في {time}.',
+    },
+    es: {
+      title: 'Nueva solicitud de sesión',
+      body: '{gameName} — propuesta para las {time}.',
+    },
+    fr: {
+      title: 'Nouvelle demande de session',
+      body: '{gameName} — proposée à {time}.',
+    },
+    hi: {
+      title: 'नया सेशन अनुरोध',
+      body: '{gameName} — {time} के लिए प्रस्तावित।',
+    },
+    'pt-BR': {
+      title: 'Nova solicitação de sessão',
+      body: '{gameName} — proposta para às {time}.',
+    },
+    'pt-PT': {
+      title: 'Novo pedido de sessão',
+      body: '{gameName} — proposta para as {time}.',
+    },
+  },
   sessionReminder: {
     en: {
       t60: { title: 'Session starting in 1 hour', body: '{gameName} starts at {time}.' },
@@ -144,6 +174,15 @@ export function friendRequestMessage(locale, { name, handle }) {
       name: name || 'Player',
       handle: handle || 'player',
     }),
+  };
+}
+
+/** @returns {{ title: string, body: string }} */
+export function sessionRequestMessage(locale, { gameName, time }) {
+  const messages = MESSAGES.sessionRequest[normalizePushLocale(locale)] ?? MESSAGES.sessionRequest.en;
+  return {
+    title: messages.title,
+    body: interpolate(messages.body, { gameName: gameName || 'Game', time: time || '' }),
   };
 }
 

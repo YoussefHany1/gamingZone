@@ -29,8 +29,10 @@ const OFFLINE: PresenceEntry = { online: false, lastActiveAt: null };
  * Writers only need `presence/{uid}.updatedAt` (a plain JS epoch-millis
  * number, maintained by `usePresenceHeartbeat`) — the dedicated collection is
  * readable by any authed user (firestore.rules) with no backend involvement.
- * The read is a single chunked query for docs whose heartbeat is inside the
- * online window; uids missing from the result are offline by construction.
+ * The read is a chunked `documentId in` equality query (Firestore rejects
+ * combining that with a range filter on another field); "online" is computed
+ * client-side against the 5-minute window, so uids without a fresh heartbeat
+ * resolve to offline.
  */
 export function useSocialPresence(friendUids: string[]): Record<string, PresenceEntry> {
   // Stable identity for the effect: same ids in any order → same subscription.
@@ -60,12 +62,16 @@ export function useSocialPresence(friendUids: string[]): Record<string, Presence
 
       const cutoff = Date.now() - ONLINE_WINDOW_MS;
       try {
+        // NOTE: no server-side range filter on `updatedAt` here — Firestore
+        // turns a `documentId() in` into a range filter, and pairing that with
+        // an inequality on another field is rejected outright (invalid
+        // argument). Ids missing from the result are offline by construction,
+        // so the cutoff only costs reads of tiny one-field docs.
         const snapshots = await Promise.all(
           chunks.map((chunk) =>
             firestore()
               .collection("presence")
               .where(firestore.FieldPath.documentId(), "in", chunk)
-              .where("presence.updatedAt", ">", cutoff)
               .get(),
           ),
         );
@@ -77,7 +83,7 @@ export function useSocialPresence(friendUids: string[]): Record<string, Presence
           snapshot.forEach((doc) => {
             const updatedAt = doc.data().updatedAt;
             next[doc.id] =
-              typeof updatedAt === "number"
+              typeof updatedAt === "number" && updatedAt > cutoff
                 ? { online: true, lastActiveAt: updatedAt }
                 : OFFLINE;
           });
