@@ -7,8 +7,9 @@ import { Gamepad2 } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import PressScale from "./PressScale";
+import PressScale from "@/src/components/PressScale";
 import GamerAvatar from "./GamerAvatar";
+import PillButton from "./common/PillButton";
 import type { PlaySession } from "../hooks/usePlaySessions";
 import { openSessionInCalendar } from "../lib/calendarLink";
 import { openSessionLink } from "../lib/sessionLink";
@@ -164,30 +165,6 @@ const PlaySessionCard = memo(
         borderColor: c.border,
       },
       completedBadgeText: { color: c.textMuted, fontSize: 11, fontWeight: "800" },
-      action: {
-        minHeight: 36,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 5,
-        paddingHorizontal: 12,
-        borderRadius: 11,
-        backgroundColor: c.accent,
-      },
-      actionText: { color: c.onAccent, fontSize: 12, fontWeight: "800" },
-      secondaryButton: {
-        minHeight: 36,
-        alignItems: "center",
-        justifyContent: "center",
-        paddingHorizontal: 11,
-        borderRadius: 11,
-        backgroundColor: c.accentSurface,
-        borderWidth: 1,
-        borderColor: c.border,
-      },
-      secondaryButtonText: { color: c.text, fontSize: 12, fontWeight: "700" },
-      dangerBorder: { borderColor: c.danger },
-      dangerText: { color: c.danger },
       linkRow: {
         flexDirection: "row",
         flexWrap: "wrap",
@@ -242,33 +219,31 @@ const PlaySessionCard = memo(
       label: string,
       tone: ActionTone,
     ): React.ReactElement => {
-      const containerStyle =
-        variant === "social"
-          ? tone === "primary"
-            ? styles.action
-            : [styles.secondaryButton, tone === "danger" && styles.dangerBorder]
-          : tone === "primary"
-            ? styles.sessionButton
-            : styles.sessionSecondary;
-      const labelStyle =
-        variant === "social"
-          ? [
-              tone === "primary" ? styles.actionText : styles.secondaryButtonText,
-              tone === "danger" && styles.dangerText,
-            ]
-          : tone === "primary"
-            ? styles.sessionButtonText
-            : styles.message;
-
+      // The chat card keeps its compact opacity-press buttons; the
+      // social card uses the shared pill button.
+      if (variant === "chat") {
+        return (
+          <ActionSurface
+            key={kind}
+            variant={variant}
+            style={tone === "primary" ? styles.sessionButton : styles.sessionSecondary}
+            onPress={() => run(kind)}
+          >
+            <CustomText
+              style={tone === "primary" ? styles.sessionButtonText : styles.message}
+            >
+              {label}
+            </CustomText>
+          </ActionSurface>
+        );
+      }
       return (
-        <ActionSurface
+        <PillButton
           key={kind}
-          variant={variant}
-          style={containerStyle}
+          label={label}
+          tone={tone === "primary" ? "primary" : tone === "danger" ? "danger-outline" : "secondary"}
           onPress={() => run(kind)}
-        >
-          <CustomText style={labelStyle}>{label}</CustomText>
-        </ActionSurface>
+        />
       );
     };
 
@@ -306,16 +281,11 @@ const PlaySessionCard = memo(
     const actionRow = (
       <View style={variant === "social" ? styles.sessionActions : styles.chatActions}>
         {variant === "social" && onSchedule && session.status === "proposed" ? (
-          <ActionSurface
+          <PillButton
             key="schedule"
-            variant={variant}
-            style={styles.action}
+            label={t("social.sessions.schedule")}
             onPress={() => onSchedule(session)}
-          >
-            <CustomText style={styles.actionText}>
-              {t("social.sessions.schedule")}
-            </CustomText>
-          </ActionSurface>
+          />
         ) : null}
         {actions.accept
           ? renderAction("accept", t("social.sessions.accept"), "primary")
@@ -336,22 +306,18 @@ const PlaySessionCard = memo(
           ? renderAction("cancel", t("social.sessions.cancel"), "danger")
           : null}
         {variant === "social" && onOpenChat ? (
-          <ActionSurface
+          <PillButton
             key="openChat"
-            variant={variant}
-            style={styles.secondaryButton}
+            tone="secondary"
+            label={t("social.sessions.openChat")}
             onPress={() => onOpenChat(session)}
-          >
-            <CustomText style={styles.secondaryButtonText}>
-              {t("social.sessions.openChat")}
-            </CustomText>
-          </ActionSurface>
+          />
         ) : null}
         {variant === "social" && typeof session.startsAt === "number" ? (
-          <ActionSurface
+          <PillButton
             key="calendar"
-            variant={variant}
-            style={styles.secondaryButton}
+            tone="secondary"
+            label={t("social.sessions.addToCalendar")}
             onPress={() => {
               if (session.startsAt === null) return;
               void openSessionInCalendar({
@@ -361,11 +327,7 @@ const PlaySessionCard = memo(
                 if (!opened) showToast(t("social.sessions.calendarError"));
               });
             }}
-          >
-            <CustomText style={styles.secondaryButtonText}>
-              {t("social.sessions.addToCalendar")}
-            </CustomText>
-          </ActionSurface>
+          />
         ) : null}
       </View>
     );

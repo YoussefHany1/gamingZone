@@ -1,6 +1,5 @@
 import type { ComponentType } from "react";
 import type { GameEntry } from "@/src/features/lists/types";
-import type { ProfileStatus } from "@gaming-zone/core";
 import type { UserStats } from "../../hooks/useUserStats";
 
 export type StatTileProps = {
@@ -13,19 +12,6 @@ export type StatTileProps = {
 
 export type RateCardProps = {
   entry: GameEntry;
-};
-
-export type ProfileHeaderCardProps = {
-  displayName: string;
-  photoURL: string;
-  memberSince: string | null;
-  platform: string;
-  country: string;
-  handle: string;
-  bannerURL: string;
-  bio: string;
-  status: ProfileStatus | null;
-  onEditProfile?: () => void;
 };
 
 export type ProfileStatsGridProps = {

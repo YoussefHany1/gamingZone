@@ -968,7 +968,11 @@
       "mutualFriends": "{{count}} amis en commun",
       "librarySection": "Ludothèque",
       "libraryCount": "{{count}} jeux",
-      "libraryHidden": "Ce joueur garde sa ludothèque privée"
+      "libraryHidden": "Ce joueur garde sa ludothèque privée",
+      "share": "Partager le profil",
+      "shareTitle": "Partager le profil",
+      "shareMessage": "Ajoutez-moi sur Gaming Zone : @{{handle}} {{url}}",
+      "shareMessageNoHandle": "Ajoutez-moi sur Gaming Zone : {{name}}"
     },
     "friends": {
       "title": "Friends",
@@ -981,7 +985,8 @@
       "accepted": "Demande d'ami acceptée",
       "declined": "Demande d'ami refusée",
       "accept": "Accept",
-      "cancel": "Cancel request"
+      "cancel": "Cancel request",
+      "cancelled": "Demande d’amis annulée"
     },
     "chats": {
       "title": "Discussions",
@@ -1011,7 +1016,17 @@
       "copy": "Copier",
       "copied": "Message copié",
       "sent": "Envoyé",
-      "read": "Lu"
+      "read": "Lu",
+      "new": "Nouveau chat",
+      "active": "Active",
+      "archived": "Archivées",
+      "open": "Ouvrir",
+      "mute": "Muet",
+      "unmute": "Réactiver",
+      "archive": "Archiver",
+      "unarchive": "Désarchiver",
+      "delete": "Supprimer",
+      "leaveGroup": "Quitter le groupe"
     },
     "groups": {
       "create": "Créer un groupe",
@@ -1072,7 +1087,10 @@
           "lobby": "Salon",
           "party": "Party"
         }
-      }
+      },
+      "new": "Nouvelle session",
+      "noChatsYet": "Pas encore de discussion",
+      "openChat": "Ouvrir le chat"
     },
     "search": {
       "placeholder": "Search by @handle",
@@ -1084,7 +1102,9 @@
       "block": "Block",
       "unblock": "Unblock",
       "message": "Message",
-      "more": "Plus d’options"
+      "more": "Plus d’options",
+      "viewProfile": "Voir le profil",
+      "inviteToSession": "Inviter à une session"
     },
     "errors": {
       "load": "Could not load social data",
@@ -1106,6 +1126,9 @@
     "presence": {
       "online": "En ligne",
       "lastSeen": "Vu {{when}}"
+    },
+    "players": {
+      "fallback": "Joueur"
     }
   },
   "aiChat": {

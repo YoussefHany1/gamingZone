@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import PressScale from "@/src/features/social/components/PressScale";
+import PressScale from "@/src/components/PressScale";
 import {
   useSessionReminderOffset,
   MIN_SESSION_REMINDER_MINUTES,

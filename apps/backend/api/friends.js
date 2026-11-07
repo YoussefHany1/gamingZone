@@ -880,10 +880,27 @@ async function sendMessagePush(uid, conversationId, conversationData, text) {
   const recipients = (conversationData.members ?? []).filter((member) => member !== uid);
   if (recipients.length === 0) return;
   try {
+    // Fetch the sender's display name so the notification can show who wrote
+    // the message instead of a generic "New message" label.
+    const admin = await requireAdmin();
+    const profileSnap = await admin.firestore.collection('profiles').doc(uid).get();
+    const profile = profileSnap.exists ? (profileSnap.data() ?? {}) : {};
+    const senderName =
+      (typeof profile.displayName === 'string' && profile.displayName.trim()) ||
+      (typeof profile.handle === 'string' && profile.handle.trim()) ||
+      'Player';
+
+    const preview = text.slice(0, 120);
+    const isGroup = conversationData.type === 'group';
+    const title = isGroup
+      ? (conversationData.title || 'New message')
+      : senderName;
+    const body = isGroup ? `${senderName}: ${preview}` : preview;
+
     await sendPushToUids(recipients, {
-      title: conversationData.type === 'group' ? (conversationData.title || 'New message') : 'New message',
-      body: text.slice(0, 120),
-      data: { type: 'social_message', conversationId, senderUid: uid },
+      title,
+      body,
+      data: { type: 'social_message', conversationId, senderUid: uid, senderName },
     });
   } catch (error) {
     console.warn('[push] message push failed:', error?.message ?? error);

@@ -9,23 +9,58 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import useCachedData from "@/src/hooks/useCachedData";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { flagEmoji } from "@/src/lib/flagEmoji";
-import type { PublicProfile } from "@gaming-zone/core";
+import type { ProfileStatus, PublicProfile } from "@gaming-zone/core";
 import { getMutualFriendCount } from "../lib/friendService";
 import PlatformGlyph from "./PlatformGlyph";
 
 export type PublicProfileHeaderProps = {
-  profile: PublicProfile;
+  /** Public profile projection; when present its fields are authoritative. */
+  profile?: PublicProfile;
+  /** Flat display fields — used by owner contexts (Settings) that lack a projection. */
+  displayName?: string;
+  photoURL?: string | null;
+  memberSince?: string | null;
+  platform?: string;
+  country?: string;
+  handle?: string | null;
+  bannerURL?: string | null;
+  bio?: string;
+  status?: ProfileStatus | null;
   /** Only the owner gets the pencil. */
   onEdit?: () => void;
+  /** Owner uid — mutual friends are only fetched for other viewers. */
+  profileUid?: string;
+  /** Viewer uid from the auth store; disables the mutuals fetch for the owner. */
+  viewerUid?: string | null;
 };
 
 /**
- * The public identity card: banner, avatar, display name, @handle, status and
- * bio. Everything optional is simply omitted, so a profile that has only
- * claimed a handle still renders as a clean card.
+ * The profile identity card: banner, avatar, display name, @handle, status,
+ * bio and the meta row (platform, member since, country flag). Anything optional
+ * is simply omitted, so a profile that has only claimed a handle still renders
+ * as a clean card.
+ *
+ * One component serves both the public user profile screen and the owner's own
+ * profile screen: pass a full `profile` projection, or flat fields (owner
+ * context). Mutual friends are only fetched when another member's profile is
+ * being viewed.
  */
 const PublicProfileHeader = memo(
-  ({ profile, onEdit }: PublicProfileHeaderProps): React.ReactElement => {
+  ({
+    profile,
+    displayName,
+    photoURL,
+    memberSince,
+    platform,
+    country,
+    handle,
+    bannerURL,
+    bio,
+    status,
+    onEdit,
+    profileUid,
+    viewerUid,
+  }: PublicProfileHeaderProps): React.ReactElement => {
     const colors = useThemeColors();
     const { t, i18n } = useTranslation();
 
@@ -68,7 +103,6 @@ const PublicProfileHeader = memo(
       },
       nameBlock: {
         flex: 1,
-        paddingBottom: 4,
       },
       nameRow: {
         flexDirection: "row",
@@ -84,7 +118,6 @@ const PublicProfileHeader = memo(
       handle: {
         color: c.textMuted,
         fontSize: 14,
-        marginTop: 2,
       },
       status: {
         flexDirection: "row",
@@ -124,47 +157,59 @@ const PublicProfileHeader = memo(
       },
     }));
 
-    const avatarSource = profile.photoURL
-      ? { uri: profile.photoURL }
+    const resolvedDisplayName = displayName ?? profile?.displayName ?? "";
+    const resolvedPhotoURL = photoURL ?? profile?.photoURL ?? null;
+    const resolvedHandle = handle ?? profile?.handle ?? null;
+    const resolvedBannerURL = bannerURL ?? profile?.bannerURL ?? null;
+    const resolvedBio = bio ?? profile?.bio ?? "";
+    const resolvedStatus = status ?? profile?.status ?? null;
+    const resolvedPlatform = platform ?? profile?.platform;
+    const resolvedCountry = country ?? profile?.country;
+    const resolvedUid = profile?.uid ?? profileUid ?? "";
+    const createdAt = profile?.createdAt ?? null;
+
+    const avatarSource = resolvedPhotoURL
+      ? { uri: resolvedPhotoURL }
       : require("@/assets/default_profile.webp");
 
-    const countryFlag = flagEmoji(profile.country);
+    const countryFlag = flagEmoji(resolvedCountry ?? "");
+    const platformIcon = <PlatformGlyph platform={resolvedPlatform} color={colors.textMuted} size={16} />;
 
-    const platformIcon = (
-      <PlatformGlyph platform={profile.platform} color={colors.textMuted} size={16} />
-    );
-
-    const memberSince = useMemo(() => {
-      if (!profile.createdAt) return null;
+    const memberSinceLabel = useMemo(() => {
+      if (memberSince) return memberSince;
+      if (!createdAt) return null;
       try {
-        return new Date(profile.createdAt).toLocaleDateString(i18n.language, {
+        return new Date(createdAt).toLocaleDateString(i18n.language, {
           month: "long",
           year: "numeric",
         });
       } catch {
         return null;
       }
-    }, [profile.createdAt, i18n.language]);
+    }, [memberSince, createdAt, i18n.language]);
 
     // Mutual friends: only fetched when viewing someone else's profile. The
     // count is cached per (viewer, profile) pair in MMKV with a short TTL so
     // tab switches and list scrolls never re-request the backend.
-    const viewerUid = useAuthStore((state) => state.user?.uid ?? null);
-    const isOwnProfile = !viewerUid || viewerUid === profile.uid;
+    const viewerUidFromStore = useAuthStore((state) => state.user?.uid ?? null);
+    const resolvedViewerUid = viewerUid ?? viewerUidFromStore;
+    const isOwnProfile = !resolvedUid || !resolvedViewerUid || resolvedViewerUid === resolvedUid;
     const { data: mutualCount } = useCachedData<number>(
-      viewerUid ? `social/mutuals/${viewerUid}_${profile.uid}` : "social/mutuals/disabled",
-      () => getMutualFriendCount(profile.uid),
-      [profile.uid, viewerUid],
+      resolvedUid
+        ? `social/mutuals/${resolvedViewerUid ?? "anon"}_${resolvedUid}`
+        : "social/mutuals/disabled",
+      () => getMutualFriendCount(resolvedUid),
+      [resolvedUid, resolvedViewerUid],
       300_000,
       !isOwnProfile,
     );
 
     return (
       <View style={styles.card}>
-        {profile.bannerURL ? (
+        {resolvedBannerURL ? (
           <Image
             style={styles.banner}
-            source={{ uri: profile.bannerURL }}
+            source={{ uri: resolvedBannerURL }}
             contentFit="cover"
             transition={250}
             cachePolicy="memory-disk"
@@ -176,17 +221,18 @@ const PublicProfileHeader = memo(
         <View style={styles.body}>
           <View style={styles.avatarRow}>
             <Image
-              recyclingKey={profile.photoURL ?? null}
+              recyclingKey={resolvedPhotoURL ?? null}
               style={styles.avatar}
               source={avatarSource}
               contentFit="cover"
               transition={250}
               cachePolicy="memory-disk"
+              allowDownscaling
             />
             <View style={styles.nameBlock}>
               <View style={styles.nameRow}>
                 <CustomText style={[styles.name]} numberOfLines={1}>
-                  {profile.displayName}
+                  {resolvedDisplayName}
                 </CustomText>
                 {onEdit && (
                   <TouchableOpacity
@@ -199,9 +245,11 @@ const PublicProfileHeader = memo(
                   </TouchableOpacity>
                 )}
               </View>
-              <CustomText style={styles.handle} numberOfLines={1}>
-                @{profile.handle}
-              </CustomText>
+              {resolvedHandle ? (
+                <CustomText style={styles.handle} numberOfLines={1}>
+                  @{resolvedHandle}
+                </CustomText>
+              ) : null}
               {typeof mutualCount === "number" && mutualCount > 0 && (
                 <CustomText style={styles.mutuals}>
                   {t("social.profile.mutualFriends", { count: mutualCount })}
@@ -210,31 +258,27 @@ const PublicProfileHeader = memo(
             </View>
           </View>
 
-          {profile.status && (
+          {resolvedStatus && (
             <View style={styles.status}>
-              {profile.status.emoji !== "" && (
-                <CustomText style={styles.statusText}>{profile.status.emoji}</CustomText>
+              {resolvedStatus.emoji !== "" && (
+                <CustomText style={styles.statusText}>{resolvedStatus.emoji}</CustomText>
               )}
               <CustomText style={styles.statusText} numberOfLines={2}>
-                {profile.status.text}
+                {resolvedStatus.text}
               </CustomText>
             </View>
           )}
 
-          {profile.bio !== "" && (
-            <CustomText style={styles.bio}>{profile.bio}</CustomText>
-          )}
+          {resolvedBio ? <CustomText style={styles.bio}>{resolvedBio}</CustomText> : null}
 
           <View style={styles.metaRow}>
             {platformIcon}
-            {memberSince && (
+            {memberSinceLabel && (
               <CustomText style={styles.metaText}>
-                {t("settings.profileShowcase.memberSince")} {memberSince}
+                {t("settings.profileShowcase.memberSince")} {memberSinceLabel}
               </CustomText>
             )}
-            {countryFlag !== "" && (
-              <CustomText style={styles.metaText}>{countryFlag}</CustomText>
-            )}
+            {countryFlag !== "" && <CustomText style={styles.metaText}>{countryFlag}</CustomText>}
           </View>
         </View>
       </View>

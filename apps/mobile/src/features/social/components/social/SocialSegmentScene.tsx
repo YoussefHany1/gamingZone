@@ -5,11 +5,19 @@ import { FlashList } from "@shopify/flash-list";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import GamingEmptyState from "../GamingEmptyState";
+import GamingEmptyState from "@/src/components/GamingEmptyState";
+import { NativeAdComponent } from "@/src/components/NativeAd";
 import PlaySessionCard from "../PlaySessionCard";
 import SocialFab from "./SocialFab";
 import SocialListHeader from "./SocialListHeader";
 import SocialPersonRow from "./SocialPersonRow";
+import SkeletonSocial from "../../skeleton/SkeletonSocial";
+import type {
+  Conversation,
+  FriendRequest,
+  Friendship,
+  ProfileSearchHit,
+} from "@gaming-zone/core";
 import type { PlaySession } from "../../hooks/usePlaySessions";
 import type { SocialScreenState } from "../../hooks/useSocialScreen";
 import { useSocialPresence } from "../../hooks/useSocialPresence";
@@ -18,8 +26,12 @@ import {
   cancelFriendRequest,
   sendFriendRequest,
 } from "../../lib/friendService";
+import { withListAds, withSessionAds } from "../../lib/socialList";
 import type { SocialListRow } from "../../types";
 import type { SocialSegment } from "../../lib/socialList";
+
+/** Row-card lists (friends/requests/chats + search hits) that share the SocialListRow-styled ad. */
+type RowCardRow = ProfileSearchHit | FriendRequest | Friendship | Conversation;
 
 type SocialSegmentSceneProps = {
   segment: SocialSegment;
@@ -48,6 +60,15 @@ export default function SocialSegmentScene({
     return uids;
   }, [segment, screen.friendships, screen.uid]);
   const presenceByUid = useSocialPresence(friendUids);
+  const mutedConversationIds = useMemo(
+    () =>
+      new Set(
+        Object.entries(screen.conversationSettings ?? {})
+          .filter(([, state]) => state?.muted === true)
+          .map(([id]) => id),
+      ),
+    [screen.conversationSettings],
+  );
 
   const styles = useThemeStyles((c) => ({
     scene: { flex: 1, backgroundColor: c.background },
@@ -84,9 +105,25 @@ export default function SocialSegmentScene({
     [screen, t],
   );
 
+  // Row-card lists (chats, friends, requests — including search hits) get
+  // native-ad slots styled like SocialListRow interleaved after every 4 rows
+  // (plus one trailing ad for a 1–3 row list). Session cards get their own
+  // PlaySessionCard-styled ad variant.
+  const data = useMemo<SocialListRow[]>(() => {
+    if (segment === "sessions") {
+      const sessionRows = (screen.rowsBySegment.sessions ?? []) as unknown as PlaySession[];
+      return withSessionAds(sessionRows);
+    }
+    const rowCards = ((screen.rowsBySegment[segment] ?? []) as unknown) as RowCardRow[];
+    return withListAds(rowCards);
+  }, [segment, screen.rowsBySegment]);
+
   const renderItem = useCallback(
     ({ item }: { item: SocialListRow }) =>
-      "gameName" in item ? (
+      "chatAd" in item || "sessionAd" in item ? (
+        // Native ad styled like the list's own card; hidden while idle/loading/error.
+        <NativeAdComponent variant={"chatAd" in item ? "chat" : "session"} />
+      ) : "gameName" in item ? (
         <PlaySessionCard
           session={item as PlaySession}
           currentUid={screen.currentUid}
@@ -120,9 +157,10 @@ export default function SocialSegmentScene({
           onRespond={handleRespond}
           onCancelRequest={handleCancelRequest}
           onSendRequest={handleSendRequest}
+          mutedConversationIds={mutedConversationIds}
         />
       ),
-    [screen, i18n.language, presenceByUid, handleRespond, handleCancelRequest, handleSendRequest],
+    [screen, i18n.language, presenceByUid, mutedConversationIds, handleRespond, handleCancelRequest, handleSendRequest],
   );
 
   const hasHandle = !!screen.myProfile?.handle;
@@ -167,9 +205,15 @@ export default function SocialSegmentScene({
   return (
     <View style={styles.scene}>
       <FlashList
-        data={screen.rowsBySegment[segment] ?? []}
+        data={data as SocialListRow[]}
         keyExtractor={(item: SocialListRow) =>
-          String("id" in item ? item.id : item.uid)
+          String(
+            "chatAd" in item || "sessionAd" in item
+              ? item.adId
+              : "id" in item
+                ? item.id
+                : item.uid,
+          )
         }
         contentContainerStyle={styles.content}
         refreshControl={
@@ -199,28 +243,34 @@ export default function SocialSegmentScene({
           />
         }
         ListEmptyComponent={
-          <GamingEmptyState
-            title={
-              screen.isSearching
-                ? t("social.search.noResults")
-                : t(`social.${segment}.empty`)
-            }
-            icon={
-              screen.isSearching
-                ? SearchX
-                : segment === "friends"
-                  ? Users
-                  : segment === "requests"
-                    ? UserPlus
-                    : segment === "chats"
-                      ? MessageSquare
-                      : undefined
-            }
-            actionLabel={
-              segment === "friends" ? t("social.groups.create") : undefined
-            }
-            onAction={segment === "friends" ? () => screen.setGroupOpen(true) : undefined}
-          />
+          // First load: skeleton rows until the shared listeners deliver,
+          // then the real empty states.
+          screen.loading ? (
+            <SkeletonSocial />
+          ) : (
+            <GamingEmptyState
+              title={
+                screen.isSearching
+                  ? t("social.search.noResults")
+                  : t(`social.${segment}.empty`)
+              }
+              icon={
+                screen.isSearching
+                  ? SearchX
+                  : segment === "friends"
+                    ? Users
+                    : segment === "requests"
+                      ? UserPlus
+                      : segment === "chats"
+                        ? MessageSquare
+                        : undefined
+              }
+              actionLabel={
+                segment === "friends" ? t("social.groups.create") : undefined
+              }
+              onAction={segment === "friends" ? () => screen.setGroupOpen(true) : undefined}
+            />
+          )
         }
         renderItem={renderItem}
       />

@@ -14,7 +14,7 @@ import type { SettingsStackParamList } from "@/src/navigation/AppNavigator";
 import AdSlot from "@/src/components/AdSlot";
 import ProfileContentSkeleton from "../components/profile/ProfileContentSkeleton";
 import ProfileEmptyLibraryCard from "../components/profile/ProfileEmptyLibraryCard";
-import ProfileHeaderCard from "../components/profile/ProfileHeaderCard";
+import PublicProfileHeader from "@/src/features/social/components/PublicProfileHeader";
 import ProfileMenu from "../components/profile/ProfileMenu";
 import ProfileStatsGrid from "../components/profile/ProfileStatsGrid";
 import RateCard from "../components/profile/RateCard";
@@ -93,7 +93,7 @@ const ProfileScreen = React.memo((): React.ReactElement => {
           <ProfileContentSkeleton />
         ) : (
           <>
-            <ProfileHeaderCard
+            <PublicProfileHeader
               displayName={displayName}
               photoURL={photoURL}
               memberSince={memberSince}
@@ -103,7 +103,7 @@ const ProfileScreen = React.memo((): React.ReactElement => {
               bannerURL={bannerURL}
               bio={bio}
               status={status}
-              onEditProfile={() => navigation.navigate("EditProfile")}
+              onEdit={() => navigation.navigate("EditProfile")}
             />
 
             <LevelCard

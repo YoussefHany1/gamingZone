@@ -20,7 +20,7 @@ import type { SocialRouteShape } from "../types";
 function SocialScreen(): React.ReactElement {
   const layout = useWindowDimensions();
   const styles = useThemeStyles((c) => ({
-    container: { flex: 1, backgroundColor: c.backgroundDeep },
+    container: { flex: 1, backgroundColor: c.backgroundDeep, paddingVertical: 8 },
   }));
 
   const screen = useSocialScreen();
@@ -100,7 +100,6 @@ function SocialScreen(): React.ReactElement {
         busy={screen.chatActionBusy}
         uid={screen.uid}
         onClose={() => screen.setChatMenuId(null)}
-        onOpen={screen.openChat}
         onToggleMuted={screen.toggleChatMuted}
         onToggleArchived={screen.toggleChatArchived}
         onLeaveGroup={screen.leaveChatGroup}

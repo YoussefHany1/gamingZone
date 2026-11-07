@@ -1,31 +1,24 @@
 import React from "react";
+import { Monitor } from "lucide-react-native";
 import {
+  AndroidIcon,
+  AppleIcon,
   DiscordIcon,
   PlayStationIcon,
   XboxIcon,
 } from "@/src/components/icons/BrandIcons";
-import { SteamIcon } from "@/src/components/icons/StoreIcons";
+import { NintendoSwitchIcon, SteamIcon } from "@/src/components/icons/StoreIcons";
 
 /**
- * The four platforms the profile knows about. `PublicProfile.platform` and
- * `ProfileLink.platform` use different spellings for PlayStation, so both are
- * folded into the same canonical name here instead of in every card.
+ * The canonical platform→glyph mapping. Platform ids use assorted spellings
+ * across the app (`pc`, `psn`, `playstation`, linked `steam`/`xbox`), so every
+ * spelling is folded into one component instead of per-card switch statements.
  */
-type CanonicalPlatform = "steam" | "playstation" | "xbox" | "discord";
-
-const CANONICAL_PLATFORMS: Record<string, CanonicalPlatform> = {
-  steam: "steam",
-  psn: "playstation",
-  playstation: "playstation",
-  xbox: "xbox",
-  discord: "discord",
-};
-
 export type PlatformGlyphProps = {
   platform: string | null | undefined;
   color: string;
   size?: number;
-  /** The linked-accounts card historically renders Discord for unknown values. */
+  /** Legacy fallback: renders Discord for unknown values. */
   unknownAsDiscord?: boolean;
 };
 
@@ -35,15 +28,25 @@ export default function PlatformGlyph({
   size = 16,
   unknownAsDiscord = false,
 }: PlatformGlyphProps): React.ReactElement | null {
-  const canonical = platform ? CANONICAL_PLATFORMS[platform.toLowerCase()] : undefined;
+  const key = platform?.trim().toLowerCase() ?? "";
+  if (!key) return null;
 
-  switch (canonical) {
+  switch (key) {
+    case "pc":
+      return <Monitor size={size} color={color} />;
     case "steam":
       return <SteamIcon size={size} fill={color} />;
     case "playstation":
+    case "psn":
       return <PlayStationIcon size={size} fill={color} />;
     case "xbox":
       return <XboxIcon size={size} fill={color} />;
+    case "nintendo":
+      return <NintendoSwitchIcon size={size} fill={color} />;
+    case "android":
+      return <AndroidIcon size={size} fill={color} />;
+    case "ios":
+      return <AppleIcon size={size} fill={color} />;
     case "discord":
       return <DiscordIcon size={size} fill={color} />;
     default:

@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
 import type { Conversation, FriendRequest, Friendship, ProfileSearchHit } from "@gaming-zone/core";
 import type { ConversationUserState } from "../hooks/useConversationList";
+import type { PlaySession } from "../hooks/usePlaySessions";
 import {
+  chatAdRow,
   countryOptions,
   relationByUid,
   selectSocialRows,
+  sessionAdRow,
   socialTabCounts,
   toGroupFriends,
   visibleConversations,
+  withListAds,
+  withSessionAds,
   type SocialRowsInput,
 } from "./socialList";
 
@@ -60,6 +65,20 @@ function hit(partial: Partial<ProfileSearchHit> & Pick<ProfileSearchHit, "uid">)
     platform: "PC",
     country: "US",
     ...partial,
+  };
+}
+
+function playSession(id: string): PlaySession {
+  return {
+    id,
+    conversationId: `conv-${id}`,
+    participantUids: [uid, "other"],
+    gameId: id,
+    gameName: `Game ${id}`,
+    status: "proposed",
+    confirmedProposalId: null,
+    startsAt: null,
+    proposals: [],
   };
 }
 
@@ -260,5 +279,84 @@ describe("countryOptions", () => {
         hit({ uid: "d", country: "US" }),
       ]),
     ).toEqual(["US", "DE"]);
+  });
+});
+
+describe("withListAds", () => {
+  it("returns an empty list unchanged (the empty state owns that view)", () => {
+    expect(withListAds([])).toEqual([]);
+  });
+
+  it("appends one trailing ad when there are fewer chats than the interval", () => {
+    const rows = [conversation("c1"), conversation("c2"), conversation("c3")];
+    expect(withListAds(rows)).toEqual([...rows, chatAdRow("ad-end")]);
+  });
+
+  it("splits 4 chats with an ad in the middle instead of trailing one", () => {
+    const rows = [conversation("c1"), conversation("c2"), conversation("c3"), conversation("c4")];
+    expect(withListAds(rows)).toEqual([
+      conversation("c1"),
+      conversation("c2"),
+      conversation("c3"),
+      conversation("c4"),
+      chatAdRow("ad-4"),
+    ]);
+  });
+
+  it("interleaves an ad after every interval chats", () => {
+    const rows = Array.from({ length: 9 }, (_, index) => conversation(`c${index + 1}`));
+    const result = withListAds(rows);
+    expect(result.filter((row) => "chatAd" in row).map((row) => row.adId)).toEqual([
+      "ad-4",
+      "ad-8",
+      "ad-end-3",
+    ]);
+    // 9 conversations + 3 ad slots.
+    expect(result.length).toBe(12);
+    // The conversations keep their order and stay unmodified.
+    expect(result.filter((row) => "id" in row).map((row) => row.id)).toEqual(rows.map((row) => row.id));
+  });
+
+  it("adds no trailing ad when the count is an exact multiple of the interval", () => {
+    const rows = Array.from({ length: 8 }, (_, index) => conversation(`c${index + 1}`));
+    const ads = withListAds(rows).filter((row) => "chatAd" in row);
+    expect(ads.map((row) => row.adId)).toEqual(["ad-4", "ad-8"]);
+  });
+
+  it("works unchanged for friendship rows (friends tab)", () => {
+    const rows = [friendship("f1", "ada"), friendship("f2", "bob"), friendship("f3", "cyd")];
+    expect(withListAds(rows)).toEqual([...rows, chatAdRow("ad-end")]);
+  });
+
+  it("works unchanged for friend-request rows (requests tab)", () => {
+    const rows = [request("r1", "ada", uid), request("r2", uid, "bob"), request("r3", "cyd", uid)];
+    expect(withListAds(rows)).toEqual([...rows, chatAdRow("ad-end")]);
+  });
+});
+
+describe("withSessionAds", () => {
+  it("returns an empty list ad-free", () => {
+    expect(withSessionAds([] as PlaySession[])).toEqual([]);
+  });
+
+  it("marks chat slots and session slots with distinct flags", () => {
+    expect(sessionAdRow("ad-end")).toEqual({ sessionAd: true, adId: "ad-end" });
+    expect(chatAdRow("ad-end")).toEqual({ chatAd: true, adId: "ad-end" });
+  });
+
+  it("mirrors the chat rule: trailing ad for a 1–3 session list", () => {
+    const rows = [playSession("s1"), playSession("s2"), playSession("s3")];
+    expect(withSessionAds(rows)).toEqual([...rows, sessionAdRow("ad-end")]);
+  });
+
+  it("interleaves an ad after every interval sessions", () => {
+    const rows = Array.from({ length: 6 }, (_, index) => playSession(`s${index + 1}`));
+    const result = withSessionAds(rows);
+    expect(result.filter((row) => "sessionAd" in row).map((row) => row.adId)).toEqual([
+      "ad-4",
+      "ad-end-2",
+    ]);
+    // The sessions keep their order and stay unmodified.
+    expect(result.filter((row) => "sessionAd" in row === false).length).toBe(6);
   });
 });

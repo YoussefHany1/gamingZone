@@ -968,7 +968,11 @@
       "mutualFriends": "{{count}} मित्र साझा हैं",
       "librarySection": "गेम लाइब्रेरी",
       "libraryCount": "{{count}} गेम",
-      "libraryHidden": "यह खिलाड़ी अपनी गेम लाइब्रेरी निजी रखता है"
+      "libraryHidden": "यह खिलाड़ी अपनी गेम लाइब्रेरी निजी रखता है",
+      "share": "प्रोफ़ाइल शेयर करें",
+      "shareTitle": "प्रोफ़ाइल शेयर करें",
+      "shareMessage": "Gaming Zone पर मैंसे जोड़ें: @{{handle}} {{url}}",
+      "shareMessageNoHandle": "Gaming Zone पर मैंसे जोड़ें: {{name}}"
     },
     "friends": {
       "title": "Friends",
@@ -981,7 +985,8 @@
       "accepted": "मित्रता अनुरोध स्वीकार किया गया",
       "declined": "मित्रता अनुरोध अस्वीकार किया गया",
       "accept": "Accept",
-      "cancel": "Cancel request"
+      "cancel": "Cancel request",
+      "cancelled": "दोस्ती अनुरोध रद्द किया गया"
     },
     "chats": {
       "title": "चैट",
@@ -1011,7 +1016,17 @@
       "copy": "कॉपी करें",
       "copied": "संदेश कॉपी हो गया",
       "sent": "भेजा गया",
-      "read": "पढ़ा गया"
+      "read": "पढ़ा गया",
+      "new": "नई चैट",
+      "active": "सक्रिय",
+      "archived": "संग्रहीत",
+      "open": "खोलें",
+      "mute": "म्यूट",
+      "unmute": "अनम्यूट",
+      "archive": "संग्रहीत करें",
+      "unarchive": "संग्रहण हटाएँ",
+      "delete": "हटाएँ",
+      "leaveGroup": "ग्रुप छोड़ें"
     },
     "groups": {
       "create": "समूह बनाएं",
@@ -1072,7 +1087,10 @@
           "lobby": "लॉबी",
           "party": "पार्टी"
         }
-      }
+      },
+      "new": "नया सेशन",
+      "noChatsYet": "अभी कोई चैट नहीं",
+      "openChat": "चैट खोलें"
     },
     "search": {
       "placeholder": "Search by @handle",
@@ -1084,7 +1102,9 @@
       "block": "Block",
       "unblock": "Unblock",
       "message": "संदेश",
-      "more": "और विकल्प"
+      "more": "और विकल्प",
+      "viewProfile": "प्रोफ़ाइल देखें",
+      "inviteToSession": "सेशन में आमंदोश मिलाएँ"
     },
     "errors": {
       "load": "Could not load social data",
@@ -1106,6 +1126,9 @@
     "presence": {
       "online": "ऑनलाइन",
       "lastSeen": "अंतिम बार {{when}} देखा गया"
+    },
+    "players": {
+      "fallback": "खिलाड़ी"
     }
   },
   "aiChat": {

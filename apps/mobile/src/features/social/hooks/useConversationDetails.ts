@@ -6,6 +6,7 @@ import { logger } from "@/src/lib/logger";
 export type ConversationDetails = {
   type: ConversationType | null;
   members: string[];
+  admins: string[];
   title: string | null;
   photoURL: string | null;
 };
@@ -13,6 +14,7 @@ export type ConversationDetails = {
 const EMPTY_DETAILS: ConversationDetails = {
   type: null,
   members: [],
+  admins: [],
   title: null,
   photoURL: null,
 };
@@ -41,6 +43,7 @@ export function useConversationDetails(conversationId: string): ConversationDeta
         setDetails({
           type: data.type === "dm" || data.type === "group" ? data.type : null,
           members: Array.isArray(data.members) ? data.members : [],
+          admins: Array.isArray(data.admins) ? data.admins : [],
           title: typeof data.title === "string" ? data.title : null,
           photoURL: typeof data.photoURL === "string" ? data.photoURL : null,
         });

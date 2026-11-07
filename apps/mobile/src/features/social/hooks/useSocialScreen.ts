@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Platform, Share } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NavigationProp } from "@react-navigation/native";
-import { profilePath } from "@gaming-zone/core";
+import { profilePath, type Conversation } from "@gaming-zone/core";
 import type { SocialStackParamList } from "@/src/navigation/AppNavigator";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { showToast } from "@/src/lib/toast";
@@ -11,6 +11,7 @@ import { useSocialData } from "./useSocialData";
 import { useMyProfile } from "./useMyProfile";
 import { useProfileSearch } from "./useProfileSearch";
 import { usePlaySessions, type PlaySession } from "./usePlaySessions";
+import { useChatMenu, fallbackConversation } from "./useChatMenu";
 import type { SessionActionErrorHandler } from "./useSessionActions";
 import {
   blockUser,
@@ -21,12 +22,8 @@ import {
 import { createPlaySession, proposeSlot } from "../lib/sessionService";
 import { validateSessionUrl } from "../lib/sessionLink";
 import { setGroupMembers, updateGroupConversation } from "../lib/friendService";
-import {
-  hideConversation,
-  setConversationArchived,
-  setConversationMuted,
-} from "../lib/chatService";
-import { leaveGroupConversation } from "../lib/friendService";
+import { setConversationArchived } from "../lib/chatService";
+import { showConfirmAlert } from "../lib/confirmDialog";
 import {
   countryOptions,
   relationByUid as buildRelationByUid,
@@ -66,11 +63,9 @@ export function useSocialScreen() {
   const navigation =
     useNavigation<NavigationProp<SocialStackParamList & SocialParentNavigation>>();
 
-  const [segment, setSegment] = useState<SocialSegment>("friends");
+  const [segment, setSegment] = useState<SocialSegment>("chats");
   const [requestView, setRequestView] = useState<RequestView>("incoming");
   const [chatView, setChatView] = useState<ChatView>("active");
-  const [chatMenuId, setChatMenuId] = useState<string | null>(null);
-  const [chatActionBusy, setChatActionBusy] = useState(false);
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [newChatBusy, setNewChatBusy] = useState(false);
   const [friendMenuUid, setFriendMenuUid] = useState<string | null>(null);
@@ -93,6 +88,7 @@ export function useSocialScreen() {
     conversations,
     unreadCounts,
     conversationSettings,
+    loading,
   } = useSocialData();
   const { profile: myProfile, loading: profileLoading } = useMyProfile(uid);
   const {
@@ -387,40 +383,38 @@ export function useSocialScreen() {
 
   const confirmRemoveFriend = useCallback(
     (targetUid: string) => {
-      Alert.alert(t("social.actions.removeFriend"), undefined, [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.save"),
-          onPress: () => {
-            void handleFriendAction(
-              () => removeFriend(targetUid),
-              t("social.actions.removeFriend"),
-              t("social.errors.friendRequest"),
-            );
-            setFriendMenuUid(null);
-          },
+      showConfirmAlert({
+        title: t("social.actions.removeFriend"),
+        confirmLabel: t("common.save"),
+        cancelLabel: t("common.cancel"),
+        onConfirm: () => {
+          void handleFriendAction(
+            () => removeFriend(targetUid),
+            t("social.actions.removeFriend"),
+            t("social.errors.friendRequest"),
+          );
+          setFriendMenuUid(null);
         },
-      ]);
+      });
     },
     [handleFriendAction, t],
   );
 
   const confirmBlockUser = useCallback(
     (targetUid: string) => {
-      Alert.alert(t("social.actions.block"), undefined, [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.save"),
-          onPress: () => {
-            void handleFriendAction(
-              () => blockUser(targetUid),
-              t("social.actions.block"),
-              t("social.errors.friendRequest"),
-            );
-            setFriendMenuUid(null);
-          },
+      showConfirmAlert({
+        title: t("social.actions.block"),
+        confirmLabel: t("common.save"),
+        cancelLabel: t("common.cancel"),
+        onConfirm: () => {
+          void handleFriendAction(
+            () => blockUser(targetUid),
+            t("social.actions.block"),
+            t("social.errors.friendRequest"),
+          );
+          setFriendMenuUid(null);
         },
-      ]);
+      });
     },
     [handleFriendAction, t],
   );
@@ -461,35 +455,32 @@ export function useSocialScreen() {
   }, [conversations]);
   const closeSessionForm = useCallback(() => setSessionForm(null), []);
 
-  const chatMenuConversation = useMemo(() => {
-    if (!chatMenuId) return null;
-    return (
-      conversations.find((item) => item.id === chatMenuId) ?? {
-        id: chatMenuId,
-        type: "dm" as const,
-        title: null,
-        photoURL: null,
-        members: [],
-        admins: [],
-        dmKey: null,
-        lastMessage: null,
-        lastMessageAt: null,
-      }
-    );
-  }, [chatMenuId, conversations]);
+  // Chat-menu sheet state (shared with the chat screen via `useChatMenu`):
+  // open id, conversation resolution, viewer state and the menu actions.
+  const resolveChatMenuConversation = useCallback(
+    (conversationId: string): Conversation =>
+      conversations.find((item) => item.id === conversationId) ??
+      fallbackConversation(conversationId),
+    [conversations],
+  );
+  const chatMenu = useChatMenu({
+    uid,
+    resolveConversation: resolveChatMenuConversation,
+    userStates: conversationSettings,
+  });
+
+  const openGroupSettings = useCallback(
+    (conversationId: string) => {
+      chatMenu.closeMenu();
+      setGroupSettingsId(conversationId);
+    },
+    [chatMenu],
+  );
 
   const groupSettingsConversation = useMemo(() => {
     if (!groupSettingsId) return null;
     return conversations.find((item) => item.id === groupSettingsId) ?? null;
   }, [conversations, groupSettingsId]);
-
-  const openGroupSettings = useCallback(
-    (conversationId: string) => {
-      setChatMenuId(null);
-      setGroupSettingsId(conversationId);
-    },
-    [],
-  );
 
   const renameGroup = useCallback(
     (conversationId: string, title: string) => {
@@ -514,49 +505,6 @@ export function useSocialScreen() {
     [t],
   );
 
-  const toggleChatMuted = useCallback(
-    (conversationId: string) => {
-      const muted = conversationSettings[conversationId]?.muted === true;
-      setChatActionBusy(true);
-      void setConversationMuted(conversationId, uid, !muted).finally(() =>
-        setChatActionBusy(false),
-      );
-      setChatMenuId(null);
-    },
-    [conversationSettings, uid],
-  );
-
-  const toggleChatArchived = useCallback(
-    (conversationId: string) => {
-      const archived = conversationSettings[conversationId]?.archived === true;
-      setChatActionBusy(true);
-      void setConversationArchived(conversationId, uid, !archived).finally(() =>
-        setChatActionBusy(false),
-      );
-      setChatMenuId(null);
-    },
-    [conversationSettings, uid],
-  );
-
-  const leaveChatGroup = useCallback((conversationId: string) => {
-    void leaveGroupConversation(conversationId).then(() => setChatMenuId(null));
-  }, []);
-
-  const deleteChat = useCallback(
-    (conversationId: string) => {
-      Alert.alert(t("social.chats.delete"), undefined, [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.save"),
-          onPress: () => {
-            void hideConversation(conversationId, uid).then(() => setChatMenuId(null));
-          },
-        },
-      ]);
-    },
-    [t, uid],
-  );
-
   return {
     uid,
     currentUid,
@@ -567,12 +515,15 @@ export function useSocialScreen() {
     setRequestView,
     chatView,
     setChatView,
-    chatMenuConversation,
-    chatMenuState: chatMenuConversation
-      ? conversationSettings[chatMenuConversation.id]
-      : undefined,
-    setChatMenuId,
-    chatActionBusy,
+    // First-load gate for the social skeletons.
+    loading,
+    chatMenuConversation: chatMenu.conversation,
+    chatMenuState: chatMenu.state,
+    setChatMenuId: (conversationId: string | null) => {
+      if (conversationId) chatMenu.openMenu(conversationId);
+      else chatMenu.closeMenu();
+    },
+    chatActionBusy: chatMenu.busy,
     newChatOpen,
     setNewChatOpen,
     newChatBusy,
@@ -600,6 +551,7 @@ export function useSocialScreen() {
     friendProfiles,
     conversations,
     unreadCounts,
+    conversationSettings,
     myProfile,
     profileLoading,
     query,
@@ -628,10 +580,10 @@ export function useSocialScreen() {
     inviteToSession,
     openSessionForm,
     closeSessionForm,
-    toggleChatMuted,
-    toggleChatArchived,
-    leaveChatGroup,
-    deleteChat,
+    toggleChatMuted: chatMenu.toggleMuted,
+    toggleChatArchived: chatMenu.toggleArchived,
+    leaveChatGroup: chatMenu.leaveGroup,
+    deleteChat: chatMenu.delete,
     rowsBySegment,
   };
 }

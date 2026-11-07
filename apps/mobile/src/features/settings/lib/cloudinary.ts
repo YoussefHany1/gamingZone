@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+import { File } from "expo-file-system";
 import type { CloudinaryResponse } from "../types";
 import { logger } from "@/src/lib/logger";
 
@@ -33,12 +34,9 @@ export async function uploadProfileImage(uri: string | null): Promise<string | n
 
   const extension = uri.split(".").pop();
 
+  const file = new File(uri);
   const data = new FormData();
-  data.append("file", {
-    uri,
-    type: `image/${extension}`,
-    name: `profile.${extension}`,
-  } as unknown as Blob);
+  data.append("file", file, `profile.${extension}`);
   data.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
   data.append("api_key", CLOUDINARY_API_KEY);
 

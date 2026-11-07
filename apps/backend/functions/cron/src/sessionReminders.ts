@@ -21,14 +21,18 @@ export async function runSessionReminders() {
   let completedCount = 0;
 
   for (const sessionDoc of sessionsSnap.docs) {
-    const session = sessionDoc.data();
+    const session = sessionDoc.data() ?? {};
     const startsAt = Number(session.startsAt);
     if (!Number.isFinite(startsAt)) continue;
 
     if (startsAt <= now) {
-      await sessionDoc.ref.update({ status: 'completed' });
-      completedCount++;
-      logs.push(`session-reminders: marked ${sessionDoc.id} completed`);
+      try {
+        await sessionDoc.ref.update({ status: 'completed' });
+        completedCount++;
+        logs.push(`session-reminders: marked ${sessionDoc.id} completed`);
+      } catch (error) {
+        logs.push(`session-reminders: failed to complete ${sessionDoc.id}: ${String(error)}`);
+      }
     }
   }
 

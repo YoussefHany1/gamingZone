@@ -8,11 +8,12 @@ import Animated, {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-type PressScaleProps = Omit<PressableProps, "style"> & {
+export type PressScaleProps = Omit<PressableProps, "style"> & {
   children: React.ReactNode;
   style?: PressableProps["style"];
 };
 
+/** Pressable that subtly scales down while pressed (spring, 0.97). */
 export default function PressScale({ children, style, ...props }: PressScaleProps) {
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({

@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Platform, ScrollView, View } from "react-native";
+import { Platform, View } from "react-native";
 import DateTimePicker, {
   DateTimePickerAndroid,
 } from "@react-native-community/datetimepicker";
@@ -14,23 +14,77 @@ import {
   AlertCircle,
   Sparkles,
 } from "lucide-react-native";
+import type { LucideIcon } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import type { Conversation } from "@gaming-zone/core";
 import CustomText from "@/src/components/CustomText";
 import CustomTextInput from "@/src/components/CustomTextInput";
+import IconButton from "@/src/components/IconButton";
 import GameSearchField from "@/src/features/social/components/social/GameSearchField";
 import SessionReminderStepper from "@/src/features/social/components/social/SessionReminderStepper";
+import ToggleChipRow from "@/src/features/social/components/common/ToggleChipRow";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { validateSessionUrl } from "../../lib/sessionLink";
 import GameBottomSheet from "../GameBottomSheet";
-import PressScale from "../PressScale";
+import PressScale from "@/src/components/PressScale";
 import type { SessionFormState } from "../../hooks/useSocialScreen";
 
 const SHEET_FILE = "src/features/social/screens/SocialScreen.tsx";
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
-type SessionFormSheetProps = {
+/** The shared section row: icon + label + required/optional markers. */
+function SectionHeader({
+  icon: Icon,
+  label,
+  required = false,
+  optionalBadge,
+}: {
+  icon: LucideIcon;
+  /** Already-translated label. */
+  label: string;
+  required?: boolean;
+  /** Already-translated badge rendered at the end (e.g. "Optional"). */
+  optionalBadge?: string;
+}): React.ReactElement {
+  const colors = useThemeColors();
+  const styles = useThemeStyles((c) => ({
+    sectionHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      marginBottom: 8,
+    },
+    sectionLabel: {
+      color: c.text,
+      fontSize: 13,
+      fontWeight: "800",
+      letterSpacing: 0.2,
+    },
+    sectionRequired: { color: c.accent, fontSize: 13, fontWeight: "800" },
+    optionalBadge: {
+      color: c.textMuted,
+      fontSize: 11,
+      fontWeight: "600",
+      marginLeft: "auto",
+    },
+  }));
+
+  return (
+    <View style={styles.sectionHeader}>
+      <Icon size={14} color={colors.accent} />
+      <CustomText style={styles.sectionLabel}>{label}</CustomText>
+      {required ? (
+        <CustomText style={styles.sectionRequired}>*</CustomText>
+      ) : null}
+      {optionalBadge ? (
+        <CustomText style={styles.optionalBadge}>{optionalBadge}</CustomText>
+      ) : null}
+    </View>
+  );
+}
+
+export type SessionFormSheetProps = {
   sessionForm: SessionFormState | null;
   conversations: Conversation[];
   friendProfiles: Record<string, { displayName?: string } | undefined>;
@@ -91,71 +145,8 @@ export default function SessionFormSheet({
       fontSize: 12,
       marginTop: 2,
     },
-    closeButton: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: c.surface,
-      alignItems: "center",
-      justifyContent: "center",
-      borderWidth: 1,
-      borderColor: c.border,
-    },
     section: {
       marginBottom: 16,
-    },
-    sectionHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      marginBottom: 8,
-    },
-    sectionLabel: {
-      color: c.text,
-      fontSize: 13,
-      fontWeight: "800",
-      letterSpacing: 0.2,
-    },
-    sectionRequired: {
-      color: c.accent,
-      fontSize: 13,
-      fontWeight: "800",
-    },
-    optionalBadge: {
-      color: c.textMuted,
-      fontSize: 11,
-      fontWeight: "600",
-      marginLeft: "auto",
-    },
-    subTabsContainer: {
-      flexDirection: "row",
-      gap: 8,
-      paddingVertical: 2,
-    },
-    subTab: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      minHeight: 38,
-      paddingHorizontal: 12,
-      borderRadius: 12,
-      backgroundColor: c.surface,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-    subTabActive: {
-      backgroundColor: c.accentSurface,
-      borderColor: c.accent,
-    },
-    subTabText: {
-      color: c.textMuted,
-      fontSize: 12,
-      fontWeight: "700",
-      maxWidth: 130,
-    },
-    subTabTextActive: {
-      color: c.text,
-      fontWeight: "800",
     },
     emptyChatsBox: {
       padding: 12,
@@ -371,6 +362,19 @@ export default function SessionFormSheet({
     }
   }, [sessionForm?.startsAt]);
 
+  const conversationChips = useMemo(() => {
+    if (!sessionForm) return [];
+    return conversations.map((conversation) => {
+      const isDm = conversation.type === "dm";
+      const label = isDm
+        ? (friendProfiles[
+            conversation.members.find((member) => member !== uid) ?? ""
+          ]?.displayName ?? t("social.chats.directMessage"))
+        : (conversation.title ?? t("social.groups.fallback"));
+      return { key: conversation.id, label, icon: isDm ? MessageSquare : Users };
+    });
+  }, [conversations, friendProfiles, sessionForm, uid, t]);
+
   return (
     <GameBottomSheet
       visible={sessionForm !== null}
@@ -399,22 +403,16 @@ export default function SessionFormSheet({
             </CustomText>
           </View>
         </View>
-        <PressScale style={styles.closeButton} onPress={onClose}>
+        <IconButton onPress={onClose} size={32} variant="surface" bordered>
           <X size={16} color={colors.textMuted} />
-        </PressScale>
+        </IconButton>
       </View>
 
       {sessionForm && (
         <>
           {/* Section 1: Conversation Picker */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Users size={14} color={colors.accent} />
-              <CustomText style={styles.sectionLabel}>
-                {t("social.chats.conversation")}
-              </CustomText>
-              <CustomText style={styles.sectionRequired}>*</CustomText>
-            </View>
+            <SectionHeader icon={Users} label={t("social.chats.conversation")} required />
 
             {conversations.length === 0 ? (
               <View style={styles.emptyChatsBox}>
@@ -423,65 +421,22 @@ export default function SessionFormSheet({
                 </CustomText>
               </View>
             ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.subTabsContainer}
-              >
-                {conversations.map((conversation) => {
-                  const active = sessionForm.conversationId === conversation.id;
-                  const isDm = conversation.type === "dm";
-                  const label = isDm
-                    ? (friendProfiles[
-                        conversation.members.find((member) => member !== uid) ?? ""
-                      ]?.displayName ?? t("social.chats.directMessage"))
-                    : (conversation.title ?? t("social.groups.fallback"));
-
-                  return (
-                    <PressScale
-                      key={conversation.id}
-                      style={[styles.subTab, active && styles.subTabActive]}
-                      onPress={() =>
-                        onChange((previous) =>
-                          previous
-                            ? { ...previous, conversationId: conversation.id }
-                            : previous,
-                        )
-                      }
-                    >
-                      {isDm ? (
-                        <MessageSquare
-                          size={13}
-                          color={active ? colors.accent : colors.textMuted}
-                        />
-                      ) : (
-                        <Users
-                          size={13}
-                          color={active ? colors.accent : colors.textMuted}
-                        />
-                      )}
-                      <CustomText
-                        style={[styles.subTabText, active && styles.subTabTextActive]}
-                        numberOfLines={1}
-                      >
-                        {label}
-                      </CustomText>
-                    </PressScale>
-                  );
-                })}
-              </ScrollView>
+              <ToggleChipRow
+                variant="compact"
+                options={conversationChips}
+                value={sessionForm.conversationId}
+                onChipPress={(key) =>
+                  onChange((previous) =>
+                    previous ? { ...previous, conversationId: key } : previous,
+                  )
+                }
+              />
             )}
           </View>
 
           {/* Section 2: Game Picker */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Gamepad2 size={14} color={colors.accent} />
-              <CustomText style={styles.sectionLabel}>
-                {t("social.sessions.gameName")}
-              </CustomText>
-              <CustomText style={styles.sectionRequired}>*</CustomText>
-            </View>
+            <SectionHeader icon={Gamepad2} label={t("social.sessions.gameName")} required />
             <GameSearchField
               selected={sessionForm.gameName ? { name: sessionForm.gameName } : null}
               locked={Boolean(sessionForm.sessionId)}
@@ -502,13 +457,7 @@ export default function SessionFormSheet({
 
           {/* Section 3: Date & Time */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Calendar size={14} color={colors.accent} />
-              <CustomText style={styles.sectionLabel}>
-                {t("social.sessions.schedule")}
-              </CustomText>
-              <CustomText style={styles.sectionRequired}>*</CustomText>
-            </View>
+            <SectionHeader icon={Calendar} label={t("social.sessions.schedule")} required />
 
             {Platform.OS === "android" ? (
               <PressScale
@@ -553,15 +502,15 @@ export default function SessionFormSheet({
           {/* Section 4: External Party / Voice Link (Optional) */}
           {showLinkFields && (
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <LinkIcon size={14} color={colors.accent} />
-                <CustomText style={styles.sectionLabel}>
-                  {t("social.sessions.links.add")}
-                </CustomText>
-                <CustomText style={styles.optionalBadge}>
-                  {t("social.sessions.links.labelPlaceholder", { defaultValue: "Optional" }).match(/\((.*?)\)/)?.[1] || "Optional"}
-                </CustomText>
-              </View>
+              <SectionHeader
+                icon={LinkIcon}
+                label={t("social.sessions.links.add")}
+                optionalBadge={
+                  t("social.sessions.links.labelPlaceholder", {
+                    defaultValue: "Optional",
+                  }).match(/\((.*?)\)/)?.[1] || "Optional"
+                }
+              />
 
               <View style={styles.linkFieldsCard}>
                 <CustomTextInput

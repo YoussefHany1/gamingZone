@@ -12,29 +12,36 @@ import {
   type AlertButton,
 } from "react-native";
 import { Image } from "expo-image";
-import { ArrowLeft, ArrowRight, MoreVertical, Send, Users } from "lucide-react-native";
+import { ArrowLeft, MoreVertical, Send, Users } from "lucide-react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import type { RouteProp } from "@react-navigation/native";
-import type { SocialMessage } from "@gaming-zone/core";
+import type { SocialMessage, Conversation } from "@gaming-zone/core";
 import CustomText from "@/src/components/CustomText";
 import CustomTextInput from "@/src/components/CustomTextInput";
-import PressScale from "../components/PressScale";
+import IconButton from "@/src/components/IconButton";
 import GamerAvatar from "../components/GamerAvatar";
+import ChatMenuSheet from "../components/social/ChatMenuSheet";
 import GameBottomSheet from "../components/GameBottomSheet";
 import PlaySessionCard from "../components/PlaySessionCard";
 import ChatMessageList from "../components/ChatMessageList";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useAuthStore } from "@/src/store/useAuthStore";
+import { useTabBarStore } from "@/src/store/useTabBarStore";
 import { logger } from "@/src/lib/logger";
 import { showToast } from "@/src/lib/toast";
-import firestore from "@react-native-firebase/firestore";
 import type { SocialStackParamList } from "@/src/navigation/AppNavigator";
-import { deleteMessageForMe, editMessage, listenToReadPosition, sendMessage } from "../lib/chatService";
-import { relativeTime } from "../lib/relativeTime";
+import {
+  deleteMessageForMe,
+  editMessage,
+  listenToReadPosition,
+  sendMessage,
+} from "../lib/chatService";
+import { useChatMenu } from "../hooks/useChatMenu";
+import { usePeerPresence } from "../hooks/usePeerPresence";
 import { usePlaySessions } from "../hooks/usePlaySessions";
 import { useChatProfiles } from "../hooks/useChatProfiles";
 import { useChatMessages } from "../hooks/useChatMessages";
@@ -44,12 +51,12 @@ import type { SessionActionErrorHandler } from "../hooks/useSessionActions";
 export default function ChatScreen(): React.ReactElement {
   const route = useRoute<RouteProp<SocialStackParamList, "ChatScreen">>();
   const navigation = useNavigation<NativeStackNavigationProp<SocialStackParamList>>();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const uid = useAuthStore((state) => state.user?.uid ?? "");
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const styles = useThemeStyles((c) => ({
-    container: { flex: 1, backgroundColor: c.background, marginBottom: 25 },
+    container: { flex: 1, backgroundColor: c.background },
     header: {
       flexDirection: "row",
       alignItems: "center",
@@ -60,23 +67,8 @@ export default function ChatScreen(): React.ReactElement {
       borderBottomColor: c.accentBorder,
       backgroundColor: c.backgroundDeep,
     },
-    backButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      alignItems: "center",
-      justifyContent: "center",
-    },
     headerText: { flex: 1 },
     headerSubtitle: { color: c.textMuted, fontSize: 11, marginTop: 2 },
-    headerAction: {
-      width: 38,
-      height: 38,
-      borderRadius: 19,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: c.surface,
-    },
     avatarRing: {
       borderWidth: 1,
       borderColor: c.accentBorder,
@@ -134,10 +126,21 @@ export default function ChatScreen(): React.ReactElement {
   const [membersOpen, setMembersOpen] = useState(false);
   const sending = useRef(false);
   const conversationId = route.params.conversationId;
+  const setIsVisible = useTabBarStore((state) => state.setIsVisible);
+
+  useFocusEffect(
+    useCallback(() => {
+      setIsVisible(false);
+      return () => {
+        setIsVisible(true);
+      };
+    }, [setIsVisible]),
+  );
 
   const {
     type: conversationType,
     members: conversationMembers,
+    admins: conversationAdmins,
     title: conversationTitle,
     photoURL: conversationPhotoURL,
   } = useConversationDetails(conversationId);
@@ -146,13 +149,56 @@ export default function ChatScreen(): React.ReactElement {
       (session) =>
         session.conversationId === conversationId &&
         session.status !== "completed" &&
-        session.status !== "cancelled",
+        session.status !== "cancelled" &&
+        !(
+          session.status === "confirmed" &&
+          typeof session.startsAt === "number" &&
+          session.startsAt <= Date.now()
+        ),
     )
     .sort((a, b) => {
       const aTime = typeof a.startsAt === "number" ? a.startsAt : 0;
       const bTime = typeof b.startsAt === "number" ? b.startsAt : 0;
       return bTime - aTime;
     })[0];
+  // Chat-menu sheet state (shared with the social screen via `useChatMenu`).
+  // This screen resolves the conversation from its own details subscription;
+  // leave/delete drop back into the stack (`goBack`) once handled.
+  const resolveChatMenuConversation = useCallback(
+    (): Conversation =>
+      ({
+        id: conversationId,
+        type: conversationType === "group" ? "group" : "dm",
+        title: conversationTitle,
+        photoURL: conversationPhotoURL,
+        members: conversationMembers,
+        admins: conversationAdmins,
+        dmKey: null,
+        lastMessage: null,
+        lastMessageAt: null,
+      }) as Conversation,
+    [
+      conversationId,
+      conversationType,
+      conversationTitle,
+      conversationPhotoURL,
+      conversationMembers,
+      conversationAdmins,
+    ],
+  );
+  const chatMenu = useChatMenu({
+    uid,
+    resolveConversation: resolveChatMenuConversation,
+    onLeft: () => navigation.goBack(),
+    onDeleted: () => navigation.goBack(),
+  });
+
+  const handleOpenGroupSettings = useCallback((_id: string) => {
+    chatMenu.closeMenu();
+    // Reuse the members sheet for editing; group settings sheet not mounted here,
+    // so fall back to the members sheet.
+    setMembersOpen(true);
+  }, [chatMenu]);
   const {
     messages,
     olderMessages,
@@ -187,15 +233,19 @@ export default function ChatScreen(): React.ReactElement {
     .map((member) => ({ uid: member, profile: conversationProfiles[member] }))
     .filter((item) => item.profile);
 
+  // Header presence (DM only): a single-doc listener on the peer's heartbeat,
+  // shared with the friends list through `usePeerPresence` / `lib/presence`.
+  const peerUid =
+    conversationType === "dm" && conversationMembers.length === 2
+      ? (conversationMembers.find((member) => member !== uid) ?? null)
+      : null;
+  const presence = usePeerPresence(peerUid);
+
   // Read receipts (v1: 1:1 chats only). `markConversationRead` already keeps
   // *this* user's `reads/{uid}.lastReadAt` fresh on every message snapshot;
   // the only new work is one extra doc get on the peer's read row — allowed
   // for members by firestore.rules — to know when own messages were seen.
   // Groups are excluded: a dormant member would pin "not read" forever.
-  const peerUid =
-    conversationType === "dm" && conversationMembers.length === 2
-      ? (conversationMembers.find((member) => member !== uid) ?? null)
-      : null;
   const [peerLastReadAt, setPeerLastReadAt] = useState<number | null>(null);
   useEffect(() => {
     if (!peerUid) {
@@ -212,52 +262,6 @@ export default function ChatScreen(): React.ReactElement {
       },
     );
   }, [conversationId, peerUid]);
-
-  // Header presence (DM only): a single-doc listener on the peer's heartbeat.
-  // The doc lives in the dedicated `presence` collection, which any authed
-  // user may read (firestore.rules). Online is client-computed with the same
-  // 5-minute window the friends list uses; a timer flips the label once the
-  // window expires even without another snapshot.
-  const [peerPresenceAt, setPeerPresenceAt] = useState<number | null>(null);
-  const [, setPresenceClock] = useState(0);
-  useEffect(() => {
-    if (!peerUid) {
-      setPeerPresenceAt(null);
-      return;
-    }
-    return firestore()
-      .collection("presence")
-      .doc(peerUid)
-      .onSnapshot(
-        (snapshot) => {
-          const updatedAt = snapshot.data()?.updatedAt;
-          setPeerPresenceAt(typeof updatedAt === "number" ? updatedAt : null);
-        },
-        (error) => {
-          logger.warn("[social] Failed to load peer presence", error);
-          setPeerPresenceAt(null);
-        },
-      );
-  }, [peerUid]);
-  useEffect(() => {
-    if (peerPresenceAt === null) return;
-    const expiresAt = peerPresenceAt + 5 * 60_000;
-    const delay = expiresAt - Date.now();
-    if (delay <= 0) {
-      setPresenceClock((tick) => tick + 1);
-      return;
-    }
-    const timer = setTimeout(() => setPresenceClock((tick) => tick + 1), delay);
-    return () => clearTimeout(timer);
-  }, [peerPresenceAt]);
-  const peerOnline =
-    peerUid !== null &&
-    peerPresenceAt !== null &&
-    Date.now() - peerPresenceAt < 5 * 60_000;
-  const peerLastSeenLabel =
-    peerUid !== null && peerPresenceAt !== null && !peerOnline
-      ? relativeTime(peerPresenceAt, i18n.language)
-      : "";
 
   const submit = async (): Promise<void> => {
     const value = text.trim();
@@ -330,6 +334,18 @@ export default function ChatScreen(): React.ReactElement {
 
   return (
     <SafeAreaView style={styles.container}>
+      <ChatMenuSheet
+        conversation={chatMenu.conversation}
+        state={chatMenu.state}
+        busy={chatMenu.busy}
+        uid={uid}
+        onClose={chatMenu.closeMenu}
+        onToggleMuted={chatMenu.toggleMuted}
+        onToggleArchived={chatMenu.toggleArchived}
+        onLeaveGroup={chatMenu.leaveGroup}
+        onDelete={chatMenu.delete}
+        onOpenSettings={handleOpenGroupSettings}
+      />
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -363,18 +379,13 @@ export default function ChatScreen(): React.ReactElement {
         <View
           style={[styles.header, I18nManager.isRTL ? styles.headerRtl : styles.headerLtr]}
         >
-          <TouchableOpacity
-            style={styles.backButton}
+          <IconButton
+            feedback="opacity"
             onPress={() => navigation.goBack()}
-            accessibilityRole="button"
             accessibilityLabel={t("common.back")}
           >
-            {I18nManager.isRTL ? (
-              <ArrowRight size={22} color={colors.text} />
-            ) : (
-              <ArrowLeft size={22} color={colors.text} />
-            )}
-          </TouchableOpacity>
+            <ArrowLeft size={22} color={colors.text} />
+          </IconButton>
           <TouchableOpacity
             style={styles.avatarRing}
             onPress={() => (conversationTitle ? setMembersOpen(true) : undefined)}
@@ -404,24 +415,24 @@ export default function ChatScreen(): React.ReactElement {
             <CustomText style={styles.headerSubtitle}>
               {conversationTitle
                 ? t("social.chats.groupMembers", { count: conversationMembers.length })
-                : peerOnline
+                : presence.online
                   ? t("social.presence.online")
-                  : peerLastSeenLabel
-                    ? t("social.presence.lastSeen", { when: peerLastSeenLabel })
+                  : presence.lastSeenLabel
+                    ? t("social.presence.lastSeen", { when: presence.lastSeenLabel })
                     : t("social.chats.directMessage")}
             </CustomText>
           </TouchableOpacity>
-          <PressScale
-            style={styles.headerAction}
-            onPress={() => (conversationTitle ? setMembersOpen(true) : undefined)}
-            disabled={!conversationTitle}
+          <IconButton
+            variant="surface"
+            size={38}
+            onPress={() => chatMenu.openMenu(conversationId)}
           >
             {conversationTitle ? (
               <Users size={18} color={colors.accentText} />
             ) : (
               <MoreVertical size={18} color={colors.textMuted} />
             )}
-          </PressScale>
+          </IconButton>
         </View>
         {latestSession ? (
           <PlaySessionCard
@@ -445,7 +456,7 @@ export default function ChatScreen(): React.ReactElement {
           onLoadOlder={loadOlder}
           onShowActions={showMessageActions}
         />
-        <View style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+        <View style={[styles.composer]}>
           {sendError ? (
             <CustomText style={styles.sendError}>
               {t("social.chats.unableSend")}

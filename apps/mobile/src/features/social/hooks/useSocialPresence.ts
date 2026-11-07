@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import firestore from "@react-native-firebase/firestore";
 import { logger } from "@/src/lib/logger";
+import { isPresenceFresh } from "../lib/presence";
 
 export type PresenceEntry = {
   online: boolean;
   /** Client-epoch millis of the peer's last heartbeat, or null when unknown. */
   lastActiveAt: number | null;
 };
-
-/** A user counts as online for this long after their last heartbeat. */
-const ONLINE_WINDOW_MS = 5 * 60_000;
 
 /** How often the online computation refreshes while the hook is mounted. */
 const REFRESH_INTERVAL_MS = 2 * 60_000;
@@ -60,7 +58,6 @@ export function useSocialPresence(friendUids: string[]): Record<string, Presence
       }
       if (chunks.length === 0) return;
 
-      const cutoff = Date.now() - ONLINE_WINDOW_MS;
       try {
         // NOTE: no server-side range filter on `updatedAt` here — Firestore
         // turns a `documentId() in` into a range filter, and pairing that with
@@ -82,10 +79,9 @@ export function useSocialPresence(friendUids: string[]): Record<string, Presence
         for (const snapshot of snapshots) {
           snapshot.forEach((doc) => {
             const updatedAt = doc.data().updatedAt;
-            next[doc.id] =
-              typeof updatedAt === "number" && updatedAt > cutoff
-                ? { online: true, lastActiveAt: updatedAt }
-                : OFFLINE;
+            next[doc.id] = isPresenceFresh(updatedAt)
+              ? { online: true, lastActiveAt: updatedAt }
+              : OFFLINE;
           });
         }
         setPresence(next);

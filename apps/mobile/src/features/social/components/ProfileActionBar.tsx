@@ -1,9 +1,10 @@
 import React, { memo } from "react";
-import { Alert, View } from "react-native";
+import { View } from "react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import PressScale from "./PressScale";
+import PressScale from "@/src/components/PressScale";
+import { showConfirmAlert } from "../lib/confirmDialog";
 import type { ProfileRelation } from "../lib/relation";
 
 export type ProfileActionBarProps = {
@@ -59,15 +60,14 @@ const ProfileActionBar = memo(
     }));
 
     const confirm = (title: string, action: () => Promise<unknown>): void => {
-      Alert.alert(title, undefined, [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.save"),
-          onPress: () => {
-            void action().catch(() => undefined);
-          },
+      showConfirmAlert({
+        title,
+        confirmLabel: t("common.save"),
+        cancelLabel: t("common.cancel"),
+        onConfirm: () => {
+          void action().catch(() => undefined);
         },
-      ]);
+      });
     };
 
     return (

@@ -1,9 +1,11 @@
 import React, { memo } from "react";
 import { View, type StyleProp, type ViewStyle } from "react-native";
+import { VolumeX } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
+import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import GamerAvatar from "./GamerAvatar";
-import PressScale from "./PressScale";
+import PressScale from "@/src/components/PressScale";
 
 export type SocialListRowProps = {
   photoURL?: string | null | undefined;
@@ -12,6 +14,8 @@ export type SocialListRowProps = {
   /** Extra muted line (conversation timestamp). */
   meta?: string | null;
   unreadCount?: number;
+  /** Shows a mute icon beside the label (muted conversations). */
+  muted?: boolean;
   /** Bold the subtitle (used for unread conversations). */
   subtitleBold?: boolean;
   /** Action buttons or status text rendered at the end of the row. */
@@ -38,6 +42,7 @@ const SocialListRow = memo(
     meta,
     unreadCount,
     subtitleBold = false,
+    muted = false,
     trailing,
     selected = false,
     conversation = false,
@@ -46,6 +51,7 @@ const SocialListRow = memo(
     disabled = false,
     style,
   }: SocialListRowProps): React.ReactElement => {
+    const colors = useThemeColors();
     const styles = useThemeStyles((c) => ({
       row: {
         flexDirection: "row",
@@ -60,7 +66,9 @@ const SocialListRow = memo(
       },
       selected: { backgroundColor: c.accentSurface, borderColor: c.accentBorder },
       body: { flex: 1 },
+      labelRow: { flexDirection: "row", alignItems: "center", gap: 6 },
       label: { color: c.text, fontSize: 15, fontWeight: "700" },
+      muteIcon: { marginTop: 1 },
       muted: { color: c.textMuted, fontSize: 12, marginTop: 3 },
       snippet: { color: c.textMuted, fontSize: 13, marginTop: 4 },
       selectedText: { color: c.accentText },
@@ -84,12 +92,17 @@ const SocialListRow = memo(
       >
         <GamerAvatar photoURL={photoURL} size={44} online={online} />
         <View style={styles.body}>
-          <CustomText
-            style={[styles.label, selected && styles.selectedText]}
-            numberOfLines={1}
-          >
-            {label}
-          </CustomText>
+          <View style={styles.labelRow}>
+            <CustomText
+              style={[styles.label, selected && styles.selectedText]}
+              numberOfLines={1}
+            >
+              {label}
+            </CustomText>
+            {muted ? (
+              <VolumeX size={14} color={colors.textMuted} style={styles.muteIcon} />
+            ) : null}
+          </View>
           {subtitle ? (
             <CustomText
               style={[

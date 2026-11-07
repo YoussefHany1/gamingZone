@@ -28,7 +28,7 @@ export function useBannerUpload(onUploaded: (url: string) => void): BannerUpload
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: "images",
       allowsEditing: true,
       aspect: [3, 1],
       quality: 0.8,

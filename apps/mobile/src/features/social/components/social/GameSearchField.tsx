@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import type { Game } from "@/src/types/sharedTypes";
 import CustomText from "@/src/components/CustomText";
 import CustomTextInput from "@/src/components/CustomTextInput";
-import PressScale from "../PressScale";
+import PressScale from "@/src/components/PressScale";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { searchGamesAutocomplete } from "@/src/services/api/igdbApi";

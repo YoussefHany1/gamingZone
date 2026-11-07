@@ -19,6 +19,22 @@ export type SocialListRow =
   | Friendship
   | FriendRequest
   | Conversation
-  | PlaySession;
+  | PlaySession
+  | ChatAdRow
+  | SessionAdRow;
+
+/** A native-ad placeholder interleaved in the chats list (`withChatAds`). */
+export type ChatAdRow = {
+  chatAd: true;
+  /** Unique key per ad slot ("ad-4", "ad-end", …) for list key extraction. */
+  adId: string;
+};
+
+/** A native-ad placeholder interleaved in the sessions list (`withSessionAds`). */
+export type SessionAdRow = {
+  sessionAd: true;
+  /** Unique key per ad slot ("ad-4", "ad-end", …) for list key extraction. */
+  adId: string;
+};
 
 export type SocialRowsBySegment = Record<SocialSegment, SocialListRow[]>;

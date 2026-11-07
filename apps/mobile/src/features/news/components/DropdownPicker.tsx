@@ -83,7 +83,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      paddingVertical: 15,
+      paddingVertical: 14,
       borderWidth: 0,
       padding: 10,
       borderBottomWidth: 1,
@@ -104,6 +104,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
     modalItemText: {
       color: c.text,
       fontSize: 16,
+      // textAlign: "left",
     },
     closeButton: {
       marginTop: 15,
@@ -114,7 +115,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
     },
     closeButtonText: {
       color: c.text,
-      fontSize: 22,
+      fontSize: 18,
       fontWeight: "bold",
     },
     sectionHeader: {

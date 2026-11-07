@@ -3,9 +3,8 @@ import { MessageSquare, Check, X, UserPlus, MoreVertical } from "lucide-react-na
 import { useTranslation } from "react-i18next";
 import type { Conversation, FriendRequest, Friendship, ProfileSearchHit } from "@gaming-zone/core";
 import { useThemeColors } from "@/src/hooks/useTheme";
-import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SocialListRow from "../SocialListRow";
-import PressScale from "../PressScale";
+import PillButton from "../common/PillButton";
 import { relativeTime } from "../../lib/relativeTime";
 import type { ListRelation } from "../../lib/socialList";
 import type { PresenceEntry } from "../../hooks/useSocialPresence";
@@ -19,6 +18,8 @@ type SocialPersonRowProps = {
   friendProfiles: Record<string, { displayName?: string; handle?: string; photoURL?: string | null; statusText?: string; platform?: string } | undefined>;
   relationByUid: Map<string, ListRelation>;
   unreadCounts: Record<string, number>;
+  /** Muted state per conversation, for showing the mute icon in the chats tab. */
+  mutedConversationIds?: Set<string>;
   /** Presence map from `useSocialPresence` (friends scene only, may be empty). */
   presenceByUid?: Record<string, PresenceEntry> | undefined;
   i18nLang: string;
@@ -39,6 +40,7 @@ export default function SocialPersonRow({
   friendProfiles,
   relationByUid,
   unreadCounts,
+  mutedConversationIds,
   presenceByUid,
   i18nLang,
   onOpenProfile,
@@ -52,32 +54,9 @@ export default function SocialPersonRow({
 }: SocialPersonRowProps): React.ReactElement {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const styles = useThemeStyles((c) => ({
-    action: {
-      minHeight: 36,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 5,
-      paddingHorizontal: 12,
-      borderRadius: 11,
-      backgroundColor: c.accent,
-    },
-    dangerAction: { backgroundColor: c.danger },
-    secondaryButton: {
-      minHeight: 36,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: 11,
-      borderRadius: 11,
-      backgroundColor: c.accentSurface,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-  }));
 
   const isConversation = "type" in item && (item.type === "dm" || item.type === "group");
-  let label = "Player";
+  let label = t("social.players.fallback");
   let subtitle = "";
   let photoURL: string | null | undefined;
   let targetUid: string | undefined;
@@ -92,7 +71,7 @@ export default function SocialPersonRow({
     const requestTarget = sentByMe ? item.to : item.from;
     const profile = friendProfiles[requestTarget];
     photoURL = profile?.photoURL;
-    label = profile?.displayName ?? "Player";
+    label = profile?.displayName ?? t("social.players.fallback");
     subtitle = profile?.handle ? `@${profile.handle}` : "";
     targetUid = requestTarget;
   } else if (isConversation) {
@@ -100,7 +79,7 @@ export default function SocialPersonRow({
       targetUid = item.members.find((member) => member !== uid);
       const profile = targetUid ? friendProfiles[targetUid] : undefined;
       photoURL = profile?.photoURL;
-      label = profile?.displayName ?? "Player";
+      label = profile?.displayName ?? t("social.players.fallback");
     } else {
       label = item.title ?? t("social.groups.fallback");
       subtitle = item.lastMessage?.text ?? t("social.chats.noMessages");
@@ -109,7 +88,7 @@ export default function SocialPersonRow({
     targetUid = item.members.find((member) => member !== uid);
     const profile = targetUid ? friendProfiles[targetUid] : undefined;
     photoURL = profile?.photoURL;
-    label = profile?.displayName ?? "Player";
+    label = profile?.displayName ?? t("social.players.fallback");
     subtitle =
       profile?.statusText ||
       (profile?.handle ? `@${profile.handle}` : profile?.platform || "");
@@ -135,73 +114,49 @@ export default function SocialPersonRow({
   const actions =
     isSearching && "uid" in item && targetUid !== uid ? (
       relationByUid.get(item.uid) === "friends" ? (
-        <PressScale style={styles.action} onPress={() => onOpenDirectMessage(item.uid)}>
+        <PillButton onPress={() => onOpenDirectMessage(item.uid)}>
           <MessageSquare size={16} color={colors.onAccent} />
-        </PressScale>
+        </PillButton>
       ) : relationByUid.get(item.uid) === "received" ? (
-        <PressScale
-          style={styles.action}
-          onPress={() => onRespond(item.uid, "accept")}
-        >
+        <PillButton onPress={() => onRespond(item.uid, "accept")}>
           <Check size={16} color={colors.onAccent} />
-        </PressScale>
+        </PillButton>
       ) : relationByUid.get(item.uid) === "sent" ? (
-        <PressScale
-          style={[styles.action, styles.dangerAction]}
-          onPress={() => onCancelRequest(item.uid)}
-        >
+        <PillButton tone="danger" onPress={() => onCancelRequest(item.uid)}>
           <X size={16} color={colors.onAccent} />
-        </PressScale>
+        </PillButton>
       ) : (
-        <PressScale
-          style={styles.action}
-          onPress={() => onSendRequest(item.uid)}
-        >
+        <PillButton onPress={() => onSendRequest(item.uid)}>
           <UserPlus size={16} color={colors.onAccent} />
-        </PressScale>
+        </PillButton>
       )
     ) : !isSearching && "members" in item && !isConversation ? (
       <>
-        <PressScale
-          style={styles.action}
-          onPress={() => onOpenDirectMessage(targetUid ?? "")}
-        >
+        <PillButton onPress={() => onOpenDirectMessage(targetUid ?? "")}>
           <MessageSquare size={16} color={colors.onAccent} />
-        </PressScale>
-        <PressScale
-          style={styles.secondaryButton}
-          onPress={() => onFriendMenu(targetUid ?? null)}
-        >
+        </PillButton>
+        <PillButton tone="secondary" onPress={() => onFriendMenu(targetUid ?? null)}>
           <MoreVertical size={16} color={colors.text} />
-        </PressScale>
+        </PillButton>
       </>
     ) : !isSearching && isConversation ? (
-      <PressScale
-        style={styles.secondaryButton}
-        onPress={() => onChatMenu(item.id)}
-      >
+      <PillButton tone="secondary" onPress={() => onChatMenu(item.id)}>
         <MoreVertical size={16} color={colors.text} />
-      </PressScale>
+      </PillButton>
     ) : !isSearching && "from" in item && !isConversation ? (
       item.from !== uid ? (
         <>
-          <PressScale style={styles.action} onPress={() => onRespond(item.from, "accept")}>
+          <PillButton onPress={() => onRespond(item.from, "accept")}>
             <Check size={16} color={colors.onAccent} />
-          </PressScale>
-          <PressScale
-            style={[styles.action, styles.dangerAction]}
-            onPress={() => onRespond(item.from, "decline")}
-          >
+          </PillButton>
+          <PillButton tone="danger" onPress={() => onRespond(item.from, "decline")}>
             <X size={16} color={colors.onAccent} />
-          </PressScale>
+          </PillButton>
         </>
       ) : (
-        <PressScale
-          style={[styles.action, styles.dangerAction]}
-          onPress={() => onCancelRequest(item.to)}
-        >
+        <PillButton tone="danger" onPress={() => onCancelRequest(item.to)}>
           <X size={16} color={colors.onAccent} />
-        </PressScale>
+        </PillButton>
       )
     ) : null;
 
@@ -213,6 +168,7 @@ export default function SocialPersonRow({
       meta={meta}
       unreadCount={unreadCount}
       subtitleBold={isConversation && unreadCount > 0}
+      muted={isConversation && !!mutedConversationIds?.has(item.id)}
       conversation={isConversation}
       online={online}
       onPress={onRow}

@@ -1,26 +1,23 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { Conversation } from "@gaming-zone/core";
-import CustomText from "@/src/components/CustomText";
-import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type { ConversationUserState } from "../../hooks/useConversationList";
 import GameBottomSheet from "../GameBottomSheet";
-import PressScale from "../PressScale";
+import PillButton from "../common/PillButton";
 
 const SHEET_FILE = "src/features/social/screens/SocialScreen.tsx";
 
-type ChatMenuSheetProps = {
+export type ChatMenuSheetProps = {
   conversation: Conversation | null;
   state: ConversationUserState | undefined;
   busy: boolean;
   uid: string;
   onClose: () => void;
-  onOpen: (conversationId: string) => void;
   onToggleMuted: (conversationId: string) => void;
   onToggleArchived: (conversationId: string) => void;
   onLeaveGroup: (conversationId: string) => void;
   onDelete: (conversationId: string) => void;
-  /** Opens the GroupSettingsSheet (admin-only, checked by the caller via uid). */
+  /** Opens the GroupSettingsSheet (admin-only, checked here via uid). */
   onOpenSettings: (conversationId: string) => void;
 };
 
@@ -30,30 +27,13 @@ export default function ChatMenuSheet({
   busy,
   uid,
   onClose,
-  onOpen,
   onToggleMuted,
   onToggleArchived,
+  onOpenSettings,
   onLeaveGroup,
   onDelete,
-  onOpenSettings,
 }: ChatMenuSheetProps): React.ReactElement {
   const { t } = useTranslation();
-  const styles = useThemeStyles((c) => ({
-    sheetTitle: { color: c.text, fontSize: 20, fontWeight: "900", marginBottom: 14 },
-    groupCreate: {
-      minHeight: 40,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 5,
-      paddingHorizontal: 12,
-      borderRadius: 11,
-      backgroundColor: c.accent,
-      marginBottom: 14,
-    },
-    actionText: { color: c.onAccent, fontSize: 12, fontWeight: "800" },
-    dangerAction: { backgroundColor: c.danger },
-  }));
 
   return (
     <GameBottomSheet
@@ -64,50 +44,38 @@ export default function ChatMenuSheet({
     >
       {conversation && (
         <>
-          <CustomText style={styles.sheetTitle}>{t("social.chats.conversation")}</CustomText>
-          <PressScale style={styles.groupCreate} onPress={() => onOpen(conversation.id)}>
-            <CustomText style={styles.actionText}>{t("social.chats.open")}</CustomText>
-          </PressScale>
-          <PressScale
-            style={styles.groupCreate}
+          <PillButton
+            variant="menu"
+            label={state?.muted ? t("social.chats.unmute") : t("social.chats.mute")}
             onPress={() => onToggleMuted(conversation.id)}
             disabled={busy}
-          >
-            <CustomText style={styles.actionText}>
-              {state?.muted ? t("social.chats.unmute") : t("social.chats.mute")}
-            </CustomText>
-          </PressScale>
-          <PressScale
-            style={styles.groupCreate}
+          />
+          <PillButton
+            variant="menu"
+            label={state?.archived ? t("social.chats.unarchive") : t("social.chats.archive")}
             onPress={() => onToggleArchived(conversation.id)}
             disabled={busy}
-          >
-            <CustomText style={styles.actionText}>
-              {state?.archived ? t("social.chats.unarchive") : t("social.chats.archive")}
-            </CustomText>
-          </PressScale>
-          {conversation.type === "group" &&
-            conversation.admins.includes(uid) && (
-              <PressScale
-                style={styles.groupCreate}
-                onPress={() => onOpenSettings(conversation.id)}
-              >
-                <CustomText style={styles.actionText}>
-                  {t("social.groups.settings")}
-                </CustomText>
-              </PressScale>
-            )}
-          {conversation.type === "group" && conversation.members.length > 0 && (
-            <PressScale style={styles.groupCreate} onPress={() => onLeaveGroup(conversation.id)}>
-              <CustomText style={styles.actionText}>{t("social.chats.leaveGroup")}</CustomText>
-            </PressScale>
+          />
+          {conversation.type === "group" && conversation.admins.includes(uid) && (
+            <PillButton
+              variant="menu"
+              label={t("social.groups.settings")}
+              onPress={() => onOpenSettings(conversation.id)}
+            />
           )}
-          <PressScale
-            style={[styles.groupCreate, styles.dangerAction]}
+          {conversation.type === "group" && conversation.members.length > 0 && (
+            <PillButton
+              variant="menu"
+              label={t("social.chats.leaveGroup")}
+              onPress={() => onLeaveGroup(conversation.id)}
+            />
+          )}
+          <PillButton
+            variant="menu"
+            tone="danger"
+            label={t("social.chats.delete")}
             onPress={() => onDelete(conversation.id)}
-          >
-            <CustomText style={styles.actionText}>{t("social.chats.delete")}</CustomText>
-          </PressScale>
+          />
         </>
       )}
     </GameBottomSheet>

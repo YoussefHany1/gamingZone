@@ -43,10 +43,6 @@ export type ProfilePlatformSelectorProps = {
   onChange: (platform: string) => void;
 };
 
-export type SteamSyncButtonProps = {
-  onPress: () => void;
-};
-
 export type ReauthModalProps = {
   visible: boolean;
   method: ReauthMethod;

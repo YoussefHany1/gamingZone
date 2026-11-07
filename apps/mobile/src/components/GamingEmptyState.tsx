@@ -1,11 +1,11 @@
 import { Gamepad2, type LucideIcon } from "lucide-react-native";
 import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
-import PressScale from "./PressScale";
+import PressScale from "@/src/components/PressScale";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
-type GamingEmptyStateProps = {
+export type GamingEmptyStateProps = {
   title: string;
   actionLabel?: string | undefined;
   onAction?: (() => void) | undefined;

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo } from "react";
 import type { ViewStyle } from "react-native";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import {
   NativeAd,
@@ -8,15 +8,17 @@ import {
   NativeAsset,
   NativeAssetType,
 } from "react-native-google-mobile-ads";
+import { Gamepad2 } from "lucide-react-native";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { nativeAdUnitId } from "../constants/config";
 import { useAdsEnabled } from "../hooks/useAdsEnabled";
+import { useDeferredReady } from "../hooks/useDeferredReady";
 import { t } from "i18next";
 import CustomText from "./CustomText";
 import { logger } from "@/src/lib/logger";
 
-export type NativeAdVariant = "game" | "news" | "grid";
+export type NativeAdVariant = "game" | "news" | "grid" | "chat" | "session";
 
 interface NativeAdComponentProps {
   style?: ViewStyle;
@@ -27,6 +29,10 @@ interface NativeAdComponentProps {
 export const NativeAdComponent = memo<NativeAdComponentProps>(
   ({ style, variant = "game", language }) => {
     const adsEnabled = useAdsEnabled();
+    // Ads must never paint on the first frame; the social list also relies on
+    // the chat variant returning `null` while idle/loading/error so the
+    // FlashList rows do not jump around.
+    const isReady = useDeferredReady();
     const colors = useThemeColors();
     const styles = useThemeStyles((c) => ({
       loadingContainer: {
@@ -239,6 +245,90 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
         zIndex: 10,
         overflow: "hidden",
       },
+      // "chat" variant — mirrors the SocialListRow card (surface bg, radius 18,
+      // themed border, padding 13, marginBottom 10) with a 44px circle icon,
+      // the headline+badge as the label row and the body as the snippet line.
+      chatAdRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        padding: 13,
+        marginBottom: 10,
+        borderRadius: 18,
+        backgroundColor: c.surface,
+        borderWidth: 1,
+        borderColor: c.border,
+      },
+      chatAdInner: { flexDirection: "row", alignItems: "center", gap: 12 },
+      chatAdIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: c.accentSurface,
+      },
+      chatAdBody: { flex: 1 },
+      chatAdLabelRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+      chatAdHeadline: { color: c.text, fontSize: 15, fontWeight: "700", flex: 1 },
+      chatAdSnippet: { color: c.textMuted, fontSize: 13, marginTop: 4 },
+      chatAdCta: {
+        backgroundColor: c.accent,
+        color: c.onAccent,
+        fontSize: 12,
+        fontWeight: "800",
+        borderRadius: 11,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        alignSelf: "flex-start",
+        marginTop: 8,
+        textAlign: "center",
+        overflow: "hidden",
+      },
+      // "session" variant — mirrors the social PlaySessionCard: padding 15,
+      // radius 20, accentBorder card; 58×58 game tile with the ad icon filling
+      // it (Gamepad2 fallback), headline as the session title, body as the
+      // meta line and the CTA as the accent pill.
+      sessionAdCard: {
+        padding: 15,
+        marginBottom: 12,
+        borderRadius: 20,
+        backgroundColor: c.surface,
+        borderWidth: 1,
+        borderColor: c.accentBorder,
+      },
+      sessionAdTop: { flexDirection: "row", gap: 12, alignItems: "center" },
+      sessionAdTile: {
+        width: 58,
+        height: 58,
+        borderRadius: 16,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: c.backgroundDeep,
+        borderWidth: 1,
+        borderColor: c.accentBorder,
+      },
+      sessionAdCover: {
+        width: 58,
+        height: 58,
+        borderRadius: 16,
+        backgroundColor: c.skeletonBase,
+      },
+      sessionAdInfo: { flex: 1 },
+      sessionAdLabelRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+      sessionAdHeadline: { color: c.text, fontSize: 16, fontWeight: "800", flex: 1 },
+      sessionAdMeta: { color: c.textMuted, fontSize: 12, marginTop: 5 },
+      sessionAdCta: {
+        backgroundColor: c.accent,
+        color: c.onAccent,
+        fontSize: 12,
+        fontWeight: "800",
+        borderRadius: 11,
+        paddingHorizontal: 12,
+        paddingVertical: 9,
+        alignSelf: "flex-start",
+        marginTop: 12,
+        textAlign: "center",
+        overflow: "hidden",
+      },
     }));
 
     const [ad, setAd] = useState<NativeAd | null>(null);
@@ -282,7 +372,7 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
       };
     }, [adsEnabled]);
 
-    if (!adsEnabled) {
+    if (!adsEnabled || !isReady) {
       return null;
     }
 
@@ -295,6 +385,11 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
             </View>
           </View>
         );
+      }
+      // Chat/session variants render nothing while loading so FlashList
+      // rows never shift when the ad slots in.
+      if (variant === "chat" || variant === "session") {
+        return null;
       }
       return (
         <View
@@ -310,6 +405,114 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
 
     if (error || !ad) {
       return null;
+    }
+
+    if (variant === "session") {
+      return (
+        <View style={[styles.sessionAdCard, style]}>
+          {/* Everything (top row + CTA) lives inside the NativeAdView — a
+              `NativeAsset` rendered outside one would have no `viewRef` and
+              crash on `viewRef.current`. */}
+          <NativeAdView nativeAd={ad}>
+            <View style={styles.sessionAdTop}>
+              {/* Game-tile slot: ad artwork fills the 58×58 footprint. */}
+              <View style={styles.sessionAdTile}>
+                {ad.icon ? (
+                  <NativeAsset assetType={NativeAssetType.ICON}>
+                    <Image
+                      source={{ uri: ad.icon.url }}
+                      style={styles.sessionAdCover}
+                      contentFit="cover"
+                      cachePolicy="memory-disk"
+                      recyclingKey={ad.icon.url}
+                    />
+                  </NativeAsset>
+                ) : (
+                  <Gamepad2 size={20} color={colors.accentText} />
+                )}
+              </View>
+
+              {/* Info column — session title / status-line layout. */}
+              <View style={styles.sessionAdInfo}>
+                <View style={styles.sessionAdLabelRow}>
+                  <NativeAsset assetType={NativeAssetType.HEADLINE}>
+                    <CustomText style={styles.sessionAdHeadline} numberOfLines={1}>
+                      {ad.headline}
+                    </CustomText>
+                  </NativeAsset>
+                  <CustomText style={styles.badge}>{t("common.ad")}</CustomText>
+                </View>
+
+                {ad.body ? (
+                  <NativeAsset assetType={NativeAssetType.BODY}>
+                    <CustomText style={styles.sessionAdMeta} numberOfLines={2}>
+                      {ad.body}
+                    </CustomText>
+                  </NativeAsset>
+                ) : null}
+              </View>
+            </View>
+
+            {ad.callToAction ? (
+              <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
+                <CustomText style={styles.sessionAdCta} numberOfLines={1}>
+                  {ad.callToAction}
+                </CustomText>
+              </NativeAsset>
+            ) : null}
+          </NativeAdView>
+        </View>
+      );
+    }
+
+    if (variant === "chat") {
+      return (
+        <View style={[styles.chatAdRow, style]}>
+          <NativeAdView nativeAd={ad} style={styles.chatAdInner}>
+            {ad.icon ? (
+              <NativeAsset assetType={NativeAssetType.ICON}>
+                <Image
+                  source={{ uri: ad.icon.url }}
+                  style={styles.chatAdIcon}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  recyclingKey={ad.icon.url}
+                />
+              </NativeAsset>
+            ) : (
+              <View style={styles.chatAdIcon} />
+            )}
+
+            {/* Info column — same layout as a SocialListRow body. */}
+            <View style={styles.chatAdBody}>
+              <View style={styles.chatAdLabelRow}>
+                <NativeAsset assetType={NativeAssetType.HEADLINE}>
+                  <CustomText style={styles.chatAdHeadline} numberOfLines={1}>
+                    {ad.headline}
+                  </CustomText>
+                </NativeAsset>
+                <CustomText style={styles.badge}>{t("common.ad")}</CustomText>
+              </View>
+
+              {ad.body ? (
+                <NativeAsset assetType={NativeAssetType.BODY}>
+                  <CustomText style={styles.chatAdSnippet} numberOfLines={2}>
+                    {ad.body}
+                  </CustomText>
+                </NativeAsset>
+              ) : null}
+
+              {ad.callToAction ? (
+                <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
+                  <CustomText style={styles.chatAdCta} numberOfLines={1}>
+                    {ad.callToAction}
+                  </CustomText>
+                </NativeAsset>
+              ) : null}
+            </View>
+          </NativeAdView>
+        </View>
+      );
     }
 
     if (variant === "grid") {
@@ -346,7 +549,6 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
             <CustomText style={styles.gridAdBadge}>{t("common.ad")}</CustomText>
 
             <View style={styles.gridAdInfo}>
-
               <NativeAsset assetType={NativeAssetType.HEADLINE}>
                 <CustomText style={styles.gridAdHeadline} numberOfLines={2}>
                   {ad.headline}
@@ -355,9 +557,7 @@ export const NativeAdComponent = memo<NativeAdComponentProps>(
               <View style={styles.gridAdInfoRow}>
                 {ad.callToAction ? (
                   <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
-                    <CustomText style={styles.gridAdCta}>
-                      {ad.callToAction}
-                    </CustomText>
+                    <CustomText style={styles.gridAdCta}>{ad.callToAction}</CustomText>
                   </NativeAsset>
                 ) : null}
               </View>

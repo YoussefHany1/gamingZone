@@ -16,6 +16,11 @@ export type ConversationListResult = {
   readAt: Record<string, number | null>;
   /** Per-user state per conversation id. */
   userState: Record<string, ConversationUserState>;
+  /**
+   * False until the realtime listener has delivered its first snapshot —
+   * an empty result and "not yet loaded" are different states.
+   */
+  loaded: boolean;
 };
 
 const ID_SEPARATOR = "\n";
@@ -29,6 +34,7 @@ const ID_SEPARATOR = "\n";
  */
 export function useConversationList(uid: string): ConversationListResult {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loaded, setLoaded] = useState<boolean>(false);
   const [positions, setPositions] = useState<Record<string, ReadPosition>>({});
   const readStops = useRef(new Map<string, () => void>());
 
@@ -40,13 +46,20 @@ export function useConversationList(uid: string): ConversationListResult {
   useEffect(() => {
     // A new account must never inherit the previous account's list or reads.
     setConversations([]);
+    setLoaded(false);
     setPositions({});
     stopReadListeners();
 
     if (!uid) return;
 
-    return listenToConversations(uid, setConversations, (error) =>
-      logger.warn("[social] Conversations unavailable", error),
+    return listenToConversations(
+      uid,
+      (snapshot) => {
+        setLoaded(true);
+        setConversations(snapshot);
+      },
+      (error) =>
+        logger.warn("[social] Conversations unavailable", error),
     );
   }, [uid, stopReadListeners]);
 
@@ -127,5 +140,5 @@ export function useConversationList(uid: string): ConversationListResult {
     return result;
   }, [positions]);
 
-  return { conversations, readAt, userState };
+  return { conversations, readAt, userState, loaded };
 }

@@ -6,11 +6,24 @@ import type {
 } from "@gaming-zone/core";
 import type { GroupFriend } from "../components/GroupCreateSheet";
 import type { ConversationUserState } from "../hooks/useConversationList";
+import type { PlaySession } from "../hooks/usePlaySessions";
+import type { ChatAdRow, SessionAdRow } from "../types";
 
 export type SocialSegment = "friends" | "requests" | "chats" | "sessions";
 export type RequestView = "incoming" | "sent";
 export type ChatView = "active" | "archived";
 export type ListRelation = "friends" | "sent" | "received" | "none";
+
+/** One row of the chats list: a conversation or an interleaved ad slot. */
+export type ChatListRow = Conversation | ChatAdRow;
+/** One row of the sessions list: a session card or an interleaved ad slot. */
+export type SessionListRow = PlaySession | SessionAdRow;
+
+/** Either list's ad-slot marker. */
+type ListAdRow = ChatAdRow | SessionAdRow;
+
+/** An ad follows after this many list rows. */
+export const LIST_AD_INTERVAL = 4;
 
 export type SocialRowsInput = {
   isSearching: boolean;
@@ -132,9 +145,10 @@ export function toGroupFriends(
 }
 
 /**
- * Last write wins, in this order: friendship, then incoming, then sent.
- * A uid present in more than one list therefore resolves to the latest write,
- * which is the same result as the original sequential `Map#set` calls.
+ * Priority is friendship, then incoming, then sent: a uid present in several
+ * lists resolves to the strictest relation. The writes happen in reverse
+ * (sent → received → friends) and the last write wins, so the map always
+ * reflects the priority order above.
  */
 export function relationByUid(
   friendships: Friendship[],
@@ -143,15 +157,15 @@ export function relationByUid(
   uid: string,
 ): Map<string, ListRelation> {
   const map = new Map<string, ListRelation>();
-  friendships.forEach((friendship) => {
-    const other = friendship.members.find((member) => member !== uid);
-    if (other) map.set(other, "friends");
+  sentRequests.forEach((request) => {
+    map.set(request.to, "sent");
   });
   requests.forEach((request) => {
     map.set(request.from, "received");
   });
-  sentRequests.forEach((request) => {
-    map.set(request.to, "sent");
+  friendships.forEach((friendship) => {
+    const other = friendship.members.find((member) => member !== uid);
+    if (other) map.set(other, "friends");
   });
   return map;
 }
@@ -159,4 +173,56 @@ export function relationByUid(
 /** First-seen country order from search hits. Empty countries are dropped. */
 export function countryOptions(results: ProfileSearchHit[]): string[] {
   return Array.from(new Set(results.map((item) => item.country).filter(Boolean)));
+}
+
+/** Builds an ad-slot marker row for a given position ("ad-4", "ad-end", …). */
+export function chatAdRow(adId: string): ChatAdRow {
+  return { chatAd: true, adId };
+}
+
+/** Session-list counterpart of `chatAdRow`. */
+export function sessionAdRow(adId: string): SessionAdRow {
+  return { sessionAd: true, adId };
+}
+
+/**
+ * The shared interleave rule behind `withListAds` and `withSessionAds`: one
+ * ad after every `LIST_AD_INTERVAL` rows, plus a single trailing ad when the
+ * list has a non-zero remainder, so a short list (1–3 rows) still shows one
+ * ad at the end. An empty list stays ad-free — the empty state owns it.
+ */
+function interleaveAds<T, A extends ListAdRow>(
+  rows: T[],
+  makeAd: (adId: string) => A,
+): Array<T | A> {
+  if (rows.length === 0) return [];
+
+  const output: Array<T | A> = [];
+  let adsPlaced = 0;
+  rows.forEach((row, index) => {
+    output.push(row);
+    const seen = index + 1;
+    if (seen % LIST_AD_INTERVAL === 0) {
+      adsPlaced += 1;
+      output.push(makeAd(`ad-${seen}`));
+    }
+  });
+
+  if (rows.length % LIST_AD_INTERVAL !== 0) {
+    output.push(makeAd(adsPlaced === 0 ? "ad-end" : `ad-end-${adsPlaced + 1}`));
+  }
+  return output;
+}
+
+/**
+ * Interleaves ad slots (SocialListRow-styled) into the row-card lists —
+ * friends, requests and chats all share this rule.
+ */
+export function withListAds<T>(rows: T[]): Array<T | ChatAdRow> {
+  return interleaveAds(rows, chatAdRow);
+}
+
+/** Interleaves ad slots (session-card styled) into the sessions list. */
+export function withSessionAds(rows: PlaySession[]): SessionListRow[] {
+  return interleaveAds(rows, sessionAdRow);
 }

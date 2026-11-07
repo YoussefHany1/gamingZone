@@ -3,7 +3,6 @@ import type {
   ViewStyle} from "react-native";
 import {
   View,
-  Text,
   Modal,
   TouchableOpacity,
   StyleSheet,
@@ -15,11 +14,8 @@ import CustomText from "./CustomText";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import type { PickerOption } from "@/src/types/sharedTypes";
 
-type PickerOption = {
-  label: string;
-  value: string;
-};
 type CustomPickerProps = {
   options: PickerOption[];
   selectedValue: string;

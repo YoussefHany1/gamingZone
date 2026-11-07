@@ -843,7 +843,8 @@
       "browseGames": "تصفح الألعاب",
       "editProfile": "تعديل الملف الشخصي",
       "myLists": "قوائمي",
-      "blockedUsers": "المستخدمون المحظورون"
+      "blockedUsers": "المستخدمون المحظورون",
+      "pcSpecs": "جهازي"
     },
     "languageSelect": {
       "confirmTitle": "تغيير اللغة",
@@ -968,20 +969,25 @@
       "mutualFriends": "{{count}} أصدقاء مشتركون",
       "librarySection": "مكتبة الألعاب",
       "libraryCount": "{{count}} ألعاب",
-      "libraryHidden": "هذا اللاعب يُبقي مكتبة ألعابه خاصة"
+      "libraryHidden": "هذا اللاعب يُبقي مكتبة ألعابه خاصة",
+      "share": "مشاركة الملف الشخصي",
+      "shareTitle": "مشاركة الملف الشخصي",
+      "shareMessage": "أضفني على Gaming Zone: @{{handle}} {{url}}",
+      "shareMessageNoHandle": "أضفني على Gaming Zone: {{name}}"
     },
     "friends": {
-      "title": "Friends",
-      "empty": "No friends yet"
+      "title": "الأصدقاء",
+      "empty": "لا يوجد أصدقاء حاليا"
     },
     "requests": {
-      "title": "Requests",
-      "empty": "No pending requests",
-      "sent": "Request sent",
+      "title": "طلبات الصداقة",
+      "empty": "لا يوجد طلبات صداقة حتي الأن",
+      "sent": "تم ارسال طلب صداقة",
       "accepted": "تم قبول طلب الصداقة",
       "declined": "تم رفض طلب الصداقة",
-      "accept": "Accept",
-      "cancel": "Cancel request"
+      "accept": "موافق",
+      "cancel": "الغاء الطلب",
+      "cancelled": "تم إلغاء طلب الصداقة"
     },
     "chats": {
       "title": "المحادثات",
@@ -1011,7 +1017,17 @@
       "copy": "نسخ",
       "copied": "تم نسخ الرسالة",
       "sent": "أُرسلت",
-      "read": "قُرئت"
+      "read": "قُرئت",
+      "new": "محادثة جديدة",
+      "active": "نشط",
+      "archived": "مؤرشف",
+      "open": "فتح",
+      "mute": "كتم",
+      "unmute": "إلغاء الكتم",
+      "archive": "أرشف",
+      "unarchive": "إلغاء الأرشفة",
+      "delete": "حذف",
+      "leaveGroup": "مغادرة المجموعة"
     },
     "groups": {
       "create": "إنشاء مجموعة",
@@ -1072,22 +1088,27 @@
           "lobby": "لوبي",
           "party": "مجموعة"
         }
-      }
+      },
+      "new": "جلسة جديدة",
+      "noChatsYet": "لا توجد محادثات بعد",
+      "openChat": "فتح المحادثة"
     },
     "search": {
-      "placeholder": "Search by @handle",
-      "noResults": "No players found"
+      "placeholder": "البحث بأسم المستخدم (@username)",
+      "noResults": "لم يتم العثور على لاعبين"
     },
     "actions": {
-      "addFriend": "Add friend",
-      "removeFriend": "Remove friend",
-      "block": "Block",
-      "unblock": "Unblock",
+      "addFriend": "أضافة صديق",
+      "removeFriend": "حذف الصديق",
+      "block": "حظر",
+      "unblock": "الغاء الحظر",
       "message": "مراسلة",
-      "more": "المزيد من الخيارات"
+      "more": "المزيد من الخيارات",
+      "viewProfile": "عرض الملف الشخصي",
+      "inviteToSession": "دعوة إلى جلسة"
     },
     "errors": {
-      "load": "Could not load social data",
+      "load": "تعذّر تحميل البيانات",
       "search": "تعذّر البحث. حاول مرة أخرى.",
       "chat": "تعذر فتح المحادثة",
       "friendRequest": "تعذّر إرسال طلب الصداقة",
@@ -1106,6 +1127,9 @@
     "presence": {
       "online": "متصل الآن",
       "lastSeen": "آخر ظهور {{when}}"
+    },
+    "players": {
+      "fallback": "لاعب"
     }
   },
   "aiChat": {
@@ -1129,8 +1153,8 @@
     "titleSuffix": "الآن!",
     "description": "انضم إلى مجتمع اللاعبين العربي، تابع أحدث الأخبار، المراجعات، وأضف ألعابك المفضلة إلى مكتبتك الخاصة بكل سهولة عبر تطبيقنا المتاح على متجر جوجل بلاي.",
     "getItOn": "احصل عليه من",
-    "googlePlay": "Google Play",
-    "getItOnFooter": "احصل عليه من Google Play"
+    "googlePlay": "جوجل بلاي",
+    "getItOnFooter": "احصل عليه من جوجل بلاي"
   },
   "onboarding": {
     "skip": "تخطى",

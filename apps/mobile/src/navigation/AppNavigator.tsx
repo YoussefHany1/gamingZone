@@ -246,7 +246,7 @@ const SocialStack = memo(() => {
       <SocialStackNav.Screen
         name="UserProfile"
         component={UserProfileScreen}
-        options={{ title: t("social.profile.title") }}
+        options={{ title: t("social.profile.title"), headerShown: true }}
       />
     </SocialStackNav.Navigator>
   );

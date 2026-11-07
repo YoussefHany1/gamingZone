@@ -1,14 +1,16 @@
-import React, { memo } from "react";
-import { ActivityIndicator, TouchableOpacity, View } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import React, { memo, useRef, useEffect } from "react";
+import { TouchableOpacity, View } from "react-native";
+import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { Check, CheckCheck, MessageCircle } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import type { SocialMessage } from "@gaming-zone/core";
 import CustomText from "@/src/components/CustomText";
+import SkeletonChat from "../skeleton/SkeletonChat";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import GamingEmptyState from "./GamingEmptyState";
+import GamingEmptyState from "@/src/components/GamingEmptyState";
+import GameCoverThumbnail from "./social/GameCoverThumbnail";
 import type { ChatSenderProfile } from "../lib/profileLookup";
 
 export type ChatMessageListProps = {
@@ -39,7 +41,7 @@ function formatMessageTime(value: number | null): string {
 }
 
 /**
- * The scrollable part of a conversation: empty/loading/error states, the
+ * The scrollable part of a conversation: skeleton/empty/error states, the
  * "load older" header and the reversed message list.
  */
 const ChatMessageList = memo(
@@ -58,6 +60,23 @@ const ChatMessageList = memo(
   }: ChatMessageListProps): React.ReactElement => {
     const { t } = useTranslation();
     const colors = useThemeColors();
+    const listRef = useRef<FlashListRef<SocialMessage>>(null);
+    const prevFirstMessageId = useRef<string | null>(null);
+
+    // Keep the view pinned to the newest messages on initial load and whenever
+    // a new message arrives, without yanking the user back down while they are
+    // paging through older history.
+    useEffect(() => {
+      const firstId = messages[0]?.id ?? null;
+      const shouldScroll = firstId !== null && firstId !== prevFirstMessageId.current;
+      prevFirstMessageId.current = firstId;
+      if (!shouldScroll) return;
+      const frame = requestAnimationFrame(() => {
+        listRef.current?.scrollToEnd({ animated: false });
+      });
+      return () => cancelAnimationFrame(frame);
+    }, [messages]);
+
     const styles = useThemeStyles((c) => ({
       content: { padding: 16, paddingBottom: 10 },
       messageRow: {
@@ -105,11 +124,7 @@ const ChatMessageList = memo(
     }));
 
     if (loading) {
-      return (
-        <View style={styles.empty}>
-          <ActivityIndicator color={colors.accent} />
-        </View>
-      );
+      return <SkeletonChat />;
     }
 
     if (loadError) {
@@ -132,6 +147,7 @@ const ChatMessageList = memo(
 
     return (
       <FlashList
+        ref={listRef}
         data={[...messages, ...olderMessages].reverse()}
         keyExtractor={(item) => item.id}
         extraData={senderProfiles}
@@ -175,6 +191,9 @@ const ChatMessageList = memo(
                 delayLongPress={350}
                 style={[styles.bubble, own ? styles.ownBubble : styles.receivedBubble]}
               >
+                {item.type === "system" && item.gameId ? (
+                  <GameCoverThumbnail gameId={item.gameId} />
+                ) : null}
                 <CustomText style={[styles.message, own && styles.ownMessage]}>
                   {item.deletedFor.includes(uid) ? t("social.chats.removed") : item.text}
                 </CustomText>
@@ -197,8 +216,10 @@ const ChatMessageList = memo(
                       {t("social.chats.edited")}
                     </CustomText>
                   ) : null}
-                  {own && typeof item.createdAt === "number" && item.senderId !== "system" ? (
-                    (otherLastReadAt !== null && otherLastReadAt >= item.createdAt) ? (
+                  {own &&
+                  typeof item.createdAt === "number" &&
+                  item.senderId !== "system" ? (
+                    otherLastReadAt !== null && otherLastReadAt >= item.createdAt ? (
                       <CheckCheck
                         size={14}
                         color={colors.onAccent}

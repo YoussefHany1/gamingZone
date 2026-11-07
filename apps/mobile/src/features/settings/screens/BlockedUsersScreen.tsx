@@ -7,7 +7,7 @@ import {
   View,
 } from "react-native";
 import GamerAvatar from "@/src/features/social/components/GamerAvatar";
-import GamingEmptyState from "@/src/features/social/components/GamingEmptyState";
+import GamingEmptyState from "@/src/components/GamingEmptyState";
 import { Ban } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";

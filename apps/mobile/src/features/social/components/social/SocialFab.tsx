@@ -1,5 +1,5 @@
 import React from "react";
-import PressScale from "../PressScale";
+import PressScale from "@/src/components/PressScale";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 type SocialFabProps = {

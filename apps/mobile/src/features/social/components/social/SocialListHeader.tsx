@@ -6,7 +6,8 @@ import CustomText from "@/src/components/CustomText";
 import CustomTextInput from "@/src/components/CustomTextInput";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import PressScale from "../PressScale";
+import PressScale from "@/src/components/PressScale";
+import ToggleChipRow from "../common/ToggleChipRow";
 import type { SocialSegment } from "../../lib/socialList";
 
 /** Per-segment content above the list (the segment switching itself lives in the TabBar). */
@@ -37,7 +38,9 @@ export default function SocialListHeader({
   isSearching,
   query,
   setQuery,
-  searching,
+  // The search spinner is no longer rendered inline; the prop stays part of
+  // the header contract for the social screen wiring.
+  searching: _searching,
   searchError,
   platformFilter,
   setPlatformFilter,
@@ -63,27 +66,6 @@ export default function SocialListHeader({
       borderColor: c.border,
     },
     input: { flex: 1, color: c.text, paddingVertical: 8, fontSize: 15 },
-    subTabs: {
-      flexDirection: "row",
-      gap: 8,
-      marginBottom: 14,
-    },
-    subTab: {
-      flex: 1,
-      minHeight: 36,
-      alignItems: "center",
-      justifyContent: "center",
-      borderRadius: 11,
-      backgroundColor: c.accentSurface,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-    subTabActive: {
-      backgroundColor: c.accent,
-      borderColor: c.accent,
-    },
-    subTabText: { color: c.text, fontSize: 12, fontWeight: "700" },
-    subTabTextActive: { color: c.onAccent },
     searchError: { marginBottom: 12, color: c.danger },
   }));
 
@@ -104,50 +86,29 @@ export default function SocialListHeader({
               <X size={18} color={colors.textMuted} />
             </PressScale>
           )}
-          {searching && <X size={0} />}
         </View>
       )}
 
       {segment === "requests" && !isSearching && (
-        <View style={styles.subTabs}>
-          {["incoming", "sent"].map((view) => {
-            const active = requestView === view;
-            return (
-              <PressScale
-                key={view}
-                style={[styles.subTab, active && styles.subTabActive]}
-                onPress={() => onRequestViewChange(view as "incoming" | "sent")}
-              >
-                <CustomText
-                  style={[styles.subTabText, active && styles.subTabTextActive]}
-                >
-                  {t(`social.requests.${view}Tab`)}
-                </CustomText>
-              </PressScale>
-            );
-          })}
-        </View>
+        <ToggleChipRow
+          options={[
+            { key: "incoming", label: t("social.requests.incomingTab") },
+            { key: "sent", label: t("social.requests.sentTab") },
+          ]}
+          value={requestView}
+          onChipPress={(key) => onRequestViewChange(key as "incoming" | "sent")}
+        />
       )}
 
       {segment === "chats" && !isSearching && (
-        <View style={styles.subTabs}>
-          {["active", "archived"].map((view) => {
-            const active = chatView === view;
-            return (
-              <PressScale
-                key={view}
-                style={[styles.subTab, active && styles.subTabActive]}
-                onPress={() => onChatViewChange(view as "active" | "archived")}
-              >
-                <CustomText
-                  style={[styles.subTabText, active && styles.subTabTextActive]}
-                >
-                  {t(`social.chats.${view}`)}
-                </CustomText>
-              </PressScale>
-            );
-          })}
-        </View>
+        <ToggleChipRow
+          options={[
+            { key: "active", label: t("social.chats.active") },
+            { key: "archived", label: t("social.chats.archived") },
+          ]}
+          value={chatView}
+          onChipPress={(key) => onChatViewChange(key as "active" | "archived")}
+        />
       )}
 
       {searchError && (
@@ -155,51 +116,26 @@ export default function SocialListHeader({
       )}
 
       {isSearching && (
-        <View style={styles.subTabs}>
-          {["PC", "PlayStation", "Xbox"].map((platform) => {
-            const active = platformFilter === platform;
-            return (
-              <PressScale
-                key={platform}
-                style={[styles.subTab, active && styles.subTabActive]}
-                onPress={() =>
-                  setPlatformFilter((previous) =>
-                    previous === platform ? null : platform,
-                  )
-                }
-              >
-                <CustomText
-                  style={[styles.subTabText, active && styles.subTabTextActive]}
-                >
-                  {platform}
-                </CustomText>
-              </PressScale>
-            );
-          })}
-        </View>
+        <ToggleChipRow
+          options={["PC", "PlayStation", "Xbox"].map((platform) => ({
+            key: platform,
+            label: platform,
+          }))}
+          value={platformFilter}
+          onChipPress={(key) =>
+            setPlatformFilter((previous) => (previous === key ? null : key))
+          }
+        />
       )}
 
       {isSearching && countries.length > 0 && (
-        <View style={styles.subTabs}>
-          {countries.map((country) => {
-            const active = countryFilter === country;
-            return (
-              <PressScale
-                key={country}
-                style={[styles.subTab, active && styles.subTabActive]}
-                onPress={() =>
-                  setCountryFilter((previous) => (previous === country ? null : country))
-                }
-              >
-                <CustomText
-                  style={[styles.subTabText, active && styles.subTabTextActive]}
-                >
-                  {country}
-                </CustomText>
-              </PressScale>
-            );
-          })}
-        </View>
+        <ToggleChipRow
+          options={countries.map((country) => ({ key: country, label: country }))}
+          value={countryFilter}
+          onChipPress={(key) =>
+            setCountryFilter((previous) => (previous === key ? null : key))
+          }
+        />
       )}
     </>
   );

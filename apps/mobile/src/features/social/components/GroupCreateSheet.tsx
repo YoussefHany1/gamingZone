@@ -6,7 +6,8 @@ import CustomTextInput from "@/src/components/CustomTextInput";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import GameBottomSheet from "./GameBottomSheet";
-import PressScale from "./PressScale";
+import PillButton from "./common/PillButton";
+import SheetTitle from "./common/SheetTitle";
 import SocialListRow from "./SocialListRow";
 
 export type GroupFriend = {
@@ -39,7 +40,6 @@ export default function GroupCreateSheet({
   const [busy, setBusy] = useState(false);
 
   const styles = useThemeStyles((c) => ({
-    title: { color: c.text, fontSize: 20, fontWeight: "900", marginBottom: 14 },
     input: {
       color: c.text,
       paddingHorizontal: 14,
@@ -50,17 +50,6 @@ export default function GroupCreateSheet({
       borderWidth: 1,
       borderColor: c.border,
     },
-    action: {
-      minHeight: 36,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 5,
-      paddingHorizontal: 12,
-      borderRadius: 11,
-      backgroundColor: c.accent,
-    },
-    actionText: { color: c.onAccent, fontSize: 12, fontWeight: "800" },
     selectText: { color: c.textMuted, fontSize: 12 },
     selectedText: { color: c.accentText },
   }));
@@ -96,7 +85,7 @@ export default function GroupCreateSheet({
       name="GroupCreateSheet"
       file="src/features/social/components/GroupCreateSheet.tsx"
     >
-      <CustomText style={styles.title}>{t("social.groups.create")}</CustomText>
+      <SheetTitle title={t("social.groups.create")} />
       <CustomTextInput
         value={title}
         onChangeText={setTitle}
@@ -121,11 +110,11 @@ export default function GroupCreateSheet({
           />
         );
       })}
-      <PressScale style={styles.action} onPress={() => void submit()} disabled={busy}>
-        <CustomText style={styles.actionText}>
-          {busy ? t("social.groups.creating") : t("social.groups.create")}
-        </CustomText>
-      </PressScale>
+      <PillButton
+        label={busy ? t("social.groups.creating") : t("social.groups.create")}
+        onPress={() => void submit()}
+        disabled={busy}
+      />
     </GameBottomSheet>
   );
 }

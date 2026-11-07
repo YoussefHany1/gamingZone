@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { BadgeCheck, Copy, ExternalLink } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import SectionTitle from "@/src/components/SectionTitle";
-import PressScale from "./PressScale";
+import PressScale from "@/src/components/PressScale";
 import PlatformGlyph from "./PlatformGlyph";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";

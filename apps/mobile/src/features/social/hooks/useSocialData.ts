@@ -24,7 +24,7 @@ export function useSocialData() {
   const [friendProfiles, setFriendProfiles] = useState<
     Record<string, ProfileSearchHit & { statusText?: string }>
   >({});
-  const { conversations, readAt, userState } = useConversationList(uid);
+  const { conversations, readAt, userState, loaded: conversationsLoaded } = useConversationList(uid);
 
   useEffect(() => {
     if (!uid) {
@@ -134,5 +134,8 @@ export function useSocialData() {
     conversations,
     unreadCounts,
     conversationSettings: userState,
+    // Skeleton gate: the conversation listener is the slowest of the shared
+    // queries; the friendship/request listeners resolve near-instantly.
+    loading: !conversationsLoaded,
   };
 }

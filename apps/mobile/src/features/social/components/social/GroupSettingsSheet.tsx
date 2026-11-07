@@ -7,13 +7,17 @@ import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useChatProfiles } from "../../hooks/useChatProfiles";
 import GameBottomSheet from "../GameBottomSheet";
-import PressScale from "../PressScale";
+import PillButton from "../common/PillButton";
+import SheetTitle from "../common/SheetTitle";
 import SocialListRow from "../SocialListRow";
 import type { GroupFriend } from "../GroupCreateSheet";
 
 const SHEET_FILE = "src/features/social/screens/SocialScreen.tsx";
 
-type GroupSettingsSheetProps = {
+/** The tight row-level pill variant (slightly shorter than the inline one). */
+const ROW_PILL_STYLE = { minHeight: 34, borderRadius: 10 } as const;
+
+export type GroupSettingsSheetProps = {
   /** Group being edited (or null while closed). */
   conversation: Conversation | null;
   uid: string;
@@ -65,7 +69,6 @@ export default function GroupSettingsSheet({
   const canRename = isAdmin && title.trim().length > 0 && title !== conversation?.title;
 
   const styles = useThemeStyles((c) => ({
-    sheetTitle: { color: c.text, fontSize: 20, fontWeight: "900", marginBottom: 14 },
     muted: { color: c.textMuted, fontSize: 12, marginTop: 3, marginBottom: 8 },
     input: {
       color: c.text,
@@ -77,31 +80,6 @@ export default function GroupSettingsSheet({
       borderWidth: 1,
       borderColor: c.border,
     },
-    sectionAction: {
-      minHeight: 40,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 5,
-      paddingHorizontal: 12,
-      borderRadius: 11,
-      backgroundColor: c.accent,
-      marginBottom: 14,
-    },
-    sectionActionText: { color: c.onAccent, fontSize: 12, fontWeight: "800" },
-    rowAction: {
-      minHeight: 34,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: 12,
-      borderRadius: 10,
-      backgroundColor: c.accentSurface,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-    rowActionText: { color: c.text, fontSize: 12, fontWeight: "700" },
-    rowActionDanger: { borderColor: c.danger },
-    rowActionDangerText: { color: c.danger },
   }));
 
   return (
@@ -113,9 +91,7 @@ export default function GroupSettingsSheet({
     >
       {conversation && (
         <>
-          <CustomText style={styles.sheetTitle}>
-            {t("social.groups.settings")}
-          </CustomText>
+          <SheetTitle title={t("social.groups.settings")} />
 
           {isAdmin && (
             <>
@@ -127,15 +103,12 @@ export default function GroupSettingsSheet({
                 maxLength={80}
                 style={styles.input}
               />
-              <PressScale
-                style={styles.sectionAction}
+              <PillButton
+                variant="menu"
+                label={busy ? t("social.sessions.saving") : t("common.save")}
                 onPress={() => onRename(conversation.id, title)}
                 disabled={busy || !canRename}
-              >
-                <CustomText style={styles.sectionActionText}>
-                  {busy ? t("social.sessions.saving") : t("common.save")}
-                </CustomText>
-              </PressScale>
+              />
             </>
           )}
 
@@ -146,22 +119,18 @@ export default function GroupSettingsSheet({
             <SocialListRow
               key={member}
               photoURL={profiles[member]?.photoURL}
-              label={
-                profiles[member]?.displayName ?? t("social.groups.fallback")
-              }
+              label={profiles[member]?.displayName ?? t("social.groups.fallback")}
               selected={false}
               onPress={undefined}
               trailing={
                 isAdmin && canRemoveMember && member !== uid ? (
-                  <PressScale
-                    style={[styles.rowAction, styles.rowActionDanger]}
+                  <PillButton
+                    tone="danger-outline"
+                    label={t("social.groups.remove")}
                     onPress={() => onRemoveMember(conversation.id, member)}
                     disabled={busy}
-                  >
-                    <CustomText style={[styles.rowActionText, styles.rowActionDangerText]}>
-                      {t("social.groups.remove")}
-                    </CustomText>
-                  </PressScale>
+                    style={ROW_PILL_STYLE}
+                  />
                 ) : null
               }
             />
@@ -178,15 +147,13 @@ export default function GroupSettingsSheet({
                   selected={false}
                   onPress={() => onAddMember(conversation.id, friend.uid)}
                   trailing={
-                    <PressScale
-                      style={styles.rowAction}
+                    <PillButton
+                      tone="secondary"
+                      label={t("social.groups.add")}
                       onPress={() => onAddMember(conversation.id, friend.uid)}
                       disabled={busy}
-                    >
-                      <CustomText style={styles.rowActionText}>
-                        {t("social.groups.add")}
-                      </CustomText>
-                    </PressScale>
+                      style={ROW_PILL_STYLE}
+                    />
                   }
                 />
               ))}

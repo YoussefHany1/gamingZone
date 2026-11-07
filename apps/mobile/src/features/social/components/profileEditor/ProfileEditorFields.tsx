@@ -316,6 +316,7 @@ export function PrivacyToggle({ title, hint, value, onChange }: PrivacyTogglePro
         value={value}
         onValueChange={onChange}
         trackColor={{ true: colors.accentText, false: colors.border }}
+        thumbColor={colors.text}
       />
     </View>
   );

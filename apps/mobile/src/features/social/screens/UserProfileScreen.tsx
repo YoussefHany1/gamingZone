@@ -1,8 +1,5 @@
-import React, { useCallback, useMemo } from "react";
-import { ActivityIndicator, Alert, Platform, ScrollView, Share, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { MoreVertical } from "lucide-react-native";
-import PressScale from "../components/PressScale";
+import React, { useCallback, useEffect, useMemo } from "react";
+import { Alert, ScrollView, View } from "react-native";
 import {
   blockUser,
   cancelFriendRequest,
@@ -18,28 +15,20 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import ErrorState from "@/src/components/ErrorState";
-import { useThemeColors } from "@/src/hooks/useTheme";
+import PressScale from "@/src/components/PressScale";
+import SkeletonUserProfile from "../skeleton/SkeletonUserProfile";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import type { SettingsStackParamList } from "@/src/navigation/AppNavigator";
 import { usePublicProfile } from "../hooks/usePublicProfile";
 import { useProfileRelation } from "../hooks/useProfileRelation";
-import { profilePath } from "@gaming-zone/core";
 import PublicProfileHeader from "../components/PublicProfileHeader";
 import PublicLinksCard from "../components/PublicLinksCard";
 import LibraryGrid from "../components/LibraryGrid";
 import ProfileActionBar from "../components/ProfileActionBar";
 
-/**
- * Public profile by uid or handle.
- *
- * Phase 2 opens this from friends and search results; Phase 1 opens it from the
- * user's own profile menu so the projection can be previewed before handles are
- * searchable.
- */
 function UserProfileScreen(): React.ReactElement {
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const route = useRoute<RouteProp<SettingsStackParamList, "UserProfile">>();
 
@@ -56,6 +45,13 @@ function UserProfileScreen(): React.ReactElement {
   const otherUid = profile?.uid ?? uid;
   const relation = useProfileRelation(currentUid, otherUid);
 
+  // The native stack header shows the viewed profile's name (falls back to the
+  // localized section title until the profile resolves).
+  useEffect(() => {
+    if (!profile) return;
+    navigation.setOptions({ title: profile.displayName });
+  }, [navigation, profile]);
+
   const styles = useThemeStyles((c) => ({
     container: { flex: 1, backgroundColor: c.background },
     content: { padding: 16, paddingBottom: 60 },
@@ -67,38 +63,11 @@ function UserProfileScreen(): React.ReactElement {
       borderColor: c.accentBorder,
       backgroundColor: c.surface,
     },
-    heroGradient: {
-      paddingHorizontal: 16,
-      paddingTop: 16,
-      paddingBottom: 18,
-      minHeight: 110,
-    },
-    heroLabel: { color: c.onAccent, fontSize: 11, fontWeight: "800", letterSpacing: 1 },
-    heroTop: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-    },
     heroBody: { padding: 12 },
     statRow: { flexDirection: "row", gap: 8, marginTop: 12 },
     stat: { flex: 1, padding: 10, borderRadius: 12, backgroundColor: c.accentSurface },
     statValue: { color: c.text, fontSize: 17, fontWeight: "900" },
     statLabel: { color: c.textMuted, fontSize: 11, marginTop: 2 },
-    menuButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: c.surface,
-    },
-
-    centered: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-      padding: 24,
-    },
     editButton: {
       marginTop: 20,
       borderRadius: 12,
@@ -129,9 +98,7 @@ function UserProfileScreen(): React.ReactElement {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <ActivityIndicator color={colors.accentText} />
-        </View>
+        <SkeletonUserProfile />
       </SafeAreaView>
     );
   }
@@ -154,62 +121,12 @@ function UserProfileScreen(): React.ReactElement {
   const isOwner = profile.uid === currentUid;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.heroWrap}>
-          <LinearGradient
-            colors={[colors.backgroundDeep, colors.accent]}
-            style={styles.heroGradient}
-          >
-            <View style={styles.heroTop}>
-              <CustomText style={styles.heroLabel}>
-                {isOwner
-                  ? t("social.profile.yourProfile")
-                  : t("social.profile.gamerProfile")}
-              </CustomText>
-              {!isOwner ? (
-                <PressScale
-                  style={styles.menuButton}
-                  onPress={() => {
-                    const handle = profile?.handle;
-                    const shareUrl = handle
-                      ? `https://gz1.games${profilePath(handle)}`
-                      : null;
-                    Alert.alert(t("social.actions.more"), undefined, [
-                      ...(shareUrl
-                        ? [
-                            {
-                              text: t("social.profile.share"),
-                              onPress: () => {
-                                void Share.share(
-                                  Platform.select({
-                                    ios: { message: t("social.profile.shareMessage", { handle, url: shareUrl }), url: shareUrl },
-                                    default: { message: `${t("social.profile.shareMessage", { handle, url: shareUrl })} ${shareUrl}` },
-                                  })!,
-                                  { dialogTitle: t("social.profile.shareTitle") },
-                                );
-                              },
-                            },
-                          ]
-                        : []),
-                      {
-                        text: t("social.actions.block"),
-                        onPress: () => {
-                          void blockUser(otherUid);
-                        },
-                      },
-                      { text: t("common.cancel"), style: "cancel" },
-                    ]);
-                  }}
-                >
-                  <MoreVertical size={18} color={colors.textMuted} />
-                </PressScale>
-              ) : null}
-            </View>
-          </LinearGradient>
           <View style={styles.heroBody}>
             <PublicProfileHeader
               profile={profile}

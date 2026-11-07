@@ -175,8 +175,8 @@ function applyConfirmation(transaction, db, ref, data, proposal, FieldValue) {
   const messageRef = db.collection('conversations').doc(data.conversationId).collection('messages').doc();
   const now = FieldValue.serverTimestamp();
   transaction.update(ref, { status: 'confirmed', confirmedProposalId: proposal.id, startsAt: proposal.startsAt, proposals: [proposal] });
-  transaction.create(messageRef, { senderId: 'system', text: `${data.gameName} session confirmed`, type: 'system', createdAt: now, editedAt: null, deletedAt: null, deletedFor: [] });
-  transaction.set(db.collection('conversations').doc(data.conversationId), { lastMessage: { senderId: 'system', text: `${data.gameName} session confirmed`, type: 'system', createdAt: now }, lastMessageAt: now }, { merge: true });
+  transaction.create(messageRef, { senderId: 'system', text: `${data.gameName} session confirmed`, type: 'system', gameId: data.gameId, gameName: data.gameName, createdAt: now, editedAt: null, deletedAt: null, deletedFor: [] });
+  transaction.set(db.collection('conversations').doc(data.conversationId), { lastMessage: { senderId: 'system', text: `${data.gameName} session confirmed`, type: 'system', gameId: data.gameId, gameName: data.gameName, createdAt: now }, lastMessageAt: now }, { merge: true });
 }
 
 export async function respondToSlot(uid, sessionId, proposalId, response) {
