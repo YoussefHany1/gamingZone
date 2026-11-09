@@ -174,7 +174,7 @@
       "hardware": "Hardware"
     },
     "weeklySummary": {
-      "title": "🗞️ Resumo semanal",
+      "title": "Resumo semanal",
       "createdBy": "Criado por",
       "readMore": "Ler mais…",
       "readLess": "Ler menos",
@@ -386,6 +386,11 @@
       "yourRating": "A sua avaliação",
       "about": "Sobre",
       "screenshotsGallery": "Capturas de Ecrã",
+      "gallery": {
+        "imageOf": "Imagem {{current}} de {{total}}",
+        "close": "Fechar galeria",
+        "viewFullScreen": "Toque duas vezes para ver em ecrã inteiro"
+      },
       "genres": "Géneros",
       "gameModes": "Modos de jogo",
       "developer": "Programador",

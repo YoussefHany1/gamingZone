@@ -4,10 +4,12 @@ import type { NewsPlatformFilter } from "./lib/articlePlatforms";
 
 export type { Article } from "@gaming-zone/core";
 
+export type NewsSourceLanguage = "ar" | "en" | "es" | "fr" | "hi" | "pt";
+
 export type RssFeedSource = {
   name: string;
   image: string | { uri: string };
-  language: "ar" | "en";
+  language: NewsSourceLanguage;
   website?: string;
   aboutSite?: string;
   isActive?: boolean;
@@ -50,7 +52,7 @@ export type GenericNewsRouteProps = {
   refetch: (forceRefresh?: boolean) => Promise<void>;
 };
 
-export type NewsLanguageFilter = "all" | "ar" | "en";
+export type NewsLanguageFilter = "all" | NewsSourceLanguage;
 
 export type LatestNewsProps = {
   limit?: number;

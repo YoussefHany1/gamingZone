@@ -29,7 +29,38 @@ if (firebaseState.enabled) {
 interface SummaryResponse {
   arabic: string;
   english: string;
+  spanish: string;
+  french: string;
+  hindi: string;
+  /** Brazilian Portuguese. Underscore keeps the key hyphen-free for the Gemini schema. */
+  portuguese_br: string;
+  /** European Portuguese. */
+  portuguese_pt: string;
 }
+
+/** All seven languages the weekly recap is produced in (mirrors the app's UI locales). */
+const SUMMARY_LANGUAGE_KEYS = ['arabic', 'english', 'spanish', 'french', 'hindi', 'portuguese_br', 'portuguese_pt'] as const;
+
+const LANGUAGE_LABELS: Record<(typeof SUMMARY_LANGUAGE_KEYS)[number], string> = {
+  arabic: 'Arabic',
+  english: 'English',
+  spanish: 'Spanish',
+  french: 'French',
+  hindi: 'Hindi',
+  portuguese_br: 'Brazilian Portuguese',
+  portuguese_pt: 'European Portuguese',
+};
+
+/** `SummaryResponse` key → `weekly_summaries` attribute, mirroring the `summary_*` naming on `articles`. */
+const SUMMARY_ATTRIBUTES: Record<(typeof SUMMARY_LANGUAGE_KEYS)[number], string> = {
+  arabic: 'summary_ar',
+  english: 'summary_en',
+  spanish: 'summary_es',
+  french: 'summary_fr',
+  hindi: 'summary_hi',
+  portuguese_br: 'summary_pt_br',
+  portuguese_pt: 'summary_pt_pt',
+};
 
 const SUMMARY_PROMPT = (
   startDate: string,
@@ -37,14 +68,14 @@ const SUMMARY_PROMPT = (
   newsText: string,
 ) => `You are a senior gaming news editor writing a weekly recap for a gaming audience.
 
-TASK: Synthesize the gaming news articles below into a cohesive Weekly Recap. Output BOTH Arabic and English versions.
+TASK: Synthesize the gaming news articles below into a cohesive Weekly Recap. Output SEVEN language versions: Arabic, English, Spanish, French, Hindi, Brazilian Portuguese and European Portuguese.
 
 CONTEXT: This recap covers ${startDate} to ${endDate}.
 
 GUIDELINES:
 1. **Tone**: Write like an informed gaming journalist — authoritative but approachable. Assume the reader is a gamer who wants to stay current without reading every article.
 2. **Structure**:
-   - Open with a bold title: "## 🎮 Weekly Gaming Recap (${startDate} – ${endDate})"
+   - Start directly with the first thematic section — do NOT add a title, header, or greeting.
    - Group stories into thematic sections with ### headings. Choose headings that best fit the week's news, for example:
      - "### 🕹️ Major Releases & Updates" — new games, patches, DLC, season launches
      - "### 🏆 Esports & Competitive" — tournaments, roster changes, competitive scene news
@@ -55,10 +86,13 @@ GUIDELINES:
 3. **Content**: Synthesize articles into 2-4 sentences per section. Do NOT repeat headlines verbatim — connect related stories, add context, and explain why they matter. Use the article descriptions to add specific details (game names, studio names, numbers).
 4. **Formatting**: Use Markdown bullet points ONLY for lists of 3+ small standalone items (e.g. multiple game releases on the same day). Prefer flowing prose. Separate sections with a blank line.
 5. **Emojis**: Use emojis in section headings only. Keep body text clean.
-6. **Arabic version**: Must follow the EXACT same structure — same section headings (translated), same emoji usage, same number of sections. Write in clear Modern Standard Arabic (فصحى), not dialectal.
+6. **Languages**: Every version must follow the EXACT same structure — same section headings (translated), same emoji usage, same number of sections.
+   - Arabic: clear Modern Standard Arabic (فصحى), not dialectal.
+   - Hindi: clear Standard Hindi, written in Devanagari script.
+   - Portuguese: Brazilian (portuguese_br) and European (portuguese_pt) must be distinct, natural variants of each — not copies of one another.
 7. **Length**: Each language version must be between ~1,800 and ~2,500 characters. Be dense, not verbose — every sentence should add value. Do NOT exceed ~2,500 characters per language.
 
-OUTPUT: A JSON object with keys "arabic" and "english", each containing the full Markdown-formatted recap in that language.
+OUTPUT: A JSON object with the string keys "arabic", "english", "spanish", "french", "hindi", "portuguese_br" and "portuguese_pt", each containing the full Markdown-formatted recap in that language. Never leave a key empty.
 
 Headlines & Descriptions:
 ${newsText}`;
@@ -76,10 +110,10 @@ GUIDELINES:
 2. **Structure**: Start each thematic group with a ### heading. Use section names that fit the content (e.g. "### 🕹️ Major Releases", "### 💰 Industry News"). Keep sections tight — 1-2 sentences each.
 3. **Content**: Synthesize articles — do NOT repeat headlines. Connect related stories and use the article descriptions to add specific details. Prioritize major stories; briefly mention smaller ones.
 4. **Formatting**: Markdown bullet points only for 3+ small items. Blank line between sections. Emojis in headings only.
-5. **Arabic version**: Same structure, same sections (translated), same emoji usage. Write in clear Modern Standard Arabic (فصحى).
+5. **Languages**: Produce ALL seven versions — Arabic, English, Spanish, French, Hindi, Brazilian Portuguese, European Portuguese — with the same structure, same sections (translated) and same emoji usage. Arabic in clear Modern Standard Arabic (فصحى); the two Portuguese variants distinct and natural.
 6. **Conciseness**: This is a chunk — keep it compact so multiple chunks can be merged cleanly. Aim for ~600–1,200 characters per language version.
 
-OUTPUT: A JSON object with keys "arabic" and "english", each containing the Markdown-formatted segment.
+OUTPUT: A JSON object with the string keys "arabic", "english", "spanish", "french", "hindi", "portuguese_br" and "portuguese_pt", each containing the Markdown-formatted segment. Never leave a key empty.
 
 Headlines & Descriptions:
 ${newsText}`;
@@ -87,21 +121,22 @@ ${newsText}`;
 const MERGE_SUMMARY_PROMPT = (
   startDate: string,
   endDate: string,
-  arabicSummaries: string,
-  englishSummaries: string,
+  segmentsText: string,
 ) => `You are a senior gaming news editor producing the final version of a weekly gaming recap.
 
-TASK: Merge the following segment recaps into ONE consolidated, polished Weekly Recap. Output BOTH Arabic and English.
+TASK: Merge the following segment recaps into ONE consolidated, polished Weekly Recap. Output SEVEN language versions: Arabic, English, Spanish, French, Hindi, Brazilian Portuguese and European Portuguese.
 
 CONTEXT: This recap covers ${startDate} to ${endDate}.
 
 SEGMENTS TO MERGE:
-Each segment covers a different batch of articles from the same week. There will be overlap — your job is to deduplicate and unify.
+Each block below is the same recap segment rendered in all seven languages, from a different batch of articles. For every language, merge ONLY that language's version of the segments into one cohesive recap.
+
+${segmentsText}
 
 GUIDELINES:
 1. **Tone**: Authoritative, approachable gaming journalism. Write for a gamer who wants the week's highlights.
 2. **Structure**:
-   - Open with a bold title: "## 🎮 Weekly Gaming Recap (${startDate} – ${endDate})"
+   - Start directly with the first thematic section — do NOT add a title, header, or greeting.
    - Consolidate all content into logical thematic sections with ### headings. Merge overlapping topics from different segments into single sections.
    - Recommended sections (adapt to content):
      - "### 🕹️ Major Releases & Updates"
@@ -111,16 +146,10 @@ GUIDELINES:
      - "### 🔮 Looking Ahead"
 3. **Content**: Write 2-4 flowing sentences per section. Do NOT simply concatenate segments — rewrite into a unified narrative. Deduplicate stories that appear in multiple segments. Use specific details (game names, studio names, numbers) from the source material.
 4. **Formatting**: Bullet points only for lists of 3+ small items. Blank line between sections. Emojis in headings only.
-5. **Arabic version**: EXACT same structure — same sections (translated), same emoji usage, same flow. Write in clear Modern Standard Arabic (فصحى).
+5. **Languages**: EXACT same structure across all seven versions — same sections (translated), same emoji usage, same flow. Arabic in clear Modern Standard Arabic (فصحى); Hindi in Standard Hindi (Devanagari); Brazilian (portuguese_br) and European (portuguese_pt) Portuguese distinct and natural.
 6. **Length**: Each language version must be between ~1,800 and ~2,500 characters (hard limit: 5,000 bytes). Be dense and decisive — avoid redundant phrasing.
 
-OUTPUT: A JSON object with keys "arabic" and "english", each containing the full polished Markdown recap.
-
-Arabic Segments:
-${arabicSummaries}
-
-English Segments:
-${englishSummaries}`;
+OUTPUT: A JSON object with the string keys "arabic", "english", "spanish", "french", "hindi", "portuguese_br" and "portuguese_pt", each containing the full polished Markdown recap in that language. Never leave a key empty.`;
 
 function parseJsonSummary(rawText: string): SummaryResponse {
   try {
@@ -137,8 +166,13 @@ const WEEKLY_GEMINI_SCHEMA = {
   properties: {
     arabic: { type: 'STRING' },
     english: { type: 'STRING' },
+    spanish: { type: 'STRING' },
+    french: { type: 'STRING' },
+    hindi: { type: 'STRING' },
+    portuguese_br: { type: 'STRING' },
+    portuguese_pt: { type: 'STRING' },
   },
-  required: ['arabic', 'english'],
+  required: ['arabic', 'english', 'spanish', 'french', 'hindi', 'portuguese_br', 'portuguese_pt'],
 };
 
 /**
@@ -188,17 +222,21 @@ async function summarizeWithAi(
   return callAiWithRetry(prompt, ai);
 }
 
+function formatSegment(summary: SummaryResponse, batchIndex: number): string {
+  const lines = (Object.keys(LANGUAGE_LABELS) as (keyof SummaryResponse)[]).map(
+    (key) => `${LANGUAGE_LABELS[key]}: ${summary[key] ?? ''}`,
+  );
+  return `[Batch ${batchIndex}]\n${lines.join('\n\n')}`;
+}
+
 function mergeSummariesWithAi(
   startDate: string,
   endDate: string,
-  arabicSummaries: string,
-  englishSummaries: string,
+  segments: SummaryResponse[],
   ai: AiRuntime,
 ): Promise<SummaryResponse> {
-  return callAiWithRetry(
-    MERGE_SUMMARY_PROMPT(startDate, endDate, arabicSummaries, englishSummaries),
-    ai,
-  );
+  const segmentsText = segments.map((s, idx) => formatSegment(s, idx + 1)).join('\n\n');
+  return callAiWithRetry(MERGE_SUMMARY_PROMPT(startDate, endDate, segmentsText), ai);
 }
 
 function getSevenDaysAgoIso() {
@@ -236,6 +274,11 @@ async function fetchLastWeekNewsTitles() {
 
 const MAX_SUMMARY_BYTES = 5000;
 
+/** Removes a leading "# ..."/"## ..." title that some models still emit despite the prompt (sections are ###). */
+function stripLeadingTitle(text: string): string {
+  return text.replace(/^#{1,2}[^\n]*\n+/, '').trim();
+}
+
 function truncateByBytes(text: string, maxBytes: number): string {
   const trimmed = text.trim();
   if (Buffer.byteLength(trimmed, 'utf8') <= maxBytes) {
@@ -258,24 +301,21 @@ function truncateByBytes(text: string, maxBytes: number): string {
 }
 
 async function saveWeeklySummary(summary: SummaryResponse, startDate: string) {
-  let { arabic, english } = summary;
-  for (const [lang, value] of [
-    ['Arabic', arabic],
-    ['English', english],
-  ] as const) {
+  const data: Record<string, string> = {};
+  for (const key of SUMMARY_LANGUAGE_KEYS) {
+    const attribute = SUMMARY_ATTRIBUTES[key];
+    const value = stripLeadingTitle(summary[key] ?? '');
     const truncated = truncateByBytes(value, MAX_SUMMARY_BYTES);
     if (truncated !== value) {
       logger.warn(
-        `⚠️ ${lang} summary exceeded ${MAX_SUMMARY_BYTES} bytes – truncated to ${truncated.length} characters.`,
+        `⚠️ ${attribute} exceeded ${MAX_SUMMARY_BYTES} bytes – truncated to ${truncated.length} characters.`,
       );
     }
-    if (lang === 'Arabic') arabic = truncated;
-    else english = truncated;
+    data[attribute] = truncated;
   }
 
   await databases.createDocument(DATABASE_ID, SUMMARIES_COLLECTION_ID, sdk.ID.unique(), {
-    summary_ar: arabic,
-    summary_en: english,
+    ...data,
     startDate,
     endDate: new Date().toISOString(),
   });
@@ -373,18 +413,11 @@ async function runGenerateWeeklySummary() {
       }
 
       logger.info('Consolidating and merging all chunk summaries...');
-      const arabicSummaries = chunkSummaries
-        .map((s, idx) => `[Batch ${idx + 1} Arabic Recap segment]:\n${s.arabic}`)
-        .join('\n\n');
-      const englishSummaries = chunkSummaries
-        .map((s, idx) => `[Batch ${idx + 1} English Recap segment]:\n${s.english}`)
-        .join('\n\n');
 
       jsonSummary = await mergeSummariesWithAi(
         sevenDaysAgo,
         endDate,
-        arabicSummaries,
-        englishSummaries,
+        chunkSummaries,
         ai,
       );
       logger.info('✅ Weekly recap merged.');

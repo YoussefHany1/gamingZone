@@ -1,8 +1,13 @@
 import React, { useCallback, useMemo } from "react";
-import { useWindowDimensions } from "react-native";
+import { TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TabView } from "react-native-tab-view";
 import type { NavigationState, SceneRendererProps } from "react-native-tab-view";
+import type { NavigationProp } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
+import CustomText from "@/src/components/CustomText";
+import { useAuthUser } from "@/src/hooks/useAuthUser";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import GroupCreateSheet from "../components/GroupCreateSheet";
 import GroupSettingsSheet from "../components/social/GroupSettingsSheet";
@@ -18,9 +23,38 @@ import type { SocialRouteShape } from "../types";
 
 /** Social tab: one lazy scene per segment, sharing the social data hook. */
 function SocialScreen(): React.ReactElement {
+  const { t } = useTranslation();
+  const { user, isAnonymous } = useAuthUser();
+  const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const layout = useWindowDimensions();
   const styles = useThemeStyles((c) => ({
     container: { flex: 1, backgroundColor: c.backgroundDeep, paddingVertical: 8 },
+    loginContainer: {
+      flex: 1,
+      alignItems: "center" as const,
+      justifyContent: "center" as const,
+      paddingHorizontal: 32,
+      backgroundColor: c.backgroundDeep,
+    },
+    loginMessage: {
+      color: c.text,
+      fontSize: 16,
+      textAlign: "center" as const,
+      opacity: 0.8,
+      lineHeight: 24,
+      marginBottom: 20,
+    },
+    loginButton: {
+      backgroundColor: c.accent,
+      borderRadius: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+    },
+    loginButtonText: {
+      color: c.onAccent,
+      fontSize: 15,
+      fontWeight: "600" as const,
+    },
   }));
 
   const screen = useSocialScreen();
@@ -50,6 +84,33 @@ function SocialScreen(): React.ReactElement {
     ),
     [screen],
   );
+
+  /** Cross-navigator hop to the auth stack (bubbles up to the root navigator). */
+  const handleSignIn = useCallback(() => {
+    navigation.navigate("Auth", { screen: "Login" });
+  }, [navigation]);
+
+  /** Social is behind the login wall: signed-out / anonymous users get a sign-in prompt. */
+  if (isAnonymous || !user) {
+    return (
+      <SafeAreaView style={styles.loginContainer}>
+        <CustomText style={styles.loginMessage}>
+          {t("common.loginRequired")}
+        </CustomText>
+        <TouchableOpacity
+          style={styles.loginButton}
+          onPress={handleSignIn}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.authPrompt.signIn")}
+        >
+          <CustomText style={styles.loginButtonText}>
+            {t("common.authPrompt.signIn")}
+          </CustomText>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <>

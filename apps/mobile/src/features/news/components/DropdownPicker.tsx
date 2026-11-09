@@ -7,6 +7,7 @@ import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { openLink } from "@/src/lib/browser";
 import { useNotificationPreferences } from "@/src/hooks/useNotificationPreferences";
+import auth from "@react-native-firebase/auth";
 import NotificationService from "@/src/services/notificationService";
 import { useState, memo, useMemo, useCallback } from "react";
 import SkeletonDropdown from "../skeleton/SkeletonDropdown";
@@ -18,6 +19,13 @@ import {
   ALL_SOURCES_NAME,
   ARABIC_SOURCES_NAME,
   ENGLISH_SOURCES_NAME,
+  SPANISH_SOURCES_NAME,
+  FRENCH_SOURCES_NAME,
+  HINDI_SOURCES_NAME,
+  PORTUGUESE_SOURCES_NAME,
+  SUPPORTED_SOURCE_LANGUAGES,
+  allSourcesNameForLanguage,
+  normalizeSourceLanguage,
   isAllSourcesName,
 } from "../lib/allSources";
 import type { DropdownPickerProps, SectionData, RssFeedSource } from "../types";
@@ -148,30 +156,26 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
   );
   const selectedItem = props.value;
 
-  const arabicAllSource: RssFeedSource = useMemo(
-    () => ({
-      name: ARABIC_SOURCES_NAME,
-      image: "",
-      language: "ar",
-    }),
-    [],
-  );
-
-  const englishAllSource: RssFeedSource = useMemo(
-    () => ({
-      name: ENGLISH_SOURCES_NAME,
-      image: "",
-      language: "en",
-    }),
-    [],
-  );
+  // Synthetic "all sources" entry for every supported language.
+  const allSourcesByLanguage: Record<string, RssFeedSource> = useMemo(() => {
+    const entries: Record<string, RssFeedSource> = {};
+    for (const lang of SUPPORTED_SOURCE_LANGUAGES) {
+      const name = allSourcesNameForLanguage(lang);
+      if (!name) continue;
+      entries[lang] = { name, image: "", language: lang as RssFeedSource["language"] };
+    }
+    return entries;
+  }, []);
 
   const getItemName = useCallback(
     (item: RssFeedSource): string => {
       switch (item.name) {
         case ARABIC_SOURCES_NAME:
-          return t("news.dropdown.allSources");
         case ENGLISH_SOURCES_NAME:
+        case SPANISH_SOURCES_NAME:
+        case FRENCH_SOURCES_NAME:
+        case HINDI_SOURCES_NAME:
+        case PORTUGUESE_SOURCES_NAME:
           return t("news.dropdown.allSources");
         case ALL_SOURCES_NAME:
         case ALL_LANGUAGES_NAME:
@@ -183,41 +187,67 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
     [t],
   );
 
-  // Build section list grouped by Arabic vs English sources, ordered by current app locale
+  // Title key for each language's section.
+  const sectionTitleForLanguage = useCallback(
+    (lang: string): string => {
+      switch (lang) {
+        case "ar":
+          return t("news.dropdown.arabicSources");
+        case "en":
+          return t("news.dropdown.englishSources");
+        case "es":
+          return t("news.dropdown.spanishSources");
+        case "fr":
+          return t("news.dropdown.frenchSources");
+        case "hi":
+          return t("news.dropdown.hindiSources");
+        case "pt":
+          return t("news.dropdown.portugueseSources");
+        default:
+          return lang.toUpperCase();
+      }
+    },
+    [t],
+  );
+
+  // Build section list grouped by language, ordered with the current app
+  // language first.
   const sections: SectionData[] = useMemo(() => {
-    const arabicSites: RssFeedSource[] = [
-      arabicAllSource,
-      ...websites.filter((item) => item.language === "ar"),
+    const normalizedAppLang = i18n.language.startsWith("pt")
+      ? "pt"
+      : (i18n.language.split("-")[0] ?? "en");
+    const appLang = (SUPPORTED_SOURCE_LANGUAGES as readonly string[]).includes(normalizedAppLang)
+      ? normalizedAppLang
+      : "en";
+    const orderedLanguages = [
+      appLang,
+      ...SUPPORTED_SOURCE_LANGUAGES.filter((lang) => lang !== appLang),
     ];
-    const englishSites: RssFeedSource[] = [
-      englishAllSource,
-      ...websites.filter((item) => item.language !== "ar"),
-    ];
-
-    const arSection: SectionData = {
-      title: t("news.dropdown.arabicSources"),
-      data: arabicSites,
-    };
-    const enSection: SectionData = {
-      title: t("news.dropdown.englishSources"),
-      data: englishSites,
-    };
-
-    const isEnglishApp = i18n.language.startsWith("en");
 
     const result: SectionData[] = [];
-    if (isEnglishApp) {
-      result.push(enSection);
-      result.push(arSection);
-    } else {
-      result.push(arSection);
-      result.push(enSection);
+    for (const lang of orderedLanguages) {
+      const allSource = allSourcesByLanguage[lang];
+      const sites: RssFeedSource[] = [
+        ...(allSource ? [allSource] : []),
+        ...websites.filter(
+          (item) => normalizeSourceLanguage(item.language) === lang,
+        ),
+      ];
+      result.push({
+        title: sectionTitleForLanguage(lang),
+        data: sites,
+      });
     }
 
     return result;
-  }, [arabicAllSource, englishAllSource, websites, i18n.language, t]);
+  }, [allSourcesByLanguage, websites, i18n.language, sectionTitleForLanguage]);
 
   const handleToggleNotification = async (): Promise<void> => {
+    const currentUser = auth().currentUser;
+    if (!currentUser || currentUser.isAnonymous) {
+      ToastAndroid.show(t("common.loginRequired"), ToastAndroid.LONG);
+      return;
+    }
     const state = await NetInfo.fetch();
     if (!state.isConnected) {
       ToastAndroid.show(

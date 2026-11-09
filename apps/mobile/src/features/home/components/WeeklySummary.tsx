@@ -1,13 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState, memo } from "react";
 import CustomText from "@/src/components/CustomText";
-import type {
-  LayoutChangeEvent} from "react-native";
-import {
-  View,
-  TouchableOpacity,
-  Platform,
-  ToastAndroid,
-} from "react-native";
+import type { LayoutChangeEvent } from "react-native";
+import { View, TouchableOpacity, Platform, ToastAndroid } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -15,7 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 import Markdown from "react-native-markdown-display";
 import * as Notifications from "expo-notifications";
-import { Bell, BellOff } from "lucide-react-native";
+import { Bell, BellOff, Newspaper } from "lucide-react-native";
 import auth from "@react-native-firebase/auth";
 import Loading from "@/src/Loading";
 import { databases } from "@/src/lib/appwrite";
@@ -31,6 +25,7 @@ import Constants from "expo-constants";
 import useCachedData from "@/src/hooks/useCachedData";
 import { storageGet, storageSet } from "@/src/lib/storage";
 import type { WeeklySummaryDoc } from "../types";
+import { getArticleSummary } from "@gaming-zone/utils";
 import { logger } from "@/src/lib/logger";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -259,7 +254,8 @@ const WeeklySummary = memo(function WeeklySummary() {
   }, [summaryDoc, subscribed, t]);
 
   const handleToggleSubscribe = useCallback(async (): Promise<void> => {
-    if (!auth().currentUser?.uid) {
+    const currentUser = auth().currentUser;
+    if (!currentUser?.uid || currentUser.isAnonymous) {
       ToastAndroid.show(t("common.loginRequired"), ToastAndroid.LONG);
       return;
     }
@@ -292,8 +288,8 @@ const WeeklySummary = memo(function WeeklySummary() {
   if (isLoading && !summaryDoc) return <Loading />;
   if (!summaryDoc) return null;
 
+  const content = getArticleSummary(summaryDoc, i18n.language);
   const currentLang: "ar" | "en" = i18n.language.startsWith("ar") ? "ar" : "en";
-  const content = currentLang === "ar" ? summaryDoc.summary_ar : summaryDoc.summary_en;
   if (!content) return null;
 
   return (
@@ -301,10 +297,11 @@ const WeeklySummary = memo(function WeeklySummary() {
       <View style={styles.headerContainer}>
         <View style={styles.headerLeft}>
           <CustomText style={styles.headerTitle}>
+            <Newspaper size={16} color={colors.accentText} />{" "}
             {t("home.weeklySummary.title")}
           </CustomText>
           <CustomText style={styles.date}>
-            {t("home.weeklySummary.createdBy")} Gemini 2.5 Flash
+            {t("home.weeklySummary.createdBy")} Gemini 3.1 Flash
           </CustomText>
         </View>
         <CustomText style={styles.date}>
@@ -344,7 +341,7 @@ const WeeklySummary = memo(function WeeklySummary() {
         {subscribed ? (
           <Bell size={16} color={colors.onAccent} />
         ) : (
-          <BellOff size={16} color={colors.accentText}/>
+          <BellOff size={16} color={colors.accentText} />
         )}
         <CustomText
           style={[styles.subscribeText, subscribed && styles.subscribeTextActive]}
@@ -359,5 +356,3 @@ const WeeklySummary = memo(function WeeklySummary() {
 });
 
 export default WeeklySummary;
-
-// ─── Styles ───────────────────────────────────────────────────────────────────

@@ -47,13 +47,14 @@ function MostAnticipated(): React.ReactElement {
 
   const { t } = useTranslation();
   const { preferences, toggleSource } = useNotificationPreferences();
-  const userId = auth().currentUser?.uid;
+  const currentUser = auth().currentUser;
+  const userId = currentUser?.uid;
 
   const { games: gamesToShow, isLoading, error: isError } = useMostAnticipated();
 
   const handleToggleNotification = useCallback(
     async (item: Game) => {
-      if (!userId) {
+      if (!userId || currentUser?.isAnonymous) {
         ToastAndroid.show(t("common.loginRequired"), ToastAndroid.LONG);
         return;
       }
@@ -74,7 +75,7 @@ function MostAnticipated(): React.ReactElement {
         ToastAndroid.show(t("common.error"), ToastAndroid.SHORT);
       }
     },
-    [userId, preferences, toggleSource, t],
+    [userId, currentUser?.isAnonymous, preferences, toggleSource, t],
   );
 
   const renderCard = useCallback(

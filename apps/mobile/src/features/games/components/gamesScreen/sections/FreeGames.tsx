@@ -48,7 +48,8 @@ function FreeGames(): React.ReactElement {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const [notifEnabled, setNotifEnabled] = useState(false);
-  const userId = auth().currentUser?.uid;
+  const currentUser = auth().currentUser;
+  const userId = currentUser?.uid;
 
   const styles = useThemeStyles((c) => ({
     headerContainer: {
@@ -77,7 +78,7 @@ function FreeGames(): React.ReactElement {
 
   // Check user's notification preference on mount / user change
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || currentUser?.isAnonymous) return;
     let isMounted = true;
 
     const checkNotificationStatus = async (): Promise<void> => {
@@ -94,10 +95,10 @@ function FreeGames(): React.ReactElement {
     return () => {
       isMounted = false;
     };
-  }, [userId]);
+  }, [userId, currentUser?.isAnonymous]);
 
   const toggleNotifications = useCallback(async (): Promise<void> => {
-    if (!userId) {
+    if (!userId || currentUser?.isAnonymous) {
       ToastAndroid.show(t("common.loginRequired"), ToastAndroid.LONG);
       return;
     }
@@ -123,7 +124,7 @@ function FreeGames(): React.ReactElement {
       setNotifEnabled(!newStatus); // Revert on failure
       ToastAndroid.show(t("common.error"), ToastAndroid.LONG);
     }
-  }, [userId, notifEnabled, t]);
+  }, [userId, currentUser?.isAnonymous, notifEnabled, t]);
 
   const handleClaimPress = useCallback(async (item: FreeGameItem): Promise<void> => {
     try {

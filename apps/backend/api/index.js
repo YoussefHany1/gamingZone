@@ -683,12 +683,22 @@ app.get('/events', cacheMiddleware(3600), asyncRoute(async (req, res) => {
 const STEAM_API_KEY = process.env.STEAM_API_KEY;
 
 // Get Steam Top Sellers and map to IGDB
+// Source: the official "Weekly Top Sellers" RSS feed
+// (https://store.steampowered.com/feeds/weeklytopsellers.xml). It is an RSS
+// 1.0 / RDF document where each <item>'s <link> points at the store page
+// (…/app/<appid>/…) and items appear in rank order (#1 first).
 app.get('/steam-top-sellers', cacheMiddleware(3600), asyncRoute(async (req, res) => {
-  const steamRes = await fetch('https://store.steampowered.com/api/featuredcategories/');
-  const steamData = await steamRes.json();
+  const steamRes = await fetch('https://store.steampowered.com/feeds/weeklytopsellers.xml');
+  if (!steamRes.ok) {
+    throw new AppError(`Steam top sellers feed returned status ${steamRes.status}`, 502);
+  }
+  const xml = await steamRes.text();
 
-  const topSellersItems = steamData?.top_sellers?.items || [];
-  const appIds = topSellersItems.map((item) => `"${item.id}"`);
+  // <link> texts carry the appid; the channel-level <link> (charts page) has
+  // none, so scanning <link>…</link> keeps document (rank) order intact.
+  const appIds = [...xml.matchAll(/<link>([^<]*)<\/link>/g)]
+    .map((m) => /\/app\/(\d+)/.exec(m[1])?.[1])
+    .filter((id, index, all) => id && all.indexOf(id) === index);
 
   if (appIds.length === 0) {
     return res.json([]);
@@ -697,7 +707,7 @@ app.get('/steam-top-sellers', cacheMiddleware(3600), asyncRoute(async (req, res)
   // 1) Find IGDB game IDs from Steam appIds
   const extQuery = `
     fields game, uid;
-    where uid = (${appIds.join(',')});
+    where uid = (${appIds.map((id) => `"${id}"`).join(',')});
     limit 50;
   `;
   const extGames = await callIgdb('external_games', extQuery);
@@ -722,9 +732,8 @@ app.get('/steam-top-sellers', cacheMiddleware(3600), asyncRoute(async (req, res)
   const sortedGames = [];
   const addedIds = new Set();
 
-  for (const appIdStr of appIds) {
-    const cleanId = appIdStr.replace(/"/g, '');
-    const extMatch = extGames.find((e) => e.uid === cleanId);
+  for (const appId of appIds) {
+    const extMatch = extGames.find((e) => e.uid === appId);
     if (extMatch) {
       const game = igdbGames.find((g) => g.id === extMatch.game);
       if (game && !addedIds.has(game.id)) {

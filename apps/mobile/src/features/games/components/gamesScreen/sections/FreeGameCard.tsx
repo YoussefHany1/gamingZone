@@ -123,7 +123,7 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
       shadowRadius: 3,
     },
     savingsText: {
-      color: c.accentText,
+      color: c.text,
       fontSize: 12,
       fontWeight: "bold",
       letterSpacing: 0.5,
@@ -162,12 +162,6 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
       activeOpacity={0.9}
       onPress={handleCardPress}
     >
-      {/* Background gradient */}
-      <LinearGradient
-        colors={[colors.skeletonBase, colors.accent]}
-        style={styles.cardGradient}
-      />
-
       {/* Image area with optional countdown overlay */}
       <View style={styles.imageContainer}>
         {item.type === "next" && item.startDate && (

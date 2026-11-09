@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { ToastAndroid } from "react-native";
 import auth from "@react-native-firebase/auth";
+import i18n from "@/src/i18n";
 import type {
   NotificationPreferences,
 } from "@/src/services/notificationService";
@@ -41,8 +42,9 @@ export const useNotificationPreferences = (): UseNotificationPreferencesResult =
 
   // Load preferences on mount (skips the spinner if the cache is warm).
   useEffect(() => {
-    const uid = auth().currentUser?.uid;
-    if (!uid) {
+    const currentUser = auth().currentUser;
+    const uid = currentUser?.uid;
+    if (!uid || currentUser?.isAnonymous) {
       setLoadingPreferences(false);
       return;
     }
@@ -73,8 +75,15 @@ export const useNotificationPreferences = (): UseNotificationPreferencesResult =
   // Optimistic toggle: update state immediately, roll back on failure.
   const toggleSource = useCallback(
     async (category: string, sourceName: string): Promise<void> => {
-      const uid = auth().currentUser?.uid;
-      if (!uid) return;
+      const currentUser = auth().currentUser;
+      const uid = currentUser?.uid;
+      if (!uid || currentUser?.isAnonymous) {
+        ToastAndroid.show(
+          i18n.t("common.loginRequired"),
+          ToastAndroid.LONG,
+        );
+        return;
+      }
 
       const prefId = NotificationService.getTopicName(category, sourceName);
       const previousValue = globalPreferencesCache?.[prefId] ?? false;

@@ -42,8 +42,12 @@ export function useNotificationSettings(): UseNotificationSettingsResult {
 
   const toggleAlert = useCallback(
     async (category: string, source: string): Promise<void> => {
-      const userId = auth().currentUser?.uid;
-      if (!userId) return;
+      const currentUser = auth().currentUser;
+      const userId = currentUser?.uid;
+      if (!userId || currentUser?.isAnonymous) {
+        ToastAndroid.show(t("common.loginRequired"), ToastAndroid.LONG);
+        return;
+      }
 
       const topicId = NotificationService.getTopicName(category, source);
       const wasEnabled = preferences[topicId] ?? false;

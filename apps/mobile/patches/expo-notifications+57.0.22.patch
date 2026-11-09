@@ -1,0 +1,24 @@
+diff --git a/node_modules/expo-notifications/android/src/main/java/expo/modules/notifications/service/NotificationsService.kt b/node_modules/expo-notifications/android/src/main/java/expo/modules/notifications/service/NotificationsService.kt
+index 74554be..e582fed 100644
+--- a/node_modules/expo-notifications/android/src/main/java/expo/modules/notifications/service/NotificationsService.kt
++++ b/node_modules/expo-notifications/android/src/main/java/expo/modules/notifications/service/NotificationsService.kt
+@@ -635,7 +635,18 @@ open class NotificationsService : BroadcastReceiver() {
+       try {
+         intent?.run { handleIntent(context, intent) }
+       } finally {
+-        pendingIntent.finish()
++        try {
++          pendingIntent.finish()
++        } catch (e: IllegalStateException) {
++          // Known Android 11/12 framework race: when QueuedWork has pending work
++          // (e.g. SharedPreferences commits), PendingResult.finish() defers the
++          // actual sendFinished() to the QueuedWork thread, where it can run
++          // after the broadcast result was already sent/cancelled by the system,
++          // crashing the app with "IllegalStateException: Broadcast already
++          // finished". See https://issuetracker.google.com/issues/257513022.
++          // Finishing an already-finished broadcast is a no-op, so ignore it.
++          Log.w("expo-notifications", "Notification broadcast was already finished", e)
++        }
+       }
+     }
+   }

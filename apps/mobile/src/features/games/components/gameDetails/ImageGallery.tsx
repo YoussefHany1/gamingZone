@@ -3,7 +3,7 @@ import CustomText from "@/src/components/CustomText";
 import type {
   NativeSyntheticEvent,
   NativeScrollEvent,
-  ScrollView} from "react-native";
+} from "react-native";
 import {
   View,
   StyleSheet,
@@ -15,253 +15,75 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
-import { ChevronLeft, ChevronRight, Images, X } from "lucide-react-native";
+import { Images, X } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import type {
-  PinchGestureHandlerGestureEvent,
-  PanGestureHandlerGestureEvent,
-  HandlerStateChangeEvent,
-  PinchGestureHandlerEventPayload,
-  PanGestureHandlerEventPayload} from "react-native-gesture-handler";
-import {
-  GestureHandlerRootView,
-  PinchGestureHandler,
-  PanGestureHandler,
-  State
-} from "react-native-gesture-handler";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useFloatingTopInset } from "@/src/hooks/useBottomInset";
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-
-// ─── Gesture thresholds ───────────────────────────────────────────────────────
-
-const MIN_SCALE = 1;
-const MAX_SCALE = 4;
-
-const SWIPE_DOWN_DIST = 100; // px downward to trigger close
-const SWIPE_DOWN_VEL = 800; // px/s downward velocity to trigger close
-const SWIPE_HORIZ_DIST = 60; // px horizontal to trigger navigation
-const SWIPE_HORIZ_VEL = 400; // px/s horizontal velocity to trigger navigation
+import Gallery from "react-native-better-awesome-gallery";
 
 import { igdbImageUrl } from "@gaming-zone/utils";
 
 import type {
   GalleryImage,
-  ZoomableImageProps,
   ImageGalleryAdvancedProps,
 } from "../../types";
 
-// ─── ZoomableImage ────────────────────────────────────────────────────────────
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+// Dots stop scaling well on large screenshot sets — fall back to the counter
+// badge alone past this point.
+const MAX_PAGINATION_DOTS = 8;
+
+// ─── FullScreenImage ──────────────────────────────────────────────────────────
 //
-// Provides pinch-to-zoom and pan when zoomed.
-// At scale 1× swipe gestures are interpreted as navigation / close commands.
+// Rendered inside the gallery's `renderItem`. Reports the loaded image
+// dimensions back to the gallery (needed for correct aspect fit and pan
+// bounds) and shows a spinner while the full-resolution image streams in.
+// The spinner stays white: the fullscreen viewer has a fixed black
+// background in both themes.
 
-const ZoomableImage: React.FC<ZoomableImageProps> = ({
-  imageUrl,
-  onSwipeLeft,
-  onSwipeRight,
-  onSwipeDown,
-}) => {
-  const [loading, setLoading] = useState(true);
-  const scale = useRef(new Animated.Value(1)).current;
-  const translateX = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
-  const pinchAnim = useRef(new Animated.Value(1)).current;
+interface FullScreenImageProps {
+  url: string;
+  setImageDimensions: (dimensions: { width: number; height: number }) => void;
+}
 
-  useEffect(() => {
-    setLoading(true);
-  }, [imageUrl]);
+const FullScreenImage: React.FC<FullScreenImageProps> = React.memo(
+  ({ url, setImageDimensions }) => {
+    const [loading, setLoading] = useState(true);
 
-  const styles = useThemeStyles(() => ({
-    zoomContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-    imageWrapper: {
-      flex: 1,
-      width: SCREEN_WIDTH,
-      height: SCREEN_HEIGHT,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    animatedImageContainer: {
-      width: SCREEN_WIDTH,
-      height: SCREEN_HEIGHT,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    fullScreenImage: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
-    fullScreenLoaderOverlay: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 1,
-    },
-  }));
-  const lastScale = useRef(1);
-  const lastTX = useRef(0);
-  const lastTY = useRef(0);
-
-  const resetPan = useCallback((): void => {
-    translateX.setValue(0);
-    translateY.setValue(0);
-    translateX.setOffset(0);
-    translateY.setOffset(0);
-    lastTX.current = 0;
-    lastTY.current = 0;
-  }, [translateX, translateY]);
-
-  const snapBack = useCallback((): void => {
-    Animated.parallel([
-      Animated.spring(translateX, { toValue: 0, useNativeDriver: true }),
-      Animated.spring(translateY, { toValue: 0, useNativeDriver: true }),
-    ]).start();
-    translateX.setOffset(0);
-    translateY.setOffset(0);
-    lastTX.current = 0;
-    lastTY.current = 0;
-  }, [translateX, translateY]);
-
-  const onPinchEvent: (e: PinchGestureHandlerGestureEvent) => void = Animated.event(
-    [{ nativeEvent: { scale: pinchAnim } }],
-    {
-      useNativeDriver: true,
-    },
-  );
-
-  const onPinchStateChange = useCallback(
-    (event: HandlerStateChangeEvent<PinchGestureHandlerEventPayload>): void => {
-      if (event.nativeEvent.oldState !== State.ACTIVE) return;
-
-      lastScale.current = Math.min(
-        MAX_SCALE,
-        Math.max(MIN_SCALE, lastScale.current * event.nativeEvent.scale),
-      );
-
-      if (lastScale.current === MIN_SCALE) resetPan();
-
-      scale.setValue(lastScale.current);
-      pinchAnim.setValue(1);
-    },
-    [scale, pinchAnim, resetPan],
-  );
-
-  const onPanEvent: (e: PanGestureHandlerGestureEvent) => void = Animated.event(
-    [{ nativeEvent: { translationX: translateX, translationY: translateY } }],
-    { useNativeDriver: true },
-  );
-
-  const onPanStateChange = useCallback(
-    (event: HandlerStateChangeEvent<PanGestureHandlerEventPayload>): void => {
-      if (event.nativeEvent.oldState !== State.ACTIVE) return;
-
-      const {
-        translationX: tx,
-        translationY: ty,
-        velocityX: vx,
-        velocityY: vy,
-      } = event.nativeEvent;
-
-      if (lastScale.current <= MIN_SCALE) {
-        // ── At normal zoom: interpret as swipe gesture ──────────────────────
-        const absX = Math.abs(tx);
-        const absY = Math.abs(ty);
-
-        if (ty > SWIPE_DOWN_DIST || vy > SWIPE_DOWN_VEL) {
-          resetPan();
-          onSwipeDown?.();
-          return;
-        }
-
-        if (absX > absY && (absX > SWIPE_HORIZ_DIST || Math.abs(vx) > SWIPE_HORIZ_VEL)) {
-          resetPan();
-          if (tx < 0) onSwipeLeft?.();
-          else onSwipeRight?.();
-          return;
-        }
-
-        snapBack();
-        return;
-      }
-
-      // ── Zoomed in: accumulate pan offsets ───────────────────────────────
-      lastTX.current += tx;
-      lastTY.current += ty;
-      translateX.setOffset(lastTX.current);
-      translateX.setValue(0);
-      translateY.setOffset(lastTY.current);
-      translateY.setValue(0);
-    },
-    [translateX, translateY, resetPan, snapBack, onSwipeDown, onSwipeLeft, onSwipeRight],
-  );
-
-  const handleDoubleTap = useCallback((): void => {
-    Animated.parallel([
-      Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
-      Animated.spring(translateX, { toValue: 0, useNativeDriver: true }),
-      Animated.spring(translateY, { toValue: 0, useNativeDriver: true }),
-    ]).start();
-    lastScale.current = 1;
-    resetPan();
-  }, [scale, translateX, translateY, resetPan]);
-
-  return (
-    <PanGestureHandler
-      onGestureEvent={onPanEvent}
-      onHandlerStateChange={onPanStateChange}
-      minPointers={1}
-      maxPointers={1}
-    >
-      <Animated.View style={styles.zoomContainer}>
-        <PinchGestureHandler
-          onGestureEvent={onPinchEvent}
-          onHandlerStateChange={onPinchStateChange}
-        >
-          <Animated.View style={{ flex: 1 }}>
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={handleDoubleTap}
-              style={styles.imageWrapper}
-            >
-              <Animated.View
-                style={[
-                  styles.animatedImageContainer,
-                  {
-                    transform: [
-                      { scale: Animated.multiply(scale, pinchAnim) },
-                      { translateX },
-                      { translateY },
-                    ],
-                  },
-                ]}
-              >
-                <Image
-                  style={styles.fullScreenImage}
-                  source={imageUrl}
-                  contentFit="contain"
-                  transition={300}
-                  cachePolicy="memory-disk"
-                  onLoadStart={() => setLoading(true)}
-                  onLoad={() => setLoading(false)}
-                  onError={() => setLoading(false)}
-                />
-                {loading && (
-                  <View style={styles.fullScreenLoaderOverlay} pointerEvents="none">
-                    <ActivityIndicator size="large" color="#ffffff" />
-                  </View>
-                )}
-              </Animated.View>
-            </TouchableOpacity>
-          </Animated.View>
-        </PinchGestureHandler>
-      </Animated.View>
-    </PanGestureHandler>
-  );
-};
+    return (
+      <View style={StyleSheet.absoluteFill}>
+        <Image
+          style={StyleSheet.absoluteFill}
+          source={url}
+          contentFit="contain"
+          cachePolicy="memory-disk"
+          transition={200}
+          onLoadStart={() => setLoading(true)}
+          onLoad={(e) => {
+            // width/height can arrive missing or 0 for some sources — never
+            // hand bad dimensions to the gallery.
+            const { width, height } = e.source;
+            if (width && height) {
+              setImageDimensions({ width, height });
+            }
+            setLoading(false);
+          }}
+          onError={() => setLoading(false)}
+        />
+        {loading && (
+          <View style={fullScreenStyles.loaderOverlay} pointerEvents="none">
+            <ActivityIndicator size="large" color="#ffffff" />
+          </View>
+        )}
+      </View>
+    );
+  },
+);
+FullScreenImage.displayName = "FullScreenImage";
 
 // ─── GalleryThumbnail ────────────────────────────────────────────────────────
 
@@ -278,15 +100,19 @@ interface GalleryThumbnailProps {
 const GalleryThumbnail: React.FC<GalleryThumbnailProps> = React.memo(
   ({ image, index, totalImages, onPress, colors, isRtl, styles }) => {
     const [loading, setLoading] = useState(true);
+    const { t } = useTranslation();
 
     return (
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={onPress}
         style={styles.thumbnailContainer}
-        accessibilityLabel={`Image ${index + 1} of ${totalImages}`}
+        accessibilityLabel={t("games.details.gallery.imageOf", {
+          current: index + 1,
+          total: totalImages,
+        })}
         accessibilityRole="imagebutton"
-        accessibilityHint="Double tap to view full screen"
+        accessibilityHint={t("games.details.gallery.viewFullScreen")}
       >
         <Image
           style={styles.thumbnail}
@@ -337,6 +163,8 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [fullScreenVisible, setFullScreenVisible] = useState(false);
   const [fullScreenIndex, setFullScreenIndex] = useState(0);
+  const [chromeVisible, setChromeVisible] = useState(true);
+  const chromeOpacity = useRef(new Animated.Value(1)).current;
   const colors = useThemeColors();
   const topInset = useFloatingTopInset(38);
 
@@ -427,8 +255,8 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
     }),
     [topInset],
   );
-  const scrollViewRef = useRef<ScrollView>(null);
-  const { i18n } = useTranslation();
+
+  const { t, i18n } = useTranslation();
   const isRtl = i18n.language === "ar";
 
   // Merge cover and screenshots into a single list — memoised to avoid
@@ -457,42 +285,83 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>): void => {
-      const index = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-      setActiveIndex(index);
+      // In RTL layouts (Android) contentOffset.x runs negative — Math.abs
+      // keeps the index correct for both scroll directions.
+      const index = Math.abs(
+        Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH),
+      );
+      setActiveIndex(Math.min(index, allImages.length - 1));
     },
-    [],
+    [allImages.length],
   );
 
-  const openFullScreen = useCallback((index: number): void => {
-    setFullScreenIndex(index);
-    setFullScreenVisible(true);
-  }, []);
+  const openFullScreen = useCallback(
+    (index: number): void => {
+      setFullScreenIndex(index);
+      setChromeVisible(true);
+      chromeOpacity.setValue(1);
+      setFullScreenVisible(true);
+    },
+    [chromeOpacity],
+  );
 
   const closeFullScreen = useCallback((): void => {
     setFullScreenVisible(false);
   }, []);
 
-  const goToNext = useCallback((): void => {
-    setFullScreenIndex((prev) => Math.min(prev + 1, allImages.length - 1));
-  }, [allImages.length]);
+  // Tap on the image toggles the top controls — the polish native photo
+  // viewers have.
+  const toggleChrome = useCallback((): void => {
+    setChromeVisible((prev) => {
+      const next = !prev;
+      Animated.timing(chromeOpacity, {
+        toValue: next ? 1 : 0,
+        duration: 150,
+        useNativeDriver: true,
+      }).start();
+      return next;
+    });
+  }, [chromeOpacity]);
 
-  const goToPrevious = useCallback((): void => {
-    setFullScreenIndex((prev) => Math.max(prev - 1, 0));
-  }, []);
+  // Preload the full-resolution neighbours so swiping doesn't wait on the
+  // network.
+  useEffect(() => {
+    if (!fullScreenVisible) return;
+    const neighbours = [
+      allImages[fullScreenIndex + 1]?.url,
+      allImages[fullScreenIndex - 1]?.url,
+    ];
+    for (const url of neighbours) {
+      if (url) {
+        Image.prefetch(url).catch(() => {});
+      }
+    }
+  }, [fullScreenVisible, fullScreenIndex, allImages]);
+
+  const renderFullScreenItem = useCallback(
+    ({
+      item,
+      setImageDimensions,
+    }: {
+      item: GalleryImage;
+      index: number;
+      setImageDimensions: (dimensions: { width: number; height: number }) => void;
+    }): React.ReactElement => (
+      <FullScreenImage url={item.url} setImageDimensions={setImageDimensions} />
+    ),
+    [],
+  );
 
   if (allImages.length === 0) {
     return <View style={styles.placeholder} />;
   }
 
   const imageCount = allImages.length;
-  const isFirst = fullScreenIndex === 0;
-  const isLast = fullScreenIndex === imageCount - 1;
 
   return (
     <View style={styles.container}>
       {/* ── Horizontal paging thumbnail strip ─────────────────────────── */}
       <Animated.ScrollView
-        ref={scrollViewRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -515,7 +384,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
       </Animated.ScrollView>
 
       {/* ── Dot pagination ─────────────────────────────────────────────── */}
-      {imageCount > 1 && (
+      {imageCount > 1 && imageCount <= MAX_PAGINATION_DOTS && (
         <View style={styles.pagination}>
           {allImages.map((_, index) => (
             <View
@@ -549,19 +418,42 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
         onRequestClose={closeFullScreen}
       >
         <StatusBar hidden />
-        <GestureHandlerRootView style={{ flex: 1 }}>
+        {/* Android modals render into a separate native window and need
+            their own gesture root, or every gesture inside is dead. */}
+        <GestureHandlerRootView style={fullScreenStyles.rootView}>
           <View style={fullScreenStyles.fullScreenContainer}>
-            {/* Top controls */}
-            <View
+            {/* Mounted only while open — a fresh Gallery instance picks up
+                `initialIndex` on every open. */}
+            {fullScreenVisible && (
+              <Gallery
+                data={allImages}
+                keyExtractor={(item) => item.id}
+                initialIndex={fullScreenIndex}
+                onIndexChange={setFullScreenIndex}
+                onSwipeToClose={closeFullScreen}
+                onTap={toggleChrome}
+                disableTransitionOnScaledImage
+                hideAdjacentImagesOnScaledImage
+                renderItem={renderFullScreenItem}
+                style={fullScreenStyles.gallery}
+              />
+            )}
+
+            {/* Top controls — fade out when the image is tapped */}
+            <Animated.View
+              pointerEvents={chromeVisible ? "auto" : "none"}
               style={[
                 fullScreenStyles.topControls,
-                { top: (StatusBar.currentHeight ?? 40) + 10 },
+                {
+                  top: (StatusBar.currentHeight ?? 40) + 10,
+                  opacity: chromeOpacity,
+                },
               ]}
             >
               <TouchableOpacity
                 style={fullScreenStyles.closeButton}
                 onPress={closeFullScreen}
-                accessibilityLabel="Close gallery"
+                accessibilityLabel={t("games.details.gallery.close")}
                 accessibilityRole="button"
               >
                 <X size={28} color={colors.text} />
@@ -571,31 +463,7 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
                   {fullScreenIndex + 1} / {imageCount}
                 </CustomText>
               </View>
-            </View>
-
-            {/* Swipe-hint chevrons (non-interactive — hint only) */}
-            {imageCount > 1 && (
-              <View style={fullScreenStyles.swipeHints} pointerEvents="none">
-                <ChevronLeft
-                  size={28}
-                  color={isFirst ? "transparent" : "rgba(255,255,255,0.25)"}
-                />
-                <ChevronRight
-                  size={28}
-                  color={isLast ? "transparent" : "rgba(255,255,255,0.25)"}
-                />
-              </View>
-            )}
-
-            <View style={fullScreenStyles.imageArea}>
-              <ZoomableImage
-                key={fullScreenIndex}
-                imageUrl={allImages[fullScreenIndex]?.url ?? ""}
-                onSwipeLeft={!isLast ? goToNext : undefined}
-                onSwipeRight={!isFirst ? goToPrevious : undefined}
-                onSwipeDown={closeFullScreen}
-              />
-            </View>
+            </Animated.View>
           </View>
         </GestureHandlerRootView>
       </Modal>
@@ -606,10 +474,22 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
 export default ImageGalleryAdvanced;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-// Fullscreen/zoom geometry: no palette dependency, so it stays static. The
-// only token applied at render time is the status-bar inset for `topControls`.
+// Fullscreen geometry: no palette dependency, so it stays static. The only
+// token applied at render time is the status-bar inset for `topControls`.
 const fullScreenStyles = StyleSheet.create({
+  rootView: { flex: 1 },
   fullScreenContainer: { flex: 1, backgroundColor: "#000000" },
+  gallery: { flex: 1 },
+  loaderOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1,
+  },
   topControls: {
     position: "absolute",
     left: 0,
@@ -624,18 +504,5 @@ const fullScreenStyles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.6)",
     borderRadius: 25,
     padding: 10,
-  },
-  imageArea: { flex: 1, justifyContent: "center", alignItems: "center" },
-  swipeHints: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 8,
-    zIndex: 999,
   },
 });

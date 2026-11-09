@@ -176,7 +176,7 @@
       "hardware": "Hardware"
     },
     "weeklySummary": {
-      "title": "🗞️ Weekly Recap",
+      "title": "Weekly Recap",
       "createdBy": "Created by",
       "readMore": "Read More..",
       "readLess": "Read Less",
@@ -253,6 +253,10 @@
       "cancel": "Cancel",
       "englishSources": "English Sources",
       "arabicSources": "Arabic Sources",
+      "spanishSources": "Spanish Sources",
+      "frenchSources": "French Sources",
+      "hindiSources": "Hindi Sources",
+      "portugueseSources": "Portuguese Sources",
       "visitWebsite": "Visit Website",
       "allSources": "All sources"
     },
@@ -388,6 +392,11 @@
       "yourRating": "Your Rating",
       "about": "About",
       "screenshotsGallery": "Screenshots",
+      "gallery": {
+        "imageOf": "Image {{current}} of {{total}}",
+        "close": "Close gallery",
+        "viewFullScreen": "Double tap to view full screen"
+      },
       "genres": "Genres",
       "gameModes": "Game Modes",
       "developer": "Developer",

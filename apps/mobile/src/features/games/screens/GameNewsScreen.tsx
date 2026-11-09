@@ -14,6 +14,7 @@ import { Image } from "expo-image";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
+import auth from "@react-native-firebase/auth";
 import { databases } from "@/src/lib/appwrite";
 import { Query, ID } from "react-native-appwrite";
 import Constants from "expo-constants";
@@ -164,6 +165,7 @@ NewsItem.displayName = "NewsItem";
 const NewsSection = memo<NewsSectionProps>(
   ({ gameName, title, sourceId, lang, defaultExpanded = true, rssUrl }) => {
     const colors = useThemeColors();
+    const { t } = useTranslation();
     const styles = useThemeStyles((c) => ({
       sectionContainer: {
         marginVertical: 20,
@@ -247,6 +249,11 @@ const NewsSection = memo<NewsSectionProps>(
     }, []);
 
     const handleToggleSwitch = useCallback(async (): Promise<void> => {
+      const currentUser = auth().currentUser;
+      if (!currentUser || currentUser.isAnonymous) {
+        ToastAndroid.show(t("common.loginRequired"), ToastAndroid.LONG);
+        return;
+      }
       if (!isEnabled) {
         try {
           const existing = await databases.listDocuments(

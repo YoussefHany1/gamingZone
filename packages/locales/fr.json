@@ -174,7 +174,7 @@
       "hardware": "Matériel"
     },
     "weeklySummary": {
-      "title": "🗞️ Résumé hebdomadaire",
+      "title": "Résumé hebdomadaire",
       "createdBy": "Créé par",
       "readMore": "Lire plus…",
       "readLess": "Lire moins",
@@ -387,6 +387,11 @@
       "ratingFailed": "Impossible d'enregistrer votre note. Veuillez réessayer.",
       "about": "À propos",
       "screenshotsGallery": "Captures d'écran",
+      "gallery": {
+        "imageOf": "Image {{current}} sur {{total}}",
+        "close": "Fermer la galerie",
+        "viewFullScreen": "Touchez deux fois pour afficher en plein écran"
+      },
       "genres": "Genres",
       "gameModes": "Modes de Jeu",
       "developer": "Développeur",

@@ -141,7 +141,7 @@ import type { MaterialTopTabBarProps } from "@react-navigation/material-top-tabs
 export const TAB_BAR_HEIGHT = 64;
 
 /** Fixed label row so unfocused (invisible) labels still keep icons centered. */
-const LABEL_ROW_HEIGHT = 12;
+const LABEL_ROW_HEIGHT = 16;
 
 const LiquidGlassTabBar = memo(
   ({ state, descriptors, navigation }: MaterialTopTabBarProps) => {

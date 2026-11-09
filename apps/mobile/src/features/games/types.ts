@@ -172,13 +172,6 @@ export type GalleryImage = {
   thumbnail: string;
 };
 
-export type ZoomableImageProps = {
-  imageUrl: string;
-  onSwipeLeft?: (() => void) | undefined; // navigate forward
-  onSwipeRight?: (() => void) | undefined; // navigate backward
-  onSwipeDown?: (() => void) | undefined; // close gallery
-};
-
 export type ImageGalleryAdvancedProps = {
   coverImageId?: string | undefined;
   screenshots?: Screenshot[] | undefined;

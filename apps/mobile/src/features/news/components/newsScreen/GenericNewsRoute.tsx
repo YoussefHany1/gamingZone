@@ -11,6 +11,14 @@ import {
   ALL_LANGUAGES_NAME,
   ARABIC_SOURCES_NAME,
   ENGLISH_SOURCES_NAME,
+  SPANISH_SOURCES_NAME,
+  FRENCH_SOURCES_NAME,
+  HINDI_SOURCES_NAME,
+  PORTUGUESE_SOURCES_NAME,
+  SUPPORTED_SOURCE_LANGUAGES,
+  allSourcesNameForLanguage,
+  languageForSourceName,
+  normalizeSourceLanguage,
   isAllSourcesName,
 } from "../../lib/allSources";
 import type {
@@ -69,24 +77,36 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
     // LatestNews works with the lighter `RssFeedSource` view-model; they are
     // structurally compatible for every field LatestNews reads.
     const list = (rssFeeds[categoryKey] ?? []) as unknown as RssFeedSource[];
-    const arList = list
-      .filter((item) => item.language === "ar")
-      .sort((a, b) => a.name.localeCompare(b.name, "ar"));
-    const enList = list
-      .filter((item) => item.language !== "ar")
-      .sort((a, b) => a.name.localeCompare(b.name, "en"));
-    return i18n.language === "ar" ? [...arList, ...enList] : [...enList, ...arList];
+    const appLang = i18n.language.startsWith("pt")
+      ? "pt"
+      : (i18n.language.split("-")[0] ?? "en");
+    const orderedLanguages = [
+      appLang,
+      ...SUPPORTED_SOURCE_LANGUAGES.filter((lang) => lang !== appLang),
+    ];
+    return orderedLanguages.flatMap((lang) =>
+      list
+        .filter((item) => normalizeSourceLanguage(item.language) === lang)
+        .sort((a, b) => a.name.localeCompare(b.name, lang === "ar" ? "ar" : "en")),
+    );
   }, [rssFeeds, categoryKey, i18n.language]);
 
-  const appLanguage: NewsLanguageFilter = i18n.language.startsWith("ar") ? "ar" : "en";
-  const defaultSourceName = appLanguage === "ar" ? ARABIC_SOURCES_NAME : ENGLISH_SOURCES_NAME;
+  const appLanguage: NewsLanguageFilter = i18n.language.startsWith("pt")
+    ? "pt"
+    : (SUPPORTED_SOURCE_LANGUAGES as readonly string[]).includes(
+        i18n.language.split("-")[0] ?? "",
+      )
+      ? ((i18n.language.split("-")[0] ?? "en") as NewsLanguageFilter)
+      : "en";
+  const defaultSourceName =
+    allSourcesNameForLanguage(appLanguage as string) ?? ENGLISH_SOURCES_NAME;
 
   const [selected, setSelected] = useState<RssFeedSource | undefined>(() => {
     if (feedList.length > 0) {
       return {
         name: defaultSourceName,
         image: "",
-        language: appLanguage,
+        language: appLanguage === "all" ? "en" : (appLanguage as any),
       };
     }
     return undefined;
@@ -109,7 +129,7 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
         return {
           name: defaultSourceName,
           image: "",
-          language: appLanguage,
+          language: appLanguage === "all" ? "en" : (appLanguage as any),
         };
       }
 
@@ -119,7 +139,7 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
             return {
               name: defaultSourceName,
               image: "",
-              language: appLanguage,
+              language: appLanguage === "all" ? "en" : (appLanguage as any),
             };
           }
           return undefined;
@@ -131,7 +151,7 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
         return {
           name: defaultSourceName,
           image: "",
-          language: appLanguage,
+          language: appLanguage === "all" ? "en" : (appLanguage as any),
         };
       }
 
@@ -145,12 +165,11 @@ const GenericNewsRoute = memo(function GenericNewsRoute({
 
   if (selected) {
     const isAllSources = isAllSourcesName(selected.name);
+    const resolvedLang = languageForSourceName(selected.name);
     const languageFilter: NewsLanguageFilter =
-      selected.name === ARABIC_SOURCES_NAME
-        ? "ar"
-        : selected.name === ENGLISH_SOURCES_NAME
-          ? "en"
-          : "all";
+      resolvedLang && resolvedLang !== "all"
+        ? (resolvedLang as NewsLanguageFilter)
+        : "all";
     const allSourcesLanguage: NewsLanguageFilter =
       languageFilter === "all" ? appLanguage : languageFilter;
     const feedProps: FeedProps = {

@@ -174,11 +174,11 @@
       "hardware": "هاردوير"
     },
     "weeklySummary": {
-      "title": "🗞️ ملخص الأسبوع",
+      "title": "ملخص الأسبوع",
       "createdBy": "تم الإنشاء بواسطة",
       "readMore": "اقرأ المزيد..",
       "readLess": "عرض أقل",
-      "subscribe": "أشعرني أسبوعيًا",
+      "subscribe": "اشعارات الملخص الأسبوعي",
       "notificationsOn": "الإشعارات مفعّلة",
       "subscribed": "اشتركت في إشعارات الملخص الأسبوعي",
       "unsubscribed": "ألغيت الاشتراك في إشعارات الملخص الأسبوعي",
@@ -386,6 +386,11 @@
       "yourRating": "تقييمك",
       "about": "عن اللعبة",
       "screenshotsGallery": "لقطات من اللعبة",
+      "gallery": {
+        "imageOf": "صورة {{current}} من {{total}}",
+        "close": "إغلاق المعرض",
+        "viewFullScreen": "انقر مرتين لعرض الشاشة الكاملة"
+      },
       "genres": "التصنيفات",
       "gameModes": "أطوار اللعب",
       "developer": "المطور",

@@ -174,7 +174,7 @@
       "hardware": "हार्डवेयर"
     },
     "weeklySummary": {
-      "title": "🗞️ साप्ताहिक सारांश",
+      "title": "साप्ताहिक सारांश",
       "createdBy": "द्वारा बनाया गया",
       "readMore": "और पढ़ें..",
       "readLess": "कम पढ़ें",
@@ -387,6 +387,11 @@
       "ratingFailed": "आपकी रेटिंग सहेजी नहीं जा सकी। कृपया फिर से कोशिश करें।",
       "about": "के बारे में",
       "screenshotsGallery": "स्क्रीनशॉट्स",
+      "gallery": {
+        "imageOf": "छवि {{current}} / {{total}}",
+        "close": "गैलरी बंद करें",
+        "viewFullScreen": "पूरी स्क्रीन देखने के लिए डबल टैप करें"
+      },
       "genres": "शैलियाँ",
       "gameModes": "गेम मोड्स",
       "developer": "डेवलपर",
