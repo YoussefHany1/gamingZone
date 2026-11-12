@@ -11,3 +11,6 @@ export { default as NewsDetailsScreen } from "./screens/NewsDetailsScreen";
 
 // ── Components ────────────────────────────────────────────────────────────────
 export { default as LatestNews } from "./components/LatestNews";
+
+// ── Hooks ─────────────────────────────────────────────────────────────────────
+export { useNewsPlatformFilter } from "./hooks/useNewsPlatformFilter";

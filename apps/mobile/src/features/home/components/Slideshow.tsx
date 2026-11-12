@@ -8,7 +8,7 @@ import {
   Pressable,
   Dimensions,
 } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import PagerView from "react-native-pager-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
@@ -46,6 +46,16 @@ function getImageSource(item: Game): string | ReturnType<typeof require> {
     return igdbImageUrl(item.cover.image_id, "cover_big");
   }
   return require("@/assets/image-not-found.webp");
+}
+
+function getPlaceholderSource(item: Game): { uri: string } | undefined {
+  if (item.screenshots?.[0]?.image_id) {
+    return { uri: igdbImageUrl(item.screenshots[0].image_id, "thumb") };
+  }
+  if (item.cover?.image_id) {
+    return { uri: igdbImageUrl(item.cover.image_id, "cover_small") };
+  }
+  return undefined;
 }
 
 // Slide
@@ -120,12 +130,15 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
     },
   }));
 
+  const heroPlaceholder = getPlaceholderSource(item);
+
   return (
     <TouchableOpacity style={styles.slide} onPress={handlePress} activeOpacity={0.8}>
-      <Image
+      <AppImage
         style={styles.thumbnail}
         recyclingKey={String(item.id)}
         source={getImageSource(item)}
+        {...(heroPlaceholder ? { placeholder: heroPlaceholder } : {})}
         contentFit="cover"
         transition={300}
         cachePolicy="memory-disk"
@@ -136,9 +149,10 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
         style={styles.gradient}
       />
       <View style={styles.headline}>
-        {coverUrl && (
-          <Image
+        {coverUrl && item.cover?.image_id && (
+          <AppImage
             source={{ uri: coverUrl }}
+            placeholder={{ uri: igdbImageUrl(item.cover.image_id, "thumb") }}
             style={styles.coverImage}
             contentFit="cover"
             cachePolicy="memory-disk"

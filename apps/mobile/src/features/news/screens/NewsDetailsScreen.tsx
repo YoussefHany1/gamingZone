@@ -14,7 +14,7 @@ import NewsSummaryCard from "../components/newsDetails/NewsSummaryCard";
 import ReadFullArticleButton from "../components/newsDetails/ReadFullArticleButton";
 import { useNewsArticle } from "../hooks/useNewsArticle";
 import { useShareArticle } from "../hooks/useShareArticle";
-
+import { useThemeColors } from "@/src/hooks/useTheme";
 /**
  * Article reader: hero image, title, source metadata, AI summary, body and a
  * CTA to the original source. Falls back to fetching the full document from
@@ -23,6 +23,7 @@ import { useShareArticle } from "../hooks/useShareArticle";
 const NewsDetails = memo((): React.ReactElement => {
   const navigation = useNavigation();
   const bottomInset = useBottomInset();
+  const colors = useThemeColors();
   const styles = useThemeStyles(
     (c) => ({
       modalContainer: {
@@ -35,13 +36,13 @@ const NewsDetails = memo((): React.ReactElement => {
         padding: 15,
         paddingBottom: bottomInset,
       },
-    title: {
-      fontSize: 22,
-      fontWeight: "bold",
-      color: c.text,
-      lineHeight: 32,
-      textAlign: "center",
-    },
+      title: {
+        fontSize: 22,
+        fontWeight: "bold",
+        color: c.text,
+        lineHeight: 32,
+        textAlign: "center",
+      },
     }),
     [bottomInset],
   );
@@ -99,7 +100,9 @@ const NewsDetails = memo((): React.ReactElement => {
         <NewsArticleImage thumbnail={thumbnail} />
 
         <View style={styles.content}>
-          <CustomText style={styles.title}>{title}</CustomText>
+          <CustomText selectable selectionColor={colors.accent + 70} style={styles.title}>
+            {title}
+          </CustomText>
 
           <NewsArticleMeta
             siteImage={siteImage}
@@ -109,9 +112,7 @@ const NewsDetails = memo((): React.ReactElement => {
             platforms={platforms}
           />
 
-          {summary ? (
-            <NewsSummaryCard summary={summary} isRtl={isSummaryRtl} />
-          ) : null}
+          {summary ? <NewsSummaryCard summary={summary} isRtl={isSummaryRtl} /> : null}
 
           <NewsDescription
             description={description}

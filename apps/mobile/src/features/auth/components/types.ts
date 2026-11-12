@@ -8,7 +8,6 @@ export type AuthLogoProps = {
   size?: number;
 };
 
-/** Shared shape for the primary / Google / outline / guest buttons. */
 export type AuthButtonProps = {
   label: string;
   onPress: () => void;
@@ -16,19 +15,24 @@ export type AuthButtonProps = {
   disabled?: boolean;
   /** Extra layout style (margins etc.) applied on top of the base button. */
   containerStyle?: StyleProp<ViewStyle>;
+  /** Screen-reader label; defaults to the visible `label`. */
+  accessibilityLabel?: string | undefined;
+  /** Screen-reader hint describing what pressing the button does. */
+  accessibilityHint?: string | undefined;
 };
 
-export type AuthPasswordInputProps = {
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder?: string;
-};
+/**
+ * Password input props are now owned by `AuthPasswordInput.tsx`
+ * (`AuthPasswordInputProps`, derived from `AuthInputProps`).
+ */
 
 export type VerifyEmailModalProps = {
   visible: boolean;
   email: string;
   isChecking: boolean;
   isResending: boolean;
+  /** Seconds left on the resend cooldown; `0` allows a resend. */
+  resendCooldown?: number;
   onCheckVerified: () => void;
   onResend: () => void;
   onSkip: () => void;

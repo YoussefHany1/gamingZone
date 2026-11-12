@@ -428,15 +428,44 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                     showsVerticalScrollIndicator={true}
                   >
                     {lists.length === 0 ? (
-                      <CustomText
-                        style={{
-                          color: colors.textMuted,
-                          textAlign: "center",
-                          marginVertical: 10,
-                        }}
-                      >
-                        {t("userLists.empty.title")}
-                      </CustomText>
+                      <View style={{ paddingVertical: 12, alignItems: "center" }}>
+                        <CustomText
+                          style={{
+                            color: colors.text,
+                            textAlign: "center",
+                            fontSize: 16,
+                            fontWeight: "700",
+                            marginBottom: 6,
+                          }}
+                        >
+                          {t("lists.createFirstTitle") || t("userLists.actions.createNewList")}
+                        </CustomText>
+                        <CustomText
+                          style={{
+                            color: colors.textMuted,
+                            textAlign: "center",
+                            marginBottom: 12,
+                            lineHeight: 20,
+                          }}
+                        >
+                          {t("lists.createFirstMessage") || t("userLists.empty.title")}
+                        </CustomText>
+                        {!isCreating && (
+                          <TouchableOpacity
+                            style={{
+                              backgroundColor: colors.accent,
+                              paddingHorizontal: 16,
+                              paddingVertical: 10,
+                              borderRadius: 10,
+                            }}
+                            onPress={() => setIsCreating(true)}
+                          >
+                            <CustomText style={{ color: colors.onAccent, fontWeight: "700" }}>
+                              {t("userLists.actions.createNewList")}
+                            </CustomText>
+                          </TouchableOpacity>
+                        )}
+                      </View>
                     ) : (
                       lists.map(renderListItem)
                     )}

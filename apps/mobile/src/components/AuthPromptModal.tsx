@@ -1,14 +1,11 @@
-import React, { useCallback, useState } from "react";
-import { Modal, View, StyleSheet, TouchableOpacity } from "react-native";
+import React from "react";
+import { Modal, View, TouchableOpacity } from "react-native";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react-native";
 import CustomText from "./CustomText";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import { storage } from "@/src/lib/storage";
-import { logger } from "@/src/lib/logger";
-
-const HIDE_KEY = "hide_auth_prompt";
+import PressScale from "./PressScale";
 
 interface AuthPromptModalProps {
   visible: boolean;
@@ -21,6 +18,10 @@ interface AuthPromptModalProps {
   onSignUp?: () => void;
 }
 
+/**
+ * Contextual auth gate shown when a guest triggers a protected action.
+ * Dismissing clears any pending action (handled by the auth gate store).
+ */
 const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
   visible,
   onDismiss,
@@ -29,11 +30,10 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const [dontShowAgain, setDontShowAgain] = useState(false);
   const styles = useThemeStyles((c) => ({
     overlay: {
       flex: 1,
-      backgroundColor: "rgba(0, 0, 0, 0.6)",
+      backgroundColor: c.scrim,
       justifyContent: "center",
       alignItems: "center",
       paddingHorizontal: 24,
@@ -67,43 +67,12 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
     },
     body: {
       paddingHorizontal: 20,
-      paddingBottom: 16,
+      paddingBottom: 20,
     },
     message: {
       fontSize: 14,
       lineHeight: 20,
       color: c.textMuted,
-    },
-    checkboxRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: 20,
-      paddingBottom: 16,
-      gap: 10,
-    },
-    checkbox: {
-      width: 20,
-      height: 20,
-      borderRadius: 4,
-      borderWidth: 1.5,
-      borderColor: c.accent,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "transparent",
-    },
-    checkboxChecked: {
-      backgroundColor: c.accent,
-    },
-    checkboxInner: {
-      width: 10,
-      height: 10,
-      borderRadius: 2,
-      backgroundColor: c.background,
-    },
-    checkboxLabel: {
-      fontSize: 13,
-      color: c.textMuted,
-      flex: 1,
     },
     actions: {
       flexDirection: "row",
@@ -119,9 +88,9 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
       justifyContent: "center",
     },
     signInButton: {
-      // backgroundColor: c.surface,
       borderWidth: 1,
       borderColor: c.border,
+      backgroundColor: c.surface,
     },
     signUpButton: {
       backgroundColor: c.accent,
@@ -134,65 +103,30 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
     signUpText: {
       fontSize: 15,
       fontWeight: "600",
-      color: c.text,
+      color: c.onAccent,
     },
   }));
-
-  const handleDismiss = useCallback(() => {
-    try {
-      if (dontShowAgain) {
-        storage.set(HIDE_KEY, "true");
-      }
-    } catch (e) {
-      logger.warn("[AuthPromptModal] Failed to persist preference:", e);
-    }
-    onDismiss();
-  }, [dontShowAgain, onDismiss]);
-
-  const handleSignIn = useCallback(() => {
-    try {
-      if (dontShowAgain) {
-        storage.set(HIDE_KEY, "true");
-      }
-    } catch (e) {
-      logger.warn("[AuthPromptModal] Failed to persist preference:", e);
-    }
-    onDismiss();
-    onSignIn?.();
-  }, [dontShowAgain, onSignIn, onDismiss]);
-
-  const handleSignUp = useCallback(() => {
-    try {
-      if (dontShowAgain) {
-        storage.set(HIDE_KEY, "true");
-      }
-    } catch (e) {
-      logger.warn("[AuthPromptModal] Failed to persist preference:", e);
-    }
-    onDismiss();
-    onSignUp?.();
-  }, [dontShowAgain, onSignUp, onDismiss]);
-
-  const toggleCheckbox = useCallback(() => {
-    setDontShowAgain((prev) => !prev);
-  }, []);
 
   return (
     <Modal
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={handleDismiss}
+      onRequestClose={onDismiss}
       statusBarTranslucent
     >
       <View style={styles.overlay}>
         <View style={styles.container}>
           <View style={styles.header}>
-            <CustomText style={styles.title}>{t("common.authPrompt.title")}</CustomText>
+            <CustomText style={styles.title}>
+              {t("common.authPrompt.title")}
+            </CustomText>
             <TouchableOpacity
               style={styles.closeButton}
-              onPress={handleDismiss}
+              onPress={onDismiss}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={t("common.close")}
             >
               <X size={22} color={colors.textMuted} />
             </TouchableOpacity>
@@ -204,38 +138,25 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
             </CustomText>
           </View>
 
-          <TouchableOpacity
-            style={styles.checkboxRow}
-            onPress={toggleCheckbox}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.checkbox, dontShowAgain && styles.checkboxChecked]}>
-              {dontShowAgain && <View style={styles.checkboxInner} />}
-            </View>
-            <CustomText style={styles.checkboxLabel}>
-              {t("common.authPrompt.dontShowAgain")}
-            </CustomText>
-          </TouchableOpacity>
-
           <View style={styles.actions}>
-            <TouchableOpacity
+            <PressScale
               style={[styles.button, styles.signInButton]}
-              onPress={handleSignIn}
-              activeOpacity={0.8}
+              onPress={onSignIn}
+              accessibilityRole="button"
             >
               <CustomText style={styles.signInText}>
                 {t("common.authPrompt.signIn")}
               </CustomText>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </PressScale>
+            <PressScale
               style={[styles.button, styles.signUpButton]}
-              onPress={handleSignUp}
-              activeOpacity={0.8}
+              onPress={onSignUp}
+              accessibilityRole="button"
             >
               <CustomText style={styles.signUpText}>
                 {t("common.authPrompt.signUp")}
               </CustomText>
-            </TouchableOpacity>
+            </PressScale>
           </View>
         </View>
       </View>
@@ -244,3 +165,4 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
 };
 
 export default AuthPromptModal;
+

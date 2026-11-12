@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import auth from "@react-native-firebase/auth";
+import analytics from "@react-native-firebase/analytics";
 import { GoogleSignin, statusCodes } from "@/src/features/auth/lib/googleSignIn";
 import { useTranslation } from "react-i18next";
 import { logger } from "@/src/lib/logger";
@@ -43,7 +44,34 @@ export function useGoogleAuth({
       }
 
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      await auth().signInWithCredential(googleCredential);
+      const currentUser = auth().currentUser;
+
+      if (currentUser?.isAnonymous) {
+        try {
+          await currentUser.linkWithCredential(googleCredential);
+          try {
+            await analytics().logEvent("guest_link_success", { method: "google" });
+          } catch {
+            // non-fatal
+          }
+        } catch (linkError) {
+          const code = (linkError as { code?: string }).code;
+          if (code === "auth/credential-already-in-use") {
+            // Google account already exists — sign into it; anonymous data loss is acceptable.
+            await auth().signInWithCredential(googleCredential);
+            try {
+              await analytics().logEvent("guest_link_fallback", { method: "google" });
+            } catch {
+              // non-fatal
+            }
+          } else {
+            throw linkError;
+          }
+        }
+      } else {
+        await auth().signInWithCredential(googleCredential);
+      }
+
       onSuccess();
     } catch (error) {
       // Silently ignore user-cancelled sign-in; log unexpected errors.

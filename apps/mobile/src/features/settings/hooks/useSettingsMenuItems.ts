@@ -59,21 +59,10 @@ export function useSettingsMenuItems(): UseSettingsMenuItemsResult {
         icon: List,
         label: t("settings.menu.myLists"),
         onPress: () => {
-          try {
-            const nav: any = navigation;
-            if (nav.getParent?.()?.getParent?.()?.navigate) {
-              nav
-                .getParent()
-                .getParent()
-                .navigate("Settings", { screen: "UserListsScreen" });
-              return;
-            }
-            if (nav.getParent?.()?.navigate) {
-              nav.getParent().navigate("UserListsScreen");
-              return;
-            }
-            nav.navigate("UserListsScreen");
-          } catch {
+          const parent = (navigation as any).getParent?.();
+          if (parent) {
+            parent.navigate("Settings", { screen: "UserListsScreen" });
+          } else {
             (navigation as any).navigate("UserListsScreen");
           }
         },
@@ -106,6 +95,19 @@ export function useSettingsMenuItems(): UseSettingsMenuItemsResult {
         },
       },
       {
+        id: "language",
+        icon: Languages,
+        label: t("settings.menu.changeLanguage"),
+        onPress: () => {
+          const parent = (navigation as any).getParent?.();
+          if (parent) {
+            parent.navigate("Settings", { screen: "LanguageScreen" });
+          } else {
+            (navigation as any).navigate("LanguageScreen");
+          }
+        },
+      },
+      {
         id: "rate",
         icon: Star,
         label: t("settings.menu.rateUs"),
@@ -122,19 +124,6 @@ export function useSettingsMenuItems(): UseSettingsMenuItemsResult {
             parent.navigate("Settings", { screen: "ContactScreen" });
           } else {
             (navigation as any).navigate("ContactScreen");
-          }
-        },
-      },
-      {
-        id: "language",
-        icon: Languages,
-        label: t("settings.menu.changeLanguage"),
-        onPress: () => {
-          const parent = (navigation as any).getParent?.();
-          if (parent) {
-            parent.navigate("Settings", { screen: "LanguageScreen" });
-          } else {
-            (navigation as any).navigate("LanguageScreen");
           }
         },
       },

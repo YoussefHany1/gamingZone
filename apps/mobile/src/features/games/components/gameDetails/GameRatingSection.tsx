@@ -1,10 +1,12 @@
 import React, { memo } from "react";
 import { View, TouchableOpacity } from "react-native";
 import CustomText from "@/src/components/CustomText";
+import PressScale from "@/src/components/PressScale";
 import { Star, Zap } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useAuthGateStore } from "@/src/store/useAuthGateStore";
 import type { GameRatingSectionProps } from "./types";
 
 const STARS = [1, 2, 3, 4, 5];
@@ -12,8 +14,7 @@ const STARS = [1, 2, 3, 4, 5];
 const STAR_STYLE = { paddingHorizontal: 6 } as const;
 
 /**
- * Five-star rating widget. Hides itself for logged-out / anonymous users —
- * auth guarding lives here so callers only need to gate on game presence.
+ * Five-star rating widget. Guests see a sign-in CTA that triggers the auth gate.
  */
 const GameRatingSection: React.FC<GameRatingSectionProps> = ({
   user,
@@ -23,6 +24,7 @@ const GameRatingSection: React.FC<GameRatingSectionProps> = ({
 }) => {
   const colors = useThemeColors();
   const { t } = useTranslation();
+  const openAuthGate = useAuthGateStore((s) => s.open);
   const styles = useThemeStyles((c) => ({
     ratingSection: {
       backgroundColor: "rgba(119, 155, 221, 0.08)",
@@ -61,9 +63,37 @@ const GameRatingSection: React.FC<GameRatingSectionProps> = ({
       fontSize: 12,
       fontWeight: "700",
     },
+    signInBtn: {
+      marginTop: 8,
+      backgroundColor: c.accent,
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderRadius: 10,
+    },
+    signInText: {
+      color: c.onAccent,
+      fontWeight: "700",
+      fontSize: 14,
+    },
   }));
 
-  if (!user || user.isAnonymous) return null;
+  if (!user || user.isAnonymous) {
+    return (
+      <View style={styles.ratingSection}>
+        <CustomText style={styles.ratingTitle}>
+          {t("games.details.rateThisGame") ?? "Rate this Game"}
+        </CustomText>
+        <CustomText style={styles.ratingValueText}>
+          {t("common.loginRequired")}
+        </CustomText>
+        <PressScale style={styles.signInBtn} onPress={() => openAuthGate()}>
+          <CustomText style={styles.signInText}>
+            {t("common.authPrompt.signIn")}
+          </CustomText>
+        </PressScale>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.ratingSection}>

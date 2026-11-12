@@ -109,7 +109,7 @@ export type GameSectionProps<T> = {
 function GameSection<T extends { id: string | number }>({
   title,
   subtitle,
-  headerFontSize = 24,
+  headerFontSize = 20,
   headerTrailing,
   games,
   isLoading,
@@ -174,10 +174,7 @@ function GameSection<T extends { id: string | number }>({
     [renderCard],
   );
 
-  const skeletonSlot = useCallback(
-    () => renderSkeletonItem(),
-    [renderSkeletonItem],
-  );
+  const skeletonSlot = useCallback(() => renderSkeletonItem(), [renderSkeletonItem]);
 
   const emptyListMessage =
     emptyState === "noResults"
@@ -193,7 +190,10 @@ function GameSection<T extends { id: string | number }>({
       ? { horizontal: true as const, showsHorizontalScrollIndicator: false }
       : { showsVerticalScrollIndicator: false }),
     contentContainerStyle: styles.listContent,
-    ...(snapToInterval !== undefined && { snapToInterval, decelerationRate: "fast" as const }),
+    ...(snapToInterval !== undefined && {
+      snapToInterval,
+      decelerationRate: "fast" as const,
+    }),
     ...(extraData !== undefined && { extraData }),
   } as const;
 
@@ -265,7 +265,9 @@ function GameSection<T extends { id: string | number }>({
           {...(skeletonWithKeyExtractor && {
             keyExtractor: (item: SkeletonPayload) => String(item.id),
           })}
-          {...(skeletonWithScrollComponent && { renderScrollComponent: GestureScrollView })}
+          {...(skeletonWithScrollComponent && {
+            renderScrollComponent: GestureScrollView,
+          })}
           {...(horizontal
             ? { showsHorizontalScrollIndicator: false }
             : { showsVerticalScrollIndicator: false })}

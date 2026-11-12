@@ -1,4 +1,4 @@
-import { Alert } from "react-native";
+import { Alert } from "@/src/lib/alert";
 
 export type ConfirmDialogOptions = {
   /** Alert title (already translated). */

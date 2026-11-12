@@ -37,7 +37,7 @@ const PLATFORM_LABELS: Record<UserPlatform, string> = {
  * `PosterGameCard` (Trending passes `deriveRecyclingKey`, the only poster
  * consumer that historically derived a CoverImage recyclingKey).
  */
-function TrendingPlatformInternal({
+export function TrendingPlatformView({
   platform,
 }: {
   platform: UserPlatform;
@@ -87,7 +87,7 @@ function TrendingPlatformInternal({
     />
   );
 }
-TrendingPlatformInternal.displayName = "TrendingPlatformInternal";
+TrendingPlatformView.displayName = "TrendingPlatformView";
 
 /**
  * The games feed's `trending_platform` section — hidden while the user's
@@ -102,7 +102,7 @@ function TrendingPlatformSection(): React.ReactElement | null {
     return null;
   }
 
-  return <TrendingPlatformInternal platform={platform} />;
+  return <TrendingPlatformView platform={platform} />;
 }
 
 TrendingPlatformSection.displayName = "TrendingPlatformSection";

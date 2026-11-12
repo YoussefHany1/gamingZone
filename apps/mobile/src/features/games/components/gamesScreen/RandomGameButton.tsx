@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Modal, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Modal, TouchableOpacity, View } from "react-native";
+import { Alert } from "@/src/lib/alert";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { CalendarDays, Shuffle, Star, X } from "lucide-react-native";

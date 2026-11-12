@@ -1,6 +1,12 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { View, TouchableOpacity, StyleSheet, I18nManager, ActivityIndicator } from "react-native";
-import { Image } from "expo-image";
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  I18nManager,
+  ActivityIndicator,
+} from "react-native";
+import AppImage from "@/src/components/AppImage";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import type { Day, Locale, Month } from "date-fns";
@@ -349,12 +355,15 @@ const DayGameRow = memo<DayGameRowProps>(({ game }) => {
             <ActivityIndicator size="small" color={colors.onAccent} />
           </View>
         )}
-        <Image
+        <AppImage
           source={
             game.cover?.image_id
               ? { uri: igdbImageUrl(game.cover.image_id, "cover_med") }
               : require("@/assets/image-not-found.webp")
           }
+          {...(game.cover?.image_id
+            ? { placeholder: { uri: igdbImageUrl(game.cover.image_id, "thumb") } }
+            : {})}
           style={styles.rowCoverImage}
           contentFit="cover"
           cachePolicy="memory-disk"
@@ -440,6 +449,7 @@ const DayCell = memo<DayCellProps>(
       },
       dayCircleSelected: {
         backgroundColor: c.text,
+        borderRadius: 100,
       },
       dayCircleToday: {
         borderWidth: 1.5,
@@ -954,7 +964,7 @@ function ReleaseCalendar({
           </View>
         ) : (
           <View style={styles.emptyDay}>
-            <CalendarX size={26} color={colors.accentText}/>
+            <CalendarX size={26} color={colors.accentText} />
             <CustomText style={styles.emptyDayText}>
               {selectedInWindow && (data?.length ?? 0) > 0
                 ? t("home.releaseCalendar.noReleases")

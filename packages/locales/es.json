@@ -57,6 +57,42 @@
     "save": "Guardar"
   },
   "auth": {
+    "a11y": {
+      "buttonHint": "Toca dos veces para activar",
+      "emailLabel": "Correo electrónico",
+      "emailHint": "Introduce tu correo electrónico",
+      "passwordLabel": "Contraseña",
+      "passwordHint": "Introduce tu contraseña",
+      "newPasswordHint": "Crea una contraseña de al menos 8 caracteres con letras y números",
+      "nameLabel": "Nombre completo",
+      "nameHint": "Introduce tu nombre completo",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
+      "showPasswordHint": "Muestra la contraseña introducida",
+      "hidePasswordHint": "Oculta la contraseña",
+      "passwordStrengthHint": "Muestra la seguridad de tu contraseña",
+      "signInHint": "Inicia sesión en tu cuenta",
+      "googleSignInHint": "Inicia sesión con tu cuenta de Google",
+      "discordSignInHint": "Inicia sesión con tu cuenta de Discord",
+      "createAccountHint": "Abre la pantalla de registro",
+      "guestHint": "Continúa sin iniciar sesión",
+      "forgotPasswordHint": "Abre la pantalla de restablecimiento de contraseña",
+      "signUpHint": "Crea tu cuenta",
+      "googleSignUpHint": "Crea una cuenta con Google",
+      "discordSignUpHint": "Crea una cuenta con Discord",
+      "haveAccountHint": "Abre la pantalla de inicio de sesión",
+      "sendResetHint": "Envía un enlace para restablecer la contraseña a tu correo",
+      "backToLoginHint": "Vuelve a la pantalla de inicio de sesión",
+      "privacyPolicyHint": "Abre la política de privacidad en tu navegador",
+      "verifyHint": "Comprueba si tu correo está verificado",
+      "resendHint": "Envía otro correo de verificación",
+      "continueHint": "Continúa a la aplicación sin verificar"
+    },
+    "emailSuggestions": {
+      "label": "Dominios de correo sugeridos",
+      "useDomain": "Usar {{domain}}",
+      "useDomainHint": "Completa el dominio del correo por ti"
+    },
     "emailPlaceholder": "Correo electrónico",
     "passwordPlaceholder": "Contraseña",
     "guest": "Continuar como invitado",
@@ -82,6 +118,8 @@
       "female": "Femenino",
       "googleSignUp": "Registrarse con Google",
       "discordSignUp": "Registrarse con Discord",
+      "legalNotice": "Al crear una cuenta, aceptas nuestra",
+      "privacyPolicyLink": "Política de Privacidad",
       "haveAnAccount": "¿Ya tienes una cuenta?",
       "success": "Registro exitoso",
       "emptyFields": "Por favor, completa todos los campos obligatorios"
@@ -95,6 +133,7 @@
       "optionalNote": "Este paso es opcional: puedes seguir usando la aplicación sin verificar. Verificar ayuda a proteger tu cuenta y a recuperarla más adelante.",
       "resend": "Reenviar correo",
       "resending": "Enviando...",
+      "resendIn": "Reenviar en {{seconds}}s",
       "iveVerified": "He verificado",
       "checking": "Comprobando...",
       "continue": "Continuar",
@@ -133,6 +172,7 @@
       "emailRequired": "El correo electrónico es obligatorio",
       "emailInvalid": "Por favor, ingresa una dirección de correo electrónico válida",
       "passwordShort": "La contraseña es demasiado corta",
+      "passwordRequired": "Por favor, ingresa tu contraseña",
       "passwordLetter": "La contraseña debe contener al menos una letra",
       "passwordNumber": "La contraseña debe contener al menos un número",
       "nameShort": "El nombre debe tener al menos 2 caracteres",
@@ -142,7 +182,14 @@
     },
     "validation": {
       "passwordTitle": "Contraseña no válida",
-      "passwordRequirements": "La contraseña debe tener al menos 8 caracteres y contener letras y números."
+      "passwordRequirements": "La contraseña debe tener al menos 8 caracteres y contener letras y números.",
+      "orContinueWith": "O continúa con",
+      "passwordStrength": "Fortaleza de la contraseña",
+      "checks": {
+        "minLength": "Al menos 8 caracteres",
+        "hasLetter": "Contiene una letra",
+        "hasNumber": "Contiene un número"
+      }
     }
   },
   "navigation": {
@@ -208,7 +255,23 @@
       "noReleasesInRange": "No hay lanzamientos en este rango de fechas",
       "moreCount": "+{{count}} más",
       "previousMonth": "Mes anterior",
-      "nextMonth": "Mes siguiente"
+      "nextMonth": "Mes siguiente",
+      "expand": "Mostrar calendario",
+      "collapse": "Ocultar calendario"
+    },
+    "header": {
+      "goodMorning": "Buenos días",
+      "goodAfternoon": "Buenas tardes",
+      "goodEvening": "Buenas noches",
+      "gamer": "Jugador",
+      "level": "Nv {{level}}",
+      "search": "Buscar juegos"
+    },
+    "quickActions": {
+      "releases": "Lanzamientos",
+      "forYou": "Para ti",
+      "trending": "Tendencias",
+      "popular": "Populares"
     }
   },
   "events": {
@@ -231,7 +294,10 @@
       "esports": "Deportes electrónicos",
       "hardware": "Hardware"
     },
-    "latestHeader": "Últimas {{category}}",
+    "latestHeader": "Últimas noticias para ti",
+    "latestSubtitle": "Según tus plataformas",
+    "latestHeaderNoPlatform": "Últimas noticias",
+    "latestSubtitleNoPlatform": "No te pierdas nada",
     "newsHeader": "Noticias y artículos de videojuegos",
     "noArticles": "No hay artículos disponibles en este momento.",
     "platforms": {
@@ -374,7 +440,8 @@
       },
       "recommended": {
         "title": "Recomendado para ti",
-        "subtitle": "Basado en los juegos que has jugado"
+        "subtitle": "Basado en los juegos que has jugado",
+        "popularSubtitle": "Lo más popular"
       }
     },
     "details": {
@@ -1163,7 +1230,8 @@
   "onboarding": {
     "skip": "Omitir",
     "next": "Siguiente",
-    "getStarted": "Comenzar",
+    "getStarted": "Empezar",
+    "exploreAsGuest": "Explora como invitado — no necesitas una cuenta",
     "slides": [
       {
         "title": "📰 Mantente al día",
@@ -1184,7 +1252,9 @@
     ]
   },
   "lists": {
-    "addGame": "Añadir un juego"
+    "addGame": "Añadir un juego",
+    "createFirstTitle": "Crea tu primera lista",
+    "createFirstMessage": "Guarda este juego creando una lista a la que puedas volver cuando quieras."
   },
   "notifications": {
     "newsChannelName": "Notificaciones de noticias",
@@ -1265,6 +1335,32 @@
     "errors": {
       "partsRequired": "Selecciona CPU y GPU",
       "saveFailed": "Error al guardar las especificaciones del PC"
+    }
+  },
+  "setup": {
+    "continue": "Continuar",
+    "finish": "Finalizar",
+    "skip": "Omitir por ahora",
+    "platforms": {
+      "title": "Elige tus plataformas",
+      "subtitle": "Selecciona las plataformas en las que juegas para personalizar tu feed y las alertas de juegos gratis.",
+      "playstation": "PlayStation",
+      "xbox": "Xbox",
+      "pc": "PC / Steam",
+      "nintendo": "Nintendo Switch",
+      "mobile": "Móvil"
+    },
+    "genres": {
+      "title": "Géneros favoritos",
+      "subtitle": "Selecciona 3–5 géneros que te gusten para obtener mejores recomendaciones.",
+      "hint": "Elige 3–5 géneros (opcional)"
+    }
+  },
+  "linking": {
+    "nudge": {
+      "title": "Vincula tus cuentas de juego",
+      "message": "Vincula tu cuenta de PSN, Xbox o Steam para importar automáticamente tu biblioteca y trofeos.",
+      "cta": "Vincular cuentas"
     }
   }
 }

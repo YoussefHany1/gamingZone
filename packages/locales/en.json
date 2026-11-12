@@ -57,6 +57,42 @@
     "save": "Save"
   },
   "auth": {
+    "a11y": {
+      "buttonHint": "Double tap to activate",
+      "emailLabel": "Email address",
+      "emailHint": "Enter your email address",
+      "passwordLabel": "Password",
+      "passwordHint": "Enter your password",
+      "newPasswordHint": "Create a password with at least 8 characters, including letters and numbers",
+      "nameLabel": "Full name",
+      "nameHint": "Enter your full name",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "showPasswordHint": "Reveals the password you entered",
+      "hidePasswordHint": "Hides the password",
+      "passwordStrengthHint": "Shows how strong your password is",
+      "signInHint": "Signs in to your account",
+      "googleSignInHint": "Signs in with your Google account",
+      "discordSignInHint": "Signs in with your Discord account",
+      "createAccountHint": "Opens the sign up screen",
+      "guestHint": "Continues without signing in",
+      "forgotPasswordHint": "Opens the password reset screen",
+      "signUpHint": "Creates your account",
+      "googleSignUpHint": "Creates an account with Google",
+      "discordSignUpHint": "Creates an account with Discord",
+      "haveAccountHint": "Opens the sign in screen",
+      "sendResetHint": "Sends a password reset link to your email",
+      "backToLoginHint": "Returns to the sign in screen",
+      "privacyPolicyHint": "Opens the privacy policy in your browser",
+      "verifyHint": "Checks whether your email has been verified",
+      "resendHint": "Sends another verification email",
+      "continueHint": "Continues to the app without verifying"
+    },
+    "emailSuggestions": {
+      "label": "Suggested email domains",
+      "useDomain": "Use {{domain}}",
+      "useDomainHint": "Fills in the email domain for you"
+    },
     "emailPlaceholder": "Email",
     "passwordPlaceholder": "Password",
     "guest": "Sign in Later",
@@ -82,6 +118,8 @@
       "female": "Female",
       "googleSignUp": "Sign Up with Google",
       "discordSignUp": "Sign Up with Discord",
+      "legalNotice": "By creating an account, you agree to our",
+      "privacyPolicyLink": "Privacy Policy",
       "haveAnAccount": "Already have an account?",
       "success": "Sign up successful",
       "emptyFields": "Please fill in all required fields"
@@ -115,6 +153,7 @@
       "emailRequired": "Email is required",
       "emailInvalid": "Please enter a valid email address",
       "passwordShort": "Password is too short",
+      "passwordRequired": "Please enter your password",
       "passwordLetter": "Password must contain at least one letter",
       "passwordNumber": "Password must contain at least one number",
       "nameShort": "Name must be at least 2 characters",
@@ -124,7 +163,14 @@
     },
     "validation": {
       "passwordTitle": "Inadequate Password",
-      "passwordRequirements": "Password must be at least 8 characters long and contain both letters and numbers."
+      "passwordRequirements": "Password must be at least 8 characters long and contain both letters and numbers.",
+      "orContinueWith": "Or continue with",
+      "passwordStrength": "Password strength",
+      "checks": {
+        "minLength": "At least 8 characters",
+        "hasLetter": "Contains a letter",
+        "hasNumber": "Contains a number"
+      }
     },
     "verifyEmail": "Verify Email",
     "emailVerified": "Email Verified",
@@ -135,6 +181,7 @@
       "optionalNote": "This step is optional — you can keep using the app without verifying. Verifying helps secure your account and recover it later.",
       "resend": "Resend email",
       "resending": "Sending...",
+      "resendIn": "Resend in {{seconds}}s",
       "iveVerified": "I've verified",
       "checking": "Checking...",
       "continue": "Continue",
@@ -168,6 +215,20 @@
     "slideshow": {
       "subtitle": "Watch the Trailer",
       "error": "Error loading slideshow"
+    },
+    "header": {
+      "goodMorning": "Good morning",
+      "goodAfternoon": "Good afternoon",
+      "goodEvening": "Good evening",
+      "gamer": "Gamer",
+      "level": "Lv {{level}}",
+      "search": "Search games"
+    },
+    "quickActions": {
+      "releases": "Releases",
+      "forYou": "For You",
+      "trending": "Trending",
+      "popular": "Popular"
     },
     "sections": {
       "news": "News",
@@ -210,7 +271,9 @@
       "noReleasesInRange": "No releases in this date range",
       "moreCount": "+{{count}} more",
       "previousMonth": "Previous month",
-      "nextMonth": "Next month"
+      "nextMonth": "Next month",
+      "expand": "Show calendar",
+      "collapse": "Hide calendar"
     }
   },
   "events": {
@@ -233,7 +296,10 @@
       "esports": "Esports",
       "hardware": "Hardware"
     },
-    "latestHeader": "Latest {{category}}",
+    "latestHeader": "Your Latest News",
+    "latestSubtitle": "Based on your platform",
+    "latestHeaderNoPlatform": "Latest news",
+    "latestSubtitleNoPlatform": "Never miss a moment",
     "newsHeader": "Gaming News & Articles",
     "noArticles": "No articles available at the moment.",
     "fetchError": "Error while fetching data, please try again later.",
@@ -380,7 +446,8 @@
       },
       "recommended": {
         "title": "Recommended for You",
-        "subtitle": "Based on your played games"
+        "subtitle": "Based on your played games",
+        "popularSubtitle": "Popular right now"
       }
     },
     "details": {
@@ -1172,6 +1239,7 @@
     "skip": "Skip",
     "next": "Next",
     "getStarted": "Get Started",
+    "exploreAsGuest": "Explore as a guest — no account needed",
     "slides": [
       {
         "title": "📰 Stay up-to-date",
@@ -1191,8 +1259,29 @@
       }
     ]
   },
+  "setup": {
+    "continue": "Continue",
+    "finish": "Finish",
+    "skip": "Skip for now",
+    "platforms": {
+      "title": "Choose your platforms",
+      "subtitle": "Pick the platforms you play on so we can personalize your feed and free game alerts.",
+      "playstation": "PlayStation",
+      "xbox": "Xbox",
+      "pc": "PC / Steam",
+      "nintendo": "Nintendo Switch",
+      "mobile": "Mobile"
+    },
+    "genres": {
+      "title": "Favorite genres",
+      "subtitle": "Select 3–5 genres you love to get better recommendations.",
+      "hint": "Pick 3–5 genres (optional)"
+    }
+  },
   "lists": {
-    "addGame": "Add a game"
+    "addGame": "Add a game",
+    "createFirstTitle": "Create your first list",
+    "createFirstMessage": "Save this game by creating a list you can come back to anytime."
   },
   "notifications": {
     "newsChannelName": "News Notifications",
@@ -1274,6 +1363,13 @@
     "errors": {
       "partsRequired": "Select CPU and GPU",
       "saveFailed": "Failed to save PC specs"
+    }
+  },
+  "linking": {
+    "nudge": {
+      "title": "Link your gaming accounts",
+      "message": "Link your PSN, Xbox, or Steam account to automatically import your library and trophies.",
+      "cta": "Link accounts"
     }
   }
 }

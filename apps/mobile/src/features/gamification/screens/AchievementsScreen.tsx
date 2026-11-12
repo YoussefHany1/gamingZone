@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { ScrollView, View, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import ErrorState from "@/src/components/ErrorState";
 import SectionTitle from "@/src/components/SectionTitle";
+import AccountLinkNudgeCard from "@/src/components/AccountLinkNudgeCard";
+import LinkAccountModal from "@/src/features/linking/components/LinkAccountModal";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useAuthUser } from "@/src/hooks/useAuthUser";
@@ -26,6 +28,7 @@ const AchievementsScreen = (): React.ReactElement => {
   const colors = useThemeColors();
   const { user, isAnonymous } = useAuthUser();
   const uid = user?.uid ?? "";
+  const [showLinkModal, setShowLinkModal] = useState(false);
 
   const { gamification } = useGamification(uid);
   const { refresh, refreshing } = useUserStats(uid);
@@ -94,6 +97,11 @@ const AchievementsScreen = (): React.ReactElement => {
       >
         <LevelCard gamification={gamification} unlockedCount={unlockedCount} />
 
+        <AccountLinkNudgeCard
+          surface="achievements"
+          onPress={() => setShowLinkModal(true)}
+        />
+
         <SectionTitle title={t("gamification.achievementsTitle")} />
         {gamification ? (
           <AchievementGrid achievements={gamification.achievements} />
@@ -120,6 +128,7 @@ const AchievementsScreen = (): React.ReactElement => {
           </View>
         ) : null}
       </ScrollView>
+      <LinkAccountModal visible={showLinkModal} onClose={() => setShowLinkModal(false)} />
     </SafeAreaView>
   );
 };

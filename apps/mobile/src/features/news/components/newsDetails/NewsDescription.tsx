@@ -5,6 +5,7 @@ import CustomText from "@/src/components/CustomText";
 import AdSlot from "@/src/components/AdSlot";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type { NewsDescriptionProps } from "./types";
+import { useThemeColors } from "@/src/hooks/useTheme";
 
 const MIN_LONG_LENGTH = 350;
 
@@ -102,6 +103,7 @@ const NewsDescription = memo(function NewsDescription({
   isReady = true,
 }: NewsDescriptionProps) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
   const styles = useThemeStyles((c) => ({
     container: {
       width: "100%",
@@ -126,11 +128,19 @@ const NewsDescription = memo(function NewsDescription({
   if (isLong && secondPart) {
     return (
       <View style={styles.container}>
-        <CustomText style={[styles.description, fontStyle]}>
+        <CustomText
+          selectable
+          selectionColor={colors.accent + 70}
+          style={[styles.description, fontStyle]}
+        >
           {firstPart}
         </CustomText>
         <AdSlot visible={isReady} marginVertical={25} />
-        <CustomText style={[styles.description, fontStyle]}>
+        <CustomText
+          selectable
+          selectionColor={colors.accent + 70}
+          style={[styles.description, fontStyle]}
+        >
           {secondPart}
         </CustomText>
       </View>
@@ -139,7 +149,11 @@ const NewsDescription = memo(function NewsDescription({
 
   return (
     <View style={styles.container}>
-      <CustomText style={[styles.description, fontStyle]}>
+      <CustomText
+        selectable
+        selectionColor={colors.accent + 70}
+        style={[styles.description, fontStyle]}
+      >
         {firstPart || t("news.details.noDescription")}
       </CustomText>
       <AdSlot visible={isReady} marginVertical={30} />

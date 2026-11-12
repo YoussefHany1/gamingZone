@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Alert } from "react-native";
+import { Alert } from "@/src/lib/alert";
 import auth from "@react-native-firebase/auth";
 import { useTranslation } from "react-i18next";
 import { runDiscordAuthFlow } from "@/src/features/auth/lib/discordAuthFlow";

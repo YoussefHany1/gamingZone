@@ -57,6 +57,42 @@
     "save": "Enregistrer"
   },
   "auth": {
+    "a11y": {
+      "buttonHint": "Appuyez deux fois pour activer",
+      "emailLabel": "Adresse e-mail",
+      "emailHint": "Saisissez votre adresse e-mail",
+      "passwordLabel": "Mot de passe",
+      "passwordHint": "Saisissez votre mot de passe",
+      "newPasswordHint": "Créez un mot de passe d'au moins 8 caractères comprenant des lettres et des chiffres",
+      "nameLabel": "Nom complet",
+      "nameHint": "Saisissez votre nom complet",
+      "showPassword": "Afficher le mot de passe",
+      "hidePassword": "Masquer le mot de passe",
+      "showPasswordHint": "Affiche le mot de passe saisi",
+      "hidePasswordHint": "Masque le mot de passe",
+      "passwordStrengthHint": "Indique la force de votre mot de passe",
+      "signInHint": "Connecte votre compte",
+      "googleSignInHint": "Connecte votre compte Google",
+      "discordSignInHint": "Connecte votre compte Discord",
+      "createAccountHint": "Ouvre l'écran de création de compte",
+      "guestHint": "Continue sans se connecter",
+      "forgotPasswordHint": "Ouvre l'écran de réinitialisation du mot de passe",
+      "signUpHint": "Crée votre compte",
+      "googleSignUpHint": "Crée un compte avec Google",
+      "discordSignUpHint": "Crée un compte avec Discord",
+      "haveAccountHint": "Ouvre l'écran de connexion",
+      "sendResetHint": "Envoie un lien de réinitialisation du mot de passe à votre e-mail",
+      "backToLoginHint": "Revient à l'écran de connexion",
+      "privacyPolicyHint": "Ouvre la politique de confidentialité dans votre navigateur",
+      "verifyHint": "Vérifie si votre e-mail a été confirmé",
+      "resendHint": "Envoie un autre e-mail de vérification",
+      "continueHint": "Continue vers l'application sans vérifier"
+    },
+    "emailSuggestions": {
+      "label": "Domaines e-mail suggérés",
+      "useDomain": "Utiliser {{domain}}",
+      "useDomainHint": "Complète le domaine de l'e-mail pour vous"
+    },
     "emailPlaceholder": "E-mail",
     "passwordPlaceholder": "Mot de passe",
     "guest": "Continuer en tant qu’invité",
@@ -82,6 +118,8 @@
       "female": "Femme",
       "googleSignUp": "S'inscrire avec Google",
       "discordSignUp": "S'inscrire avec Discord",
+      "legalNotice": "En créant un compte, vous acceptez notre",
+      "privacyPolicyLink": "Politique de confidentialité",
       "haveAnAccount": "Vous avez déjà un compte ?",
       "success": "Inscription réussie",
       "emptyFields": "Veuillez remplir tous les champs obligatoires"
@@ -95,6 +133,7 @@
       "optionalNote": "Cette étape est facultative — vous pouvez continuer à utiliser l'application sans vérifier. La vérification aide à sécuriser votre compte et à le récupérer plus tard.",
       "resend": "Renvoyer l'e-mail",
       "resending": "Envoi...",
+      "resendIn": "Renvoyer dans {{seconds}}s",
       "iveVerified": "J'ai vérifié",
       "checking": "Vérification...",
       "continue": "Continuer",
@@ -132,6 +171,7 @@
       "emailRequired": "L'e-mail est obligatoire",
       "emailInvalid": "Veuillez saisir une adresse e-mail valide",
       "passwordShort": "Le mot de passe est trop court",
+      "passwordRequired": "Veuillez saisir votre mot de passe",
       "passwordLetter": "Le mot de passe doit contenir au moins une lettre",
       "passwordNumber": "Le mot de passe doit contenir au moins un chiffre",
       "nameShort": "Le nom doit contenir au moins 2 caractères",
@@ -142,7 +182,14 @@
     },
     "validation": {
       "passwordTitle": "Mot de passe invalide",
-      "passwordRequirements": "Le mot de passe doit comporter au moins 8 caractères et contenir des lettres et des chiffres."
+      "passwordRequirements": "Le mot de passe doit comporter au moins 8 caractères et contenir des lettres et des chiffres.",
+      "orContinueWith": "Ou continuer avec",
+      "passwordStrength": "Force du mot de passe",
+      "checks": {
+        "minLength": "Au moins 8 caractères",
+        "hasLetter": "Contient une lettre",
+        "hasNumber": "Contient un chiffre"
+      }
     }
   },
   "navigation": {
@@ -208,7 +255,23 @@
       "noReleasesInRange": "Aucune sortie sur cette période",
       "moreCount": "+{{count}} de plus",
       "previousMonth": "Mois précédent",
-      "nextMonth": "Mois suivant"
+      "nextMonth": "Mois suivant",
+      "expand": "Afficher le calendrier",
+      "collapse": "Masquer le calendrier"
+    },
+    "header": {
+      "goodMorning": "Bonjour",
+      "goodAfternoon": "Bon après-midi",
+      "goodEvening": "Bonsoir",
+      "gamer": "Joueur",
+      "level": "Niv. {{level}}",
+      "search": "Rechercher des jeux"
+    },
+    "quickActions": {
+      "releases": "Sorties",
+      "forYou": "Pour vous",
+      "trending": "Tendances",
+      "popular": "Populaires"
     }
   },
   "events": {
@@ -231,7 +294,10 @@
       "esports": "Esports",
       "hardware": "Matériel"
     },
-    "latestHeader": "Dernières {{category}}",
+    "latestHeader": "Dernières actualités pour vous",
+    "latestSubtitle": "Selon vos plateformes",
+    "latestHeaderNoPlatform": "Dernières actualités",
+    "latestSubtitleNoPlatform": "Ne manquez rien",
     "newsHeader": "Actualités et articles gaming",
     "noArticles": "Aucun article disponible pour le moment.",
     "fetchError": "Erreur lors de la récupération des données. Veuillez réessayer plus tard.",
@@ -374,7 +440,8 @@
       },
       "recommended": {
         "title": "Recommandé pour vous",
-        "subtitle": "Basé sur les jeux auxquels vous avez joué"
+        "subtitle": "Basé sur les jeux auxquels vous avez joué",
+        "popularSubtitle": "Populaire en ce moment"
       }
     },
     "details": {
@@ -1161,9 +1228,10 @@
     "getItOnFooter": "Disponible sur Google Play"
   },
   "onboarding": {
-    "skip": "Ignorer",
+    "skip": "Passer",
     "next": "Suivant",
     "getStarted": "Commencer",
+    "exploreAsGuest": "Explorez en tant qu'invité — aucun compte requis",
     "slides": [
       {
         "title": "📰 Restez informé",
@@ -1184,7 +1252,9 @@
     ]
   },
   "lists": {
-    "addGame": "Ajouter un jeu"
+    "addGame": "Ajouter un jeu",
+    "createFirstTitle": "Créez votre première liste",
+    "createFirstMessage": "Enregistrez ce jeu en créant une liste à retrouver à tout moment."
   },
   "notifications": {
     "newsChannelName": "Notifications d'actualités",
@@ -1265,6 +1335,32 @@
     "errors": {
       "partsRequired": "Sélectionnez le CPU et le GPU",
       "saveFailed": "Échec de l'enregistrement des spécifications du PC"
+    }
+  },
+  "setup": {
+    "continue": "Continuer",
+    "finish": "Terminer",
+    "skip": "Passer pour l'instant",
+    "platforms": {
+      "title": "Choisissez vos plateformes",
+      "subtitle": "Sélectionnez les plateformes sur lesquelles vous jouez pour personnaliser votre fil et les alertes de jeux gratuits.",
+      "playstation": "PlayStation",
+      "xbox": "Xbox",
+      "pc": "PC / Steam",
+      "nintendo": "Nintendo Switch",
+      "mobile": "Mobile"
+    },
+    "genres": {
+      "title": "Genres favoris",
+      "subtitle": "Sélectionnez 3 à 5 genres que vous aimez pour de meilleures recommandations.",
+      "hint": "Choisissez 3 à 5 genres (optionnel)"
+    }
+  },
+  "linking": {
+    "nudge": {
+      "title": "Liez vos comptes de jeu",
+      "message": "Liez votre compte PSN, Xbox ou Steam pour importer automatiquement votre bibliothèque et vos trophées.",
+      "cta": "Lier les comptes"
     }
   }
 }

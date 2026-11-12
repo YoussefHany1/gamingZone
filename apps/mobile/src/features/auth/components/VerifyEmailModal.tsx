@@ -15,6 +15,7 @@ const VerifyEmailModal: React.FC<VerifyEmailModalProps> = ({
   email,
   isChecking,
   isResending,
+  resendCooldown = 0,
   onCheckVerified,
   onResend,
   onSkip,
@@ -99,6 +100,7 @@ const VerifyEmailModal: React.FC<VerifyEmailModalProps> = ({
       transparent
       animationType="fade"
       onRequestClose={onSkip}
+      accessibilityViewIsModal
     >
       <View style={styles.verifyModalContainer}>
         <View style={styles.verifyModalContent}>
@@ -120,6 +122,13 @@ const VerifyEmailModal: React.FC<VerifyEmailModalProps> = ({
               ]}
               onPress={onCheckVerified}
               disabled={isChecking || isResending}
+              accessibilityRole="button"
+              accessibilityLabel={t("auth.verifyPrompt.iveVerified")}
+              accessibilityHint={t("auth.a11y.verifyHint")}
+              accessibilityState={{
+                disabled: isChecking || isResending,
+                busy: isChecking,
+              }}
             >
               {isChecking ? (
                 <ActivityIndicator color={colors.onAccent} size="small" />
@@ -133,16 +142,28 @@ const VerifyEmailModal: React.FC<VerifyEmailModalProps> = ({
             <TouchableOpacity
               style={[
                 styles.verifySecondaryBtn,
-                (isResending || isChecking) && styles.buttonDisabled,
+                (isResending || isChecking || resendCooldown > 0) &&
+                  styles.buttonDisabled,
               ]}
               onPress={onResend}
-              disabled={isResending || isChecking}
+              disabled={isResending || isChecking || resendCooldown > 0}
+              accessibilityRole="button"
+              accessibilityLabel={t("auth.verifyPrompt.resend")}
+              accessibilityHint={t("auth.a11y.resendHint")}
+              accessibilityState={{
+                disabled: isResending || isChecking || resendCooldown > 0,
+                busy: isResending,
+              }}
             >
               {isResending ? (
                 <ActivityIndicator color={colors.text} size="small" />
               ) : (
                 <CustomText style={styles.verifySecondaryBtnText}>
-                  {t("auth.verifyPrompt.resend")}
+                  {resendCooldown > 0
+                    ? t("auth.verifyPrompt.resendIn", {
+                        seconds: resendCooldown,
+                      })
+                    : t("auth.verifyPrompt.resend")}
                 </CustomText>
               )}
             </TouchableOpacity>
@@ -150,6 +171,10 @@ const VerifyEmailModal: React.FC<VerifyEmailModalProps> = ({
             <TouchableOpacity
               onPress={onSkip}
               disabled={isChecking || isResending}
+              accessibilityRole="button"
+              accessibilityLabel={t("auth.verifyPrompt.continue")}
+              accessibilityHint={t("auth.a11y.continueHint")}
+              accessibilityState={{ disabled: isChecking || isResending }}
             >
               <CustomText style={styles.verifySkipText}>
                 {t("auth.verifyPrompt.continue")}

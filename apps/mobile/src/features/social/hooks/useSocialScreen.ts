@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Platform, Share } from "react-native";
+import { Platform, Share } from "react-native";
+import { Alert } from "@/src/lib/alert";
 import { useNavigation } from "@react-navigation/native";
 import type { NavigationProp } from "@react-navigation/native";
 import { profilePath, type Conversation } from "@gaming-zone/core";

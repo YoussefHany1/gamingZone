@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from "react";
-import { Alert, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
+import { Alert } from "@/src/lib/alert";
 import {
   blockUser,
   cancelFriendRequest,

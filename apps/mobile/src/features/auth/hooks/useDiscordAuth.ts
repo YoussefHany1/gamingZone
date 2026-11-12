@@ -7,6 +7,7 @@
  */
 import { useCallback } from "react";
 import auth from "@react-native-firebase/auth";
+import analytics from "@react-native-firebase/analytics";
 import { useTranslation } from "react-i18next";
 import { runDiscordAuthFlow } from "@/src/features/auth/lib/discordAuthFlow";
 import { logger } from "@/src/lib/logger";
@@ -34,7 +35,19 @@ export function useDiscordAuth({
       const result = await runDiscordAuthFlow();
 
       if (result.status === "success") {
+        // Architecture note: Discord uses custom tokens, so anonymous->account linking
+        // is not performed client-side. If local-first guest features are added later,
+        // update the Discord auth endpoint to accept anonymousUid and mint
+        // admin.auth().createCustomToken(anonymousUid, ...) to preserve identity.
+        const wasGuest = !!auth().currentUser?.isAnonymous;
         await auth().signInWithCustomToken(result.customToken);
+        if (wasGuest) {
+          try {
+            await analytics().logEvent("guest_discord_login_no_link");
+          } catch {
+            // non-fatal
+          }
+        }
         onSuccess();
         return;
       }

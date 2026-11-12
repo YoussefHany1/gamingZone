@@ -41,9 +41,32 @@ export function recommendedGamesListHash(ids: RecommendedGamesListIds): string {
   return `${sorted(ids.playing)}|${sorted(ids.played)}|${sorted(ids.wantToPlay)}`;
 }
 
+export type RecommendedGamesPrefs = {
+  favoriteGenres?: string[] | null;
+  preferredPlatforms?: string[] | null;
+};
+
+export function recommendedGamesPrefsHash(prefs: RecommendedGamesPrefs): string {
+  const norm = (arr?: string[] | null): string =>
+    (arr ?? [])
+      .filter((x): x is string => typeof x === "string")
+      .map((x) => x.trim().toLowerCase())
+      .filter(Boolean)
+      .sort()
+      .join(",");
+  return `${norm(prefs.favoriteGenres)}|${norm(prefs.preferredPlatforms)}`;
+}
+
+export function recommendedGamesSignature(
+  ids: RecommendedGamesListIds,
+  prefs: RecommendedGamesPrefs,
+): string {
+  return `${recommendedGamesListHash(ids)}||${recommendedGamesPrefsHash(prefs)}`;
+}
+
 /**
- * True when `cached` was built from the same library state and is still inside
- * the TTL — i.e. the rail can be served without touching the network.
+ * True when `cached` was built from the same library+preferences state and is
+ * still inside the TTL — i.e. the rail can be served without touching the network.
  */
 export function isRecommendedGamesCacheFresh(
   cached: CachedRecommendations | null,

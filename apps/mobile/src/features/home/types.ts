@@ -1,21 +1,24 @@
-import type { WeeklySummaryDoc } from "@gaming-zone/core";
-
 export type { WeeklySummaryDoc } from "@gaming-zone/core";
 
 export type SectionItem = {
   type:
     | "slideshow"
-    | "news"
+    | "quick_actions"
+    | "free_games"
+    | "news_tabs"
+    | "events"
     | "weekly_summary"
     | "release_calendar"
     | "recommended"
-    | "events"
     | "ad";
   category?: string;
   website?: string;
+  /**
+   * Distinct logical id when two entries share a type (the two tab groups:
+   * "news_tabs" and "insight_tabs"). Drives the chip scroll targets.
+   */
+  id?: string;
   _key: string;
-  /** ms to wait before mounting this news section. 0 / undefined = immediate. */
-  delay?: number;
   /**
    * Bumped on pull-to-refresh. Passed through to sections that must bypass
    * their cache rather than remount (remounting re-runs the fetch with

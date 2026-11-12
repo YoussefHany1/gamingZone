@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ToastAndroid } from "react-native";
 import type { RefObject } from "react";
 import type { ScrollView } from "react-native";
+import { useRequireAuth } from "@/src/hooks/useRequireAuth";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { useShallow } from "zustand/react/shallow";
@@ -162,22 +162,30 @@ export const useGameDetails = ({
 
   const handleGoBack = useCallback(() => navigation.goBack(), [navigation]);
 
+  const requireAuth = useRequireAuth();
+
   const handleAddToList = useCallback(() => {
-    if (!user) {
-      ToastAndroid.show(
-        t("common.loginRequired") ?? "You need to log in.",
-        ToastAndroid.LONG,
-      );
-      return;
-    }
-    setShowListModal(true);
-  }, [user, t]);
+    requireAuth(() => {
+      setShowListModal(true);
+    });
+  }, [requireAuth]);
 
   const handleCloseModal = useCallback(() => setShowListModal(false), []);
 
   const handleNavigateToGame = useCallback(
     (id: number) => setCurrentId(id),
     [setCurrentId],
+  );
+
+  const handleRateGame = useCallback(
+    (newRating: number) => {
+      let result: Promise<void> = Promise.resolve();
+      requireAuth(() => {
+        result = rateGame(newRating);
+      });
+      return result;
+    },
+    [requireAuth, rateGame],
   );
 
   return {
@@ -206,7 +214,7 @@ export const useGameDetails = ({
     similarGames,
     t,
     onScroll,
-    handleRateGame: rateGame,
+    handleRateGame,
     handleGoBack,
     handleAddToList,
     handleCloseModal,

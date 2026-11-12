@@ -1,5 +1,5 @@
 import firestore from "@react-native-firebase/firestore";
-import { fetchGamesByIds } from "@/src/services/api/igdbApi";
+import { fetchGamesByIds, searchGames } from "@/src/services/api/igdbApi";
 import type { Game } from "@/src/types/sharedTypes";
 import {
   collectGameSignals,
@@ -64,9 +64,23 @@ export async function buildRecommendations(
 
   const userDoc = await db.collection("users").doc(uid).get();
   let userPlatform: string | null = null;
+  let favoriteGenres: string[] = [];
   if (userDoc.exists()) {
-    const data = userDoc.data();
+    const data = userDoc.data() as {
+      platform?: unknown;
+      preferredPlatforms?: unknown;
+      favoriteGenres?: unknown;
+    } | undefined;
     if (data?.platform) userPlatform = String(data.platform).toLowerCase();
+    if (!userPlatform && Array.isArray(data?.preferredPlatforms)) {
+      const first = data.preferredPlatforms.find((p) => typeof p === "string");
+      if (typeof first === "string") userPlatform = first.toLowerCase();
+    }
+    if (Array.isArray(data?.favoriteGenres)) {
+      favoriteGenres = data.favoriteGenres.filter(
+        (g): g is string => typeof g === "string",
+      );
+    }
   }
 
   const ownedGameIds = new Set<number>([
@@ -75,7 +89,32 @@ export async function buildRecommendations(
     ...ownedIds.wantToPlay,
   ]);
 
-  if (allUserGames.length === 0) return { games: [], basedOnGenre: null };
+  if (allUserGames.length === 0) {
+    // Cold start: if the user picked favorite genres during setup, seed recommendations from them.
+    if (favoriteGenres.length === 0) return { games: [], basedOnGenre: null };
+    const seedGenres = favoriteGenres.slice(0, 2);
+    const results = await Promise.all(
+      seedGenres.map((genre) =>
+        searchGames({ filters: { genre } }).catch(() => [] as Game[]),
+      ),
+    );
+    const seen = new Set<number>();
+    const seeded: Game[] = [];
+    for (const list of results) {
+      for (const game of list) {
+        if (seen.has(game.id)) continue;
+        seen.add(game.id);
+        seeded.push(game);
+      }
+    }
+    const filtered = filterByUserPlatform(seeded, userPlatform).filter(
+      (g) => !ownedGameIds.has(g.id),
+    );
+    return {
+      games: pickDiverseRecommendations(filtered),
+      basedOnGenre: favoriteGenres[0] ?? null,
+    };
+  }
 
   const topGameIds = sortByPlaytimeThenAddedAt(allUserGames)
     .slice(0, TOP_GAMES_SAMPLE_SIZE)
@@ -96,7 +135,38 @@ export async function buildRecommendations(
     ownedGameIds,
   );
 
-  if (ids.size === 0) return { games: [], basedOnGenre: null };
+  if (ids.size === 0) {
+    // Fall back to favorite genres if library signals produced no candidates.
+    if (favoriteGenres.length === 0) return { games: [], basedOnGenre: null };
+    const seedGenres = favoriteGenres.slice(0, 2);
+    const results = await Promise.all(
+      seedGenres.map((genre) =>
+        searchGames({ filters: { genre } }).catch(() => [] as Game[]),
+      ),
+    );
+    const seen = new Set<number>();
+    const seeded: Game[] = [];
+    for (const list of results) {
+      for (const game of list) {
+        if (seen.has(game.id)) continue;
+        seen.add(game.id);
+        seeded.push(game);
+      }
+    }
+    const filtered = filterByUserPlatform(seeded, userPlatform).filter(
+      (g) => !ownedGameIds.has(g.id),
+    );
+    const mergedTopGenres = Array.from(new Set([...topGenres, ...favoriteGenres])).slice(0, 5);
+    return {
+      games: pickDiverseRecommendations(filtered),
+      basedOnGenre: mergedTopGenres[0] ?? favoriteGenres[0] ?? null,
+    };
+  }
+
+  const mergedTopGenres = Array.from(new Set([...topGenres, ...favoriteGenres])).slice(
+    0,
+    5,
+  );
 
   const rankedIds = Array.from(ids)
     .sort((a, b) => (weights[b] ?? 0) - (weights[a] ?? 0))
@@ -109,8 +179,8 @@ export async function buildRecommendations(
 
   return {
     games: pickDiverseRecommendations(
-      rankRecommendations(candidates, topGenres, weights),
+      rankRecommendations(candidates, mergedTopGenres, weights),
     ),
-    basedOnGenre: topGenres[0] ?? null,
+    basedOnGenre: mergedTopGenres[0] ?? topGenres[0] ?? null,
   };
 }

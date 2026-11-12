@@ -20,7 +20,7 @@ export type FreeGameCardProps = {
   t: (key: string) => string;
 };
 
-const CARD_HEIGHT = 300;
+const CARD_HEIGHT = 250;
 
 const renderStoreIcon = (store?: string) => {
   // Called during render, so an imperative read observes the current palette.
@@ -55,7 +55,7 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
 
   const styles = useThemeStyles((c) => ({
     gameCard: {
-      width: 165,
+      width: 145,
       height: CARD_HEIGHT,
       marginHorizontal: 5,
       borderRadius: 16,
@@ -69,7 +69,7 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
     },
     imageContainer: {
       width: "100%",
-      height: 200,
+      height: 150,
       position: "relative",
     },
     cover: {
@@ -208,7 +208,7 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
               end={{ x: 1, y: 1 }}
               style={styles.savingsButton}
             >
-              <Gift size={16} color={colors.accentText} />
+              <Gift size={16} color={colors.background} />
               <CustomText style={styles.savingsText}>
                 {t("games.list.freeGames.claimNow")}
               </CustomText>

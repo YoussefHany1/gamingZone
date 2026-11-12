@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import { TouchableOpacity, ActivityIndicator } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import CustomText from "@/src/components/CustomText";
+import { useTranslation } from "react-i18next";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type { AuthButtonProps } from "./types";
 
@@ -29,9 +30,12 @@ const AuthBrandButton: React.FC<AuthBrandButtonProps> = ({
   loading = false,
   disabled = false,
   containerStyle,
+  accessibilityLabel,
+  accessibilityHint,
   gradientColors,
   icon,
 }) => {
+  const { t } = useTranslation();
   const styles = useThemeStyles(() => ({
     wrapper: {
       justifyContent: "center",
@@ -45,6 +49,7 @@ const AuthBrandButton: React.FC<AuthBrandButtonProps> = ({
       alignItems: "center",
       flexDirection: "row",
       justifyContent: "center",
+      gap: 10,
     },
     // Sits on the fixed brand gradient, which is identical in both
     // themes — so it must not follow the palette.
@@ -61,6 +66,10 @@ const AuthBrandButton: React.FC<AuthBrandButtonProps> = ({
       onPress={onPress}
       style={[styles.wrapper, containerStyle, disabled && styles.buttonDisabled]}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityHint={accessibilityHint ?? t("auth.a11y.buttonHint")}
+      accessibilityState={{ disabled, busy: loading }}
     >
       <LinearGradient
         colors={gradientColors}
@@ -73,7 +82,7 @@ const AuthBrandButton: React.FC<AuthBrandButtonProps> = ({
         ) : (
           <>
             {icon}
-            <CustomText style={styles.brandButtonText}> {label}</CustomText>
+            <CustomText style={styles.brandButtonText}>{label}</CustomText>
           </>
         )}
       </LinearGradient>

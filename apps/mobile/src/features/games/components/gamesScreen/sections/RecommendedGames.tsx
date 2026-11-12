@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import SkeletonPopular from "../../../skeleton/gamesScreen/SkeletonPopular";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useRecommendedGames } from "../../../hooks/useRecommendedGames";
+import type { RecommendedGamesState } from "../../../hooks/useRecommendedGames";
 import { GameSection } from "./GameSection";
 import PosterGameCard from "./PosterGameCard";
 import type { Game } from "@/src/types/sharedTypes";
@@ -26,7 +27,11 @@ const CARD_MARGIN = 5;
  * the generic-fallback i18n `defaultValue`s are also part of the legacy
  * contract.
  */
-function RecommendedGames(): React.ReactElement | null {
+function RecommendedGamesView({
+  state,
+}: {
+  state: RecommendedGamesState;
+}): React.ReactElement | null {
   // Every style rule below is theme-independent, so the factory needs no
   // palette (unchanged; the factory still must exist for the lint tooling).
   const styles = useThemeStyles(() => ({
@@ -41,7 +46,7 @@ function RecommendedGames(): React.ReactElement | null {
   }));
 
   const { t } = useTranslation();
-  const { recommendedGames, loading, basedOnGenre } = useRecommendedGames();
+  const { recommendedGames, loading, basedOnGenre } = state;
 
   const renderCard = useCallback(
     (item: Game) => <PosterGameCard item={item} statIconVariant="emoji" />,
@@ -80,4 +85,13 @@ function RecommendedGames(): React.ReactElement | null {
   );
 }
 
+// Standalone entry point (home rail): resolves its own recommendation state.
+// The games feed uses `RecommendedGamesView` through `DiscoveryRail` so the
+// three fallback rails share a single `useRecommendedGames` instance.
+function RecommendedGames(): React.ReactElement | null {
+  const state = useRecommendedGames();
+  return <RecommendedGamesView state={state} />;
+}
+
+export { RecommendedGamesView };
 export default RecommendedGames;

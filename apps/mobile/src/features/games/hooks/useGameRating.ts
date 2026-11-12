@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, ToastAndroid } from "react-native";
+import { ToastAndroid } from "react-native";
+import { Alert } from "@/src/lib/alert";
 import firestore from "@react-native-firebase/firestore";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";

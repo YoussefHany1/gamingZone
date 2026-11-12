@@ -57,6 +57,42 @@
     "save": "حفظ"
   },
   "auth": {
+    "a11y": {
+      "buttonHint": "اضغط مرتين للتفعيل",
+      "emailLabel": "البريد الإلكتروني",
+      "emailHint": "أدخل عنوان بريدك الإلكتروني",
+      "passwordLabel": "كلمة المرور",
+      "passwordHint": "أدخل كلمة المرور",
+      "newPasswordHint": "أنشئ كلمة مرور من 8 أحرف على الأقل تتضمن حروفًا وأرقامًا",
+      "nameLabel": "الاسم الكامل",
+      "nameHint": "أدخل اسمك الكامل",
+      "showPassword": "إظهار كلمة المرور",
+      "hidePassword": "إخفاء كلمة المرور",
+      "showPasswordHint": "يعرض كلمة المرور التي أدخلتها",
+      "hidePasswordHint": "يخفي كلمة المرور",
+      "passwordStrengthHint": "يعرض مدى قوة كلمة المرور",
+      "signInHint": "يسجل الدخول إلى حسابك",
+      "googleSignInHint": "يسجل الدخول باستخدام حساب Google",
+      "discordSignInHint": "يسجل الدخول باستخدام حساب Discord",
+      "createAccountHint": "يفتح شاشة إنشاء حساب",
+      "guestHint": "يتابع دون تسجيل الدخول",
+      "forgotPasswordHint": "يفتح شاشة إعادة تعيين كلمة المرور",
+      "signUpHint": "ينشئ حسابك",
+      "googleSignUpHint": "ينشئ حسابًا باستخدام Google",
+      "discordSignUpHint": "ينشئ حسابًا باستخدام Discord",
+      "haveAccountHint": "يفتح شاشة تسجيل الدخول",
+      "sendResetHint": "يرسل رابط إعادة تعيين كلمة المرور إلى بريدك",
+      "backToLoginHint": "يعود إلى شاشة تسجيل الدخول",
+      "privacyPolicyHint": "يفتح سياسة الخصوصية في متصفحك",
+      "verifyHint": "يتحقق من تفعيل بريدك الإلكتروني",
+      "resendHint": "يرسل رسالة تحقق أخرى",
+      "continueHint": "يتابع إلى التطبيق دون التحقق"
+    },
+    "emailSuggestions": {
+      "label": "نطاقات البريد الإلكتروني المقترحة",
+      "useDomain": "استخدام {{domain}}",
+      "useDomainHint": "يملأ نطاق البريد الإلكتروني تلقائيًا"
+    },
     "emailPlaceholder": "البريد الإلكتروني",
     "passwordPlaceholder": "كلمة السر",
     "guest": "تسجيل الدخول لاحقا",
@@ -77,6 +113,8 @@
       "signUpButton": "إنشاء حساب",
       "googleSignUp": "سجل باستخدام جوجل",
       "discordSignUp": "إنشاء حساب باستخدام Discord",
+      "legalNotice": "بإنشاء حساب، فإنك توافق على",
+      "privacyPolicyLink": "سياسة الخصوصية",
       "namePlaceholder": "الاسم بالكامل",
       "countryPlaceholder": "اختر البلد",
       "genderPlaceholder": "الجنس",
@@ -115,6 +153,7 @@
       "emailRequired": "البريد الإلكتروني مطلوب",
       "emailInvalid": "يرجى إدخال بريد إلكتروني صحيح",
       "passwordShort": "كلمة المرور قصيرة جداً",
+      "passwordRequired": "الرجاء إدخال كلمة المرور",
       "passwordLetter": "يجب أن تحتوي كلمة المرور على حرف واحد على الأقل",
       "passwordNumber": "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل",
       "nameShort": "يجب أن يتكون الاسم من حرفين على الأقل",
@@ -124,7 +163,14 @@
     },
     "validation": {
       "passwordTitle": "كلمة المرور غير كافية",
-      "passwordRequirements": "يجب أن تكون كلمة المرور مكونة من 8 خانات على الأقل، وتحتوي على أحرف وأرقام."
+      "passwordRequirements": "يجب أن تكون كلمة المرور مكونة من 8 خانات على الأقل، وتحتوي على أحرف وأرقام.",
+      "orContinueWith": "أو تابع باستخدام",
+      "passwordStrength": "قوة كلمة المرور",
+      "checks": {
+        "minLength": "8 خانات على الأقل",
+        "hasLetter": "تحتوي على حرف",
+        "hasNumber": "تحتوي على رقم"
+      }
     },
     "verifyEmail": "تحقق من البريد الإلكتروني",
     "emailVerified": "تم التحقق من البريد الإلكتروني",
@@ -135,6 +181,7 @@
       "optionalNote": "هذه الخطوة اختيارية — يمكنك متابعة استخدام التطبيق دون التحقق. يساعد التحقق على تأمين حسابك واستعادته لاحقاً.",
       "resend": "إعادة إرسال البريد",
       "resending": "جارٍ الإرسال...",
+      "resendIn": "إعادة الإرسال بعد {{seconds}} ثانية",
       "iveVerified": "لقد قمت بالتحقق",
       "checking": "جارٍ التحقق...",
       "continue": "متابعة",
@@ -208,7 +255,23 @@
       "noReleasesInRange": "لا إصدارات في هذه الفترة",
       "moreCount": "+{{count}} إضافية",
       "previousMonth": "الشهر السابق",
-      "nextMonth": "الشهر التالي"
+      "nextMonth": "الشهر التالي",
+      "expand": "عرض التقويم",
+      "collapse": "إخفاء التقويم"
+    },
+    "header": {
+      "goodMorning": "صباح الخير",
+      "goodAfternoon": "مساء الخير",
+      "goodEvening": "مساء الخير",
+      "gamer": "لاعب",
+      "level": "المستوى {{level}}",
+      "search": "ابحث عن الألعاب"
+    },
+    "quickActions": {
+      "releases": "الإصدارات",
+      "forYou": "مختارات لك",
+      "trending": "الأكثر رواجًا",
+      "popular": "الأكثر شعبية"
     }
   },
   "events": {
@@ -231,7 +294,10 @@
       "esports": "أخبار الرياضة إلكترونية",
       "hardware": "أخبار الهاردوير"
     },
-    "latestHeader": "أحدث {{category}}",
+    "latestHeader": "أحدث الأخبار لك",
+    "latestSubtitle": "بناءً على منصاتك",
+    "latestHeaderNoPlatform": "أحدث الأخبار",
+    "latestSubtitleNoPlatform": "لا تفوّت أي لحظة",
     "newsHeader": "أخبار الألعاب",
     "noArticles": "لا توجد مقالات متاحة في الوقت الحالي.",
     "fetchError": "حدث خطأ أثناء جلب البيانات، يرجى المحاولة مرة أخرى لاحقاً.",
@@ -374,7 +440,8 @@
       },
       "recommended": {
         "title": "ألعاب مقترحة لك",
-        "subtitle": "بناءً على الألعاب التي لعبتها"
+        "subtitle": "بناءً على الألعاب التي لعبتها",
+        "popularSubtitle": "الأكثر رواجًا الآن"
       }
     },
     "details": {
@@ -1162,9 +1229,10 @@
     "getItOnFooter": "احصل عليه من جوجل بلاي"
   },
   "onboarding": {
-    "skip": "تخطى",
+    "skip": "تخطي",
     "next": "التالي",
     "getStarted": "ابدأ الآن",
+    "exploreAsGuest": "استكشف التطبيق كضيف — لا حاجة لحساب",
     "slides": [
       {
         "title": "📰 ابقَ على اطلاع دائم",
@@ -1185,7 +1253,9 @@
     ]
   },
   "lists": {
-    "addGame": "إضافة لعبة"
+    "addGame": "إضافة لعبة",
+    "createFirstTitle": "أنشئ قائمتك الأولى",
+    "createFirstMessage": "احفظ هذه اللعبة بإنشاء قائمة يمكنك العودة إليها في أي وقت."
   },
   "notifications": {
     "newsChannelName": "إشعارات الأخبار",
@@ -1266,6 +1336,32 @@
     "errors": {
       "partsRequired": "اختر المعالج وكرت الشاشة",
       "saveFailed": "فشل حفظ مواصفات الجهاز"
+    }
+  },
+  "setup": {
+    "continue": "متابعة",
+    "finish": "إنهاء",
+    "skip": "تخطي الآن",
+    "platforms": {
+      "title": "اختر منصاتك",
+      "subtitle": "اختر المنصات التي تلعب عليها لنخصّص خلاصتك وتنبيهات الألعاب المجانية.",
+      "playstation": "بلايستيشن",
+      "xbox": "إكس بوكس",
+      "pc": "كمبيوتر / ستيم",
+      "nintendo": "نينتندو سويتش",
+      "mobile": "موبايل"
+    },
+    "genres": {
+      "title": "الأنواع المفضلة",
+      "subtitle": "اختر 3–5 أنواع تحبها للحصول على توصيات أفضل.",
+      "hint": "اختر 3–5 أنواع (اختياري)"
+    }
+  },
+  "linking": {
+    "nudge": {
+      "title": "اربط حسابات الألعاب الخاصة بك",
+      "message": "اربط حساب PSN أو Xbox أو Steam لاستيراد مكتبتك وإنجازاتك تلقائيًا.",
+      "cta": "ربط الحسابات"
     }
   }
 }

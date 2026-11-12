@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { Alert } from "react-native";
+import { Alert } from "@/src/lib/alert";
 import { useTranslation } from "react-i18next";
 import { sendChatMessage } from "../lib/aiService";
 import { checkAILimit, getRemainingAILimit, incrementAILimit } from "../lib/aiLimit";

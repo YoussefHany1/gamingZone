@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshControl, TouchableOpacity, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,6 +15,8 @@ import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import SkeletonUserLists from "../skeleton/SkeletonUserLists";
 import UserListRow from "../components/userLists/UserListRow";
 import AdSlot from "@/src/components/AdSlot";
+import AccountLinkNudgeCard from "@/src/components/AccountLinkNudgeCard";
+import LinkAccountModal from "@/src/features/linking/components/LinkAccountModal";
 import CreateListModal from "../components/userLists/CreateListModal";
 import LoginRequiredView from "../components/shared/LoginRequiredView";
 import { useUserLists } from "../hooks/useUserLists";
@@ -67,6 +69,9 @@ const UserListsScreen = ({ navigation }: Props) => {
       fontSize: 15,
       fontWeight: "600" as const,
     },
+    nudge: {
+      paddingHorizontal: 16,
+    },
   }));
 
   const adsEnabled = useAdsEnabled();
@@ -83,6 +88,7 @@ const UserListsScreen = ({ navigation }: Props) => {
   const [isModalVisible, setModalVisible] = useState<boolean>(false);
   const [newListName, setNewListName] = useState<string>("");
   const [newListDescription, setNewListDescription] = useState<string>("");
+  const [showLinkModal, setShowLinkModal] = useState<boolean>(false);
 
   // Header button
   useEffect(() => {
@@ -129,9 +135,7 @@ const UserListsScreen = ({ navigation }: Props) => {
               })
             }
             onDelete={
-              item.type === "custom"
-                ? () => deleteList(item.id, item.name)
-                : undefined
+              item.type === "custom" ? () => deleteList(item.id, item.name) : undefined
             }
           />
           {showAd && <AdSlot marginVertical={30} />}
@@ -147,12 +151,8 @@ const UserListsScreen = ({ navigation }: Props) => {
     if (error) {
       return (
         <View style={styles.emptyState}>
-          <CustomText style={styles.emptyTitle}>
-            {t("common.dataLoadError")}
-          </CustomText>
-          <CustomText style={styles.emptyMessage}>
-            {t("common.pullToRefresh")}
-          </CustomText>
+          <CustomText style={styles.emptyTitle}>{t("common.dataLoadError")}</CustomText>
+          <CustomText style={styles.emptyMessage}>{t("common.pullToRefresh")}</CustomText>
         </View>
       );
     }
@@ -183,7 +183,7 @@ const UserListsScreen = ({ navigation }: Props) => {
 
   if (isAnonymous || !user) {
     return (
-      <SafeAreaView style={styles.container} edges={["right", "left"]}>
+      <SafeAreaView style={styles.container}>
         <LoginRequiredView />
       </SafeAreaView>
     );
@@ -198,6 +198,14 @@ const UserListsScreen = ({ navigation }: Props) => {
           data={lists}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          ListHeaderComponent={
+            <View style={styles.nudge}>
+              <AccountLinkNudgeCard
+                surface="userLists"
+                onPress={() => setShowLinkModal(true)}
+              />
+            </View>
+          }
           ListEmptyComponent={renderListEmpty}
           contentContainerStyle={{ paddingTop: 15, paddingBottom: bottomInset }}
           onScroll={onScroll}
@@ -222,6 +230,7 @@ const UserListsScreen = ({ navigation }: Props) => {
         onCancel={handleCancelCreate}
         onSubmit={handleCreateList}
       />
+      <LinkAccountModal visible={showLinkModal} onClose={() => setShowLinkModal(false)} />
     </SafeAreaView>
   );
 };

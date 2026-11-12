@@ -1,5 +1,6 @@
 import { useCallback } from "react";
-import { Alert, I18nManager } from "react-native";
+import { I18nManager } from "react-native";
+import { Alert } from "@/src/lib/alert";
 import { useTranslation } from "react-i18next";
 import * as Updates from "expo-updates";
 import { storage } from "@/src/lib/storage";

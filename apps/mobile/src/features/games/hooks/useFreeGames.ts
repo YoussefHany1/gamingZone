@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import Constants from "expo-constants";
 import { Query } from "react-native-appwrite";
 import { useSectionFeed } from "./useSectionFeed";
@@ -40,6 +41,21 @@ const fetchFreeGamesFromAppwrite = async (): Promise<FreeGameItem[]> => {
   }));
 };
 
+function matchesPreferredPlatforms(item: FreeGameItem, preferredPlatforms?: string[]): boolean {
+  if (!preferredPlatforms || preferredPlatforms.length === 0) return true;
+  const store = (item.store ?? "").toLowerCase();
+  // Best-effort mapping: current giveaways are primarily PC storefronts.
+  const pcStores = ["steam", "epic", "gog", "pc"];
+  const wantsPc = preferredPlatforms.includes("pc");
+  const wantsOtherConsole = preferredPlatforms.some((p) => p !== "pc" && p !== "mobile");
+  if (wantsPc && pcStores.some((s) => store.includes(s))) return true;
+  // If user only selected non-PC platforms, keep PC giveaways visible as general deals.
+  if (!wantsPc && wantsOtherConsole) return true;
+  // Mobile giveaways are rare; if explicitly selected, don't hide PC deals either.
+  if (preferredPlatforms.includes("mobile")) return true;
+  return false;
+}
+
 /**
  * Free games for the games feed's `free_games` section.
  *
@@ -49,6 +65,13 @@ const fetchFreeGamesFromAppwrite = async (): Promise<FreeGameItem[]> => {
  * `Game[]`), this one is Appwrite-backed and therefore passes its own
  * payload type to the shared `useSectionFeed`.
  */
-export function useFreeGames() {
-  return useSectionFeed<FreeGameItem>(STORAGE_KEY, fetchFreeGamesFromAppwrite);
+export function useFreeGames(preferredPlatforms?: string[]) {
+  const state = useSectionFeed<FreeGameItem>(STORAGE_KEY, fetchFreeGamesFromAppwrite);
+  const filtered = useMemo(() => {
+    if (!state.games) return state.games;
+    const out = state.games.filter((g) => matchesPreferredPlatforms(g, preferredPlatforms));
+    // Never hide all deals due to uncertain mapping.
+    return out.length > 0 ? out : state.games;
+  }, [state.games, preferredPlatforms]);
+  return { ...state, games: filtered };
 }

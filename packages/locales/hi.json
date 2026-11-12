@@ -57,6 +57,42 @@
     "save": "सहेजें"
   },
   "auth": {
+    "a11y": {
+      "buttonHint": "सक्रिय करने के लिए दो बार टैप करें",
+      "emailLabel": "ईमेल पता",
+      "emailHint": "अपना ईमेल पता दर्ज करें",
+      "passwordLabel": "पासवर्ड",
+      "passwordHint": "अपना पासवर्ड दर्ज करें",
+      "newPasswordHint": "कम से कम 8 अक्षरों का पासवर्ड बनाएं जिसमें अक्षर और अंक हों",
+      "nameLabel": "पूरा नाम",
+      "nameHint": "अपना पूरा नाम दर्ज करें",
+      "showPassword": "पासवर्ड दिखाएं",
+      "hidePassword": "पासवर्ड छिपाएं",
+      "showPasswordHint": "दर्ज किया गया पासवर्ड दिखाता है",
+      "hidePasswordHint": "पासवर्ड छिपाता है",
+      "passwordStrengthHint": "आपके पासवर्ड की मजबूती दिखाता है",
+      "signInHint": "आपके खाते में साइन इन करता है",
+      "googleSignInHint": "आपके Google खाते से साइन इन करता है",
+      "discordSignInHint": "आपके Discord खाते से साइन इन करता है",
+      "createAccountHint": "साइन अप स्क्रीन खोलता है",
+      "guestHint": "साइन इन किए बिना जारी रखता है",
+      "forgotPasswordHint": "पासवर्ड रीसेट स्क्रीन खोलता है",
+      "signUpHint": "आपका खाता बनाता है",
+      "googleSignUpHint": "Google के साथ खाता बनाता है",
+      "discordSignUpHint": "Discord के साथ खाता बनाता है",
+      "haveAccountHint": "साइन इन स्क्रीन खोलता है",
+      "sendResetHint": "आपके ईमेल पर पासवर्ड रीसेट लिंक भेजता है",
+      "backToLoginHint": "साइन इन स्क्रीन पर लौटता है",
+      "privacyPolicyHint": "आपके ब्राउज़र में गोपनीयता नीति खोलता है",
+      "verifyHint": "जांचता है कि आपका ईमेल सत्यापित हुआ है या नहीं",
+      "resendHint": "एक और सत्यापन ईमेल भेजता है",
+      "continueHint": "सत्यापित किए बिना ऐप में जारी रखता है"
+    },
+    "emailSuggestions": {
+      "label": "सुझाए गए ईमेल डोमेन",
+      "useDomain": "{{domain}} का उपयोग करें",
+      "useDomainHint": "ईमेल डोमेन अपने आप भर देता है"
+    },
     "emailPlaceholder": "ईमेल",
     "passwordPlaceholder": "पासवर्ड",
     "guest": "बाद में साइन इन करें",
@@ -82,6 +118,8 @@
       "female": "महिला",
       "googleSignUp": "Google से साइन अप करें",
       "discordSignUp": "Discord से साइन अप करें",
+      "legalNotice": "खाता बनाकर, आप सहमत होते हैं",
+      "privacyPolicyLink": "गोपनीयता नीति",
       "haveAnAccount": "पहले से खाता है?",
       "success": "साइन अप सफल हुआ",
       "emptyFields": "कृपया सभी आवश्यक फ़ील्ड भरें"
@@ -95,6 +133,7 @@
       "optionalNote": "यह चरण वैकल्पिक है — आप बिना सत्यापित किए ऐप का उपयोग जारी रख सकते हैं। सत्यापन आपके खाते को सुरक्षित रखने और बाद में पुनर्प्राप्त करने में मदद करता है।",
       "resend": "ईमेल दोबारा भेजें",
       "resending": "भेजा जा रहा है...",
+      "resendIn": "{{seconds}}s में दोबारा भेजें",
       "iveVerified": "मैंने सत्यापित कर लिया",
       "checking": "जाँच हो रही है...",
       "continue": "जारी रखें",
@@ -132,6 +171,7 @@
       "emailRequired": "ईमेल आवश्यक है",
       "emailInvalid": "कृपया एक मान्य ईमेल पता दर्ज करें",
       "passwordShort": "पासवर्ड बहुत छोटा है",
+      "passwordRequired": "कृपया अपना पासवर्ड दर्ज करें",
       "passwordLetter": "पासवर्ड में कम से कम एक अक्षर होना चाहिए",
       "passwordNumber": "पासवर्ड में कम से कम एक अंक होना चाहिए",
       "nameShort": "नाम कम से कम 2 अक्षरों का होना चाहिए",
@@ -142,7 +182,14 @@
     },
     "validation": {
       "passwordTitle": "अपर्याप्त पासवर्ड",
-      "passwordRequirements": "पासवर्ड कम से कम 8 अक्षरों का होना चाहिए और उसमें अक्षर तथा अंक दोनों होने चाहिए।"
+      "passwordRequirements": "पासवर्ड कम से कम 8 अक्षरों का होना चाहिए और उसमें अक्षर तथा अंक दोनों होने चाहिए।",
+      "orContinueWith": "या जारी रखें",
+      "passwordStrength": "पासवर्ड की मजबूती",
+      "checks": {
+        "minLength": "कम से कम 8 अक्षर",
+        "hasLetter": "एक अक्षर शामिल है",
+        "hasNumber": "एक अंक शामिल है"
+      }
     }
   },
   "navigation": {
@@ -208,7 +255,23 @@
       "noReleasesInRange": "इस तारीख़ सीमा में कोई रिलीज़ नहीं",
       "moreCount": "+{{count}} और",
       "previousMonth": "पिछला महीना",
-      "nextMonth": "अगला महीना"
+      "nextMonth": "अगला महीना",
+      "expand": "कैलेंडर दिखाएँ",
+      "collapse": "कैलेंडर छिपाएँ"
+    },
+    "header": {
+      "goodMorning": "सुप्रभात",
+      "goodAfternoon": "नमस्ते",
+      "goodEvening": "शुभ संध्या",
+      "gamer": "गेमर",
+      "level": "लेवल {{level}}",
+      "search": "गेम खोजें"
+    },
+    "quickActions": {
+      "releases": "रिलीज़",
+      "forYou": "आपके लिए",
+      "trending": "ट्रेंडिंग",
+      "popular": "लोकप्रिय"
     }
   },
   "events": {
@@ -231,7 +294,10 @@
       "esports": "ईस्पोर्ट्स",
       "hardware": "हार्डवेयर"
     },
-    "latestHeader": "नवीनतम {{category}}",
+    "latestHeader": "आपके लिए नवीनतम समाचार",
+    "latestSubtitle": "आपके प्लेटफॉर्म के आधार पर",
+    "latestHeaderNoPlatform": "ताज़ा समाचार",
+    "latestSubtitleNoPlatform": "कोई भी पल न चूकें",
     "newsHeader": "गेमिंग समाचार और लेख",
     "noArticles": "इस समय कोई लेख उपलब्ध नहीं है।",
     "fetchError": "डेटा प्राप्त करने में त्रुटि हुई, कृपया बाद में फिर से कोशिश करें।",
@@ -374,7 +440,8 @@
       },
       "recommended": {
         "title": "आपके लिए अनुशंसित",
-        "subtitle": "आपके खेले गए गेम्स के आधार पर"
+        "subtitle": "आपके खेले गए गेम्स के आधार पर",
+        "popularSubtitle": "अभी सबसे लोकप्रिय"
       }
     },
     "details": {
@@ -1164,6 +1231,7 @@
     "skip": "छोड़ें",
     "next": "अगला",
     "getStarted": "शुरू करें",
+    "exploreAsGuest": "मेहमान के रूप में देखें — खाते की आवश्यकता नहीं",
     "slides": [
       {
         "title": "📰 अपडेट रहें",
@@ -1184,7 +1252,9 @@
     ]
   },
   "lists": {
-    "addGame": "एक गेम जोड़ें"
+    "addGame": "एक गेम जोड़ें",
+    "createFirstTitle": "अपनी पहली सूची बनाएं",
+    "createFirstMessage": "इस गेम को एक सूची बनाकर सहेजें ताकि आप कभी भी वापस आ सकें।"
   },
   "notifications": {
     "newsChannelName": "समाचार सूचनाएं",
@@ -1265,6 +1335,32 @@
     "errors": {
       "partsRequired": "CPU और GPU चुनें",
       "saveFailed": "PC विशिष्टताएँ सहेजने में विफल"
+    }
+  },
+  "setup": {
+    "continue": "जारी रखें",
+    "finish": "समाप्त",
+    "skip": "अभी छोड़ें",
+    "platforms": {
+      "title": "अपने प्लेटफ़ॉर्म चुनें",
+      "subtitle": "अपनी फ़ीड और फ्री गेम अलर्ट को व्यक्तिगत बनाने के लिए वे प्लेटफ़ॉर्म चुनें जिन पर आप खेलते हैं।",
+      "playstation": "PlayStation",
+      "xbox": "Xbox",
+      "pc": "PC / Steam",
+      "nintendo": "Nintendo Switch",
+      "mobile": "मोबाइल"
+    },
+    "genres": {
+      "title": "पसंदीदा शैलियाँ",
+      "subtitle": "बेहतर सुझाव पाने के लिए 3–5 पसंदीदा शैलियाँ चुनें।",
+      "hint": "3–5 शैलियाँ चुनें (वैकल्पिक)"
+    }
+  },
+  "linking": {
+    "nudge": {
+      "title": "अपने गेमिंग खाते लिंक करें",
+      "message": "अपनी लाइब्रेरी और ट्रॉफी स्वचालित रूप से आयात करने के लिए अपना PSN, Xbox या Steam खाता लिंक करें।",
+      "cta": "खाते लिंक करें"
     }
   }
 }

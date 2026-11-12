@@ -8,6 +8,7 @@
 import type { Game, GamingEvent } from "@/src/types/sharedTypes";
 import type { GameData, GameFilters } from "@/src/features/games/types";
 import apiClient from "./client";
+import { fetchReleaseCalendarWindow } from "./releaseCalendar";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,16 +79,21 @@ export async function fetchSteamTopSellerGames(): Promise<Game[]> {
  * Fetch every game releasing inside the [from, to] window (Unix **seconds**,
  * inclusive on both ends) so the release calendar can bucket games per day.
  *
- * The server clamps the window to 62 days and caps the result at 500 games.
+ * The server clamps the window to 62 days **and caps a single response at 500
+ * games**, sorted ascending. A dense week can fill that cap on its own, which
+ * would silently truncate the newest days (today and everything upcoming), so
+ * the window is fetched in chunks and merged here.
  */
 export async function fetchReleaseCalendarGames(
   from: number,
   to: number,
 ): Promise<Game[]> {
-  const response = await apiClient.get<Game[]>("/release-calendar", {
-    params: { from, to },
+  return fetchReleaseCalendarWindow(from, to, async (pageFrom, pageTo) => {
+    const response = await apiClient.get<Game[]>("/release-calendar", {
+      params: { from: pageFrom, to: pageTo },
+    });
+    return response.data;
   });
-  return response.data;
 }
 
 /** Fetch most anticipated upcoming games. */

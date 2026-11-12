@@ -6,15 +6,15 @@ import AdSlot from "@/src/components/AdSlot";
 import { useBottomInset } from "@/src/hooks/useBottomInset";
 import DeferredSection from "./DeferredSection";
 import FreeGames from "./sections/FreeGames";
-import RecommendedGames from "./sections/RecommendedGames";
-import Popular from "./sections/Popular";
+import DiscoveryRail from "./sections/DiscoveryRail";
+import { DiscoveryRailProvider } from "./sections/DiscoveryRailContext";
 import SteamTopSellers from "./sections/SteamTopSellers";
-import TrendingPlatformSection from "./sections/TrendingPlatformSection";
 import RecentlyReleased from "./sections/RecentlyReleased";
 import ComingSoon from "./sections/ComingSoon";
 import MostAnticipated from "./sections/MostAnticipated";
 import NostalgiaCorner from "./sections/NostalgiaCorner";
 import TopRated from "./sections/TopRated";
+import { GamingEvents } from "@/src/features/events";
 import type { FeedItemConfig } from "../../types";
 import type { GamesFeedProps } from "./types";
 
@@ -22,16 +22,16 @@ import type { GamesFeedProps } from "./types";
 // the component so the array reference never changes between renders.
 const STATIC_FEED_ITEMS: FeedItemConfig[] = [
   { id: "free_games", type: "COMPONENT" },
+  // One discovery rail: Recommended → Trending (platform) → Popular.
   { id: "recommended", type: "COMPONENT" },
   { id: "ad_1", type: "AD" },
-  { id: "popular", type: "COMPONENT" },
-  { id: "trending_platform", type: "COMPONENT" },
-  { id: "ad_2", type: "AD" },
   { id: "anticipated", type: "COMPONENT" },
+  { id: "ad_2", type: "AD" },
   { id: "steam_top_sellers", type: "COMPONENT" },
   { id: "ad_3", type: "AD" },
   { id: "recently_released", type: "COMPONENT" },
   { id: "coming_soon", type: "COMPONENT" },
+  { id: "events", type: "COMPONENT" },
   { id: "ad_4", type: "AD" },
   { id: "nostalgia", type: "COMPONENT" },
   { id: "top_rated", type: "COMPONENT" },
@@ -44,25 +44,23 @@ const staticStyles = StyleSheet.create({
 // Stable memoized section wrappers — defined at module scope so their
 // references never change, which lets renderFeedItem remain stable.
 const FreeGamesSection = memo(() => <FreeGames />);
-const RecommendedSection = memo(() => <RecommendedGames />);
-const PopularSection = memo(() => <Popular />);
+const DiscoveryRailSection = memo(() => <DiscoveryRail />);
 const SteamSection = memo(() => <SteamTopSellers />);
-const TrendingSection = memo(() => <TrendingPlatformSection />);
 const ReleasedSection = memo(() => <RecentlyReleased />);
 const ComingSoonSection = memo(() => <ComingSoon />);
 const AnticipatedSection = memo(() => <MostAnticipated />);
 const NostalgiaSection = memo(() => <NostalgiaCorner />);
 const TopRatedSection = memo(() => <TopRated />);
+const EventsSection = memo(() => <GamingEvents />);
 FreeGamesSection.displayName = "FreeGamesSection";
-RecommendedSection.displayName = "RecommendedSection";
-PopularSection.displayName = "PopularSection";
+DiscoveryRailSection.displayName = "DiscoveryRailSection";
 SteamSection.displayName = "SteamSection";
-TrendingSection.displayName = "TrendingSection";
 ReleasedSection.displayName = "ReleasedSection";
 ComingSoonSection.displayName = "ComingSoonSection";
 AnticipatedSection.displayName = "AnticipatedSection";
 NostalgiaSection.displayName = "NostalgiaSection";
 TopRatedSection.displayName = "TopRatedSection";
+EventsSection.displayName = "EventsSection";
 
 /**
  * Browsable games feed: a static list of game sections, ad slots and a themed
@@ -86,25 +84,13 @@ const GamesFeed: React.FC<GamesFeedProps> = ({ onScroll }) => {
         case "recommended":
           return (
             <DeferredSection delay={600}>
-              <RecommendedSection />
-            </DeferredSection>
-          );
-        case "popular":
-          return (
-            <DeferredSection delay={900}>
-              <PopularSection />
+              <DiscoveryRailSection />
             </DeferredSection>
           );
         case "steam_top_sellers":
           return (
             <DeferredSection delay={1800}>
               <SteamSection />
-            </DeferredSection>
-          );
-        case "trending_platform":
-          return (
-            <DeferredSection delay={1200}>
-              <TrendingSection />
             </DeferredSection>
           );
         case "recently_released":
@@ -117,6 +103,12 @@ const GamesFeed: React.FC<GamesFeedProps> = ({ onScroll }) => {
           return (
             <DeferredSection delay={2400}>
               <ComingSoonSection />
+            </DeferredSection>
+          );
+        case "events":
+          return (
+            <DeferredSection delay={2550}>
+              <EventsSection />
             </DeferredSection>
           );
         case "anticipated":
@@ -145,17 +137,21 @@ const GamesFeed: React.FC<GamesFeedProps> = ({ onScroll }) => {
   );
 
   return (
-    <FlashList
-      data={STATIC_FEED_ITEMS}
-      renderItem={renderFeedItem}
-      keyExtractor={(item) => item.id}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-      onScroll={onScroll}
-      scrollEventThrottle={16}
-      getItemType={(item) => (item.type === "AD" ? "AD" : item.id)}
-      contentContainerStyle={[staticStyles.listContent, { paddingBottom: bottomInset }]}
-    />
+    // Shares the discovery-rail decision with the rail itself (and, on Home,
+    // with the For You quick-action chip) so the two can never disagree.
+    <DiscoveryRailProvider>
+      <FlashList
+        data={STATIC_FEED_ITEMS}
+        renderItem={renderFeedItem}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        getItemType={(item) => (item.type === "AD" ? "AD" : item.id)}
+        contentContainerStyle={[staticStyles.listContent, { paddingBottom: bottomInset }]}
+      />
+    </DiscoveryRailProvider>
   );
 };
 

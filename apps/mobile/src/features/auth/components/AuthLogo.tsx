@@ -15,6 +15,8 @@ const AuthLogo: React.FC<AuthLogoProps> = ({ size = 220 }) => {
       transition={500}
       cachePolicy="memory-disk"
       allowDownscaling
+      accessibilityRole="image"
+      accessibilityLabel="GamingZone"
     />
   );
 };

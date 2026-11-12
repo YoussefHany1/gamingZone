@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { Alert } from "react-native";
+import { Alert } from "@/src/lib/alert";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import CustomTextInput from "@/src/components/CustomTextInput";

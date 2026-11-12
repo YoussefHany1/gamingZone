@@ -71,7 +71,7 @@ export type NewsStackParamList = {
 };
 
 export type GamesStackParamList = {
-  GamesScreen: undefined;
+  GamesScreen: { focusSearch?: number } | undefined;
   GameDetails: { gameID: number | string; claimUrl?: string; store?: string } | undefined;
   GameNewsScreen: undefined;
 };

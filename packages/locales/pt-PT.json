@@ -57,6 +57,42 @@
     "save": "Guardar"
   },
   "auth": {
+    "a11y": {
+      "buttonHint": "Toque duas vezes para ativar",
+      "emailLabel": "Endereço de e-mail",
+      "emailHint": "Introduza o seu e-mail",
+      "passwordLabel": "Palavra-passe",
+      "passwordHint": "Introduza a sua palavra-passe",
+      "newPasswordHint": "Crie uma palavra-passe com pelo menos 8 caracteres, incluindo letras e números",
+      "nameLabel": "Nome completo",
+      "nameHint": "Introduza o seu nome completo",
+      "showPassword": "Mostrar palavra-passe",
+      "hidePassword": "Ocultar palavra-passe",
+      "showPasswordHint": "Mostra a palavra-passe introduzida",
+      "hidePasswordHint": "Oculta a palavra-passe",
+      "passwordStrengthHint": "Mostra a força da sua palavra-passe",
+      "signInHint": "Inicia sessão na sua conta",
+      "googleSignInHint": "Inicia sessão com a sua conta Google",
+      "discordSignInHint": "Inicia sessão com a sua conta Discord",
+      "createAccountHint": "Abre o ecrã de criação de conta",
+      "guestHint": "Continua sem iniciar sessão",
+      "forgotPasswordHint": "Abre o ecrã de reposição da palavra-passe",
+      "signUpHint": "Cria a sua conta",
+      "googleSignUpHint": "Cria uma conta com o Google",
+      "discordSignUpHint": "Cria uma conta com o Discord",
+      "haveAccountHint": "Abre o ecrã de início de sessão",
+      "sendResetHint": "Envia uma ligação de reposição da palavra-passe para o seu e-mail",
+      "backToLoginHint": "Volta ao ecrã de início de sessão",
+      "privacyPolicyHint": "Abre a política de privacidade no seu navegador",
+      "verifyHint": "Verifica se o seu e-mail foi confirmado",
+      "resendHint": "Envia outro e-mail de verificação",
+      "continueHint": "Continua para a aplicação sem verificar"
+    },
+    "emailSuggestions": {
+      "label": "Domínios de e-mail sugeridos",
+      "useDomain": "Usar {{domain}}",
+      "useDomainHint": "Preenche o domínio do e-mail por si"
+    },
     "emailPlaceholder": "E-mail",
     "passwordPlaceholder": "Palavra-passe",
     "guest": "Continuar como convidado",
@@ -82,6 +118,8 @@
       "female": "Feminino",
       "googleSignUp": "Registar com a Google",
       "discordSignUp": "Registar com o Discord",
+      "legalNotice": "Ao criar uma conta, aceita a nossa",
+      "privacyPolicyLink": "Política de Privacidade",
       "haveAnAccount": "Já tem uma conta?",
       "success": "Registo concluído com sucesso",
       "emptyFields": "Preencha todos os campos obrigatórios"
@@ -95,6 +133,7 @@
       "optionalNote": "Este passo é opcional — pode continuar a usar a aplicação sem verificar. A verificação ajuda a proteger a sua conta e a recuperá-la mais tarde.",
       "resend": "Reenviar e-mail",
       "resending": "A enviar...",
+      "resendIn": "Reenviar dentro de {{seconds}}s",
       "iveVerified": "Já verifiquei",
       "checking": "A verificar...",
       "continue": "Continuar",
@@ -133,6 +172,7 @@
       "emailRequired": "O e-mail é obrigatório",
       "emailInvalid": "Introduza um endereço de e-mail válido",
       "passwordShort": "A palavra-passe é demasiado curta",
+      "passwordRequired": "Por favor, introduza a sua palavra-passe",
       "passwordLetter": "A palavra-passe deve conter pelo menos uma letra",
       "passwordNumber": "A palavra-passe deve conter pelo menos um número",
       "nameShort": "O nome deve ter pelo menos 2 caracteres",
@@ -142,7 +182,14 @@
     },
     "validation": {
       "passwordTitle": "Palavra-passe inválida",
-      "passwordRequirements": "A palavra-passe deve ter pelo menos 8 caracteres e conter letras e números."
+      "passwordRequirements": "A palavra-passe deve ter pelo menos 8 caracteres e conter letras e números.",
+      "orContinueWith": "Ou continue com",
+      "passwordStrength": "Força da palavra-passe",
+      "checks": {
+        "minLength": "Pelo menos 8 caracteres",
+        "hasLetter": "Contém uma letra",
+        "hasNumber": "Contém um número"
+      }
     }
   },
   "navigation": {
@@ -208,7 +255,23 @@
       "noReleasesInRange": "Sem lançamentos neste período",
       "moreCount": "+{{count}} mais",
       "previousMonth": "Mês anterior",
-      "nextMonth": "Próximo mês"
+      "nextMonth": "Próximo mês",
+      "expand": "Mostrar calendário",
+      "collapse": "Ocultar calendário"
+    },
+    "header": {
+      "goodMorning": "Bom dia",
+      "goodAfternoon": "Boa tarde",
+      "goodEvening": "Boa noite",
+      "gamer": "Jogador",
+      "level": "Nv {{level}}",
+      "search": "Pesquisar jogos"
+    },
+    "quickActions": {
+      "releases": "Lançamentos",
+      "forYou": "Para si",
+      "trending": "Em alta",
+      "popular": "Populares"
     }
   },
   "events": {
@@ -231,7 +294,10 @@
       "esports": "Esports",
       "hardware": "Hardware"
     },
-    "latestHeader": "Últimas {{category}}",
+    "latestHeader": "Últimas notícias para ti",
+    "latestSubtitle": "Com base nas tuas plataformas",
+    "latestHeaderNoPlatform": "Últimas notícias",
+    "latestSubtitleNoPlatform": "Não percas nada",
     "newsHeader": "Notícias e artigos de gaming",
     "noArticles": "De momento, não há artigos disponíveis.",
     "platforms": {
@@ -374,7 +440,8 @@
       },
       "recommended": {
         "title": "Recomendado para si",
-        "subtitle": "Com base nos jogos que jogou"
+        "subtitle": "Com base nos jogos que jogou",
+        "popularSubtitle": "Populares agora"
       }
     },
     "details": {
@@ -1164,6 +1231,7 @@
     "skip": "Saltar",
     "next": "Seguinte",
     "getStarted": "Começar",
+    "exploreAsGuest": "Explore como convidado — sem necessidade de conta",
     "slides": [
       {
         "title": "📰 Mantenha-se atualizado",
@@ -1184,7 +1252,9 @@
     ]
   },
   "lists": {
-    "addGame": "Adicionar um jogo"
+    "addGame": "Adicionar um jogo",
+    "createFirstTitle": "Crie a sua primeira lista",
+    "createFirstMessage": "Guarde este jogo criando uma lista a que pode voltar quando quiser."
   },
   "notifications": {
     "newsChannelName": "Notificações de notícias",
@@ -1265,6 +1335,32 @@
     "errors": {
       "partsRequired": "Selecione CPU e GPU",
       "saveFailed": "Falha ao guardar as especificações do PC"
+    }
+  },
+  "setup": {
+    "continue": "Continuar",
+    "finish": "Concluir",
+    "skip": "Saltar por agora",
+    "platforms": {
+      "title": "Escolha as suas plataformas",
+      "subtitle": "Selecione as plataformas em que joga para personalizar o seu feed e alertas de jogos grátis.",
+      "playstation": "PlayStation",
+      "xbox": "Xbox",
+      "pc": "PC / Steam",
+      "nintendo": "Nintendo Switch",
+      "mobile": "Telemóvel"
+    },
+    "genres": {
+      "title": "Géneros favoritos",
+      "subtitle": "Selecione 3–5 géneros de que gosta para receber melhores recomendações.",
+      "hint": "Escolha 3–5 géneros (opcional)"
+    }
+  },
+  "linking": {
+    "nudge": {
+      "title": "Associe as suas contas de jogo",
+      "message": "Associe a sua conta PSN, Xbox ou Steam para importar automaticamente a sua biblioteca e troféus.",
+      "cta": "Associar contas"
     }
   }
 }

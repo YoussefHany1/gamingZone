@@ -11,6 +11,7 @@ import NotificationService from "@/src/services/notificationService";
 import { openLink } from "@/src/lib/browser";
 import { logger } from "@/src/lib/logger";
 import { useFreeGames } from "../../../hooks/useFreeGames";
+import { useUserPreferences } from "@/src/features/setup/hooks/useUserPreferences";
 import { GameSection } from "./GameSection";
 import FreeGameCard from "./FreeGameCard";
 import type { FreeGameItem } from "../../../types";
@@ -74,7 +75,8 @@ function FreeGames(): React.ReactElement {
     },
   }));
 
-  const { games, isLoading, error } = useFreeGames();
+  const { preferredPlatforms } = useUserPreferences();
+  const { games, isLoading, error } = useFreeGames(preferredPlatforms);
 
   // Check user's notification preference on mount / user change
   useEffect(() => {
@@ -147,9 +149,7 @@ function FreeGames(): React.ReactElement {
   }, []);
 
   const renderCard = useCallback(
-    (item: FreeGameItem) => (
-      <FreeGameCard item={item} onClaim={handleClaimPress} t={t} />
-    ),
+    (item: FreeGameItem) => <FreeGameCard item={item} onClaim={handleClaimPress} t={t} />,
     [handleClaimPress, t],
   );
 

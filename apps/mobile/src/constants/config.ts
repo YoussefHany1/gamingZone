@@ -1,6 +1,9 @@
 import { TestIds } from "react-native-google-mobile-ads";
 
 export const SERVER_URL = "https://api-fallback.vercel.app" as const;
+
+/** Privacy policy shown on the register screen and required by app stores. */
+export const PRIVACY_POLICY_URL = "https://gz1.games/privacy-policy" as const;
 export const adUnitId: string = __DEV__
   ? TestIds.BANNER
   : "ca-app-pub-4635812020796700/3199160392";

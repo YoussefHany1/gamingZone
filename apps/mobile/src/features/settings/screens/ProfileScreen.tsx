@@ -23,6 +23,7 @@ import { useGamification } from "@/src/features/gamification/hooks/useGamificati
 import { useProfileData } from "../hooks/useProfileData";
 import { useUserStats } from "../hooks/useUserStats";
 import LinkAccountModal from "@/src/features/linking/components/LinkAccountModal";
+import AccountLinkNudgeCard from "@/src/components/AccountLinkNudgeCard";
 
 const ProfileScreen = React.memo((): React.ReactElement => {
   const { t } = useTranslation();
@@ -62,7 +63,7 @@ const ProfileScreen = React.memo((): React.ReactElement => {
     },
     content: {
       padding: 20,
-      paddingBottom:60
+      paddingBottom: 60,
     },
     coversRow: {
       flexDirection: "row",
@@ -114,9 +115,14 @@ const ProfileScreen = React.memo((): React.ReactElement => {
               onPress={() => navigation.navigate("Achievements")}
             />
 
+            <AccountLinkNudgeCard
+              surface="profile"
+              onPress={() => setShowLinkModal(true)}
+            />
+
             <SectionTitle title={t("settings.profileShowcase.statsSection")} />
             <ProfileStatsGrid stats={stats} />
-<AdSlot visible={isReady} marginVertical={22} />
+            <AdSlot visible={isReady} marginVertical={22} />
             {(stats?.highestRated.length ?? 0) > 0 && (
               <>
                 <SectionTitle title={t("settings.profileShowcase.highestRated")} />
@@ -141,7 +147,6 @@ const ProfileScreen = React.memo((): React.ReactElement => {
               onConnectedApps={() => setShowLinkModal(true)}
               onBlockedUsers={() => navigation.navigate("BlockedUsersScreen")}
             />
-
           </>
         )}
       </ScrollView>

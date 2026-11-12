@@ -1,4 +1,5 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { ReactNode } from "react";
 import type { GameEntry } from "@gaming-zone/core";
 import type { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
 
@@ -65,7 +66,8 @@ export type UserGamesNativeAdProps = {
 export type EmptyGamesListProps = {
   listId: string;
   isSharedList: boolean;
-  showSteamSync: boolean;
+  /** Optional call-to-action rendered above the empty-state illustration. */
+  nudge?: ReactNode;
   onFindGame: () => void;
 };
 

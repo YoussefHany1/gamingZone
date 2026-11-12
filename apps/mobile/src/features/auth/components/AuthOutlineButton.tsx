@@ -8,6 +8,8 @@ const AuthOutlineButton: React.FC<AuthButtonProps> = ({
   onPress,
   disabled = false,
   containerStyle,
+  accessibilityLabel,
+  accessibilityHint,
 }) => (
   <AuthFlatButton
     variant="outline"
@@ -15,6 +17,8 @@ const AuthOutlineButton: React.FC<AuthButtonProps> = ({
     onPress={onPress}
     disabled={disabled}
     containerStyle={containerStyle}
+    accessibilityLabel={accessibilityLabel}
+    accessibilityHint={accessibilityHint}
   />
 );
 

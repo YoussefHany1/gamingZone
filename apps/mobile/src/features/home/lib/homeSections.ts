@@ -14,39 +14,34 @@ export function buildHomeSections(
 
   return [
     { type: "slideshow", website, category: "news", _key: `slideshow_${refreshToken}` },
-    // ── Immediate (above the fold) ──────────────────────────────────────────
-    { type: "news", category: "news", _key: `news_0_${currentLang}_${refreshToken}` },
+    // ── Immediate — pure UI, no fetch of its own ────────────────────────────
+    { type: "quick_actions", _key: "quick_actions" },
+    // ── Above the fold ──────────────────────────────────────────────────────
+    { type: "free_games", _key: `free_games_${refreshToken}` },
+    // NOTE: no `website` on the tab groups — the news feeds are all-sources
+    // (as the stacked sections always were). Only the Slideshow is site-bound.
     { type: "weekly_summary", _key: `weekly_${refreshToken}` },
+    // ── Staggered — spread the network burst so fetches never stack up ─────
+    { type: "recommended", _key: `recommended_${refreshToken}` },
+    { type: "ad", _key: "ad_0" },
+    // NOTE: no `website` on the tab groups — the news feeds are all-sources
+    // (as the stacked sections always were). Only the Slideshow is site-bound.
+    {
+      type: "news_tabs",
+      id: "news_tabs", // News | Reviews
+      _key: `news_tabs_${currentLang}_${refreshToken}`,
+    },
+    { type: "events", _key: `events_${refreshToken}` },
     {
       type: "release_calendar",
       refreshToken,
       _key: "release_calendar",
     },
-
-    { type: "ad", _key: "ad_0" },
-    // ── Staggered — spread the network burst so fetches never stack up ─────
-    {
-      type: "news",
-      category: "reviews",
-      delay: 1800,
-      _key: `news_1_${currentLang}_${refreshToken}`,
-    },
-    { type: "recommended", _key: `recommended_${refreshToken}` },
-
     { type: "ad", _key: "ad_1" },
     {
-      type: "news",
-      category: "esports",
-      delay: 3200,
-      _key: `news_2_${currentLang}_${refreshToken}`,
-    },
-    { type: "events", _key: `events_${refreshToken}` },
-    { type: "ad", _key: "ad_2" },
-    {
-      type: "news",
-      category: "hardware",
-      delay: 4600,
-      _key: `news_3_${currentLang}_${refreshToken}`,
+      type: "news_tabs",
+      id: "insight_tabs", // Esports | Hardware
+      _key: `insight_tabs_${currentLang}_${refreshToken}`,
     },
   ];
 }

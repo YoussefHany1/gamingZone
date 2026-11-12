@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { Alert, Linking, Platform } from "react-native";
+import { Linking, Platform } from "react-native";
+import { Alert } from "@/src/lib/alert";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import { storage } from "../lib/storage";
 import Constants from "expo-constants";

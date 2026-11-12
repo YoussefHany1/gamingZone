@@ -41,7 +41,9 @@ import { usePresenceHeartbeat } from "./features/social/hooks/usePresenceHeartbe
 import { useSessionReminders } from "./features/social/hooks/useSessionReminders";
 import { useSessionReminderNavigation } from "./features/social/hooks/useSessionReminderNavigation";
 import useOTAUpdate from "./hooks/useOTAUpdate";
-import { useAuthPrompt } from "./hooks/useAuthPrompt";
+import { useAuthGateStore } from "./store/useAuthGateStore";
+import AuthPromptModal from "./components/AuthPromptModal";
+import { SetupWizardScreen, isSetupDone } from "./features/setup";
 import {
   MainAppTabs,
   AuthStack,
@@ -52,6 +54,7 @@ import OnboardingScreen from "./features/onboarding/screens/OnboardingScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import OfflineBanner from "./components/OfflineBanner";
 import GamificationOverlay from "./features/gamification/components/GamificationOverlay";
+import AlertHost from "./components/ThemedAlert/AlertHost";
 import { logger } from "@/src/lib/logger";
 import { logScreenNavigation } from "@/src/lib/navigationLogger";
 
@@ -319,11 +322,43 @@ function App(): React.ReactElement | null {
   useSessionReminderNavigation(navigationRef);
 
   const otaState = useOTAUpdate();
-  const {
-    visible: showAuthPrompt,
-    dismiss: dismissAuthPrompt,
-    AuthPromptModal,
-  } = useAuthPrompt();
+
+  const authGateVisible = useAuthGateStore((s) => s.visible);
+  const dismissAuthGate = useAuthGateStore((s) => s.dismiss);
+  const onAuthenticated = useAuthGateStore((s) => s.onAuthenticated);
+  const setWizardHold = useAuthGateStore((s) => s.setWizardHold);
+  const consumePendingAction = useAuthGateStore((s) => s.consumePendingAction);
+  const prevIsSignedInRef = useRef(false);
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
+
+  // When a guest becomes signed-in while the gate flow is active, resume/hold pending action.
+  useEffect(() => {
+    const wasSignedIn = prevIsSignedInRef.current;
+    const nowSignedIn = !!user && !user.isAnonymous;
+    prevIsSignedInRef.current = nowSignedIn;
+    if (!wasSignedIn && nowSignedIn) {
+      onAuthenticated();
+    }
+  }, [user, onAuthenticated]);
+
+  // Show quick setup for signed-in users who haven't completed it yet.
+  useEffect(() => {
+    if (loading || showOnboarding) return;
+    if (user && !user.isAnonymous && !isSetupDone(user.uid)) {
+      setWizardHold(true);
+      setShowSetupWizard(true);
+    } else {
+      setShowSetupWizard(false);
+      setWizardHold(false);
+    }
+  }, [user, loading, showOnboarding, setWizardHold]);
+
+  const handleSetupDone = useCallback(() => {
+    setShowSetupWizard(false);
+    setWizardHold(false);
+    // Resume any pending action that was held for the wizard.
+    consumePendingAction();
+  }, [setWizardHold, consumePendingAction]);
 
   const handleAuthPromptSignIn = useCallback(() => {
     navigationRef.current?.navigate("Auth", { screen: "Login" });
@@ -391,6 +426,19 @@ function App(): React.ReactElement | null {
     );
   }
 
+  if (showSetupWizard) {
+    return (
+      <ErrorBoundary sectionLabel="Setup">
+        <SafeAreaProvider>
+          <GestureHandlerRootView style={styles.container}>
+            <StatusBar style={isDark ? "light" : "dark"} />
+            <SetupWizardScreen onDone={handleSetupDone} />
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary sectionLabel="Root">
       <SafeAreaProvider>
@@ -418,16 +466,16 @@ function App(): React.ReactElement | null {
 
           {/* XP awards and level-ups are reported wherever the user happens to be. */}
           <GamificationOverlay />
+          {/* Global themed Alert replacement, driven by useAlertStore. */}
+          <AlertHost />
         </GestureHandlerRootView>
       </SafeAreaProvider>
-      {navigationRef.current ? (
-        <AuthPromptModal
-          visible={showAuthPrompt}
-          onDismiss={dismissAuthPrompt}
-          onSignIn={handleAuthPromptSignIn}
-          onSignUp={handleAuthPromptSignUp}
-        />
-      ) : null}
+      <AuthPromptModal
+        visible={authGateVisible}
+        onDismiss={dismissAuthGate}
+        onSignIn={handleAuthPromptSignIn}
+        onSignUp={handleAuthPromptSignUp}
+      />
     </ErrorBoundary>
   );
 }

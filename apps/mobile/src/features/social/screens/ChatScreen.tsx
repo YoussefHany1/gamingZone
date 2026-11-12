@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   // Core Clipboard is deprecated in RN but still ships in the native build;
   // swap to @react-native-clipboard/clipboard when a native rebuild is planned.
@@ -9,8 +8,8 @@ import {
   Platform,
   TouchableOpacity,
   View,
-  type AlertButton,
 } from "react-native";
+import { Alert, type AlertButton } from "@/src/lib/alert";
 import { Image } from "expo-image";
 import { ArrowLeft, MoreVertical, Send, Users } from "lucide-react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";

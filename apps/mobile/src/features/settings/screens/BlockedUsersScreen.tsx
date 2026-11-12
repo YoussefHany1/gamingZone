@@ -1,11 +1,11 @@
 import React, { memo, useCallback } from "react";
 import {
   ActivityIndicator,
-  Alert,
   RefreshControl,
   TouchableOpacity,
   View,
 } from "react-native";
+import { Alert } from "@/src/lib/alert";
 import GamerAvatar from "@/src/features/social/components/GamerAvatar";
 import GamingEmptyState from "@/src/components/GamingEmptyState";
 import { Ban } from "lucide-react-native";

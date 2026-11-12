@@ -72,13 +72,19 @@ export type LatestNewsProps = {
   mockData?: Article[]; // For preview screens like ThemeScreen
   /** Active platform filter; `undefined` disables filtering (Home/preview). */
   platform?: ArticlePlatform | undefined;
+  /**
+   * Client-side platform relevance filter (home tabs): the fetch stays
+   * unfiltered, but items are kept only when untagged (no `platforms`) or
+   * tagged with this platform. Takes precedence over `platform`.
+   */
+  userPlatform?: ArticlePlatform | undefined;
   /** Renders the platform chip row under the source dropdown. */
   showPlatformFilter?: boolean;
   onPlatformChange?: (value: NewsPlatformFilter) => void;
   /** Clears the platform filter from the filtered empty state. */
   onResetPlatform?: () => void;
   /** False while the profile platform is still resolving — keeps the feed idle. */
-  feedReady?: boolean;
+  feedReady?: boolean | undefined;
   /** Language filter for an "All sources" feed (`all` = no language query). */
   languageFilter?: NewsLanguageFilter;
 };

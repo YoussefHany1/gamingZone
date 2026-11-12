@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import { TouchableOpacity, ActivityIndicator } from "react-native";
 import CustomText from "@/src/components/CustomText";
+import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type { AuthButtonProps } from "./types";
@@ -27,8 +28,11 @@ const AuthFlatButton: React.FC<AuthFlatButtonProps> = ({
   loading = false,
   disabled = false,
   containerStyle,
+  accessibilityLabel,
+  accessibilityHint,
   variant,
 }) => {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useThemeStyles(
     (c) => {
@@ -97,6 +101,10 @@ const AuthFlatButton: React.FC<AuthFlatButtonProps> = ({
       style={[styles.button, containerStyle, disabled && styles.buttonDisabled]}
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityHint={accessibilityHint ?? t("auth.a11y.buttonHint")}
+      accessibilityState={{ disabled, busy: loading }}
     >
       {loading ? (
         <ActivityIndicator color={colors.onAccent} size="small" />

@@ -11,6 +11,11 @@
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 export { useGames } from "./hooks/useGames";
 export { useGameDetails } from "./hooks/useGameDetails";
+export { useDiscoveryRailKind } from "./hooks/useDiscoveryRailKind";
+export type {
+  DiscoveryRailDecision,
+  DiscoveryRailKind,
+} from "./hooks/useDiscoveryRailKind";
 
 // ── Types (re-exported for consumers) ────────────────────────────────────────
 export type {
@@ -68,4 +73,10 @@ export { default as GameDetailsScreen } from "./screens/GameDetailsScreen";
 export { default as GameNewsScreen } from "./screens/GameNewsScreen";
 
 // ── Components ────────────────────────────────────────────────────────────────
-export { default as RecommendedGames } from "./components/gamesScreen/RecommendedGames";
+export { default as RecommendedGames } from "./components/gamesScreen/sections/RecommendedGames";
+export { default as DiscoveryRail } from "./components/gamesScreen/sections/DiscoveryRail";
+export {
+  DiscoveryRailProvider,
+  useDiscoveryRailDecision,
+} from "./components/gamesScreen/sections/DiscoveryRailContext";
+export { default as FreeGames } from "./components/gamesScreen/sections/FreeGames";

@@ -6,18 +6,23 @@ import type { NewsSectionProps } from "./types";
 // always referentially equal across renders.
 const noop = (): void => {};
 
-/** Home's news feed: 4 items, no dropdown, header title shown, no footer. */
+/** The home news feed section (fixed to 4 items, no dropdown/footer). */
 const NewsSection = memo(function NewsSection({
   category,
   language,
   website,
+  showHeaderTitle = true,
+  userPlatform,
+  feedReady,
 }: NewsSectionProps) {
   return (
     <LatestNews
       category={category}
       limit={4}
       showDropdown={false}
-      showHeaderTitle={true}
+      showHeaderTitle={showHeaderTitle}
+      userPlatform={userPlatform}
+      feedReady={feedReady}
       language={language}
       showFooter={false}
       website={website}

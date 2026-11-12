@@ -1,4 +1,5 @@
-import { Alert, Linking } from "react-native";
+import { Linking } from "react-native";
+import { Alert } from "@/src/lib/alert";
 import { useThemeStore } from "../store/useThemeStore";
 import { logger } from "@/src/lib/logger";
 

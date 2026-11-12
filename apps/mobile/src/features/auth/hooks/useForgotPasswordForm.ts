@@ -1,7 +1,9 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ToastAndroid } from "react-native";
 import auth from "@react-native-firebase/auth";
 import { useTranslation } from "react-i18next";
+import { useAuthValidation } from "./useAuthValidation";
+import { normalizeEmail } from "../lib/validation";
 import type { AuthNavigationProp } from "../types";
 import { logger } from "@/src/lib/logger";
 
@@ -12,6 +14,13 @@ export type UseForgotPasswordFormParams = {
 export type UseForgotPasswordFormResult = {
   email: string;
   setEmail: (email: string) => void;
+  /**
+   * Inline validation error, shown once the field was blurred or a submit was
+   * attempted. `null` means valid (or not yet eligible to show).
+   */
+  error: string | null;
+  /** Marks the email field as touched (called on blur). */
+  markTouched: () => void;
   loading: boolean;
   handleResetPassword: () => Promise<void>;
   handleGoBack: () => void;
@@ -24,12 +33,30 @@ export function useForgotPasswordForm({
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [touched, setTouched] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const validators = useAuthValidation();
+
+  const markTouched = useCallback((): void => setTouched(true), []);
+
+  /** Inline error, revealed after blur or first submit attempt. */
+  const error = useMemo(
+    () =>
+      touched || submitted
+        ? validators.validateEmail(normalizeEmail(email))
+        : null,
+    [touched, submitted, email, validators],
+  );
 
   const handleResetPassword = useCallback(async (): Promise<void> => {
-    if (!email) {
-      ToastAndroid.show(t("auth.forgotPassword.emptyEmail"), ToastAndroid.LONG);
-      return;
-    }
+    setSubmitted(true);
+
+    // Normalise again at submit time in case the value was autofilled.
+    const normalizedEmail = normalizeEmail(email);
+    setEmail(normalizedEmail);
+
+    // Client-side validation: surfaced inline via `error`, so only bail out.
+    if (validators.validateEmail(normalizedEmail)) return;
 
     setLoading(true);
     try {
@@ -38,7 +65,7 @@ export function useForgotPasswordForm({
       // for every address (existing or not), which would falsely report "no account".
       // sendPasswordResetEmail itself resolves successfully even for unknown emails
       // (to prevent account enumeration), so existing accounts always receive the link.
-      await auth().sendPasswordResetEmail(email);
+      await auth().sendPasswordResetEmail(normalizedEmail);
       ToastAndroid.show(t("auth.forgotPassword.successTitle"), ToastAndroid.LONG);
       navigation.goBack();
     } catch (error: unknown) {
@@ -52,17 +79,22 @@ export function useForgotPasswordForm({
     } finally {
       setLoading(false);
     }
-  }, [email, navigation, t]);
+  }, [email, navigation, t, validators]);
 
   const handleGoBack = useCallback(() => {
     navigation.goBack();
   }, [navigation]);
 
-  const setEmailValue = useCallback((value: string) => setEmail(value), []);
+  const setEmailValue = useCallback(
+    (value: string) => setEmail(normalizeEmail(value)),
+    [],
+  );
 
   return {
     email,
     setEmail: setEmailValue,
+    error,
+    markTouched,
     loading,
     handleResetPassword,
     handleGoBack,

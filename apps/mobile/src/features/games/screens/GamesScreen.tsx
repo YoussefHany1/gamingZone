@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { View } from "react-native";
+import type { TextInput } from "react-native";
+import { useRoute } from "@react-navigation/native";
+import type { RouteProp } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import FilterModal from "../components/gamesScreen/FilterModal";
@@ -8,6 +11,7 @@ import GamesList from "../components/gamesScreen/GamesList";
 import GamesLoadingSkeleton from "../components/gamesScreen/GamesLoadingSkeleton";
 import GamesSearchHeader from "../components/gamesScreen/GamesSearchHeader";
 import { useGames } from "../hooks/useGames";
+import type { GamesStackParamList } from "@/src/navigation/AppNavigator";
 
 /**
  * Browse screen: a search/filter header on top of either the loading skeleton,
@@ -21,6 +25,9 @@ function GamesScreen(): React.ReactElement {
     },
     flex: { flex: 1 },
   }));
+
+  const route = useRoute<RouteProp<GamesStackParamList, "GamesScreen">>();
+  const inputRef = useRef<TextInput | null>(null);
 
   const {
     searchQuery,
@@ -44,10 +51,20 @@ function GamesScreen(): React.ReactElement {
     closeFilter,
   } = useGames();
 
+  useEffect(() => {
+    const token = route.params?.focusSearch;
+    if (!token || !isReady) return;
+    const t = setTimeout(() => {
+      inputRef.current?.focus?.();
+    }, 150);
+    return () => clearTimeout(t);
+  }, [route.params?.focusSearch, isReady]);
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <GamesSearchHeader
         searchQuery={searchQuery}
+        inputRef={inputRef}
         showAutocomplete={showAutocomplete}
         activeFilterCount={activeFilterCount}
         onChangeText={handleSearchTextChange}

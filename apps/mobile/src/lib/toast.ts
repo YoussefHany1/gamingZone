@@ -1,4 +1,5 @@
-import { Alert, Platform, ToastAndroid } from "react-native";
+import { Platform, ToastAndroid } from "react-native";
+import { Alert } from "@/src/lib/alert";
 
 /**
  * Cross-platform transient message.

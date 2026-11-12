@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { Alert } from "react-native";
+import { Alert } from "@/src/lib/alert";
 import auth from "@react-native-firebase/auth";
 import { useTranslation } from "react-i18next";
 import NotificationService from "@/src/services/notificationService";

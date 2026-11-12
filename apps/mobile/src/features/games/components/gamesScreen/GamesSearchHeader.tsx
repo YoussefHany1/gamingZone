@@ -19,6 +19,7 @@ const FILTER_HIT_SLOP = { top: 6, bottom: 6, left: 6, right: 6 };
  */
 const GamesSearchHeader: React.FC<GamesSearchHeaderProps> = ({
   searchQuery,
+  inputRef,
   showAutocomplete,
   activeFilterCount,
   onChangeText,
@@ -107,6 +108,7 @@ const GamesSearchHeader: React.FC<GamesSearchHeaderProps> = ({
         <View style={styles.searchBarContainer}>
           <Search size={18} color={colors.textSubtle} style={styles.searchIcon} />
           <CustomTextInput
+            ref={inputRef}
             style={styles.searchInput}
             placeholder={t("games.searchPlaceholder")}
             placeholderTextColor={colors.textSubtle}

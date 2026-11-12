@@ -5,7 +5,7 @@ import type { DeferredSectionProps } from "./types";
 /**
  * Mounts `children` only after `delay` ms. Used to spread out the Home-screen
  * network fetches so they never all fire at once: a simultaneous burst
- * (slideshow + news feeds + weekly summary + recommended + events + ads)
+ * (slideshow + news feeds + weekly summary + recommended + ads)
  * starved the main- and render-threads on a low-end MediaTek device and
  * produced an input-dispatch ANR. Renders a fixed-height placeholder until
  * mounted so the page layout doesn't shift.

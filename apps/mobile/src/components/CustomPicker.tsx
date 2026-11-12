@@ -1,13 +1,7 @@
 import { useState, useCallback, useMemo, memo } from "react";
-import type {
-  ViewStyle} from "react-native";
-import {
-  View,
-  Modal,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView
-} from "react-native";
+import type { ViewStyle } from "react-native";
+import { View, Modal, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import type { LucideIcon } from "lucide-react-native";
 import { Check, ChevronDown, X } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomText from "./CustomText";
@@ -22,10 +16,18 @@ type CustomPickerProps = {
   onValueChange: (value: string) => void;
   placeholder?: string;
   containerStyle?: ViewStyle;
+  icon?: LucideIcon;
 };
 
 const CustomPicker: React.FC<CustomPickerProps> = memo(
-  ({ options, selectedValue, onValueChange, placeholder, containerStyle }) => {
+  ({
+    options,
+    selectedValue,
+    onValueChange,
+    placeholder,
+    containerStyle,
+    icon: Icon,
+  }) => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const { t } = useTranslation();
     const colors = useThemeColors();
@@ -33,16 +35,24 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
     const resolvedPlaceholder = placeholder ?? t("common.selectAnOption");
 
     const styles = useThemeStyles((c) => ({
-      container: {
-        marginBottom: 10,
-      },
+      container: {},
       pickerButton: {
         backgroundColor: c.surface,
         padding: 15,
-        borderRadius: 5,
+        borderRadius: 12,
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        borderWidth: 1,
+        borderColor: c.accentBorder,
+      },
+      leftContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        flex: 1,
+      },
+      icon: {
+        marginEnd: 10,
       },
       pickerText: {
         fontSize: 14,
@@ -127,11 +137,20 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
           style={styles.pickerButton}
           onPress={() => setModalVisible(true)}
         >
-          <CustomText
-            style={[styles.pickerText, !selectedValue && styles.placeholderText]}
-          >
-            {selectedLabel}
-          </CustomText>
+          <View style={styles.leftContent}>
+            {Icon ? (
+              <Icon
+                size={20}
+                color={selectedValue ? colors.accentText : colors.textSubtle}
+                style={styles.icon}
+              />
+            ) : null}
+            <CustomText
+              style={[styles.pickerText, !selectedValue && styles.placeholderText]}
+            >
+              {selectedLabel}
+            </CustomText>
+          </View>
           <ChevronDown size={20} color={colors.text} />
         </TouchableOpacity>
 

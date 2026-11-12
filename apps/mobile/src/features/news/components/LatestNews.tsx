@@ -10,7 +10,7 @@ import {
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import type { ListRenderItemInfo } from "@shopify/flash-list";
 import { FlashList } from "@shopify/flash-list";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { NativeAdComponent } from "@/src/components/NativeAd";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import NetInfo from "@react-native-community/netinfo";
@@ -20,7 +20,7 @@ import DropdownPicker from "./DropdownPicker";
 import SkeletonNewsItem from "../skeleton/SkeletonNewsItem";
 import ErrorState from "@/src/components/ErrorState";
 import PlatformFilterChips from "./PlatformFilterChips";
-import { badgePlatformsOf } from "../lib/articlePlatforms";
+import { articlePlatformsOf, badgePlatformsOf } from "../lib/articlePlatforms";
 import type { NewsPlatformFilter } from "../lib/articlePlatforms";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -148,7 +148,7 @@ const NewsItem = memo(function NewsItem({
           <CustomText style={styles.timeAgoText}>{timeAgo}</CustomText>
         </View>
         <View>
-          <Image
+          <AppImage
             style={styles.thumbnail}
             recyclingKey={String(item?.id ?? item?.thumbnail)}
             source={
@@ -163,9 +163,9 @@ const NewsItem = memo(function NewsItem({
                 : require("@/assets/image-not-found.webp")
             }
             contentFit="cover"
-            cachePolicy="memory-disk"
+            cachePolicy="none"
             allowDownscaling={true}
-            transition={200}
+            transition={300}
           />
           <CustomText style={styles.website}>{item.siteName}</CustomText>
         </View>
@@ -259,6 +259,7 @@ function LatestNews({
   adInterval = 8,
   mockData,
   platform,
+  userPlatform,
   showPlatformFilter,
   onPlatformChange,
   onResetPlatform,
@@ -407,7 +408,7 @@ function LatestNews({
   // Reset page when category, website, language, or platform changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [category, website, language, platform, languageFilter]);
+  }, [category, website, language, platform, userPlatform, languageFilter]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
@@ -430,12 +431,14 @@ function LatestNews({
     feedCategory,
     feedWebsite,
     currentPage,
-    itemsPerPage,
+    // Client-side relevance mode (home tabs) over-fetches so the display
+    // slice still fills after filtering; the fetch itself stays unfiltered.
+    userPlatform ? Math.max(itemsPerPage * 6, 40) : itemsPerPage,
     language,
     // Mock-only previews (Appearance screen) must not touch the cache or NetInfo;
     // the feed also waits for the profile platform so it never fetches twice.
     !mockData && feedReady,
-    platform,
+    userPlatform ? undefined : platform,
     // `all` = no language query; `undefined` = derive from `language`.
     languageFilter,
   );
@@ -461,8 +464,21 @@ function LatestNews({
       return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
     });
 
+    // Client-side platform relevance (home tabs): keep articles with no
+    // platform tags at all, plus articles tagged with the user's platform.
+    // General articles tag every platform, so they always match.
+    const relevant =
+      userPlatform === undefined
+        ? sorted
+        : sorted.filter((item) => {
+            const tags = articlePlatformsOf(item);
+            return tags.length === 0 || tags.includes(userPlatform);
+          });
+
     const sliced =
-      typeof limit === "number" && !enablePagination ? sorted.slice(0, limit) : sorted;
+      typeof limit === "number" && !enablePagination
+        ? relevant.slice(0, limit)
+        : relevant;
 
     // Feed pages can overlap across fetches — dedupe by $id so the list keys
     // stay unique and stable (FlashList recycles by key; duplicated keys cause
@@ -474,7 +490,7 @@ function LatestNews({
       seen.add(key);
       return true;
     });
-  }, [articles, limit, enablePagination]);
+  }, [articles, limit, enablePagination, userPlatform]);
 
   // Navigate to the article detail screen
   const handlePressArticle = useCallback(

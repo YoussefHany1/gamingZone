@@ -9,6 +9,8 @@ const AuthPrimaryButton: React.FC<AuthButtonProps> = ({
   loading = false,
   disabled = false,
   containerStyle,
+  accessibilityLabel,
+  accessibilityHint,
 }) => (
   <AuthFlatButton
     variant="primary"
@@ -17,6 +19,8 @@ const AuthPrimaryButton: React.FC<AuthButtonProps> = ({
     loading={loading}
     disabled={disabled}
     containerStyle={containerStyle}
+    accessibilityLabel={accessibilityLabel}
+    accessibilityHint={accessibilityHint}
   />
 );
 

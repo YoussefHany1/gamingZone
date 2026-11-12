@@ -1,5 +1,6 @@
 import { useCallback, type Dispatch, type SetStateAction } from "react";
-import { Alert, ToastAndroid } from "react-native";
+import { ToastAndroid } from "react-native";
+import { Alert } from "@/src/lib/alert";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
 import { useTranslation } from "react-i18next";

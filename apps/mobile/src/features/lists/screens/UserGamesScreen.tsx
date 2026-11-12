@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { View, TouchableOpacity, Share, RefreshControl } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,6 +15,8 @@ import GamePosterItem from "../components/userGames/GamePosterItem";
 import UserGamesNativeAd from "../components/userGames/UserGamesNativeAd";
 import GamesListHeader from "../components/userGames/GamesListHeader";
 import EmptyGamesList from "../components/userGames/EmptyGamesList";
+import AccountLinkNudgeCard from "@/src/components/AccountLinkNudgeCard";
+import LinkAccountModal from "@/src/features/linking/components/LinkAccountModal";
 import { useUserGames } from "../hooks/useUserGames";
 import { useListEditing } from "../hooks/useListEditing";
 import { useGameMutations } from "../hooks/useGameMutations";
@@ -43,6 +45,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
   const isReady = useDeferredMount();
   const getDisplayName = useListDisplayName();
   const { viewMode, setViewMode } = useViewModePreference();
+  const [showLinkModal, setShowLinkModal] = useState<boolean>(false);
 
   const styles = useThemeStyles((c) => ({
     container: {
@@ -206,23 +209,26 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
 
   // Empty list
   const renderEmptyList = useCallback(() => {
-    const isDefaultGameList = ["playing", "played", "wantToPlay"].includes(
-      listId,
-    );
-    const showSteamSync =
-      !isSharedList && isDefaultGameList && isSignedIn;
+    const nudge =
+      isSignedIn && !isSharedList ? (
+        <AccountLinkNudgeCard
+          surface="userGames"
+          onPress={() => setShowLinkModal(true)}
+        />
+      ) : undefined;
 
     return (
       <EmptyGamesList
         listId={listId}
         isSharedList={Boolean(isSharedList)}
-        showSteamSync={showSteamSync}
+        nudge={nudge}
         onFindGame={() => navigation.navigate("Games")}
       />
     );
   }, [listId, isSharedList, isSignedIn, navigation]);
 
-  // Header: title + description (editable by the list owner)
+  // Header: title + description (editable by the list owner). The account-link
+  // nudge lives in the empty state instead, so a populated list stays clean.
   const listHeader = (
     <GamesListHeader
       title={getDisplayName(displayTitle)}
@@ -271,6 +277,7 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
           }
         />
       )}
+      <LinkAccountModal visible={showLinkModal} onClose={() => setShowLinkModal(false)} />
     </SafeAreaView>
   );
 };
