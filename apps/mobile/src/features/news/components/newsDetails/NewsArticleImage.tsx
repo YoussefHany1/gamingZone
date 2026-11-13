@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import type { NewsArticleImageProps } from "./types";
 
@@ -16,7 +16,7 @@ const NewsArticleImage = memo(function NewsArticleImage({
   }));
 
   return (
-    <Image
+    <AppImage
       style={styles.image}
       recyclingKey={thumbnail || ""}
       source={

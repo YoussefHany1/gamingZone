@@ -3,7 +3,7 @@ import { igdbImageUrl } from "@gaming-zone/utils";
 import { View, TouchableOpacity } from "react-native";
 import { GestureScrollView } from "@/src/components/GestureScrollView";
 import CustomText from "@/src/components/CustomText";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { FlashList } from "@shopify/flash-list";
 import type { ListRenderItemInfo } from "@shopify/flash-list";
 import { useNavigation } from "@react-navigation/native";
@@ -99,7 +99,7 @@ const RecommendedCard = React.memo<RecommendedCardProps>(({ item }) => {
       {/* <LinearGradient colors={["#172a4a", "#0c1a33"]} style={styles.cardBackground} /> */}
 
       <View style={styles.coverContainer}>
-        <Image
+        <AppImage
           source={
             item.cover
               ? {

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { igdbImageUrl } from "@gaming-zone/utils";
 import { View, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl } from "react-native";
 import CustomText from "@/src/components/CustomText";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import type { ListRenderItemInfo } from "@shopify/flash-list";
 import { FlashList } from "@shopify/flash-list";
 import { ArrowLeft, ArrowRight } from "lucide-react-native";
@@ -142,7 +142,7 @@ const GameCard = React.memo<GameCardProps>(({ item }) => {
       accessibilityLabel={item.name}
     >
       <View style={styles.coverWrapper}>
-        <Image
+        <AppImage
           source={
             item.cover
               ? {

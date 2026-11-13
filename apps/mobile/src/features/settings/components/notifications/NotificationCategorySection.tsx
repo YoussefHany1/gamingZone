@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { View, Switch, TouchableOpacity } from "react-native";
 import type { ImageStyle } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { ChevronDown, ChevronRight } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -149,7 +149,7 @@ const NotificationCategorySection = memo(
                   return (
                     <View key={`${category}-${source.$id}`} style={styles.sourceItem}>
                       <View style={styles.sourceInfo}>
-                        <Image
+                        <AppImage
                           source={source.image ?? null}
                           style={styles.sourceIcon as ImageStyle}
                         />

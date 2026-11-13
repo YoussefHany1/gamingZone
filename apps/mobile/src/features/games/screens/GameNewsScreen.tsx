@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import AdSlot from "@/src/components/AdSlot";
 import { FlashList } from "@shopify/flash-list";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -144,7 +144,7 @@ const NewsItem = memo<NewsItemProps>(({ item, lang }) => {
           </CustomText>
         </View>
         {imageUrl && (
-          <Image
+          <AppImage
             recyclingKey={imageUrl}
             source={{ uri: imageUrl }}
             style={styles.cover}

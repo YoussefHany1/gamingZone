@@ -208,7 +208,9 @@
       "myLists": "My Lists",
       "profile": "My Profile",
       "pcSpecs": "My PC",
-      "social": "Social"
+      "social": "Social",
+      "adminDashboard": "Admin Dashboard",
+      "adminUserDetail": "User details"
     }
   },
   "home": {
@@ -742,7 +744,8 @@
       "privacyPolicy": "Privacy Policy",
       "signOut": "Sign Out",
       "showAds": "Show Ads",
-      "blockedUsers": "Blocked Users"
+      "blockedUsers": "Blocked Users",
+      "adminDashboard": "Admin dashboard"
     },
     "profile": {
       "changePic": "Change your profile picture",
@@ -1370,6 +1373,167 @@
       "title": "Link your gaming accounts",
       "message": "Link your PSN, Xbox, or Steam account to automatically import your library and trophies.",
       "cta": "Link accounts"
+    }
+  },
+  "admin": {
+    "tabs": {
+      "overview": "Overview",
+      "users": "Users",
+      "system": "System"
+    },
+    "access": {
+      "checking": "Checking admin access…",
+      "denied": "Admin access required",
+      "deniedHint": "Your account doesn't have the admin role.",
+      "sessionExpired": "Your session changed. Refresh to try again."
+    },
+    "errors": {
+      "generic": "Couldn't load admin data.",
+      "network_error": "Network error — check your connection.",
+      "admin_required": "Admin access required.",
+      "user_not_found": "User not found.",
+      "self_demotion": "You can't remove your own admin access.",
+      "self_disable": "You can't disable your own account.",
+      "last_admin": "At least one admin must remain.",
+      "invalid_payload": "The request was invalid.",
+      "invalid_uid": "Invalid user id.",
+      "invalid_request": "Invalid request.",
+      "unauthenticated": "You must be signed in."
+    },
+    "overview": {
+      "range": {
+        "7d": "7 days",
+        "30d": "30 days",
+        "90d": "90 days"
+      },
+      "totals": {
+        "users": "Total users",
+        "onlineNow": "Online now",
+        "admins": "Admins",
+        "profiles": "Profiles",
+        "conversations": "Conversations",
+        "messages": "Messages",
+        "playSessions": "Play sessions",
+        "friendships": "Friendships",
+        "blockedPairs": "Blocked pairs",
+        "linkedAccounts": "Linked accounts"
+      },
+      "signups": {
+        "title": "New signups",
+        "total": "{{count}} signups in range"
+      },
+      "generatedAt": "Updated {{time}}",
+      "approximate": "Approximate: based on the newest {{count}} accounts.",
+      "community": {
+        "title": "Community totals"
+      },
+      "platforms": {
+        "title": "Platforms",
+        "scope": "Share of recent signups"
+      },
+      "countries": {
+        "title": "Countries",
+        "empty": "No data yet",
+        "unknown": "Unknown"
+      },
+      "recentUsers": {
+        "title": "Recent users",
+        "empty": "No users yet",
+        "viewAll": "View all users"
+      }
+    },
+    "users": {
+      "searchPlaceholder": "Search name, email, @handle or uid",
+      "searchHint": "Name and email search match the start of the value only.",
+      "filters": {
+        "all": "All",
+        "admins": "Admins",
+        "disabled": "Disabled"
+      },
+      "count": "{{count}} results",
+      "browse": "Showing the newest accounts",
+      "empty": "No matching users",
+      "loadMore": "Load more",
+      "joined": "Joined {{date}}",
+      "unknownJoin": "Join date unknown",
+      "noEmail": "No email",
+      "badges": {
+        "admin": "Admin",
+        "disabled": "Disabled",
+        "verified": "Verified"
+      }
+    },
+    "audit": {
+      "actions": {
+        "promote": "Promoted",
+        "demote": "Demoted",
+        "disable": "Disabled",
+        "enable": "Enabled"
+      },
+      "by": "By {{actor}}",
+      "target": "Target {{target}}",
+      "unknownActor": "Unknown admin",
+      "unknownTarget": "Unknown user"
+    },
+    "system": {
+      "notDefined": "Not defined",
+      "channel": "Update channel",
+      "runtimeVersion": "Runtime version",
+      "updateId": "Update ID",
+      "runningNativeBuild": "Running native build",
+      "appVersion": "App version",
+      "platform": "Platform",
+      "environment": "Environment",
+      "apiUrl": "API URL",
+      "build": "Build & runtime",
+      "ads": "Advertising",
+      "audit": "Recent admin activity",
+      "auditEmpty": "No admin actions yet.",
+      "refresh": "Refresh"
+    },
+    "detail": {
+      "you": "You",
+      "account": "Account",
+      "counts": "Activity",
+      "linked": "Linked accounts",
+      "linkedEmpty": "No linked accounts.",
+      "audit": "Admin history",
+      "auditEmpty": "No admin actions for this user.",
+      "fields": {
+        "uid": "User ID",
+        "email": "Email",
+        "handle": "Handle",
+        "joined": "Joined",
+        "lastSignIn": "Last sign-in",
+        "providers": "Sign-in providers",
+        "platform": "Platform",
+        "country": "Country",
+        "status": "Status",
+        "active": "Active",
+        "lists": "Lists",
+        "ratings": "Ratings",
+        "friends": "Friends",
+        "conversations": "Conversations",
+        "sessions": "Sessions"
+      },
+      "actions": {
+        "title": "Admin actions",
+        "cancel": "Cancel",
+        "success": "Saved",
+        "failed": "Action failed",
+        "demote": "Remove admin",
+        "promote": "Make admin",
+        "demoteTitle": "Remove admin access?",
+        "promoteTitle": "Grant admin access?",
+        "demoteMessage": "They will lose access to the admin dashboard immediately.",
+        "promoteMessage": "They will gain full access to the admin dashboard.",
+        "enable": "Enable account",
+        "disable": "Disable account",
+        "enableTitle": "Enable this account?",
+        "disableTitle": "Disable this account?",
+        "enableMessage": "The user will be able to sign in again.",
+        "disableMessage": "The user will be signed out and blocked from signing in."
+      }
     }
   }
 }

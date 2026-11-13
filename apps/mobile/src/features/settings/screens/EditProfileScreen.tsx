@@ -14,7 +14,6 @@ import { useAuthStore } from "@/src/store/useAuthStore";
 import type { SettingsStackParamList } from "@/src/navigation/AppNavigator";
 import AvatarPickerModal from "../components/AvatarPickerModal";
 import AdSlot from "@/src/components/AdSlot";
-import AdminDashboardPanel from "../components/editProfile/AdminDashboardPanel";
 import EditProfileAvatar from "../components/editProfile/EditProfileAvatar";
 import EmailVerificationCard from "../components/editProfile/EmailVerificationCard";
 import ProfileCountryPicker from "../components/editProfile/ProfileCountryPicker";
@@ -55,7 +54,6 @@ function EditProfileScreen(): React.ReactElement {
     platform,
     setPlatform,
     isSaving,
-    isAdmin,
     pickImage,
     save,
   } = useEditProfileForm();
@@ -171,8 +169,6 @@ function EditProfileScreen(): React.ReactElement {
           <TouchableOpacity onPress={save} style={styles.saveBtn}>
             <CustomText style={styles.saveText}>{t("common.saveChanges")}</CustomText>
           </TouchableOpacity>
-
-          {isAdmin && <AdminDashboardPanel />}
 
           <DeleteAccountButton
             label={t("settings.deleteAccount.delete")}

@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { View } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { LinearGradient } from "expo-linear-gradient";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -61,15 +61,18 @@ const GameDetailsBackground: React.FC<GameDetailsBackgroundProps> = ({
         />
       </View>
 
-      {/* Blurred background image using expo-image for proper memory management */}
-      <Image
-        {...(coverImageId && { source: { uri: igdbImageUrl(coverImageId, "720p") } })}
-        style={styles.bgImage}
-        contentFit="cover"
-        blurRadius={2}
-        cachePolicy="memory-disk"
-        allowDownscaling
-      />
+      {/* Blurred background image using expo-image for proper memory management.
+          Rendered only when a cover exists; otherwise there is nothing to show. */}
+      {coverImageId ? (
+        <AppImage
+          source={{ uri: igdbImageUrl(coverImageId, "720p") }}
+          style={styles.bgImage}
+          contentFit="cover"
+          blurRadius={2}
+          cachePolicy="memory-disk"
+          allowDownscaling
+        />
+      ) : null}
     </>
   );
 };

@@ -163,9 +163,9 @@ const NewsItem = memo(function NewsItem({
                 : require("@/assets/image-not-found.webp")
             }
             contentFit="cover"
-            cachePolicy="none"
+            cachePolicy="memory-disk"
             allowDownscaling={true}
-            transition={300}
+            transition={200}
           />
           <CustomText style={styles.website}>{item.siteName}</CustomText>
         </View>

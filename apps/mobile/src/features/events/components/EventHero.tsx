@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { LinearGradient } from "expo-linear-gradient";
 import { ArrowLeft } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
@@ -59,7 +59,7 @@ const EventHero: React.FC<EventHeroProps> = ({ event, status, logoUri, onBack })
   return (
     <View style={styles.hero}>
       {logoUri ? (
-        <Image
+        <AppImage
           recyclingKey={event.event_logo?.image_id ?? "hero"}
           source={logoUri}
           style={StyleSheet.absoluteFill}
@@ -67,7 +67,7 @@ const EventHero: React.FC<EventHeroProps> = ({ event, status, logoUri, onBack })
           cachePolicy="memory-disk"
         />
       ) : (
-        <Image
+        <AppImage
           source={require("@/assets/image-not-found.webp")}
           style={StyleSheet.absoluteFill}
           contentFit="cover"

@@ -18,7 +18,8 @@
     "functions:deploy": "node scripts/functions/deploy.mjs",
     "check:game-releases": "tsx ./scripts/jobs/gameReleases.job.ts",
     "backfill:rss-descriptions": "tsx ./scripts/backfillRssDescriptions.ts",
-    "backfill:article-platforms": "tsx ./scripts/backfillArticlePlatforms.ts"
+    "backfill:article-platforms": "tsx ./scripts/backfillArticlePlatforms.ts",
+    "backfill:user-search": "tsx ./scripts/backfillUserSearchKeys.ts"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",

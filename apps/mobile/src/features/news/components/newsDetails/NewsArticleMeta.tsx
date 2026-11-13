@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { View } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import CustomText from "@/src/components/CustomText";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import PlatformBadges from "../PlatformBadges";
@@ -46,7 +46,7 @@ const NewsArticleMeta = memo(function NewsArticleMeta({
     <>
       <View style={styles.site}>
         <View style={styles.siteRow}>
-          <Image
+          <AppImage
             recyclingKey={siteImage || ""}
             style={styles.siteImage}
             source={siteImage}

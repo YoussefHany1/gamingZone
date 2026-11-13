@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { View } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
 type GamerAvatarProps = {
@@ -43,7 +43,7 @@ const GamerAvatar = memo(({ photoURL, size = 48, online = false }: GamerAvatarPr
   );
   return (
     <View style={styles.frame}>
-      <Image
+      <AppImage
         source={photoURL ? { uri: photoURL } : require("@/assets/default_profile.webp")}
         style={styles.image}
         contentFit="cover"

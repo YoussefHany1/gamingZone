@@ -1,7 +1,7 @@
 import React from "react";
 import CustomText from "@/src/components/CustomText";
 import { Modal, View, TouchableOpacity } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { useTranslation } from "react-i18next";
 import { Camera, X } from "lucide-react-native";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -146,7 +146,7 @@ function AvatarPickerModal({
                 accessibilityRole="radio"
                 accessibilityState={{ selected: currentUri === uri }}
               >
-                <Image
+                <AppImage
                   style={[styles.thumb, currentUri === uri && styles.thumbSelected]}
                   source={{ uri }}
                   contentFit="cover"

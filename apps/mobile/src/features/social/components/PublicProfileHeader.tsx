@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from "react";
 import { TouchableOpacity, View } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { useTranslation } from "react-i18next";
 import { Pencil } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
@@ -207,7 +207,7 @@ const PublicProfileHeader = memo(
     return (
       <View style={styles.card}>
         {resolvedBannerURL ? (
-          <Image
+          <AppImage
             style={styles.banner}
             source={{ uri: resolvedBannerURL }}
             contentFit="cover"
@@ -220,7 +220,7 @@ const PublicProfileHeader = memo(
 
         <View style={styles.body}>
           <View style={styles.avatarRow}>
-            <Image
+            <AppImage
               recyclingKey={resolvedPhotoURL ?? null}
               style={styles.avatar}
               source={avatarSource}

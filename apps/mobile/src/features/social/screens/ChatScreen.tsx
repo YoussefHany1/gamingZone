@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { Alert, type AlertButton } from "@/src/lib/alert";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { ArrowLeft, MoreVertical, Send, Users } from "lucide-react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
@@ -390,7 +390,7 @@ export default function ChatScreen(): React.ReactElement {
             onPress={() => (conversationTitle ? setMembersOpen(true) : undefined)}
             disabled={!conversationTitle}
           >
-            <Image
+            <AppImage
               source={
                 headerPhotoURL
                   ? { uri: headerPhotoURL }

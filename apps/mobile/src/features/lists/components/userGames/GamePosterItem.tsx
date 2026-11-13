@@ -1,6 +1,6 @@
 import React, { useCallback, memo } from "react";
 import { View, TouchableOpacity } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Star } from "lucide-react-native";
@@ -77,7 +77,7 @@ const GamePosterItem = memo<GamePosterItemProps>(({ game, onRemove }) => {
         accessibilityRole="button"
         accessibilityLabel={game.name}
       >
-        <Image
+        <AppImage
           recyclingKey={String(game.cover_image_id ?? game.id)}
           source={coverUrl}
           style={styles.posterImage}

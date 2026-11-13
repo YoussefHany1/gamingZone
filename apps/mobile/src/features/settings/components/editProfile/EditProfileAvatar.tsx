@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { TouchableOpacity } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -26,7 +26,7 @@ const EditProfileAvatar = memo(
 
     return (
       <TouchableOpacity onPress={onPress} style={styles.avatarContainer}>
-        <Image
+        <AppImage
           recyclingKey={imageUri ?? ""}
           style={styles.avatar}
           source={imageUri ?? require("@/assets/default_profile.webp")}

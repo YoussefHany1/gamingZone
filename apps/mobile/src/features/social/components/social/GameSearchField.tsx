@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import { useTranslation } from "react-i18next";
 import type { Game } from "@/src/types/sharedTypes";
@@ -51,7 +51,7 @@ function SuggestionRow({ game, onPress }: RowProps): React.ReactElement {
       onPress={() => onPress(game)}
       activeOpacity={0.7}
     >
-      <Image
+      <AppImage
         source={
           game.cover
             ? { uri: igdbImageUrl(game.cover.image_id, "cover_small") }

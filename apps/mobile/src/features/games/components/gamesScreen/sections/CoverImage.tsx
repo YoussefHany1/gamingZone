@@ -1,5 +1,5 @@
 import React from "react";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import type { StyleProp, ImageStyle } from "react-native";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import type { Game } from "@/src/types/sharedTypes";
@@ -37,7 +37,7 @@ function CoverImage({
   style,
 }: CoverImageProps): React.ReactElement {
   return (
-    <Image
+    <AppImage
       source={
         item.cover
           ? {

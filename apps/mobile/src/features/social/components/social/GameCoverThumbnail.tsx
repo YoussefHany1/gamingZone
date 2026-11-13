@@ -1,5 +1,5 @@
 import React from "react";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useGameCoverImage } from "../../hooks/useGameCoverImage";
@@ -31,7 +31,7 @@ export default function GameCoverThumbnail({ gameId }: GameCoverThumbnailProps):
   if (!coverImageId) return null;
 
   return (
-    <Image
+    <AppImage
       source={{ uri: igdbImageUrl(coverImageId, "cover_small") }}
       style={styles.cover}
       contentFit="cover"

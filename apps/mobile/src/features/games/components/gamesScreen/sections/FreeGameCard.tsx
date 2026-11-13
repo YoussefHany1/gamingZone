@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from "react";
 import { View, TouchableOpacity } from "react-native";
 import CustomText from "@/src/components/CustomText";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { LinearGradient } from "expo-linear-gradient";
 import { Gift } from "lucide-react-native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -168,7 +168,7 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
           <CountdownTimer t={t} startDate={item.startDate} />
         )}
 
-        <Image
+        <AppImage
           source={
             item.image
               ? {

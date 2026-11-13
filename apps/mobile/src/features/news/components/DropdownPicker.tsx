@@ -1,7 +1,7 @@
 import CustomText from "@/src/components/CustomText";
 import type { SectionListData } from "react-native";
 import { View, TouchableOpacity, Modal, SectionList, ToastAndroid } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { Check, ChevronDown } from "lucide-react-native";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -297,7 +297,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
         onPress={() => setModalVisible(true)}
       >
         {selectedItem?.image ? (
-          <Image
+          <AppImage
             recyclingKey={String(selectedItem.image)}
             source={selectedItem.image}
             style={styles.avatar}
@@ -363,7 +363,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                 >
                   <View style={{ alignItems: "center", flexDirection: "row" }}>
                     {isAllSourcesName(item.name) ? null : (
-                      <Image
+                      <AppImage
                         recyclingKey={String(item.image ?? "")}
                         source={item.image}
                         style={styles.modalItemLogo}

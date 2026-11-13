@@ -1,8 +1,11 @@
+import { FieldValue } from 'firebase-admin/firestore';
 import { initFirebaseAdmin } from './lib/firebaseAdmin';
 import { logger } from './lib/logger';
 
 // Grants (or revokes with --revoke) the `admin` custom claim on a Firebase
-// Auth user. Required by firestore.rules for admin aggregate reads.
+// Auth user. The claim is the only trusted admin signal (firestore.rules and
+// the /admin/* API both check it); `users/{uid}.isAdmin` is mirrored here for
+// display/diagnostics only.
 //
 // Usage:
 //   npm run admin:claim -- <uid>            # grant
@@ -44,6 +47,24 @@ async function main(): Promise<void> {
 
   await admin.auth(app).setCustomUserClaims(uid, claims);
   logger.info(`✅ customClaims for ${uid}: ${JSON.stringify(claims)}`);
+
+  // Mirror the claim into the user document (display-only state). Admin SDK
+  // writes bypass firestore.rules, which deny clients the `isAdmin` field.
+  try {
+    const userRef = admin.firestore(app).collection('users').doc(uid);
+    const userSnap = await userRef.get();
+    if (userSnap.exists) {
+      await userRef.set(
+        { isAdmin: claims.admin === true, updatedAt: FieldValue.serverTimestamp() },
+        { merge: true },
+      );
+      logger.info(`🪞 users/${uid}.isAdmin = ${claims.admin === true}`);
+    } else {
+      logger.warn(`⚠ users/${uid} does not exist — claim set, mirror skipped`);
+    }
+  } catch (err) {
+    logger.warn(err, 'Mirroring isAdmin into Firestore failed (claim still set)');
+  }
 
   // Existing ID tokens keep their old claims for up to ~1h until refreshed.
   await admin.auth(app).revokeRefreshTokens(uid);

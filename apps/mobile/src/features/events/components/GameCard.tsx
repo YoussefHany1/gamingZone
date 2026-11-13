@@ -2,7 +2,7 @@ import { memo } from "react";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import type { GameCardProps } from "../types";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
@@ -28,7 +28,7 @@ const GameCard = memo<GameCardProps>(({ game }) => {
   }));
   return (
     <View style={styles.gameCard}>
-      <Image
+      <AppImage
         recyclingKey={game.cover?.image_id ?? `game-${game.id}`}
         source={
           game.cover

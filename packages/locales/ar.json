@@ -206,7 +206,9 @@
       "gamesList": "قائمة ألعابي",
       "myLists": "قوائمي",
       "profile": "ملفي الشخصي",
-      "pcSpecs": "جهازي"
+      "pcSpecs": "جهازي",
+      "adminDashboard": "لوحة الإدارة",
+      "adminUserDetail": "تفاصيل المستخدم"
     }
   },
   "home": {
@@ -736,7 +738,8 @@
       "privacyPolicy": "سياسة الخصوصية",
       "signOut": "تسجيل الخروج",
       "showAds": "إظهار الإعلانات",
-      "blockedUsers": "المستخدمون المحظورون"
+      "blockedUsers": "المستخدمون المحظورون",
+      "adminDashboard": "لوحة الإدارة"
     },
     "profile": {
       "changePic": "تغيير صورة الملف الشخصي",
@@ -1362,6 +1365,167 @@
       "title": "اربط حسابات الألعاب الخاصة بك",
       "message": "اربط حساب PSN أو Xbox أو Steam لاستيراد مكتبتك وإنجازاتك تلقائيًا.",
       "cta": "ربط الحسابات"
+    }
+  },
+  "admin": {
+    "tabs": {
+      "overview": "نظرة عامة",
+      "users": "المستخدمون",
+      "system": "النظام"
+    },
+    "access": {
+      "checking": "جارٍ التحقق من صلاحيات المشرف…",
+      "denied": "صلاحيات المشرف مطلوبة",
+      "deniedHint": "حسابك لا يملك دور المشرف.",
+      "sessionExpired": "تغيّرت جلستك. حدّث للمحاولة مرة أخرى."
+    },
+    "errors": {
+      "generic": "تعذّر تحميل بيانات الإدارة.",
+      "network_error": "خطأ في الشبكة — تحقق من اتصالك.",
+      "admin_required": "صلاحيات المشرف مطلوبة.",
+      "user_not_found": "المستخدم غير موجود.",
+      "self_demotion": "لا يمكنك إزالة صلاحيات المشرف عن نفسك.",
+      "self_disable": "لا يمكنك تعطيل حسابك.",
+      "last_admin": "يجب أن يبقى مشرف واحد على الأقل.",
+      "invalid_payload": "الطلب غير صالح.",
+      "invalid_uid": "معرّف المستخدم غير صالح.",
+      "invalid_request": "طلب غير صالح.",
+      "unauthenticated": "يجب تسجيل الدخول."
+    },
+    "overview": {
+      "range": {
+        "7d": "٧ أيام",
+        "30d": "٣٠ يومًا",
+        "90d": "٩٠ يومًا"
+      },
+      "totals": {
+        "users": "إجمالي المستخدمين",
+        "onlineNow": "متصل الآن",
+        "admins": "المشرفون",
+        "profiles": "الملفات الشخصية",
+        "conversations": "المحادثات",
+        "messages": "الرسائل",
+        "playSessions": "جلسات اللعب",
+        "friendships": "الصداقات",
+        "blockedPairs": "الأزواج المحظورة",
+        "linkedAccounts": "الحسابات المرتبطة"
+      },
+      "signups": {
+        "title": "التسجيلات الجديدة",
+        "total": "{{count}} تسجيل خلال الفترة"
+      },
+      "generatedAt": "آخر تحديث {{time}}",
+      "approximate": "تقريبي: استنادًا إلى أحدث {{count}} حساب.",
+      "community": {
+        "title": "إجماليات المجتمع"
+      },
+      "platforms": {
+        "title": "المنصات",
+        "scope": "نسبة التسجيلات الحديثة"
+      },
+      "countries": {
+        "title": "الدول",
+        "empty": "لا توجد بيانات بعد",
+        "unknown": "غير معروف"
+      },
+      "recentUsers": {
+        "title": "أحدث المستخدمين",
+        "empty": "لا يوجد مستخدمون بعد",
+        "viewAll": "عرض كل المستخدمين"
+      }
+    },
+    "users": {
+      "searchPlaceholder": "ابحث بالاسم أو البريد أو @المعرّف أو uid",
+      "searchHint": "البحث بالاسم والبريد يطابق بداية القيمة فقط.",
+      "filters": {
+        "all": "الكل",
+        "admins": "المشرفون",
+        "disabled": "المعطّلون"
+      },
+      "count": "{{count}} نتيجة",
+      "browse": "عرض أحدث الحسابات",
+      "empty": "لا يوجد مستخدمون مطابقون",
+      "loadMore": "تحميل المزيد",
+      "joined": "انضم في {{date}}",
+      "unknownJoin": "تاريخ الانضمام غير معروف",
+      "noEmail": "لا يوجد بريد إلكتروني",
+      "badges": {
+        "admin": "مشرف",
+        "disabled": "معطّل",
+        "verified": "موثّق"
+      }
+    },
+    "audit": {
+      "actions": {
+        "promote": "تمت الترقية",
+        "demote": "تمت الإزالة",
+        "disable": "تم التعطيل",
+        "enable": "تم التفعيل"
+      },
+      "by": "بواسطة {{actor}}",
+      "target": "الهدف {{target}}",
+      "unknownActor": "مشرف غير معروف",
+      "unknownTarget": "مستخدم غير معروف"
+    },
+    "system": {
+      "notDefined": "غير محدد",
+      "channel": "قناة التحديث",
+      "runtimeVersion": "إصدار وقت التشغيل",
+      "updateId": "معرّف التحديث",
+      "runningNativeBuild": "يعمل على البناء الأصلي",
+      "appVersion": "إصدار التطبيق",
+      "platform": "المنصة",
+      "environment": "البيئة",
+      "apiUrl": "رابط API",
+      "build": "البناء ووقت التشغيل",
+      "ads": "الإعلانات",
+      "audit": "أحدث أنشطة الإدارة",
+      "auditEmpty": "لا توجد إجراءات إدارية بعد.",
+      "refresh": "تحديث"
+    },
+    "detail": {
+      "you": "أنت",
+      "account": "الحساب",
+      "counts": "النشاط",
+      "linked": "الحسابات المرتبطة",
+      "linkedEmpty": "لا توجد حسابات مرتبطة.",
+      "audit": "سجل الإدارة",
+      "auditEmpty": "لا توجد إجراءات إدارية لهذا المستخدم.",
+      "fields": {
+        "uid": "معرّف المستخدم",
+        "email": "البريد الإلكتروني",
+        "handle": "المعرّف",
+        "joined": "تاريخ الانضمام",
+        "lastSignIn": "آخر تسجيل دخول",
+        "providers": "مزوّدو تسجيل الدخول",
+        "platform": "المنصة",
+        "country": "الدولة",
+        "status": "الحالة",
+        "active": "نشط",
+        "lists": "القوائم",
+        "ratings": "التقييمات",
+        "friends": "الأصدقاء",
+        "conversations": "المحادثات",
+        "sessions": "الجلسات"
+      },
+      "actions": {
+        "title": "إجراءات المشرف",
+        "cancel": "إلغاء",
+        "success": "تم الحفظ",
+        "failed": "فشل الإجراء",
+        "demote": "إزالة صلاحية المشرف",
+        "promote": "ترقية إلى مشرف",
+        "demoteTitle": "إزالة صلاحية المشرف؟",
+        "promoteTitle": "منح صلاحية المشرف؟",
+        "demoteMessage": "سيفقد الوصول إلى لوحة الإدارة فورًا.",
+        "promoteMessage": "سيحصل على وصول كامل إلى لوحة الإدارة.",
+        "enable": "تفعيل الحساب",
+        "disable": "تعطيل الحساب",
+        "enableTitle": "تفعيل هذا الحساب؟",
+        "disableTitle": "تعطيل هذا الحساب؟",
+        "enableMessage": "سيتمكن المستخدم من تسجيل الدخول مجددًا.",
+        "disableMessage": "سيتم تسجيل خروج المستخدم ومنعه من تسجيل الدخول."
+      }
     }
   }
 }

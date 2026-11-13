@@ -10,6 +10,7 @@ import { registerSocialRoutes } from './social.js';
 import { registerFriendRoutes } from './friends.js';
 import { registerSessionRoutes } from './sessions.js';
 import { registerPcRequirementsRoutes } from './pcRequirements.js';
+import { registerAdminRoutes } from './admin.js';
 const app = express();
 
 app.use(cors());
@@ -1417,6 +1418,9 @@ registerSessionRoutes(app, { AppError, asyncRoute });
 
 // Batch Steam PC requirements for game cards
 registerPcRequirementsRoutes(app, { AppError, asyncRoute, callIgdb });
+
+// Admin dashboard (custom claim: admin=true required on every request)
+registerAdminRoutes(app, { AppError, asyncRoute });
 
 // invalid route handler (404)
 app.get('*', (req, res) => {

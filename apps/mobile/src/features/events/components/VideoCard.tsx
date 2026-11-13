@@ -1,7 +1,7 @@
 import React, { memo, useCallback } from "react";
 import CustomText from "@/src/components/CustomText";
 import { View, StyleSheet, TouchableOpacity, Dimensions } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { CirclePlay } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { openLink } from "@/src/lib/browser";
@@ -48,7 +48,7 @@ const VideoCard = memo<VideoCardProps>(({ video }) => {
 
   return (
     <TouchableOpacity style={styles.videoCard} onPress={handlePress} activeOpacity={0.8}>
-      <Image
+      <AppImage
         recyclingKey={video.video_id}
         source={`https://img.youtube.com/vi/${video.video_id}/mqdefault.jpg`}
         style={styles.videoThumb}

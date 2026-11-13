@@ -16,6 +16,7 @@ import { useCountryOptions } from "./useCountryOptions";
 import type { AuthNavigationProp, AuthPickerOption, Gender } from "../types";
 import { useAuthStore } from "@/src/store/useAuthStore";
 import { claimGeneratedHandle } from "@/src/features/social/lib/profileService";
+import { toDisplayNameKey, toEmailKey } from "@/src/lib/searchKeys";
 import { logger } from "@/src/lib/logger";
 
 export type UseRegisterFormParams = {
@@ -184,7 +185,10 @@ export function useRegisterForm({
         {
           uid: user.uid,
           displayName: name,
+          // Normalized mirrors power the admin dashboard's prefix search.
+          displayNameLower: toDisplayNameKey(name),
           email: normalizedEmail,
+          emailLower: toEmailKey(normalizedEmail),
           country,
           gender,
           photoURL: user.photoURL ?? null,

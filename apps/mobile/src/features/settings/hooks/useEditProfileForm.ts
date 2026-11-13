@@ -9,6 +9,7 @@ import { useAuthStore } from "@/src/store/useAuthStore";
 import { uploadProfileImage } from "../lib/cloudinary";
 import { firstMissingField, type ProfileFormField } from "../lib/profileForm";
 import { updateMyPublicProfile } from "@/src/features/social/lib/profileService";
+import { toDisplayNameKey } from "@/src/lib/searchKeys";
 import type { FirestoreUser } from "../types";
 import { logger } from "@/src/lib/logger";
 
@@ -38,7 +39,6 @@ export type UseEditProfileFormResult = {
   platform: string;
   setPlatform: (value: string) => void;
   isSaving: boolean;
-  isAdmin: boolean;
   /** Opens the media library and stores the picked file URI. */
   pickImage: () => Promise<void>;
   save: () => Promise<void>;
@@ -65,7 +65,6 @@ export function useEditProfileForm(): UseEditProfileFormResult {
   const [platform, setPlatform] = useState<string>("");
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   // Load profile data from Auth (fast) then Firestore (complete).
   useEffect(() => {
@@ -93,7 +92,6 @@ export function useEditProfileForm(): UseEditProfileFormResult {
           setGender(userData.gender ?? "");
           setCountry(userData.country ?? "");
           setPlatform(userData.platform ?? "");
-          if (userData.isAdmin === true) setIsAdmin(true);
         }
       } catch (error) {
         logger.error("Error fetching user data from Firestore:", error);
@@ -167,6 +165,7 @@ export function useEditProfileForm(): UseEditProfileFormResult {
       // Update the Firestore document (full profile data).
       await firestore().collection("users").doc(currentUser.uid).update({
         displayName: name,
+        displayNameLower: toDisplayNameKey(name),
         photoURL: newPhotoURL,
         dob,
         gender,
@@ -214,7 +213,6 @@ export function useEditProfileForm(): UseEditProfileFormResult {
     platform,
     setPlatform,
     isSaving,
-    isAdmin,
     pickImage,
     save,
   };

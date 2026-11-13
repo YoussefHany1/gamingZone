@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from "react";
 import { TouchableOpacity } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -58,7 +58,7 @@ const SettingsUserCard = memo(
 
     return (
       <TouchableOpacity style={styles.userContainer} onPress={onPress} activeOpacity={0.7}>
-        <Image
+        <AppImage
           source={avatarSource}
           style={styles.avatar}
           contentFit="cover"

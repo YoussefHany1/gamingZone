@@ -43,6 +43,8 @@ import {
 import PcSpecsScreen from "@/src/features/pcSpecs/screens/PcSpecsScreen";
 import { UserGamesScreen, UserListsScreen } from "@/src/features/lists";
 import { AchievementsScreen } from "@/src/features/gamification";
+import AdminDashboardScreen from "@/src/features/admin/screens/AdminDashboardScreen";
+import AdminUserDetailScreen from "@/src/features/admin/screens/AdminUserDetailScreen";
 import { AIChatScreen } from "@/src/features/ai";
 import { EventDetailsScreen } from "@/src/features/events";
 import {
@@ -91,6 +93,8 @@ export type SettingsStackParamList = {
   Achievements: undefined;
   PcSpecsScreen: undefined;
   BlockedUsersScreen: undefined;
+  AdminDashboard: undefined;
+  AdminUserDetail: { uid: string };
 };
 
 export type MainTabParamList = {
@@ -273,6 +277,8 @@ const SettingsStack = memo(() => {
       pcSpecs: { title: t("navigation.titles.pcSpecs") },
       userProfile: { title: t("social.profile.title") },
       blockedUsers: { title: t("social.blockedUsers.title") },
+      adminDashboard: { title: t("navigation.titles.adminDashboard") },
+      adminUserDetail: { title: t("navigation.titles.adminUserDetail") },
     }),
     [t],
   );
@@ -362,6 +368,16 @@ const SettingsStack = memo(() => {
         name="BlockedUsersScreen"
         component={BlockedUsersScreen}
         options={screenTitles.blockedUsers}
+      />
+      <SettingsStackNav.Screen
+        name="AdminDashboard"
+        component={AdminDashboardScreen}
+        options={screenTitles.adminDashboard}
+      />
+      <SettingsStackNav.Screen
+        name="AdminUserDetail"
+        component={AdminUserDetailScreen}
+        options={screenTitles.adminUserDetail}
       />
     </SettingsStackNav.Navigator>
   );

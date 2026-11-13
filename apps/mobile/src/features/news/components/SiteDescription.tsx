@@ -1,6 +1,6 @@
 import React from "react";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { Bell, BellOff, SquareArrowOutUpRight } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -74,7 +74,7 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
   return (
     <View style={[styles.siteDesc, { direction: isLangArbic ? "rtl" : "ltr" }]}>
       {selectedItem?.image ? (
-        <Image
+        <AppImage
           recyclingKey={String(selectedItem.image)}
           source={selectedItem.image}
           style={styles.siteImg}

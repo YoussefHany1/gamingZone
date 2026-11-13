@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Modal, TouchableOpacity, View } from "react-native";
 import { Alert } from "@/src/lib/alert";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { LinearGradient } from "expo-linear-gradient";
 import { CalendarDays, Shuffle, Star, X } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -263,7 +263,7 @@ function RandomGameButton(): React.ReactElement {
 
                 <View style={styles.coverWrapper}>
                   {suggestedGame.cover?.image_id ? (
-                    <Image
+                    <AppImage
                       source={{
                         uri: igdbImageUrl(suggestedGame.cover.image_id, "cover_big"),
                       }}

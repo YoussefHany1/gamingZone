@@ -4,7 +4,7 @@ import CustomText from "@/src/components/CustomText";
 import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
 import type { ListRenderItemInfo } from "@shopify/flash-list";
 import { FlashList } from "@shopify/flash-list";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
@@ -182,7 +182,7 @@ const EventCard = memo<EventCardProps>(({ item }) => {
 
   return (
     <TouchableOpacity style={styles.eventCard} onPress={handlePress} activeOpacity={0.92}>
-      <Image
+      <AppImage
         recyclingKey={item.event_logo?.image_id ?? ""}
         source={
           item.event_logo

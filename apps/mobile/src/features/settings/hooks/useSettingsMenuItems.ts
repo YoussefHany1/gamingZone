@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import {
   Bell,
@@ -8,12 +8,12 @@ import {
   List,
   MessageSquare,
   Palette,
+  Shield,
   ShieldCheck,
   Star,
 } from "lucide-react-native";
-import { useIsAdmin } from "@/src/hooks/useIsAdmin";
+import { useAdminAccess } from "@/src/hooks/useIsAdmin";
 import { openLink } from "@/src/lib/browser";
-import AdminAdsToggle from "../components/AdminAdsToggle";
 import InviteFriendsBtn from "../components/InviteFriendsBtn";
 import type { MenuItem, SettingsNavProp } from "../types";
 import { logger } from "@/src/lib/logger";
@@ -21,15 +21,32 @@ import { logger } from "@/src/lib/logger";
 const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.yh.gamingzone";
 const PRIVACY_POLICY_URL = "https://gz1.games/privacy-policy";
 
+// Re-reading the claim forces a network token refresh, so rapid tab switches
+// reuse the previous verdict instead of hitting the auth backend each time.
+const ADMIN_REFRESH_ON_FOCUS_MS = 60_000;
+let lastAdminFocusRefreshAt = 0;
+
 export type UseSettingsMenuItemsResult = {
   menuItems: MenuItem[];
 };
 
-/** Builds the settings menu rows, including the admin-only ads toggle. */
+/** Builds the settings menu rows, including the admin-only dashboard link. */
 export function useSettingsMenuItems(): UseSettingsMenuItemsResult {
   const navigation = useNavigation<SettingsNavProp>();
   const { t } = useTranslation();
-  const isAdmin = useIsAdmin();
+  const { isAdmin, refresh: refreshAdminAccess } = useAdminAccess();
+
+  // Settings is where the admin row lives. Re-read the claim on focus so a
+  // demotion performed elsewhere hides the row without waiting for the cache.
+  useFocusEffect(
+    useCallback(() => {
+      if (Date.now() - lastAdminFocusRefreshAt < ADMIN_REFRESH_ON_FOCUS_MS) {
+        return;
+      }
+      lastAdminFocusRefreshAt = Date.now();
+      void refreshAdminAccess();
+    }, [refreshAdminAccess]),
+  );
 
   const handleOpenURL = useCallback(async (url: string): Promise<void> => {
     try {
@@ -41,6 +58,23 @@ export function useSettingsMenuItems(): UseSettingsMenuItemsResult {
 
   const menuItems = useMemo<MenuItem[]>(
     () => [
+      ...(isAdmin
+        ? [
+            {
+              id: "adminDashboard",
+              icon: Shield,
+              label: t("settings.menu.adminDashboard"),
+              onPress: () => {
+                const parent = (navigation as any).getParent?.();
+                if (parent) {
+                  parent.navigate("Settings", { screen: "AdminDashboard" });
+                } else {
+                  (navigation as any).navigate("AdminDashboard");
+                }
+              },
+            },
+          ]
+        : []),
       {
         id: "pcSpecs",
         icon: Cpu,
@@ -80,7 +114,6 @@ export function useSettingsMenuItems(): UseSettingsMenuItemsResult {
           }
         },
       },
-      ...(isAdmin ? [{ id: "adminAds", component: AdminAdsToggle }] : []),
       {
         id: "theme",
         icon: Palette,

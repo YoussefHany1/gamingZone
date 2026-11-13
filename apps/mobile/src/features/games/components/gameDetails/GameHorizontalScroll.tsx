@@ -3,7 +3,7 @@ import { igdbImageUrl } from "@gaming-zone/utils";
 import CustomText from "@/src/components/CustomText";
 import { View, TouchableOpacity, ActivityIndicator } from "react-native";
 import { FlashList } from "@shopify/flash-list";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useSharedStyles } from "./shared";
@@ -26,7 +26,7 @@ const HorizontalGameCard: React.FC<{
   return (
     <TouchableOpacity style={styles.card} onPress={() => onPress(game.id)}>
       <View style={styles.imageContainer}>
-        <Image
+        <AppImage
           recyclingKey={game.cover?.image_id ?? ""}
           style={styles.coverImage}
           source={

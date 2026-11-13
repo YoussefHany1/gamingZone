@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { View, TouchableOpacity } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { Star } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -59,7 +59,7 @@ const RateCard = memo(({ entry }: RateCardProps): React.ReactElement => {
       onPress={() => navigation.navigate("GameDetails", { gameID: entry.id })}
       activeOpacity={0.75}
     >
-      <Image
+      <AppImage
         style={styles.cover}
         source={coverSource(entry)}
         contentFit="cover"

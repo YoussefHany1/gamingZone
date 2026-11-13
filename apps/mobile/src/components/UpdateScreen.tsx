@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, memo } from "react";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import {
   View,
   StyleSheet,
@@ -258,7 +258,7 @@ const UpdateScreen: React.FC<UpdateScreenProps> = memo(({ progress }) => {
     <View style={styles.root}>
       {/* ── Logo area ── */}
       <View style={styles.logoArea}>
-        <Image
+        <AppImage
           source={require("@/assets/icon.png")}
           style={styles.logoBox}
           contentFit="contain"

@@ -1,6 +1,6 @@
 import React, { useCallback, memo } from "react";
 import { View, TouchableOpacity } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Star, Trash2 } from "lucide-react-native";
@@ -74,7 +74,7 @@ const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
 
   return (
     <TouchableOpacity style={styles.gameItemContainer} onPress={handlePress}>
-      <Image
+      <AppImage
         recyclingKey={String(game.cover_image_id ?? "")}
         source={coverUrl}
         style={styles.gameImage}

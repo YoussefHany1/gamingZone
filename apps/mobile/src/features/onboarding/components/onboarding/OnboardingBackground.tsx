@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { StyleSheet, View } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { LinearGradient } from "expo-linear-gradient";
 import { VideoView } from "expo-video";
 import { useNetworkStatus } from "@/src/hooks/useNetworkStatus";
@@ -41,7 +41,7 @@ const OnboardingBackground = memo(
       <View style={styles.container} pointerEvents="none">
         {isOffline ? (
           <LinearGradient colors={SCRIM_GRADIENT} style={styles.fallback}>
-            <Image
+            <AppImage
               source={require("@/assets/logo.webp")}
               style={staticStyles.logo}
               contentFit="contain"

@@ -4,7 +4,7 @@
     "slug": "gaming-zone",
     "orientation": "default",
     "scheme": "gaming-zone",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "icon": "./assets/logo-background.png",
     "userInterfaceStyle": "automatic",
     "android": {

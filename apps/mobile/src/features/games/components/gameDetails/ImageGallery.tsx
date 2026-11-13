@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { Images, X } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -56,7 +57,7 @@ const FullScreenImage: React.FC<FullScreenImageProps> = React.memo(
 
     return (
       <View style={StyleSheet.absoluteFill}>
-        <Image
+        <AppImage
           style={StyleSheet.absoluteFill}
           source={url}
           contentFit="contain"
@@ -114,7 +115,7 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = React.memo(
         accessibilityRole="imagebutton"
         accessibilityHint={t("games.details.gallery.viewFullScreen")}
       >
-        <Image
+        <AppImage
           style={styles.thumbnail}
           source={image.thumbnail}
           contentFit="cover"

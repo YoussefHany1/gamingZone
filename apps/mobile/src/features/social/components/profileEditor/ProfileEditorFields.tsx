@@ -1,13 +1,13 @@
 import React from "react";
 import {
   ActivityIndicator,
-  Image,
   Switch,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { useTranslation } from "react-i18next";
+import AppImage from "@/src/components/AppImage";
 import CustomText from "@/src/components/CustomText";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -141,7 +141,7 @@ export function BannerField({
   return (
     <View>
       {bannerURL ? (
-        <Image source={{ uri: bannerURL }} style={styles.banner} resizeMode="cover" />
+        <AppImage source={{ uri: bannerURL }} style={styles.banner} contentFit="cover" />
       ) : null}
       <CustomText style={styles.label}>{t("social.profile.banner")}</CustomText>
       <View style={styles.bannerActions}>

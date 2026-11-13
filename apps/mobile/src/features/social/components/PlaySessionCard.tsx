@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { TouchableOpacity, View, type StyleProp, type ViewStyle } from "react-native";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import { useTranslation } from "react-i18next";
 import { Gamepad2 } from "lucide-react-native";
@@ -354,7 +354,7 @@ const PlaySessionCard = memo(
           disabled={!onOpenChat}
         >
           {coverImageId ? (
-            <Image
+            <AppImage
               source={{ uri: igdbImageUrl(coverImageId, "cover_small") }}
               style={styles.gameCover}
               contentFit="cover"

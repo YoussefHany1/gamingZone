@@ -1,7 +1,7 @@
 import React, { memo, useRef, useEffect } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { Check, CheckCheck, MessageCircle } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import type { SocialMessage } from "@gaming-zone/core";
@@ -176,7 +176,7 @@ const ChatMessageList = memo(
           return (
             <View style={[styles.messageRow, own && styles.ownRow]}>
               {showAvatar ? (
-                <Image
+                <AppImage
                   source={avatarSource}
                   style={styles.avatar}
                   contentFit="cover"

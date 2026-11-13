@@ -9,7 +9,7 @@ import {
   Platform,
 } from "react-native";
 import { FlashList } from "@shopify/flash-list";
-import { Image } from "expo-image";
+import AppImage from "@/src/components/AppImage";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { Game } from "@/src/types/sharedTypes";
@@ -70,7 +70,7 @@ const SuggestionRow = React.memo<RowProps>(({ item, onPress }) => {
   return (
     <TouchableOpacity style={styles.row} onPress={handlePress} activeOpacity={0.7}>
       {coverUri ? (
-        <Image
+        <AppImage
           source={{ uri: coverUri }}
           style={styles.cover}
           contentFit="cover"
@@ -78,7 +78,7 @@ const SuggestionRow = React.memo<RowProps>(({ item, onPress }) => {
           recyclingKey={item.cover?.image_id ?? null}
         />
       ) : (
-        <Image
+        <AppImage
           source={require("@/assets/image-not-found.webp")}
           style={styles.cover}
           contentFit="cover"

@@ -206,7 +206,9 @@
       "gamesList": "Minha lista de jogos",
       "myLists": "Minhas listas",
       "profile": "Meu perfil",
-      "pcSpecs": "Meu PC"
+      "pcSpecs": "Meu PC",
+      "adminDashboard": "Painel de administração",
+      "adminUserDetail": "Detalhes do usuário"
     }
   },
   "home": {
@@ -768,7 +770,8 @@
       "privacyPolicy": "Política de privacidade",
       "showAds": "Mostrar anúncios",
       "signOut": "Sair",
-      "blockedUsers": "Usuários bloqueados"
+      "blockedUsers": "Usuários bloqueados",
+      "adminDashboard": "Painel de administração"
     },
     "signOut": {
       "confirmTitle": "Sair",
@@ -1361,6 +1364,167 @@
       "title": "Vincule suas contas de jogos",
       "message": "Vincule sua conta PSN, Xbox ou Steam para importar automaticamente sua biblioteca e troféus.",
       "cta": "Vincular contas"
+    }
+  },
+  "admin": {
+    "tabs": {
+      "overview": "Visão geral",
+      "users": "Usuários",
+      "system": "Sistema"
+    },
+    "access": {
+      "checking": "Verificando acesso de administrador…",
+      "denied": "Acesso de administrador necessário",
+      "deniedHint": "Sua conta não tem a função de administrador.",
+      "sessionExpired": "Sua sessão mudou. Atualize para tentar novamente."
+    },
+    "errors": {
+      "generic": "Não foi possível carregar os dados de administração.",
+      "network_error": "Erro de rede — verifique sua conexão.",
+      "admin_required": "Acesso de administrador necessário.",
+      "user_not_found": "Usuário não encontrado.",
+      "self_demotion": "Você não pode remover seu próprio acesso de administrador.",
+      "self_disable": "Você não pode desativar sua própria conta.",
+      "last_admin": "Pelo menos um administrador deve permanecer.",
+      "invalid_payload": "A solicitação é inválida.",
+      "invalid_uid": "ID de usuário inválido.",
+      "invalid_request": "Solicitação inválida.",
+      "unauthenticated": "Você precisa entrar."
+    },
+    "overview": {
+      "range": {
+        "7d": "7 dias",
+        "30d": "30 dias",
+        "90d": "90 dias"
+      },
+      "totals": {
+        "users": "Total de usuários",
+        "onlineNow": "Online agora",
+        "admins": "Administradores",
+        "profiles": "Perfis",
+        "conversations": "Conversas",
+        "messages": "Mensagens",
+        "playSessions": "Sessões de jogo",
+        "friendships": "Amizades",
+        "blockedPairs": "Pares bloqueados",
+        "linkedAccounts": "Contas vinculadas"
+      },
+      "signups": {
+        "title": "Novos cadastros",
+        "total": "{{count}} cadastros no período"
+      },
+      "generatedAt": "Atualizado {{time}}",
+      "approximate": "Aproximado: com base nas {{count}} contas mais recentes.",
+      "community": {
+        "title": "Totais da comunidade"
+      },
+      "platforms": {
+        "title": "Plataformas",
+        "scope": "Parcela dos cadastros recentes"
+      },
+      "countries": {
+        "title": "Países",
+        "empty": "Ainda sem dados",
+        "unknown": "Desconhecido"
+      },
+      "recentUsers": {
+        "title": "Usuários recentes",
+        "empty": "Ainda sem usuários",
+        "viewAll": "Ver todos os usuários"
+      }
+    },
+    "users": {
+      "searchPlaceholder": "Buscar nome, e-mail, @handle ou uid",
+      "searchHint": "A busca por nome e e-mail corresponde apenas ao início do valor.",
+      "filters": {
+        "all": "Todos",
+        "admins": "Administradores",
+        "disabled": "Desativados"
+      },
+      "count": "{{count}} resultados",
+      "browse": "Mostrando as contas mais recentes",
+      "empty": "Nenhum usuário correspondente",
+      "loadMore": "Carregar mais",
+      "joined": "Entrou em {{date}}",
+      "unknownJoin": "Data de entrada desconhecida",
+      "noEmail": "Sem e-mail",
+      "badges": {
+        "admin": "Admin",
+        "disabled": "Desativado",
+        "verified": "Verificado"
+      }
+    },
+    "audit": {
+      "actions": {
+        "promote": "Promovido",
+        "demote": "Rebaixado",
+        "disable": "Desativado",
+        "enable": "Ativado"
+      },
+      "by": "Por {{actor}}",
+      "target": "Alvo {{target}}",
+      "unknownActor": "Administrador desconhecido",
+      "unknownTarget": "Usuário desconhecido"
+    },
+    "system": {
+      "notDefined": "Não definido",
+      "channel": "Canal de atualização",
+      "runtimeVersion": "Versão de execução",
+      "updateId": "ID da atualização",
+      "runningNativeBuild": "Executando build nativo",
+      "appVersion": "Versão do app",
+      "platform": "Plataforma",
+      "environment": "Ambiente",
+      "apiUrl": "URL da API",
+      "build": "Build e execução",
+      "ads": "Publicidade",
+      "audit": "Atividade administrativa recente",
+      "auditEmpty": "Ainda não há ações administrativas.",
+      "refresh": "Atualizar"
+    },
+    "detail": {
+      "you": "Você",
+      "account": "Conta",
+      "counts": "Atividade",
+      "linked": "Contas vinculadas",
+      "linkedEmpty": "Nenhuma conta vinculada.",
+      "audit": "Histórico administrativo",
+      "auditEmpty": "Nenhuma ação administrativa para este usuário.",
+      "fields": {
+        "uid": "ID do usuário",
+        "email": "E-mail",
+        "handle": "Handle",
+        "joined": "Entrou",
+        "lastSignIn": "Último acesso",
+        "providers": "Provedores de login",
+        "platform": "Plataforma",
+        "country": "País",
+        "status": "Status",
+        "active": "Ativo",
+        "lists": "Listas",
+        "ratings": "Avaliações",
+        "friends": "Amigos",
+        "conversations": "Conversas",
+        "sessions": "Sessões"
+      },
+      "actions": {
+        "title": "Ações de administrador",
+        "cancel": "Cancelar",
+        "success": "Salvo",
+        "failed": "A ação falhou",
+        "demote": "Remover admin",
+        "promote": "Tornar admin",
+        "demoteTitle": "Remover acesso de administrador?",
+        "promoteTitle": "Conceder acesso de administrador?",
+        "demoteMessage": "Ele perderá o acesso ao painel imediatamente.",
+        "promoteMessage": "Ele receberá acesso total ao painel.",
+        "enable": "Ativar conta",
+        "disable": "Desativar conta",
+        "enableTitle": "Ativar esta conta?",
+        "disableTitle": "Desativar esta conta?",
+        "enableMessage": "O usuário poderá entrar novamente.",
+        "disableMessage": "O usuário será desconectado e impedido de entrar."
+      }
     }
   }
 }
