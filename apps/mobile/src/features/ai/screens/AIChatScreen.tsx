@@ -1,5 +1,5 @@
-import React, { memo, useCallback, useEffect, useRef } from "react";
-import { KeyboardAvoidingView } from "react-native";
+import React, { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { KeyboardAvoidingView, Platform } from "react-native"
 import { FlashList } from "@shopify/flash-list";
 import type { FlashListRef } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -69,7 +69,10 @@ const AIChatScreen: React.FC = memo(() => {
   // A genuinely new message (user send arriving, reply landing) always pins the
   // list to the end — the near-bottom rule only guards ambient size changes
   // like the keyboard animating in/out.
-  const visibleMessages = messages.filter((m) => m.role !== "system");
+  const visibleMessages = useMemo(
+    () => messages.filter((message) => message.role !== "system"),
+    [messages],
+  );
   const messageCount = visibleMessages.length;
   const lastCountRef = useRef(messageCount);
   useEffect(() => {
@@ -86,7 +89,7 @@ const AIChatScreen: React.FC = memo(() => {
     >
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior="padding"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <FlashList
           ref={flatListRef}

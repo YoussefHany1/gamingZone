@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState, memo } from "react";
 import CustomText from "@/src/components/CustomText";
 import type { LayoutChangeEvent } from "react-native";
-import { View, TouchableOpacity, Platform, ToastAndroid } from "react-native";
+import { View, Pressable, Platform, ToastAndroid } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -317,20 +317,25 @@ const WeeklySummary = memo(function WeeklySummary() {
         </View>
       </Animated.View>
 
-      <TouchableOpacity
+      <Pressable
         onPress={handleToggleExpand}
-        style={styles.readMoreButton}
-        activeOpacity={0.7}
+        style={({ pressed }) => [styles.readMoreButton, pressed && { opacity: 0.7 }]}
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+        accessibilityRole="button"
       >
         <CustomText style={styles.readMoreText}>
           {expanded ? t("home.weeklySummary.readLess") : t("home.weeklySummary.readMore")}
         </CustomText>
-      </TouchableOpacity>
+      </Pressable>
 
-      <TouchableOpacity
-        style={[styles.subscribeButton, subscribed && styles.subscribeButtonActive]}
+      <Pressable
+        style={({ pressed }) => [
+          styles.subscribeButton,
+          subscribed && styles.subscribeButtonActive,
+          pressed && { opacity: 0.7 },
+        ]}
         onPress={handleToggleSubscribe}
-        activeOpacity={0.7}
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
         accessibilityRole="button"
         accessibilityLabel={
           subscribed
@@ -350,7 +355,7 @@ const WeeklySummary = memo(function WeeklySummary() {
             ? t("home.weeklySummary.notificationsOn")
             : t("home.weeklySummary.subscribe")}
         </CustomText>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 });

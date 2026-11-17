@@ -13,6 +13,17 @@ import { storage } from "./lib/storage";
 // supported languages in app
 type SupportedLanguage = "en" | "ar" | "es" | "fr" | "hi" | "pt-BR" | "pt-PT";
 
+/** Every locale the app ships translations for (drives deep-link parsing etc.). */
+const SUPPORTED_LANGUAGES: readonly SupportedLanguage[] = [
+  "en",
+  "ar",
+  "es",
+  "fr",
+  "hi",
+  "pt-BR",
+  "pt-PT",
+];
+
 // Resources Type
 interface Resources {
   [lang: string]: {
@@ -54,4 +65,5 @@ i18n.use(initReactI18next).init({
 
 export default i18n;
 
-export { detectedLanguage };
+export { detectedLanguage, SUPPORTED_LANGUAGES };
+export type { SupportedLanguage };

@@ -1,5 +1,5 @@
 import React, { memo, forwardRef, useCallback, useState } from "react";
-import { TouchableOpacity, type TextInput } from "react-native";
+import { Pressable, type TextInput } from "react-native";
 import { Eye, EyeOff, Lock } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -65,7 +65,7 @@ const AuthPasswordInput = memo(
             : t("auth.a11y.passwordHint"))
         }
         rightSlot={
-          <TouchableOpacity
+          <Pressable
             onPress={toggle}
             style={styles.eyeButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -80,13 +80,14 @@ const AuthPasswordInput = memo(
                 ? t("auth.a11y.hidePasswordHint")
                 : t("auth.a11y.showPasswordHint")
             }
+            android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: true }}
           >
             {showPassword ? (
               <EyeOff size={22} color={colors.textSubtle} />
             ) : (
               <Eye size={22} color={colors.textSubtle} />
             )}
-          </TouchableOpacity>
+          </Pressable>
         }
       />
     );

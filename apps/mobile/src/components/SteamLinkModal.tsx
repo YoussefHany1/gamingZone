@@ -3,7 +3,7 @@ import CustomText from "@/src/components/CustomText";
 import {
   Modal,
   View,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   ToastAndroid,
   KeyboardAvoidingView,
@@ -402,16 +402,32 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
   }, [steamInput, t, onClose]);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "android" ? "height" : "padding"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.overlay}>
           <View style={styles.modalContent}>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <Pressable
+              onPress={onClose}
+              style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.85 }]}
+              android_ripple={{
+                color: "rgba(128,128,128,0.25)",
+                borderless: true,
+                radius: 20,
+              }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel={t("common.close")}
+            >
               <X size={24} color={colors.text} />
-            </TouchableOpacity>
+            </Pressable>
 
             <View style={styles.logo}>
               <SteamIcon size={50} fill={colors.text} />
@@ -440,10 +456,12 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
                 "Please ensure your Steam Profile and Game Details are set to 'Public' in your privacy settings."}
             </CustomText>
 
-            <TouchableOpacity
-              style={styles.syncBtn}
+            <Pressable
+              style={({ pressed }) => [styles.syncBtn, pressed && { opacity: 0.85 }]}
+              android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
               onPress={handleSync}
               disabled={loading}
+              accessibilityRole="button"
             >
               {loading ? (
                 <ActivityIndicator color={colors.text} />
@@ -452,7 +470,7 @@ export default function SteamLinkModal({ visible, onClose }: Props) {
                   {t("settings.profile.steam.modal.syncBtn") || "Sync Games"}
                 </CustomText>
               )}
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </KeyboardAvoidingView>

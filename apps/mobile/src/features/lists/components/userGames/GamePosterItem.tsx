@@ -1,5 +1,5 @@
 import React, { useCallback, memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { Pressable, View } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -69,11 +69,11 @@ const GamePosterItem = memo<GamePosterItemProps>(({ game, onRemove }) => {
 
   return (
     <View style={styles.posterCell}>
-      <TouchableOpacity
-        style={styles.poster}
+      <Pressable
+        style={({ pressed }) => [styles.poster, pressed && { opacity: 0.85 }]}
         onPress={handlePress}
         onLongPress={onRemove ? handleLongPress : undefined}
-        activeOpacity={0.85}
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
         accessibilityRole="button"
         accessibilityLabel={game.name}
       >
@@ -92,7 +92,7 @@ const GamePosterItem = memo<GamePosterItemProps>(({ game, onRemove }) => {
             <CustomText style={styles.ratingBadgeText}>{game.rating}</CustomText>
           </View>
         ) : null}
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 });

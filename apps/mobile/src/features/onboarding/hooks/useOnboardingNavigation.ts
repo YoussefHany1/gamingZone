@@ -15,6 +15,7 @@ export type UseOnboardingNavigationResult = {
   /** Handed to the slides list so the footer can page it. */
   listRef: RefObject<FlatList<OnboardingSlide> | null>;
   onMomentumScrollEnd: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  goBack: () => boolean;
   goNext: () => void;
 };
 
@@ -42,6 +43,17 @@ export function useOnboardingNavigation(
     [total],
   );
 
+  const goBack = useCallback((): boolean => {
+    if (activeIndex <= 0) return false;
+    const previousIndex = activeIndex - 1;
+    setActiveIndex(previousIndex);
+    listRef.current?.scrollToOffset({
+      offset: previousIndex * SLIDE_WIDTH,
+      animated: true,
+    });
+    return true;
+  }, [activeIndex]);
+
   const goNext = useCallback((): void => {
     if (activeIndex < total - 1) {
       const nextIndex = activeIndex + 1;
@@ -55,5 +67,12 @@ export function useOnboardingNavigation(
     }
   }, [activeIndex, total, onDone]);
 
-  return { activeIndex, isLast: activeIndex === total - 1, listRef, onMomentumScrollEnd, goNext };
+  return {
+    activeIndex,
+    isLast: activeIndex === total - 1,
+    listRef,
+    onMomentumScrollEnd,
+    goBack,
+    goNext,
+  };
 }

@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { Pressable, View } from "react-native";
 import { LayoutGrid, LayoutList } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -38,11 +38,18 @@ const ViewModeToggle = memo<ViewModeToggleProps>(({ value, onChange }) => {
 
   return (
     <View style={styles.toggleGroup}>
-      <TouchableOpacity
-        style={[styles.toggleButton, value === "list" && styles.toggleButtonActive]}
+      <Pressable
+        style={({ pressed }) => [
+          styles.toggleButton,
+          value === "list" && styles.toggleButtonActive,
+          pressed && { opacity: 0.85 },
+        ]}
         onPress={() => onChange("list")}
-        activeOpacity={0.7}
         hitSlop={8}
+        android_ripple={{
+          color: value === "list" ? "rgba(255,255,255,0.18)" : "rgba(128,128,128,0.25)",
+          borderless: false,
+        }}
         accessibilityRole="button"
         accessibilityState={{ selected: value === "list" }}
         accessibilityLabel={t("settings.userGames.viewList")}
@@ -51,12 +58,19 @@ const ViewModeToggle = memo<ViewModeToggleProps>(({ value, onChange }) => {
           size={18}
           color={value === "list" ? colors.onAccent : colors.textMuted}
         />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.toggleButton, value === "grid" && styles.toggleButtonActive]}
+      </Pressable>
+      <Pressable
+        style={({ pressed }) => [
+          styles.toggleButton,
+          value === "grid" && styles.toggleButtonActive,
+          pressed && { opacity: 0.85 },
+        ]}
         onPress={() => onChange("grid")}
-        activeOpacity={0.7}
         hitSlop={8}
+        android_ripple={{
+          color: value === "grid" ? "rgba(255,255,255,0.18)" : "rgba(128,128,128,0.25)",
+          borderless: false,
+        }}
         accessibilityRole="button"
         accessibilityState={{ selected: value === "grid" }}
         accessibilityLabel={t("settings.userGames.viewGrid")}
@@ -65,7 +79,7 @@ const ViewModeToggle = memo<ViewModeToggleProps>(({ value, onChange }) => {
           size={18}
           color={value === "grid" ? colors.onAccent : colors.textMuted}
         />
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 });

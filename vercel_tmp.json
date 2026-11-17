@@ -1,0 +1,1 @@
+﻿{ " buildCommand\: \npm run build\, \outputDirectory\: \.next\, \installCommand\: \npm install\, \framework\: \nextjs\, \env\: { \NPM_CONFIG_CACHE_DIR\: \\, \npm_config_cache_dir\: \\ } }

@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { igdbImageUrl } from "@gaming-zone/utils";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { GestureScrollView } from "@/src/components/GestureScrollView";
 import CustomText from "@/src/components/CustomText";
 import AppImage from "@/src/components/AppImage";
@@ -95,7 +95,12 @@ const RecommendedCard = React.memo<RecommendedCardProps>(({ item }) => {
   }, [navigation, item.id]);
 
   return (
-    <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.9}>
+    <Pressable
+      style={({ pressed }) => [styles.gameCard, pressed && { opacity: 0.9 }]}
+      onPress={handlePress}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
+    >
       {/* <LinearGradient colors={["#172a4a", "#0c1a33"]} style={styles.cardBackground} /> */}
 
       <View style={styles.coverContainer}>
@@ -108,6 +113,7 @@ const RecommendedCard = React.memo<RecommendedCardProps>(({ item }) => {
               : require("@/assets/image-not-found.webp")
           }
           style={styles.cover}
+          recyclingKey={String(item.id)}
           contentFit="cover"
           cachePolicy="memory-disk"
         />
@@ -142,7 +148,7 @@ const RecommendedCard = React.memo<RecommendedCardProps>(({ item }) => {
           )}
         </View>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 RecommendedCard.displayName = "RecommendedCard";

@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, Switch, TouchableOpacity } from "react-native";
+import { View, Switch, Pressable } from "react-native";
 import type { ImageStyle } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import { ChevronDown, ChevronRight } from "lucide-react-native";
@@ -116,10 +116,11 @@ const NotificationCategorySection = memo(
 
     return (
       <View style={styles.categorySection}>
-        <TouchableOpacity
-          style={styles.categoryHeader}
+        <Pressable
+          style={({ pressed }) => [styles.categoryHeader, pressed && { opacity: 0.85 }]}
           onPress={() => onToggleExpansion(category)}
-          activeOpacity={0.7}
+          accessibilityRole="button"
+          android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
         >
           <View style={styles.categoryHeaderLeft}>
             {isExpanded ? (
@@ -130,7 +131,7 @@ const NotificationCategorySection = memo(
             <CustomText style={styles.categoryTitle}>{title}</CustomText>
             <CustomText style={styles.sourceCount}>({sources.length})</CustomText>
           </View>
-        </TouchableOpacity>
+        </Pressable>
 
         {isExpanded && (
           <View style={styles.sourcesList}>

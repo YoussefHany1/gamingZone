@@ -1,5 +1,5 @@
 import React, { memo, useState } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -138,45 +138,69 @@ const GamePcRequirements: React.FC<
           {/* Min / Recommended / RT tabs */}
           <View style={styles.tabRow}>
             {hasMin && (
-              <TouchableOpacity
-                style={[styles.tab, currentTab === "min" && styles.tabActive]}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.tab,
+                  currentTab === "min" && styles.tabActive,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={() => setActiveTab("min")}
+                android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                accessibilityRole="button"
               >
                 <CustomText
                   style={[styles.tabText, currentTab === "min" && styles.tabTextActive]}
                 >
                   {t("games.details.minimum")}
                 </CustomText>
-              </TouchableOpacity>
+              </Pressable>
             )}
             {hasRec && (
-              <TouchableOpacity
-                style={[styles.tab, currentTab === "rec" && styles.tabActive]}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.tab,
+                  currentTab === "rec" && styles.tabActive,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={() => setActiveTab("rec")}
+                android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                accessibilityRole="button"
               >
                 <CustomText
                   style={[styles.tabText, currentTab === "rec" && styles.tabTextActive]}
                 >
                   {t("games.details.recommended")}
                 </CustomText>
-              </TouchableOpacity>
+              </Pressable>
             )}
             {hasRtMin && (
-              <TouchableOpacity
-                style={[styles.tab, currentTab === "rtmin" && styles.tabActive]}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.tab,
+                  currentTab === "rtmin" && styles.tabActive,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={() => setActiveTab("rtmin")}
+                android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                accessibilityRole="button"
               >
                 <CustomText
                   style={[styles.tabText, currentTab === "rtmin" && styles.tabTextActive]}
                 >
                   {t("games.details.rtMinimum", { defaultValue: "RT Minimum" })}
                 </CustomText>
-              </TouchableOpacity>
+              </Pressable>
             )}
             {hasRtUltra && (
-              <TouchableOpacity
-                style={[styles.tab, currentTab === "rtultra" && styles.tabActive]}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.tab,
+                  currentTab === "rtultra" && styles.tabActive,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={() => setActiveTab("rtultra")}
+                android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                accessibilityRole="button"
               >
                 <CustomText
                   style={[
@@ -186,7 +210,7 @@ const GamePcRequirements: React.FC<
                 >
                   {t("games.details.rtUltra", { defaultValue: "RT Ultra" })}
                 </CustomText>
-              </TouchableOpacity>
+              </Pressable>
             )}
           </View>
 

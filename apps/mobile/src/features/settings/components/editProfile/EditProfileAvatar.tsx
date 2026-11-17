@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { TouchableOpacity } from "react-native";
+import { Pressable } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -25,7 +25,12 @@ const EditProfileAvatar = memo(
     }));
 
     return (
-      <TouchableOpacity onPress={onPress} style={styles.avatarContainer}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [styles.avatarContainer, pressed && { opacity: 0.85 }]}
+        accessibilityRole="button"
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      >
         <AppImage
           recyclingKey={imageUri ?? ""}
           style={styles.avatar}
@@ -38,7 +43,7 @@ const EditProfileAvatar = memo(
         <CustomText style={styles.changePicText}>
           {t("settings.profile.changePic")}
         </CustomText>
-      </TouchableOpacity>
+      </Pressable>
     );
   },
 );

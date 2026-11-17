@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { TouchableOpacity } from "react-native";
+import { Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import CustomTextInput from "@/src/components/CustomTextInput";
@@ -38,7 +38,12 @@ const ProfileDobField = memo(
     return (
       <>
         <SectionTitle title={t("settings.profile.dobLabel")} />
-        <TouchableOpacity onPress={onOpenPicker}>
+        <Pressable
+          onPress={onOpenPicker}
+          style={({ pressed }) => pressed && { opacity: 0.85 }}
+          accessibilityRole="button"
+          android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+        >
           <CustomTextInput
             style={styles.input}
             placeholder={t("settings.profile.placeholders.dob")}
@@ -46,7 +51,7 @@ const ProfileDobField = memo(
             value={value}
             editable={false}
           />
-        </TouchableOpacity>
+        </Pressable>
         {isPickerVisible && (
           <DateTimePicker
             mode="date"

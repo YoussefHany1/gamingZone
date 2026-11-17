@@ -102,7 +102,10 @@ export function useLoginForm({
       await auth().signInWithEmailAndPassword(normalizedEmail, password);
       navigation.replace("MainApp");
     } catch (error) {
-      logger.error("Login failed", error);
+      // Bad credentials are an expected user error — the Toast above surfaces
+      // it. Breadcrumb only, so Crashlytics doesn't fill up with non-fatals
+      // every time someone mistypes a password.
+      logger.info("Login failed", error);
       ToastAndroid.show(
         messages.login((error as { code?: string }).code),
         ToastAndroid.LONG,

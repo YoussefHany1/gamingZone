@@ -95,7 +95,9 @@ export async function buildRecommendations(
     const seedGenres = favoriteGenres.slice(0, 2);
     const results = await Promise.all(
       seedGenres.map((genre) =>
-        searchGames({ filters: { genre } }).catch(() => [] as Game[]),
+        searchGames({ filters: { genre, year: null, platform: null, sort: null } }).catch(
+          () => [] as Game[],
+        ),
       ),
     );
     const seen = new Set<number>();
@@ -141,7 +143,9 @@ export async function buildRecommendations(
     const seedGenres = favoriteGenres.slice(0, 2);
     const results = await Promise.all(
       seedGenres.map((genre) =>
-        searchGames({ filters: { genre } }).catch(() => [] as Game[]),
+        searchGames({ filters: { genre, year: null, platform: null, sort: null } }).catch(
+          () => [] as Game[],
+        ),
       ),
     );
     const seen = new Set<number>();

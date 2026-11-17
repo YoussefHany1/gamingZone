@@ -1,6 +1,6 @@
-import React, { memo, useEffect, useMemo } from "react";
+import React, { memo, useEffect } from "react";
 import analytics from "@react-native-firebase/analytics";
-import { View, ScrollView } from "react-native";
+import { Alert, BackHandler, View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { Gamepad2, Monitor, Smartphone } from "lucide-react-native";
@@ -46,9 +46,31 @@ const SetupWizardScreen: React.FC<Props> = memo(({ onDone }) => {
     saving,
     togglePlatform,
     toggleGenre,
+    back,
     next,
     skip,
   } = useSetupFlow(onDone);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (saving) return true;
+      if (step === "genres") {
+        back();
+        return true;
+      }
+
+      Alert.alert(
+        t("setup.exitTitle", "Exit setup?"),
+        t("setup.exitMessage", "Your setup can be skipped and completed later."),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          { text: t("setup.skip", "Skip"), style: "destructive", onPress: () => void skip() },
+        ],
+      );
+      return true;
+    });
+    return () => subscription.remove();
+  }, [back, saving, skip, step, t]);
 
   const styles = useThemeStyles((c) => ({
     container: { flex: 1, backgroundColor: c.background },

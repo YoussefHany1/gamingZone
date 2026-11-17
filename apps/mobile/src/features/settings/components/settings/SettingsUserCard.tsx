@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from "react";
-import { TouchableOpacity } from "react-native";
+import { Pressable, Platform } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -57,7 +57,16 @@ const SettingsUserCard = memo(
     const label = isGuest || !displayName ? t("auth.register.signUpButton") : displayName;
 
     return (
-      <TouchableOpacity style={styles.userContainer} onPress={onPress} activeOpacity={0.7}>
+      <Pressable
+        style={({ pressed }) => [
+          styles.userContainer,
+          Platform.OS === "android" && pressed && { opacity: 0.85 },
+        ]}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        android_ripple={{ color: "rgba(128,128,128,0.2)", borderless: false }}
+      >
         <AppImage
           source={avatarSource}
           style={styles.avatar}
@@ -73,7 +82,7 @@ const SettingsUserCard = memo(
           ) : (
             <ChevronRight size={24} color={colors.accentText} />
           ))}
-      </TouchableOpacity>
+      </Pressable>
     );
   },
 );

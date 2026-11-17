@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { igdbImageUrl } from "@gaming-zone/utils";
-import { View, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl } from "react-native";
+import { View, Pressable, ActivityIndicator, StyleSheet, RefreshControl } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import AppImage from "@/src/components/AppImage";
 import type { ListRenderItemInfo } from "@shopify/flash-list";
@@ -135,11 +135,12 @@ const GameCard = React.memo<GameCardProps>(({ item }) => {
   }, [navigation, item.id]);
 
   return (
-    <TouchableOpacity
+    <Pressable
       style={styles.gameCard}
       onPress={handlePress}
       accessibilityRole="button"
       accessibilityLabel={item.name}
+      android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
     >
       <View style={styles.coverWrapper}>
         <AppImage
@@ -172,7 +173,7 @@ const GameCard = React.memo<GameCardProps>(({ item }) => {
       <CustomText style={styles.title} numberOfLines={2}>
         {item.name}
       </CustomText>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 GameCard.displayName = "GameCard";
@@ -331,21 +332,24 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
         <GameCard item={item} />
       </View>
     ),
-    [styles],
+    // `styles` intentionally excluded: it only changes on a theme switch, and a
+    // new renderItem identity would remount every FlashList row mid-scroll.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
   const renderBackButton = useCallback(() => {
     if (!onBack) return null;
     return (
-      <TouchableOpacity
-        style={styles.backBtn}
+      <Pressable
+        style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.85 }]}
         onPress={onBack}
-        activeOpacity={0.7}
+        android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
         accessibilityRole="button"
         accessibilityLabel={t("common.back")}
       >
         <ArrowLeft size={20} color={colors.onAccent} accessible={false} />
-      </TouchableOpacity>
+      </Pressable>
     );
   }, [onBack, styles, colors.onAccent, t]);
 
@@ -385,16 +389,16 @@ function GamesList({ query, filters, onBack }: GamesListProps) {
         {isLoadingMore ? (
           <ActivityIndicator color={colors.accentText}/>
         ) : (
-          <TouchableOpacity
-            style={styles.nextBtn}
+          <Pressable
+            style={({ pressed }) => [styles.nextBtn, pressed && { opacity: 0.85 }]}
             onPress={handleLoadMore}
-            activeOpacity={0.7}
+            android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
             accessibilityRole="button"
             accessibilityLabel={t("games.list.next")}
           >
             <CustomText style={styles.nextText}>{t("games.list.next")}</CustomText>
             <ArrowRight size={20} color={colors.onAccent} accessible={false} />
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
     );

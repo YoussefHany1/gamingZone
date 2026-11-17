@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import { useTranslation } from "react-i18next";
@@ -46,10 +46,11 @@ function SuggestionRow({ game, onPress }: RowProps): React.ReactElement {
     name: { flex: 1, color: c.text, fontSize: 14, fontWeight: "600" },
   }));
   return (
-    <TouchableOpacity
-      style={styles.row}
+    <Pressable
+      style={({ pressed }) => [styles.row, pressed && { opacity: 0.85 }]}
       onPress={() => onPress(game)}
-      activeOpacity={0.7}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
     >
       <AppImage
         source={
@@ -65,7 +66,7 @@ function SuggestionRow({ game, onPress }: RowProps): React.ReactElement {
       <CustomText style={styles.name} numberOfLines={1} ellipsizeMode="tail">
         {game.name}
       </CustomText>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 

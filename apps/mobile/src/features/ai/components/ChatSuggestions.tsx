@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from "react";
-import { View, ScrollView, TouchableOpacity } from "react-native";
+import { View, ScrollView, Pressable } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -49,13 +49,16 @@ const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ onSelect }) => {
         contentContainerStyle={styles.suggestionsList}
       >
         {suggestions.map((suggestion, index) => (
-          <TouchableOpacity
+          <Pressable
             key={index}
-            style={styles.suggestionChip}
+            style={({ pressed }) => [styles.suggestionChip, pressed && { opacity: 0.85 }]}
             onPress={() => onSelect(suggestion)}
+            hitSlop={{ top: 8, bottom: 8 }}
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+            accessibilityRole="button"
           >
             <CustomText style={styles.suggestionText}>{suggestion}</CustomText>
-          </TouchableOpacity>
+          </Pressable>
         ))}
       </ScrollView>
     </View>

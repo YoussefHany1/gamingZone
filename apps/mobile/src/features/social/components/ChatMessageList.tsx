@@ -1,5 +1,5 @@
-import React, { memo, useRef, useEffect } from "react";
-import { TouchableOpacity, View } from "react-native";
+import React, { memo, useRef, useEffect, useMemo, useCallback } from "react";
+import { Pressable, View } from "react-native";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import AppImage from "@/src/components/AppImage";
 import { Check, CheckCheck, MessageCircle } from "lucide-react-native";
@@ -12,6 +12,7 @@ import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import GamingEmptyState from "@/src/components/GamingEmptyState";
 import GameCoverThumbnail from "./social/GameCoverThumbnail";
 import type { ChatSenderProfile } from "../lib/profileLookup";
+import type { ThemeColors } from "@/src/constants/colors";
 
 export type ChatMessageListProps = {
   messages: SocialMessage[];
@@ -39,6 +40,160 @@ function formatMessageTime(value: number | null): string {
     minute: "2-digit",
   });
 }
+
+// ── Styles (single sheet shared by the list and every row) ───────────────────
+const chatStylesFactory = (c: ThemeColors) => ({
+  content: { padding: 16, paddingBottom: 10 },
+  messageRow: {
+    flexDirection: "row" as const,
+    alignItems: "flex-end" as const,
+    gap: 8,
+    marginBottom: 8,
+  },
+  ownRow: { justifyContent: "flex-end" as const },
+  avatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: c.surface,
+  },
+  bubble: {
+    maxWidth: "78%" as const,
+    padding: 11,
+    borderRadius: 16,
+    backgroundColor: c.surface,
+  },
+  ownBubble: { backgroundColor: c.accent, borderBottomRightRadius: 5 },
+  receivedBubble: { borderBottomLeftRadius: 5 },
+  edited: { color: c.onAccent, fontSize: 10, fontStyle: "italic" as const },
+  message: { color: c.text },
+  muted: { color: c.textMuted, fontSize: 11 },
+  gameCard: {
+    marginTop: 8,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: c.background,
+  },
+  gameTitle: { color: c.text, fontWeight: "700" as const },
+  gameLink: { color: c.accent, fontSize: 12, marginTop: 4 },
+  messageMeta: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 8,
+    marginTop: 4,
+  },
+  ownMessage: { color: c.onAccent },
+  tickSent: { opacity: 0.55 },
+  empty: { flex: 1, alignItems: "center" as const, justifyContent: "center" as const },
+  sessionSecondary: {
+    backgroundColor: c.background,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+});
+type ChatStyles = Readonly<ReturnType<typeof chatStylesFactory>>;
+
+// ── Single message row ───────────────────────────────────────────────────────
+type MessageRowProps = {
+  item: SocialMessage;
+  uid: string;
+  senderProfile: ChatSenderProfile | undefined;
+  otherLastReadAt: number | null;
+  onShowActions: (message: SocialMessage) => void;
+  onAccent: string;
+  styles: ChatStyles;
+};
+
+/**
+ * Memoized row: re-renders only when its own message, the sender's profile,
+ * the peer's read position or the theme changes — not on every list update.
+ */
+const MessageRow = memo(function MessageRow({
+  item,
+  uid,
+  senderProfile,
+  otherLastReadAt,
+  onShowActions,
+  onAccent,
+  styles,
+}: MessageRowProps): React.ReactElement {
+  const { t } = useTranslation();
+  const own = item.senderId === uid;
+  const showAvatar = !own && item.senderId !== "system";
+  const avatarSource = senderProfile?.photoURL
+    ? { uri: senderProfile.photoURL }
+    : // Metro caches the module, so the inline require is resolved once.
+      require("@/assets/default_profile.webp");
+
+  return (
+    <View style={[styles.messageRow, own && styles.ownRow]}>
+      {showAvatar ? (
+        <AppImage
+          source={avatarSource}
+          style={styles.avatar}
+          contentFit="cover"
+          transition={150}
+          cachePolicy="memory-disk"
+          accessibilityIgnoresInvertColors
+        />
+      ) : null}
+      <Pressable
+        onLongPress={() => onShowActions(item)}
+        delayLongPress={350}
+        style={[styles.bubble, own ? styles.ownBubble : styles.receivedBubble]}
+      >
+        {item.type === "system" && item.gameId ? (
+          <GameCoverThumbnail gameId={item.gameId} />
+        ) : null}
+        <CustomText style={[styles.message, own && styles.ownMessage]}>
+          {item.deletedFor.includes(uid) ? t("social.chats.removed") : item.text}
+        </CustomText>
+        {!item.deletedFor.includes(uid) &&
+        item.type === "game_suggestion" &&
+        item.gameName ? (
+          <View style={styles.gameCard}>
+            <CustomText style={styles.gameTitle}>{item.gameName}</CustomText>
+            <CustomText style={styles.gameLink}>
+              {t("social.chats.openGame")}
+            </CustomText>
+          </View>
+        ) : null}
+        <View style={styles.messageMeta}>
+          <CustomText style={[styles.muted, own && styles.ownMessage]}>
+            {formatMessageTime(item.createdAt)}
+          </CustomText>
+          {item.editedAt ? (
+            <CustomText style={styles.edited}>
+              {t("social.chats.edited")}
+            </CustomText>
+          ) : null}
+          {own &&
+          typeof item.createdAt === "number" &&
+          item.senderId !== "system" ? (
+            otherLastReadAt !== null && otherLastReadAt >= item.createdAt ? (
+              <CheckCheck
+                size={14}
+                color={onAccent}
+                accessibilityLabel={t("social.chats.read")}
+              />
+            ) : (
+              <Check
+                size={14}
+                color={onAccent}
+                style={styles.tickSent}
+                accessibilityLabel={t("social.chats.sent")}
+              />
+            )
+          ) : null}
+        </View>
+      </Pressable>
+    </View>
+  );
+});
+MessageRow.displayName = "MessageRow";
+
+const keyExtractor = (item: SocialMessage): string => item.id;
 
 /**
  * The scrollable part of a conversation: skeleton/empty/error states, the
@@ -77,51 +232,36 @@ const ChatMessageList = memo(
       return () => cancelAnimationFrame(frame);
     }, [messages]);
 
-    const styles = useThemeStyles((c) => ({
-      content: { padding: 16, paddingBottom: 10 },
-      messageRow: {
-        flexDirection: "row",
-        alignItems: "flex-end",
-        gap: 8,
-        marginBottom: 8,
-      },
-      ownRow: { justifyContent: "flex-end" },
-      avatar: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        backgroundColor: c.surface,
-      },
-      bubble: {
-        maxWidth: "78%",
-        padding: 11,
-        borderRadius: 16,
-        backgroundColor: c.surface,
-      },
-      ownBubble: { backgroundColor: c.accent, borderBottomRightRadius: 5 },
-      receivedBubble: { borderBottomLeftRadius: 5 },
-      edited: { color: c.onAccent, fontSize: 10, fontStyle: "italic" },
-      message: { color: c.text },
-      muted: { color: c.textMuted, fontSize: 11 },
-      gameCard: {
-        marginTop: 8,
-        padding: 10,
-        borderRadius: 10,
-        backgroundColor: c.background,
-      },
-      gameTitle: { color: c.text, fontWeight: "700" },
-      gameLink: { color: c.accent, fontSize: 12, marginTop: 4 },
-      messageMeta: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
-      ownMessage: { color: c.onAccent },
-      tickSent: { opacity: 0.55 },
-      empty: { flex: 1, alignItems: "center", justifyContent: "center" },
-      sessionSecondary: {
-        backgroundColor: c.background,
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        paddingVertical: 7,
-      },
-    }));
+    const styles = useThemeStyles(chatStylesFactory);
+
+    // Rebuilt only when the underlying pages change — never a fresh spread +
+    // reverse copy on every render of the chat screen.
+    const data = useMemo(
+      () => [...messages, ...olderMessages].reverse(),
+      [messages, olderMessages],
+    );
+
+    // Read ticks depend on `otherLastReadAt` too, so it must be part of the
+    // extra-data identity for rows to repaint when the peer catches up.
+    const extraData = useMemo(
+      () => ({ senderProfiles, otherLastReadAt }),
+      [senderProfiles, otherLastReadAt],
+    );
+
+    const renderItem = useCallback(
+      ({ item }: { item: SocialMessage }): React.ReactElement => (
+        <MessageRow
+          item={item}
+          uid={uid}
+          senderProfile={senderProfiles[item.senderId]}
+          otherLastReadAt={otherLastReadAt}
+          onShowActions={onShowActions}
+          onAccent={colors.onAccent}
+          styles={styles}
+        />
+      ),
+      [uid, senderProfiles, otherLastReadAt, onShowActions, colors.onAccent, styles],
+    );
 
     if (loading) {
       return <SkeletonChat />;
@@ -148,97 +288,29 @@ const ChatMessageList = memo(
     return (
       <FlashList
         ref={listRef}
-        data={[...messages, ...olderMessages].reverse()}
-        keyExtractor={(item) => item.id}
-        extraData={senderProfiles}
+        data={data}
+        keyExtractor={keyExtractor}
+        extraData={extraData}
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           hasOlderMessages ? (
-            <TouchableOpacity
-              style={styles.sessionSecondary}
+            <Pressable
+              style={({ pressed }) => [
+                styles.sessionSecondary,
+                pressed && { opacity: 0.85 },
+              ]}
               onPress={() => void onLoadOlder()}
               disabled={loadingOlder}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+              accessibilityRole="button"
             >
               <CustomText style={styles.message}>
                 {loadingOlder ? t("social.chats.loading") : t("social.chats.loadOlder")}
               </CustomText>
-            </TouchableOpacity>
+            </Pressable>
           ) : null
         }
-        renderItem={({ item }) => {
-          const own = item.senderId === uid;
-          const senderProfile = senderProfiles[item.senderId];
-          const showAvatar = !own && item.senderId !== "system";
-          const avatarSource = senderProfile?.photoURL
-            ? { uri: senderProfile.photoURL }
-            : require("@/assets/default_profile.webp");
-
-          return (
-            <View style={[styles.messageRow, own && styles.ownRow]}>
-              {showAvatar ? (
-                <AppImage
-                  source={avatarSource}
-                  style={styles.avatar}
-                  contentFit="cover"
-                  transition={150}
-                  cachePolicy="memory-disk"
-                  accessibilityIgnoresInvertColors
-                />
-              ) : null}
-              <TouchableOpacity
-                activeOpacity={1}
-                onLongPress={() => onShowActions(item)}
-                delayLongPress={350}
-                style={[styles.bubble, own ? styles.ownBubble : styles.receivedBubble]}
-              >
-                {item.type === "system" && item.gameId ? (
-                  <GameCoverThumbnail gameId={item.gameId} />
-                ) : null}
-                <CustomText style={[styles.message, own && styles.ownMessage]}>
-                  {item.deletedFor.includes(uid) ? t("social.chats.removed") : item.text}
-                </CustomText>
-                {!item.deletedFor.includes(uid) &&
-                item.type === "game_suggestion" &&
-                item.gameName ? (
-                  <View style={styles.gameCard}>
-                    <CustomText style={styles.gameTitle}>{item.gameName}</CustomText>
-                    <CustomText style={styles.gameLink}>
-                      {t("social.chats.openGame")}
-                    </CustomText>
-                  </View>
-                ) : null}
-                <View style={styles.messageMeta}>
-                  <CustomText style={[styles.muted, own && styles.ownMessage]}>
-                    {formatMessageTime(item.createdAt)}
-                  </CustomText>
-                  {item.editedAt ? (
-                    <CustomText style={styles.edited}>
-                      {t("social.chats.edited")}
-                    </CustomText>
-                  ) : null}
-                  {own &&
-                  typeof item.createdAt === "number" &&
-                  item.senderId !== "system" ? (
-                    otherLastReadAt !== null && otherLastReadAt >= item.createdAt ? (
-                      <CheckCheck
-                        size={14}
-                        color={colors.onAccent}
-                        accessibilityLabel={t("social.chats.read")}
-                      />
-                    ) : (
-                      <Check
-                        size={14}
-                        color={colors.onAccent}
-                        style={styles.tickSent}
-                        accessibilityLabel={t("social.chats.sent")}
-                      />
-                    )
-                  ) : null}
-                </View>
-              </TouchableOpacity>
-            </View>
-          );
-        }}
+        renderItem={renderItem}
       />
     );
   },

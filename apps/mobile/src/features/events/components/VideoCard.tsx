@@ -1,6 +1,6 @@
 import React, { memo, useCallback } from "react";
 import CustomText from "@/src/components/CustomText";
-import { View, StyleSheet, TouchableOpacity, Dimensions } from "react-native";
+import { View, Pressable, StyleSheet, Dimensions } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import { CirclePlay } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -47,7 +47,12 @@ const VideoCard = memo<VideoCardProps>(({ video }) => {
   }));
 
   return (
-    <TouchableOpacity style={styles.videoCard} onPress={handlePress} activeOpacity={0.8}>
+    <Pressable
+      style={({ pressed }) => [styles.videoCard, pressed && { opacity: 0.8 }]}
+      onPress={handlePress}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
+    >
       <AppImage
         recyclingKey={video.video_id}
         source={`https://img.youtube.com/vi/${video.video_id}/mqdefault.jpg`}
@@ -67,7 +72,7 @@ const VideoCard = memo<VideoCardProps>(({ video }) => {
           {video.name}
         </CustomText>
       ) : null}
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 VideoCard.displayName = "VideoCard";

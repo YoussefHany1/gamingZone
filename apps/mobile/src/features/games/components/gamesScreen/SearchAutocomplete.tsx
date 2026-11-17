@@ -3,10 +3,9 @@ import { igdbImageUrl } from "@gaming-zone/utils";
 import CustomText from "@/src/components/CustomText";
 import {
   View,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Animated,
-  Platform,
 } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import AppImage from "@/src/components/AppImage";
@@ -17,6 +16,7 @@ import type { GamesStackParamList } from "../../screens/GameDetailsScreen";
 import { searchGamesAutocomplete } from "@/src/services/api/igdbApi";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useTranslation } from "react-i18next";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -68,7 +68,12 @@ const SuggestionRow = React.memo<RowProps>(({ item, onPress }) => {
   const handlePress = useCallback(() => onPress(item), [onPress, item]);
 
   return (
-    <TouchableOpacity style={styles.row} onPress={handlePress} activeOpacity={0.7}>
+    <Pressable
+      style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}
+      onPress={handlePress}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
+    >
       {coverUri ? (
         <AppImage
           source={{ uri: coverUri }}
@@ -87,7 +92,7 @@ const SuggestionRow = React.memo<RowProps>(({ item, onPress }) => {
       <CustomText style={styles.name} numberOfLines={1} ellipsizeMode="tail">
         {item.name}
       </CustomText>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 SuggestionRow.displayName = "SuggestionRow";
@@ -101,6 +106,7 @@ export default function SearchAutocomplete({
 }: SearchAutocompleteProps) {
   const navigation = useNavigation<NativeStackNavigationProp<GamesStackParamList>>();
   const colors = useThemeColors();
+  const { t } = useTranslation();
 
   const styles = useThemeStyles((c) => ({
     container: {
@@ -116,6 +122,16 @@ export default function SearchAutocomplete({
     loaderWrap: {
       paddingVertical: 20,
       alignItems: "center",
+    },
+    noResultsWrap: {
+      paddingVertical: 18,
+      paddingHorizontal: 14,
+      alignItems: "center",
+    },
+    noResultsText: {
+      color: c.textMuted,
+      fontSize: 14,
+      textAlign: "center",
     },
     separator: {
       height: 1,
@@ -156,7 +172,7 @@ export default function SearchAutocomplete({
   }, [query, visible]);
 
   // Fade animation
-  const shouldShow = visible && (loading || suggestions.length > 0);
+  const shouldShow = visible && query.trim().length >= MIN_QUERY_LEN;
 
   useEffect(() => {
     Animated.timing(opacity, {
@@ -188,6 +204,10 @@ export default function SearchAutocomplete({
       {loading && suggestions.length === 0 ? (
         <View style={styles.loaderWrap}>
           <ActivityIndicator size="small" color={colors.accentText}/>
+        </View>
+      ) : suggestions.length === 0 ? (
+        <View style={styles.noResultsWrap}>
+          <CustomText style={styles.noResultsText}>{t("games.noResults")}</CustomText>
         </View>
       ) : (
         <FlashList

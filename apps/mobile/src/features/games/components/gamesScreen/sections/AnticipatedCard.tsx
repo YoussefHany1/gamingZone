@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import type { GestureResponderEvent } from "react-native";
 import { Bell, BellOff } from "lucide-react-native";
@@ -133,10 +133,11 @@ const AnticipatedCard = React.memo<AnticipatedCardProps>(
     );
 
     return (
-      <TouchableOpacity
-        style={styles.cardContainer}
+      <Pressable
+        style={({ pressed }) => [styles.cardContainer, pressed && { opacity: 0.9 }]}
         onPress={handlePress}
-        activeOpacity={0.9}
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+        accessibilityRole="button"
       >
         {/* Timeline Section */}
         <View style={styles.timelineContainer}>
@@ -149,11 +150,15 @@ const AnticipatedCard = React.memo<AnticipatedCardProps>(
         <View style={styles.imageContainer}>
           <CoverImage item={item} deriveRecyclingKey style={styles.coverImage} />
 
-          <TouchableOpacity
-            style={[styles.bellButton, isSubscribed && styles.bellButtonActive]}
+          <Pressable
+            style={({ pressed }) => [
+              styles.bellButton,
+              isSubscribed && styles.bellButtonActive,
+              pressed && { opacity: 0.8 },
+            ]}
             onPress={handleBellPress}
-            activeOpacity={0.8}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: true, radius: 20 }}
             accessibilityRole="button"
             accessibilityLabel={
               isSubscribed
@@ -166,14 +171,14 @@ const AnticipatedCard = React.memo<AnticipatedCardProps>(
             ) : (
               <BellOff size={14} color="#ffffff" />
             )}
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Title */}
         <CustomText style={styles.title} numberOfLines={2}>
           {item.name}
         </CustomText>
-      </TouchableOpacity>
+      </Pressable>
     );
   },
 );

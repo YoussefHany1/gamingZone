@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { View, TouchableOpacity, Share, RefreshControl } from "react-native";
+import { Pressable, View, Share, RefreshControl } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CirclePlus, Share2 } from "lucide-react-native";
@@ -137,24 +137,36 @@ const UserGamesScreen = ({ route, navigation }: Props) => {
       headerRight: () => (
         <View style={headerButtonsRow}>
           {targetUserId && games.length > 0 ? (
-            <TouchableOpacity
+            <Pressable
               onPress={handleShare}
-              style={headerButtonSpacing}
+              style={({ pressed }) => [headerButtonSpacing, pressed && { opacity: 0.85 }]}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              android_ripple={{
+                color: "rgba(128,128,128,0.25)",
+                borderless: true,
+                radius: 18,
+              }}
               accessibilityRole="button"
               accessibilityLabel={t("common.share")}
             >
               <Share2 size={24} color={colors.text} />
-            </TouchableOpacity>
+            </Pressable>
           ) : null}
           {!isSharedList && (
-            <TouchableOpacity
+            <Pressable
               onPress={() => navigation.getParent()?.navigate("Games")}
-              style={headerButtonPadding}
+              style={({ pressed }) => [headerButtonPadding, pressed && { opacity: 0.85 }]}
+              hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+              android_ripple={{
+                color: "rgba(128,128,128,0.25)",
+                borderless: true,
+                radius: 20,
+              }}
               accessibilityRole="button"
               accessibilityLabel={t("lists.addGame")}
             >
               <CirclePlus size={28} color={colors.text} />
-            </TouchableOpacity>
+            </Pressable>
           )}
         </View>
       ),

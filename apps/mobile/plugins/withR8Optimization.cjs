@@ -4,6 +4,8 @@
  * Applies the following Android native changes so they survive `expo prebuild --clean`:
  *  1. gradle.properties → android.enableR8.fullMode=true
  *  2. app/build.gradle  → proguard-android-optimize.txt + minifyEnabled true + shrinkResources true
+ *  3. local release signing → environment-provided keystore when available,
+ *     with the generated debug key retained only as an explicit local fallback
  *
  * Usage in app.json:
  *   "plugins": ["./plugins/withR8Optimization"]
@@ -48,8 +50,52 @@ const withR8BuildGradle = (config) =>
   withAppBuildGradle(config, (mod) => {
     let contents = mod.modResults.contents;
 
-    // Already patched — idempotent guard
+    // Replace the generated version from app.json on every prebuild. The
+    // android directory is intentionally untracked in this CNG project.
+    if (config.version) {
+      contents = contents.replace(
+        /versionName\s+["'][^"']+["']/,
+        `versionName "${config.version}"`,
+      );
+    }
+
+    // Local release builds may provide a real keystore through environment
+    // variables. EAS credentials injection remains responsible for cloud
+    // signing; without local variables, retain the generated debug fallback
+    // rather than failing configuration at prebuild time.
+    if (!contents.includes("signingConfigs.release")) {
+      contents = contents.replace(
+        /\n\s*}\s*\n\s*buildTypes\s*\{/,
+        `
+        release {
+            def localKeystore = System.getenv("ANDROID_KEYSTORE")
+            if (localKeystore != null) {
+                storeFile file(localKeystore)
+                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+`,
+      );
+    }
+
+    const releaseSigning = `signingConfig signingConfigs.debug
+            // Local override; EAS replaces signing credentials in cloud builds.
+            if (System.getenv("ANDROID_KEYSTORE") != null) {
+                signingConfig signingConfigs.release
+            }`;
+    contents = contents.replace(
+      /signingConfig signingConfigs\.debug\s*\n(\s*def enableShrinkResources)/,
+      `${releaseSigning}\n            $1`,
+    );
+
+    // Already patched — idempotent guard for the R8 transforms below.
     if (contents.includes("proguard-android-optimize.txt")) {
+      mod.modResults.contents = contents;
       return mod;
     }
 

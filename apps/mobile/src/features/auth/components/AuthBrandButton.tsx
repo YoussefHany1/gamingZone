@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { TouchableOpacity, ActivityIndicator } from "react-native";
+import { Pressable, ActivityIndicator, Platform } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
@@ -39,6 +39,8 @@ const AuthBrandButton: React.FC<AuthBrandButtonProps> = ({
   const styles = useThemeStyles(() => ({
     wrapper: {
       justifyContent: "center",
+      overflow: "hidden",
+      borderRadius: 12,
     },
     buttonDisabled: {
       opacity: 0.6,
@@ -50,6 +52,7 @@ const AuthBrandButton: React.FC<AuthBrandButtonProps> = ({
       flexDirection: "row",
       justifyContent: "center",
       gap: 10,
+      overflow: "hidden",
     },
     // Sits on the fixed brand gradient, which is identical in both
     // themes — so it must not follow the palette.
@@ -62,14 +65,20 @@ const AuthBrandButton: React.FC<AuthBrandButtonProps> = ({
   }));
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
-      style={[styles.wrapper, containerStyle, disabled && styles.buttonDisabled]}
+      style={({ pressed }) => [
+        styles.wrapper,
+        containerStyle,
+        disabled && styles.buttonDisabled,
+        Platform.OS === "android" && pressed && styles.buttonDisabled,
+      ]}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint ?? t("auth.a11y.buttonHint")}
       accessibilityState={{ disabled, busy: loading }}
+      android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
     >
       <LinearGradient
         colors={gradientColors}
@@ -86,7 +95,7 @@ const AuthBrandButton: React.FC<AuthBrandButtonProps> = ({
           </>
         )}
       </LinearGradient>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 

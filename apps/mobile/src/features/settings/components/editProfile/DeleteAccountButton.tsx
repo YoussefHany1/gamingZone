@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { Trash2 } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import { withAlpha } from "@/src/constants/colorUtils";
@@ -44,10 +44,15 @@ const DeleteAccountButton = memo(
 
     return (
       <View style={styles.container}>
-        <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.7}>
+        <Pressable
+          style={({ pressed }) => [styles.button, pressed && { opacity: 0.85 }]}
+          onPress={onPress}
+          accessibilityRole="button"
+          android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+        >
           <Trash2 size={20} color={colors.danger} style={styles.icon} />
           <CustomText style={styles.text}>{label}</CustomText>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   },

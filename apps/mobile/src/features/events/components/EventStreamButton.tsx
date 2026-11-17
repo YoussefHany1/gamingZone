@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { CirclePlay, Radio } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
@@ -44,7 +44,12 @@ const EventStreamButton: React.FC<EventStreamButtonProps> = ({ status, onPress }
     : [colors.accent, colors.textMuted];
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={styles.streamBtnWrap}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.streamBtnWrap, pressed && { opacity: 0.85 }]}
+      android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+      accessibilityRole="button"
+    >
       <LinearGradient
         colors={gradientColors}
         style={styles.streamBtn}
@@ -66,7 +71,7 @@ const EventStreamButton: React.FC<EventStreamButtonProps> = ({ status, onPress }
             : t("home.gamingEvents.detailsButton")}
         </CustomText>
       </LinearGradient>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 

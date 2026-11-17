@@ -1,5 +1,5 @@
 import React, { useCallback, memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { Pressable, View } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -73,7 +73,13 @@ const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
   );
 
   return (
-    <TouchableOpacity style={styles.gameItemContainer} onPress={handlePress}>
+    <Pressable
+      style={({ pressed }) => [styles.gameItemContainer, pressed && { opacity: 0.85 }]}
+      onPress={handlePress}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
+      accessibilityLabel={game.name}
+    >
       <AppImage
         recyclingKey={String(game.cover_image_id ?? "")}
         source={coverUrl}
@@ -92,27 +98,48 @@ const GameItem = memo<GameItemProps>(({ game, onRemove, onRate }) => {
         </CustomText>
         <View style={styles.ratingRow}>
           {[1, 2, 3, 4, 5].map((star) => (
-            <TouchableOpacity
+            <Pressable
               key={star}
               onPress={() => onRate && onRate(game.id, game.rating === star ? 0 : star)}
               disabled={!onRate}
-              activeOpacity={0.7}
-              style={{ paddingRight: 4, paddingVertical: 4 }}
+              style={({ pressed }) => [
+                { paddingRight: 4, paddingVertical: 4 },
+                pressed && { opacity: 0.85 },
+              ]}
+              hitSlop={{ top: 11, bottom: 11, left: 4, right: 4 }}
+              android_ripple={{
+                color: "rgba(128,128,128,0.25)",
+                borderless: true,
+                radius: 13,
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`${star} ${star === 1 ? "star" : "stars"}`}
             >
               <Star
                 size={18}
                 color={star <= (game.rating ?? 0) ? "#ffc107" : colors.textMuted}
               />
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
       {onRemove && (
-        <TouchableOpacity style={styles.removeButton} onPress={handleRemove}>
+        <Pressable
+          style={({ pressed }) => [styles.removeButton, pressed && { opacity: 0.85 }]}
+          onPress={handleRemove}
+          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+          android_ripple={{
+            color: "rgba(128,128,128,0.25)",
+            borderless: true,
+            radius: 20,
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Remove"
+        >
           <Trash2 size={24} color={colors.danger} />
-        </TouchableOpacity>
+        </Pressable>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 GameItem.displayName = "GameItem";

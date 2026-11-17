@@ -1,7 +1,7 @@
 import React, { memo, useState } from "react";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import CustomText from "@/src/components/CustomText";
-import { View, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Pressable, ActivityIndicator } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import AppImage from "@/src/components/AppImage";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -24,7 +24,12 @@ const HorizontalGameCard: React.FC<{
   const compatibility = usePcCompatibility(game.id, game.first_release_date);
 
   return (
-    <TouchableOpacity style={styles.card} onPress={() => onPress(game.id)}>
+    <Pressable
+      style={({ pressed }) => [styles.card, pressed && { opacity: 0.85 }]}
+      onPress={() => onPress(game.id)}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
+    >
       <View style={styles.imageContainer}>
         <AppImage
           recyclingKey={game.cover?.image_id ?? ""}
@@ -58,7 +63,7 @@ const HorizontalGameCard: React.FC<{
       <CustomText style={styles.gameName} numberOfLines={2}>
         {game.name}
       </CustomText>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 HorizontalGameCard.displayName = "HorizontalGameCard";

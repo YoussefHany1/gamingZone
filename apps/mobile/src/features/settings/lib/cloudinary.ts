@@ -42,15 +42,17 @@ export async function uploadProfileImage(uri: string | null): Promise<string | n
 
   const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
+  // Let fetch provide the multipart boundary. Manually setting the
+  // Content-Type omits that boundary on some Android runtimes and can make
+  // otherwise valid uploads fail intermittently.
   const response = await fetch(url, {
     method: "POST",
     body: data,
-    headers: { "Content-Type": "multipart/form-data" },
   });
 
   const json: CloudinaryResponse = await response.json();
 
-  if (!json.secure_url) {
+  if (!response.ok || !json.secure_url) {
     logger.error("Cloudinary error:", json);
     throw new Error("Image upload failed.");
   }

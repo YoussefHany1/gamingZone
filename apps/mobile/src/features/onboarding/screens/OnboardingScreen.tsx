@@ -1,5 +1,5 @@
-import React, { memo } from "react";
-import { StyleSheet, View } from "react-native";
+import React, { memo, useEffect } from "react";
+import { BackHandler, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import OnboardingActions from "../components/onboarding/OnboardingActions";
@@ -8,6 +8,7 @@ import OnboardingDots from "../components/onboarding/OnboardingDots";
 import OnboardingSlidesList from "../components/onboarding/OnboardingSlidesList";
 import { useOnboardingNavigation } from "../hooks/useOnboardingNavigation";
 import { useOnboardingSlides } from "../hooks/useOnboardingSlides";
+import { Alert } from "@/src/lib/alert";
 
 interface OnboardingScreenProps {
   onDone: () => void;
@@ -19,8 +20,25 @@ interface OnboardingScreenProps {
  */
 const OnboardingScreen = memo(({ onDone }: OnboardingScreenProps): React.ReactElement => {
   const { slides, total } = useOnboardingSlides();
-  const { activeIndex, isLast, listRef, onMomentumScrollEnd, goNext } =
+  const { activeIndex, isLast, listRef, onMomentumScrollEnd, goBack, goNext } =
     useOnboardingNavigation(total, onDone);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (goBack()) return true;
+
+      Alert.alert(
+        "Exit onboarding?",
+        "You can complete onboarding later from the app settings.",
+        [
+          { text: "Stay", style: "cancel" },
+          { text: "Exit", style: "destructive", onPress: onDone },
+        ],
+      );
+      return true;
+    });
+    return () => subscription.remove();
+  }, [goBack, onDone]);
 
   const styles = useThemeStyles((c) => ({
     safeArea: {

@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import PressScale from "@/src/components/PressScale";
 import { Star, Zap } from "lucide-react-native";
@@ -102,18 +102,24 @@ const GameRatingSection: React.FC<GameRatingSectionProps> = ({
       </CustomText>
       <View style={styles.starsRow}>
         {STARS.map((star) => (
-          <TouchableOpacity
+          <Pressable
             key={star}
             onPress={() => onRate(rating === star ? 0 : star)}
-            activeOpacity={0.7}
-            style={STAR_STYLE}
+            style={({ pressed }) => [STAR_STYLE, pressed && { opacity: 0.7 }]}
+            hitSlop={{ top: 8, bottom: 8, left: 2, right: 2 }}
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: true, radius: 22 }}
+            accessibilityRole="button"
+            accessibilityLabel={t("games.details.rateStar", {
+              star,
+              defaultValue: `${star} of 5 stars`,
+            })}
           >
             <Star
               size={32}
               color={colors.textMuted}
               fill={star <= rating ? colors.textMuted : "transparent"}
             />
-          </TouchableOpacity>
+          </Pressable>
         ))}
       </View>
       {rating > 0 && (

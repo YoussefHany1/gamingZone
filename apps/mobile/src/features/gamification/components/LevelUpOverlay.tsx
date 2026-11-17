@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useRef } from "react";
-import { Animated, Modal, View, TouchableOpacity } from "react-native";
+import { Animated, Modal, View, Pressable } from "react-native";
 import { Trophy } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -108,7 +108,7 @@ const LevelUpOverlay = memo(
         statusBarTranslucent
       >
         <Animated.View style={[styles.backdrop, { opacity }]}>
-          <TouchableOpacity activeOpacity={1} onPress={onDismiss}>
+          <Pressable onPress={onDismiss}>
             <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
               <View style={styles.iconWrap}>
                 <Trophy size={34} color={colors.onAccent} />
@@ -121,17 +121,18 @@ const LevelUpOverlay = memo(
                 {t("gamification.levelUp.body", { level: levelUp.toLevel }) ??
                   `You reached Level ${levelUp.toLevel}.`}
               </CustomText>
-              <TouchableOpacity
-                style={styles.button}
+              <Pressable
+                style={({ pressed }) => [styles.button, pressed && { opacity: 0.8 }]}
                 onPress={onDismiss}
-                activeOpacity={0.8}
+                android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+                accessibilityRole="button"
               >
                 <CustomText style={styles.buttonText}>
                   {t("common.ok") ?? "OK"}
                 </CustomText>
-              </TouchableOpacity>
+              </Pressable>
             </Animated.View>
-          </TouchableOpacity>
+          </Pressable>
         </Animated.View>
       </Modal>
     );

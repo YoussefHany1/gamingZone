@@ -1,5 +1,11 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity, Modal, ActivityIndicator } from "react-native";
+import {
+  View,
+  Pressable,
+  Modal,
+  ActivityIndicator,
+  Platform,
+} from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -115,10 +121,11 @@ const VerifyEmailModal: React.FC<VerifyEmailModalProps> = ({
           </CustomText>
 
           <View style={styles.verifyModalActions}>
-            <TouchableOpacity
-              style={[
+            <Pressable
+              style={({ pressed }) => [
                 styles.verifyPrimaryBtn,
                 (isChecking || isResending) && styles.buttonDisabled,
+                Platform.OS === "android" && pressed && { opacity: 0.85 },
               ]}
               onPress={onCheckVerified}
               disabled={isChecking || isResending}
@@ -129,6 +136,7 @@ const VerifyEmailModal: React.FC<VerifyEmailModalProps> = ({
                 disabled: isChecking || isResending,
                 busy: isChecking,
               }}
+              android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
             >
               {isChecking ? (
                 <ActivityIndicator color={colors.onAccent} size="small" />
@@ -137,13 +145,14 @@ const VerifyEmailModal: React.FC<VerifyEmailModalProps> = ({
                   {t("auth.verifyPrompt.iveVerified")}
                 </CustomText>
               )}
-            </TouchableOpacity>
+            </Pressable>
 
-            <TouchableOpacity
-              style={[
+            <Pressable
+              style={({ pressed }) => [
                 styles.verifySecondaryBtn,
                 (isResending || isChecking || resendCooldown > 0) &&
                   styles.buttonDisabled,
+                Platform.OS === "android" && pressed && { opacity: 0.85 },
               ]}
               onPress={onResend}
               disabled={isResending || isChecking || resendCooldown > 0}
@@ -154,6 +163,7 @@ const VerifyEmailModal: React.FC<VerifyEmailModalProps> = ({
                 disabled: isResending || isChecking || resendCooldown > 0,
                 busy: isResending,
               }}
+              android_ripple={{ color: "rgba(128,128,128,0.2)", borderless: false }}
             >
               {isResending ? (
                 <ActivityIndicator color={colors.text} size="small" />
@@ -166,20 +176,21 @@ const VerifyEmailModal: React.FC<VerifyEmailModalProps> = ({
                     : t("auth.verifyPrompt.resend")}
                 </CustomText>
               )}
-            </TouchableOpacity>
+            </Pressable>
 
-            <TouchableOpacity
+            <Pressable
               onPress={onSkip}
               disabled={isChecking || isResending}
               accessibilityRole="button"
               accessibilityLabel={t("auth.verifyPrompt.continue")}
               accessibilityHint={t("auth.a11y.continueHint")}
               accessibilityState={{ disabled: isChecking || isResending }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <CustomText style={styles.verifySkipText}>
                 {t("auth.verifyPrompt.continue")}
               </CustomText>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </View>

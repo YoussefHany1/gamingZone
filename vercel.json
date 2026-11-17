@@ -1,6 +1,10 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "installCommand": "npm install",
-  "framework": "nextjs"
+    "outputDirectory":  ".next",
+    "buildCommand":  "npm run build",
+    "env":  {
+                "PNPM_CONFIG_CACHE_DIR":  "",
+                "NPM_CONFIG_CACHE":  ""
+            },
+    "framework":  "nextjs",
+    "installCommand":  "npm install"
 }

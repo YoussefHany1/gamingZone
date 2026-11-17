@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import React, { Component } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import crashlytics from "@react-native-firebase/crashlytics";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -106,27 +106,31 @@ function ErrorFallback({
       <CustomText style={styles.title}>{t("common.somethingWentWrong")}</CustomText>
 
       <View style={styles.buttonsContainer}>
-        <TouchableOpacity
-          style={styles.button}
+        <Pressable
+          style={({ pressed }) => [styles.button, pressed && { opacity: 0.85 }]}
+          android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
           onPress={onRetry}
-          activeOpacity={0.8}
           accessibilityLabel={t("common.retryButton")}
           accessibilityRole="button"
         >
           <CustomText style={styles.buttonText}>{t("common.retryButton")}</CustomText>
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
-          style={[styles.button, styles.contactButton]}
+        <Pressable
+          style={({ pressed }) => [
+            styles.button,
+            styles.contactButton,
+            pressed && { opacity: 0.85 },
+          ]}
+          android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
           onPress={onContact}
-          activeOpacity={0.8}
           accessibilityRole="button"
           accessibilityLabel={t("common.contactSupport")}
         >
           <CustomText style={[styles.buttonText, styles.contactButtonText]}>
             {t("common.contactSupport")}
           </CustomText>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );

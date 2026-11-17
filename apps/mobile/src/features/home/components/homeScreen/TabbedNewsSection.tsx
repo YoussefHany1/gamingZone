@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useState } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useNewsPlatformFilter } from "@/src/features/news";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -103,10 +103,15 @@ function TabbedNewsSection({
         {tabs.map((key) => {
           const isActive = key === activeTab;
           return (
-            <TouchableOpacity
+            <Pressable
               key={key}
-              style={[styles.tab, isActive && styles.tabActive]}
+              style={({ pressed }) => [
+                styles.tab,
+                isActive && styles.tabActive,
+                pressed && { opacity: 0.85 },
+              ]}
               onPress={() => setActiveTab(key)}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
               accessibilityRole="button"
               accessibilityState={{ selected: isActive }}
               accessibilityLabel={t(TAB_DEFS[key].labelKey)}
@@ -114,7 +119,7 @@ function TabbedNewsSection({
               <CustomText style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
                 {t(TAB_DEFS[key].labelKey)}
               </CustomText>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>

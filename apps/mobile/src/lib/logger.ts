@@ -12,8 +12,10 @@ import crashlytics from "@react-native-firebase/crashlytics";
  * here instead.
  *
  *  - development: writes straight to the console, so behaviour is unchanged.
- *  - release: `warn`/`error` become Crashlytics breadcrumbs and non-fatals, so a
- *    crash report shows what the app was doing and which failures preceded it.
+ *  - release: `info` becomes a Crashlytics *breadcrumb* (attached to future
+ *    reports, never opens a new issue), while `warn`/`error` additionally
+ *    record a non-fatal, so a crash report shows what the app was doing and
+ *    which failures preceded it.
  *
  * `debug` deliberately stays dev-only: it carries the verbose step-by-step traces
  * (Steam sync, bulk notification sync) that would only add noise to a report.
@@ -41,6 +43,17 @@ function toError(payload: LogPayload): Error | null {
   }
 }
 
+/** Plain-text rendering of a log payload, for breadcrumb lines. */
+function toText(payload: LogPayload): string {
+  if (payload instanceof Error) return payload.message;
+  if (typeof payload === "string") return payload;
+  try {
+    return JSON.stringify(payload);
+  } catch {
+    return String(payload);
+  }
+}
+
 export const logger = {
   /**
    * Verbose trace of what the code is doing. Dev builds only — these lines are
@@ -48,6 +61,23 @@ export const logger = {
    */
   debug(message: string, ...rest: LogPayload[]): void {
     if (__DEV__) console.log(message, ...rest);
+  },
+
+  /**
+   * An expected, already-handled failure (a transient network error behind a
+   * cache, a login attempt with bad credentials). Dev-only console output;
+   * in release it becomes a Crashlytics breadcrumb — context for a future
+   * report, never a non-fatal of its own. Use `warn`/`error` for failures
+   * that indicate something actually worth investigating.
+   */
+  info(message: string, payload?: LogPayload): void {
+    if (__DEV__) {
+      console.log(message, payload);
+      return;
+    }
+    crashlytics().log(
+      payload !== undefined ? `${message} ${toText(payload)}` : message,
+    );
   },
 
   /**

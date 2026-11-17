@@ -22,7 +22,12 @@ export function useRequireAuth() {
         return true;
       }
       if (action || opts?.returnTo) {
-        open({ pendingAction: action, returnTo: opts?.returnTo });
+        // Conditional spreads keep `exactOptionalPropertyTypes` happy: the
+        // store treats omitted keys the same as undefined (`?? null`).
+        open({
+          ...(action && { pendingAction: action }),
+          ...(opts?.returnTo && { returnTo: opts.returnTo }),
+        });
       } else {
         open();
       }

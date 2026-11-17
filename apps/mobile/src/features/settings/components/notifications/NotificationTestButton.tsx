@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { Bell } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -43,15 +43,17 @@ const NotificationTestButton = memo((): React.ReactElement => {
 
   return (
     <View style={styles.footer}>
-      <TouchableOpacity
-        style={styles.testButton}
+      <Pressable
+        style={({ pressed }) => [styles.testButton, pressed && { opacity: 0.85 }]}
         onPress={NotificationService.testLocalNotification}
+        accessibilityRole="button"
+        android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
       >
         <Bell size={20} color={colors.onAccent} />
         <CustomText style={styles.testButtonText}>
           {t("settings.notifications.testNotification")}
         </CustomText>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 });

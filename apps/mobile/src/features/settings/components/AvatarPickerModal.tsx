@@ -1,7 +1,8 @@
 import React from "react";
 import CustomText from "@/src/components/CustomText";
-import { Modal, View, TouchableOpacity } from "react-native";
+import { Modal, View, Pressable } from "react-native";
 import AppImage from "@/src/components/AppImage";
+import IconButton from "@/src/components/IconButton";
 import { useTranslation } from "react-i18next";
 import { Camera, X } from "lucide-react-native";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -60,6 +61,10 @@ function AvatarPickerModal({
     },
     closeBtn: {
       alignSelf: "flex-end",
+      width: 48,
+      height: 48,
+      alignItems: "center",
+      justifyContent: "center",
     },
     title: {
       color: c.text,
@@ -126,9 +131,14 @@ function AvatarPickerModal({
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.modalContent}>
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={8}>
+          <IconButton
+            onPress={onClose}
+            size={48}
+            accessibilityLabel={t("common.close")}
+            style={styles.closeBtn}
+          >
             <X size={22} color={colors.text} />
-          </TouchableOpacity>
+          </IconButton>
 
           <CustomText style={styles.title}>
             {t("settings.profile.avatar.title")}
@@ -139,12 +149,16 @@ function AvatarPickerModal({
 
           <View style={styles.grid}>
             {SUGGESTED_AVATARS.map((uri) => (
-              <TouchableOpacity
+              <Pressable
                 key={uri}
                 onPress={() => onSelect(uri)}
-                activeOpacity={0.75}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: currentUri === uri }}
+                android_ripple={{
+                  color: "rgba(128,128,128,0.3)",
+                  borderless: true,
+                  radius: THUMB / 2,
+                }}
               >
                 <AppImage
                   style={[styles.thumb, currentUri === uri && styles.thumbSelected]}
@@ -154,26 +168,32 @@ function AvatarPickerModal({
                   cachePolicy="memory-disk"
                   allowDownscaling
                 />
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
 
-          <TouchableOpacity
-            style={styles.uploadBtn}
+          <Pressable
+            style={({ pressed }) => [styles.uploadBtn, pressed && { opacity: 0.85 }]}
             onPress={onUpload}
-            activeOpacity={0.75}
             accessibilityRole="button"
             accessibilityLabel={t("settings.profile.avatar.upload")}
+            android_ripple={{ color: "rgba(128,128,128,0.2)", borderless: false }}
           >
             <Camera size={20} color={colors.accentText}/>
             <CustomText style={styles.uploadText}>
               {t("settings.profile.avatar.upload")}
             </CustomText>
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity style={styles.cancelBtn} onPress={onClose} hitSlop={8}>
+          <Pressable
+            style={({ pressed }) => [styles.cancelBtn, pressed && { opacity: 0.85 }]}
+            onPress={onClose}
+            hitSlop={8}
+            accessibilityRole="button"
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+          >
             <CustomText style={styles.cancelText}>{t("common.cancel")}</CustomText>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </Modal>

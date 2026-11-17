@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { LinearGradient } from "expo-linear-gradient";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -172,7 +172,12 @@ const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(({ item, index 
   }, [navigation, item.id]);
 
   return (
-    <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.85}>
+    <Pressable
+      style={({ pressed }) => [styles.gameCard, pressed && { opacity: 0.85 }]}
+      onPress={handlePress}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
+    >
       {/* Steam-style top accent border */}
       <View style={[styles.topAccentBar, isTopThree && styles.topAccentBarGold]} />
 
@@ -225,7 +230,7 @@ const SteamTopSellersCard = React.memo<SteamTopSellersCardProps>(({ item, index 
           </View>
         )}
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 SteamTopSellersCard.displayName = "SteamTopSellersCard";

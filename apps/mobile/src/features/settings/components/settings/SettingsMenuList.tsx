@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable, Platform } from "react-native";
 import {
   ChevronLeft,
   ChevronRight,
@@ -67,11 +67,16 @@ const SettingsMenuList = memo(
               : ChevronRight;
 
           return (
-            <TouchableOpacity
+            <Pressable
               key={item.id}
-              style={styles.menuItem}
+              style={({ pressed }) => [
+                styles.menuItem,
+                Platform.OS === "android" && pressed && { opacity: 0.85 },
+              ]}
               onPress={item.onPress}
-              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={item.label}
+              android_ripple={{ color: "rgba(128,128,128,0.2)", borderless: false }}
             >
               <View style={styles.menuItemLeft}>
                 {Icon && (
@@ -80,7 +85,7 @@ const SettingsMenuList = memo(
                 <CustomText style={styles.menuLabel}>{item.label}</CustomText>
               </View>
               <TrailingIcon size={18} color={colors.accentText} />
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </>

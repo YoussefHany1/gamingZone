@@ -2,11 +2,11 @@ import React, { useCallback, memo, useState, useRef, useEffect } from "react";
 import CustomText from "@/src/components/CustomText";
 import {
   StyleSheet,
-  TouchableOpacity,
   View,
   Modal,
   Pressable,
   Dimensions,
+  AppState,
 } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import PagerView from "react-native-pager-view";
@@ -18,6 +18,7 @@ import { useAdsEnabled } from "@/src/hooks/useAdsEnabled";
 import SkeletonSlideshow from "../skeleton/SkeletonSlideshow";
 import ErrorState from "@/src/components/ErrorState";
 import { useThemeColors } from "@/src/hooks/useTheme";
+import { useIsFocused } from "@react-navigation/native";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { adUnitId } from "@/src/constants/config";
 import useCachedData from "@/src/hooks/useCachedData";
@@ -133,7 +134,12 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
   const heroPlaceholder = getPlaceholderSource(item);
 
   return (
-    <TouchableOpacity style={styles.slide} onPress={handlePress} activeOpacity={0.8}>
+    <Pressable
+      style={({ pressed }) => [styles.slide, pressed && { opacity: 0.8 }]}
+      onPress={handlePress}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
+    >
       <AppImage
         style={styles.thumbnail}
         recyclingKey={String(item.id)}
@@ -171,7 +177,7 @@ const Slide = memo<SlideProps>(({ item, onPress }) => {
           </View>
         </View>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 Slide.displayName = "Slide";
@@ -227,6 +233,8 @@ Pagination.displayName = "Pagination";
 
 function Slideshow(): React.ReactElement {
   const adsEnabled = useAdsEnabled();
+  const isFocused = useIsFocused();
+  const [isAppActive, setIsAppActive] = useState(AppState.currentState === "active");
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const pagerRef = useRef<PagerView>(null);
@@ -271,9 +279,20 @@ function Slideshow(): React.ReactElement {
     ? data.filter((item) => !!getTrailerVideoId(item))
     : [];
 
-  // Auto-play: advance to next page every 5 seconds
   useEffect(() => {
-    if (trailers.length <= 1) return;
+    const subscription = AppState.addEventListener("change", (state) => {
+      setIsAppActive(state === "active");
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  // Auto-play only while this screen is visible and the app is foregrounded.
+  // This avoids pager work and timer wakeups while another tab is active.
+  useEffect(() => {
+    if (!isFocused || !isAppActive || playingVideoId || trailers.length <= 1) {
+      return;
+    }
 
     const interval = setInterval(() => {
       const next = (activeIndexRef.current + 1) % trailers.length;
@@ -281,7 +300,7 @@ function Slideshow(): React.ReactElement {
     }, AUTOPLAY_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [trailers.length]);
+  }, [isFocused, isAppActive, playingVideoId, trailers.length]);
 
   const handlePageSelected = useCallback((e: { nativeEvent: { position: number } }) => {
     const idx = e.nativeEvent.position;
@@ -336,9 +355,12 @@ function Slideshow(): React.ReactElement {
           <Pressable style={StyleSheet.absoluteFill} onPress={handleCloseModal} />
           <View style={styles.modalContent}>
             <View style={styles.videoContainer}>
-              {/* Modal is only shown when playingVideoId is non-null, so the
-                  non-null assertion here is safe and avoids the empty-string fallback. */}
-              <YoutubePlayer height={250} play videoId={playingVideoId!} />
+              {/* Render the player (a full WebView) only while the modal is
+                  open; a hidden Modal still mounts its children in the JS
+                  tree, which spawned a WebView on every Home mount. */}
+              {playingVideoId && (
+                <YoutubePlayer height={250} play videoId={playingVideoId} />
+              )}
             </View>
             {adsEnabled && (
               <BannerAd unitId={adUnitId} size={BannerAdSize.MEDIUM_RECTANGLE} />

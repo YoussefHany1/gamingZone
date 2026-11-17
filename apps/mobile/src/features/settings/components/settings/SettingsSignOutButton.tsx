@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { LogOut, Trash2 } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -45,12 +45,17 @@ const SettingsActionButton = memo(
     const Icon = isDelete ? Trash2 : LogOut;
 
     return (
-      <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.7}>
+      <Pressable
+        style={({ pressed }) => [styles.button, pressed && { opacity: 0.85 }]}
+        onPress={onPress}
+        accessibilityRole="button"
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      >
         <View style={styles.left}>
           <Icon size={20} color={isDelete ? "#dc2626" : "red"} style={styles.icon} />
           <CustomText style={styles.text}>{label}</CustomText>
         </View>
-      </TouchableOpacity>
+      </Pressable>
     );
   },
 );

@@ -7,6 +7,7 @@ import {
   withRepeat,
   withSequence,
   withTiming,
+  type SharedValue,
 } from "react-native-reanimated";
 
 // ---------------------------------------------------------------------------
@@ -69,4 +70,33 @@ export const useShimmerSweep = (): ReturnType<typeof useAnimatedStyle> => {
   return useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
   }));
+};
+
+/**
+ * Shimmer value that oscillates between 0 and 1 (900ms up, 900ms down).
+ *
+ * Consolidated single source of truth for the "0..1 shimmer" used by the
+ * game-details skeleton layer. Previously duplicated in
+ * `features/games/skeleton/gameDetails/useShimmer.ts`; that module now
+ * re-exports this hook so every consumer keeps the exact same timing and
+ * API without a second implementation.
+ *
+ * @returns a Reanimated `SharedValue<number>` — drive opacity/translateX
+ *          through `useAnimatedStyle` at the call site.
+ */
+export const useShimmer = (): SharedValue<number> => {
+  const shimmer = useSharedValue(0);
+
+  useEffect(() => {
+    shimmer.value = withRepeat(
+      withSequence(withTiming(1, { duration: 900 }), withTiming(0, { duration: 900 })),
+      -1, // repeat forever
+      false,
+    );
+    return () => {
+      shimmer.value = 0;
+    };
+  }, [shimmer]);
+
+  return shimmer;
 };

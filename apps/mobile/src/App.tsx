@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { BackHandler, Alert } from "react-native";
 import { useAuthStore } from "./store/useAuthStore";
 import { useShallow } from "zustand/react/shallow";
 import { storage } from "./lib/storage";
@@ -27,7 +28,7 @@ import * as Updates from "expo-updates";
 import { useFonts } from "expo-font";
 import { APP_FONTS } from "./utils/fontUtils";
 import { I18nManager } from "react-native";
-import i18n from "./i18n";
+import i18n, { SUPPORTED_LANGUAGES } from "./i18n";
 import { useIsDark, useThemeColors } from "./hooks/useTheme";
 import { useThemeStyles } from "./hooks/useThemeStyles";
 import type { ThemeColors } from "./constants/colors";
@@ -127,14 +128,17 @@ const linking: LinkingOptions<any> = {
   getStateFromPath(path: string, options: Parameters<typeof getStateFromPath>[1]) {
     let cleanPath = path.startsWith("/") ? path.substring(1) : path;
 
-    // Strip locale prefix (e.g. /en/news/123 or /ar/lists/456)
-    if (cleanPath.startsWith("en/")) cleanPath = cleanPath.substring(3);
-    else if (cleanPath.startsWith("ar/")) cleanPath = cleanPath.substring(3);
-    else if (cleanPath.startsWith("es/")) cleanPath = cleanPath.substring(3);
-    else if (cleanPath.startsWith("fr/")) cleanPath = cleanPath.substring(3);
-    else if (cleanPath.startsWith("hi/")) cleanPath = cleanPath.substring(3);
-    else if (cleanPath.startsWith("pt-BR/")) cleanPath = cleanPath.substring(6);
-    else if (cleanPath.startsWith("pt-PT/")) cleanPath = cleanPath.substring(6);
+    // Strip a locale prefix (e.g. /en/news/123, /ar/lists/456, /pt-BR/...).
+    // Longest prefixes first so "pt-BR/" is preferred over any shorter overlap.
+    const localePrefixes = [...SUPPORTED_LANGUAGES]
+      .map((lng) => `${lng}/`)
+      .sort((a, b) => b.length - a.length);
+    for (const prefix of localePrefixes) {
+      if (cleanPath.startsWith(prefix)) {
+        cleanPath = cleanPath.substring(prefix.length);
+        break;
+      }
+    }
 
     // lists/:listId → Settings > UserGamesScreen
     if (cleanPath.startsWith("lists/")) {
@@ -186,7 +190,11 @@ const linking: LinkingOptions<any> = {
   },
 };
 
-SplashScreen.preventAutoHideAsync();
+// Module-scope promise: attach a no-op catch so a rare failure (e.g. the
+// splash module not being linked during an OTA update) can never surface as an
+// unhandled promise rejection at cold start. The actual hide is handled in
+// App's effect below.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function PcSpecsSyncRoot() {
   usePcSpecsSync();
@@ -388,6 +396,38 @@ function App(): React.ReactElement | null {
     routeNameRef.current = currentRouteName;
   }, []);
 
+  // Android hardware/soft back button handling
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
+      const canGoBack = navigationRef.current?.canGoBack() ?? false;
+      if (canGoBack) {
+        navigationRef.current?.goBack();
+        return true; // prevent default (exit app)
+      }
+
+      // At root – show confirmation on second press or exit immediately in prod
+      if (__DEV__) {
+        Alert.alert(
+          "Exit App",
+          "Press back again to exit",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Exit",
+              onPress: () => BackHandler.exitApp(),
+            },
+          ],
+          { cancelable: false }
+        );
+      } else {
+        BackHandler.exitApp();
+      }
+      return true;
+    });
+
+    return () => backHandler.remove();
+  }, [navigationRef]);
+
   const handleOnboardingDone = useCallback(async () => {
     storage.set("@onboarding_done", "true");
     setShowOnboarding(false);
@@ -457,7 +497,7 @@ function App(): React.ReactElement | null {
             {/* التعديل: إزالة الـ Suspense المحيط بـ الـ Navigator لعدم الحاجة إليه الآن */}
             <Stack.Navigator
               id="root"
-              screenOptions={{ headerShown: false, freezeOnBlur: true }}
+              screenOptions={{ headerShown: false, freezeOnBlur: true, gestureEnabled: true }}
             >
               <Stack.Screen name="MainApp" component={MainAppTabs} />
               <Stack.Screen name="Auth" component={AuthStack} />

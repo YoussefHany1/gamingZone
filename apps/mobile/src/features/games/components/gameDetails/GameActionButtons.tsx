@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { Bell, CirclePlus, Gift } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -68,10 +68,10 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
   return (
     <View style={styles.container}>
       {claimUrl && (
-        <TouchableOpacity
-          activeOpacity={0.85}
+        <Pressable
           onPress={handleClaimPress}
-          style={styles.buttonWrapper}
+          style={({ pressed }) => [styles.buttonWrapper, pressed && { opacity: 0.85 }]}
+          android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
           accessibilityLabel={`${t("games.details.claimNow")} ${capitalise(store)}`}
           accessibilityRole="button"
         >
@@ -86,14 +86,14 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
               {`${t("games.details.claimNow")} ${capitalise(store)}`}
             </CustomText>
           </LinearGradient>
-        </TouchableOpacity>
+        </Pressable>
       )}
 
       {isUpcoming && onToggleNotification && (
-        <TouchableOpacity
-          activeOpacity={0.85}
+        <Pressable
           onPress={onToggleNotification}
-          style={styles.buttonWrapper}
+          style={({ pressed }) => [styles.buttonWrapper, pressed && { opacity: 0.85 }]}
+          android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
           accessibilityLabel={
             isSubscribed
               ? t("games.details.notificationEnabled", "Notification Enabled")
@@ -118,13 +118,13 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
                 : t("games.details.notifyOnRelease")}
             </CustomText>
           </LinearGradient>
-        </TouchableOpacity>
+        </Pressable>
       )}
 
-      <TouchableOpacity
-        activeOpacity={0.85}
+      <Pressable
         onPress={onAddToList}
-        style={styles.buttonWrapper}
+        style={({ pressed }) => [styles.buttonWrapper, pressed && { opacity: 0.85 }]}
+        android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
         accessibilityLabel={t("games.details.addToList")}
         accessibilityRole="button"
       >
@@ -139,7 +139,7 @@ const GameActionButtons: React.FC<GameActionButtonsProps> = ({
             {t("games.details.addToList")}
           </CustomText>
         </LinearGradient>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 };

@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { Monitor } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -99,11 +99,16 @@ const ProfilePlatformSelector = memo(
             const tint = isSelected ? colors.text : colors.textMuted;
 
             return (
-              <TouchableOpacity
+              <Pressable
                 key={option.id}
-                style={[styles.button, isSelected && styles.buttonSelected]}
+                style={({ pressed }) => [
+                  styles.button,
+                  isSelected && styles.buttonSelected,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={() => onChange(option.id)}
-                activeOpacity={0.7}
+                accessibilityRole="button"
+                android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
               >
                 {Icon === Monitor ? (
                   <Icon size={32} color={tint} />
@@ -115,7 +120,7 @@ const ProfilePlatformSelector = memo(
                 >
                   {option.label}
                 </CustomText>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </View>

@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View, TouchableOpacity, Dimensions } from "react-native";
+import { View, Pressable, Dimensions } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { LinearGradient } from "expo-linear-gradient";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -276,7 +276,12 @@ const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
   }, [navigation, item.id]);
 
   return (
-    <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.85}>
+    <Pressable
+      style={({ pressed }) => [styles.gameCard, pressed && { opacity: 0.85 }]}
+      onPress={handlePress}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
+    >
       {/* Vintage dark background — anchored to the active scheme so light
           themes get a dark-neutral poster instead of a stranded navy band. */}
       <LinearGradient
@@ -324,7 +329,7 @@ const NostalgiaCard = React.memo<NostalgiaCardProps>(({ item }) => {
         <View style={styles.cornerBottomLeft} />
         <View style={styles.cornerBottomRight} />
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 NostalgiaCard.displayName = "NostalgiaCard";

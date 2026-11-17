@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { ChevronRight, Sparkles } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -124,10 +124,11 @@ const LevelCard = memo(
           </View>
 
           {onPress ? (
-            <TouchableOpacity
-              style={styles.achievementsBtn}
+            <Pressable
+              style={({ pressed }) => [styles.achievementsBtn, pressed && { opacity: 0.7 }]}
               onPress={onPress}
-              activeOpacity={0.7}
+              hitSlop={{ top: 15, bottom: 15 }}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
               accessibilityRole="button"
               accessibilityLabel={
                 t("gamification.achievementsTitle") ?? "Achievements"
@@ -138,7 +139,7 @@ const LevelCard = memo(
                 {unlockedCount}
               </CustomText>
               <ChevronRight size={15} color={colors.accentText} />
-            </TouchableOpacity>
+            </Pressable>
           ) : null}
         </View>
 

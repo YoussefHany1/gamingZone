@@ -25,10 +25,9 @@ Notifications.setNotificationHandler({
     }),
 });
 
-// Root Registration
-registerRootComponent(App);
-
-// Background/quit state messages handler
+// Background/quit state messages handler — must be registered synchronously at
+// the top level (and before `registerRootComponent`) so Firebase can dispatch
+// data-only messages while the app is backgrounded or quit.
 messaging().setBackgroundMessageHandler(
   async (
     remoteMessage: FirebaseMessagingTypes.RemoteMessage,
@@ -36,8 +35,8 @@ messaging().setBackgroundMessageHandler(
     // console.log("📨 Background message received:", remoteMessage?.messageId);
     // console.log("📨 Background message data:", remoteMessage?.data);
     // console.log(
-    //   "📨 Background message notification:",
-    //   remoteMessage?.notification
+    //   "📨 Processing background notification:",
+    //   remoteMessage?.notification,
     // );
 
     // Handle background notification
@@ -58,3 +57,6 @@ messaging().setBackgroundMessageHandler(
     }
   },
 );
+
+// Root Registration
+registerRootComponent(App);

@@ -3,9 +3,9 @@ import CustomText from "@/src/components/CustomText";
 import {
   View,
   KeyboardAvoidingView,
-  Platform,
   Keyboard,
   TouchableWithoutFeedback,
+  Platform,
 } from "react-native";
 import { ImageBackground } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -55,9 +55,10 @@ const ForgotPasswordScreen: React.FC<AuthScreenProps<"ForgotPassword">> = memo(
         contentFit="cover"
         cachePolicy="memory-disk"
       >
+        {/* Android relies on `adjustResize`; pair with padding behavior. */}
         <KeyboardAvoidingView
           style={styles.keyboardView}
-          behavior={Platform.OS === "android" ? "height" : undefined}
+          behavior={Platform.OS === "android" ? "padding" : undefined}
         >
           <SafeAreaView style={styles.container}>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>

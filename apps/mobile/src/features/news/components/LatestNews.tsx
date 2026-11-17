@@ -5,10 +5,9 @@ import {
   Pressable,
   RefreshControl,
   ToastAndroid,
-  TouchableOpacity,
 } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
-import type { ListRenderItemInfo } from "@shopify/flash-list";
+import type { ListRenderItemInfo, FlashListRef } from "@shopify/flash-list";
 import { FlashList } from "@shopify/flash-list";
 import AppImage from "@/src/components/AppImage";
 import { NativeAdComponent } from "@/src/components/NativeAd";
@@ -30,6 +29,12 @@ import { useNavigation } from "@react-navigation/native";
 import { getArticleSummary } from "@gaming-zone/utils";
 import type { Article, NewsItemProps, LatestNewsProps, RssFeedSource } from "../types";
 import { useScrollDirection } from "@/src/hooks/useScrollDirection";
+
+// Pagination controls are visually compact (40px / 36px circles); hitSlop
+// expands their touch targets to the 48dp Android accessibility minimum
+// without changing the layout.
+const PAGE_BUTTON_HIT_SLOP = { top: 4, bottom: 4, left: 4, right: 4 };
+const PAGE_NUMBER_HIT_SLOP = { top: 6, bottom: 6, left: 6, right: 6 };
 
 const NewsItem = memo(function NewsItem({
   item,
@@ -129,7 +134,16 @@ const NewsItem = memo(function NewsItem({
         language === "ar" ? { direction: "rtl" } : { direction: "ltr" },
       ]}
     >
-      <TouchableOpacity style={styles.NewsContainer} onPress={handlePress}>
+      <Pressable
+        style={({ pressed }) => [
+          styles.NewsContainer,
+          pressed && { opacity: 0.85 },
+        ]}
+        onPress={handlePress}
+        accessibilityRole="button"
+        accessibilityLabel={item?.title ?? ""}
+        android_ripple={{ color: "rgba(128,128,128,0.2)", borderless: false }}
+      >
         <View style={styles.textContainer}>
           <CustomText
             numberOfLines={3}
@@ -169,7 +183,7 @@ const NewsItem = memo(function NewsItem({
           />
           <CustomText style={styles.website}>{item.siteName}</CustomText>
         </View>
-      </TouchableOpacity>
+      </Pressable>
       {shouldShowAd && <NativeAdComponent variant="news" language={language ?? "en"} />}
     </View>
   );
@@ -268,7 +282,7 @@ function LatestNews({
 }: LatestNewsProps) {
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
-  const listRef = useRef<any>(null);
+  const listRef = useRef<FlashListRef<Article>>(null);
   const { onScroll } = useScrollDirection();
   const colors = useThemeColors();
   const bottomInset = useBottomInset();
@@ -331,6 +345,8 @@ function LatestNews({
       backgroundColor: c.accent,
       paddingHorizontal: 20,
       paddingVertical: 10,
+      minHeight: 48,
+      justifyContent: "center",
       borderRadius: 8,
     },
     showAllText: {
@@ -517,6 +533,9 @@ function LatestNews({
     [language, languageFilter, handlePressArticle, t, adInterval, showAds],
   );
 
+  // Module-stable identity — `$id` is the dedupe key used by `listData`.
+  const keyExtractor = useCallback((item: Article) => item.$id, []);
+
   const headerComponent = (
     <ListHeader
       category={category}
@@ -565,6 +584,9 @@ function LatestNews({
             disabled={currentPage === 1}
             style={[styles.pageButton, currentPage === 1 && styles.disabledPageButton]}
             onPress={() => handlePageChange(currentPage - 1)}
+            hitSlop={PAGE_BUTTON_HIT_SLOP}
+            accessibilityRole="button"
+            accessibilityLabel={t("common.previous")}
           >
             {isRtl ? (
               <ChevronRight size={18} color={colors.text} />
@@ -581,6 +603,8 @@ function LatestNews({
                   currentPage === 1 && styles.activePageNumberButton,
                 ]}
                 onPress={() => handlePageChange(1)}
+                hitSlop={PAGE_NUMBER_HIT_SLOP}
+                accessibilityRole="button"
               >
                 <CustomText
                   style={[
@@ -603,6 +627,8 @@ function LatestNews({
                 currentPage === page && styles.activePageNumberButton,
               ]}
               onPress={() => handlePageChange(page)}
+              hitSlop={PAGE_NUMBER_HIT_SLOP}
+              accessibilityRole="button"
             >
               <CustomText
                 style={[
@@ -626,6 +652,8 @@ function LatestNews({
                   currentPage === totalPages && styles.activePageNumberButton,
                 ]}
                 onPress={() => handlePageChange(totalPages)}
+                hitSlop={PAGE_NUMBER_HIT_SLOP}
+                accessibilityRole="button"
               >
                 <CustomText
                   style={[
@@ -646,6 +674,9 @@ function LatestNews({
               currentPage === totalPages && styles.disabledPageButton,
             ]}
             onPress={() => handlePageChange(currentPage + 1)}
+            hitSlop={PAGE_BUTTON_HIT_SLOP}
+            accessibilityRole="button"
+            accessibilityLabel={t("common.next")}
           >
             {isRtl ? (
               <ChevronLeft size={18} color={colors.text} />
@@ -762,7 +793,7 @@ function LatestNews({
         ref={listRef}
         data={listData}
         renderItem={renderItem}
-        keyExtractor={(item) => item.$id}
+        keyExtractor={keyExtractor}
         ListHeaderComponent={headerComponent}
         ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}

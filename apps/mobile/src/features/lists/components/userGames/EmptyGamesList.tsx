@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { Pressable, View } from "react-native";
 import { Bookmark } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -83,11 +83,16 @@ const EmptyGamesList = memo<EmptyGamesListProps>(
         <CustomText style={styles.emptySubText}>{emptySubText}</CustomText>
         {!isSharedList && (
           <View style={styles.emptyActionsContainer}>
-            <TouchableOpacity onPress={onFindGame} style={styles.findGameButton}>
+            <Pressable
+              onPress={onFindGame}
+              style={({ pressed }) => [styles.findGameButton, pressed && { opacity: 0.85 }]}
+              android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+              accessibilityRole="button"
+            >
               <CustomText style={styles.findGameText}>
                 {t("settings.userGames.findButton")}
               </CustomText>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         )}
         {nudge ? <View style={styles.nudge}>{nudge}</View> : null}

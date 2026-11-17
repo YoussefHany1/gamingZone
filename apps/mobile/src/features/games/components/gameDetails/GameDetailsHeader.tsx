@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, ArrowRight } from "lucide-react-native";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -36,10 +36,11 @@ const GameDetailsHeader: React.FC<GameDetailsHeaderProps> = ({ onBack }) => {
 
   return (
     <View style={styles.header}>
-      <TouchableOpacity
-        style={styles.backButton}
+      <Pressable
+        style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.85 }]}
         onPress={onBack}
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: true, radius: 20 }}
         accessibilityRole="button"
         accessibilityLabel={t("common.back")}
       >
@@ -48,7 +49,7 @@ const GameDetailsHeader: React.FC<GameDetailsHeaderProps> = ({ onBack }) => {
         ) : (
           <ArrowLeft size={28} color={colors.text} />
         )}
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 };

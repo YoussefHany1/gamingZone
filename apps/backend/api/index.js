@@ -9,8 +9,13 @@ import { registerAccountDeletionRoutes } from './accountDeletion.js';
 import { registerSocialRoutes } from './social.js';
 import { registerFriendRoutes } from './friends.js';
 import { registerSessionRoutes } from './sessions.js';
+
+// Notification preferences (trusted write replaces client transaction)
+import { registerNotificationPreferenceRoutes } from './notificationPrefs.js';
+
 import { registerPcRequirementsRoutes } from './pcRequirements.js';
 import { registerAdminRoutes } from './admin.js';
+import { registerAiRoutes } from './ai.js';
 const app = express();
 
 app.use(cors());
@@ -1416,11 +1421,17 @@ registerFriendRoutes(app, { AppError, asyncRoute });
 // Play-session agreement state machine.
 registerSessionRoutes(app, { AppError, asyncRoute });
 
+// Notification preference toggles (trusted write replaces client transaction)
+registerNotificationPreferenceRoutes(app, { AppError, asyncRoute });
+
 // Batch Steam PC requirements for game cards
 registerPcRequirementsRoutes(app, { AppError, asyncRoute, callIgdb });
 
 // Admin dashboard (custom claim: admin=true required on every request)
 registerAdminRoutes(app, { AppError, asyncRoute });
+
+// AI chat proxy (provider keys stay server-side; auth'd users only)
+registerAiRoutes(app, { AppError, asyncRoute });
 
 // invalid route handler (404)
 app.get('*', (req, res) => {

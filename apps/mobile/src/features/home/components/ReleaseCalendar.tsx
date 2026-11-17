@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   I18nManager,
   ActivityIndicator,
@@ -348,7 +348,12 @@ const DayGameRow = memo<DayGameRowProps>(({ game }) => {
   }
 
   return (
-    <TouchableOpacity style={styles.gameRow} onPress={handlePress} activeOpacity={0.85}>
+    <Pressable
+      style={({ pressed }) => [styles.gameRow, pressed && { opacity: 0.85 }]}
+      onPress={handlePress}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
+    >
       <View style={styles.rowCover}>
         {coverLoading && (
           <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -393,7 +398,7 @@ const DayGameRow = memo<DayGameRowProps>(({ game }) => {
           {statusLabel}
         </View>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 DayGameRow.displayName = "DayGameRow";
@@ -471,17 +476,19 @@ const DayCell = memo<DayCellProps>(
     }));
 
     return (
-      <TouchableOpacity
-        style={[
+      <Pressable
+        style={({ pressed }) => [
           styles.dayCell,
           { opacity: cellOpacity },
           // Printed calendars shade Saturday and Sunday; 5 and 6 are the last
           // two Monday-first columns.
           inMonth && column >= 5 && styles.dayCellWeekend,
+          pressed && { opacity: cellOpacity * 0.7 },
         ]}
         onPress={() => onSelect(dayKey)}
         disabled={!inWindow}
-        activeOpacity={0.7}
+        hitSlop={{ top: 1, bottom: 1, left: 1, right: 1 }}
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         accessibilityState={{ selected: isSelected, disabled: !inWindow }}
@@ -505,7 +512,7 @@ const DayCell = memo<DayCellProps>(
         </View>
 
         <ReleaseDots count={releaseCount} highlighted={isSelected} />
-      </TouchableOpacity>
+      </Pressable>
     );
   },
 );
@@ -848,46 +855,49 @@ function ReleaseCalendar({
         </View>
 
         {isViewingCurrentMonth ? null : (
-          <TouchableOpacity
-            style={styles.todayButton}
+          <Pressable
+            style={({ pressed }) => [styles.todayButton, pressed && { opacity: 0.7 }]}
             onPress={handleGoToToday}
-            activeOpacity={0.7}
+            hitSlop={{ top: 9, bottom: 9 }}
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
             accessibilityRole="button"
             accessibilityLabel={t("home.releaseCalendar.today")}
           >
             <CustomText style={styles.todayButtonText}>
               {t("home.releaseCalendar.today")}
             </CustomText>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
 
       {/* ── The month sheet ── */}
       <View style={styles.card}>
         <View style={styles.monthNav}>
-          <TouchableOpacity
-            style={styles.navButton}
+          <Pressable
+            style={({ pressed }) => [styles.navButton, pressed && { opacity: 0.7 }]}
             onPress={handlePrevMonth}
-            activeOpacity={0.7}
+            hitSlop={{ top: 7, bottom: 7, left: 7, right: 7 }}
+            android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: true, radius: 17 }}
             accessibilityRole="button"
             accessibilityLabel={t("home.releaseCalendar.previousMonth")}
           >
             <PREV_ICON size={20} color={colors.text} />
-          </TouchableOpacity>
+          </Pressable>
 
           <CustomText style={styles.monthLabel} numberOfLines={1}>
             {monthLabel(locale, view.year, view.month)}
           </CustomText>
 
-          <TouchableOpacity
-            style={styles.navButton}
+          <Pressable
+            style={({ pressed }) => [styles.navButton, pressed && { opacity: 0.7 }]}
             onPress={handleNextMonth}
-            activeOpacity={0.7}
+            hitSlop={{ top: 7, bottom: 7, left: 7, right: 7 }}
+            android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: true, radius: 17 }}
             accessibilityRole="button"
             accessibilityLabel={t("home.releaseCalendar.nextMonth")}
           >
             <NEXT_ICON size={20} color={colors.text} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         <View style={styles.weekdayHeader}>

@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { Pressable, View, Platform } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -55,16 +55,20 @@ const AuthEmailSuggestions: React.FC<AuthEmailSuggestionsProps> = ({
       accessibilityLabel={t("auth.emailSuggestions.label")}
     >
       {domains.map((domain) => (
-        <TouchableOpacity
+        <Pressable
           key={domain}
-          style={styles.chip}
+          style={({ pressed }) => [
+            styles.chip,
+            Platform.OS === "android" && pressed && { opacity: 0.7 },
+          ]}
           onPress={() => onSelect(domain)}
           accessibilityRole="button"
           accessibilityLabel={t("auth.emailSuggestions.useDomain", { domain })}
           accessibilityHint={t("auth.emailSuggestions.useDomainHint")}
+          android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
         >
           <CustomText style={styles.chipText}>@{domain}</CustomText>
-        </TouchableOpacity>
+        </Pressable>
       ))}
     </View>
   );

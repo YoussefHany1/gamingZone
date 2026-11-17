@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { Pressable, View, Platform } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -41,18 +41,21 @@ const ProfileMenuItem = memo(
 
     return (
       <>
-        <TouchableOpacity
-          style={styles.row}
+        <Pressable
+          style={({ pressed }) => [
+            styles.row,
+            Platform.OS === "android" && pressed && { opacity: 0.85 },
+          ]}
           onPress={onPress}
-          activeOpacity={0.8}
           accessibilityRole="button"
+          android_ripple={{ color: "rgba(128,128,128,0.2)", borderless: false }}
         >
           <View style={styles.iconContainer}>
             <Icon size={18} color={colors.textMuted} />
           </View>
           <CustomText style={styles.label}>{label}</CustomText>
           <ChevronRight size={18} color={colors.textMuted} />
-        </TouchableOpacity>
+        </Pressable>
         {showDivider && <View style={styles.divider} />}
       </>
     );

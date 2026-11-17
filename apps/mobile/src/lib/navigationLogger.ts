@@ -79,7 +79,7 @@ export function getCallerFile(): string | undefined {
       ) {
         continue;
       }
-      const match = line.match(/(src\/[A-Za-z0-9_\-\/]+(\.tsx|\.ts|\.js|\.jsx))/);
+      const match = line.match(/(src\/[A-Za-z0-9_/-]+(\.tsx|\.ts|\.js|\.jsx))/);
       if (match) {
         return match[1];
       }

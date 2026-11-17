@@ -5,7 +5,7 @@ import {
   Modal,
   Platform,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   View,
 } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -125,12 +125,17 @@ const HardwarePickerModal: React.FC<HardwarePickerModalProps> = ({
     const selected = item.id === selectedId;
     const vram = (item as PcGpu).vramGb;
     return (
-      <TouchableOpacity
-        style={[styles.row, selected && styles.rowActive]}
+      <Pressable
+        style={({ pressed }) => [
+          styles.row,
+          selected && styles.rowActive,
+          pressed && { opacity: 0.85 },
+        ]}
         onPress={() => {
           onSelect(item.id);
           onClose();
         }}
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
         accessibilityRole="button"
         accessibilityState={{ selected }}
       >
@@ -145,7 +150,7 @@ const HardwarePickerModal: React.FC<HardwarePickerModalProps> = ({
           )}
         </View>
         {selected && <Check size={18} color={colors.accentText} />}
-      </TouchableOpacity>
+      </Pressable>
     );
   };
 
@@ -153,9 +158,9 @@ const HardwarePickerModal: React.FC<HardwarePickerModalProps> = ({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={styles.kbView}
-        behavior={Platform.OS === "android" ? "height" : "padding"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
+        <Pressable style={styles.backdrop} onPress={onClose} />
         <View style={styles.sheet}>
           <View style={styles.handle} />
           <View style={styles.header}>
@@ -165,15 +170,16 @@ const HardwarePickerModal: React.FC<HardwarePickerModalProps> = ({
             <CustomText style={styles.count}>
               {t("pcSpecs.picker.resultsCount", { count: results.length })}
             </CustomText>
-            <TouchableOpacity
-              style={styles.closeBtn}
+            <Pressable
+              style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.85 }]}
               onPress={onClose}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: true, radius: 14 }}
               accessibilityRole="button"
               accessibilityLabel={t("common.close")}
             >
               <X size={20} color={colors.textMuted} />
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View style={styles.searchRow}>

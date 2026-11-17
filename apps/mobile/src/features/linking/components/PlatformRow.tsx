@@ -5,12 +5,13 @@
  * of the other two.
  */
 import React, { memo } from "react";
-import { View, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Pressable, ActivityIndicator } from "react-native";
 import { Link2, Link2Off } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import { SteamIcon, PlayStationIcon, XboxIcon } from "@/src/components/icons/StoreIcons";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
+import { useTranslation } from "react-i18next";
 import type { LinkedAccountPlatform } from "@/src/features/settings/types";
 
 const PLATFORM_ICONS: Record<
@@ -44,6 +45,7 @@ function PlatformRow({
   onUnlink,
 }: PlatformRowProps): React.ReactElement {
   const colors = useThemeColors();
+  const { t } = useTranslation();
   const styles = useThemeStyles((c) => ({
     row: {
       flexDirection: "row",
@@ -64,11 +66,12 @@ function PlatformRow({
   const Icon = PLATFORM_ICONS[platform];
 
   return (
-    <TouchableOpacity
-      style={styles.row}
+    <Pressable
+      style={({ pressed }) => [styles.row, pressed && { opacity: 0.85 }]}
       onPress={onPress}
       disabled={busy}
-      activeOpacity={0.7}
+      accessibilityRole="button"
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
     >
       <View style={styles.rowIcon}>
         <Icon size={26} fill={colors.text} />
@@ -83,16 +86,38 @@ function PlatformRow({
         <ActivityIndicator size="small" color={colors.textSubtle} style={styles.rowSpinner} />
       )}
       {onRelink && !busy && (
-        <TouchableOpacity onPress={onRelink} style={styles.iconBtn}>
+        <Pressable
+          onPress={onRelink}
+          style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.85 }]}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityRole="button"
+          accessibilityLabel={t("settings.linkedAccounts.relink", { defaultValue: "Relink" })}
+          android_ripple={{
+            color: "rgba(128,128,128,0.25)",
+            borderless: true,
+            radius: 18,
+          }}
+        >
           <Link2 size={20} color={colors.textSubtle} />
-        </TouchableOpacity>
+        </Pressable>
       )}
       {onUnlink && !busy && (
-        <TouchableOpacity onPress={onUnlink} style={styles.iconBtn}>
+        <Pressable
+          onPress={onUnlink}
+          style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.85 }]}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityRole="button"
+          accessibilityLabel={t("settings.linkedAccounts.unlink", { defaultValue: "Unlink" })}
+          android_ripple={{
+            color: "rgba(128,128,128,0.25)",
+            borderless: true,
+            radius: 18,
+          }}
+        >
           <Link2Off size={20} color={colors.danger} />
-        </TouchableOpacity>
+        </Pressable>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 

@@ -30,14 +30,18 @@ export function usePresenceHeartbeat(user: FirebaseAuthTypes.User | null): void 
       }
     };
 
-    // Initial write on mount (fresh app open or sign-in)
-    void updatePresence();
+    // Initial write on mount (fresh app open or sign-in). Do not write while
+    // the app is already backgrounded, which can happen during cold-start
+    // restoration on Android.
+    if (AppState.currentState === "active") {
+      void updatePresence();
+    }
 
-    // Subscribe to app state changes
+    // Refresh only when the app returns to the foreground. Background writes
+    // consume battery and can incorrectly make a user appear active after
+    // leaving the app.
     const subscription = AppState.addEventListener("change", (state) => {
-      // Write on any state change (foreground/background/inactive) to keep
-      // presence fresh. The backend computes online = (now - updatedAt) < 5min.
-      if (state === "active" || state === "background") {
+      if (state === "active") {
         void updatePresence();
       }
     });

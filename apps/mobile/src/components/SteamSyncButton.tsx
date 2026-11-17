@@ -5,7 +5,7 @@ import type {
   TextStyle} from "react-native";
 import {
   View,
-  TouchableOpacity
+  Pressable
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { SteamIcon } from "@/src/components/icons/StoreIcons";
@@ -63,10 +63,11 @@ export default function SteamSyncButton({
 
   return (
     <>
-      <TouchableOpacity
-        style={[styles.button, style]}
+      <Pressable
+        style={({ pressed }) => [styles.button, style, pressed && { opacity: 0.85 }]}
+        android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
         onPress={handlePress}
-        activeOpacity={0.8}
+        accessibilityRole="button"
       >
         <View style={styles.iconWrapper}>
           <SteamIcon size={iconSize} fill={colors.onAccent} />
@@ -74,7 +75,7 @@ export default function SteamSyncButton({
         <CustomText style={[styles.text, textStyle]}>
           {label || t("settings.profile.steam.modal.title") || "Sync Steam Library"}
         </CustomText>
-      </TouchableOpacity>
+      </Pressable>
 
       {!onPress && (
         <SteamLinkModal

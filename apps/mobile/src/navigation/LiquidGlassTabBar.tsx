@@ -1,11 +1,12 @@
 import { useEffect, memo, useMemo } from "react";
 import {
   View,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   I18nManager,
   useWindowDimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -104,13 +105,13 @@ const TabIcon = memo(function TabIcon({
   }));
 
   return (
-    <TouchableOpacity
+    <Pressable
       accessibilityRole="tab"
       accessibilityLabel={label}
       accessibilityState={isFocused ? { selected: true } : {}}
       onPress={onPress}
-      activeOpacity={0.75}
-      style={styles.tabItem}
+      style={({ pressed }) => [styles.tabItem, pressed && { opacity: 0.75 }]}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
     >
       <View collapsable={false} style={{ transform: [{ scale: iconScale }] }}>
         <Icon size={23} color={iconColor} accessible={false} />
@@ -129,7 +130,7 @@ const TabIcon = memo(function TabIcon({
           {label}
         </CustomText>
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 TabIcon.displayName = "TabIcon";
@@ -137,7 +138,15 @@ TabIcon.displayName = "TabIcon";
 // ── Main tab bar ─────────────────────────────────────────────────────────────
 import type { MaterialTopTabBarProps } from "@react-navigation/material-top-tabs";
 
-/** Fixed bar height — the bar itself and `useBottomInset` both read this. */
+/**
+ * Fixed bar height above the system bottom inset.
+ *
+ * With edge-to-edge (`android:navigationBarColor` transparent + targetSdk 35+),
+ * Android 10+ gesture navigation and the 3-button bar both draw over the app,
+ * so the bar pads its bottom by `insets.bottom` and its *total* height becomes
+ * `TAB_BAR_HEIGHT + insets.bottom`. `useBottomInset` already accounts for both
+ * when reserving scroll-content padding, so the two stay in sync.
+ */
 export const TAB_BAR_HEIGHT = 64;
 
 /** Fixed label row so unfocused (invisible) labels still keep icons centered. */
@@ -149,6 +158,9 @@ const LiquidGlassTabBar = memo(
     const tabWidth = screenWidth / TAB_ROUTES.length;
     const isVisible = useTabBarStore((s) => s.isVisible);
     const palette = useTabPalette();
+    // Gesture strip / 3-button nav height. `max` keeps the bar stable during
+    // the transient frames where safe-area context may report 0.
+    const bottomInset = Math.max(useSafeAreaInsets().bottom, 0);
 
     const indicatorX = useSharedValue(state.index * tabWidth * rtlMultiplier);
     const translateY = useSharedValue(0);
@@ -181,7 +193,15 @@ const LiquidGlassTabBar = memo(
         style={[styles.wrapper, wrapperStyle]}
         pointerEvents={isVisible ? "box-none" : "none"}
       >
-        <View style={styles.bar}>
+        <View
+          style={[
+            styles.bar,
+            // Occupy the system gesture/nav strip so tabs are never rendered
+            // under it; `tabItem`'s height: "100%" resolves against the
+            // remaining 64dp content box, keeping icons centered as before.
+            { height: TAB_BAR_HEIGHT },
+          ]}
+        >
           <LinearGradient
             colors={[palette.barTop, palette.barBottom, palette.barBottom]}
             locations={[0, 0.3, 1]}
@@ -259,7 +279,7 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: "row",
     width: "100%",
-    height: TAB_BAR_HEIGHT,
+    // Height is set inline: TAB_BAR_HEIGHT + bottom safe-area inset.
     borderTopEndRadius: 34,
     borderTopStartRadius: 34,
     overflow: "hidden",

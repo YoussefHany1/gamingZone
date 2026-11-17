@@ -1,4 +1,4 @@
-{
+﻿{
   "root": true,
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -21,24 +21,46 @@
     "react-native/react-native": true
   },
   "rules": {
-    // ── Console ────────────────────────────────────────────────────────────
+    // -- Console ------------------------------------------------------------
     "no-console": ["warn", { "allow": ["warn", "error"] }],
 
-    // ── TypeScript ─────────────────────────────────────────────────────────
+    // -- TypeScript ---------------------------------------------------------
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
     "@typescript-eslint/consistent-type-imports": ["warn", { "prefer": "type-imports" }],
 
-    // ── React ──────────────────────────────────────────────────────────────
+    // -- React --------------------------------------------------------------
     "react/react-in-jsx-scope": "off",
     "react/prop-types": "off",
     "react-hooks/exhaustive-deps": "warn",
     "react-hooks/rules-of-hooks": "error",
 
-    // ── React Native ───────────────────────────────────────────────────────
+    // -- React Native -------------------------------------------------------
     "react-native/no-unused-styles": "warn",
     "react-native/no-inline-styles": "warn",
-    "react-native/no-color-literals": "warn"
+    "react-native/no-color-literals": "warn",
+
+    // -- Secrets in local storage -------------------------------------------
+    // MMKV (src/lib/storage.ts) is an unencrypted on-disk store: auth tokens,
+    // passwords, API keys and OAuth codes must never be written there.
+    // These selectors statically flag string-literal keys that look like
+    // credentials; dynamic keys are additionally caught at runtime by the
+    // dev-only assertion in storage.ts.
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "CallExpression[callee.object.name='storage'][callee.property.name='set'] > Literal[value=/token|secret|password|passwd|credential|api_?key|private_?key|npsso|ssocookie|authtoken|refresh_|jwt|bearer|fcm/i]",
+        "message": "Secret-like key written to MMKV - MMKV is an unencrypted on-disk store. Auth tokens belong to the Firebase SDK's session storage; other credentials must stay on the backend."
+      },
+      {
+        "selector": "CallExpression[callee.name='storageSet'] > Literal[value=/token|secret|password|passwd|credential|api_?key|private_?key|npsso|ssocookie|authtoken|refresh_|jwt|bearer|fcm/i]",
+        "message": "Secret-like key written to MMKV via storageSet - MMKV is an unencrypted on-disk store. Auth tokens belong to the Firebase SDK's session storage; other credentials must stay on the backend."
+      },
+      {
+        "selector": "CallExpression[callee.name='storageSetTimestamp'] > Literal[value=/token|secret|password|passwd|credential|api_?key|private_?key|npsso|ssocookie|authtoken|refresh_|jwt|bearer|fcm/i]",
+        "message": "Secret-like key written to MMKV via storageSetTimestamp - MMKV is an unencrypted on-disk store."
+      }
+    ]
   },
   "ignorePatterns": [
     "node_modules/",

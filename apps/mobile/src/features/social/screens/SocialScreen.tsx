@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from "react";
-import { TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { Pressable, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TabView } from "react-native-tab-view";
 import type { NavigationState, SceneRendererProps } from "react-native-tab-view";
@@ -97,17 +97,17 @@ function SocialScreen(): React.ReactElement {
         <CustomText style={styles.loginMessage}>
           {t("common.loginRequired")}
         </CustomText>
-        <TouchableOpacity
-          style={styles.loginButton}
+        <Pressable
+          style={({ pressed }) => [styles.loginButton, pressed && { opacity: 0.85 }]}
           onPress={handleSignIn}
-          activeOpacity={0.8}
+          android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
           accessibilityRole="button"
           accessibilityLabel={t("common.authPrompt.signIn")}
         >
           <CustomText style={styles.loginButtonText}>
             {t("common.authPrompt.signIn")}
           </CustomText>
-        </TouchableOpacity>
+        </Pressable>
       </SafeAreaView>
     );
   }

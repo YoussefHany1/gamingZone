@@ -1,7 +1,7 @@
 import React from "react";
 import {
   View,
-  TouchableOpacity,
+  Pressable,
   Modal,
   KeyboardAvoidingView,
   Platform,
@@ -79,9 +79,14 @@ const CreateListModal = ({
   }));
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onCancel}
+    >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
         <View style={styles.modalContainer}>
@@ -107,16 +112,25 @@ const CreateListModal = ({
               maxLength={300}
             />
             <View style={styles.modalButtons}>
-              <TouchableOpacity onPress={onCancel} style={styles.cancelBtn}>
+              <Pressable
+                onPress={onCancel}
+                style={({ pressed }) => [styles.cancelBtn, pressed && { opacity: 0.85 }]}
+                hitSlop={{ top: 4, bottom: 4, left: 0, right: 0 }}
+                android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                accessibilityRole="button"
+              >
                 <CustomText style={styles.textBtn}>{t("common.cancel")}</CustomText>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </Pressable>
+              <Pressable
                 onPress={onSubmit}
-                style={styles.createBtn}
+                style={({ pressed }) => [styles.createBtn, pressed && { opacity: 0.85 }]}
                 disabled={isCreating}
+                hitSlop={{ top: 4, bottom: 4, left: 0, right: 0 }}
+                android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+                accessibilityRole="button"
               >
                 <CustomText style={styles.textBtn}>{t("common.create")}</CustomText>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>

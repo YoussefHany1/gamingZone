@@ -23,6 +23,14 @@ web-build/
 *.jks
 *.keystore
 
+# أسرار البيئة ومفاتيح الخدمة (لا يجب أبداً رفعها إلى EAS — .easignore يستبدل .gitignore)
+.env
+.env.*
+serviceAccountKey.json
+*serviceAccountKey.json
+gaming-zone-ca485-*.json
+google-services.json
+
 # ملفات Android و iOS (يجب تجاهلها بالكامل لأن المشروع يعتمد على Expo Prebuild - CNG)
 android/
 ios/

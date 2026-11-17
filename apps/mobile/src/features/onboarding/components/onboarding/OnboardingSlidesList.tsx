@@ -48,7 +48,7 @@ const OnboardingSlidesList = memo(
         getItemLayout={getItemLayout}
         initialNumToRender={1}
         maxToRenderPerBatch={2}
-        windowSize={3}
+        windowSize={1}
         removeClippedSubviews={false}
       />
     );

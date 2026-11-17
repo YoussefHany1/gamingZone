@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { TouchableOpacity, ToastAndroid } from "react-native";
+import { Pressable, ToastAndroid } from "react-native";
 import { Bell, BellOff } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import auth from "@react-native-firebase/auth";
@@ -169,13 +169,18 @@ function FreeGames(): React.ReactElement {
       horizontal
       snapToInterval={ESTIMATED_CARD_WIDTH}
       headerTrailing={
-        <TouchableOpacity onPress={toggleNotifications} style={styles.bellButton}>
+        <Pressable
+          onPress={toggleNotifications}
+          style={({ pressed }) => [styles.bellButton, pressed && { opacity: 0.85 }]}
+          android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+          accessibilityRole="button"
+        >
           {notifEnabled ? (
             <Bell size={22} color={colors.text} />
           ) : (
             <BellOff size={22} color={colors.textSubtle} />
           )}
-        </TouchableOpacity>
+        </Pressable>
       }
       styles={styles}
     />

@@ -5,10 +5,10 @@ import {
   View,
   ScrollView,
   KeyboardAvoidingView,
-  Platform,
   Keyboard,
   TouchableWithoutFeedback,
   type TextInput,
+  Platform,
 } from "react-native";
 import { ImageBackground } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -73,14 +73,16 @@ const RegisterScreen: React.FC<AuthScreenProps<"Register">> = memo(({ navigation
       contentFit="cover"
       cachePolicy="memory-disk"
     >
+      {/* Android relies on `adjustResize`; pair with padding behavior. */}
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === "android" ? "height" : undefined}
+        behavior={Platform.OS === "android" ? "padding" : undefined}
       >
         <SafeAreaView style={styles.container}>
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             contentContainerStyle={styles.scrollContent}
           >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>

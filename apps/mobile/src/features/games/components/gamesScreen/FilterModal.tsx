@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useState } from "react";
 import CustomText from "@/src/components/CustomText";
-import { Modal, View, TouchableOpacity, ScrollView } from "react-native";
+import { Modal, View, Pressable, ScrollView } from "react-native";
 import { X } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -106,24 +106,35 @@ const FilterSection = memo<SectionProps>(
         >
           {/* "Any" chip — hidden for sections that always need a selection (e.g. Sort) */}
           {!hideAny && (
-            <TouchableOpacity
-              style={[styles.chip, selected === null && styles.chipActive]}
+            <Pressable
+              style={({ pressed }) => [
+                styles.chip,
+                selected === null && styles.chipActive,
+                pressed && { opacity: 0.85 },
+              ]}
               onPress={() => onSelect(null)}
+              hitSlop={{ top: 4, bottom: 4, left: 2, right: 2 }}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+              accessibilityRole="button"
             >
               <CustomText
                 style={[styles.chipText, selected === null && styles.chipTextActive]}
               >
                 {t("games.filter.any")}
               </CustomText>
-            </TouchableOpacity>
+            </Pressable>
           )}
 
           {normalizedItems.map((item) => {
             const isActive = selected === item.id;
             return (
-              <TouchableOpacity
+              <Pressable
                 key={item.id}
-                style={[styles.chip, isActive && styles.chipActive]}
+                style={({ pressed }) => [
+                  styles.chip,
+                  isActive && styles.chipActive,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={() => {
                   // FIX: For Sort section (hideAny=true), pressing active chip resets to "relevance"
                   // instead of null, which would break the API.
@@ -133,11 +144,14 @@ const FilterSection = memo<SectionProps>(
                     onSelect(isActive ? null : item.id);
                   }
                 }}
+                hitSlop={{ top: 4, bottom: 4, left: 2, right: 2 }}
+                android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                accessibilityRole="button"
               >
                 <CustomText style={[styles.chipText, isActive && styles.chipTextActive]}>
                   {t(item.label)}
                 </CustomText>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </ScrollView>
@@ -261,7 +275,7 @@ function FilterModal({ visible, filters, onApply, onClose }: FilterModalProps) {
       onRequestClose={onClose}
     >
       {/* Backdrop */}
-      <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
+      <Pressable style={styles.backdrop} onPress={onClose} />
 
       {/* Sheet */}
       <View style={styles.sheet}>
@@ -271,14 +285,15 @@ function FilterModal({ visible, filters, onApply, onClose }: FilterModalProps) {
         {/* Header */}
         <View style={styles.header}>
           <CustomText style={styles.headerTitle}>{t("games.filter.title")}</CustomText>
-          <TouchableOpacity
+          <Pressable
             onPress={onClose}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: true, radius: 22 }}
             accessibilityRole="button"
             accessibilityLabel={t("common.close")}
           >
             <X size={22} color={colors.textMuted} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         <ScrollView
@@ -314,15 +329,25 @@ function FilterModal({ visible, filters, onApply, onClose }: FilterModalProps) {
 
         {/* Footer buttons */}
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
+          <Pressable
+            style={({ pressed }) => [styles.resetBtn, pressed && { opacity: 0.85 }]}
+            onPress={handleReset}
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+            accessibilityRole="button"
+          >
             <CustomText style={styles.resetText}>{t("games.filter.reset")}</CustomText>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.applyBtn} onPress={handleApply}>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.applyBtn, pressed && { opacity: 0.85 }]}
+            onPress={handleApply}
+            android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+            accessibilityRole="button"
+          >
             <CustomText style={styles.applyText}>
               {t("games.filter.apply")}
               {activeCount > 0 ? ` (${activeCount})` : ""}
             </CustomText>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </Modal>

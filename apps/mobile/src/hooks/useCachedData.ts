@@ -27,6 +27,34 @@ async function getNetworkStatus(): Promise<{ isConnected: boolean | null }> {
 }
 
 // ---------------------------------------------------------------------------
+// Mount stagger — spreads the initial background revalidation of hooks that
+// mount together (the home screen mounts ~9 at once) over a short window.
+// Without it a single offline moment produces one failed fetch per key in the
+// same second, and low-end networks face a wall of simultaneous requests.
+// Only hooks that already have cached data participate: first-load fetches
+// run immediately because the user is waiting on them.
+// ---------------------------------------------------------------------------
+const STAGGER_STEP_MS = 75;
+const STAGGER_MAX_DELAY_MS = 600;
+const STAGGER_WINDOW_MS = 1_000;
+
+let _staggerSlot = 0;
+let _staggerWindowStart = 0;
+
+/** Returns the delay before this hook's initial background revalidation. */
+function claimStaggerSlot(): number {
+  const now = Date.now();
+  if (now - _staggerWindowStart > STAGGER_WINDOW_MS) {
+    _staggerWindowStart = now;
+    _staggerSlot = 0;
+  }
+  const maxSlots = Math.floor(STAGGER_MAX_DELAY_MS / STAGGER_STEP_MS);
+  const slot = Math.min(_staggerSlot, maxSlots);
+  _staggerSlot += 1;
+  return slot * STAGGER_STEP_MS;
+}
+
+// ---------------------------------------------------------------------------
 // Lightweight data-equality check.
 //
 // Arrays are compared by their id sequence in order — that catches appends,
@@ -69,6 +97,10 @@ function isDataEqual<T>(a: T | null, b: T | null): boolean {
  * Serves data immediately from the synchronous MMKV store (no awaits, no
  * bridge round-trips), then revalidates in the background when the TTL has
  * expired or forceRefresh is requested.
+ *
+ * Background revalidations of hooks that mount together are staggered over a
+ * short window (see the mount-stagger note in the helpers), and loads skipped
+ * while the device was offline retry automatically when connectivity returns.
  *
  * Compared to the AsyncStorage version:
  *  - Cache reads are now synchronous → the UI shows cached data *instantly*
@@ -281,7 +313,11 @@ export default function useCachedData<T>(
         storageSetTimestamp(timestampKey, Date.now()); // synchronous write
       } catch (err) {
         if (signal?.aborted) return;
-        logger.error(`[useCachedData] Error for key "${key}":`, err);
+        // Expected, handled failure: the screen keeps serving cached data and
+        // reads `error`/`errorKind` to show its own message. A breadcrumb is
+        // enough in release — recording every blip as a non-fatal flooded
+        // Crashlytics with one issue per cache key per offline moment.
+        logger.info(`[useCachedData] Error for key "${key}":`, err);
         safeSet(setError, err instanceof Error ? err : new Error(String(err)));
         safeSet(setErrorKind, "server");
       } finally {
@@ -296,15 +332,61 @@ export default function useCachedData<T>(
     [key, ttl, ...dependencies],
   );
 
+  // Tracks whether the initial (mount or key-change) load has been scheduled,
+  // so dependency changes and manual refetches skip the stagger.
+  const initialLoadRef = useRef<{ key: string; scheduled: boolean }>({
+    key,
+    scheduled: false,
+  });
+
   // Run on mount and whenever key, TTL, or deps change. Skipped entirely while
   // `enabled` is false so disabled hooks do no cache reads, no connectivity
-  // checks and no writes (used for mock-only previews).
+  // checks and no writes (used for mock-only previews). The first load for a
+  // key is staggered when cached data is already on screen (background
+  // revalidation) — see the mount-stagger note above.
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
-    loadData(false, controller.signal);
-    return () => controller.abort();
-  }, [loadData, enabled]);
+
+    if (initialLoadRef.current.key !== key) {
+      initialLoadRef.current = { key, scheduled: false };
+    }
+    let delay = 0;
+    if (!initialLoadRef.current.scheduled) {
+      initialLoadRef.current.scheduled = true;
+      const snap = snapshotRef.current;
+      if (snap && snap.present && snap.key === key) {
+        delay = claimStaggerSlot();
+      }
+    }
+
+    const timer = setTimeout(() => {
+      loadData(false, controller.signal);
+    }, delay);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [loadData, enabled, key]);
+
+  // When a load was skipped because the device was offline, retry it as soon
+  // as connectivity comes back. The TTL had already expired at that point
+  // (the offline check runs after it), so nothing else would trigger a
+  // refresh — the screen would sit on stale cached data until the next
+  // manual refetch. Server-side failures are deliberately not retried here:
+  // they are not deterministic the way an offline skip is, and retrying them
+  // could hammer an already-failing endpoint.
+  useEffect(() => {
+    if (!enabled || errorKind !== "offline") return;
+    const controller = new AbortController();
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      if (state.isConnected) loadData(false, controller.signal);
+    });
+    return () => {
+      unsubscribe();
+      controller.abort();
+    };
+  }, [loadData, enabled, errorKind]);
 
   // Manually push a new value into state and cache (e.g. from Realtime events).
   const updateLocalData = useCallback(

@@ -56,7 +56,15 @@ export function useUserPlatform(): { platform: UserPlatform | null; loading: boo
         setPlatform(isUserPlatform(value) ? (value.toLowerCase() as UserPlatform) : null);
       })
       .catch((error) => {
-        logger.error("[useUserPlatform] Error loading user platform:", error);
+        // `unavailable` / network codes are transient and handled (we fall
+        // back to null) — breadcrumbs only. `permission-denied` on the user's
+        // own doc means a rules bug, which is worth a non-fatal.
+        const code = (error as { code?: string } | undefined)?.code;
+        if (code === "firestore/permission-denied") {
+          logger.error("[useUserPlatform] Error loading user platform:", error);
+        } else {
+          logger.info("[useUserPlatform] Error loading user platform:", error);
+        }
         if (mounted) setPlatform(null);
       })
       .finally(() => {

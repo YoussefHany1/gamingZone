@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { Pressable, View } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import { useTranslation } from "react-i18next";
 import { Pencil } from "lucide-react-native";
@@ -235,14 +235,20 @@ const PublicProfileHeader = memo(
                   {resolvedDisplayName}
                 </CustomText>
                 {onEdit && (
-                  <TouchableOpacity
+                  <Pressable
                     onPress={onEdit}
-                    activeOpacity={0.7}
+                    style={({ pressed }) => (pressed ? { opacity: 0.85 } : undefined)}
+                    hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+                    android_ripple={{
+                      color: "rgba(128,128,128,0.25)",
+                      borderless: true,
+                      radius: 8,
+                    }}
                     accessibilityRole="button"
                     accessibilityLabel={t("settings.profileShowcase.editProfile")}
                   >
                     <Pencil size={16} color={colors.textMuted} />
-                  </TouchableOpacity>
+                  </Pressable>
                 )}
               </View>
               {resolvedHandle ? (

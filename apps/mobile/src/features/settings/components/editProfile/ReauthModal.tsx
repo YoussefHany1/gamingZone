@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  TouchableOpacity,
+  Pressable,
   View,
 } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -155,10 +155,16 @@ const ReauthModal = memo(
 
             <View style={styles.gap}>
               {method === "password" ? (
-                <TouchableOpacity
-                  style={[styles.primaryBtn, disabled && styles.buttonDisabled]}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.primaryBtn,
+                    disabled && styles.buttonDisabled,
+                    pressed && { opacity: 0.85 },
+                  ]}
                   onPress={onSubmitPassword}
                   disabled={disabled}
+                  accessibilityRole="button"
+                  android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
                 >
                   {isSubmitting ? (
                     <ActivityIndicator color={colors.onAccent} size="small" />
@@ -167,14 +173,20 @@ const ReauthModal = memo(
                       {t("settings.deleteAccount.verifyAndDelete")}
                     </CustomText>
                   )}
-                </TouchableOpacity>
+                </Pressable>
               ) : null}
 
               {method === "google" ? (
-                <TouchableOpacity
-                  style={[styles.secondaryBtn, disabled && styles.buttonDisabled]}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.secondaryBtn,
+                    disabled && styles.buttonDisabled,
+                    pressed && { opacity: 0.85 },
+                  ]}
                   onPress={onVerifyWithGoogle}
                   disabled={disabled}
+                  accessibilityRole="button"
+                  android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
                 >
                   {isSubmitting ? (
                     <ActivityIndicator color={colors.text} size="small" />
@@ -183,14 +195,20 @@ const ReauthModal = memo(
                       {t("settings.deleteAccount.verifyWithGoogle")}
                     </CustomText>
                   )}
-                </TouchableOpacity>
+                </Pressable>
               ) : null}
 
               {method === "discord" ? (
-                <TouchableOpacity
-                  style={[styles.secondaryBtn, disabled && styles.buttonDisabled]}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.secondaryBtn,
+                    disabled && styles.buttonDisabled,
+                    pressed && { opacity: 0.85 },
+                  ]}
                   onPress={onVerifyWithDiscord}
                   disabled={disabled}
+                  accessibilityRole="button"
+                  android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
                 >
                   {isSubmitting ? (
                     <ActivityIndicator color={colors.text} size="small" />
@@ -199,28 +217,40 @@ const ReauthModal = memo(
                       {t("settings.deleteAccount.verifyWithDiscord")}
                     </CustomText>
                   )}
-                </TouchableOpacity>
+                </Pressable>
               ) : null}
 
               {method === "password" && showDiscordAlternative ? (
-                <TouchableOpacity
-                  style={[styles.discordLink, disabled && styles.buttonDisabled]}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.discordLink,
+                    disabled && styles.buttonDisabled,
+                    pressed && { opacity: 0.85 },
+                  ]}
                   onPress={onVerifyWithDiscord}
                   disabled={disabled}
+                  accessibilityRole="button"
+                  android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
                 >
                   <CustomText style={styles.discordLinkText}>
                     {t("settings.deleteAccount.discordAlternative")}
                   </CustomText>
-                </TouchableOpacity>
+                </Pressable>
               ) : null}
 
-              <TouchableOpacity
-                style={[styles.cancelBtn, disabled && styles.buttonDisabled]}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.cancelBtn,
+                  disabled && styles.buttonDisabled,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={onCancel}
                 disabled={disabled}
+                accessibilityRole="button"
+                android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
               >
                 <CustomText style={styles.cancelText}>{t("common.cancel")}</CustomText>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </KeyboardAvoidingView>

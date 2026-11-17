@@ -39,10 +39,12 @@ describe("resolveLanguageCode", () => {
     expect(resolveLanguageCode("")).toBe("en");
   });
 
-  it("maps a bare 'pt' to English (current behaviour — see review note)", () => {
-    // Neither "pt-PT" nor "pt-BR" is a prefix of "pt", so a device locale of
-    // plain "pt" resolves to English. Arguably it should resolve to "pt-PT";
-    // asserted here so the behaviour cannot change silently.
-    expect(resolveLanguageCode("pt")).toBe("en");
+  it("maps a bare 'pt' to European Portuguese (pt-PT)", () => {
+    // A regionless `pt` tag defaults to European Portuguese: ISO 639-1 `pt`
+    // conventionally refers to Portugal's Portuguese, and Brazilian devices
+    // normally report `pt-BR`. See the doc comment on resolveLanguageCode.
+    expect(resolveLanguageCode("pt")).toBe("pt-PT");
+    // Unknown regions also fall back to pt-PT rather than English.
+    expect(resolveLanguageCode("pt-AO")).toBe("pt-PT");
   });
 });

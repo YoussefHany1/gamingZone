@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import CustomText from "@/src/components/CustomText";
 import LiquidGlassTabBar from "./LiquidGlassTabBar";
@@ -135,6 +135,8 @@ const HIDDEN_HEADER_OPTIONS = {
   // Screens covered by the one on top stop re-rendering (react-freeze), so a
   // theme change repaints only what the user can actually see.
   freezeOnBlur: true,
+  // Enable Android back gesture for native stack screens
+  gestureEnabled: true,
 } as const;
 
 function useSettingsHeaderOptions(): NativeStackNavigationOptions {
@@ -318,14 +320,25 @@ const SettingsStack = memo(() => {
             (route.params as { listName?: string } | undefined)?.listName ??
             screenTitles.userGames.title,
           headerRight: () => (
-            <TouchableOpacity
+            <Pressable
               onPress={() => nav.getParent()?.navigate("Games")}
-              style={{ marginRight: 4, padding: 6 }}
+              style={({ pressed }) => [
+                {
+                  marginRight: 4,
+                  padding: 10,
+                  minWidth: 48,
+                  minHeight: 48,
+                  alignItems: "center",
+                  justifyContent: "center",
+                },
+                pressed && { opacity: 0.85 },
+              ]}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
               accessibilityRole="button"
               accessibilityLabel={t("lists.addGame")}
             >
               <CirclePlus size={28} color={colors.text} />
-            </TouchableOpacity>
+            </Pressable>
           ),
         })}
       />

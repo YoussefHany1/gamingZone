@@ -6,6 +6,7 @@ import firestore, {
   getDoc,
   getDocs,
   serverTimestamp,
+  setDoc,
   updateDoc,
   deleteField,
 } from "@react-native-firebase/firestore";
@@ -14,6 +15,8 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { logger } from "@/src/lib/logger";
 import { storage } from "@/src/lib/storage";
+import apiClient from "@/src/services/api/client";
+import { getBackendIdToken } from "@/src/services/api/authToken";
 
 declare const globalThis: { RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS: boolean };
 globalThis.RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS = true;
@@ -155,60 +158,21 @@ class NotificationService {
         throw new Error("FCM Subscription failed, aborting Firestore write.");
       }
 
-      const db = firestore();
-      const userRef = doc(db, COLLECTIONS.USERS, userId);
-      const prefRef = doc(collection(userRef, COLLECTIONS.PREFERENCES), topicId);
-      const statsRef = doc(collection(db, COLLECTIONS.STATS), topicId);
-
-      const data: NotificationPreferenceData = {
-        category,
-        sourceName,
-        enabled,
-        topicId,
-        updatedAt: serverTimestamp(),
-      };
-
-      let enabledCountAfterChange = 0;
-
-      await db.runTransaction(async (transaction) => {
-        // Firestore requires ALL reads to happen before ANY writes.
-        const [prefSnapshot, statsSnapshot] = await Promise.all([
-          transaction.get(prefRef),
-          transaction.get(statsRef),
-        ]);
-
-        const previousEnabled = prefSnapshot.exists()
-          ? Boolean((prefSnapshot.data() as NotificationPreferenceData).enabled)
-          : false;
-
-        const delta = (enabled ? 1 : 0) - (previousEnabled ? 1 : 0);
-
-        const statsData = statsSnapshot.exists()
-          ? (statsSnapshot.data() as Partial<NotificationSourceStatsData>)
-          : null;
-
-        const currentCount =
-          statsData && typeof statsData.enabledCount === "number"
-            ? statsData.enabledCount
-            : 0;
-
-        const nextCount = Math.max(0, currentCount + delta);
-        enabledCountAfterChange = nextCount;
-
-        // All writes happen after all reads.
-        transaction.set(prefRef, data, { merge: true });
-        transaction.set(
-          statsRef,
-          {
-            category,
-            sourceName,
-            topicId,
-            enabledCount: nextCount,
-            updatedAt: serverTimestamp(),
-          } satisfies NotificationSourceStatsData,
-          { merge: true },
-        );
-      });
+      // The preference doc + shared stats counter are written server-side:
+      // notificationStats is server-write-only (firestore.rules) so no client
+      // can falsify enabledCount for everyone.
+      const token = await getBackendIdToken();
+      if (!token) {
+        throw new Error("No auth session — cannot persist notification preference.");
+      }
+      await apiClient.post(
+        "/notifications/preferences/toggle",
+        { category, sourceName, enabled },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 15_000,
+        },
+      );
 
       const normalizedCategory = normalizeAnalyticsParam(category);
       const normalizedSource = normalizeAnalyticsParam(sourceName);
@@ -218,7 +182,6 @@ class NotificationService {
         category: normalizedCategory,
         source_name: normalizedSource,
         enabled: enabled ? 1 : 0,
-        enabled_count: enabledCountAfterChange,
       });
 
       await analytics().logEvent(
@@ -310,9 +273,22 @@ class NotificationService {
   static async saveUserLanguage(userId: string, language: string): Promise<void> {
     if (!userId || !language) return;
     try {
-      await updateDoc(doc(firestore(), COLLECTIONS.USERS, userId), { language });
+      // `setDoc({ merge: true })` rather than `updateDoc`: on a user whose
+      // `users/{uid}` doc doesn't exist yet, `updateDoc` is denied outright
+      // (the rules read `resource.data`, which is null for a missing doc) and
+      // surfaced as permission-denied in Crashlytics. Merge creates the doc
+      // when missing (the client `create` rule allows a bare `language` key)
+      // and merges otherwise.
+      await setDoc(doc(firestore(), COLLECTIONS.USERS, userId), { language }, { merge: true });
     } catch (error) {
-      logger.error("❌ Language Sync Error:", error);
+      // A genuine denial still means a rules bug worth a non-fatal; transient
+      // network failures are handled and only get a breadcrumb.
+      const code = (error as { code?: string } | undefined)?.code;
+      if (code === "firestore/permission-denied") {
+        logger.error("❌ Language Sync Error:", error);
+      } else {
+        logger.info("❌ Language Sync Error:", error);
+      }
     }
   }
 

@@ -45,7 +45,7 @@ interface PcSpecsState {
   discardGuestCopy: () => void;
 }
 
-export const usePcSpecsStore = create<PcSpecsState>()((set, get) => ({
+export const usePcSpecsStore = create<PcSpecsState>()((set) => ({
   specs: null,
   hydrated: false,
   saving: false,

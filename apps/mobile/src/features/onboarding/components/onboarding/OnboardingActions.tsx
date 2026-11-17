@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -34,16 +34,27 @@ const OnboardingActions = memo(
 
     return (
       <View style={staticStyles.buttonsRow}>
-        <TouchableOpacity
+        <Pressable
           onPress={onSkip}
-          style={[staticStyles.skipBtn, isLast && staticStyles.invisible]}
+          style={({ pressed }) => [
+            staticStyles.skipBtn,
+            isLast && staticStyles.invisible,
+            pressed && { opacity: 0.7 },
+          ]}
           disabled={isLast}
-          activeOpacity={0.7}
+          hitSlop={{ top: 2, bottom: 2 }}
+          android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+          accessibilityRole="button"
         >
           <CustomText style={styles.skipText}>{t("onboarding.skip")}</CustomText>
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity onPress={onNext} style={staticStyles.nextBtn} activeOpacity={0.85}>
+        <Pressable
+          onPress={onNext}
+          style={({ pressed }) => [staticStyles.nextBtn, pressed && { opacity: 0.85 }]}
+          android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+          accessibilityRole="button"
+        >
           <LinearGradient
             colors={nextGradientColors}
             start={{ x: 0, y: 0 }}
@@ -54,7 +65,7 @@ const OnboardingActions = memo(
               {isLast ? t("onboarding.getStarted") : t("onboarding.next")}
             </CustomText>
           </LinearGradient>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   },

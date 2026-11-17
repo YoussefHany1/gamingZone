@@ -1,8 +1,9 @@
 import React, { memo, useCallback } from "react";
 import {
   ActivityIndicator,
+  Pressable,
   RefreshControl,
-  TouchableOpacity,
+  Platform,
   View,
 } from "react-native";
 import { Alert } from "@/src/lib/alert";
@@ -50,16 +51,28 @@ const BlockedUserRow = memo(
       rowText: { flex: 1, color: c.text },
       muted: { color: c.textMuted, fontSize: 13, marginTop: 2 },
       unblockButton: {
-        paddingHorizontal: 12,
+        minHeight: 48,
+        paddingHorizontal: 14,
         paddingVertical: 8,
         borderRadius: 8,
         backgroundColor: c.accent,
+        alignItems: "center",
+        justifyContent: "center",
       },
       unblockButtonText: { color: c.onAccent, fontSize: 13, fontWeight: "600" },
     }));
 
     return (
-      <TouchableOpacity style={styles.row} onPress={() => onOpen(user.uid)}>
+      <Pressable
+        style={({ pressed }) => [
+          styles.row,
+          Platform.OS === "android" && pressed && { opacity: 0.85 },
+        ]}
+        onPress={() => onOpen(user.uid)}
+        accessibilityRole="button"
+        accessibilityLabel={user.displayName}
+        android_ripple={{ color: "rgba(128,128,128,0.2)", borderless: false }}
+      >
         <GamerAvatar photoURL={user.photoURL} size={46} />
         <View style={styles.rowText}>
           <CustomText style={styles.rowText}>{user.displayName}</CustomText>
@@ -67,15 +80,21 @@ const BlockedUserRow = memo(
             <CustomText style={styles.muted}>@{user.handle}</CustomText>
           ) : null}
         </View>
-        <TouchableOpacity
-          style={styles.unblockButton}
+        <Pressable
+          style={({ pressed }) => [
+            styles.unblockButton,
+            Platform.OS === "android" && pressed && { opacity: 0.8 },
+          ]}
           onPress={() => onUnblock(user.uid)}
+          accessibilityRole="button"
+          accessibilityLabel={t("social.actions.unblock")}
+          android_ripple={{ color: "rgba(255,255,255,0.2)", borderless: false }}
         >
           <CustomText style={styles.unblockButtonText}>
             {t("social.actions.unblock")}
           </CustomText>
-        </TouchableOpacity>
-      </TouchableOpacity>
+        </Pressable>
+      </Pressable>
     );
   },
 );
@@ -131,6 +150,13 @@ export default function BlockedUsersScreen(): React.ReactElement {
     [handleUnblock, t],
   );
 
+  const renderRow = useCallback(
+    ({ item }: { item: BlockedUser }) => (
+      <BlockedUserRow user={item} onOpen={openProfile} onUnblock={confirmUnblock} />
+    ),
+    [openProfile, confirmUnblock],
+  );
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -155,9 +181,7 @@ export default function BlockedUsersScreen(): React.ReactElement {
           />
         }
         ListEmptyComponent={<GamingEmptyState title={t("social.blockedUsers.empty")} icon={Ban} />}
-        renderItem={({ item }) => (
-          <BlockedUserRow user={item} onOpen={openProfile} onUnblock={confirmUnblock} />
-        )}
+        renderItem={renderRow}
       />
     </SafeAreaView>
   );

@@ -1,7 +1,7 @@
 import { GestureScrollView } from "@/src/components/GestureScrollView";
 import React, { useCallback, useRef, memo } from "react";
 import CustomText from "@/src/components/CustomText";
-import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
+import { View, Pressable, StyleSheet, Dimensions } from "react-native";
 import type { ListRenderItemInfo } from "@shopify/flash-list";
 import { FlashList } from "@shopify/flash-list";
 import AppImage from "@/src/components/AppImage";
@@ -181,7 +181,12 @@ const EventCard = memo<EventCardProps>(({ item }) => {
   }));
 
   return (
-    <TouchableOpacity style={styles.eventCard} onPress={handlePress} activeOpacity={0.92}>
+    <Pressable
+      style={({ pressed }) => [styles.eventCard, pressed && { opacity: 0.92 }]}
+      onPress={handlePress}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
+    >
       <AppImage
         recyclingKey={item.event_logo?.image_id ?? ""}
         source={
@@ -228,7 +233,7 @@ const EventCard = memo<EventCardProps>(({ item }) => {
             {item.name}
           </CustomText>
 
-          {/* Countdown timer â€” only shown for upcoming events with time remaining */}
+          {/* Countdown timer - only shown for upcoming events with time remaining */}
           {timeUntil && (
             <View style={styles.dateTimeRow}>
               <View style={styles.dateContainer}>
@@ -247,7 +252,7 @@ const EventCard = memo<EventCardProps>(({ item }) => {
       </View>
 
       {status === "live" && <View style={styles.liveGlow} />}
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 
@@ -345,7 +350,7 @@ export default memo(GamingEvents);
 
 // Styles
 
-// List-level layout for the section as a whole — geometry only, so it needs
+// List-level layout for the section as a whole â€” geometry only, so it needs
 // no palette. Per-card colors live in EventCard's themed sheet.
 const staticStyles = StyleSheet.create({
   container: { marginTop: 20 },

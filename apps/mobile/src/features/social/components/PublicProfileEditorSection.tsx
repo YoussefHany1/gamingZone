@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from "react";
-import { ActivityIndicator, ToastAndroid, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ToastAndroid, Pressable, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import SectionTitle from "@/src/components/SectionTitle";
@@ -134,10 +134,12 @@ const PublicProfileEditorSection = memo(
             value={draft.privacy.showStats}
             onChange={(value) => setPrivacy({ showStats: value })}
           />
-          <TouchableOpacity
-            style={styles.saveButton}
+          <Pressable
+            style={({ pressed }) => [styles.saveButton, pressed && { opacity: 0.85 }]}
             onPress={() => void handleSave()}
             disabled={saving}
+            android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+            accessibilityRole="button"
           >
             {saving ? (
               <ActivityIndicator color={colors.onAccent} />
@@ -146,7 +148,7 @@ const PublicProfileEditorSection = memo(
                 {t("social.profile.savePublicProfile")}
               </CustomText>
             )}
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     );

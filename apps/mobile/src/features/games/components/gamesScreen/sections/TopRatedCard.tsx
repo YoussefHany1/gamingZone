@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { LinearGradient } from "expo-linear-gradient";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -188,7 +188,12 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
         : ["#CD7F32", "#8B4513", "transparent"];
 
   return (
-    <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.9}>
+    <Pressable
+      style={({ pressed }) => [styles.gameCard, pressed && { opacity: 0.9 }]}
+      onPress={handlePress}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
+    >
       <LinearGradient
         colors={["transparent", colors.scrimSolid]}
         style={styles.cardBackground}
@@ -256,7 +261,7 @@ const TopRatedCard = React.memo<TopRatedCardProps>(({ item, index }) => {
 
       {/* Coloured border glow for top-3 */}
       {rank <= 3 && <LinearGradient colors={glowColors} style={styles.glowBorder} />}
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 TopRatedCard.displayName = "TopRatedCard";

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import AppImage from "@/src/components/AppImage";
 import { LinearGradient } from "expo-linear-gradient";
@@ -157,10 +157,11 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
   }, []);
 
   return (
-    <TouchableOpacity
-      style={styles.gameCard}
-      activeOpacity={0.9}
+    <Pressable
+      style={({ pressed }) => [styles.gameCard, pressed && { opacity: 0.9 }]}
       onPress={handleCardPress}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
     >
       {/* Image area with optional countdown overlay */}
       <View style={styles.imageContainer}>
@@ -197,10 +198,11 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
 
         {/* Claim button — only for currently available games */}
         {item.type === "current" && (
-          <TouchableOpacity
-            style={styles.savingsContainer}
+          <Pressable
+            style={({ pressed }) => [styles.savingsContainer, pressed && { opacity: 0.9 }]}
             onPress={handleClaimPress}
-            activeOpacity={0.9}
+            android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+            accessibilityRole="button"
           >
             <LinearGradient
               colors={[colors.textMuted, colors.accent]}
@@ -213,10 +215,10 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
                 {t("games.list.freeGames.claimNow")}
               </CustomText>
             </LinearGradient>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 FreeGameCard.displayName = "FreeGameCard";

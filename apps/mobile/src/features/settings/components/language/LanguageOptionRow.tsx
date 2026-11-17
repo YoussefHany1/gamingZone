@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable, Platform } from "react-native";
 import { Check } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -51,9 +51,17 @@ const LanguageOptionRow = memo(
     const handlePress = useCallback((): void => onSelect(code), [code, onSelect]);
 
     return (
-      <TouchableOpacity
-        style={[styles.row, isRtl ? styles.rowRtl : styles.rowLtr]}
+      <Pressable
+        style={({ pressed }) => [
+          styles.row,
+          isRtl ? styles.rowRtl : styles.rowLtr,
+          Platform.OS === "android" && pressed && { opacity: 0.85 },
+        ]}
         onPress={handlePress}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ selected: isSelected }}
+        android_ripple={{ color: "rgba(128,128,128,0.2)", borderless: false }}
       >
         <View style={[styles.rowInner, isRtl ? styles.rowInnerRtl : styles.rowInnerLtr]}>
           <CustomText style={[styles.title, isRtl ? styles.titleRtl : styles.titleLtr]}>
@@ -61,7 +69,7 @@ const LanguageOptionRow = memo(
           </CustomText>
           {isSelected && <Check size={24} color={colors.accentText}/>}
         </View>
-      </TouchableOpacity>
+      </Pressable>
     );
   },
 );

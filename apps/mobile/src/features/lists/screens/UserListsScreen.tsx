@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RefreshControl, TouchableOpacity, View } from "react-native";
+import { RefreshControl, Pressable, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CirclePlus } from "lucide-react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
+import ErrorState from "@/src/components/ErrorState";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useBottomInset } from "@/src/hooks/useBottomInset";
@@ -95,15 +96,26 @@ const UserListsScreen = ({ navigation }: Props) => {
     navigation.setOptions({
       headerRight: () =>
         user && !isAnonymous ? (
-          <TouchableOpacity
+          <Pressable
             onPress={() => setModalVisible(true)}
-            style={{ padding: 6, marginRight: 6 }}
+            style={({ pressed }) => [
+              { padding: 6, marginRight: 6 },
+              pressed && { opacity: 0.85 },
+            ]}
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+            android_ripple={{
+              color: "rgba(128,128,128,0.25)",
+              borderless: true,
+              radius: 20,
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t("userLists.actions.createNewList")}
           >
             <CirclePlus size={28} color={colors.text} />
-          </TouchableOpacity>
+          </Pressable>
         ) : null,
     });
-  }, [navigation, user, isAnonymous, colors.text]);
+  }, [navigation, user, isAnonymous, colors.text, t]);
 
   const handleCreateList = useCallback(async (): Promise<void> => {
     const created = await createList(newListName, newListDescription);
@@ -150,10 +162,12 @@ const UserListsScreen = ({ navigation }: Props) => {
   const renderListEmpty = useMemo(() => {
     if (error) {
       return (
-        <View style={styles.emptyState}>
-          <CustomText style={styles.emptyTitle}>{t("common.dataLoadError")}</CustomText>
-          <CustomText style={styles.emptyMessage}>{t("common.pullToRefresh")}</CustomText>
-        </View>
+        <ErrorState
+          message={t("common.dataLoadError")}
+          subMessage={t("common.pullToRefresh")}
+          onRetry={refresh}
+          retrying={refreshing}
+        />
       );
     }
     return (
@@ -164,22 +178,22 @@ const UserListsScreen = ({ navigation }: Props) => {
         <CustomText style={styles.emptyMessage}>
           {t("userLists.noListsCreated.message")}
         </CustomText>
-        <TouchableOpacity
-          style={styles.emptyButton}
+        <Pressable
+          style={({ pressed }) => [styles.emptyButton, pressed && { opacity: 0.85 }]}
           onPress={() => setModalVisible(true)}
-          activeOpacity={0.8}
+          android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
           accessibilityRole="button"
           accessibilityLabel={t("userLists.actions.createNewList")}
         >
           <CustomText style={styles.emptyButtonText}>
             {t("userLists.actions.createNewList")}
           </CustomText>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
     // modalVisible is intentionally omitted: the button's onPress opens the
     // modal, but its visibility never changes what these nodes render.
-  }, [error, styles, t]);
+  }, [error, styles, t, refresh, refreshing]);
 
   if (isAnonymous || !user) {
     return (

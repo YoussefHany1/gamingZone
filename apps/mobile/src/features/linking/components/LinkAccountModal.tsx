@@ -16,7 +16,7 @@ import React, { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import {
   Modal,
   View,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -91,9 +91,14 @@ function PanelError({ onBack }: { onBack: () => void }): React.ReactElement {
       <CustomText style={styles.title}>
         {t("common.somethingWentWrong") || "Something went wrong"}
       </CustomText>
-      <TouchableOpacity style={[styles.secondaryBtn, styles.mtSmall]} onPress={onBack}>
+      <Pressable
+        style={({ pressed }) => [styles.secondaryBtn, styles.mtSmall, pressed && { opacity: 0.85 }]}
+        onPress={onBack}
+        accessibilityRole="button"
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      >
         <CustomText style={styles.secondaryBtnText}>{t("common.back") || "Back"}</CustomText>
-      </TouchableOpacity>
+      </Pressable>
     </>
   );
 }
@@ -342,38 +347,48 @@ export default function LinkAccountModal({
     >
       <KeyboardAvoidingView
         style={styles.stretch}
-        behavior={Platform.OS === "android" ? "height" : "padding"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.overlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               {isSubPanel ? (
-                <TouchableOpacity
+                <Pressable
                   onPress={handleBackButton}
-                  style={styles.headerBtn}
+                  style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.85 }]}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   accessibilityRole="button"
                   accessibilityLabel={t("common.back") || "Back"}
+                  android_ripple={{
+                    color: "rgba(128,128,128,0.25)",
+                    borderless: true,
+                    radius: 16,
+                  }}
                 >
                   {isRtl ? (
                     <ArrowRight size={24} color={colors.text} />
                   ) : (
                     <ArrowLeft size={24} color={colors.text} />
                   )}
-                </TouchableOpacity>
+                </Pressable>
               ) : (
                 <View style={styles.headerBtnPlaceholder} />
               )}
 
-              <TouchableOpacity
+              <Pressable
                 onPress={onClose}
-                style={styles.headerBtn}
+                style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.85 }]}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="button"
                 accessibilityLabel={t("common.close") || "Close"}
+                android_ripple={{
+                  color: "rgba(128,128,128,0.25)",
+                  borderless: true,
+                  radius: 16,
+                }}
               >
                 <X size={24} color={colors.text} />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             {/* Small screens: every panel is reachable by scrolling. The

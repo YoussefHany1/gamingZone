@@ -1,5 +1,5 @@
 import React from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { Pressable, View, StyleSheet } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import { Bell, BellOff, SquareArrowOutUpRight } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
@@ -91,33 +91,43 @@ const SiteDescription: React.FC<SiteDescriptionProps> = ({
         <View style={styles.buttons}>
           {/* Visit site — label changes based on site language */}
           {selectedItem?.language === "ar" ? (
-            <TouchableOpacity
+            <Pressable
               onPress={() => onVisitSite(selectedItem?.website)}
-              style={styles.visitSiteBtn}
+              style={({ pressed }) => [styles.visitSiteBtn, pressed && { opacity: 0.85 }]}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+              accessibilityRole="button"
             >
               <CustomText style={styles.visitSiteText}>
                 زور الموقع <SquareArrowOutUpRight size={18} color={colors.text} />
               </CustomText>
-            </TouchableOpacity>
+            </Pressable>
           ) : (
-            <TouchableOpacity
+            <Pressable
               onPress={() => onVisitSite(selectedItem?.website)}
-              style={styles.visitSiteBtn}
+              style={({ pressed }) => [styles.visitSiteBtn, pressed && { opacity: 0.85 }]}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+              accessibilityRole="button"
             >
               <CustomText style={styles.visitSiteText}>
                 Visit Website <SquareArrowOutUpRight size={18} color={colors.text} />
               </CustomText>
-            </TouchableOpacity>
+            </Pressable>
           )}
 
           {/* Notification toggle */}
-          <TouchableOpacity onPress={onToggleNotification} style={styles.bellButton}>
+          <Pressable
+            onPress={onToggleNotification}
+            style={({ pressed }) => [styles.bellButton, pressed && { opacity: 0.85 }]}
+            hitSlop={{ top: 2, bottom: 2, left: 2, right: 2 }}
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+            accessibilityRole="button"
+          >
             {isNotifEnabled ? (
               <Bell size={24} color={colors.accentText}/>
             ) : (
               <BellOff size={24} color={colors.textSubtle} />
             )}
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </View>

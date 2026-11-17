@@ -1,5 +1,5 @@
 import React from "react";
-import { TouchableOpacity, type StyleProp, type ViewStyle } from "react-native";
+import { Pressable, type StyleProp, type ViewStyle } from "react-native";
 import PressScale from "@/src/components/PressScale";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 
@@ -47,27 +47,50 @@ export default function IconButton({
     bordered: { borderWidth: 1, borderColor: c.border },
   }));
 
+  // Material guidance: interactive targets must be ≥48dp. The visual circle
+  // stays at `size`; hitSlop widens the pressable area around smaller circles
+  // without changing the layout.
+  const slop = Math.max(0, (48 - size) / 2);
+  const hitSlop =
+    slop > 0
+      ? { top: slop, bottom: slop, left: slop, right: slop }
+      : undefined;
+
   if (feedback === "opacity") {
     return (
-      <TouchableOpacity
-        style={[styles.circle, variant === "surface" && styles.surface, bordered && styles.bordered, style]}
+      <Pressable
+        style={({ pressed }) => [
+          styles.circle,
+          variant === "surface" && styles.surface,
+          bordered && styles.bordered,
+          style,
+          pressed && { opacity: 0.85 },
+        ]}
+        android_ripple={{
+          color: "rgba(128,128,128,0.25)",
+          borderless: true,
+          radius: size / 2,
+        }}
         onPress={onPress}
         disabled={disabled}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
+        hitSlop={hitSlop}
       >
         {children}
-      </TouchableOpacity>
+      </Pressable>
     );
   }
 
   return (
     <PressScale
       style={[styles.circle, variant === "surface" && styles.surface, bordered && styles.bordered, style]}
+      android_ripple={{ color: "rgba(255,255,255,0.12)", borderless: true }}
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      hitSlop={hitSlop}
     >
       {children}
     </PressScale>

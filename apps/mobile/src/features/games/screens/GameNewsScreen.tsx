@@ -2,16 +2,16 @@ import React, { memo, useState, useCallback, useMemo } from "react";
 import CustomText from "@/src/components/CustomText";
 import {
   View,
-  TouchableOpacity,
+  Pressable,
   Switch,
   LayoutAnimation,
   ScrollView,
   ToastAndroid,
 } from "react-native";
 import AdSlot from "@/src/components/AdSlot";
-import { FlashList } from "@shopify/flash-list";
 import AppImage from "@/src/components/AppImage";
-import { ChevronDown, ChevronUp } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Newspaper } from "lucide-react-native";
+import GamingEmptyState from "@/src/components/GamingEmptyState";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import auth from "@react-native-firebase/auth";
@@ -110,7 +110,12 @@ const NewsItem = memo<NewsItemProps>(({ item, lang }) => {
   }, [item.link]);
 
   return (
-    <TouchableOpacity style={styles.card} onPress={handlePress}>
+    <Pressable
+      style={({ pressed }) => [styles.card, pressed && { opacity: 0.85 }]}
+      onPress={handlePress}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
+    >
       <View style={styles.cardContent}>
         <View style={{ flex: 1 }}>
           <CustomText style={styles.title} numberOfLines={2}>
@@ -155,7 +160,7 @@ const NewsItem = memo<NewsItemProps>(({ item, lang }) => {
           />
         )}
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 NewsItem.displayName = "NewsItem";
@@ -294,10 +299,11 @@ const NewsSection = memo<NewsSectionProps>(
           lang === "ar" ? { direction: "rtl" } : { direction: "ltr" },
         ]}
       >
-        <TouchableOpacity
-          style={styles.categoryHeader}
+        <Pressable
+          style={({ pressed }) => [styles.categoryHeader, pressed && { opacity: 0.7 }]}
           onPress={toggleExpand}
-          activeOpacity={0.7}
+          android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+          accessibilityRole="button"
         >
           <View style={styles.categoryHeaderLeft}>
             {expanded ? (
@@ -314,7 +320,7 @@ const NewsSection = memo<NewsSectionProps>(
             value={isEnabled}
             disabled={loadingPreferences}
           />
-        </TouchableOpacity>
+        </Pressable>
 
         {expanded && (
           <View style={styles.listContainer}>
@@ -322,31 +328,22 @@ const NewsSection = memo<NewsSectionProps>(
               <Loading />
             ) : error && news.length === 0 ? (
               <ErrorState
-                message={
-                  lang === "ar" ? "تعذر تحميل الأخبار" : "Failed to load game news."
-                }
-                subMessage={
-                  lang === "ar" ? "يرجى المحاولة مرة أخرى" : "Please try again."
-                }
+                message={t("games.list.gamesNews.loadError")}
                 showContactButton={false}
                 onRetry={() => refetch(true)}
                 retrying={refetching}
               />
             ) : news.length === 0 ? (
-              <CustomText
-                style={{ color: colors.textSubtle, textAlign: "center", marginTop: 10 }}
-              >
-                {lang === "ar" ? "لا توجد أخبار حاليا" : "No news found."}
-              </CustomText>
+              <GamingEmptyState title={t("games.list.gamesNews.noNews")} icon={Newspaper} />
             ) : (
-              <View style={{ height: 250, borderRadius: 8 }}>
-                <FlashList
-                  data={news}
-                  nestedScrollEnabled
-                  showsVerticalScrollIndicator={false}
-                  keyExtractor={(item) => item.$id}
-                  renderItem={({ item }) => <NewsItem item={item} lang={lang} />}
-                />
+              // This screen already owns a bounded outer ScrollView. Rendering
+              // the small result set directly avoids a nested FlashList/ScrollView
+              // pair, which otherwise causes competing Android measurement and
+              // fling behavior.
+              <View style={styles.listContainer}>
+                {news.map((item) => (
+                  <NewsItem key={item.$id} item={item} lang={lang} />
+                ))}
               </View>
             )}
           </View>
@@ -410,11 +407,16 @@ const GameNewsScreen: React.FC<Props> = memo(({ route }) => {
         </View>
 
         {sourceLink && (
-          <TouchableOpacity onPress={handleOpenSource} style={{ marginBottom: 10 }}>
+          <Pressable
+            onPress={handleOpenSource}
+            style={({ pressed }) => [{ marginBottom: 10 }, pressed && { opacity: 0.7 }]}
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: true, radius: 24 }}
+            accessibilityRole="button"
+          >
             <CustomText style={styles.sourceText}>
               {t("games.list.gamesNews.source")}
             </CustomText>
-          </TouchableOpacity>
+          </Pressable>
         )}
 
         <NewsSection

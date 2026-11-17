@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from "react";
-import { View, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Pressable, ActivityIndicator } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -180,10 +180,11 @@ const GameStores: React.FC<GameStoresProps> = ({ websites, prices, pricesLoading
           const Icon = STORE_ICONS[entry.type];
           if (!Icon || !entry.url) return null;
           return (
-            <TouchableOpacity
+            <Pressable
               key={entry.key}
-              style={styles.storeButton}
+              style={({ pressed }) => [styles.storeButton, pressed && { opacity: 0.85 }]}
               onPress={() => openLink(entry.url)}
+              android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
               accessibilityLabel={entry.url}
               accessibilityRole="link"
               accessibilityHint={t("games.details.openStoreHint")}
@@ -194,7 +195,7 @@ const GameStores: React.FC<GameStoresProps> = ({ websites, prices, pricesLoading
                 price={entry.price}
                 loading={!entry.price && Boolean(pricesLoading?.[entry.type])}
               />
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>

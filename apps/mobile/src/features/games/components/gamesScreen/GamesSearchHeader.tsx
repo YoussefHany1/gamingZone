@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { CircleX, Search, SlidersHorizontal } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -120,14 +120,15 @@ const GamesSearchHeader: React.FC<GamesSearchHeaderProps> = ({
             returnKeyType="search"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity
+            <Pressable
               onPress={onClear}
               hitSlop={CLEAR_HIT_SLOP}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: true, radius: 22 }}
               accessibilityRole="button"
               accessibilityLabel={t("common.clearSearch")}
             >
               <CircleX size={24} color={colors.textSubtle} />
-            </TouchableOpacity>
+            </Pressable>
           )}
         </View>
 
@@ -135,10 +136,16 @@ const GamesSearchHeader: React.FC<GamesSearchHeaderProps> = ({
         <RandomGameButton />
 
         {/* Filter button */}
-        <TouchableOpacity
-          style={[styles.filterBtn, filterActive && styles.filterBtnActive]}
+        <Pressable
+          style={({ pressed }) => [
+            styles.filterBtn,
+            filterActive && styles.filterBtnActive,
+            pressed && { opacity: 0.85 },
+          ]}
           onPress={onOpenFilter}
           hitSlop={FILTER_HIT_SLOP}
+          android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: true, radius: 22 }}
+          accessibilityRole="button"
         >
           <SlidersHorizontal
             size={20}
@@ -151,7 +158,7 @@ const GamesSearchHeader: React.FC<GamesSearchHeaderProps> = ({
               </CustomText>
             </View>
           )}
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Autocomplete dropdown — absolutely positioned below the search row */}

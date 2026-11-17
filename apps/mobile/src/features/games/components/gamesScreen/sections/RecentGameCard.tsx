@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { LinearGradient } from "expo-linear-gradient";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -130,7 +130,12 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
   }, [navigation, item.id]);
 
   return (
-    <TouchableOpacity style={styles.gameCard} onPress={handlePress} activeOpacity={0.9}>
+    <Pressable
+      style={({ pressed }) => [styles.gameCard, pressed && { opacity: 0.9 }]}
+      onPress={handlePress}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
+    >
       <LinearGradient
         colors={[colors.skeletonBase, colors.backgroundDeep]}
         style={styles.cardGradient}
@@ -198,7 +203,7 @@ const RecentGameCard = React.memo<RecentGameCardProps>(({ item }) => {
           )}
         </View>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 RecentGameCard.displayName = "RecentGameCard";

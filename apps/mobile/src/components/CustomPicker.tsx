@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, memo } from "react";
 import type { ViewStyle } from "react-native";
-import { View, Modal, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Modal, Pressable, StyleSheet, FlatList } from "react-native";
 import type { LucideIcon } from "lucide-react-native";
 import { Check, ChevronDown, X } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -130,12 +130,41 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
       [onValueChange],
     );
 
+    const renderOption = useCallback(
+      ({ item }: { item: PickerOption }): React.ReactElement => {
+        const selected = item.value === selectedValue;
+        return (
+          <Pressable
+            style={({ pressed }) => [
+              styles.optionItem,
+              selected && styles.selectedOption,
+              pressed && { opacity: 0.85 },
+            ]}
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+            onPress={() => handleSelect(item.value)}
+            accessibilityRole="radio"
+            accessibilityState={selected ? { selected: true } : undefined}
+          >
+            <CustomText
+              style={[styles.optionText, selected && styles.selectedOptionText]}
+            >
+              {item.label}
+            </CustomText>
+            {selected && <Check size={24} color={colors.accentText} />}
+          </Pressable>
+        );
+      },
+      [selectedValue, handleSelect, styles, colors.accentText],
+    );
+
     return (
       <View style={[styles.container, containerStyle]}>
         {/* Trigger button */}
-        <TouchableOpacity
-          style={styles.pickerButton}
+        <Pressable
+          style={({ pressed }) => [styles.pickerButton, pressed && { opacity: 0.85 }]}
+          android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
           onPress={() => setModalVisible(true)}
+          accessibilityRole="button"
         >
           <View style={styles.leftContent}>
             {Icon ? (
@@ -152,7 +181,7 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
             </CustomText>
           </View>
           <ChevronDown size={20} color={colors.text} />
-        </TouchableOpacity>
+        </Pressable>
 
         {/* Options modal */}
         <Modal
@@ -162,10 +191,10 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
           onRequestClose={() => setModalVisible(false)}
         >
           <View style={styles.modalOverlay}>
-            {/* Dimmed background — tap to close */}
-            <TouchableOpacity
+            {/* Dimmed background — tap to close. No ripple/press dim: the
+                original activeOpacity={1} deliberately had zero feedback. */}
+            <Pressable
               style={StyleSheet.absoluteFill}
-              activeOpacity={1}
               onPress={() => setModalVisible(false)}
             />
 
@@ -173,41 +202,35 @@ const CustomPicker: React.FC<CustomPickerProps> = memo(
             <SafeAreaView style={styles.modalContent} edges={["bottom"]}>
               <View style={styles.modalHeader}>
                 <CustomText style={styles.modalTitle}>{resolvedPlaceholder}</CustomText>
-                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Pressable
+                  style={({ pressed }) => pressed && { opacity: 0.85 }}
+                  android_ripple={{
+                    color: "rgba(128,128,128,0.25)",
+                    borderless: true,
+                    radius: 20,
+                  }}
+                  onPress={() => setModalVisible(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("common.close")}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
                   <X size={24} color={colors.accentText} />
-                </TouchableOpacity>
+                </Pressable>
               </View>
 
-              {/* ScrollView renders all items without needing a pre-measured height */}
-              <ScrollView
+              {/* Virtualized: large option sets (e.g. ~250 countries) no longer
+                  mount every row when the sheet opens. */}
+              <FlatList
+                data={filteredOptions}
+                keyExtractor={(item) => item.value}
+                renderItem={renderOption}
+                initialNumToRender={16}
+                maxToRenderPerBatch={24}
+                windowSize={9}
                 bounces={false}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
-              >
-                {filteredOptions.map((item) => (
-                  <TouchableOpacity
-                    key={item.value}
-                    style={[
-                      styles.optionItem,
-                      item.value === selectedValue && styles.selectedOption,
-                    ]}
-                    onPress={() => handleSelect(item.value)}
-                    activeOpacity={0.7}
-                  >
-                    <CustomText
-                      style={[
-                        styles.optionText,
-                        item.value === selectedValue && styles.selectedOptionText,
-                      ]}
-                    >
-                      {item.label}
-                    </CustomText>
-                    {item.value === selectedValue && (
-                      <Check size={24} color={colors.accentText} />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              />
             </SafeAreaView>
           </View>
         </Modal>

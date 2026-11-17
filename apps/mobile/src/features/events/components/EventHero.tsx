@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Pressable, StyleSheet } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import { LinearGradient } from "expo-linear-gradient";
 import { ArrowLeft } from "lucide-react-native";
@@ -78,15 +78,16 @@ const EventHero: React.FC<EventHeroProps> = ({ event, status, logoUri, onBack })
         style={StyleSheet.absoluteFill}
       />
 
-      <TouchableOpacity
-        style={styles.backBtn}
+      <Pressable
+        style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.8 }]}
         onPress={onBack}
-        activeOpacity={0.8}
+        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+        android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: true, radius: 20 }}
         accessibilityRole="button"
         accessibilityLabel={t("common.back")}
       >
         <ArrowLeft size={24} color={colors.text} accessible={false} />
-      </TouchableOpacity>
+      </Pressable>
 
       <View style={styles.heroBadgeRow}>
         <EventStatusBadge status={status} />

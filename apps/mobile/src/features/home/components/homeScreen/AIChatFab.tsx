@@ -1,5 +1,5 @@
 import React, { memo, useEffect } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Pressable, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -88,12 +88,12 @@ const AIChatFab = memo(function AIChatFab({ onPress }: AIChatFabProps) {
 
   return (
     <Animated.View style={[styles.fabWrapper, pulseStyle]}>
-      <TouchableOpacity
+      <Pressable
         style={styles.fabGlass}
         onPress={onPress}
-        activeOpacity={0.8}
         accessibilityRole="button"
         accessibilityLabel={t("aiChat.title")}
+        android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
       >
         <View style={[StyleSheet.absoluteFill, styles.fabBaseFill]} />
         <LinearGradient
@@ -106,7 +106,7 @@ const AIChatFab = memo(function AIChatFab({ onPress }: AIChatFabProps) {
         <View collapsable={false}>
           <MessagesSquare size={28} color={colors.text} style={styles.fabIcon} />
         </View>
-      </TouchableOpacity>
+      </Pressable>
     </Animated.View>
   );
 });

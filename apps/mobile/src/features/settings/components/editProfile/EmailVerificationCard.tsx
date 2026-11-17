@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Pressable, ActivityIndicator } from "react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -63,20 +63,26 @@ const EmailVerificationCard = memo(
           <CustomText style={styles.verifyText}>
             {t("auth.emailNotVerified")}
           </CustomText>
-          <TouchableOpacity
+          <Pressable
             onPress={() => {
               void onSendEmail();
             }}
+            style={({ pressed }) => pressed && { opacity: 0.85 }}
+            accessibilityRole="button"
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
           >
             <CustomText style={styles.verifyAction}>
               {t("auth.verifyEmail")}
             </CustomText>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </Pressable>
+          <Pressable
             onPress={() => {
               void onRefresh();
             }}
             disabled={isChecking}
+            style={({ pressed }) => pressed && { opacity: 0.85 }}
+            accessibilityRole="button"
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
           >
             {isChecking ? (
               <ActivityIndicator
@@ -89,7 +95,7 @@ const EmailVerificationCard = memo(
                 {t("auth.verifyPrompt.iveVerified")}
               </CustomText>
             )}
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     );

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AppState } from "react-native";
 import firestore from "@react-native-firebase/firestore";
 import { logger } from "@/src/lib/logger";
 import { isPresenceFresh } from "../lib/presence";
@@ -91,11 +92,36 @@ export function useSocialPresence(friendUids: string[]): Record<string, Presence
       }
     };
 
-    void fetchPresence();
-    const timer = setInterval(() => void fetchPresence(), REFRESH_INTERVAL_MS);
+    let timer: ReturnType<typeof setInterval> | undefined;
+
+    const startRefresh = () => {
+      if (timer) return;
+      void fetchPresence();
+      timer = setInterval(() => void fetchPresence(), REFRESH_INTERVAL_MS);
+    };
+
+    const stopRefresh = () => {
+      if (!timer) return;
+      clearInterval(timer);
+      timer = undefined;
+    };
+
+    if (AppState.currentState === "active") {
+      startRefresh();
+    }
+
+    const appStateSubscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        startRefresh();
+      } else {
+        stopRefresh();
+      }
+    });
+
     return () => {
       cancelled = true;
-      clearInterval(timer);
+      appStateSubscription.remove();
+      stopRefresh();
     };
     // `ids` is derived from `key`; keying the effect on the string keeps the
     // subscription stable across parent re-renders.

@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { Pressable, View } from "react-native";
 import { FolderOpen, List, Trash2 } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -38,7 +38,12 @@ const UserListRow = memo<UserListRowProps>(
     }));
 
     return (
-      <TouchableOpacity style={styles.listItem} onPress={onPress}>
+      <Pressable
+        style={({ pressed }) => [styles.listItem, pressed && { opacity: 0.85 }]}
+        onPress={onPress}
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+        accessibilityRole="button"
+      >
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           {item.type === "default" ? (
             <List size={24} color={colors.accentText}/>
@@ -48,11 +53,21 @@ const UserListRow = memo<UserListRowProps>(
           <CustomText style={styles.listName}>{displayName}</CustomText>
         </View>
         {onDelete && (
-          <TouchableOpacity onPress={onDelete}>
+          <Pressable
+            onPress={onDelete}
+            style={({ pressed }) => (pressed ? { opacity: 0.85 } : undefined)}
+            hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
+            android_ripple={{
+              color: "rgba(128,128,128,0.25)",
+              borderless: true,
+              radius: 10,
+            }}
+            accessibilityRole="button"
+          >
             <Trash2 size={20} color={colors.danger} />
-          </TouchableOpacity>
+          </Pressable>
         )}
-      </TouchableOpacity>
+      </Pressable>
     );
   },
 );

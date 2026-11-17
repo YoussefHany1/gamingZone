@@ -19,6 +19,22 @@ function isRemoteUri(uri: unknown): boolean {
 }
 
 /**
+ * Sources are often passed as fresh `{ uri }` objects from list renders. Use a
+ * value-based identity for failure state so equivalent sources do not reset
+ * the fallback on every parent render.
+ */
+function getSourceKey(source: ImageSourceProp): string {
+  if (source == null) return "null";
+  const first = Array.isArray(source) ? source[0] : source;
+  if (typeof first === "string") return `string:${first}`;
+  if (typeof first === "number") return `asset:${first}`;
+  if (first && typeof first === "object" && "uri" in first) {
+    return `uri:${String((first as { uri?: unknown }).uri ?? "")}`;
+  }
+  return "object";
+}
+
+/**
  * Remote sources get progressive-loading defaults; local assets
  * (`require(...)`, `file://`, `content://`, data URIs, native refs) load
  * instantly and should not flash a placeholder or fade in.
@@ -39,20 +55,25 @@ export type AppImageProps = ImageProps;
 export default function AppImage({
   placeholder,
   transition,
+  cachePolicy,
   source,
   onError,
   onLoad,
   ...rest
 }: AppImageProps) {
   const [failed, setFailed] = useState(false);
+  const sourceKey = getSourceKey(source);
 
   useEffect(() => {
     setFailed(false);
-  }, [source]);
+  }, [sourceKey]);
 
   const isRemote = isRemoteSource(source);
   const resolvedSource = failed || source == null ? getFallbackImage() : source;
 
+  // Remote images default to memory+disk caching so scrolling rails and news
+  // lists never re-download the same URI. Callers can still override any of
+  // these via their normal props.
   return (
     <Image
       source={resolvedSource}
@@ -65,6 +86,11 @@ export default function AppImage({
         ? { transition }
         : isRemote
           ? { transition: 300 }
+          : {})}
+      {...(cachePolicy !== undefined
+        ? { cachePolicy }
+        : isRemote
+          ? { cachePolicy: "memory-disk" as const }
           : {})}
       onError={(event) => {
         setFailed(true);

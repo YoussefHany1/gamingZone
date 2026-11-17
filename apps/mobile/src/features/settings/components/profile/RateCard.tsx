@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import { Star } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -54,10 +54,11 @@ const RateCard = memo(({ entry }: RateCardProps): React.ReactElement => {
   }));
 
   return (
-    <TouchableOpacity
-      style={styles.card}
+    <Pressable
+      style={({ pressed }) => [styles.card, pressed && { opacity: 0.85 }]}
       onPress={() => navigation.navigate("GameDetails", { gameID: entry.id })}
-      activeOpacity={0.75}
+      accessibilityRole="button"
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
     >
       <AppImage
         style={styles.cover}
@@ -74,7 +75,7 @@ const RateCard = memo(({ entry }: RateCardProps): React.ReactElement => {
         <Star size={12} color="#ffc107" fill="#ffc107" />
         <CustomText style={styles.rating}>{entry.rating}</CustomText>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 

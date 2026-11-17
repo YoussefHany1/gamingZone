@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { Check, Dices, Sparkles } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -43,13 +43,17 @@ const AccentSwatchRow = memo(
 
             return (
               <View key={id} style={geometry.swatchCol}>
-                <TouchableOpacity
+                <Pressable
                   style={geometry.swatchHit}
                   onPress={() => onSelect(id)}
-                  activeOpacity={0.75}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: isSelected }}
                   accessibilityLabel={t(`settings.theme.${id}`)}
+                  android_ripple={{
+                    color: "rgba(128,128,128,0.25)",
+                    borderless: true,
+                    radius: SWATCH / 2,
+                  }}
                 >
                   <View
                     style={[
@@ -72,7 +76,7 @@ const AccentSwatchRow = memo(
                       />
                     )}
                   </View>
-                </TouchableOpacity>
+                </Pressable>
                 <CustomText style={[geometry.swatchLabel, { color: colors.textMuted }]}>
                   {t(`settings.theme.${id}`)}
                 </CustomText>

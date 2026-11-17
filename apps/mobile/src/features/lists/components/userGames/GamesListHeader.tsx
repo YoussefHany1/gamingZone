@@ -1,5 +1,5 @@
 import React from "react";
-import { View, TouchableOpacity } from "react-native";
+import { Pressable, View } from "react-native";
 import { Pencil } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -161,32 +161,46 @@ const GamesListHeader = ({
               editable={!isSaving}
             />
             <View style={styles.editActions}>
-              <TouchableOpacity
+              <Pressable
                 onPress={onCancelEdit}
-                style={styles.cancelBtn}
+                style={({ pressed }) => [styles.cancelBtn, pressed && { opacity: 0.85 }]}
                 disabled={isSaving}
+                hitSlop={{ top: 4, bottom: 4, left: 0, right: 0 }}
+                android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                accessibilityRole="button"
               >
                 <CustomText style={styles.cancelBtnText}>
                   {t("common.cancel")}
                 </CustomText>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </Pressable>
+              <Pressable
                 onPress={onSaveEdit}
-                style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}
+                style={({ pressed }) => [
+                  styles.saveBtn,
+                  isSaving && styles.saveBtnDisabled,
+                  pressed && { opacity: 0.85 },
+                ]}
                 disabled={isSaving}
+                hitSlop={{ top: 4, bottom: 4, left: 0, right: 0 }}
+                android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+                accessibilityRole="button"
               >
                 <CustomText style={styles.saveBtnText}>
                   {t("common.saveChanges")}
                 </CustomText>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </>
         ) : (
-          <TouchableOpacity
-            style={styles.headerRow}
-            activeOpacity={canEdit ? 0.7 : 1}
+          <Pressable
+            style={({ pressed }) => [
+              styles.headerRow,
+              canEdit && pressed && { opacity: 0.85 },
+            ]}
             disabled={!canEdit}
             onPress={onStartEdit}
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+            accessibilityRole="button"
           >
             <View style={{ flex: 1 }}>
               <CustomText style={styles.headerTitle}>{title}</CustomText>
@@ -197,7 +211,7 @@ const GamesListHeader = ({
               ) : null}
             </View>
             {canEdit && <Pencil size={20} color={colors.accentText}/>}
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
       {isSharedList ? (

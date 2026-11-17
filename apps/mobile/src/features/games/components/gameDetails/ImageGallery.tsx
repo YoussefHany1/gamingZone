@@ -8,7 +8,7 @@ import {
   View,
   StyleSheet,
   Dimensions,
-  TouchableOpacity,
+  Pressable,
   Modal,
   StatusBar,
   Animated,
@@ -104,10 +104,10 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = React.memo(
     const { t } = useTranslation();
 
     return (
-      <TouchableOpacity
-        activeOpacity={0.9}
+      <Pressable
         onPress={onPress}
-        style={styles.thumbnailContainer}
+        style={({ pressed }) => [styles.thumbnailContainer, pressed && { opacity: 0.9 }]}
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
         accessibilityLabel={t("games.details.gallery.imageOf", {
           current: index + 1,
           total: totalImages,
@@ -149,7 +149,7 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = React.memo(
             end={{ x: 0, y: 0.5 }}
           />
         </View>
-      </TouchableOpacity>
+      </Pressable>
     );
   },
 );
@@ -451,14 +451,18 @@ const ImageGalleryAdvanced: React.FC<ImageGalleryAdvancedProps> = ({
                 },
               ]}
             >
-              <TouchableOpacity
-                style={fullScreenStyles.closeButton}
+              <Pressable
+                style={({ pressed }) => [
+                  fullScreenStyles.closeButton,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={closeFullScreen}
+                android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: true, radius: 25 }}
                 accessibilityLabel={t("games.details.gallery.close")}
                 accessibilityRole="button"
               >
                 <X size={28} color={colors.text} />
-              </TouchableOpacity>
+              </Pressable>
               <View style={styles.fullScreenCounter}>
                 <CustomText style={styles.fullScreenCounterText}>
                   {fullScreenIndex + 1} / {imageCount}

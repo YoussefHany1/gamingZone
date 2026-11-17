@@ -5,7 +5,7 @@ import {
   Platform,
   ScrollView,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   View,
 } from "react-native";
 import { Alert } from "@/src/lib/alert";
@@ -51,7 +51,12 @@ const PcSpecsScreen: React.FC = () => {
   const colors = useThemeColors();
   const bottomInset = useBottomInset();
   const headerHeight = useHeaderHeight();
-  const { specs, save, clear, saving, hydrate, hydrated } = usePcSpecsStore();
+  const specs = usePcSpecsStore((state) => state.specs);
+  const save = usePcSpecsStore((state) => state.save);
+  const clear = usePcSpecsStore((state) => state.clear);
+  const saving = usePcSpecsStore((state) => state.saving);
+  const hydrate = usePcSpecsStore((state) => state.hydrate);
+  const hydrated = usePcSpecsStore((state) => state.hydrated);
 
   const [cpuId, setCpuId] = useState(specs?.cpuId ?? "");
   const [gpuId, setGpuId] = useState(specs?.gpuId ?? "");
@@ -204,7 +209,7 @@ const PcSpecsScreen: React.FC = () => {
     <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
       <KeyboardAvoidingView
         style={styles.kbView}
-        behavior={Platform.OS === "android" ? "height" : "padding"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={headerHeight}
       >
         <ScrollView contentContainerStyle={styles.container}>
@@ -214,20 +219,30 @@ const PcSpecsScreen: React.FC = () => {
             <CustomText style={styles.sectionTitle}>
               {t("pcSpecs.sections.hardware")}
             </CustomText>
-            <TouchableOpacity style={styles.row} onPress={() => setPicker("cpu")}>
+            <Pressable
+              style={({ pressed }) => [styles.row, pressed && { opacity: 0.85 }]}
+              onPress={() => setPicker("cpu")}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+              accessibilityRole="button"
+            >
               <Cpu size={18} color={colors.textMuted} />
               <CustomText style={styles.rowText} numberOfLines={1}>
                 {cpu?.label ?? t("pcSpecs.placeholders.cpu")}
               </CustomText>
               <CustomText style={styles.muted}>{t("common.edit")}</CustomText>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.row} onPress={() => setPicker("gpu")}>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.row, pressed && { opacity: 0.85 }]}
+              onPress={() => setPicker("gpu")}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+              accessibilityRole="button"
+            >
               <HardDrive size={18} color={colors.textMuted} />
               <CustomText style={styles.rowText} numberOfLines={1}>
                 {gpu?.label ?? t("pcSpecs.placeholders.gpu")}
               </CustomText>
               <CustomText style={styles.muted}>{t("common.edit")}</CustomText>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View style={styles.card}>
@@ -238,17 +253,22 @@ const PcSpecsScreen: React.FC = () => {
               {RESOLUTION_OPTIONS.map((option) => {
                 const active = resolution === option;
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={option}
-                    style={[styles.chip, active && styles.chipActive]}
+                    style={({ pressed }) => [
+                      styles.chip,
+                      active && styles.chipActive,
+                      pressed && { opacity: 0.85 },
+                    ]}
                     onPress={() => setResolution(option)}
+                    android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
                     accessibilityRole="button"
                     accessibilityState={{ selected: active }}
                   >
                     <CustomText style={[styles.chipText, active && styles.chipTextActive]}>
                       {t(RESOLUTION_LABEL_KEYS[option])}
                     </CustomText>
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
             </View>
@@ -261,29 +281,41 @@ const PcSpecsScreen: React.FC = () => {
               {RAM_OPTIONS.map((value) => {
                 const active = !ramCustom && ramGb === value;
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={value}
-                    style={[styles.chip, active && styles.chipActive]}
+                    style={({ pressed }) => [
+                      styles.chip,
+                      active && styles.chipActive,
+                      pressed && { opacity: 0.85 },
+                    ]}
                     onPress={() => {
                       setRamCustom(false);
                       setRamText(String(value));
                       setRamGb(value);
                     }}
+                    android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                    accessibilityRole="button"
                   >
                     <CustomText style={[styles.chipText, active && styles.chipTextActive]}>
                       {value} GB
                     </CustomText>
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
-              <TouchableOpacity
-                style={[styles.chip, ramCustom && styles.chipActive]}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.chip,
+                  ramCustom && styles.chipActive,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={() => setRamCustom(true)}
+                android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                accessibilityRole="button"
               >
                 <CustomText style={[styles.chipText, ramCustom && styles.chipTextActive]}>
                   {t("pcSpecs.custom.label")}
                 </CustomText>
-              </TouchableOpacity>
+              </Pressable>
             </View>
             {ramCustom && (
               <TextInput
@@ -305,31 +337,43 @@ const PcSpecsScreen: React.FC = () => {
               {STORAGE_OPTIONS.map((value) => {
                 const active = !storageCustom && freeStorageGb === value;
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={value}
-                    style={[styles.chip, active && styles.chipActive]}
+                    style={({ pressed }) => [
+                      styles.chip,
+                      active && styles.chipActive,
+                      pressed && { opacity: 0.85 },
+                    ]}
                     onPress={() => {
                       setStorageCustom(false);
                       setStorageText(String(value));
                       setFreeStorageGb(value);
                     }}
+                    android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                    accessibilityRole="button"
                   >
                     <CustomText
                       style={[styles.chipText, active && styles.chipTextActive]}
                     >
                       {value} GB
                     </CustomText>
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
-              <TouchableOpacity
-                style={[styles.chip, storageCustom && styles.chipActive]}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.chip,
+                  storageCustom && styles.chipActive,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={() => setStorageCustom(true)}
+                android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                accessibilityRole="button"
               >
                 <CustomText style={[styles.chipText, storageCustom && styles.chipTextActive]}>
                   {t("pcSpecs.custom.label")}
                 </CustomText>
-              </TouchableOpacity>
+              </Pressable>
             </View>
             {storageCustom && (
               <TextInput
@@ -345,28 +389,35 @@ const PcSpecsScreen: React.FC = () => {
 
           {error && <CustomText style={{ color: colors.danger }}>{error}</CustomText>}
 
-          <TouchableOpacity
-            style={[styles.button, (saving || !cpuId || !gpuId) && { opacity: 0.5 }]}
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              (saving || !cpuId || !gpuId) && { opacity: 0.5 },
+              pressed && { opacity: 0.85 },
+            ]}
             onPress={handleSave}
             disabled={saving || !cpuId || !gpuId}
+            android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+            accessibilityRole="button"
           >
             {saving ? (
               <ActivityIndicator color={colors.onAccent} />
             ) : (
               <CustomText style={styles.buttonText}>{t("pcSpecs.actions.save")}</CustomText>
             )}
-          </TouchableOpacity>
+          </Pressable>
 
           {specs && (
-            <TouchableOpacity
-              style={styles.clearButton}
+            <Pressable
+              style={({ pressed }) => [styles.clearButton, pressed && { opacity: 0.85 }]}
               onPress={handleClear}
               disabled={saving}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
               accessibilityRole="button"
             >
               <Trash2 size={16} color={colors.danger} />
               <CustomText style={styles.clearText}>{t("pcSpecs.actions.clear")}</CustomText>
-            </TouchableOpacity>
+            </Pressable>
           )}
 
           <CustomText style={styles.muted}>{t("pcSpecs.hints.estimate")}</CustomText>

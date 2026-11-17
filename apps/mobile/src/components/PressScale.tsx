@@ -8,6 +8,13 @@ import Animated, {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+/**
+ * Neutral mid-gray ripple that stays visible on both light and dark
+ * surfaces without subscribing PressScale to the theme store (it is used
+ * inside recycled list rows, so it must stay cheap).
+ */
+const DEFAULT_RIPPLE = { color: "rgba(128,128,128,0.25)", borderless: false };
+
 export type PressScaleProps = Omit<PressableProps, "style"> & {
   children: React.ReactNode;
   style?: PressableProps["style"];
@@ -29,6 +36,9 @@ export default function PressScale({ children, style, ...props }: PressScaleProp
 
   return (
     <AnimatedPressable
+      // Default Material ripple on Android; a caller-passed `android_ripple`
+      // in `props` wins over this default (spread order below).
+      android_ripple={DEFAULT_RIPPLE}
       {...props}
       onPressIn={(event) => {
         setPressed(true);

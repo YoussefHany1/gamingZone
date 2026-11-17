@@ -10,7 +10,7 @@
  * lives in `usePsnLinkFlow`.
  */
 import React, { memo, useCallback, useRef } from "react";
-import { TouchableOpacity, View, ActivityIndicator } from "react-native";
+import { Pressable, View, ActivityIndicator } from "react-native";
 import { WebView } from "react-native-webview";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -120,10 +120,16 @@ function PsnSignInPanel({
           startInLoadingState
         />
       </View>
-      <TouchableOpacity
-        style={[styles.primaryBtn, styles.mtSmall]}
+      <Pressable
+        style={({ pressed }) => [
+          styles.primaryBtn,
+          styles.mtSmall,
+          pressed && { opacity: 0.85 },
+        ]}
         onPress={handleGrabNpsso}
         disabled={busy}
+        accessibilityRole="button"
+        android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
       >
         {busy ? (
           <ActivityIndicator color={colors.onAccent} />
@@ -132,24 +138,36 @@ function PsnSignInPanel({
             {t("settings.profile.linking.psn.grabToken") || "Get NPSSO"}
           </CustomText>
         )}
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.secondaryBtn, styles.mtSmall]}
+      </Pressable>
+      <Pressable
+        style={({ pressed }) => [
+          styles.secondaryBtn,
+          styles.mtSmall,
+          pressed && { opacity: 0.85 },
+        ]}
         onPress={onOpenBrowser}
+        accessibilityRole="button"
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
       >
         <CustomText style={styles.secondaryBtnText}>
           {t("settings.profile.linking.psn.openBrowser") ||
             "Continue in a browser tab instead"}
         </CustomText>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.secondaryBtn, styles.mtSmall]}
+      </Pressable>
+      <Pressable
+        style={({ pressed }) => [
+          styles.secondaryBtn,
+          styles.mtSmall,
+          pressed && { opacity: 0.85 },
+        ]}
         onPress={onManualEntry}
+        accessibilityRole="button"
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
       >
         <CustomText style={styles.secondaryBtnText}>
           {t("settings.profile.linking.psn.manualEntry") || "Paste token manually"}
         </CustomText>
-      </TouchableOpacity>
+      </Pressable>
     </>
   );
 }

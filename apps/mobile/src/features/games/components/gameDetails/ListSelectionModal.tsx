@@ -4,7 +4,7 @@ import CustomTextInput from "@/src/components/CustomTextInput";
 import {
   View,
   Modal,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -380,10 +380,16 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
 
     const renderListItem = useCallback(
       (item: UserList) => (
-        <TouchableOpacity
+        <Pressable
           key={item.id}
-          style={[styles.listItem, item.isChecked && styles.selectedOption]}
+          style={({ pressed }) => [
+            styles.listItem,
+            item.isChecked && styles.selectedOption,
+            pressed && { opacity: 0.85 },
+          ]}
           onPress={() => toggleList(item.id)}
+          android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+          accessibilityRole="button"
         >
           {item.isChecked ? (
             <SquareCheckBig size={24} color={colors.accentText} />
@@ -393,7 +399,7 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
           <CustomText style={[styles.listName, item.isChecked && { fontWeight: "bold" }]}>
             {getDisplayName(item.name)}
           </CustomText>
-        </TouchableOpacity>
+        </Pressable>
       ),
       [colors.accent, styles, toggleList, getDisplayName],
     );
@@ -406,14 +412,10 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
         onRequestClose={onClose}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}
         >
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={onClose}
-          >
+          <Pressable style={styles.modalOverlay} onPress={onClose}>
             <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
               <CustomText style={styles.modalTitle}>
                 {t("games.details.listStatus.add") || "Add to..."}
@@ -451,19 +453,24 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                           {t("lists.createFirstMessage") || t("userLists.empty.title")}
                         </CustomText>
                         {!isCreating && (
-                          <TouchableOpacity
-                            style={{
-                              backgroundColor: colors.accent,
-                              paddingHorizontal: 16,
-                              paddingVertical: 10,
-                              borderRadius: 10,
-                            }}
+                          <Pressable
+                            style={({ pressed }) => [
+                              {
+                                backgroundColor: colors.accent,
+                                paddingHorizontal: 16,
+                                paddingVertical: 10,
+                                borderRadius: 10,
+                              },
+                              pressed && { opacity: 0.85 },
+                            ]}
                             onPress={() => setIsCreating(true)}
+                            android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+                            accessibilityRole="button"
                           >
                             <CustomText style={{ color: colors.onAccent, fontWeight: "700" }}>
                               {t("userLists.actions.createNewList")}
                             </CustomText>
-                          </TouchableOpacity>
+                          </Pressable>
                         )}
                       </View>
                     ) : (
@@ -484,22 +491,31 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                           autoFocus={true}
                         />
                         <View style={styles.creationButtons}>
-                          <TouchableOpacity
-                            style={[
+                          <Pressable
+                            style={({ pressed }) => [
                               styles.smallBtn,
                               { backgroundColor: colors.backgroundDeep },
+                              pressed && { opacity: 0.85 },
                             ]}
                             onPress={() => setIsCreating(false)}
+                            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                            accessibilityRole="button"
                           >
                             <CustomText style={styles.smallBtnText}>
                               {t("common.cancel")}
                             </CustomText>
-                          </TouchableOpacity>
+                          </Pressable>
 
-                          <TouchableOpacity
-                            style={[styles.smallBtn, { backgroundColor: colors.accent }]}
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.smallBtn,
+                              { backgroundColor: colors.accent },
+                              pressed && { opacity: 0.85 },
+                            ]}
                             onPress={handleCreateList}
                             disabled={creatingLoading}
+                            android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+                            accessibilityRole="button"
                           >
                             {creatingLoading ? (
                               <ActivityIndicator size="small" color={colors.text} />
@@ -508,12 +524,12 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                                 {t("common.create")}
                               </CustomText>
                             )}
-                          </TouchableOpacity>
+                          </Pressable>
                         </View>
                       </View>
                     ) : (
-                      <TouchableOpacity
-                        style={styles.addButton}
+                      <Pressable
+                        style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.85 }]}
                         onPress={() => {
                           if (isAnonymous) {
                             ToastAndroid.show(
@@ -524,18 +540,20 @@ const ListSelectionModal: React.FC<ListSelectionModalProps> = memo(
                             setIsCreating(true);
                           }
                         }}
+                        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                        accessibilityRole="button"
                       >
                         <CirclePlus size={24} color={colors.accentText} />
                         <CustomText style={styles.addButtonText}>
                           {t("userLists.actions.createNewList")}
                         </CustomText>
-                      </TouchableOpacity>
+                      </Pressable>
                     )}
                   </View>
                 </>
               )}
             </View>
-          </TouchableOpacity>
+          </Pressable>
         </KeyboardAvoidingView>
       </Modal>
     );

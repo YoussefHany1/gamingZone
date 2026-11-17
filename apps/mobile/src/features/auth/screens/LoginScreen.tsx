@@ -2,13 +2,13 @@ import React, { memo, useCallback, useRef } from "react";
 import CustomText from "@/src/components/CustomText";
 import {
   View,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   KeyboardAvoidingView,
-  Platform,
   Keyboard,
   TouchableWithoutFeedback,
   type TextInput,
+  Platform,
 } from "react-native";
 import { ImageBackground } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -78,14 +78,16 @@ const LoginScreen: React.FC<AuthScreenProps<"Login">> = memo(({ navigation }) =>
       contentFit="cover"
       cachePolicy="memory-disk"
     >
+      {/* Android: use padding behavior to cooperate with native adjustResize. */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === "android" ? "height" : undefined}
         style={styles.keyboardView}
+        behavior={Platform.OS === "android" ? "padding" : undefined}
       >
         <SafeAreaView style={styles.container}>
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             contentContainerStyle={styles.scrollContent}
           >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -121,8 +123,11 @@ const LoginScreen: React.FC<AuthScreenProps<"Login">> = memo(({ navigation }) =>
                     onSubmitEditing={submitPassword}
                   />
 
-                  <TouchableOpacity
+                  <Pressable
                     onPress={handleNavigateToForgotPassword}
+                    style={({ pressed }) => pressed && { opacity: 0.85 }}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                    android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
                     accessibilityRole="link"
                     accessibilityLabel={t("auth.login.forgotPassword")}
                     accessibilityHint={t("auth.a11y.forgotPasswordHint")}
@@ -130,7 +135,7 @@ const LoginScreen: React.FC<AuthScreenProps<"Login">> = memo(({ navigation }) =>
                     <CustomText style={styles.forgotPasswordText}>
                       {t("auth.login.forgotPassword")}
                     </CustomText>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
 
                 <AuthPrimaryButton

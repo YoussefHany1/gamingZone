@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from "react";
-import { View, TouchableOpacity, Share } from "react-native";
+import { View, Pressable, Share } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { Share2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -63,14 +63,19 @@ const InviteFriendsBtn: React.FC = memo(() => {
   }, []);
 
   return (
-    <TouchableOpacity style={styles.categoryHeader} onPress={onShare}>
+    <Pressable
+      style={({ pressed }) => [styles.categoryHeader, pressed && { opacity: 0.85 }]}
+      onPress={onShare}
+      accessibilityRole="button"
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+    >
       <View style={styles.categoryHeaderLeft}>
         <Share2 size={20} color={colors.accentText}style={styles.chevronIcon} />
         <CustomText style={styles.categoryTitle}>
           {t("settings.menu.inviteFriends")}
         </CustomText>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 

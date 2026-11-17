@@ -23,7 +23,13 @@ export function resolveLanguageCode(language: string): LanguageCode {
   if (language.startsWith("es")) return "es";
   if (language.startsWith("fr")) return "fr";
   if (language.startsWith("hi")) return "hi";
+  // Portuguese regions are kept distinct, so they are matched before the
+  // bare `pt` prefix. A bare `pt` (no region) defaults to European
+  // Portuguese (`pt-PT`): ISO 639-1 `pt` conventionally refers to Portugal's
+  // Portuguese, and Brazilian devices normally report `pt-BR`, so a regionless
+  // tag is far more likely to come from a European device.
   if (language.startsWith("pt-PT")) return "pt-PT";
   if (language.startsWith("pt-BR")) return "pt-BR";
+  if (language.startsWith("pt")) return "pt-PT";
   return "en";
 }

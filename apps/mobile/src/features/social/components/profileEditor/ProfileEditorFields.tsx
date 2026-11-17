@@ -3,7 +3,7 @@ import {
   ActivityIndicator,
   Switch,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   View,
 } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -145,10 +145,12 @@ export function BannerField({
       ) : null}
       <CustomText style={styles.label}>{t("social.profile.banner")}</CustomText>
       <View style={styles.bannerActions}>
-        <TouchableOpacity
-          style={styles.smallButton}
+        <Pressable
+          style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.85 }]}
           onPress={onPick}
           disabled={uploading}
+          android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+          accessibilityRole="button"
         >
           {uploading ? (
             <ActivityIndicator color={colors.accentText} size="small" />
@@ -157,13 +159,18 @@ export function BannerField({
               {t("social.profile.changeBanner")}
             </CustomText>
           )}
-        </TouchableOpacity>
+        </Pressable>
         {bannerURL ? (
-          <TouchableOpacity style={styles.smallButton} onPress={onRemove}>
+          <Pressable
+            style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.85 }]}
+            onPress={onRemove}
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+            accessibilityRole="button"
+          >
             <CustomText style={styles.smallButtonText}>
               {t("social.profile.removeBanner")}
             </CustomText>
-          </TouchableOpacity>
+          </Pressable>
         ) : null}
       </View>
     </View>
@@ -204,10 +211,12 @@ export function HandleField({
           placeholder={t("social.profile.handlePlaceholder")}
           placeholderTextColor={colors.textMuted}
         />
-        <TouchableOpacity
-          style={styles.claimButton}
+        <Pressable
+          style={({ pressed }) => [styles.claimButton, pressed && { opacity: 0.85 }]}
           onPress={onClaim}
           disabled={claiming}
+          android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+          accessibilityRole="button"
         >
           {claiming ? (
             <ActivityIndicator color={colors.onAccent} size="small" />
@@ -216,7 +225,7 @@ export function HandleField({
               {t("social.profile.handleClaim")}
             </CustomText>
           )}
-        </TouchableOpacity>
+        </Pressable>
       </View>
       {error ? (
         <CustomText style={styles.error}>

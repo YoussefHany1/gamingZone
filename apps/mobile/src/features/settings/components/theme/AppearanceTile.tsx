@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { Check } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import { geometry } from "./geometry";
@@ -24,16 +24,16 @@ const AppearanceTile = memo(
 
     return (
       <View style={geometry.tileWrapper}>
-        <TouchableOpacity
+        <Pressable
           style={[
             geometry.tileTouchable,
             { borderColor: isSelected ? ringColor : ringTransparent },
           ]}
           onPress={handlePress}
-          activeOpacity={0.75}
           accessibilityRole="radio"
           accessibilityState={{ selected: isSelected }}
           accessibilityLabel={label}
+          android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
         >
           {/* Main swatch: background fill */}
           <View style={[geometry.tileSwatch, { backgroundColor: palette.background }]}>
@@ -48,7 +48,7 @@ const AppearanceTile = memo(
               </View>
             )}
           </View>
-        </TouchableOpacity>
+        </Pressable>
         <CustomText style={[geometry.tileLabel, { color: labelColor }]} numberOfLines={2}>
           {label}
         </CustomText>

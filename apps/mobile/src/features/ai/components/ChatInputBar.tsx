@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import CustomTextInput from "@/src/components/CustomTextInput";
 import { Send } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -68,18 +68,27 @@ const ChatInputBar: React.FC<ChatInputBarProps> = ({
         placeholder={placeholder}
         placeholderTextColor={colors.textSubtle}
         multiline
+        returnKeyType="send"
+        submitBehavior="submit"
+        onSubmitEditing={onSend}
         maxLength={500}
       />
-      <TouchableOpacity
-        style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}
+      <Pressable
+        style={({ pressed }) => [
+          styles.sendButton,
+          !canSend && styles.sendButtonDisabled,
+          pressed && { opacity: 0.85 },
+        ]}
         onPress={onSend}
+        hitSlop={2}
         disabled={!canSend}
+        android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: true, radius: 22 }}
         accessibilityRole="button"
         accessibilityLabel={t("aiChat.send")}
         accessibilityState={{ disabled: !canSend }}
       >
         <Send size={24} color={colors.onAccent} accessible={false} />
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 };

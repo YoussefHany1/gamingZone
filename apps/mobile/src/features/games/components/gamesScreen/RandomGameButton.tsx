@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Modal, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, View } from "react-native";
 import { Alert } from "@/src/lib/alert";
 import AppImage from "@/src/components/AppImage";
 import { LinearGradient } from "expo-linear-gradient";
@@ -224,11 +224,13 @@ function RandomGameButton(): React.ReactElement {
 
   return (
     <>
-      <TouchableOpacity
-        style={styles.button}
+      <Pressable
+        style={({ pressed }) => [styles.button, pressed && { opacity: 0.85 }]}
         onPress={handleRandomGame}
         disabled={randomLoading}
         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: true, radius: 22 }}
+        accessibilityRole="button"
         accessibilityLabel={t("games.random.badge")}
       >
         {randomLoading ? (
@@ -236,7 +238,7 @@ function RandomGameButton(): React.ReactElement {
         ) : (
           <Shuffle size={20} color={colors.textMuted} />
         )}
-      </TouchableOpacity>
+      </Pressable>
 
       <Modal
         visible={showSuggestion}
@@ -244,22 +246,23 @@ function RandomGameButton(): React.ReactElement {
         animationType="fade"
         onRequestClose={closeSuggestion}
       >
-        <TouchableOpacity
-          style={styles.backdrop}
-          activeOpacity={1}
-          onPress={closeSuggestion}
-        >
+        <Pressable style={styles.backdrop} onPress={closeSuggestion}>
           <View style={styles.card}>
             {suggestedGame && (
               <>
-                <TouchableOpacity
-                  style={styles.closeButton}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.closeButton,
+                    pressed && { opacity: 0.85 },
+                  ]}
                   onPress={closeSuggestion}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: true, radius: 16 }}
+                  accessibilityRole="button"
                   accessibilityLabel={t("games.random.close")}
                 >
                   <X size={18} color="#ffffff" />
-                </TouchableOpacity>
+                </Pressable>
 
                 <View style={styles.coverWrapper}>
                   {suggestedGame.cover?.image_id ? (
@@ -306,10 +309,15 @@ function RandomGameButton(): React.ReactElement {
                 </View>
 
                 <View style={styles.actions}>
-                  <TouchableOpacity
-                    style={styles.buttonSecondary}
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.buttonSecondary,
+                      pressed && { opacity: 0.85 },
+                    ]}
                     onPress={handleRandomGame}
                     disabled={randomLoading}
+                    android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                    accessibilityRole="button"
                   >
                     {randomLoading ? (
                       <ActivityIndicator size="small" color={colors.textMuted} />
@@ -321,21 +329,26 @@ function RandomGameButton(): React.ReactElement {
                         </CustomText>
                       </>
                     )}
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.buttonPrimary}
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.buttonPrimary,
+                      pressed && { opacity: 0.85 },
+                    ]}
                     onPress={handleViewSuggestedGame}
                     disabled={randomLoading}
+                    android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+                    accessibilityRole="button"
                   >
                     <CustomText style={styles.buttonPrimaryText}>
                       {t("games.random.view")}
                     </CustomText>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </>
             )}
           </View>
-        </TouchableOpacity>
+        </Pressable>
       </Modal>
     </>
   );

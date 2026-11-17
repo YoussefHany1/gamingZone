@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useState } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Gamepad2 } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
@@ -87,7 +87,12 @@ const LinkedAccountsButton = memo(
     return (
       <>
         <SectionTitle title={t("settings.profile.connectedApps")} />
-        <TouchableOpacity style={styles.button} onPress={onPress}>
+        <Pressable
+          style={({ pressed }) => [styles.button, pressed && { opacity: 0.85 }]}
+          onPress={onPress}
+          accessibilityRole="button"
+          android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+        >
           <View style={styles.icon}>
             <Gamepad2 size={24} color={colors.onAccent} />
           </View>
@@ -95,7 +100,7 @@ const LinkedAccountsButton = memo(
             {t("settings.profile.linking.title") || "Sync Your Game Library"}
           </CustomText>
           {hasReauth && <View style={badgeStyles.dot} />}
-        </TouchableOpacity>
+        </Pressable>
       </>
     );
   },

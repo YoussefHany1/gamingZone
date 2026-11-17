@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { ScrollView, KeyboardAvoidingView } from "react-native";
+import { Platform, ScrollView, KeyboardAvoidingView } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import { useBottomInset } from "@/src/hooks/useBottomInset";
@@ -32,7 +32,7 @@ const ContactScreen = ({ navigation }: Props): React.ReactElement => {
 
   return (
     <KeyboardAvoidingView
-      behavior="height"
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>

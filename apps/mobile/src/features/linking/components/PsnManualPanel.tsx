@@ -4,7 +4,7 @@
  * The NPSSO token is copied from Sony's ssocookie page and pasted here.
  */
 import React, { memo, useState } from "react";
-import { TouchableOpacity, ActivityIndicator, Linking } from "react-native";
+import { Pressable, ActivityIndicator, Linking } from "react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import CustomTextInput from "@/src/components/CustomTextInput";
@@ -43,18 +43,24 @@ function PsnManualPanel({
         {t("settings.profile.linking.psn.manualInstructions") ||
           "Open the page below, sign in if needed, copy the NPSSO token shown there, and paste it here."}
       </CustomText>
-      <TouchableOpacity
-        style={[styles.secondaryBtn, styles.mbMedium]}
+      <Pressable
+        style={({ pressed }) => [
+          styles.secondaryBtn,
+          styles.mbMedium,
+          pressed && { opacity: 0.85 },
+        ]}
         onPress={() =>
           Linking.openURL(PSN_COOKIE_URL).catch(() => {
             /* ignore */
           })
         }
+        accessibilityRole="button"
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
       >
         <CustomText style={styles.secondaryBtnText}>
           {t("settings.profile.linking.psn.openCookiePage") || "Open NPSSO page"}
         </CustomText>
-      </TouchableOpacity>
+      </Pressable>
       <CustomTextInput
         style={styles.inputWrap}
         placeholder="NPSSO"
@@ -65,7 +71,13 @@ function PsnManualPanel({
         autoCorrect={false}
         selectTextOnFocus
       />
-      <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit} disabled={busy}>
+      <Pressable
+        style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.85 }]}
+        onPress={handleSubmit}
+        disabled={busy}
+        accessibilityRole="button"
+        android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+      >
         {busy ? (
           <ActivityIndicator color={colors.onAccent} />
         ) : (
@@ -73,7 +85,7 @@ function PsnManualPanel({
             {t("settings.profile.linking.psn.connect") || "Connect"}
           </CustomText>
         )}
-      </TouchableOpacity>
+      </Pressable>
     </>
   );
 }

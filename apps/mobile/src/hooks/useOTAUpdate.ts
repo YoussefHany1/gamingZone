@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import * as Updates from "expo-updates";
 import { logger } from "@/src/lib/logger";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 
 export type OTAUpdateState =
   | { status: "idle" }
@@ -76,7 +77,11 @@ const useOTAUpdate = (): OTAUpdateState => {
   }, []);
 
   useEffect(() => {
-    runUpdateCheck();
+    const task = runAfterInteractions(() => {
+      void runUpdateCheck();
+    });
+
+    return () => task.cancel();
   }, [runUpdateCheck]);
 
   return updateState;

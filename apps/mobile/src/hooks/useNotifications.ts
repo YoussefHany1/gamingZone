@@ -231,7 +231,7 @@ const useNotifications = (user: FirebaseAuthTypes.User | null | undefined): void
     // newsChannelName / sessionRemindersChannelName re-run setup so the OS
     // channel display names follow a language change (Android applies the new
     // name to the existing channel).
-  }, [user, newsChannelName, sessionRemindersChannelName]);
+  }, [user, newsChannelName, sessionRemindersChannelName, i18n.language, t]);
 };
 
 export default useNotifications;

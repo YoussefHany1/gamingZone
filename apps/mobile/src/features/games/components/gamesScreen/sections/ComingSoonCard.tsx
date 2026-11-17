@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
+import { View, Pressable, StyleSheet, Dimensions } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
@@ -96,10 +96,11 @@ const ComingSoonCard = React.memo<ComingSoonCardProps>(({ item }) => {
   }, [navigation, item.id]);
 
   return (
-    <TouchableOpacity
-      style={styles.cardContainer}
+    <Pressable
+      style={({ pressed }) => [styles.cardContainer, pressed && { opacity: 0.9 }]}
       onPress={handlePress}
-      activeOpacity={0.9}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
     >
       <CoverImage
         item={item}
@@ -143,7 +144,7 @@ const ComingSoonCard = React.memo<ComingSoonCardProps>(({ item }) => {
           {item.name}
         </CustomText>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 ComingSoonCard.displayName = "ComingSoonCard";

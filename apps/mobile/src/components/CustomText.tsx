@@ -11,9 +11,10 @@ const getTextContent = (children: React.ReactNode): string => {
   return "";
 };
 
-const CustomText = React.memo<TextProps>(({ style, children, ...props }) => {
-  // Memoised: recomputed only when children or style change
-  const { resolvedFontFamily, flatStyle } = useMemo(() => {
+const CustomText = React.memo<TextProps>(
+  ({ style, children, allowFontScaling, maxFontSizeMultiplier, ...props }) => {
+    // Memoised: recomputed only when children or style change
+    const { resolvedFontFamily, flatStyle } = useMemo(() => {
     const text = getTextContent(children);
     const isArabic = containsArabic(text);
     return resolveFontStyle(
@@ -22,12 +23,18 @@ const CustomText = React.memo<TextProps>(({ style, children, ...props }) => {
     );
   }, [children, style]);
 
-  return (
-    <Text style={[flatStyle, { fontFamily: resolvedFontFamily }]} {...props}>
-      {children}
-    </Text>
-  );
-});
+    return (
+      <Text
+        style={[flatStyle, { fontFamily: resolvedFontFamily }]}
+        allowFontScaling={allowFontScaling ?? true}
+        maxFontSizeMultiplier={maxFontSizeMultiplier ?? 1.4}
+        {...props}
+      >
+        {children}
+      </Text>
+    );
+  },
+);
 
 CustomText.displayName = "CustomText";
 

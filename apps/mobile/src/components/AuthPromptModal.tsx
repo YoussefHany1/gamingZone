@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, View, TouchableOpacity } from "react-native";
+import { Modal, View, Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react-native";
 import CustomText from "./CustomText";
@@ -121,15 +121,16 @@ const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
             <CustomText style={styles.title}>
               {t("common.authPrompt.title")}
             </CustomText>
-            <TouchableOpacity
-              style={styles.closeButton}
+            <Pressable
+              style={({ pressed }) => [styles.closeButton, pressed && { opacity: 0.85 }]}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
               onPress={onDismiss}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
               accessibilityLabel={t("common.close")}
             >
               <X size={22} color={colors.textMuted} />
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View style={styles.body}>

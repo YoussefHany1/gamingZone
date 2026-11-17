@@ -1,6 +1,6 @@
 import CustomText from "@/src/components/CustomText";
 import type { SectionListData } from "react-native";
-import { View, TouchableOpacity, Modal, SectionList, ToastAndroid } from "react-native";
+import { View, Pressable, Modal, SectionList, ToastAndroid } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import { Check, ChevronDown } from "lucide-react-native";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -291,10 +291,11 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
   return (
     <View style={styles.wrapper}>
       {/* Dropdown trigger */}
-      <TouchableOpacity
-        style={styles.pickerButton}
-        activeOpacity={0.7}
+      <Pressable
+        style={({ pressed }) => [styles.pickerButton, pressed && { opacity: 0.85 }]}
         onPress={() => setModalVisible(true)}
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+        accessibilityRole="button"
       >
         {selectedItem?.image ? (
           <AppImage
@@ -312,7 +313,7 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
         </CustomText>
 
         <ChevronDown size={20} color={colors.text} />
-      </TouchableOpacity>
+      </Pressable>
 
       {/* Site description card */}
       {!isAllSources && (
@@ -331,9 +332,8 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
-        <TouchableOpacity
+        <Pressable
           style={styles.modalOverlay}
-          activeOpacity={1}
           onPress={() => setModalVisible(false)}
         >
           <View style={styles.modalContent}>
@@ -354,12 +354,15 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                 </View>
               )}
               renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
+                <Pressable
+                  style={({ pressed }) => [
                     styles.modalItem,
                     selectedItem?.name === item.name && styles.modalItemSelected,
+                    pressed && { opacity: 0.85 },
                   ]}
                   onPress={() => handleSelect(item)}
+                  android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+                  accessibilityRole="button"
                 >
                   <View style={{ alignItems: "center", flexDirection: "row" }}>
                     {isAllSourcesName(item.name) ? null : (
@@ -386,19 +389,21 @@ const DropdownPicker: React.FC<DropdownPickerProps> = (props) => {
                   {selectedItem?.name === item.name && (
                     <Check size={24} color={colors.accentText} />
                   )}
-                </TouchableOpacity>
+                </Pressable>
               )}
             />
-            <TouchableOpacity
-              style={styles.closeButton}
+            <Pressable
+              style={({ pressed }) => [styles.closeButton, pressed && { opacity: 0.85 }]}
               onPress={() => setModalVisible(false)}
+              android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+              accessibilityRole="button"
             >
               <CustomText style={styles.closeButtonText}>
                 {t("news.dropdown.cancel")}
               </CustomText>
-            </TouchableOpacity>
+            </Pressable>
           </View>
-        </TouchableOpacity>
+        </Pressable>
       </Modal>
     </View>
   );

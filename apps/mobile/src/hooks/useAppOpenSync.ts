@@ -13,6 +13,7 @@
 import { useEffect, useRef } from "react";
 import auth from "@react-native-firebase/auth";
 import firestore from "@react-native-firebase/firestore";
+import { runAfterInteractions } from "@/src/utils/runAfterInteractions";
 import {
   isAccountStale,
   syncPsnLibrary,
@@ -30,57 +31,63 @@ export default function useAppOpenSync(user: { uid: string } | null): void {
   useEffect(() => {
     const uid = user?.uid ?? auth().currentUser?.uid;
     if (!uid || startedRef.current) return;
-    startedRef.current = true;
 
-    void (async (): Promise<void> => {
-      try {
-        const linkedRef = firestore().collection("users").doc(uid).collection("linkedAccounts");
-        const [steamSnap, psnSnap, xboxSnap] = await Promise.all([
-          linkedRef.doc("steam").get(),
-          linkedRef.doc("psn").get(),
-          linkedRef.doc("xbox").get(),
-        ]);
+    // Defer the three Firestore reads until startup interactions finish so
+    // they never compete with the first navigation render on cold start.
+    const task = runAfterInteractions(() => {
+      startedRef.current = true;
 
-        const steamData = steamSnap.data() as LinkedAccount | undefined;
-        const psnData = psnSnap.data() as LinkedAccount | undefined;
-        const xboxData = xboxSnap.data() as LinkedAccount | undefined;
+      void (async (): Promise<void> => {
+        try {
+          const linkedRef = firestore().collection("users").doc(uid).collection("linkedAccounts");
+          const [steamSnap, psnSnap, xboxSnap] = await Promise.all([
+            linkedRef.doc("steam").get(),
+            linkedRef.doc("psn").get(),
+            linkedRef.doc("xbox").get(),
+          ]);
 
-        if (steamData?.status !== "unlinked" && steamData?.steamId) {
-          const stale = isAccountStale(steamData.lastSyncedAt);
-          if (stale) {
-            // Silent — outcomes are logged, never toasted.
-            const outcome = await syncSteamLibrary(steamData.steamId);
-            if (__DEV__) {
-              logger.debug("[useAppOpenSync] Steam auto-sync outcome:", outcome);
+          const steamData = steamSnap.data() as LinkedAccount | undefined;
+          const psnData = psnSnap.data() as LinkedAccount | undefined;
+          const xboxData = xboxSnap.data() as LinkedAccount | undefined;
+
+          if (steamData?.status !== "unlinked" && steamData?.steamId) {
+            const stale = isAccountStale(steamData.lastSyncedAt);
+            if (stale) {
+              // Silent — outcomes are logged, never toasted.
+              const outcome = await syncSteamLibrary(steamData.steamId);
+              if (__DEV__) {
+                logger.debug("[useAppOpenSync] Steam auto-sync outcome:", outcome);
+              }
             }
           }
-        }
 
-        if (psnData && psnData.status !== "unlinked" && psnData.status !== "reauth_required") {
-          if (isAccountStale(psnData.lastSyncedAt)) {
-            // On reauth_required the backend has already flipped the account
-            // status; the reconnect banner in Settings picks it up, so the
-            // stale reauth case is skipped here without any toast.
-            const outcome = await syncPsnLibrary();
-            if (__DEV__) {
-              logger.debug("[useAppOpenSync] PSN auto-sync outcome:", outcome);
+          if (psnData && psnData.status !== "unlinked" && psnData.status !== "reauth_required") {
+            if (isAccountStale(psnData.lastSyncedAt)) {
+              // On reauth_required the backend has already flipped the account
+              // status; the reconnect banner in Settings picks it up, so the
+              // stale reauth case is skipped here without any toast.
+              const outcome = await syncPsnLibrary();
+              if (__DEV__) {
+                logger.debug("[useAppOpenSync] PSN auto-sync outcome:", outcome);
+              }
             }
           }
-        }
 
-        // Xbox runs last — it is the slowest adapter (Microsoft token refresh
-        // + Xbox Live handshake + two library calls).
-        if (xboxData && xboxData.status !== "unlinked" && xboxData.status !== "reauth_required") {
-          if (isAccountStale(xboxData.lastSyncedAt)) {
-            const outcome = await syncXboxLibrary();
-            if (__DEV__) {
-              logger.debug("[useAppOpenSync] Xbox auto-sync outcome:", outcome);
+          // Xbox runs last — it is the slowest adapter (Microsoft token refresh
+          // + Xbox Live handshake + two library calls).
+          if (xboxData && xboxData.status !== "unlinked" && xboxData.status !== "reauth_required") {
+            if (isAccountStale(xboxData.lastSyncedAt)) {
+              const outcome = await syncXboxLibrary();
+              if (__DEV__) {
+                logger.debug("[useAppOpenSync] Xbox auto-sync outcome:", outcome);
+              }
             }
           }
+        } catch (e) {
+          logger.warn("[useAppOpenSync] auto-sync pass failed (will retry next launch):", e);
         }
-      } catch (e) {
-        logger.warn("[useAppOpenSync] auto-sync pass failed (will retry next launch):", e);
-      }
-    })();
+      })();
+    });
+    return () => task.cancel();
   }, [user?.uid]);
 }

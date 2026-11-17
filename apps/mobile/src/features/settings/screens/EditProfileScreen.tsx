@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ScrollView, TouchableOpacity } from "react-native";
+import { ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -166,9 +166,14 @@ function EditProfileScreen(): React.ReactElement {
 
           <AdSlot visible={isReady || forceReady} marginVertical={30} />
 
-          <TouchableOpacity onPress={save} style={styles.saveBtn}>
+          <Pressable
+            onPress={save}
+            style={({ pressed }) => [styles.saveBtn, pressed && { opacity: 0.85 }]}
+            accessibilityRole="button"
+            android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+          >
             <CustomText style={styles.saveText}>{t("common.saveChanges")}</CustomText>
-          </TouchableOpacity>
+          </Pressable>
 
           <DeleteAccountButton
             label={t("settings.deleteAccount.delete")}

@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from "react";
-import { StyleSheet, TouchableOpacity } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { Globe } from "lucide-react-native";
 import {
@@ -64,16 +64,21 @@ const NetworkButton = memo<NetworkButtonProps>(({ network }) => {
   }));
 
   return (
-    <TouchableOpacity
-      style={[styles.networkBtn, { borderColor: iconColor + "60" }]}
+    <Pressable
+      style={({ pressed }) => [
+        styles.networkBtn,
+        { borderColor: iconColor + "60" },
+        pressed && { opacity: 0.8 },
+      ]}
       onPress={handlePress}
-      activeOpacity={0.8}
+      android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+      accessibilityRole="button"
     >
       <info.icon size={22} fill={iconColor} />
       <CustomText style={[styles.networkLabel, { color: iconColor }]}>
         {info.label}
       </CustomText>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 NetworkButton.displayName = "NetworkButton";

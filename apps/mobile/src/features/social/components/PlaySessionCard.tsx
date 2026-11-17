@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { TouchableOpacity, View, type StyleProp, type ViewStyle } from "react-native";
+import { Pressable, View, type StyleProp, type ViewStyle } from "react-native";
 import AppImage from "@/src/components/AppImage";
 import { igdbImageUrl } from "@gaming-zone/utils";
 import { useTranslation } from "react-i18next";
@@ -61,9 +61,14 @@ type ActionSurfaceProps = {
 function ActionSurface({ variant, style, onPress, children }: ActionSurfaceProps) {
   if (variant === "chat") {
     return (
-      <TouchableOpacity style={style} onPress={onPress}>
+      <Pressable
+        style={({ pressed }) => [style, pressed && { opacity: 0.85 }]}
+        onPress={onPress}
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+        accessibilityRole="button"
+      >
         {children}
-      </TouchableOpacity>
+      </Pressable>
     );
   }
   return (
@@ -264,16 +269,17 @@ const PlaySessionCard = memo(
       links.length > 0 ? (
         <View style={styles.linkRow}>
           {links.map((link) => (
-            <TouchableOpacity
+            <Pressable
               key={link.id}
-              style={styles.linkChip}
+              style={({ pressed }) => [styles.linkChip, pressed && { opacity: 0.85 }]}
               onPress={() => openLink(link.url)}
               accessibilityRole="link"
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
             >
               <CustomText style={styles.linkChipText} numberOfLines={1}>
                 {link.label ?? t(`social.sessions.links.kind.${link.kind}`)}
               </CustomText>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       ) : null;

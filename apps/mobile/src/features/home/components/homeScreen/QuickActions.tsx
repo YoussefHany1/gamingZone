@@ -1,7 +1,17 @@
 import React, { memo } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import { ScrollView, Pressable, View } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Calendar, CalendarClock, Cpu, Flame, Newspaper, Sparkles, Star, TrendingUp, Trophy } from "lucide-react-native";
+import {
+  Calendar,
+  CalendarClock,
+  Cpu,
+  Flame,
+  Newspaper,
+  Sparkles,
+  Star,
+  TrendingUp,
+  Trophy,
+} from "lucide-react-native";
 import { useDiscoveryRailDecision } from "@/src/features/games";
 import type { DiscoveryRailKind } from "@/src/features/games";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -49,9 +59,7 @@ function chipsForKind(kind: DiscoveryRailKind) {
  * Quick-action chips: a lightweight horizontal row (no fetch of its own)
  * that jumps the home feed to the matching section.
  */
-function QuickActions({
-  onScrollToSection,
-}: QuickActionsProps): React.ReactElement {
+function QuickActions({ onScrollToSection }: QuickActionsProps): React.ReactElement {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const { kind } = useDiscoveryRailDecision();
@@ -89,16 +97,18 @@ function QuickActions({
         {chips.map((chip) => {
           const Icon = chip.icon;
           return (
-            <TouchableOpacity
+            <Pressable
               key={chip.id}
-              style={styles.chip}
+              style={({ pressed }) => [styles.chip, pressed && { opacity: 0.85 }]}
               onPress={() => onScrollToSection(chip.id)}
+              hitSlop={{ top: 8, bottom: 8 }}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
               accessibilityRole="button"
               accessibilityLabel={t(chip.labelKey)}
             >
               <Icon size={15} color={colors.accent} />
               <CustomText style={styles.chipLabel}>{t(chip.labelKey)}</CustomText>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </ScrollView>

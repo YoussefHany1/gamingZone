@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { Lightbulb, MessageSquare, TriangleAlert } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -49,15 +49,21 @@ const TypeButton = memo(
     const handlePress = useCallback((): void => onPress(value), [onPress, value]);
 
     return (
-      <TouchableOpacity
-        style={[styles.typeButton, isActive && styles.typeButtonActive]}
+      <Pressable
+        style={({ pressed }) => [
+          styles.typeButton,
+          isActive && styles.typeButtonActive,
+          pressed && { opacity: 0.85 },
+        ]}
         onPress={handlePress}
+        accessibilityRole="button"
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
       >
         <Icon size={24} color={isActive ? colors.onAccent : colors.text} />
         <CustomText style={[styles.typeText, isActive && styles.typeTextActive]}>
           {label}
         </CustomText>
-      </TouchableOpacity>
+      </Pressable>
     );
   },
 );

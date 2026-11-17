@@ -6,7 +6,7 @@ import {
   Clipboard,
   I18nManager,
   Platform,
-  TouchableOpacity,
+  Pressable,
   View,
 } from "react-native";
 import { Alert, type AlertButton } from "@/src/lib/alert";
@@ -109,9 +109,9 @@ export default function ChatScreen(): React.ReactElement {
       paddingVertical: 10,
     },
     send: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
+      width: 48,
+      height: 48,
+      borderRadius: 24,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: c.accent,
@@ -347,7 +347,7 @@ export default function ChatScreen(): React.ReactElement {
       />
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
       >
         <GameBottomSheet
@@ -358,10 +358,12 @@ export default function ChatScreen(): React.ReactElement {
         >
           <CustomText style={styles.headerName}>{t("social.chats.members")}</CustomText>
           {memberProfiles.map(({ uid: memberUid, profile }) => (
-            <TouchableOpacity
+            <Pressable
               key={memberUid}
-              style={styles.groupMember}
+              style={({ pressed }) => [styles.groupMember, pressed && { opacity: 0.85 }]}
               onPress={() => setMembersOpen(false)}
+              android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+              accessibilityRole="button"
             >
               <GamerAvatar photoURL={profile?.photoURL} size={38} />
               <View style={styles.headerText}>
@@ -372,7 +374,7 @@ export default function ChatScreen(): React.ReactElement {
                   {t("social.chats.member")}
                 </CustomText>
               </View>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </GameBottomSheet>
         <View
@@ -385,10 +387,18 @@ export default function ChatScreen(): React.ReactElement {
           >
             <ArrowLeft size={22} color={colors.text} />
           </IconButton>
-          <TouchableOpacity
-            style={styles.avatarRing}
+          <Pressable
+            style={({ pressed }) => [styles.avatarRing, pressed && { opacity: 0.85 }]}
             onPress={() => (conversationTitle ? setMembersOpen(true) : undefined)}
             disabled={!conversationTitle}
+            android_ripple={{
+              color: "rgba(128,128,128,0.25)",
+              borderless: true,
+              radius: 21,
+            }}
+            hitSlop={{ top: 3, bottom: 3, left: 3, right: 3 }}
+            accessibilityRole="button"
+            accessibilityLabel={headerName}
           >
             <AppImage
               source={
@@ -402,11 +412,14 @@ export default function ChatScreen(): React.ReactElement {
               cachePolicy="memory-disk"
               accessibilityIgnoresInvertColors
             />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerText}
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.headerText, pressed && { opacity: 0.85 }]}
             onPress={() => (conversationTitle ? setMembersOpen(true) : undefined)}
             disabled={!conversationTitle}
+            android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
+            accessibilityRole="button"
+            accessibilityLabel={headerName}
           >
             <CustomText style={styles.headerName} numberOfLines={1}>
               {headerName}
@@ -420,11 +433,14 @@ export default function ChatScreen(): React.ReactElement {
                     ? t("social.presence.lastSeen", { when: presence.lastSeenLabel })
                     : t("social.chats.directMessage")}
             </CustomText>
-          </TouchableOpacity>
+          </Pressable>
           <IconButton
             variant="surface"
             size={38}
             onPress={() => chatMenu.openMenu(conversationId)}
+            accessibilityLabel={
+              conversationTitle ? t("social.chats.members") : t("social.chats.menu")
+            }
           >
             {conversationTitle ? (
               <Users size={18} color={colors.accentText} />
@@ -468,15 +484,24 @@ export default function ChatScreen(): React.ReactElement {
             placeholderTextColor={colors.textMuted}
             style={styles.input}
             multiline
+            returnKeyType="send"
+            submitBehavior="submit"
             onSubmitEditing={() => void submit()}
           />
-          <TouchableOpacity
-            style={styles.send}
+          <Pressable
+            style={({ pressed }) => [styles.send, pressed && { opacity: 0.85 }]}
             onPress={() => void submit()}
+            android_ripple={{
+              color: "rgba(255,255,255,0.18)",
+              borderless: true,
+              radius: 24,
+            }}
             accessibilityRole="button"
+            accessibilityLabel={t("social.chats.send")}
+            accessibilityState={{ disabled: !text.trim() }}
           >
             <Send size={18} color={colors.onAccent} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

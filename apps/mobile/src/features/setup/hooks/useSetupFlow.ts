@@ -97,6 +97,10 @@ export function useSetupFlow(onComplete: () => void) {
     [user, persist, platforms, genres, step, onComplete],
   );
 
+  const back = useCallback(() => {
+    if (step === "genres") setStep("platforms");
+  }, [step]);
+
   const next = useCallback(async () => {
     if (step === "platforms") {
       try {
@@ -127,6 +131,7 @@ export function useSetupFlow(onComplete: () => void) {
     canContinue,
     togglePlatform,
     toggleGenre,
+    back,
     next,
     skip,
   };

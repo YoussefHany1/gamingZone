@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { TouchableOpacity, ActivityIndicator } from "react-native";
+import { Pressable, ActivityIndicator, Platform } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -41,8 +41,9 @@ const AuthFlatButton: React.FC<AuthFlatButtonProps> = ({
       if (variant === "guest") {
         return {
           button: {
-            marginVertical: 15,
-            padding: 10,
+            marginVertical: 18,
+            paddingHorizontal: 16,
+            paddingVertical: 14,
             alignItems: "center",
           },
           buttonDisabled,
@@ -97,21 +98,27 @@ const AuthFlatButton: React.FC<AuthFlatButtonProps> = ({
   );
 
   return (
-    <TouchableOpacity
-      style={[styles.button, containerStyle, disabled && styles.buttonDisabled]}
+    <Pressable
+      style={({ pressed }) => [
+        styles.button,
+        containerStyle,
+        disabled && styles.buttonDisabled,
+        Platform.OS === "android" && pressed && styles.buttonDisabled,
+      ]}
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint ?? t("auth.a11y.buttonHint")}
       accessibilityState={{ disabled, busy: loading }}
+      android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
     >
       {loading ? (
         <ActivityIndicator color={colors.onAccent} size="small" />
       ) : (
         <CustomText style={styles.buttonText}>{label}</CustomText>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 

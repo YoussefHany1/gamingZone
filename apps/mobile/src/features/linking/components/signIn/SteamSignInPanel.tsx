@@ -7,7 +7,7 @@
  * flow, which parses the outcome and runs the post-link library sync.
  */
 import React, { memo } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { WebView } from "react-native-webview";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -65,14 +65,20 @@ function SteamSignInPanel({
           startInLoadingState
         />
       </View>
-      <TouchableOpacity
-        style={[styles.secondaryBtn, styles.mtSmall]}
+      <Pressable
+        style={({ pressed }) => [
+          styles.secondaryBtn,
+          styles.mtSmall,
+          pressed && { opacity: 0.85 },
+        ]}
         onPress={onOpenBrowser}
+        accessibilityRole="button"
+        android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
       >
         <CustomText style={styles.secondaryBtnText}>
           {t("settings.profile.linking.steam.openBrowser") || "Open in a browser tab instead"}
         </CustomText>
-      </TouchableOpacity>
+      </Pressable>
     </>
   );
 }

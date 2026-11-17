@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { Mars, Venus } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
@@ -63,11 +63,16 @@ const ProfileGenderSelector = memo(
             const Icon = option.icon;
 
             return (
-              <TouchableOpacity
+              <Pressable
                 key={option.id}
-                style={[styles.button, isSelected && styles.buttonSelected]}
+                style={({ pressed }) => [
+                  styles.button,
+                  isSelected && styles.buttonSelected,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={() => onChange(option.id)}
-                activeOpacity={0.7}
+                accessibilityRole="button"
+                android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
               >
                 <Icon size={32} color={isSelected ? colors.text : colors.textMuted} />
                 <CustomText
@@ -75,7 +80,7 @@ const ProfileGenderSelector = memo(
                 >
                   {option.label}
                 </CustomText>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </View>

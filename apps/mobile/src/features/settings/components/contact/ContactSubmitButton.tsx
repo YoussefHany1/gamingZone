@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { TouchableOpacity, ActivityIndicator } from "react-native";
+import { Pressable, ActivityIndicator } from "react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -24,13 +24,19 @@ const ContactSubmitButton = memo(
     }));
 
     return (
-      <TouchableOpacity style={styles.submitButton} onPress={onPress} disabled={isSending}>
+      <Pressable
+        style={({ pressed }) => [styles.submitButton, pressed && { opacity: 0.85 }]}
+        onPress={onPress}
+        disabled={isSending}
+        accessibilityRole="button"
+        android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+      >
         {isSending ? (
           <ActivityIndicator color={colors.text} />
         ) : (
           <CustomText style={styles.submitText}>{t("settings.contact.send")}</CustomText>
         )}
-      </TouchableOpacity>
+      </Pressable>
     );
   },
 );

@@ -1,35 +1,6 @@
-import { useEffect } from "react";
-import type {
-  SharedValue} from "react-native-reanimated";
-import {
-  useSharedValue,
-  withRepeat,
-  withTiming,
-  withSequence
-} from "react-native-reanimated";
-
-/**
- * Returns a Reanimated SharedValue that oscillates between 0 and 1.
- *
- * Migrated from `Animated` (JS thread, no native driver) to Reanimated
- * (UI thread) — the animation now runs 100% off the JS thread, which
- * eliminates JS-bridge round-trips during skeleton loading screens.
- */
-const useShimmer = (): SharedValue<number> => {
-  const shimmer = useSharedValue(0);
-
-  useEffect(() => {
-    shimmer.value = withRepeat(
-      withSequence(withTiming(1, { duration: 900 }), withTiming(0, { duration: 900 })),
-      -1, // repeat forever
-      false,
-    );
-    return () => {
-      shimmer.value = 0;
-    };
-  }, [shimmer]);
-
-  return shimmer;
-};
-
-export default useShimmer;
+// Backward-compatible re-export. The canonical implementation now lives in
+// `@/src/components/skeleton/shared` so there is a single source of truth for
+// the skeleton shimmer systems. This module stays in place so every existing
+// import path keeps working unchanged.
+export { useShimmer } from "@/src/components/skeleton/shared";
+export { useShimmer as default } from "@/src/components/skeleton/shared";

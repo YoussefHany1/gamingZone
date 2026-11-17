@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { ArrowLeft, ArrowRight, Share2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -47,9 +47,15 @@ const NewsDetailsHeader = memo(function NewsDetailsHeader({
 
   return (
     <View style={styles.header}>
-      <TouchableOpacity
-        style={styles.iconButton}
+      <Pressable
+        style={({ pressed }) => [styles.iconButton, pressed && { opacity: 0.85 }]}
         onPress={onBack}
+        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+        android_ripple={{
+          color: "rgba(128,128,128,0.25)",
+          borderless: true,
+          radius: 20,
+        }}
         accessibilityRole="button"
         accessibilityLabel={t("common.back")}
       >
@@ -58,15 +64,21 @@ const NewsDetailsHeader = memo(function NewsDetailsHeader({
         ) : (
           <ArrowLeft size={28} color={colors.text} accessible={false} />
         )}
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.iconButton}
+      </Pressable>
+      <Pressable
+        style={({ pressed }) => [styles.iconButton, pressed && { opacity: 0.85 }]}
         onPress={onShare}
+        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+        android_ripple={{
+          color: "rgba(128,128,128,0.25)",
+          borderless: true,
+          radius: 20,
+        }}
         accessibilityRole="button"
         accessibilityLabel={t("common.share")}
       >
         <Share2 size={28} color={colors.text} accessible={false} />
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 });

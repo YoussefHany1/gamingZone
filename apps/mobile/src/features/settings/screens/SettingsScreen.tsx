@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from "react";
-import { ScrollView, TouchableOpacity } from "react-native";
+import { ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
@@ -90,17 +90,17 @@ const SettingsScreen = memo((): React.ReactElement => {
           />
         )}
 
-        <TouchableOpacity
-          style={styles.footer}
+        <Pressable
+          style={({ pressed }) => [styles.footer, pressed && { opacity: 0.85 }]}
           onPress={handleDeveloperPress}
-          activeOpacity={0.7}
           accessibilityRole="link"
           accessibilityLabel={t("settings.developedBy")}
+          android_ripple={{ color: "rgba(128,128,128,0.25)", borderless: false }}
         >
           <CustomText style={styles.developerText}>
             {t("settings.developedBy")}
           </CustomText>
-        </TouchableOpacity>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );

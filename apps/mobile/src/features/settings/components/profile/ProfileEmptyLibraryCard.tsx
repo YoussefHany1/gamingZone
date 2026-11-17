@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
 import CustomText from "@/src/components/CustomText";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -44,11 +44,16 @@ const ProfileEmptyLibraryCard = memo(
         <CustomText style={styles.emptyText}>
           {t("settings.profileShowcase.emptyLibrary")}
         </CustomText>
-        <TouchableOpacity style={styles.primaryBtn} onPress={onBrowse}>
+        <Pressable
+          style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.85 }]}
+          onPress={onBrowse}
+          accessibilityRole="button"
+          android_ripple={{ color: "rgba(255,255,255,0.18)", borderless: false }}
+        >
           <CustomText style={styles.primaryText}>
             {t("settings.profileShowcase.browseGames")}
           </CustomText>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   },
