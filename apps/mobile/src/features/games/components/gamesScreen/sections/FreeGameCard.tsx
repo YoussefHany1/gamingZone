@@ -165,10 +165,6 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
     >
       {/* Image area with optional countdown overlay */}
       <View style={styles.imageContainer}>
-        {item.type === "next" && item.startDate && (
-          <CountdownTimer t={t} startDate={item.startDate} />
-        )}
-
         <AppImage
           source={
             item.image
@@ -189,6 +185,12 @@ const FreeGameCard = React.memo<FreeGameCardProps>(({ item, onClaim, t }) => {
 
         {/* Store icon badge */}
         <View style={styles.storeIconBadge}>{storeIcon}</View>
+
+        {/* Render the full-cover countdown last so it paints above the image,
+            gradient and store badge on every platform. */}
+        {item.type === "next" && item.startDate && (
+          <CountdownTimer t={t} startDate={item.startDate} />
+        )}
       </View>
 
       <View style={styles.infoSection}>

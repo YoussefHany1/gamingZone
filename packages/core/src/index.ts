@@ -295,6 +295,8 @@ export interface FreeGame {
   url?: string | undefined;
   description?: string | undefined;
   type: string;
+  /** Set to false in Appwrite to hide this giveaway from every client. */
+  isVisible?: boolean | undefined;
   startDate?: string | number | undefined;
   endDate?: string | number | undefined;
   igdb_game_id?: number | undefined;

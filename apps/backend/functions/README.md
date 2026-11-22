@@ -8,17 +8,19 @@ That function is **`gamingZone`** (Appwrite id `6ac81314002e085236df`) — the p
 
 Appwrite functions support exactly **one** schedule, and on this server that field is `interval` (minutes — `60` = hourly). The legacy `schedule` cron string is empty and is not what fires the runs; `npm run functions:deploy` PUTs `interval` (node-appwrite 21 doesn't expose it) on every run. The function runs every hour and a time-based dispatcher (`src/main.ts`) fans out based on the UTC server clock:
 
-| job                 | service                                                             | when it runs                      |
-| ------------------- | ------------------------------------------------------------------- | --------------------------------- |
-| `rss`               | `rss/rss.service.ts` (`runFetchRss`)                                | every hourly tick                 |
-| `article-summaries` | `summary/articleSummary.service.ts` (`runBackfillArticleSummaries`) | every hourly tick                 |
-| `free-games`        | `freeGames/freeGames.service.ts`                                    | top of every hour (UTC minute 0)  |
-| `weekly-summary`    | `summary/summary.service.ts`                                        | Fridays 12:00 UTC (minute 0 tick) |
+| job                 | service                                                             | when it runs                            |
+| ------------------- | ------------------------------------------------------------------- | --------------------------------------- |
+| `rss`               | `rss/rss.service.ts` (`runFetchRss`)                                | every hourly tick                       |
+| `article-summaries` | `summary/articleSummary.service.ts` (`runBackfillArticleSummaries`) | every hourly tick                       |
+| `session-reminders` | `cron/src/sessionReminders.ts` (`runSessionReminders`)              | every hourly tick                       |
+| `free-games`        | `freeGames/freeGames.service.ts`                                    | every hourly tick                       |
+| `game-releases`     | `gameReleases/gameReleases.service.ts`                              | during the 09:00 UTC hourly tick        |
+| `weekly-summary`    | `summary/summary.service.ts`                                        | during the Friday 12:00 UTC hourly tick |
 
 Notes:
 
 - `article-summaries` runs immediately after `rss` on every tick, so articles created in the same invocation are summarized within seconds — no AI work is added to the ingestion path. It generates a ≤3-line summary per supported app language (en/ar/es/fr/hi/pt-BR/pt-PT) plus the article's gaming platforms in the same model call, newest-first, plus a bounded oldest-first slice so the backlog converges. Requires the `articles` collection to have the `summary_*` / `summaries_at` / `summaries_attempts` / `summaries_failed` / `platforms` / `platforms_source` attributes (no index — see below). Ingestion tags `platforms` immediately (keyword scan) so a new article is never missing from the mobile filter, and the AI classification overwrites that value when it succeeds.
-- `weekly-summary` is **not** idempotent (it creates a new document each run), so it only fires on the single 12:00 Friday tick.
+- `weekly-summary` is **not** idempotent (it creates a new document each run), so it only fires during the Friday 12:00 UTC hourly window. With the 60-minute interval, that window is reached by one tick.
 - Jobs broadcast FCM topic pushes via `firebase-admin` (`FCM_SERVICE_ACCOUNT`): `rss` → `news_<category>_<source>`, `free-games` → `free_games_alerts`, `weekly-summary` → `weekly_summary_alerts`. Pushes are best-effort (a failure is logged, never thrown).
 - All GitHub Actions workflows were removed (`trigger-rss.yml`, `free-games.yml`, `weekly-summary.yml`, `deploy-functions.yml`) — scheduling and code deployment are entirely inside Appwrite now.
 - Manual triggers (below) can still run one specific job by passing a JSON body.
@@ -236,7 +238,7 @@ curl -X POST "https://<region>.cloud.appwrite.io/v1/functions/6ac81314002e085236
   -d '{"async":true,"method":"POST","path":"/","body":"{\"job\":\"free-games\"}"}'
 ```
 
-Valid job names: `rss`, `article-summaries`, `free-games`, `weekly-summary`, `game-releases`, `diagnostics`. Drop `"async":true` to wait for the result synchronously (only for short runs / debugging).
+Valid job names: `rss`, `article-summaries`, `session-reminders`, `free-games`, `weekly-summary`, `game-releases`, `diagnostics`. Drop `"async":true` to wait for the result synchronously (only for short runs / debugging).
 
 `diagnostics` is the cheap one (no network, no DB): it returns the Node version, the
 effective `NODE_OPTIONS`, `process.execArgv`, the V8 `heapSizeLimitMb` and current memory, so

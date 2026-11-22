@@ -50,6 +50,7 @@ interface FreeGameDoc {
   store?: string;
   url?: string;
   type?: string;
+  isVisible?: boolean;
   startDate?: string;
   endDate?: string;
 }
@@ -87,16 +88,21 @@ export const fetchFreeGames = async (): Promise<FreeGame[]> =>
           [Query.orderAsc("type"), Query.limit(FREE_GAMES_LIMIT)],
         );
 
-        return (res.documents as unknown as FreeGameDoc[]).map((doc) => ({
-          id: doc.$id,
-          title: doc.title,
-          image: doc.image,
-          store: doc.store,
-          url: doc.url,
-          type: doc.type ?? "",
-          startDate: doc.startDate,
-          endDate: doc.endDate,
-        }));
+        return (res.documents as unknown as FreeGameDoc[])
+          // `isVisible === false` hides the game on web too; missing/older
+          // attributes stay visible, so no schema migration is required here.
+          .filter((doc) => doc.isVisible !== false)
+          .map((doc) => ({
+            id: doc.$id,
+            title: doc.title,
+            image: doc.image,
+            store: doc.store,
+            url: doc.url,
+            type: doc.type ?? "",
+            isVisible: true,
+            startDate: doc.startDate,
+            endDate: doc.endDate,
+          }));
       } catch (error) {
         console.error("Error fetching free games from Appwrite:", error);
         return [];

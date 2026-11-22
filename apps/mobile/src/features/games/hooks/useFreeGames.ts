@@ -26,19 +26,25 @@ const fetchFreeGamesFromAppwrite = async (): Promise<FreeGameItem[]> => {
     Query.limit(20),
   ]);
 
-  return response.documents.map((doc) => ({
-    id: doc.$id,
-    title: doc.title as string,
-    image: doc.image as string | undefined,
-    slug: doc.slug as string | undefined,
-    store: doc.store as string | undefined,
-    url: doc.url as string | undefined,
-    description: doc.description as string | undefined,
-    type: doc.type as string,
-    startDate: doc.startDate as string | number | undefined,
-    endDate: doc.endDate as string | number | undefined,
-    igdb_game_id: doc.igdb_game_id as number | undefined,
-  }));
+  return response.documents
+    // `isVisible === false` is the only hide signal; older docs without the
+    // attribute stay visible. Filtering here rather than in the Appwrite query
+    // keeps this working if an environment has not added the attribute yet.
+    .filter((doc) => doc.isVisible !== false)
+    .map((doc) => ({
+      id: doc.$id,
+      title: doc.title as string,
+      image: doc.image as string | undefined,
+      slug: doc.slug as string | undefined,
+      store: doc.store as string | undefined,
+      url: doc.url as string | undefined,
+      description: doc.description as string | undefined,
+      type: doc.type as string,
+      isVisible: true,
+      startDate: doc.startDate as string | number | undefined,
+      endDate: doc.endDate as string | number | undefined,
+      igdb_game_id: doc.igdb_game_id as number | undefined,
+    }));
 };
 
 function matchesPreferredPlatforms(item: FreeGameItem, preferredPlatforms?: string[]): boolean {

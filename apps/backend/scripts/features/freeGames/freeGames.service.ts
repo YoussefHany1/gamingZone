@@ -37,6 +37,8 @@ if (firebaseState.enabled) {
 type FreeGameData = NormalizedGame & {
   igdb_game_id?: string | null;
   notificationSent?: boolean;
+  /** Manual Appwrite override; the cron job must never flip this back. */
+  isVisible?: boolean;
 };
 
 interface FreeGameDoc extends Models.Document, FreeGameData {}
@@ -134,7 +136,7 @@ async function createNewGame(docId: string, game: FreeGameData): Promise<void> {
     logger.info(igdbId ? `   ✅ Found IGDB ID: ${igdbId}` : '   ⚠️ No IGDB match found');
 
     let notificationSent = false;
-    if (game.type === 'current') {
+    if (game.type === 'current' && game.isVisible !== false) {
       await sendGameNotification(game);
       notificationSent = true;
     }
@@ -144,6 +146,7 @@ async function createNewGame(docId: string, game: FreeGameData): Promise<void> {
         databases.createDocument(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_FREE_GAMES, docId, {
           ...game,
           notificationSent,
+          isVisible: game.isVisible ?? true,
         }),
       { label: `createDocument ${docId}` },
     );
@@ -160,6 +163,7 @@ async function updateExistingGame(
   existingDoc: FreeGameDoc,
 ): Promise<void> {
   const alreadySent = existingDoc.notificationSent === true;
+  const isVisible = existingDoc.isVisible !== false;
 
   if (!existingDoc.igdb_game_id) {
     logger.info('   🔍 Missing IGDB ID, searching...');
@@ -170,7 +174,7 @@ async function updateExistingGame(
     game.igdb_game_id = existingDoc.igdb_game_id;
   }
 
-  if (game.type === 'current' && !alreadySent) {
+  if (game.type === 'current' && !alreadySent && isVisible) {
     logger.info('   🔔 Sending delayed notification...');
     await sendGameNotification(game);
 
@@ -179,6 +183,7 @@ async function updateExistingGame(
         databases.updateDocument(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_FREE_GAMES, docId, {
           ...game,
           notificationSent: true,
+          isVisible,
         }),
       { label: `updateDocument ${docId}` },
     );
@@ -192,6 +197,7 @@ async function updateExistingGame(
       databases.updateDocument(CONFIG.APPWRITE_DATABASE_ID, CONFIG.COLLECTION_FREE_GAMES, docId, {
         ...game,
         notificationSent: alreadySent,
+        isVisible,
       }),
     { label: `updateDocument ${docId}` },
   );

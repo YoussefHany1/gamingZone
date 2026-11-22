@@ -1,11 +1,11 @@
 // Entrypoint for the single gamingZone Appwrite function.
 //
-// One Appwrite function, one native schedule ("0 * * * *" = hourly, UTC). Every
-// tick runs against the server clock; free-games and weekly-summary fire only
-// when their time window matches, so a single cron slot covers all three
-// cadences. Hourly (not */5) keeps the full 69-source RSS sync inside
-// Appwrite's free 100 GB-hours/month compute allowance. A manual /curl trigger
-// can still run one job by name via a JSON body.
+// One Appwrite function, one native interval (every 60 minutes). Every tick
+// runs against the server clock; free-games and weekly-summary fire only when
+// their time window matches, so a single interval covers all three cadences.
+// Hourly cadence keeps the full 69-source RSS sync inside Appwrite's free
+// 100 GB-hours/month compute allowance. A manual /curl trigger can still run
+// one job by name via a JSON body.
 //
 // This file is deliberately thin: it schedules and it spawns. The jobs
 // themselves live in worker.ts, which is run as a child process with a bounded
@@ -220,18 +220,18 @@ function jobsFromScheduledTick(now: Date): string[] {
   // invocation without adding work to the ingestion path.
   const jobs: string[] = ['rss', 'article-summaries', 'session-reminders'];
 
-  if (now.getUTCMinutes() === 0) {
-    jobs.push('free-games');
-  }
+  // The function runs on a 60-minute interval, so "every tick" is hourly.
+  jobs.push('free-games');
 
-  // Game releases check runs once a day at 09:00 UTC
-  if (now.getUTCHours() === 9 && now.getUTCMinutes() === 0) {
+  // Game releases check runs once a day during the 09:00 UTC hour. The
+  // interval tick can land on any minute, so gate on the hour only.
+  if (now.getUTCHours() === 9) {
     jobs.push('game-releases');
   }
 
-  // Exactly once: only the 12:00 tick can match minute 0 (weekly recap is not
-  // idempotent — it creates a new document per run).
-  if (now.getUTCDay() === 5 && now.getUTCHours() === 12 && now.getUTCMinutes() === 0) {
+  // Weekly recap is not idempotent (it creates a new document per run), so run
+  // it during the single Friday 12:00 UTC hourly window.
+  if (now.getUTCDay() === 5 && now.getUTCHours() === 12) {
     jobs.push('weekly-summary');
   }
 

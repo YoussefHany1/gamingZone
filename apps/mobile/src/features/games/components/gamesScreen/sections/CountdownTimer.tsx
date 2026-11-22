@@ -3,7 +3,20 @@ import { View } from "react-native";
 import CustomText from "@/src/components/CustomText";
 import { LinearGradient } from "expo-linear-gradient";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
-import { useCountdown } from "@/src/hooks/useCountdown";
+import { useCountdown, type TimeLeft } from "@/src/hooks/useCountdown";
+
+/**
+ * The web free-game countdown clamps expired targets to zero instead of
+ * hiding itself, so stale "next" offers still show the overlay. Keep that
+ * behaviour local to this component: other mobile countdown consumers rely
+ * on useCountdown returning null once their target has passed.
+ */
+const EXPIRED_TIME_LEFT: TimeLeft = {
+  days: 0,
+  hours: 0,
+  minutes: 0,
+  seconds: 0,
+};
 
 export type CountdownTimerProps = {
   t: (key: string) => string;
@@ -70,7 +83,8 @@ TimeUnit.displayName = "TimeUnit";
  * already declares exactly that return type.
  */
 const CountdownTimer = React.memo<CountdownTimerProps>(({ t, startDate }) => {
-  const timeLeft = useCountdown(startDate, 1000);
+  const rawTimeLeft = useCountdown(startDate, 1000);
+  const timeLeft = startDate == null ? null : (rawTimeLeft ?? EXPIRED_TIME_LEFT);
 
   const styles = useThemeStyles(() => ({
     countdownOverlay: {
@@ -97,12 +111,7 @@ const CountdownTimer = React.memo<CountdownTimerProps>(({ t, startDate }) => {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-    },
-    separator: {
-      color: "#ffffff",
-      fontSize: 16,
-      fontWeight: "bold",
-      marginHorizontal: 2,
+      gap: 3,
     },
   }));
 
@@ -119,11 +128,8 @@ const CountdownTimer = React.memo<CountdownTimerProps>(({ t, startDate }) => {
         </CustomText>
         <View style={styles.timerContainer}>
           <TimeUnit value={timeLeft.days} label={t("games.list.freeGames.days")} />
-          <CustomText style={styles.separator}>:</CustomText>
           <TimeUnit value={timeLeft.hours} label={t("games.list.freeGames.hours")} />
-          <CustomText style={styles.separator}>:</CustomText>
           <TimeUnit value={timeLeft.minutes} label={t("games.list.freeGames.minutes")} />
-          <CustomText style={styles.separator}>:</CustomText>
           <TimeUnit value={timeLeft.seconds} label={t("games.list.freeGames.seconds")} />
         </View>
       </LinearGradient>

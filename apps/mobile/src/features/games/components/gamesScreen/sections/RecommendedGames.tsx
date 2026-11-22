@@ -85,9 +85,8 @@ function RecommendedGamesView({
   );
 }
 
-// Standalone entry point (home rail): resolves its own recommendation state.
-// The games feed uses `RecommendedGamesView` through `DiscoveryRail` so the
-// three fallback rails share a single `useRecommendedGames` instance.
+// Standalone entry point for independent rails (Home still uses DiscoveryRail;
+// the games feed mounts this component directly when library games exist).
 function RecommendedGames(): React.ReactElement | null {
   const state = useRecommendedGames();
   return <RecommendedGamesView state={state} />;

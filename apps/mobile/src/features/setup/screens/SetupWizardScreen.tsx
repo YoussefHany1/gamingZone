@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Gamepad2, Monitor, Smartphone } from "lucide-react-native";
 import CustomText from "@/src/components/CustomText";
 import PressScale from "@/src/components/PressScale";
+import Loading from "@/src/Loading";
 import { useThemeColors } from "@/src/hooks/useTheme";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
 import SelectablePill from "../components/SelectablePill";
@@ -31,15 +32,8 @@ const SetupWizardScreen: React.FC<Props> = memo(({ onDone }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
 
-  useEffect(() => {
-    try {
-      void analytics().logEvent("setup_started");
-    } catch {
-      // non-fatal
-    }
-  }, []);
-
   const {
+    ready,
     step,
     platforms,
     genres,
@@ -50,6 +44,15 @@ const SetupWizardScreen: React.FC<Props> = memo(({ onDone }) => {
     next,
     skip,
   } = useSetupFlow(onDone);
+
+  useEffect(() => {
+    if (!ready) return;
+    try {
+      void analytics().logEvent("setup_started");
+    } catch {
+      // non-fatal
+    }
+  }, [ready]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -64,7 +67,11 @@ const SetupWizardScreen: React.FC<Props> = memo(({ onDone }) => {
         t("setup.exitMessage", "Your setup can be skipped and completed later."),
         [
           { text: t("common.cancel"), style: "cancel" },
-          { text: t("setup.skip", "Skip"), style: "destructive", onPress: () => void skip() },
+          {
+            text: t("setup.skip", "Skip"),
+            style: "destructive",
+            onPress: () => void skip(),
+          },
         ],
       );
       return true;
@@ -113,15 +120,15 @@ const SetupWizardScreen: React.FC<Props> = memo(({ onDone }) => {
     hint: { color: c.textSubtle, fontSize: 13, marginBottom: 12 },
   }));
 
+  if (!ready) return <Loading />;
+
   const title =
     step === "platforms" ? t("setup.platforms.title") : t("setup.genres.title");
   const subtitle =
-    step === "platforms"
-      ? t("setup.platforms.subtitle")
-      : t("setup.genres.subtitle");
+    step === "platforms" ? t("setup.platforms.subtitle") : t("setup.genres.subtitle");
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom", "left", "right"]}>
+    <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 24 }}>
         <CustomText style={styles.title}>{title}</CustomText>
         <CustomText style={styles.subtitle}>{subtitle}</CustomText>
