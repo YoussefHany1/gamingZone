@@ -1,6 +1,5 @@
 import "server-only";
 
-import axios from "axios";
 import { unstable_cache } from "next/cache";
 import { databases } from "@/lib/appwrite";
 import { Query } from "appwrite";
@@ -14,8 +13,8 @@ import { getServerApiUrl } from "@/lib/api-config";
  * searchGames from there — `unstable_cache` and `server-only` cannot live in a
  * module that reaches the browser bundle.
  *
- * Why this matters: axios bypasses Next's fetch cache, and both callers render
- * data that outlives a single request. /[locale]/games was previously forced
+ * Why this matters: both callers render data that outlives a single request.
+ * /[locale]/games was previously forced
  * dynamic by an `await searchParams`, so it fired nine of these calls on every
  * visit. These wrappers collapse them to one upstream request per TTL.
  *
@@ -59,10 +58,12 @@ export const fetchGamesList = async (endpoint: string): Promise<Game[]> =>
   unstable_cache(
     async () => {
       try {
-        const res = await axios.get<Game[]>(`${getServerApiUrl()}/${endpoint}`, {
-          timeout: 8000,
+        const res = await fetch(`${getServerApiUrl()}/${endpoint}`, {
+          signal: AbortSignal.timeout(8000),
         });
-        return Array.isArray(res.data) ? res.data : [];
+        if (!res.ok) throw new Error(`Upstream returned ${res.status}`);
+        const data = (await res.json()) as unknown;
+        return Array.isArray(data) ? (data as Game[]) : [];
       } catch (error) {
         console.error(`Error fetching ${endpoint}:`, error);
         return [];

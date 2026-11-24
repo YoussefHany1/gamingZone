@@ -34,7 +34,7 @@ const parsed = envSchema.safeParse({
 
 if (!parsed.success) {
   console.error("❌ Invalid environment variables:", JSON.stringify(parsed.error.format(), null, 2));
-  throw new Error("Invalid environment variables. Check Netlify logs for details.");
+  throw new Error("Invalid environment variables. Check Cloudflare Workers logs for details.");
 }
 
 export const env = parsed.data;

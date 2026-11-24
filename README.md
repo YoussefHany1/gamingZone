@@ -40,7 +40,7 @@ The platform aggregates content from top sources, and allows users to manage the
 
 - **[Next.js](https://nextjs.org/)**: The React framework for the web platform.
 - **[React](https://reactjs.org/)**: For building the web user interface.
-- **[Vercel](https://vercel.com/)**: For unified deployment of the web app and API.
+- **[Cloudflare Workers](https://workers.cloudflare.com/)**: The web app runs on Workers via OpenNext, with R2-backed ISR caching.
 
 ### Backend & Services
 
@@ -117,6 +117,25 @@ Follow these instructions to get the project up and running on your local machin
     cd apps/web
     npm run dev
     ```
+
+### Deploying the web app to Cloudflare Workers
+
+See [docs/CLOUDFLARE.md](docs/CLOUDFLARE.md) for the full setup. Quick start:
+
+```bash
+cd apps/web
+# one-time: create the R2 bucket used for ISR cache
+npx wrangler r2 bucket create gamingzone-web-opennext-cache
+
+# local Workers preview
+npm run preview
+
+# deploy
+npm run deploy
+```
+
+Server-side secrets go in `apps/web/.dev.vars` locally and in Wrangler secrets
+for deployed Workers (see `apps/web/.env.example`).
 
 ## ⚙️ Automation & Backend
 

@@ -320,7 +320,7 @@ ${gamesContext}`,
       if (!text) throw new Error("Gemini returned an empty response");
 
       // Reconcile with actual usage
-      const usage = (data as any)?.usageMetadata;
+      const usage = (data as { usageMetadata?: { totalTokenCount?: number } })?.usageMetadata;
       const actualTokens = Number(usage?.totalTokenCount || 0);
       if (actualTokens > 0) {
         const ratio = estimatedRaw > 0 ? estimatedRaw / actualTokens : 1;
@@ -395,7 +395,7 @@ ${gamesContext}`,
         return NextResponse.json({ error: "All AI providers failed" }, { status: 500 });
       }
 
-      const usageGroq = (data as any)?.usage;
+      const usageGroq = (data as { usage?: { total_tokens?: number } })?.usage;
       const actualTokensG = Number(usageGroq?.total_tokens || 0);
       if (actualTokensG > 0) {
         const ratioG = estimatedRaw > 0 ? estimatedRaw / actualTokensG : 1;

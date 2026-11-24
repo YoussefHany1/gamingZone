@@ -1,9 +1,22 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
   // Ensure workspace packages are properly resolved by Turbopack
   transpilePackages: ["@gaming-zone/locales", "@gaming-zone/core", "@gaming-zone/utils"],
   poweredByHeader: false,
+  // The Firestore web SDK generates code with `new Function`, which is not
+  // allowed in the Workers runtime. Server bundles still evaluate client
+  // components during SSR, so alias the import to an inert stub there. The
+  // browser keeps using the real SDK via its underlying package.
+  turbopack: {
+    resolveAlias: {
+      "firebase/firestore": {
+        browser: "@firebase/firestore",
+        default: "./src/lib/firebase-firestore-server-stub.ts",
+      },
+    },
+  },
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -73,3 +86,6 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+// Exposes local Cloudflare bindings to `next dev` and validates the adapter setup.
+initOpenNextCloudflareForDev();

@@ -2,7 +2,6 @@ import "server-only";
 
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
-import axios from "axios";
 import type { GameData, PcRequirements } from "@gaming-zone/core";
 import { getServerApiUrl } from "@/lib/api-config";
 
@@ -46,14 +45,11 @@ export const fetchGameDetails = cache(
     try {
       return await unstable_cache(
         async () => {
-          const res = await axios.get<GameData>(
-            `${getServerApiUrl()}/game-details`,
-            {
-              params: { id },
-              timeout: 8000,
-            },
-          );
-          return res.data;
+          const url = new URL(`${getServerApiUrl()}/game-details`);
+          url.searchParams.set("id", id);
+          const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+          if (!res.ok) throw new Error(`Upstream returned ${res.status}`);
+          return (await res.json()) as GameData;
         },
         ["game-details", id],
         { revalidate: 604800, tags: ["games", `games:details:${id}`] },
@@ -77,11 +73,12 @@ export const fetchPcRequirements = cache(async (id: string): Promise<PcRequireme
   try {
     return await unstable_cache(
       async () => {
-        const res = await axios.get<Record<string, PcRequirements | null>>(
-          `${getServerApiUrl()}/pc-requirements`,
-          { params: { ids: id }, timeout: 30000 },
-        );
-        const entry = res.data?.[id];
+        const url = new URL(`${getServerApiUrl()}/pc-requirements`);
+        url.searchParams.set("ids", id);
+        const res = await fetch(url, { signal: AbortSignal.timeout(30000) });
+        if (!res.ok) throw new Error(`Upstream returned ${res.status}`);
+        const payload = (await res.json()) as Record<string, PcRequirements | null>;
+        const entry = payload?.[id];
         if (!entry) return null;
 
         // The API sends `null` for a tier with no rows (e.g. a game where only
