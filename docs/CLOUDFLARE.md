@@ -104,11 +104,26 @@ GitHub secrets are needed.
 
 4. Add every value from `apps/web/.env.example` under **Build variables and
    secrets**. `next build` reads them while prerendering, and `.env` is not
-   committed. Mark the server-only values as secrets:
+   committed. The following nine are **required** — `src/lib/env.ts` throws
+   during page-data collection if any are missing, which Next.js reports as
+   `Failed to collect page data for /[locale]/social`:
 
-   - Public (plain variables): all `NEXT_PUBLIC_*` values. The chat limits
-     (`TOKEN_MARGIN_GEMINI`, `TOKEN_MARGIN_GROQ`, `CHAT_DAILY_REQ_LIMIT`,
-     `CHAT_DAILY_TOKEN_LIMIT`) are optional because the code has defaults.
+   ```text
+   NEXT_PUBLIC_FIREBASE_API_KEY
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+   NEXT_PUBLIC_FIREBASE_APP_ID
+   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+   NEXT_PUBLIC_CLOUDINARY_API_KEY
+   NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+   ```
+
+   Add them as plain **build variables** (not just runtime secrets under
+   Settings > Variables & Secrets). The chat limits
+   (`TOKEN_MARGIN_GEMINI`, `TOKEN_MARGIN_GROQ`, `CHAT_DAILY_REQ_LIMIT`,
+   `CHAT_DAILY_TOKEN_LIMIT`) are optional because the code has defaults.
    - Secret: `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `GEMINI_API_KEY`,
      `GROQ_API_KEY`, `REVALIDATE_SECRET`, `APPWRITE_DATABASE_ID`.
 

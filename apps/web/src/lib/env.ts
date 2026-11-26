@@ -33,8 +33,15 @@ const parsed = envSchema.safeParse({
 });
 
 if (!parsed.success) {
+  const invalid = Object.entries(parsed.error.format())
+    .filter(([key]) => key !== "_errors")
+    .map(([key]) => key);
   console.error("❌ Invalid environment variables:", JSON.stringify(parsed.error.format(), null, 2));
-  throw new Error("Invalid environment variables. Check Cloudflare Workers logs for details.");
+  throw new Error(
+    `Invalid environment variables: ${invalid.join(", ")}. ` +
+      "Set the NEXT_PUBLIC_* values as Workers Builds build variables " +
+      "(see docs/CLOUDFLARE.md).",
+  );
 }
 
 export const env = parsed.data;
