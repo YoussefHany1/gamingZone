@@ -12,10 +12,8 @@ import { isSecretLikeKey } from "./storage";
 
 describe("storage key guard", () => {
   it("allows user-scoped cache keys whose uid contains credential substrings", () => {
-    expect(isSecretLikeKey("USER_STATS_zWpyNNNlFcMW3VjhXSiyJdhREDH2")).toBe(false);
-    expect(
-      isSecretLikeKey("USER_STATS_zWpyNNNlFcMW3VjhXSiyJdhREDH2_timestamp"),
-    ).toBe(false);
+    expect(isSecretLikeKey("USER_STATS_exampleUidFcM")).toBe(false);
+    expect(isSecretLikeKey("USER_STATS_exampleUidFcM_timestamp")).toBe(false);
   });
 
   it("rejects credential-style key segments", () => {

@@ -50,7 +50,6 @@ jobs:
 
           BUILD_JSON=$(
             eas build:list \
-              --project-id 25078fb9-8a54-4056-b988-2ac45be30e52 \
               --platform android \
               --build-profile production \
               --status finished \
