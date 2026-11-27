@@ -1,25 +1,21 @@
 import "server-only";
 
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { getServerApiUrl } from "@/lib/api-config";
 import type { Game } from "../types";
 
-/** Latest game trailers for the home slideshow (cached per request/render). */
-export const fetchLatestTrailers = cache(async (): Promise<Game[]> => {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+const CACHE_VERSION = "v2";
 
+async function fetchLatestTrailersUncached(): Promise<Game[]> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  try {
     const res = await fetch(`${getServerApiUrl()}/latest-trailers`, {
       signal: controller.signal,
-      // Cache in Vercel Data Cache. Kept in step with the home page's
-      // `revalidate` (3600) so a page regeneration and its underlying fetch do
-      // not expire at different times. "events" is reused here because the
-      // events workflow also refreshes trailers.
-      next: { revalidate: 3600, tags: ["events"] },
+      cache: "no-store",
     });
-
-    clearTimeout(timeoutId);
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -27,5 +23,16 @@ export const fetchLatestTrailers = cache(async (): Promise<Game[]> => {
   } catch {
     console.warn("Failed to fetch latest trailers (network error or proxy down).");
     return [];
+  } finally {
+    clearTimeout(timeoutId);
   }
-});
+}
+
+/** Latest game trailers for the home slideshow. */
+export const fetchLatestTrailers = cache(
+  unstable_cache(
+    fetchLatestTrailersUncached,
+    [CACHE_VERSION, "latest-trailers"],
+    { revalidate: 3600, tags: ["events"] },
+  ),
+);

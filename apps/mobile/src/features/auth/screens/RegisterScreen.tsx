@@ -7,7 +7,7 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   TouchableWithoutFeedback,
-  type TextInput,
+  type TextInputInstance,
   Platform,
 } from "react-native";
 import { ImageBackground } from "expo-image";
@@ -36,8 +36,8 @@ const RegisterScreen: React.FC<AuthScreenProps<"Register">> = memo(({ navigation
   const form = useRegisterForm({ navigation });
 
   // Field chaining: name → email → password (submit).
-  const emailRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInputInstance>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
 
   const focusEmail = useCallback(() => emailRef.current?.focus(), []);
   const focusPassword = useCallback(() => passwordRef.current?.focus(), []);

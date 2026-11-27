@@ -319,6 +319,11 @@
       "cancel": "إلغاء",
       "arabicSources": "مصادر عربية",
       "englishSources": "مصادر إنجليزية",
+      "spanishSources": "مصادر إسبانية",
+      "frenchSources": "مصادر فرنسية",
+      "hindiSources": "مصادر هندية",
+      "portugueseSources": "مصادر برتغالية",
+      "sourcesByLanguage": "مصادر {{language}}",
       "visitWebsite": "زيارة الموقع",
       "allSources": "كل المصادر"
     },
@@ -1229,7 +1234,10 @@
     "description": "انضم إلى مجتمع اللاعبين العربي، تابع أحدث الأخبار، المراجعات، وأضف ألعابك المفضلة إلى مكتبتك الخاصة بكل سهولة عبر تطبيقنا المتاح على متجر جوجل بلاي.",
     "getItOn": "احصل عليه من",
     "googlePlay": "جوجل بلاي",
-    "getItOnFooter": "احصل عليه من جوجل بلاي"
+    "getItOnFooter": "احصل عليه من جوجل بلاي",
+    "dontShowAgain": "لا تعرض هذا لي مرة أخرى",
+    "scanQrCode": "امسح رمز QR هذا بهاتفك لتنزيل التطبيق",
+    "downloadsLabel": "تنزيل"
   },
   "onboarding": {
     "skip": "تخطي",

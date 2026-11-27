@@ -11,7 +11,13 @@
  *   "plugins": ["./plugins/withR8Optimization"]
  */
 
-const { withGradleProperties, withAppBuildGradle } = require("expo/config-plugins");
+const fs = require("node:fs");
+const path = require("node:path");
+const {
+  withGradleProperties,
+  withAppBuildGradle,
+  withDangerousMod,
+} = require("expo/config-plugins");
 
 // ─── 1. gradle.properties ────────────────────────────────────────────────────
 
@@ -131,11 +137,57 @@ const withR8BuildGradle = (config) =>
     return mod;
   });
 
+const PROGUARD_RULES = `-keepclassmembers public class com.facebook.react.ReactActivityDelegate {
+  public *;
+  protected *;
+  private ReactDelegate mReactDelegate;
+}
+-keepclassmembers public class expo.modules.ReactActivityDelegateWrapper {
+  protected ReactDelegate getReactDelegate();
+}
+-keepclassmembers public class com.facebook.react.ReactActivity {
+  private final ReactActivityDelegate mDelegate;
+}
+-keepclassmembers public class com.facebook.react.ReactNativeHost {
+  protected *;
+}
+-keepclassmembers public class expo.modules.ExpoModulesPackageList {
+  public *;
+}
+-keepnames class * extends expo.modules.core.BasePackage
+-keepnames class * implements expo.modules.core.interfaces.Package
+-keep class com.squareup.zstd.** { *; }
+-keep class com.facebook.animated.gif.GifImageDecoder { public <init>(...); }
+-keep class com.facebook.animated.webp.WebPImageDecoder { public <init>(...); }
+-assumenosideeffects class android.view.Window {
+  public void setStatusBarColor(int);
+  public void setNavigationBarColor(int);
+}
+-assumevalues class android.view.WindowManager$LayoutParams {
+  public int layoutInDisplayCutoutMode return 3;
+}
+`;
+
+const withProguardRules = (config) =>
+  withDangerousMod(config, [
+    "android",
+    async (modConfig) => {
+      const rulesPath = path.join(
+        modConfig.modRequest.platformProjectRoot,
+        "app",
+        "proguard-rules.pro",
+      );
+      fs.writeFileSync(rulesPath, PROGUARD_RULES);
+      return modConfig;
+    },
+  ]);
+
 // ─── Composed plugin ──────────────────────────────────────────────────────────
 
 const withR8Optimization = (config) => {
   config = withR8GradleProperties(config);
   config = withR8BuildGradle(config);
+  config = withProguardRules(config);
   return config;
 };
 

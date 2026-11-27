@@ -1,0 +1,133 @@
+name: Release from EAS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-from-eas
+  cancel-in-progress: false
+
+jobs:
+  release-eas:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install EAS CLI
+        run: npm install --global eas-cli@27.11.0
+
+      - name: Check latest EAS build
+        id: eas
+        working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${EXPO_TOKEN:-}" ]; then
+            echo "::error::EXPO_TOKEN secret is required."
+            exit 1
+          fi
+
+          BUILD_JSON=$(
+            eas build:list \
+              --project-id 25078fb9-8a54-4056-b988-2ac45be30e52 \
+              --platform android \
+              --build-profile production \
+              --status finished \
+              --limit 1 \
+              --json \
+              --non-interactive
+          )
+
+          COUNT=$(jq -r 'length' <<<"$BUILD_JSON")
+          echo "finished_production_builds=$COUNT"
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "No finished production Android builds found."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          APP_VERSION=$(jq -r '.[0].appVersion // empty' <<<"$BUILD_JSON")
+          BUILD_NUMBER=$(jq -r '.[0].appBuildVersion // empty' <<<"$BUILD_JSON")
+          BUILD_ID=$(jq -r '.[0].id // empty' <<<"$BUILD_JSON")
+          BUILD_URL=$(jq -r '.[0].artifacts.buildUrl // empty' <<<"$BUILD_JSON")
+
+          if [ -z "$APP_VERSION" ] || [ -z "$BUILD_NUMBER" ] || [ -z "$BUILD_URL" ]; then
+            echo "Latest EAS build is missing version, build number, or artifact URL."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          TAG="v${APP_VERSION}-${BUILD_NUMBER}"
+          echo "Latest EAS build: $TAG ($BUILD_ID)"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists. Skipping."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "New EAS build found ($TAG). Proceeding with release."
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "app_version=$APP_VERSION" >> "$GITHUB_OUTPUT"
+            echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+            echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
+            echo "build_url=$BUILD_URL" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download EAS artifact
+        if: steps.eas.outputs.should_release == 'true'
+        env:
+          BUILD_URL: ${{ steps.eas.outputs.build_url }}
+          TAG: ${{ steps.eas.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          case "$BUILD_URL" in
+            *.aab*) EXT="aab" ;;
+            *.apk*) EXT="apk" ;;
+            *)
+              echo "::error::Unsupported EAS artifact URL: $BUILD_URL"
+              exit 1
+              ;;
+          esac
+
+          FILE_NAME="GamingZone-${TAG}.${EXT}"
+          curl -fSL --retry 3 "$BUILD_URL" -o "$FILE_NAME"
+          echo "file_name=$FILE_NAME" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        if: steps.eas.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v3
+        with:
+          token: ${{ github.token }}
+          tag_name: ${{ steps.eas.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: "Release ${{ steps.eas.outputs.tag }}"
+          body: |
+            Automated release from EAS Build.
+            - **Version:** ${{ steps.eas.outputs.app_version }}
+            - **Build Number:** ${{ steps.eas.outputs.build_number }}
+            - **EAS Build ID:** ${{ steps.eas.outputs.build_id }}
+          files: ${{ env.file_name }}
+          fail_on_unmatched_files: true

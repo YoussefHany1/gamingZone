@@ -1,5 +1,5 @@
 import React, { memo, forwardRef, useCallback, useState } from "react";
-import { Pressable, type TextInput } from "react-native";
+import { Pressable, type TextInputInstance } from "react-native";
 import { Eye, EyeOff, Lock } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "@/src/hooks/useTheme";
@@ -22,7 +22,7 @@ export type AuthPasswordInputProps = Omit<
 };
 
 const AuthPasswordInput = memo(
-  forwardRef<TextInput, AuthPasswordInputProps>(function AuthPasswordInput(
+  forwardRef<TextInputInstance, AuthPasswordInputProps>(function AuthPasswordInput(
     {
       autoComplete = "current-password",
       textContentType,

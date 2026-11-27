@@ -1,6 +1,8 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { createTranslator } from "@/i18n/translate";
 import { Source } from "../types";
+import { groupSourcesByLanguage } from "../lib/sourceLanguages";
 
 export function useSourceDropdown(
   sources: Source[],
@@ -13,28 +15,15 @@ export function useSourceDropdown(
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const selected = sources.find((s) => s.name === currentSource) || sources[0];
-
-  const arabicSources = sources
-    .filter((s) => s.language === "ar")
-    .sort((a, b) => a.name.localeCompare(b.name, "ar"));
-  const englishSources = sources
-    .filter((s) => s.language !== "ar")
-    .sort((a, b) => a.name.localeCompare(b.name, "en"));
-
-  const arGroup = {
-    title: activeLang === "ar" ? "المصادر العربية" : "Arabic Sources",
-    sources: arabicSources,
-  };
-  const enGroup = {
-    title: activeLang === "ar" ? "المصادر الإنجليزية" : "English Sources",
-    sources: englishSources,
-  };
-
-  const groups =
-    activeLang === "ar"
-      ? [arGroup, enGroup].filter((g) => g.sources.length > 0)
-      : [enGroup, arGroup].filter((g) => g.sources.length > 0);
+  const t = useMemo(() => createTranslator(activeLang), [activeLang]);
+  const selected = useMemo(
+    () => sources.find((s) => s.name === currentSource) || sources[0],
+    [sources, currentSource],
+  );
+  const groups = useMemo(
+    () => groupSourcesByLanguage(sources, activeLang, t),
+    [sources, activeLang, t],
+  );
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -49,19 +38,22 @@ export function useSourceDropdown(
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = (sourceName: string) => {
-    setIsOpen(false);
-    const searchParams = new URLSearchParams(window.location.search);
-    if (sourceName === "all") {
-      searchParams.delete("source");
-    } else {
-      searchParams.set("source", sourceName);
-    }
-    searchParams.delete("page");
+  const handleSelect = useCallback(
+    (sourceName: string) => {
+      setIsOpen(false);
+      const searchParams = new URLSearchParams(window.location.search);
+      if (sourceName === "all") {
+        searchParams.delete("source");
+      } else {
+        searchParams.set("source", sourceName);
+      }
+      searchParams.delete("page");
 
-    searchParams.set("category", currentCategory);
-    router.push(`${pathname}?${searchParams.toString()}`);
-  };
+      searchParams.set("category", currentCategory);
+      router.push(`${pathname}?${searchParams.toString()}`);
+    },
+    [currentCategory, pathname, router],
+  );
 
   return {
     isOpen,

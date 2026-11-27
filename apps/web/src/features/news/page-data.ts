@@ -1,5 +1,6 @@
 import "server-only";
 
+import { normalizeSourceLanguage } from "./lib/sourceLanguages";
 import { fetchNewsSources, fetchNews } from "./services/api";
 
 /**
@@ -38,9 +39,10 @@ export async function getNewsPageData(
 
   let defaultSource = "";
   if (sources.length > 0) {
+    const activeLanguage = normalizeSourceLanguage(locale);
     const preferredSources = sources
-      .filter((s) => (locale === "ar" ? s.language === "ar" : s.language !== "ar"))
-      .sort((a, b) => a.name.localeCompare(b.name, locale === "ar" ? "ar" : "en"));
+      .filter((s) => normalizeSourceLanguage(s.language) === activeLanguage)
+      .sort((a, b) => a.name.localeCompare(b.name, activeLanguage));
 
     defaultSource =
       preferredSources.length > 0

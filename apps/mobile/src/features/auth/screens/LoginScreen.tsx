@@ -7,7 +7,7 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   TouchableWithoutFeedback,
-  type TextInput,
+  type TextInputInstance,
   Platform,
 } from "react-native";
 import { ImageBackground } from "expo-image";
@@ -45,7 +45,7 @@ const LoginScreen: React.FC<AuthScreenProps<"Login">> = memo(({ navigation }) =>
   } = useLoginForm({ navigation });
 
   // Field chaining: email → password (submit).
-  const passwordRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
   const submitPassword = useCallback(() => handleLogin(), [handleLogin]);
 
   const styles = useThemeStyles((c) => ({

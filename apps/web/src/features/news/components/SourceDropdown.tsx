@@ -2,8 +2,10 @@
 
 import { ChevronDown, Globe } from "lucide-react";
 import Image from "next/image";
+import { createTranslator } from "@/i18n/translate";
 import { SourceDropdownProps } from "../types";
 import { useSourceDropdown } from "../hooks/useSourceDropdown";
+import { getLanguageBadge } from "../lib/sourceLanguages";
 
 export default function SourceDropdown({
   sources,
@@ -13,6 +15,7 @@ export default function SourceDropdown({
 }: SourceDropdownProps) {
   const { isOpen, setIsOpen, dropdownRef, selected, groups, handleSelect } =
     useSourceDropdown(sources, currentSource, currentCategory, activeLang);
+  const t = createTranslator(activeLang);
 
   return (
     <div className="relative inline-block text-left z-30" ref={dropdownRef}>
@@ -48,13 +51,11 @@ export default function SourceDropdown({
         <div className="absolute right-0 mt-2 w-60 rounded-2xl overflow-hidden bg-primary-bg border border-white/10 shadow-2xl animate-fade-in z-50">
           <div className="py-1.5 max-h-64 overflow-y-auto scrollbar">
             <div className="px-3 py-1 text-[9px] font-black uppercase tracking-wider text-gray-400 border-b border-white/5 mb-1.5">
-              {activeLang === "ar"
-                ? "اختر مصدر الأخبار:"
-                : "Select News Source:"}
+              {t("news.dropdown.selectSource")}
             </div>
 
-            {groups.map((group, groupIdx) => (
-              <div key={groupIdx} className="space-y-1 mb-2">
+            {groups.map((group) => (
+              <div key={group.language} className="space-y-1 mb-2">
                 {/* Group Header */}
                 <div className="px-3 py-1 text-[10px] font-extrabold text-light-blue bg-white/5 flex items-center justify-between">
                   <span>{group.title}</span>
@@ -90,7 +91,7 @@ export default function SourceDropdown({
                       ) : (
                         <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center shrink-0">
                           <span className="text-[8px] font-bold text-gray-400 uppercase">
-                            {src.language}
+                            {getLanguageBadge(src.language)}
                           </span>
                         </div>
                       )}
@@ -99,7 +100,7 @@ export default function SourceDropdown({
                       </span>
                       {src.language && (
                         <span className="text-[8px] font-black uppercase bg-white/5 border border-white/5 px-1.5 py-0.5 rounded text-gray-400">
-                          {src.language}
+                          {getLanguageBadge(src.language)}
                         </span>
                       )}
                     </button>

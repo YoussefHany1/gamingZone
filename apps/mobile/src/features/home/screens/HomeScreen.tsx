@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from "react";
 import { RefreshControl, ScrollView } from "react-native";
+import type { ScrollViewInstance } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -38,7 +39,7 @@ function HomeScreen(): React.ReactElement {
 
   /** Content-space y of each home section, keyed by logical id (see QuickActions). */
   const sectionOffsets = useRef<{ [id: string]: number }>({});
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   /** Tab to activate in the tabbed news section, requested via the chips. */
   const [newsTabRequest, setNewsTabRequest] = useState<string | undefined>(undefined);
 

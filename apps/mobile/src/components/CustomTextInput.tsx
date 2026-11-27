@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import type { TextInputProps, TextStyle } from "react-native";
+import type { TextInputInstance, TextInputProps, TextStyle } from "react-native";
 import { TextInput } from "react-native";
 import { resolveFontStyle, containsArabic } from "../utils/fontUtils";
 
@@ -9,7 +9,7 @@ import { resolveFontStyle, containsArabic } from "../utils/fontUtils";
  * based on value → defaultValue → placeholder (first non-empty wins).
  * Uses React.forwardRef for programmatic focus control.
  */
-const CustomTextInput = React.forwardRef<TextInput, TextInputProps>(
+const CustomTextInput = React.forwardRef<TextInputInstance, TextInputProps>(
   ({ style, value, defaultValue, placeholder, ...props }, ref) => {
     // Memoised: recomputed only when the analysed text or style changes
     const { resolvedFontFamily, flatStyle } = useMemo(() => {

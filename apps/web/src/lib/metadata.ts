@@ -3,7 +3,40 @@ import type { Metadata } from "next";
 const FALLBACK_BASE_URL = "https://gz1.vercel.app";
 
 export function getSiteBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL || FALLBACK_BASE_URL;
+  return (process.env.NEXT_PUBLIC_SITE_URL || FALLBACK_BASE_URL).replace(
+    /\/$/,
+    "",
+  );
+}
+
+export type SiteLocale = "en" | "ar";
+
+export function localizedUrl(locale: SiteLocale, path: string): string {
+  const normalizedPath = path && !path.startsWith("/") ? `/${path}` : path;
+  return `${getSiteBaseUrl()}/${locale}${normalizedPath}`;
+}
+
+export function createLocalizedAlternates(
+  path: string,
+  canonicalLocale: SiteLocale,
+): NonNullable<Metadata["alternates"]> {
+  return {
+    canonical: localizedUrl(canonicalLocale, path),
+    languages: {
+      en: localizedUrl("en", path),
+      ar: localizedUrl("ar", path),
+      "x-default": localizedUrl("en", path),
+    },
+  };
+}
+
+export function createCanonicalAlternates(
+  url: string,
+): NonNullable<Metadata["alternates"]> {
+  return {
+    canonical: url,
+    languages: { "x-default": url },
+  };
 }
 
 const SITE_NAME = "Gaming Zone";
@@ -41,7 +74,7 @@ function normalizeLocalePath(path: string): string {
 
 function copyToMetadata(
   copy: LocalizedCopy,
-  locale: "en" | "ar",
+  locale: SiteLocale,
   path: string,
 ): Metadata {
   return {
@@ -50,7 +83,7 @@ function copyToMetadata(
     description: copy.description,
     ...(copy.keywords && { keywords: copy.keywords }),
     icons: { icon: "/assets/icon.webp" },
-    alternates: { canonical: `${getSiteBaseUrl()}/${locale}${path}` },
+    alternates: createLocalizedAlternates(path, locale),
     openGraph: {
       title: copy.title,
       description: copy.description,

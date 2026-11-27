@@ -2,8 +2,10 @@
 
 import React, { useEffect } from "react";
 import { useLangStore } from "@/store/useLangStore";
+import type { Locale } from "@/i18n/translate";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useProfileBootstrap } from "@/features/profile/hooks/useProfileBootstrap";
+import AppDownloadPopup from "@/components/AppDownloadPopup";
 import { Toaster } from "react-hot-toast";
 
 export function Providers({
@@ -14,6 +16,7 @@ export function Providers({
   locale: string;
 }) {
   const { lang, setLang } = useLangStore();
+  const activeLocale: Locale = locale === "ar" ? "ar" : "en";
   const initAuth = useAuthStore((state) => state.initAuth);
 
   // Every signed-in account must own a profile + handle. No-op once bootstrapped.
@@ -29,10 +32,8 @@ export function Providers({
 
   // 2. Synchronize language from URL parameter
   useEffect(() => {
-    if (locale === "ar" || locale === "en") {
-      setLang(locale);
-    }
-  }, [locale, setLang]);
+    setLang(activeLocale);
+  }, [activeLocale, setLang]);
 
   // Apply Language styles dynamically to the document
   useEffect(() => {
@@ -54,6 +55,7 @@ export function Providers({
   return (
     <>
       <Toaster position="top-center" reverseOrder={false} />
+      <AppDownloadPopup />
       {children}
     </>
   );

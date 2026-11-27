@@ -1228,7 +1228,10 @@
     "description": "Junte-se à comunidade gamer, acompanhe as últimas notícias e análises e adicione facilmente seus jogos favoritos à sua biblioteca pelo nosso aplicativo, disponível no Google Play.",
     "getItOn": "DISPONÍVEL NO",
     "googlePlay": "Google Play",
-    "getItOnFooter": "Disponível no Google Play"
+    "getItOnFooter": "Disponível no Google Play",
+    "dontShowAgain": "Não mostrar isto novamente",
+    "scanQrCode": "Escaneie este QR code com seu celular para baixar o aplicativo",
+    "downloadsLabel": "downloads"
   },
   "onboarding": {
     "skip": "Pular",

@@ -1,7 +1,11 @@
 import { MetadataRoute } from "next";
 import { fetchGamesList } from "@/features/games/services/server-cache";
 import { fetchServerArticles } from "@/features/news/services/api";
-import { getSiteBaseUrl } from "@/lib/metadata";
+import {
+  articlePath,
+  canonicalArticleLocale,
+} from "@/features/news/lib/articleSlug";
+import { getSiteBaseUrl, localizedUrl } from "@/lib/metadata";
 
 const NEWS_CATEGORIES = ["news", "reviews", "esports", "hardware"];
 
@@ -85,21 +89,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     );
 
     const allNews = articlesByCategory.flat();
+    const newsEntries = new Map<string, MetadataRoute.Sitemap[number]>();
 
     allNews.forEach((art) => {
-      // News articles are available in both locales in the UI, even if content is one language
-      locales.forEach((locale) => {
-        sitemapEntries.push({
-          url: `${baseUrl}/${locale}/news/${art.$id}`,
-          // pubDate is written by the RSS job and is therefore stable across
-          // regenerations. The previous `|| Date.now()` fallback made a missing
-          // date non-deterministic, which is billed as a write.
-          ...(art.pubDate && { lastModified: new Date(art.pubDate) }),
-          changeFrequency: "never",
-          priority: 0.6,
-        });
+      const lastModified = art.pubDate ? new Date(art.pubDate) : undefined;
+      const existing = newsEntries.get(art.$id);
+      if (
+        existing?.lastModified &&
+        (!lastModified || existing.lastModified >= lastModified)
+      ) {
+        return;
+      }
+
+      newsEntries.set(art.$id, {
+        url: localizedUrl(canonicalArticleLocale(art), articlePath(art)),
+        ...(lastModified &&
+          !Number.isNaN(lastModified.getTime()) && { lastModified }),
+        changeFrequency: "never",
+        priority: 0.6,
       });
     });
+
+    sitemapEntries.push(...newsEntries.values());
   } catch (e) {
     console.error("Sitemap: Failed to fetch news", e);
   }

@@ -1,17 +1,13 @@
+import { unstable_cache } from "next/cache";
 import { GamingEvent } from "@/types";
 import { getServerApiUrl } from "@/lib/api-config";
 
-export async function fetchGamingEvents(): Promise<GamingEvent[]> {
+const CACHE_VERSION = "v2";
+
+async function fetchGamingEventsUncached(): Promise<GamingEvent[]> {
   try {
     const response = await fetch(`${getServerApiUrl()}/events`, {
-      // Cache in Vercel Data Cache. Must be raised in step with the events/[id]
-      // segment `revalidate` (also 86400) — Next takes a route's window from the
-      // lowest TTL among the entries its render touches, so moving one without
-      // the other leaves both at the lower value.
-      //
-      // This window is the sole freshness mechanism: nothing externally expires
-      // this tag, so event data goes stale for the full window once cached.
-      next: { revalidate: 86400, tags: ["events"] },
+      cache: "no-store",
     });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -20,12 +16,16 @@ export async function fetchGamingEvents(): Promise<GamingEvent[]> {
     const data = await response.json();
     return Array.isArray(data) ? data : [];
   } catch (error) {
-    // Fail open (empty list) so the home page and event pages don't crash when
-    // the backend proxy is unreachable; ISR will recover on the next revalidate.
     console.error("Error fetching gaming events:", error);
     return [];
   }
 }
+
+export const fetchGamingEvents = unstable_cache(
+  fetchGamingEventsUncached,
+  [CACHE_VERSION, "gaming-events"],
+  { revalidate: 86400, tags: ["events"] },
+);
 
 export async function fetchEventDetails(
   id: string,

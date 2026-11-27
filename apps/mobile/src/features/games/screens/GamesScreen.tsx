@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { View } from "react-native";
-import type { TextInput } from "react-native";
+import type { TextInputInstance } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,7 +27,7 @@ function GamesScreen(): React.ReactElement {
   }));
 
   const route = useRoute<RouteProp<GamesStackParamList, "GamesScreen">>();
-  const inputRef = useRef<TextInput | null>(null);
+  const inputRef = useRef<TextInputInstance | null>(null);
 
   const {
     searchQuery,

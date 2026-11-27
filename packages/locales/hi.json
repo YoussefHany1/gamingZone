@@ -1228,7 +1228,10 @@
     "description": "गेमिंग समुदाय से जुड़ें, नवीनतम समाचार, समीक्षाएं फॉलो करें, और Google Play पर उपलब्ध हमारे ऐप के ज़रिए अपने पसंदीदा गेम्स को आसानी से अपनी लाइब्रेरी में जोड़ें।",
     "getItOn": "इस पर उपलब्ध है",
     "googlePlay": "Google Play",
-    "getItOnFooter": "Google Play पर उपलब्ध है"
+    "getItOnFooter": "Google Play पर उपलब्ध है",
+    "dontShowAgain": "यह दोबारा न दिखाएँ",
+    "scanQrCode": "ऐप डाउनलोड करने के लिए अपने फ़ोन से इस QR कोड को स्कैन करें",
+    "downloadsLabel": "डाउनलोड"
   },
   "onboarding": {
     "skip": "छोड़ें",

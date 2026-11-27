@@ -38,16 +38,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const isDev = APP_VARIANT === "development";
   const isPreview = APP_VARIANT === "preview";
 
-  // Package name — dev/preview get a ".dev" suffix so both can coexist on device
-  const androidPackage =
-    isDev || isPreview ? "com.yh.gamingzone.dev" : "com.yh.gamingzone";
+  const androidPackage = isPreview
+    ? "com.yh.gamingzone.dev"
+    : "com.yh.gamingzone";
 
   // App display name — dev/preview get a badge so you can tell them apart
+  const baseName = String(config.name ?? "Gaming Zone");
   const appName = isDev
-    ? "GamingZone (Dev)"
+    ? `${baseName} (Dev)`
     : isPreview
-      ? "GamingZone (Preview)"
-      : "Gaming Zone";
+      ? `${baseName} (Preview)`
+      : baseName;
 
   return {
     ...(config as any),

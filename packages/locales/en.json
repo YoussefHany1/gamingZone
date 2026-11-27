@@ -325,6 +325,7 @@
       "frenchSources": "French Sources",
       "hindiSources": "Hindi Sources",
       "portugueseSources": "Portuguese Sources",
+      "sourcesByLanguage": "{{language}} Sources",
       "visitWebsite": "Visit Website",
       "allSources": "All sources"
     },
@@ -1236,7 +1237,10 @@
     "description": "Join the gaming community, follow the latest news, reviews, and easily add your favorite games to your library via our app available on Google Play.",
     "getItOn": "GET IT ON",
     "googlePlay": "Google Play",
-    "getItOnFooter": "Get it on Google Play"
+    "getItOnFooter": "Get it on Google Play",
+    "dontShowAgain": "Don't show me this again",
+    "scanQrCode": "Scan this QR code with your phone to download the app",
+    "downloadsLabel": "downloads"
   },
   "onboarding": {
     "skip": "Skip",

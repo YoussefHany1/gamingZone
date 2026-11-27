@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
-import type { ScrollView } from "react-native";
+import type { ScrollViewInstance } from "react-native";
 import { useRequireAuth } from "@/src/hooks/useRequireAuth";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -37,7 +37,7 @@ export type GameDetailsView = {
   isReady: boolean;
   currentId: number | string;
   currentLang: string;
-  scrollRef: RefObject<ScrollView | null>;
+  scrollRef: RefObject<ScrollViewInstance | null>;
   user: FirebaseAuthTypes.User | null;
   rating: number;
   showListModal: boolean;
@@ -78,7 +78,7 @@ export const useGameDetails = ({
 }: UseGameDetailsProps): GameDetailsView => {
   const { currentId, setCurrentId } = useCurrentGameId(initialGameID);
   const isReady = useGameContentReady(initialGameID);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const { onScroll } = useScrollDirection();
   const { t, i18n } = useTranslation();
   const user = useAuthStore(useShallow((s) => s.user));

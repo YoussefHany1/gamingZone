@@ -12,7 +12,13 @@ import {
 } from "@/features/gameDetails/utils";
 import { storeMap } from "@/features/gameDetails/constants";
 import { getTranslations } from "@/i18n/server";
-import { getSiteBaseUrl } from "@/lib/metadata";
+import {
+  createLocalizedAlternates,
+  getSiteBaseUrl,
+  localizedUrl,
+  SiteLocale,
+} from "@/lib/metadata";
+import { absoluteUrl, serializeJsonLd } from "@/lib/structuredData";
 
 // Prerender popular game pages so they are served from the Vercel CDN instead
 // of running a function (IGDB proxy + Steam scrape) on every request.
@@ -73,11 +79,11 @@ export async function generateMetadata(props: {
     };
   }
 
+  const siteLocale: SiteLocale = locale === "ar" ? "ar" : "en";
   const coverUrl = game.cover
     ? `https://images.igdb.com/igdb/image/upload/t_screenshot_med/${game.cover.image_id}.webp`
     : "/assets/cover2.png";
 
-  const canonicalUrl = `${getSiteBaseUrl()}/${locale}/games/${id}`;
 
   return {
     title: `Gaming Zone | ${game.name}`,
@@ -86,9 +92,7 @@ export async function generateMetadata(props: {
       (locale === "en"
         ? "Read game review, details, and system requirements."
         : "اقرأ مراجعة وتفاصيل ومواصفات تشغيل اللعبة."),
-    alternates: {
-      canonical: canonicalUrl,
-    },
+    alternates: createLocalizedAlternates(`/games/${id}`, siteLocale),
     icons: {
       icon: "/assets/icon.webp",
     },
@@ -102,6 +106,7 @@ export async function generateMetadata(props: {
       images: [{ url: coverUrl, alt: game.name }],
       type: "video.other",
       siteName: "Gaming Zone",
+      locale: siteLocale === "ar" ? "ar_EG" : "en_US",
     },
     twitter: {
       card: "summary_large_image",
@@ -167,31 +172,39 @@ export default async function GameDetailsPage(props: {
       return { ...w, ...sm };
     });
 
+  const siteLocale: SiteLocale = locale === "ar" ? "ar" : "en";
   const baseUrl = getSiteBaseUrl();
+  const canonicalUrl = localizedUrl(siteLocale, `/games/${id}`);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "VideoGame",
     name: game.name,
-    description: game.summary || "",
-    image: coverUrl,
-    url: `${baseUrl}/${locale}/games/${id}`,
+    description: game.summary || undefined,
+    image: absoluteUrl(coverUrl, baseUrl),
+    url: canonicalUrl,
     genre: game.genres?.map((g) => g.name),
     gamePlatform: game.platforms?.map((p) => p.name),
-    aggregateRating: game.total_rating
-      ? {
+    ...(game.first_release_date && {
+      releaseDate: new Date(game.first_release_date * 1000)
+        .toISOString()
+        .slice(0, 10),
+    }),
+    ...(game.total_rating &&
+      game.total_rating_count && {
+        aggregateRating: {
           "@type": "AggregateRating",
           ratingValue: (game.total_rating / 10).toFixed(1),
           bestRating: "10",
-          ratingCount: game.total_rating_count || 1,
-        }
-      : undefined,
+          ratingCount: game.total_rating_count,
+        },
+      }),
   };
 
   return (
     <div className="w-full flex flex-col text-white relative">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       <GameDetailsClient
         game={game}

@@ -8,7 +8,7 @@
     "icon": "./assets/logo-background.png",
     "userInterfaceStyle": "automatic",
     "android": {
-      "versionCode": 70,
+      "versionCode": 78,
       "runtimeVersion": "1.0.9",
       "userInterfaceStyle": "automatic",
       "package": "com.yh.gamingzone",
@@ -83,7 +83,8 @@
       ],
       "./plugins/withR8Optimization.cjs",
       "./plugins/withAbiSplitsDisabled.cjs",
-      "./plugins/withBroadcastFinishGuard.cjs"
+      "./plugins/withBroadcastFinishGuard.cjs",
+      "./plugins/withDevAppIdentity.cjs"
     ],
     "updates": {
       "url": "https://u.expo.dev/25078fb9-8a54-4056-b988-2ac45be30e52"

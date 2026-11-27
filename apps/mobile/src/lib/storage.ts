@@ -31,14 +31,17 @@ const mmkv = createMMKV({ id: "gamingzone-cache" });
 //  2. ESLint (`.eslintrc.json` → no-restricted-syntax): statically flags
 //     string-literal secret keys passed to `storage.set` / `storageSet*`.
 //
-// Kept deliberately permissive of generic words like "key" — cache keys such
-// as `GAMIFICATION_${uid}` legitimately contain "KEY" — while matching the
-// credential vocabulary used across the codebase.
+// Matches only whole key segments: dynamic ids can legitimately contain
+// sequences such as `fcm`, while keys like `FCM_TOKEN` must still be rejected.
 const SECRET_KEY_PATTERN =
-  /token|secret|password|passwd|credential|api_?key|private_?key|npsso|ssocookie|authtoken|refresh_|jwt|bearer|fcm/i;
+  /(?:^|[_.-])(?:token|secret|password|passwd|credentials?|api_?key|private_?key|npsso|ssocookie|auth_?token|fcm_?token|access_?token|id_?token|refresh(?:_?token)?|jwt|bearer|fcm)(?:$|[_.-])/i;
+
+export function isSecretLikeKey(key: string): boolean {
+  return SECRET_KEY_PATTERN.test(key);
+}
 
 function assertNotSecretKey(key: string): void {
-  if (__DEV__ && SECRET_KEY_PATTERN.test(key)) {
+  if (__DEV__ && isSecretLikeKey(key)) {
     throw new Error(
       `[storage] Refusing to write "${key}" to MMKV — key looks like a secret. ` +
         "MMKV is an unencrypted on-disk store; auth tokens must stay in the " +

@@ -17,29 +17,21 @@ function compute(target: number): CountdownResult {
 export function useCountdown(
   targetTimestamp: number | null,
 ): CountdownResult | null {
-  const [timeLeft, setTimeLeft] = useState<CountdownResult | null>(() =>
-    targetTimestamp === null ? null : compute(targetTimestamp),
-  );
-
-  // Reset derived state when the target changes (React-recommended pattern
-  // for adjusting state during render, avoids an extra effect pass).
+  const [timeLeft, setTimeLeft] = useState<CountdownResult | null>(null);
   const [prevTarget, setPrevTarget] = useState(targetTimestamp);
+
   if (prevTarget !== targetTimestamp) {
     setPrevTarget(targetTimestamp);
-    setTimeLeft(targetTimestamp === null ? null : compute(targetTimestamp));
+    setTimeLeft(null);
   }
 
   useEffect(() => {
     if (targetTimestamp === null) return;
 
-    const interval = setInterval(() => {
-      const next = compute(targetTimestamp);
-      setTimeLeft(next);
-      if (computeTimeLeft(targetTimestamp) === null) {
-        clearInterval(interval);
-      }
-    }, 1000);
-
+    const interval = setInterval(
+      () => setTimeLeft(compute(targetTimestamp)),
+      1000,
+    );
     return () => clearInterval(interval);
   }, [targetTimestamp]);
 

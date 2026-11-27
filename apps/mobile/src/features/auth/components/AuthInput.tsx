@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import {
   View,
-  type TextInput,
+  type TextInputInstance,
   type TextInputProps,
   type StyleProp,
   type TextStyle,
@@ -47,7 +47,7 @@ export type AuthInputProps = Omit<TextInputProps, "style"> & {
  * (`accent`), 1 → error (`danger`). Error always wins over focus.
  */
 const AuthInput = memo(
-  forwardRef<TextInput, AuthInputProps>(function AuthInput(
+  forwardRef<TextInputInstance, AuthInputProps>(function AuthInput(
     {
       icon: Icon,
       error,

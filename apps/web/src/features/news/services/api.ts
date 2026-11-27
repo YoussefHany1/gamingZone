@@ -26,6 +26,8 @@ const SOURCES_TTL_SECONDS = 604800; // source registry changes rarely
 const WEEKLY_SUMMARY_TTL_SECONDS = 3600;
 const ARTICLE_TTL_SECONDS = 604800; // article bodies are immutable once published
 
+const CACHE_VERSION = "v2";
+
 /**
  * The full category set, matching the `category` attribute on articles and on
  * the news_sources registry.
@@ -160,7 +162,7 @@ export const fetchServerArticles = cache(
           return [];
         }
       },
-      ["articles", category, lang],
+      [CACHE_VERSION, "articles", category, lang],
       {
         revalidate: ARTICLES_TTL_SECONDS,
         tags: ["news", `news:articles:${category}:${lang}`],
@@ -195,7 +197,7 @@ export const fetchServerWeeklySummary = cache(
           return null;
         }
       },
-      ["weekly-summary"],
+      [CACHE_VERSION, "weekly-summary"],
       {
         revalidate: WEEKLY_SUMMARY_TTL_SECONDS,
         tags: ["news", "news:weekly-summary"],
@@ -232,7 +234,7 @@ export const fetchNewsSources = cache(
           return [];
         }
       },
-      ["news-sources", category],
+      [CACHE_VERSION, "news-sources", category],
       {
         revalidate: SOURCES_TTL_SECONDS,
         tags: ["news", `news:sources:${category}`],
@@ -290,7 +292,7 @@ export const fetchNews = cache(
           return [];
         }
       },
-      ["news-feed", category, siteName],
+      [CACHE_VERSION, "news-feed", category, siteName],
       {
         revalidate: FEED_TTL_SECONDS,
         tags: ["news", `news:feed:${category}`, `news:source:${siteName}`],
@@ -330,7 +332,7 @@ export const getArticle = cache(
           return null;
         }
       },
-      ["article", id],
+      [CACHE_VERSION, "article", id],
       {
         revalidate: ARTICLE_TTL_SECONDS,
         tags: ["news", `news:article:${id}`],
@@ -360,7 +362,7 @@ export const getNewsSource = cache(
           return null;
         }
       },
-      ["news-source", siteName],
+      [CACHE_VERSION, "news-source", siteName],
       {
         revalidate: SOURCES_TTL_SECONDS,
         tags: ["news", `news:source:${siteName}`],

@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { Newspaper, Calendar } from "lucide-react";
 import SourceDropdown from "./SourceDropdown";
 import TimeAgoClient from "./TimeAgoClient";
+import { articlePath } from "../lib/articleSlug";
 import { Source } from "../types";
 import { Card } from "@/components/ui/Card";
 import { createTranslator } from "@/i18n/translate";
@@ -198,7 +199,7 @@ export default function NewsListClient({
               const summary = getArticleSummary(art, locale) || art.description;
 
               return (
-                <Link href={`/news/${art.$id}`} key={art.$id}>
+                <Link href={articlePath(art)} key={art.$id}>
                   <Card
                     hoverEffect
                     dir={artLang === "ar" ? "rtl" : "ltr"}

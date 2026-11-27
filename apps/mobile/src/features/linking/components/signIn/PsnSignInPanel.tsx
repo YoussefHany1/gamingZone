@@ -51,7 +51,7 @@ function PsnSignInPanel({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useLinkPanelStyles();
-  const webViewRef = useRef<WebView>(null);
+  const webViewRef = useRef<WebView<object>>(null);
 
   /** Navigates the WebView to a URL. */
   const navigateTo = useCallback((url: string): void => {

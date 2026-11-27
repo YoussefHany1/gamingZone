@@ -1228,7 +1228,10 @@
     "description": "Únete a la comunidad de videojuegos, sigue las últimas noticias y reseñas, y añade fácilmente tus juegos favoritos a tu biblioteca a través de nuestra aplicación disponible en Google Play.",
     "getItOn": "DISPONIBLE EN",
     "googlePlay": "Google Play",
-    "getItOnFooter": "Disponible en Google Play"
+    "getItOnFooter": "Disponible en Google Play",
+    "dontShowAgain": "No volver a mostrar esto",
+    "scanQrCode": "Escanea este código QR con tu teléfono para descargar la app",
+    "downloadsLabel": "descargas"
   },
   "onboarding": {
     "skip": "Omitir",

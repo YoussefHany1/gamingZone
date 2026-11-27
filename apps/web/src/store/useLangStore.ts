@@ -1,3 +1,5 @@
+import { useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { create } from "zustand";
 import { createTranslator, type Locale, type TranslateFn } from "@/i18n/translate";
 
@@ -14,7 +16,7 @@ function getTranslator(lang: Locale): TranslateFn {
   return translator;
 }
 
-export const useLangStore = create<LangState>((set, get) => ({
+const useLangState = create<LangState>((set, get) => ({
   lang: "en",
 
   setLang: (lang: Locale) => {
@@ -28,9 +30,27 @@ export const useLangStore = create<LangState>((set, get) => ({
   },
 
   t: (key: string, replacements?: Record<string, string | number>) => {
-    const { lang } = get();
-    return getTranslator(lang)(key, replacements);
+    return getTranslator(get().lang)(key, replacements);
   },
 }));
+
+export function useLangStore(): LangState;
+export function useLangStore<T>(selector: (state: LangState) => T): T;
+export function useLangStore<T>(
+  selector?: (state: LangState) => T,
+): LangState | T {
+  const state = useLangState();
+  const pathname = usePathname();
+  const lang: Locale =
+    pathname === "/ar" || pathname?.startsWith("/ar/") ? "ar" : "en";
+  const t = useCallback(
+    (key: string, replacements?: Record<string, string | number>) =>
+      getTranslator(lang)(key, replacements),
+    [lang],
+  );
+
+  const scopedState: LangState = { ...state, lang, t };
+  return selector ? selector(scopedState) : scopedState;
+}
 
 export type { TranslateFn };

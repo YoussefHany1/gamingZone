@@ -1,5 +1,5 @@
 import { forwardRef, memo, useCallback, useMemo, useState } from "react";
-import { View, type TextInput, type TextInputProps } from "react-native";
+import { View, type TextInputInstance, type TextInputProps } from "react-native";
 import { Mail } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useThemeStyles } from "@/src/hooks/useThemeStyles";
@@ -35,7 +35,7 @@ export type AuthEmailInputProps = Omit<
  * still incomplete, so they never cover the rest of the form permanently.
  */
 const AuthEmailInput = memo(
-  forwardRef<TextInput, AuthEmailInputProps>(function AuthEmailInput(
+  forwardRef<TextInputInstance, AuthEmailInputProps>(function AuthEmailInput(
     {
       value,
       onChangeText,

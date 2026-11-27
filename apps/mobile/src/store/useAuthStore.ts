@@ -36,7 +36,7 @@ export const useAuthStore = create<AuthStore>()(
 
     initAuth: () => {
       // Mirrors the AppState ref that was in App.tsx
-      let currentAppState: AppStateStatus = AppState.currentState;
+      let currentAppState = (AppState.currentState ?? "active") as AppStateStatus;
       let resumeTimer: ReturnType<typeof setTimeout> | null = null;
 
       // ── Firebase auth listener ───────────────────────────────────────────────

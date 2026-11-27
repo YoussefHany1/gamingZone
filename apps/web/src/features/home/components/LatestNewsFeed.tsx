@@ -9,6 +9,7 @@ import { Newspaper, ChevronRight, Calendar } from "lucide-react";
 import { LatestNewsFeedProps } from "../types";
 import { Card } from "@/components/ui/Card";
 import { getArticleSummary } from "@gaming-zone/utils";
+import { articlePath } from "@/features/news/lib/articleSlug";
 
 const LatestNewsFeed = React.memo(function LatestNewsFeed({
   category,
@@ -101,7 +102,7 @@ const LatestNewsFeed = React.memo(function LatestNewsFeed({
                   </div>
 
                   <Link
-                    href={`/news/${art.$id}`}
+                    href={articlePath(art)}
                     className="flex items-center justify-center gap-1.5 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 rounded-xl text-xs font-bold text-white transition-all duration-300"
                   >
                     <span>{t("news.details.readFullArticle")}</span>

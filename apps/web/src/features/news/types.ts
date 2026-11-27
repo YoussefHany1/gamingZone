@@ -4,6 +4,12 @@ export interface Source {
   image?: string;
 }
 
+export interface SourceGroup {
+  language: string;
+  title: string;
+  sources: Source[];
+}
+
 export interface SourceDropdownProps {
   sources: Source[];
   currentSource: string;

@@ -1,0 +1,25 @@
+diff --git a/node_modules/expo-image-picker/android/src/main/java/expo/modules/imagepicker/ExpoCropImageActivity.kt b/node_modules/expo-image-picker/android/src/main/java/expo/modules/imagepicker/ExpoCropImageActivity.kt
+index d919a8d..54b2e4a 100644
+--- a/node_modules/expo-image-picker/android/src/main/java/expo/modules/imagepicker/ExpoCropImageActivity.kt
++++ b/node_modules/expo-image-picker/android/src/main/java/expo/modules/imagepicker/ExpoCropImageActivity.kt
+@@ -15,6 +15,7 @@ import android.view.Menu
+ import android.view.MenuItem
+ import android.view.View
+ import android.view.ViewGroup
++import android.view.WindowManager
+ import androidx.activity.addCallback
+ import androidx.appcompat.app.ActionBar
+ import androidx.appcompat.app.AppCompatActivity
+@@ -164,7 +165,11 @@ class ExpoCropImageActivity :
+       val statusBarView = View(context).apply { setBackgroundColor(colors.toolbarColor) }
+ 
+       // Draw content edge-to-edge, behind system bars
+-      WindowCompat.enableEdgeToEdge(this)
++      WindowCompat.setDecorFitsSystemWindows(this, false)
++      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
++        attributes.layoutInDisplayCutoutMode =
++          WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
++      }
+ 
+       // Set system bar icon colors based on the current theme (dark icons on light bg, and vice versa)
+       WindowInsetsControllerCompat(this, decorView).run {
