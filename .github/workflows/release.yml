@@ -34,6 +34,10 @@ jobs:
       - name: Install EAS CLI
         run: npm install --global eas-cli@27.11.0
 
+      - name: Install dotenv for Expo config
+        working-directory: apps/mobile
+        run: npm install --no-save dotenv
+
       - name: Check latest EAS build
         id: eas
         working-directory: apps/mobile
